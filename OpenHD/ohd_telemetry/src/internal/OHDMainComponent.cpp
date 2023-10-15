@@ -332,20 +332,16 @@ void OHDMainComponent::process_command_self(const mavlink_command_long_t &comman
             m_console->debug("Scan channels is only a feature for ground unit");
             return;
         }else{
-            const auto freq_bands=static_cast<uint32_t>(command.param1);
-            const auto channel_widths=static_cast<uint32_t>(command.param2);
-            m_console->debug("OPENHD_CMD_INITIATE_CHANNEL_SEARCH {} {}",freq_bands,channel_widths);
+            const auto channels_to_scan=static_cast<uint32_t>(command.param1);
+            m_console->debug("OPENHD_CMD_INITIATE_CHANNEL_SEARCH {}",channels_to_scan);
             bool success= false;
-            if((freq_bands==0 || freq_bands==1 || freq_bands==2) &&
-               (channel_widths==0 || channel_widths==1 || channel_widths==2)){
-                const bool scan_2g=freq_bands==0 || freq_bands==1;
-                const bool scan_5g=freq_bands==0 || freq_bands==2;
-                const bool scan_20Mhz=channel_widths==0 || channel_widths==1;
-                const bool scan_40Mhz=channel_widths==0 || channel_widths==2;
+            if(channels_to_scan==0 || channels_to_scan==1 || channels_to_scan==2){
                 if(m_opt_action_handler && m_opt_action_handler->wb_cmd_scan_channels){
-                    success=m_opt_action_handler->wb_cmd_scan_channels({scan_2g,scan_5g,scan_20Mhz,scan_40Mhz});
+                    openhd::ActionHandler::ScanChannelsParam scanChannelsParam{};
+                    scanChannelsParam.channels_to_scan=channels_to_scan;
+                    success=m_opt_action_handler->wb_cmd_scan_channels(scanChannelsParam);
                 }
-                m_console->debug("OPENHD_CMD_INITIATE_CHANNEL_SEARCH rsult: {}",success);
+                m_console->debug("OPENHD_CMD_INITIATE_CHANNEL_SEARCH result: {}",success);
             }
             message_buffer.push_back(ack_command(source_sys_id,source_comp_id,command.command,success));
         }

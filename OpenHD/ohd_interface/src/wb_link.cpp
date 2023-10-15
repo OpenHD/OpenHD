@@ -916,18 +916,20 @@ openhd::WifiSpace WBLink::get_current_frequency_channel_space()const {
 void WBLink::perform_channel_scan(const openhd::ActionHandler::ScanChannelsParam& scan_channels_params){
   const WiFiCard& card=m_broadcast_cards.at(0);
   const auto channels_to_scan=
-          openhd::wb::get_scan_channels_frequencies(card, scan_channels_params.check_2g_channels_if_card_support, scan_channels_params.check_5g_channels_if_card_supports);
+          openhd::wb::get_scan_channels_frequencies(card, scan_channels_params.channels_to_scan);
   if(channels_to_scan.empty()){
     m_console->warn("No channels to scan, return early");
     return;
   }
-  const auto channel_widths_to_scan=
-          openhd::wb::get_scan_channels_bandwidths(scan_channels_params.check_20Mhz_channel_width_if_card_supports,
-                                                   scan_channels_params.check_40Mhz_channel_width_if_card_supports);
-  if(channel_widths_to_scan.empty()){
-    m_console->warn("No channel_widths to scan, return early");
-    return;
-  }
+  //const auto channel_widths_to_scan=
+  //        openhd::wb::get_scan_channels_bandwidths(scan_channels_params.check_20Mhz_channel_width_if_card_supports,
+  //                                                 scan_channels_params.check_40Mhz_channel_width_if_card_supports);
+  //if(channel_widths_to_scan.empty()){
+  //  m_console->warn("No channel_widths to scan, return early");
+  //  return;
+  //}
+  // We only scan 40Mhz, this way we get both 20Mhz and 40Mhz air unit(s)
+  const std::vector<uint16_t> channel_widths_to_scan={40};
   if(m_opt_action_handler) {
     auto stats_current = m_opt_action_handler->get_link_stats();
     stats_current.gnd_operating_mode.operating_mode = 1;

@@ -122,10 +122,7 @@ class ActionHandler{
   // checking both 2G and 5G channels takes really long, but in rare cases might be wanted by the user
   // checking both 20Mhz and 40Mhz (instead of only either of them both) also duplicates the scan time
   struct ScanChannelsParam{
-    bool check_2g_channels_if_card_support=false;
-    bool check_5g_channels_if_card_supports=false;
-    bool check_20Mhz_channel_width_if_card_supports=false;
-    bool check_40Mhz_channel_width_if_card_supports=false;
+    uint32_t channels_to_scan=0;
   };
   std::function<bool(ScanChannelsParam)> wb_cmd_scan_channels= nullptr;
 public:
