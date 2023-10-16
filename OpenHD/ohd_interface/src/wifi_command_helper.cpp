@@ -89,11 +89,29 @@ bool wifi::commandhelper::iw_set_tx_power(const std::string &device,uint32_t tx_
   return true;
 }
 
+ /* HE MCS0-11 NSS 1 20 MHz */
+
+static const std::vector<uint32_t> he20_11ax_rate_ol{
+  8600,
+  17200,
+  25800,
+  34400,
+  51600,
+  68800,
+  77400,
+  86000,
+  103200,
+  114700,
+  129000,
+  143400,
+};
+
 bool wifi::commandhelper::iw_set_rate_mcs(const std::string &device,uint32_t mcs_index,bool is_2g) {
   if(!device.compare("ath0")){
     get_logger()->info("set_rate_mcs {} {}",device,mcs_index);
-    std::vector<std::string> args{device, "he_mcs", std::to_string(mcs_index)};
-    OHDUtil::run_command("cfg80211tool", args);
+    const auto rate = he20_11ax_rate_ol[mcs_index];
+    std::vector<std::string> args{device, "bcast_rate", std::to_string(rate)};
+    OHDUtil::run_command("iwpriv", args);
     return true;
   }
 

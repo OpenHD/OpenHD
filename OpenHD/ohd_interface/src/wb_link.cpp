@@ -341,9 +341,9 @@ bool WBLink::set_mcs_index(int mcs_index) {
   m_settings->persist();
   // R.n the only card known to properly allow setting the MCS index is rtl8812au,
   // and there it is done by modifying the radiotap header
-  //for(const auto& wlan:m_broadcast_cards){
-  //  wifi::commandhelper::iw_set_rate_mcs(wlan.device_name,settings.wb_mcs_index, false);
-  //}
+  for(const auto& wlan:m_broadcast_cards){
+    wifi::commandhelper::iw_set_rate_mcs(wlan.device_name,mcs_index, false);
+  }
   apply_all_tx_instances([mcs_index](WBTransmitter& tx){
 	tx.update_mcs_index(mcs_index);
   });
