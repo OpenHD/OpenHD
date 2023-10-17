@@ -885,7 +885,8 @@ void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoF
       max_block_size_for_platform=openhd::DEFAULT_MAX_FEC_BLK_SIZE_FOR_PLATFORM;
     }
     const int fec_perc=m_settings->get_settings().wb_video_fec_percentage;
-    const auto res=tx.try_enqueue_block(fragmented_video_frame.frame_fragments, max_block_size_for_platform,fec_perc);
+    const auto res=tx.try_enqueue_block(fragmented_video_frame.frame_fragments, max_block_size_for_platform,fec_perc,
+                                          fragmented_video_frame.creation_time);
     if(!res){
         m_frame_drop_helper.notify_dropped_frame();
         if(stream_index==0){
@@ -964,12 +965,12 @@ void WBLink::perform_channel_scan(const openhd::ActionHandler::ScanChannelsParam
           continue;
       }
       if(m_opt_action_handler){
-        openhd::ActionHandler::ScanChannelsProgress tmp{};
-        tmp.channel_mhz=(int)channel.frequency;
-        tmp.channel_width_mhz=channel_width;
-        tmp.success= false;
-        tmp.progress=OHDUtil::calculate_progress_perc(i+1,(int)channels_to_scan.size());
-        m_opt_action_handler->add_scan_channels_progress(tmp);
+          openhd::ActionHandler::ScanChannelsProgress tmp{};
+          tmp.channel_mhz=(int)channel.frequency;
+          tmp.channel_width_mhz=channel_width;
+          tmp.success= false;
+          tmp.progress=OHDUtil::calculate_progress_perc(i,(int)channels_to_scan.size());
+          m_opt_action_handler->add_scan_channels_progress(tmp);
       }
       // sleeep a bit - some cards /drivers might need time switching
       std::this_thread::sleep_for(std::chrono::milliseconds(200));
