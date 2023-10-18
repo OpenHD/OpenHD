@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <thread>
 
 #include "../mav_include.h"
@@ -38,7 +39,12 @@ class OnboardComputerStatusProvider {
   // Thread-safe, should never block for a significant amount of time
   mavlink_onboard_computer_status_t get_current_status();
   // utility for OHDMainComponent,also thread-safe
-  std::vector<MavlinkMessage> get_current_status_as_mavlink_message(uint8_t sys_id,uint8_t comp_id);
+  // Extradata: Kinda dirty, more info about the uart OpenHD air unit <-> FC
+  struct ExtraUartInfo{
+    int16_t fc_sys_id;
+    uint8_t operating_mode;
+  };
+  MavlinkMessage get_current_status_as_mavlink_message(uint8_t sys_id,uint8_t comp_id,const std::optional<ExtraUartInfo>& extra_uart);
  private:
   const OHDPlatform m_platform;
   const bool m_enable;

@@ -215,13 +215,20 @@ std::optional<MavlinkMessage> OHDMainComponent::handle_timesync_message(const Ma
 
 void OHDMainComponent::check_fc_messages_for_actions(const std::vector<MavlinkMessage>& messages) {
   for(const auto& msg:messages){
-    if(((msg.m.sysid== OHD_SYS_ID_FC) || (msg.m.sysid== OHD_SYS_ID_FC_BETAFLIGHT)) && msg.m.msgid==MAVLINK_MSG_ID_HEARTBEAT){
-      mavlink_heartbeat_t heartbeat;
-      mavlink_msg_heartbeat_decode(&msg.m, &heartbeat);
-      const auto mode = (MAV_MODE_FLAG)heartbeat.base_mode;
-      const bool armed= (mode & MAV_MODE_FLAG_SAFETY_ARMED);
-      if(m_opt_action_handler){
-        m_opt_action_handler->arm_state.update_arming_state_if_changed(armed);
+    if(msg.m.msgid==MAVLINK_MSG_ID_HEARTBEAT){
+      // This is mainly for the user to debug
+      if(RUNS_ON_AIR){
+        m_air_fc_sys_id=msg.m.sysid;
+      }
+      // We filter a bit more to not accidentally set armed state
+      if(((msg.m.sysid== OHD_SYS_ID_FC) || (msg.m.sysid== OHD_SYS_ID_FC_BETAFLIGHT))){
+        mavlink_heartbeat_t heartbeat;
+        mavlink_msg_heartbeat_decode(&msg.m, &heartbeat);
+        const auto mode = (MAV_MODE_FLAG)heartbeat.base_mode;
+        const bool armed= (mode & MAV_MODE_FLAG_SAFETY_ARMED);
+        if(m_opt_action_handler){
+          m_opt_action_handler->arm_state.update_arming_state_if_changed(armed);
+        }
       }
     }
     // We only change the mcs on the air unit (since downlink is the only thing that requires 'higher' bandwidth)
@@ -253,8 +260,13 @@ std::vector<MavlinkMessage> OHDMainComponent::create_broadcast_stats_if_needed()
     const auto elapsed_onboard_computer_status=now-m_last_onboard_computer;
     if(elapsed_onboard_computer_status>m_onboard_computer_status_interval){
         m_last_onboard_computer=now;
-        OHDUtil::vec_append(ret,m_onboard_computer_status_provider->get_current_status_as_mavlink_message(
-                m_sys_id, m_comp_id));
+        std::optional<OnboardComputerStatusProvider::ExtraUartInfo> opt_uart_info=std::nullopt;
+        if(RUNS_ON_AIR){
+          opt_uart_info=OnboardComputerStatusProvider::ExtraUartInfo{m_air_fc_sys_id.load(),0};
+        }
+        OnboardComputerStatusProvider::ExtraUartInfo extra{m_air_fc_sys_id};
+        ret.push_back(m_onboard_computer_status_provider->get_current_status_as_mavlink_message(
+                m_sys_id, m_comp_id,opt_uart_info));
         if(m_opt_action_handler){
           ret.push_back(openhd::LinkStatisticsHelper::generate_sys_status1(m_sys_id,m_comp_id,*m_opt_action_handler));
         }
