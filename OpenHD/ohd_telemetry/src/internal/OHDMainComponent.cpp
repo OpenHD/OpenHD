@@ -229,7 +229,6 @@ void OHDMainComponent::check_fc_messages_for_actions(const std::vector<MavlinkMe
           if(m_opt_action_handler){
             m_opt_action_handler->fc_rc_channels.update_rc_channels(tmp);
           }
-          m_console->debug("Processed raw RC channels message");
         }
       }
       
