@@ -201,6 +201,19 @@ static std::array<int,18> mavlink_msg_rc_channels_to_array(const mavlink_rc_chan
   return ret;
 }
 
+static std::array<int,18> mavlink_msg_rc_channels_raw_to_array(const mavlink_rc_channels_raw_t& parsedMsg){
+    std::array<int,18> ret{};
+    ret[0]=parsedMsg.chan1_raw;
+    ret[1]=parsedMsg.chan2_raw;
+    ret[2]=parsedMsg.chan3_raw;
+    ret[3]=parsedMsg.chan4_raw;
+    ret[4]=parsedMsg.chan5_raw;
+    ret[5]=parsedMsg.chan6_raw;
+    ret[6]=parsedMsg.chan7_raw;
+    ret[7]=parsedMsg.chan8_raw;
+    // Has only 8 channels
+    return ret;
+}
 // Optimize message routing: If a message has a target sys / comp id, only send it to the specified sys / comp id
 struct MTarget{
   uint16_t sys_id;
