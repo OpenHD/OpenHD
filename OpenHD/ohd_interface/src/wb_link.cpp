@@ -284,7 +284,7 @@ bool WBLink::request_set_air_tx_channel_width(int channel_width) {
 
 bool WBLink::request_set_tx_power_mw(int tx_power_mw, bool armed) {
     m_console->debug("request_set_tx_power_mw {}mW", tx_power_mw);
-    if(!openhd::is_valid_tx_power_milli_watt(tx_power_mw)){
+    if(!(openhd::is_valid_tx_power_milli_watt(tx_power_mw) || (armed && tx_power_mw==0))){
         m_console->warn("Invalid tx power:{}mW", tx_power_mw);
         return false;
     }
