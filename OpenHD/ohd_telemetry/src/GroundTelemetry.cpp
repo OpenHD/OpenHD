@@ -79,7 +79,6 @@ void GroundTelemetry::on_messages_air_unit(const std::vector<MavlinkMessage>& me
     if(msges_from_fc.empty()){
         msges_from_fc= filter_by_source_sys_id(messages,OHD_SYS_ID_FC_BETAFLIGHT);
     }
-    
     if(!msges_from_fc.empty()) {
       m_endpoint_tracker->send_messages_if_enabled(msges_from_fc);
     }

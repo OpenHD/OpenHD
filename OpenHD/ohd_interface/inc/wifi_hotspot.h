@@ -35,6 +35,7 @@ class WifiHotspot {
   static bool get_use_5g_channel(const WiFiCard& wifiCard,const openhd::WifiSpace& wifibroadcast_frequency_space);
   //
   void set_enabled_async(bool enable);
+  uint16_t get_frequency();
  private:
   // NOTE: might block, use async
   // just runs the appropriate network manager (nmcli) command to start an already created wifi hotspot connection

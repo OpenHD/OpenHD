@@ -5,20 +5,17 @@
 #include "openhd_profile.h"
 
 #include <fstream>
+#include <sstream>
 
-#include "include_json.hpp"
 #include "openhd_settings_directories.hpp"
 
-static constexpr auto PROFILE_MANIFEST_FILENAME = "/tmp/profile_manifest";
-
-// Thw write out here is only for debugging
-static void to_json(nlohmann::json& j, const OHDProfile& p) {
-  j = nlohmann::json{ {"is_air", p.is_air}, {"unit_id", p.unit_id}};
-}
+static constexpr auto PROFILE_MANIFEST_FILENAME = "/tmp/profile_manifest.txt";
 
 void write_profile_manifest(const OHDProfile& ohdProfile) {
-  nlohmann::json manifest = ohdProfile;
-  OHDFilesystemUtil::write_file(PROFILE_MANIFEST_FILENAME,manifest.dump(4));
+  std::stringstream ss;
+  ss<<"AIR:"<<(ohdProfile.is_air ? "YES" : "NO")<<"\n";
+  ss<<"UNIT_ID:"<<ohdProfile.unit_id<<"\n";
+  OHDFilesystemUtil::write_file(PROFILE_MANIFEST_FILENAME,ss.str());
 }
 
 std::shared_ptr<OHDProfile> DProfile::discover(bool is_air) {

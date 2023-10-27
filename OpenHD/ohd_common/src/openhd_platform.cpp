@@ -12,8 +12,6 @@
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"
 
-#include "include_json.hpp"
-
 std::string platform_type_to_string(PlatformType platform_type) {
   switch (platform_type) {
     case PlatformType::Jetson: return "jetson";
@@ -218,15 +216,11 @@ std::shared_ptr<OHDPlatform> DPlatform::discover() {
   return platform;
 }
 
-// Thw write out here is only for debugging
-static void to_json(nlohmann::json& j,const OHDPlatform &ohdPlatform) {
-  j = nlohmann::json{{"platform_type", platform_type_to_string(ohdPlatform.platform_type)},
-                     {"board_type", board_type_to_string(ohdPlatform.board_type)}};
-}
-
-static constexpr auto PLATFORM_MANIFEST_FILENAME = "/tmp/platform_manifest";
+static constexpr auto PLATFORM_MANIFEST_FILENAME = "/tmp/platform_manifest.txt";
 
 void write_platform_manifest(const OHDPlatform& ohdPlatform) {
-  nlohmann::json manifest = ohdPlatform;
-  OHDFilesystemUtil::write_file(PLATFORM_MANIFEST_FILENAME,manifest.dump(4));
+  std::stringstream ss;
+  ss<<"Platform:"<<platform_type_to_string(ohdPlatform.platform_type)<<"\n";
+  ss<<"Board type:"<<board_type_to_string(ohdPlatform.board_type)<<"\n";
+  OHDFilesystemUtil::write_file(PLATFORM_MANIFEST_FILENAME,ss.str());
 }

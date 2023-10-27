@@ -13,7 +13,6 @@
 
 #include "../mav_helper.h"
 #include "OnboardComputerStatusProvider.h"
-#include "StatusTextAccumulator.h"
 #include "openhd_action_handler.hpp"
 #include "openhd_link_statistics.hpp"
 #include "openhd_platform.h"
@@ -74,11 +73,13 @@ class OHDMainComponent : public MavlinkComponent{
   [[nodiscard]] MavlinkMessage generate_ohd_version(const std::string& commit_hash= "unknown")const;
   // pack all the buffered log messages
   std::vector<MavlinkMessage> generateLogMessages();
-  std::unique_ptr<StatusTextAccumulator> m_status_text_accumulator;
   std::unique_ptr<OnboardComputerStatusProvider> m_onboard_computer_status_provider;
   MavlinkMessage ack_command(uint8_t source_sys_id,uint8_t source_comp_id,uint16_t command_id,bool success=true);
   std::shared_ptr<spdlog::logger> m_console;
   std::unique_ptr<LastKnowPosition> m_last_known_position= nullptr;
+  // Only set / used on air, where we have a uart connection to the FC and therefore
+  // can be 100% sure about the FC sys id
+  std::atomic_int16_t m_air_fc_sys_id=-1;
 };
 
 #endif //XMAVLINKSERVICE_INTERNALTELEMETRY_H

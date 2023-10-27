@@ -15,8 +15,8 @@
 
 namespace openhd{
 
-static constexpr auto DEFAULT_5GHZ_FREQUENCY = 5180;
-static constexpr auto DEFAULT_2GHZ_FREQUENCY = 2412;
+static constexpr auto DEFAULT_5GHZ_FREQUENCY = 5745; // Channel 149 / OpenHD race band 2
+static constexpr auto DEFAULT_2GHZ_FREQUENCY = 2452; // Channel 9 / is a 20Mhz channel / No openhd band in 2.4G
 // highest MCS where modulation is still QPSK
 static constexpr auto DEFAULT_MCS_INDEX=2;
 // We always use a MCS index of X for the uplink, since (compared to the video link) it requires a negligible amount of bandwidth
@@ -29,13 +29,14 @@ static constexpr auto DEFAULT_CHANNEL_WIDTH=20;
 static constexpr auto DEFAULT_WIFI_TX_POWER_MILLI_WATT=25;
 // by default, we do not differentiate (to not confuse the user)
 static constexpr auto WIFI_TX_POWER_MILLI_WATT_ARMED_DISABLED=0;
-// Measured to be about /below 25mW, RTL8812au only (or future cards who use the recommended power level index approach)
-static constexpr auto DEFAULT_RTL8812AU_TX_POWER_INDEX=22;
+// tx power index 22 is about 25mW on asus, but on some card(s) that can be too much already (especially on custom HW).
+// therefore, this default value is written at run time (see below)
+static constexpr auto DEFAULT_RTL8812AU_TX_POWER_INDEX=0;
 // by default, we do not differentiate (to not confuse users)
 static constexpr auto RTL8812AU_TX_POWER_INDEX_ARMED_DISABLED=0;
 // LDPC is enabled by default - drivers that don't support ldpc during rx do not exist anymore,
 // and if the tx driver doesn't support it, it is just omitted.
-static constexpr bool DEFAULT_ENABLE_LDPC=true;
+static constexpr bool DEFAULT_ENABLE_LDPC= false;
 // SHORT GUARD - doesn't really have that much of an benefit regarding bitrate,
 // so we set it off by default (use long guard)
 static constexpr bool DEFAULT_ENABLE_SHORT_GUARD= false;
@@ -118,21 +119,7 @@ static int calculate_max_fec_block_size_for_platform(const OHDPlatform platform)
   return 20;
 }
 
-static WBLinkSettings create_default_wb_stream_settings(const OHDPlatform& platform,const std::vector<WiFiCard>& wifibroadcast_cards){
-  assert(!wifibroadcast_cards.empty());
-  const auto& first_card=wifibroadcast_cards.at(0);
-  assert(first_card.supports_5GHz() || first_card.supports_2GHz());
-  const bool use_5ghz= wifibroadcast_cards.at(0).supports_5GHz();
-  WBLinkSettings settings{};
-  if(use_5ghz){
-	settings.wb_frequency=DEFAULT_5GHZ_FREQUENCY;
-  }else{
-	settings.wb_frequency=DEFAULT_2GHZ_FREQUENCY;
-  }
-  settings.wb_max_fec_block_size_for_platform= calculate_max_fec_block_size_for_platform(platform);
-  openhd::log::get_default()->debug("Default wb_max_fec_block_size_for_platform:{}",settings.wb_max_fec_block_size_for_platform);
-  return settings;
-}
+WBLinkSettings create_default_wb_stream_settings(const OHDPlatform& platform,const std::vector<WiFiCard>& wifibroadcast_cards);
 
 static bool validate_wb_rtl8812au_tx_pwr_idx_override(int value){
   if(value>=0 && value <= 63)return true;

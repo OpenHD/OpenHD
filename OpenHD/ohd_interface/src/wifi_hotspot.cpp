@@ -103,3 +103,8 @@ bool WifiHotspot::get_use_5g_channel(
   // Not seen a 5G only card yet
   return should_use_5G;
 }
+
+uint16_t WifiHotspot::get_frequency() {
+  if(m_use_5G_channel) return 5180;
+  return 2412;
+}
