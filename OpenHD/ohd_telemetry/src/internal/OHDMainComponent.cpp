@@ -233,14 +233,28 @@ void OHDMainComponent::check_fc_messages_for_actions(const std::vector<MavlinkMe
     }
     // We only change the mcs on the air unit (since downlink is the only thing that requires 'higher' bandwidth)
     if(RUNS_ON_AIR){
-      if(((msg.m.sysid== OHD_SYS_ID_FC) || (msg.m.sysid== OHD_SYS_ID_FC_BETAFLIGHT)) && msg.m.msgid==MAVLINK_MSG_ID_RC_CHANNELS){
-        mavlink_rc_channels_t rc_channels;
-        mavlink_msg_rc_channels_decode(&msg.m, &rc_channels);
-        const auto tmp=mavlink_msg_rc_channels_to_array(rc_channels);
-        if(m_opt_action_handler){
-          m_opt_action_handler->fc_rc_channels.update_rc_channels(tmp);
+      if((msg.m.sysid== OHD_SYS_ID_FC) || (msg.m.sysid== OHD_SYS_ID_FC_BETAFLIGHT))
+      {
+        if(msg.m.msgid==MAVLINK_MSG_ID_RC_CHANNELS)
+        {
+          mavlink_rc_channels_t rc_channels;
+          mavlink_msg_rc_channels_decode(&msg.m, &rc_channels);
+          const auto tmp=mavlink_msg_rc_channels_to_array(rc_channels);
+          if(m_opt_action_handler){
+            m_opt_action_handler->fc_rc_channels.update_rc_channels(tmp);
+          }
+        }
+        else if(msg.m.msgid==MAVLINK_MSG_ID_RC_CHANNELS_RAW)
+        {
+          mavlink_rc_channels_raw_t rc_channels;
+          mavlink_msg_rc_channels_raw_decode(&msg.m, &rc_channels);
+          const auto tmp=mavlink_msg_rc_channels_raw_to_array(rc_channels);
+          if(m_opt_action_handler){
+            m_opt_action_handler->fc_rc_channels.update_rc_channels(tmp);
+          }
         }
       }
+      
     }
   }
 }
