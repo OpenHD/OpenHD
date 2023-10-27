@@ -15,9 +15,11 @@ ARCH=$(cat arch.txt)
 echo ${DISTRO}
 echo ${FLAVOR}
 echo ${CUSTOM}
+echo ${ARCH}
 
 if [[ "${ARCH}" == "arm64" ]]; then
     ./install_build_dep.sh rock5
+    echo "rock5"
 fi
 
 sudo ./package.sh ${CUSTOM} ${ARCH} ${DISTRO} ${FLAVOR} || exit 1
