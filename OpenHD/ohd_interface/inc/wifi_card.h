@@ -68,6 +68,8 @@ struct WiFiCard {
   bool supports_monitor_mode=false;
   bool is_openhd_supported = false;
   bool supports_hotspot = false;
+  // RTL8812AU on openhd custom hardware
+  bool is_rtl8812au_custom_hardware = false;
   [[nodiscard]] bool supports_2GHz()const{
     return !supported_frequencies_2G.empty();
   };

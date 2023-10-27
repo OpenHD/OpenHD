@@ -10,7 +10,7 @@ BUILD_PACKAGES="git build-essential autotools-dev automake libtool python3-pip a
 
 
 function install_pi_packages {
-PLATFORM_PACKAGES="libasio-dev libcamera-openhd"
+PLATFORM_PACKAGES="libcamera-openhd"
 PLATFORM_PACKAGES_REMOVE="python3-libcamera libcamera0"
 }
 function install_x86_packages {

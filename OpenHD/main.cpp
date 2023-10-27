@@ -22,28 +22,17 @@
 // For logging the commit hash and more
 #include "git.h"
 
-///Regarding AIR / GROUND detection: Previous OpenHD releases would detect weather this system is an air pi
-// or ground pi by checking weather it has a connected camera. However, this pattern has 2 problems:
-// 1) Some camera(s) require a reconfiguration (e.g. when switching from / to libcamera to gst-rpicamsrc(mmal) or
-//    even more complex, when switching from/to the arducam-specific libcamera) and are therefore not detectable
-//    at startup
-// 2) It makes troubleshooting harder - since in case of the ochin, you cannot even connect a display to the unit
-//    and check if it boots as ground or air, or if there are issue(s) with something else (e.g. the wifi card).
-///This is why we decided to change this pattern as follows:
-// One needs to explicitly tell the OpenHD executable weather to start as air or ground. This can be done in multiple ways
-// a) during development, just pass in the required parameter (this overrides any check if a file exists,see below)
-// b) For normal users, they can select weather they want to create an air or ground unit in the flashing tool -
-//    it'l create a file called air.txt or ground.txt under /boot/openhd/
-// c) You can also rename the file under /boot/openhd/ and restart OpenHD during development
-///As a result, we have the following behaviour:
-// If we run as air - check if we can find a connected camera, if there is none, create the "dummy" camera instead
-// If we run as ground - easy, just don't check for connected camera(s)
-// There is one more thing that is usefully during development: It is possible that a camera is detectable but the pipeline
-// is bugged - for this, you can use the --force-dummy-camera parameter, which also sets OpenHD into air mode and always
-// uses the dummy camera, no matter if a camera is detected or not.
-// NOTE: If you neither pass in the argument in the command line and no file exists, OpenHD will always boot as ground.
+// |-------------------------------------------------------------------------------|
+// |                         OpenHD core executable                                |
+// | Weather you run as air (creates openhd air unit) or run as ground             |
+// | (creates openhd ground unit) needs to be specified by either using the command|
+// | line param (development) or using a text file (openhd images)                 |
+// | Read the code documentation in this project for more info.                    |
+// |-------------------------------------------------------------------------------|
 
-static const char optstr[] = "?:agcwr:qh:";
+// A few run time options, only for development. Way more configuration (during development)
+// can be done by using the hardware.config file
+static const char optstr[] = "?:agcwr:qh:f:";
 static const struct option long_options[] = {
     {"air", no_argument, nullptr, 'a'},
     {"ground", no_argument, nullptr, 'g'},
@@ -52,6 +41,7 @@ static const struct option long_options[] = {
     {"run-time-seconds", required_argument, nullptr, 'r'},
     {"continue-without-wb-card", no_argument, nullptr, 'q'},
     {"hardware-config-file", required_argument, nullptr, 'h'},
+    {"rf-metrics", required_argument, nullptr, 'f'},
     {nullptr, 0, nullptr, 0},
 };
 
@@ -66,6 +56,7 @@ struct OHDRunOptions {
   // Specify the hardware.config file, otherwise,
   // the default location (and default values if no file exists at the default location) is used
   std::optional<std::string> hardware_config_file;
+  int rf_metrics_level=0;
 };
 
 static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
@@ -105,6 +96,9 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
       case 'h':
          ret.hardware_config_file=tmp_optarg;
          break;
+      case 'f':
+         ret.rf_metrics_level=atoi(tmp_optarg);
+         break ;
       case '?':
       default:{
           std::stringstream ss;
@@ -116,6 +110,7 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
           ss <<"--run-time-seconds -r [Manually specify run time (default infinite),for debugging] \n";
           ss <<"--continue-without-wb-card -q [continue the startup process even though no monitor mode card has been found yet] \n";
           ss <<"--hardware-config-file -h [specify path to hardware.config file]\n";
+          ss <<"--rf-metrics -f [print a ton of rf metrics to stdout, for debugging. Try 1..3]\n";
           std::cout<<ss.str()<<std::flush;
       }
       exit(1);
@@ -261,6 +256,7 @@ int main(int argc, char *argv[]) {
     // create the global action handler that allows openhd modules to communicate with each other
     // e.g. when the rf link in ohd_interface needs to talk to the camera streams to reduce the bitrate
     auto ohd_action_handler=std::make_shared<openhd::ActionHandler>();
+    ohd_action_handler->rf_metrics_level=options.rf_metrics_level;
 
     // We start ohd_telemetry as early as possible, since even without a link (transmission) it still picks up local
     // log message(s) and forwards them to any ground station clients (e.g. QOpenHD)

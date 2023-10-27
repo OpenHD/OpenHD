@@ -26,8 +26,6 @@ OHDMainComponent::OHDMainComponent(
   m_console = openhd::log::create_or_get("t_main_c");
   assert(m_console);
   m_onboard_computer_status_provider=std::make_unique<OnboardComputerStatusProvider>(m_platform,true);
-  // suppress the warning until we get the first actually updated stats
-  m_status_text_accumulator=std::make_unique<StatusTextAccumulator>();
   const auto config=openhd::load_config();
   if(!RUNS_ON_AIR && config.GEN_ENABLE_LAST_KNOWN_POSITION){
       m_last_known_position=std::make_unique<LastKnowPosition>();
@@ -158,8 +156,26 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mav_wb_stats(){
   return ret;
 }
 
+static mavlink_message_t create_mavlink_log_message(const openhd::log::MavlinkLogMessage& msg,uint8_t sys_id,uint8_t comp_id){
+  mavlink_message_t ret;
+  mavlink_statustext_t mavlink_statustext;
+  mavlink_statustext.id=0;
+  mavlink_statustext.chunk_seq=0;
+  mavlink_statustext.severity=msg.level;
+  std::memcpy(&mavlink_statustext.text,msg.message,50);
+  mavlink_msg_statustext_encode(sys_id,comp_id,&ret,&mavlink_statustext);
+  return ret;
+}
+
 std::vector<MavlinkMessage> OHDMainComponent::generateLogMessages() {
-  return m_status_text_accumulator->get_mavlink_messages(m_sys_id,m_comp_id);
+  //return m_status_text_accumulator->get_mavlink_messages(m_sys_id,m_comp_id);
+  auto messages=openhd::log::MavlinkLogMessageBuffer::instance().dequeue_log_messages();
+  std::vector<MavlinkMessage> ret;
+  ret.reserve(messages.size());
+  for(auto& message:messages){
+    ret.push_back(MavlinkMessage{create_mavlink_log_message(message,m_sys_id,m_comp_id)});
+  }
+  return ret;
 }
 
 MavlinkMessage OHDMainComponent::generate_ohd_version(const std::string& commit_hash) const {
@@ -199,13 +215,20 @@ std::optional<MavlinkMessage> OHDMainComponent::handle_timesync_message(const Ma
 
 void OHDMainComponent::check_fc_messages_for_actions(const std::vector<MavlinkMessage>& messages) {
   for(const auto& msg:messages){
-    if(((msg.m.sysid== OHD_SYS_ID_FC) || (msg.m.sysid== OHD_SYS_ID_FC_BETAFLIGHT)) && msg.m.msgid==MAVLINK_MSG_ID_HEARTBEAT){
-      mavlink_heartbeat_t heartbeat;
-      mavlink_msg_heartbeat_decode(&msg.m, &heartbeat);
-      const auto mode = (MAV_MODE_FLAG)heartbeat.base_mode;
-      const bool armed= (mode & MAV_MODE_FLAG_SAFETY_ARMED);
-      if(m_opt_action_handler){
-        m_opt_action_handler->arm_state.update_arming_state_if_changed(armed);
+    if(msg.m.msgid==MAVLINK_MSG_ID_HEARTBEAT){
+      // This is mainly for the user to debug
+      if(RUNS_ON_AIR){
+        m_air_fc_sys_id=msg.m.sysid;
+      }
+      // We filter a bit more to not accidentally set armed state
+      if(((msg.m.sysid== OHD_SYS_ID_FC) || (msg.m.sysid== OHD_SYS_ID_FC_BETAFLIGHT))){
+        mavlink_heartbeat_t heartbeat;
+        mavlink_msg_heartbeat_decode(&msg.m, &heartbeat);
+        const auto mode = (MAV_MODE_FLAG)heartbeat.base_mode;
+        const bool armed= (mode & MAV_MODE_FLAG_SAFETY_ARMED);
+        if(m_opt_action_handler){
+          m_opt_action_handler->arm_state.update_arming_state_if_changed(armed);
+        }
       }
     }
     // We only change the mcs on the air unit (since downlink is the only thing that requires 'higher' bandwidth)
@@ -251,8 +274,16 @@ std::vector<MavlinkMessage> OHDMainComponent::create_broadcast_stats_if_needed()
     const auto elapsed_onboard_computer_status=now-m_last_onboard_computer;
     if(elapsed_onboard_computer_status>m_onboard_computer_status_interval){
         m_last_onboard_computer=now;
-        OHDUtil::vec_append(ret,m_onboard_computer_status_provider->get_current_status_as_mavlink_message(
-                m_sys_id, m_comp_id));
+        std::optional<OnboardComputerStatusProvider::ExtraUartInfo> opt_uart_info=std::nullopt;
+        if(RUNS_ON_AIR){
+          opt_uart_info=OnboardComputerStatusProvider::ExtraUartInfo{m_air_fc_sys_id.load(),0};
+        }
+        OnboardComputerStatusProvider::ExtraUartInfo extra{m_air_fc_sys_id};
+        ret.push_back(m_onboard_computer_status_provider->get_current_status_as_mavlink_message(
+                m_sys_id, m_comp_id,opt_uart_info));
+        if(m_opt_action_handler){
+          ret.push_back(openhd::LinkStatisticsHelper::generate_sys_status1(m_sys_id,m_comp_id,*m_opt_action_handler));
+        }
     }
     {
         const auto elapsed_version=now-m_last_version_message_tp;
@@ -327,20 +358,16 @@ void OHDMainComponent::process_command_self(const mavlink_command_long_t &comman
             m_console->debug("Scan channels is only a feature for ground unit");
             return;
         }else{
-            const auto freq_bands=static_cast<uint32_t>(command.param1);
-            const auto channel_widths=static_cast<uint32_t>(command.param2);
-            m_console->debug("OPENHD_CMD_INITIATE_CHANNEL_SEARCH {} {}",freq_bands,channel_widths);
+            const auto channels_to_scan=static_cast<uint32_t>(command.param1);
+            m_console->debug("OPENHD_CMD_INITIATE_CHANNEL_SEARCH {}",channels_to_scan);
             bool success= false;
-            if((freq_bands==0 || freq_bands==1 || freq_bands==2) &&
-               (channel_widths==0 || channel_widths==1 || channel_widths==2)){
-                const bool scan_2g=freq_bands==0 || freq_bands==1;
-                const bool scan_5g=freq_bands==0 || freq_bands==2;
-                const bool scan_20Mhz=channel_widths==0 || channel_widths==1;
-                const bool scan_40Mhz=channel_widths==0 || channel_widths==2;
+            if(channels_to_scan==0 || channels_to_scan==1 || channels_to_scan==2){
                 if(m_opt_action_handler && m_opt_action_handler->wb_cmd_scan_channels){
-                    success=m_opt_action_handler->wb_cmd_scan_channels({scan_2g,scan_5g,scan_20Mhz,scan_40Mhz});
+                    openhd::ActionHandler::ScanChannelsParam scanChannelsParam{};
+                    scanChannelsParam.channels_to_scan=channels_to_scan;
+                    success=m_opt_action_handler->wb_cmd_scan_channels(scanChannelsParam);
                 }
-                m_console->debug("OPENHD_CMD_INITIATE_CHANNEL_SEARCH rsult: {}",success);
+                m_console->debug("OPENHD_CMD_INITIATE_CHANNEL_SEARCH result: {}",success);
             }
             message_buffer.push_back(ack_command(source_sys_id,source_comp_id,command.command,success));
         }

@@ -121,14 +121,18 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
   }
 }
 
-std::vector<MavlinkMessage>
-OnboardComputerStatusProvider::get_current_status_as_mavlink_message(const uint8_t sys_id,const uint8_t comp_id) {
+MavlinkMessage
+OnboardComputerStatusProvider::get_current_status_as_mavlink_message(const uint8_t sys_id,const uint8_t comp_id,
+                                                                     const std::optional<ExtraUartInfo>& extra_uart_opt) {
   MavlinkMessage msg;
   auto tmp=get_current_status();
+  if(extra_uart_opt.has_value()){
+    const auto& extra_uart=extra_uart_opt.value();
+    tmp.fan_speed[0]=extra_uart.fc_sys_id;
+    tmp.fan_speed[1]=extra_uart.operating_mode;
+  }
   mavlink_msg_onboard_computer_status_encode(sys_id,comp_id,&msg.m,&tmp);
-  std::vector<MavlinkMessage> ret;
-  ret.push_back(msg);
-  return ret;
+  return msg;
 }
 
 void OnboardComputerStatusProvider::ina219_log_warning_once() {

@@ -142,17 +142,18 @@ bool openhd::wb::any_card_supports_stbc_ldpc_sgi(const std::vector<WiFiCard> &ca
     return false;
 }
 
-std::vector <openhd::WifiChannel> openhd::wb::get_scan_channels_frequencies(const WiFiCard &card, bool check_2g, bool check_5g) {
-    std::vector<openhd::WifiChannel> channels_to_scan;
-    if(check_2g && card.supports_2GHz()){
-        auto tmp=openhd::get_channels_2G();
-        OHDUtil::vec_append(channels_to_scan,tmp);
+std::vector <openhd::WifiChannel> openhd::wb::get_scan_channels_frequencies(const WiFiCard &card,int channels_to_scan) {
+    std::vector<openhd::WifiChannel> ret;
+    if(channels_to_scan==0){
+        // OpenHD channels 1 to 5 only
+        return openhd::get_openhd_channels_1_to_5();
     }
-    if(check_5g && card.supports_5GHz()){
-        auto tmp=openhd::get_channels_5G();
-        OHDUtil::vec_append(channels_to_scan,tmp);
+    if(channels_to_scan==1){
+        auto supported=card.supported_frequencies_2G;
+        return openhd::frequencies_to_channels(supported);
     }
-    return channels_to_scan;
+    auto supported=card.supported_frequencies_5G;
+    return openhd::frequencies_to_channels(supported);
 }
 
 std::vector<uint16_t> openhd::wb::get_scan_channels_bandwidths(bool scan_20mhz, bool scan_40mhz) {
@@ -173,13 +174,18 @@ std::vector<openhd::WifiChannel> openhd::wb::get_analyze_channels_frequencies(co
     for(const auto& freq:supported_freq_2G){
         auto tmp=openhd::channel_from_frequency(freq);
         if(tmp.has_value()){
+            //if(tmp->in_40Mhz_ht40_plus) {
+            //    channels_to_analyze.push_back(tmp.value());
+            //}
             channels_to_analyze.push_back(tmp.value());
         }
     }
     for(const auto freq:supported_freq_5G){
         auto tmp=openhd::channel_from_frequency(freq);
         if(tmp.has_value()){
-            channels_to_analyze.push_back(tmp.value());
+            if(tmp->in_40Mhz_ht40_plus){
+                channels_to_analyze.push_back(tmp.value());
+            }
         }
     }
     return channels_to_analyze;

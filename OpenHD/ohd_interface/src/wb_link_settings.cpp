@@ -27,5 +27,31 @@ std::string WBLinkSettingsHolder::imp_serialize(const openhd::WBLinkSettings &da
     const nlohmann::json tmp=data;
     return tmp.dump(4);
 }
+
+WBLinkSettings create_default_wb_stream_settings(
+    const OHDPlatform &platform,
+    const std::vector<WiFiCard> &wifibroadcast_cards) {
+  assert(!wifibroadcast_cards.empty());
+  const auto& first_card=wifibroadcast_cards.at(0);
+  assert(first_card.supports_5GHz() || first_card.supports_2GHz());
+  const bool use_5ghz= wifibroadcast_cards.at(0).supports_5GHz();
+  WBLinkSettings settings{};
+  if(use_5ghz){
+    settings.wb_frequency=DEFAULT_5GHZ_FREQUENCY;
+  }else{
+    settings.wb_frequency=DEFAULT_2GHZ_FREQUENCY;
+  }
+  settings.wb_max_fec_block_size_for_platform= calculate_max_fec_block_size_for_platform(platform);
+  openhd::log::get_default()->debug("Default wb_max_fec_block_size_for_platform:{}",settings.wb_max_fec_block_size_for_platform);
+  // custom hardware only has one wifi card
+  if(wifibroadcast_cards.at(0).is_rtl8812au_custom_hardware){
+    // Already a lot lol
+    settings.wb_rtl8812au_tx_pwr_idx_override=3;
+  }else{
+    // Should work even on ali cards without burning them
+    settings.wb_rtl8812au_tx_pwr_idx_override=10;
+  }
+  return settings;
+}
 }
 

@@ -48,6 +48,9 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   txrx_options.tx_without_pcap= true;
   txrx_options.enable_auto_switch_tx_card= false; //TODO remove me
   txrx_options.max_sane_injection_time=std::chrono::milliseconds(1);
+  if(m_opt_action_handler){
+    txrx_options.rx_radiotap_debug_level=m_opt_action_handler->rf_metrics_level;
+  }
   //txrx_options.advanced_debugging_rx= true;
   //txrx_options.debug_decrypt_time= true;
   //txrx_options.debug_encrypt_time= true;
@@ -70,8 +73,8 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
       int wb_type=card.type==WiFiCardType::OPENHD_RTL_88X2AU ? 1 : 0;
       tmp_wifi_cards.push_back(wifibroadcast::WifiCard{card.device_name,wb_type});
   }
-  m_tx_header_1=std::make_shared<RadiotapHeaderHolder>();
-  m_tx_header_2=std::make_shared<RadiotapHeaderHolder>();
+  m_tx_header_1=std::make_shared<RadiotapHeaderTxHolder>();
+  m_tx_header_2=std::make_shared<RadiotapHeaderTxHolder>();
   {
       const auto settings=m_settings->get_settings();
       auto mcs_index=static_cast<int>(settings.wb_air_mcs_index);
@@ -96,12 +99,12 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
           }
       }
       const bool set_flag_tx_no_ack = !tx_set_high_retransmit_count;
-      auto tmp_params= RadiotapHeader::UserSelectableParams{
+      auto tmp_params= RadiotapHeaderTx::UserSelectableParams{
               tx_channel_width, settings.wb_enable_short_guard,settings.wb_enable_stbc,
               settings.wb_enable_ldpc, mcs_index,set_flag_tx_no_ack};
-      m_console->debug("{}",RadiotapHeader::user_params_to_string(tmp_params));
+      m_console->debug("{}",RadiotapHeaderTx::user_params_to_string(tmp_params));
       m_tx_header_1->thread_safe_set(tmp_params);
-      auto tmp_params2= RadiotapHeader::UserSelectableParams{
+      auto tmp_params2= RadiotapHeaderTx::UserSelectableParams{
               20, settings.wb_enable_short_guard,settings.wb_enable_stbc,
               settings.wb_enable_ldpc, mcs_index, true};
       m_tx_header_2->thread_safe_set(tmp_params2);
@@ -237,6 +240,7 @@ WBLink::~WBLink() {
   m_wb_tele_tx.reset();
   m_wb_video_tx_list.resize(0);
   m_wb_video_rx_list.resize(0);
+  wifi::commandhelper::cleanup_openhd_driver_overrides();
   // give the monitor mode cards back to network manager
   openhd::wb::giveback_cards_monitor_mode(m_broadcast_cards,m_console);
   m_console->debug("WBLink::~WBLink() end");
@@ -280,7 +284,7 @@ bool WBLink::request_set_air_tx_channel_width(int channel_width) {
 
 bool WBLink::request_set_tx_power_mw(int tx_power_mw, bool armed) {
     m_console->debug("request_set_tx_power_mw {}mW", tx_power_mw);
-    if(!openhd::is_valid_tx_power_milli_watt(tx_power_mw)){
+    if(!(openhd::is_valid_tx_power_milli_watt(tx_power_mw) || (armed && tx_power_mw==0))){
         m_console->warn("Invalid tx power:{}mW", tx_power_mw);
         return false;
     }
@@ -513,8 +517,8 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
 	  if(stbc<0 || stbc>3)return false;
 	  m_settings->unsafe_get_settings().wb_enable_stbc=stbc;
 	  m_settings->persist();
-      m_tx_header_1->update_stbc(stbc);
-      m_tx_header_2->update_stbc(stbc);
+          m_tx_header_1->update_stbc(stbc);
+          m_tx_header_2->update_stbc(stbc);
 	  return true;
 	};
 	ret.push_back(openhd::Setting{WB_ENABLE_STBC,openhd::IntSetting{settings.wb_enable_stbc,cb_wb_enable_stbc}});
@@ -523,17 +527,17 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
 	  if(!validate_yes_or_no(ldpc))return false;
 	  m_settings->unsafe_get_settings().wb_enable_ldpc=ldpc;
 	  m_settings->persist();
-      m_tx_header_1->update_ldpc(ldpc);
-      m_tx_header_2->update_ldpc(ldpc);
+          m_tx_header_1->update_ldpc(ldpc);
+          m_tx_header_2->update_ldpc(ldpc);
 	  return true;
 	};
-	ret.push_back(openhd::Setting{WB_ENABLE_LDPC,openhd::IntSetting{settings.wb_enable_stbc,cb_wb_enable_ldpc}});
+	ret.push_back(openhd::Setting{WB_ENABLE_LDPC,openhd::IntSetting{settings.wb_enable_ldpc,cb_wb_enable_ldpc}});
 	auto cb_wb_enable_sg=[this](std::string,int short_gi){
 	  if(!validate_yes_or_no(short_gi))return false;
 	  m_settings->unsafe_get_settings().wb_enable_short_guard=short_gi;
 	  m_settings->persist();
-      m_tx_header_1->update_guard_interval(short_gi);
-      m_tx_header_2->update_guard_interval(short_gi);
+          m_tx_header_1->update_guard_interval(short_gi);
+          m_tx_header_2->update_guard_interval(short_gi);
 	  return true;
 	};
 	ret.push_back(openhd::Setting{WB_ENABLE_SHORT_GUARD,openhd::IntSetting{settings.wb_enable_short_guard,cb_wb_enable_sg}});
@@ -730,10 +734,18 @@ void WBLink::wt_update_statistics() {
     auto& card_stats = stats.cards.at(i);
     card_stats.NON_MAVLINK_CARD_ACTIVE= true;
     auto rxStatsCard=m_wb_txrx->get_rx_stats_for_card(i);
+    auto rf_rx_stats=m_wb_txrx->get_rx_rf_stats_for_card(i);
+    if(m_broadcast_cards[i].type==WiFiCardType::OPENHD_RTL_88X2AU ||
+        m_broadcast_cards[i].type==WiFiCardType::OPENHD_RTL_88X2BU){
+      // Value per adapter is shit, use the max of antenna(s) instead
+      rf_rx_stats.adapter.rssi_dbm=std::max(rf_rx_stats.antenna1.rssi_dbm,rf_rx_stats.antenna2.rssi_dbm);
+    }
     card_stats.tx_active=i==curr_active_tx ? 1 : 0;
-    card_stats.rx_rssi=rxStatsCard.card_dbm;
-    card_stats.rx_rssi_1=rxStatsCard.antenna1_dbm;
-    card_stats.rx_rssi_2=rxStatsCard.antenna2_dbm;
+    card_stats.rx_rssi=rf_rx_stats.adapter.rssi_dbm;
+    card_stats.rx_signal_quality_adapter=rf_rx_stats.adapter.card_signal_quality_perc;
+    card_stats.rx_noise_adapter=rf_rx_stats.adapter.noise_dbm;
+    card_stats.rx_rssi_1=rf_rx_stats.antenna1.rssi_dbm;
+    card_stats.rx_rssi_2=rf_rx_stats.antenna2.rssi_dbm;
     card_stats.count_p_received=rxStatsCard.count_p_valid;
     card_stats.count_p_injected=0;
     card_stats.curr_rx_packet_loss_perc=rxStatsCard.curr_packet_loss;
@@ -744,7 +756,6 @@ void WBLink::wt_update_statistics() {
     card_stats.tx_power_armed=card.type==WiFiCardType::OPENHD_RTL_88X2AU ?
                               curr_settings.wb_rtl8812au_tx_pwr_idx_override_armed : curr_settings.wb_tx_power_milli_watt_armed;
     card_stats.curr_status= m_wb_txrx->get_card_has_disconnected(i) ? 1 : 0;
-    card_stats.rx_signal_quality=rxStatsCard.signal_quality;
     card_stats.card_type= wifi_card_type_to_int(card.type);
     //m_console->debug("Signal quality {}",card_stats.signal_quality);
   }
@@ -874,7 +885,8 @@ void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoF
       max_block_size_for_platform=openhd::DEFAULT_MAX_FEC_BLK_SIZE_FOR_PLATFORM;
     }
     const int fec_perc=m_settings->get_settings().wb_video_fec_percentage;
-    const auto res=tx.try_enqueue_block(fragmented_video_frame.frame_fragments, max_block_size_for_platform,fec_perc);
+    const auto res=tx.try_enqueue_block(fragmented_video_frame.frame_fragments, max_block_size_for_platform,fec_perc,
+                                          fragmented_video_frame.creation_time);
     if(!res){
         m_frame_drop_helper.notify_dropped_frame();
         if(stream_index==0){
@@ -905,18 +917,20 @@ openhd::WifiSpace WBLink::get_current_frequency_channel_space()const {
 void WBLink::perform_channel_scan(const openhd::ActionHandler::ScanChannelsParam& scan_channels_params){
   const WiFiCard& card=m_broadcast_cards.at(0);
   const auto channels_to_scan=
-          openhd::wb::get_scan_channels_frequencies(card, scan_channels_params.check_2g_channels_if_card_support, scan_channels_params.check_5g_channels_if_card_supports);
+          openhd::wb::get_scan_channels_frequencies(card, scan_channels_params.channels_to_scan);
   if(channels_to_scan.empty()){
     m_console->warn("No channels to scan, return early");
     return;
   }
-  const auto channel_widths_to_scan=
-          openhd::wb::get_scan_channels_bandwidths(scan_channels_params.check_20Mhz_channel_width_if_card_supports,
-                                                   scan_channels_params.check_40Mhz_channel_width_if_card_supports);
-  if(channel_widths_to_scan.empty()){
-    m_console->warn("No channel_widths to scan, return early");
-    return;
-  }
+  //const auto channel_widths_to_scan=
+  //        openhd::wb::get_scan_channels_bandwidths(scan_channels_params.check_20Mhz_channel_width_if_card_supports,
+  //                                                 scan_channels_params.check_40Mhz_channel_width_if_card_supports);
+  //if(channel_widths_to_scan.empty()){
+  //  m_console->warn("No channel_widths to scan, return early");
+  //  return;
+  //}
+  // We only scan 40Mhz, this way we get both 20Mhz and 40Mhz air unit(s)
+  const std::vector<uint16_t> channel_widths_to_scan={40};
   if(m_opt_action_handler) {
     auto stats_current = m_opt_action_handler->get_link_stats();
     stats_current.gnd_operating_mode.operating_mode = 1;
@@ -951,12 +965,12 @@ void WBLink::perform_channel_scan(const openhd::ActionHandler::ScanChannelsParam
           continue;
       }
       if(m_opt_action_handler){
-        openhd::ActionHandler::ScanChannelsProgress tmp{};
-        tmp.channel_mhz=(int)channel.frequency;
-        tmp.channel_width_mhz=channel_width;
-        tmp.success= false;
-        tmp.progress=OHDUtil::calculate_progress_perc(i+1,(int)channels_to_scan.size());
-        m_opt_action_handler->add_scan_channels_progress(tmp);
+          openhd::ActionHandler::ScanChannelsProgress tmp{};
+          tmp.channel_mhz=(int)channel.frequency;
+          tmp.channel_width_mhz=channel_width;
+          tmp.success= false;
+          tmp.progress=OHDUtil::calculate_progress_perc(i,(int)channels_to_scan.size());
+          m_opt_action_handler->add_scan_channels_progress(tmp);
       }
       // sleeep a bit - some cards /drivers might need time switching
       std::this_thread::sleep_for(std::chrono::milliseconds(200));

@@ -51,7 +51,8 @@ static void initGstreamerOrThrow() {
 
 // SW encoding is slow, but should work on all platforms (at least for low resolutions/framerate(s) )
 // Note that not every sw encoder accepts every type of input format - I420 seems to work for all of them though.
-static std::string createSwEncoder(const CommonEncoderParams& common_encoder_params){
+static std::string createSwEncoder(const CameraSettings& settings){
+  const auto common_encoder_params= extract_common_encoder_params(settings);
   std::stringstream ss;
   if(common_encoder_params.videoCodec==VideoCodec::H264){
     // Now this is a bit annoying - we cannot deal with frame(s) using sliced encoding yet,so we have to disable it. But from that we get
@@ -59,8 +60,8 @@ static std::string createSwEncoder(const CommonEncoderParams& common_encoder_par
     // is a good idea anyways to do so, since on platforms like rpi we do not want to hog too much of the CPU to not overload the system and
     // on x86 2 threads / cores are enough for sw encode of most resolutions anyways.
     // NOTE: While not exactly true, latency is ~ as many frame(s) as there are threads, aka 2 frames for 2 threads
-    ss<<fmt::format("x264enc name=swencoder bitrate={} speed-preset=ultrafast  tune=zerolatency key-int-max={} sliced-threads=0 threads=2 ! ",
-                      common_encoder_params.h26X_bitrate_kbits,common_encoder_params.h26X_keyframe_interval);
+    ss<<fmt::format("x264enc name=swencoder bitrate={} speed-preset=ultrafast  tune=zerolatency key-int-max={} sliced-threads=0 threads=2 intra-refresh={} ! ",
+                      common_encoder_params.h26X_bitrate_kbits,common_encoder_params.h26X_keyframe_interval,settings.h26x_intra_refresh_type<0 ? "false" : "true");
   }else if(common_encoder_params.videoCodec==VideoCodec::H265){
     //TODO: jetson sw encoder (x265enc) is so old it doesn't have the key-int-max param
     ss<<fmt::format("x265enc name=swencoder bitrate={} speed-preset=ultrafast tune=zerolatency key-int-max={} ! ",
@@ -131,7 +132,7 @@ static std::string createDummyStream(const CameraSettings& settings) {
       "video/x-raw, format=I420,width={},height={},framerate={}/1 ! ",
       settings.streamed_video_format.width, settings.streamed_video_format.height, settings.streamed_video_format.framerate);
   // since the primary purpose here is testing, use sw encoder, which is always guaranteed to work
-  ss << createSwEncoder(extract_common_encoder_params(settings));
+  ss << createSwEncoder(settings);
   return ss.str();
 }
 
@@ -203,7 +204,7 @@ static std::string createRpicamsrcStream(const int camera_number,
       ss<<fmt::format(
           "video/x-raw, width={}, height={}, framerate={}/1 ! ",
           settings.streamed_video_format.width, settings.streamed_video_format.height, settings.streamed_video_format.framerate);
-      ss<<createSwEncoder(extract_common_encoder_params(settings));
+      ss<<createSwEncoder(settings);
     }else{
       ss << fmt::format(
           "video/x-h264, profile=constrained-baseline, width={}, height={}, "
@@ -215,7 +216,7 @@ static std::string createRpicamsrcStream(const int camera_number,
     ss<<fmt::format(
         "video/x-raw, width={}, height={}, framerate={}/1 ! ",
         settings.streamed_video_format.width, settings.streamed_video_format.height, settings.streamed_video_format.framerate);
-    ss<<createSwEncoder(extract_common_encoder_params(settings));
+    ss<<createSwEncoder(settings);
   }
   return ss.str();
 }
@@ -323,7 +324,7 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
         settings.streamed_video_format.width, settings.streamed_video_format.height, settings.streamed_video_format.framerate);
     if(settings.force_sw_encode){
       openhd::log::get_default()->warn("Forced SW encode");
-      ss<< createSwEncoder(extract_common_encoder_params(settings));
+      ss<< createSwEncoder(settings);
     }else{
       // We got rid of the v4l2convert - see
       // https://github.com/raspberrypi/libcamera/issues/30
@@ -341,7 +342,7 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
     ss << fmt::format("video/x-raw, width={}, height={}, framerate={}/1 ! ",
                       settings.streamed_video_format.width, settings.streamed_video_format.height,
                       settings.streamed_video_format.framerate);
-    ss << createSwEncoder(extract_common_encoder_params(settings));
+    ss << createSwEncoder(settings);
   }
   return ss.str();
 }
@@ -359,7 +360,7 @@ static std::string create_veye_vl2_stream(const CameraSettings& settings,const s
     ss<<create_rpi_v4l2_h264_encoder(settings);
   }else{
     openhd::log::get_default()->warn("No h265 encoder on rpi, using SW encode (will almost 100% result in frame drops/performance issues)");
-    ss << createSwEncoder(extract_common_encoder_params(settings));
+    ss << createSwEncoder(settings);
   }
   return ss.str();
 }
@@ -604,7 +605,7 @@ static std::string createV4l2SrcRawAndSwEncodeStream(
   ss << "queue ! ";
   // For some reason gstreamer can't automatically figure things out here
   ss<<"video/x-raw, format=I420 ! ";
-  ss<<createSwEncoder(extract_common_encoder_params(settings));
+  ss<<createSwEncoder(settings);
   return ss.str();
 }
 

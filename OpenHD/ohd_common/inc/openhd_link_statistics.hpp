@@ -118,10 +118,12 @@ struct Xmavlink_openhd_stats_monitor_mode_wifi_card_t{
     int8_t rx_rssi; /*<  rx rssi in dBm of this card - depending on the hw, might be the max of all antennas or different.*/
     int8_t rx_rssi_1; /*<  rx rssi in dBm for antenna 1*/
     int8_t rx_rssi_2; /*<  rx rssi in dBm for antenna 2*/
-    int8_t rx_evm_1; /*<  rx evm in dBm for antenna 1*/
-    int8_t rx_evm_2; /*<  rx evm in dBm for antenna 2*/
-    int8_t rx_rssi_noise; /*<  depends on the wifi driver*/
-    int8_t rx_signal_quality; /*<  depends on the wifi driver*/
+    int8_t rx_noise_adapter; /*<  RX noise in dBm of adapter*/
+    int8_t rx_noise_antenna1; /*<  RX noise in dBm of antenna1*/
+    int8_t rx_noise_antenna2; /*<  RX noise in dBm of antenna2*/
+    int8_t rx_signal_quality_adapter; /*<  Signal quality [0..100] of card*/
+    int8_t rx_signal_quality_antenna1; /*<  Signal quality [0..100] of antenna1*/
+    int8_t rx_signal_quality_antenna2; /*<  Signal quality [0..100] of antenna2*/
     int8_t curr_rx_packet_loss_perc; /*<  rx packet loss (for this card)*/
     uint8_t curr_status; /*<  set to 1 if something's wrong with the card*/
     int8_t dummy0; /*<  for future use*/

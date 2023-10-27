@@ -223,5 +223,22 @@ static WifiSpace get_space_from_frequency(uint32_t frequency){
   return channel.value().space;
 }
 
+static std::vector<WifiChannel> frequencies_to_channels(const std::vector<uint32_t>& frequencies){
+  std::vector<openhd::WifiChannel> ret;
+  auto channels=get_all_channels_2G_5G();
+  for(const auto freq:frequencies){
+    auto tmp= channel_from_frequency(freq);
+    if(tmp.has_value()){
+      ret.push_back(tmp.value());
+    }
+  }
+  return ret;
+}
+
+static std::vector<WifiChannel> get_openhd_channels_1_to_5(){
+  std::vector<uint32_t> frequencies={5700,5745,5785,5825,5865};
+  return frequencies_to_channels(frequencies);
+}
+
 }
 #endif  // OPENHD_OPENHD_OHD_INTERFACE_INC_WIFI_CHANNEL_H_

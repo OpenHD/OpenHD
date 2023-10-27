@@ -6,10 +6,10 @@
 
 NLOHMANN_JSON_SERIALIZE_ENUM( WiFiCardType, {
     {WiFiCardType::UNKNOWN, nullptr},
-    {WiFiCardType::OPENHD_RTL_88X2AU, ""},
-    {WiFiCardType::OPENHD_RTL_88X2BU, ""},
-    {WiFiCardType::RTL_88X2AU, ""},
-    {WiFiCardType::RTL_88X2BU, ""},
+    {WiFiCardType::OPENHD_RTL_88X2AU, "OPENHD_RTL_88X2AU"},
+    {WiFiCardType::OPENHD_RTL_88X2BU, "OPENHD_RTL_88X2BU"},
+    {WiFiCardType::RTL_88X2AU, "RTL_88X2AU"},
+    {WiFiCardType::RTL_88X2BU, "RTL_88X2BU"},
     {WiFiCardType::ATHEROS, "ATHEROS"},
     {WiFiCardType::MT_7921u, "MT_7921U"},
     {WiFiCardType::RALINK, "RALINK"},
@@ -20,7 +20,9 @@ NLOHMANN_JSON_SERIALIZE_ENUM( WiFiCardType, {
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WiFiCard,device_name,mac,phy80211_index,driver_name,type,
                                    is_openhd_supported,supports_monitor_mode,supports_hotspot,
-								   supported_frequencies_2G,supported_frequencies_5G)
+								   supported_frequencies_2G,supported_frequencies_5G,
+                                   is_rtl8812au_custom_hardware
+                                   )
 
 static nlohmann::json wificards_to_json(const std::vector<WiFiCard> &cards) {
   nlohmann::json j;
