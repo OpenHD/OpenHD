@@ -44,7 +44,7 @@ build_package() {
       else
       echo "this isn't cake"
       PACKAGE_NAME="openhd-x20"
-      PACKAGES=""
+      PACKAGES="-d iw -d i2c-tools -d libv4l-dev -d libusb-1.0-0 -d libpcap-dev -d libnl-3-dev -d libnl-genl-3-dev -d libsdl2-2.0-0 -d libsodium-dev -d gstreamer1.0-plugins-base -d gstreamer1.0-plugins-good -d gstreamer1.0-plugins-bad -d gstreamer1.0-tools"
       PLATFORM_CONFIGS=""
       fi
   else
