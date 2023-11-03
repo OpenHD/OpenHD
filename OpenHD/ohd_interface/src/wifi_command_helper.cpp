@@ -108,7 +108,7 @@ static const std::vector<uint32_t> he20_11ax_rate_ol{
 bool wifi::commandhelper::iw_set_rate_mcs(const std::string &device,uint32_t mcs_index,bool is_2g) {
   if(!device.compare("ath0")){
     get_logger()->info("set_rate_mcs {} {}",device,mcs_index);
-    if(msc_inde >= 0 && msc_index < he20_11ax_rate_ol.size()){
+    if(mcs_index >= 0 && mcs_index < he20_11ax_rate_ol.size()){
       const auto rate = he20_11ax_rate_ol[mcs_index];
       std::vector<std::string> args{device, "bcast_rate", std::to_string(rate)};
       OHDUtil::run_command("iwpriv", args);
