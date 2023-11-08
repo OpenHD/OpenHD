@@ -121,7 +121,9 @@ void TCPEndpoint::setup_and_allow_connection_once() {
 
 void TCPEndpoint::send_message_to_all_clients(const uint8_t *data, int data_len) {
     if(client_socket !=0){
-        send(client_socket, data, data_len, MSG_NOSIGNAL); //otherwise we might crash if the socket disconnects
+        const int flags =MSG_DONTWAIT |  // otherwise we might block if the socket got disconnected
+                      MSG_NOSIGNAL; //otherwise we might crash if the socket disconnects
+        send(client_socket, data, data_len, flags);
     }
 }
 
