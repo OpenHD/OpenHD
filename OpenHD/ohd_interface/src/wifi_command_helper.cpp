@@ -53,11 +53,20 @@ bool wifi::commandhelper::iw_set_frequency_and_channel_width(const std::string &
   if(!device.compare("ath0")){
     const auto channel = openhd::channel_from_frequency(freq_mhz);
     get_logger()->info("set_channel_and_channel_width {} channel:{} width:{}",device,(*channel).channel,channel_width);
-    std::vector<std::string> args{device, "channel", std::to_string((*channel).channel)};
-    OHDUtil::run_command("cfg80211tool", args);
-    std::vector<std::string> args1{device, "mode", "11AHE"+std::to_string(channel_width)};
-    OHDUtil::run_command("cfg80211tool", args1);
-    return true;
+    if((*channel).channel < 36) {
+      std::vector<std::string> args{device, "channel", std::to_string((*channel).channel), "1"};
+      OHDUtil::run_command("cfg80211tool", args);
+      std::vector<std::string> args1{device, "mode", "11GHE"+std::to_string(channel_width)};
+      OHDUtil::run_command("cfg80211tool", args1);
+      return true;
+    }
+    else {
+      std::vector<std::string> args{device, "channel", std::to_string((*channel).channel), "2"};
+      OHDUtil::run_command("cfg80211tool", args);
+      std::vector<std::string> args1{device, "mode", "11AHE"+std::to_string(channel_width)};
+      OHDUtil::run_command("cfg80211tool", args1);
+      return true;
+    }
   }
 
   const std::string iw_channel_width= channel_width_as_iw_string(channel_width);
