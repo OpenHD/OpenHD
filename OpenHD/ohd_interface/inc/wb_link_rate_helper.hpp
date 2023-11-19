@@ -46,7 +46,9 @@ static Rate20Mhz40Mhz rtl8812au_get_max_rate_5G_kbits(uint16_t mcs_index) {
       // OLD return 8500;
       return {
         15200-2000, // minus 2MBit/s
-        26600-4000, // minus 4MBit/s
+        // Nov 14 2023 - decreased slightly after management 20Mhz changes
+        //26600-4000, // minus 4MBit/s
+        26600-6000, // minus 6MBit/s
       };
     case 3:
       //theoretical:26 | 54
