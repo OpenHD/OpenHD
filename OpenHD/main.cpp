@@ -167,6 +167,7 @@ int main(int argc, char *argv[]) {
   // OpenHD needs to be run as root, otherwise we cannot access/ modify the Wi-Fi cards for example
   // (And there are also many other places where we just need to be root).
   OHDUtil::terminate_if_not_root();
+  OHDFilesystemUtil::write_file("/usr/local/share/openhd_platform/unconfigured","NULL");
 
   // Create the folder structure for the (per-module-specific) settings if needed
   openhd::generateSettingsDirectoryIfNonExists();
