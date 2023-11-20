@@ -140,13 +140,18 @@ static Rate20Mhz40Mhz rtl8812au_get_max_rate_2G_kbits(uint16_t mcs_index) {
                     13500-2000, // minus 2MBit/s
                     20000-2000, // minus 2MBit/s
             };
+        // In general, we only recommend MCS 0...2, but also map 3 and 4
         case 3:
             //theoretical:26 | 54
             return {
                     16600-2000, // minus 3MBit/s
                     24000-2000, // minus 2MBit/s
             };
-            // In general, we only use / recommend MCS 0..3
+        case 4:
+            return {
+                20000,
+                30000,
+            };
         default:{
             openhd::log::get_default()->warn("MCS >4 not recommended");
             //theoretical:39
