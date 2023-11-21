@@ -13,10 +13,13 @@ create_package_directory() {
   rm -rf "${PKGDIR}"
   mkdir -p "${PKGDIR}"/{usr/local/bin,tmp,settings,etc/systemd/system}
   # rpi only - copy the camera config files
-  if [[ "${OS}" == "raspbian" ]]; then
+  if [[ "${OS}" == "raspbian" ]] && [[ "${PACKAGE_ARCH}" == "armhf" ]]; then
+    echo "________"
+    echo "building for raspberry"
+    echo "________"
     mkdir -p "${PKGDIR}/boot/openhd/rpi_camera_configs"
     cp -r rpi_camera_configs/* "${PKGDIR}/boot/openhd/rpi_camera_configs/" || exit 1
-  elif [[ "${OS}" == "debian" ]]; then
+  elif [[ "${OS}" == "debian" ]] && [[ "${PACKAGE_ARCH}" == "arm64" ]]; then
     mkdir -p "${PKGDIR}/boot/openhd/rock5_camera_configs"
     cp -r rock5_camera_configs/* "${PKGDIR}/boot/openhd/rock5_camera_configs/" || exit 1
   fi
