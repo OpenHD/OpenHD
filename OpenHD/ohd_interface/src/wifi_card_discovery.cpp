@@ -32,7 +32,7 @@ static WiFiCardType driver_to_wifi_card_type(const std::string &driver_name) {
     if(OHDUtil::contains_after_uppercase(driver_name,"brcmfmac")) {
         return WiFiCardType::BROADCOM;
     }
-    if(OHDUtil::contains_after_uppercase(driver_name,"bcmdhd")) {
+    if(OHDUtil::contains_after_uppercase(driver_name,"bcmsdh_sdmmc")) {
         return WiFiCardType::BROADCOM;
     }
     if(OHDUtil::contains_after_uppercase(driver_name,"88xxau")) {
