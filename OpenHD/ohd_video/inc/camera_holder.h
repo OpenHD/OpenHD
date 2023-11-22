@@ -134,8 +134,7 @@ class CameraHolder:
       ret.push_back(openhd::Setting{"V_VERT_FLIP",openhd::IntSetting{get_settings().vertical_flip,c_vertical_flip}});
       ret.push_back(openhd::Setting{"V_HORIZ_FLIP",openhd::IntSetting{get_settings().horizontal_flip,c_horizontal_flip}});
     }
-    if(m_camera.type==CameraType::RPI_CSI_MMAL || m_camera.type==CameraType::DUMMY_SW || m_camera.type==CameraType::UVC ||
-        get_settings().force_sw_encode){
+    if(true){ // Always show intra, on libcamera without sw encode it unfortunately is 'just not mapped' and ignored.
       auto c_intra_refresh_type=[this](std::string,int value) {
         return set_intra_refresh_type(value);
       };
