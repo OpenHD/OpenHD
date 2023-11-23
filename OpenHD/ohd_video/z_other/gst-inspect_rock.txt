@@ -1,0 +1,150 @@
+Factory Details:
+  Rank                     primary + 1 (257)
+  Long-name                Rockchip's MPP video decoder
+  Klass                    Decoder/Video
+  Description              Multicodec (HEVC / AVC / VP8 / VP9) hardware decoder
+  Author                   Randy Li <randy.li@rock-chips.com>, Jeffy Chen <jeffy.chen@rock-chips.com>
+
+Plugin Details:
+  Name                     rockchipmpp
+  Description              Rockchip Mpp Video Plugin
+  Filename                 /usr/lib/aarch64-linux-gnu/gstreamer-1.0/libgstrockchipmpp.so
+  Version                  1.14.4
+  License                  LGPL
+  Source module            gst-rockchip
+  Binary package           GStreamer Rockchip Plug-ins
+  Origin URL               Unknown package origin
+
+GObject
+ +----GInitiallyUnowned
+       +----GstObject
+             +----GstElement
+                   +----GstVideoDecoder
+                         +----GstMppDec
+                               +----GstMppVideoDec
+
+Pad Templates:
+  SINK template: 'sink'
+    Availability: Always
+    Capabilities:
+      video/x-h264
+                 parsed: true
+      video/x-h265
+                 parsed: true
+      video/x-av1
+                 parsed: true
+      video/x-vp8
+                 parsed: true
+      video/x-vp9
+                 parsed: true
+      video/mpeg
+                 parsed: true
+            mpegversion: { (int)1, (int)2, (int)4 }
+           systemstream: false
+
+  SRC template: 'src'
+    Availability: Always
+    Capabilities:
+      video/x-raw
+                 format: { (string)NV12, (string)NV16, (string)NV12_10LE40, (string)NV12, (string)NV21, (string)I420, (string)YV12, (string)NV16, (string)NV61, (string)BGR16, (string)RGB, (string)BGR, (string)RGBA, (string)BGRA, (string)RGBx, (string)BGRx }
+                  width: [ 1, 2147483647 ]
+                 height: [ 1, 2147483647 ]
+              framerate: [ 0/1, 2147483647/1 ]
+      video/x-raw(memory:DMABuf)
+                 format: { (string)NV12, (string)NV16, (string)NV12_10LE40, (string)NV12, (string)NV21, (string)I420, (string)YV12, (string)NV16, (string)NV61, (string)BGR16, (string)RGB, (string)BGR, (string)RGBA, (string)BGRA, (string)RGBx, (string)BGRx }
+                  width: [ 1, 2147483647 ]
+                 height: [ 1, 2147483647 ]
+              framerate: [ 0/1, 2147483647/1 ]
+      video/x-raw
+                 format: { (string)NV12, (string)NV16, (string)NV12_10LE40, (string)NV12, (string)NV21, (string)I420, (string)YV12, (string)NV16, (string)NV61, (string)BGR16, (string)RGB, (string)BGR, (string)RGBA, (string)BGRA, (string)RGBx, (string)BGRx }
+                  width: [ 1, 2147483647 ]
+                 height: [ 1, 2147483647 ]
+              framerate: [ 0/1, 2147483647/1 ]
+               arm-afbc: 1
+      video/x-raw(memory:DMABuf)
+                 format: { (string)NV12, (string)NV16, (string)NV12_10LE40, (string)NV12, (string)NV21, (string)I420, (string)YV12, (string)NV16, (string)NV61, (string)BGR16, (string)RGB, (string)BGR, (string)RGBA, (string)BGRA, (string)RGBx, (string)BGRx }
+                  width: [ 1, 2147483647 ]
+                 height: [ 1, 2147483647 ]
+              framerate: [ 0/1, 2147483647/1 ]
+               arm-afbc: 1
+
+Element has no clocking capabilities.
+Element has no URI handling capabilities.
+
+Pads:
+  SINK: 'sink'
+    Pad Template: 'sink'
+  SRC: 'src'
+    Pad Template: 'src'
+Element Properties:
+  arm-afbc            : Prefer ARM AFBC compressed format
+                        flags: readable, writable
+                        Boolean. Default: false
+  automatic-request-sync-point-flags: Flags to use when automatically requesting sync points
+                        flags: readable, writable
+                        Flags "GstVideoDecoderRequestSyncPointFlags" Default: 0x00000003, "corrupt-output+discard-input"
+                           (0x00000001): discard-input    - GST_VIDEO_DECODER_REQUEST_SYNC_POINT_DISCARD_INPUT
+                           (0x00000002): corrupt-output   - GST_VIDEO_DECODER_REQUEST_SYNC_POINT_CORRUPT_OUTPUT
+  automatic-request-sync-points: Automatically request sync points when it would be useful
+                        flags: readable, writable
+                        Boolean. Default: false
+  crop-rectangle      : The crop rectangle ('<x, y, width, height>')
+                        flags: writable
+                        GstValueArray of GValues of type "gint" Write only
+  discard-corrupted-frames: Discard frames marked as corrupted instead of outputting them
+                        flags: readable, writable
+                        Boolean. Default: false
+  dma-feature         : Enable GST DMA feature
+                        flags: readable, writable
+                        Boolean. Default: true
+  fast-mode           : Enable MPP fast decode mode
+                        flags: readable, writable
+                        Boolean. Default: true
+  format              : Prefered output format
+                        flags: readable, writable
+                        Enum "GstMppVideoDecFormat" Default: 0, "auto"
+                           (0): auto             - Auto
+                           (23): NV12             - NV12
+                           (24): NV21             - NV21
+                           (2): I420             - I420
+                           (3): YV12             - YV12
+                           (51): NV16             - NV16
+                           (60): NV61             - NV61
+                           (30): BGR16            - BGR565
+                           (15): RGB              - RGB
+                           (16): BGR              - BGR
+                           (11): RGBA             - RGBA8888
+                           (12): BGRA             - BGRA8888
+                           (7): RGBx             - RGBX8888
+                           (8): BGRx             - BGRX8888
+  height              : Height (0 = original)
+                        flags: readable, writable
+                        Unsigned Integer. Range: 0 - 2147483647 Default: 0
+  ignore-error        : Ignore MPP decode errors
+                        flags: readable, writable
+                        Boolean. Default: true
+  max-errors          : Max consecutive decoder errors before returning flow error
+                        flags: readable, writable
+                        Integer. Range: -1 - 2147483647 Default: 10
+  min-force-key-unit-interval: Minimum interval between force-keyunit requests in nanoseconds
+                        flags: readable, writable
+                        Unsigned Integer64. Range: 0 - 18446744073709551615 Default: 0
+  name                : The name of the object
+                        flags: readable, writable, 0x2000
+                        String. Default: "mppvideodec0"
+  parent              : The parent of the object
+                        flags: readable, writable, 0x2000
+                        Object of type "GstObject"
+  qos                 : Handle Quality-of-Service events from downstream
+                        flags: readable, writable
+                        Boolean. Default: true
+  rotation            : Rotation
+                        flags: readable, writable
+                        Enum "GstMppDecRotation" Default: 0, "0"
+                           (0): 0                - Rotate 0
+                           (90): 90               - Rotate 90
+                           (180): 180              - Rotate 180
+(270): 270              - Rotate 270
+  width               : Width (0 = original)
+                        flags: readable, writable
+                        Unsigned Integer. Range: 0 - 2147483647 Default: 0
