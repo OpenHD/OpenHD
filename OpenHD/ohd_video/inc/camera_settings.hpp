@@ -84,8 +84,9 @@ struct CameraSettings {
   // supporting them needs different setting validation methods.
   // only valid for h264 / h265, mjpeg has no keyframe interval
   int h26x_keyframe_interval =DEFAULT_KEYFRAME_INTERVAL;
-  // Type of Intra Refresh to use, -1 to disable intra refresh. R.n only supported on gst-rpicamsrc.
-  // see gst-rpicamsrc for more info.
+  // Type of Intra Refresh to use, -1 to disable intra refresh. R.n only supported on gst-rpicamsrc and sw encoder
+  // See gst-rpicamsrc for more info on mmal (there we have different intra options)
+  // sw encoder only has off (-1) and on (anything not -1)
   int h26x_intra_refresh_type =-1;
   // MJPEG has no bitrate parameter, only a "quality" param. This value is only used if the
   // user selected MJPEG as its video codec
