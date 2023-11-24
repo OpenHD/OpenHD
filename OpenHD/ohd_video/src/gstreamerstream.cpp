@@ -242,6 +242,8 @@ void GStreamerStream::setup_usb_uvc() {
   const auto& camera= m_camera_holder->get_camera();
   const auto& setting= m_camera_holder->get_settings();
   m_console->debug("Setting up usb UVC camera Name:{}",camera.name);
+  // Upcoming change - we do not do any non-raw formats anymore, since usb cameras with an integrated
+  // encoder just don't have a way to reliably set params on the encoder
   if(!setting.force_sw_encode){
     // First we try and start a hw encoded path, (but hw encode by the camera encoder, not a local hw encoder)
     // where v4l2src directly provides encoded video buffers

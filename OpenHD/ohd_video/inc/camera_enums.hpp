@@ -159,11 +159,12 @@ struct VideoFormat {
            this->framerate == o.framerate;
   }
   // Return true if the Video format is valid, aka the values set "make sense".
-  // values <=0 mean something went wrong during parsing or similar. And for
-  // simplicity, I go with 4k and 240fps max here.
+  // values <0 mean something went wrong during parsing or similar.
+  // 0 means auto (in some cases9
+  // And for simplicity, I go with 4k and 240fps max here.
   [[nodiscard]] bool isValid() const {
-    return width > 0 && height > 0 &&
-           framerate > 0 && width <= 4096 && height <= 2160 && framerate <= 240;
+    return width >= 0 && height >= 0 &&
+           framerate >= 0 && width <= 4096 && height <= 2160 && framerate <= 240;
   }
   /**
    * Convert the VideoFormat into a readable string, in this format it can be

@@ -161,6 +161,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
             on_receive_video_data(1,data,data_len);
           };
           WBStreamRx::Options options_video_rx{};
+          //options_video_rx.enable_fec_debug_log=true;
           options_video_rx.enable_fec= true;
           options_video_rx.radio_port=openhd::VIDEO_PRIMARY_RADIO_PORT;
           auto primary = std::make_unique<WBStreamRx>(m_wb_txrx, options_video_rx);
