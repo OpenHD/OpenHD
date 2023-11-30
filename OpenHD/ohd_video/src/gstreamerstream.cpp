@@ -183,7 +183,7 @@ void GStreamerStream::setup() {
   // we pull data out of the gst pipeline as cpu memory buffer(s) using the gstreamer "appsink" element
   m_app_sink_element=gst_bin_get_by_name(GST_BIN(m_gst_pipeline), "out_appsink");
   assert(m_app_sink_element);
-  /*if(m_opt_action_handler){
+  if(m_opt_action_handler){
     const auto index=m_camera_holder->get_camera().index;
     const auto cam_type= camera_type_to_int(m_camera_holder->get_camera().type);
     auto cam_info=openhd::ActionHandler::CamInfo{true,
@@ -192,7 +192,7 @@ void GStreamerStream::setup() {
                                            (uint16_t )setting.streamed_video_format.height,(uint16_t )setting.streamed_video_format.framerate};
     m_opt_action_handler->set_cam_info(index,cam_info);
     //m_console->debug("Cam encoding format: {}",(int)cam_info.encoding_format);
-  }*/
+  }
 }
 
 void GStreamerStream::setup_raspberrypi_mmal_csi() {
@@ -489,6 +489,9 @@ void GStreamerStream::loop_infinite() {
       }
       // First, we start the stream
       m_console->debug("starting");
+      if(m_opt_action_handler){
+        m_opt_action_handler->set_cam_info_status(m_camera_holder->get_camera().index,CAM_STATUS_RESTARTING);
+      }
       setup();
       start();
       // Check if we were able to successfully start the camera stream.
@@ -500,6 +503,9 @@ void GStreamerStream::loop_infinite() {
         // Sleep a bit and hope it works next time
         std::this_thread::sleep_for(std::chrono::seconds(5));
         continue ;
+      }
+      if(m_opt_action_handler){
+        m_opt_action_handler->set_cam_info_status(m_camera_holder->get_camera().index,CAM_STATUS_STREAMING);
       }
       // Bitrate is the only value we (NEED) to support changing without a restart
       int currently_applied_bitrate=m_camera_holder->get_settings().h26x_bitrate_kbits;
@@ -522,7 +528,7 @@ void GStreamerStream::loop_infinite() {
           if(currently_applied_bitrate != m_curr_dynamic_bitrate_kbits){
             const int new_bitrate=m_curr_dynamic_bitrate_kbits;
             m_console->debug("Got new bitrate {} for camera {}",new_bitrate,m_camera_holder->get_camera().index);
-            if(m_camera_holder->get_camera().supports_bitrate_without_restart()){
+            if(m_bitrate_ctrl_element!=std::nullopt){
               // apply the new bitrate
               // Don't forget, the rpi csi hdmi needs the 'half bitrate' hack
               auto hacked_bitrate_kbits=new_bitrate;
@@ -533,12 +539,17 @@ void GStreamerStream::loop_infinite() {
               auto bitrate_ctrl_element=m_bitrate_ctrl_element.value();
               if(change_bitrate(bitrate_ctrl_element,hacked_bitrate_kbits)){
                 currently_applied_bitrate=new_bitrate;
+              }else{
+                m_console->warn("Cannot apply bitrate though code assumes itl work");
               }
             }else{
               // Sad, but if the camera doesn't support changing the bitrate without a restart, we need to restart
               m_console->info("Bitrate change requires restart (Not good)");
               m_request_restart= true;
             }
+          }
+          if(m_opt_action_handler){
+            m_opt_action_handler->set_cam_info_bitrate(m_camera_holder->get_camera().index,m_curr_dynamic_bitrate_kbits);
           }
         }
         // 1) Check if we require a full restart
