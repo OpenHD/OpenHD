@@ -174,7 +174,6 @@ void GStreamerStream::setup() {
   GError *error = nullptr;
   m_gst_pipeline = gst_parse_launch(m_pipeline_content.str().c_str(), &error);
   m_console->debug("GStreamerStream::setup() end");
-  m_stream_creation_time=std::chrono::steady_clock::now();
   if (error) {
     m_console->error( "Failed to create pipeline: {}",error->message);
     return;
@@ -301,59 +300,28 @@ void GStreamerStream::setup_sw_dummy_camera() {
 
 void GStreamerStream::setup_custom_unmanaged_camera() {
   m_console->debug("Setting up custom unmanaged camera");
-  const auto& setting= m_camera_holder->get_settings();
+  const auto& setting = m_camera_holder->get_settings();
   m_pipeline_content << OHDGstHelper::create_input_custom_udp_rtp_port(setting);
 }
 
-void GStreamerStream::stop_cleanup_restart() {
-  const auto before=std::chrono::steady_clock::now();
-  if(m_opt_action_handler){
-      // Restarting status
-      m_opt_action_handler->set_cam_info_status(m_camera_holder->get_camera().index,CAM_STATUS_RESTARTING);
-  }
-  stop();
-  cleanup_pipe();
-  setup();
-  start();
-  const auto elapsed=std::chrono::steady_clock::now()-before;
-  m_console->debug("stop_cleanup_restart took {}",OHDUtil::time_readable(elapsed));
-}
-
-
 void GStreamerStream::start() {
   m_console->debug("GStreamerStream::start()");
-  if(!m_gst_pipeline){
-    m_console->warn("gst_pipeline==null");
-    return;
-  }
+  assert(m_gst_pipeline!= nullptr);
   openhd::register_message_cb(m_gst_pipeline);
   const auto ret=gst_element_set_state(m_gst_pipeline, GST_STATE_PLAYING);
   m_console->debug("State change ret:{}",openhd::gst_state_change_return_to_string(ret));
-  // assume the cam is streaming okay - we log a message otherwise
-  if(m_opt_action_handler){
-     m_opt_action_handler->set_cam_info_status(m_camera_holder->get_camera().index,CAM_STATUS_STREAMING);
-  }
-  bool succesfully_streaming=false;
-  m_console->debug(openhd::gst_element_get_current_state_as_string(m_gst_pipeline,&succesfully_streaming));
-  if(!succesfully_streaming){
-      // Not successfully in changing state, we'l restart the next time it is to check streaming state - but most likely
-      // the cam doesn't support the set resolution
-      m_console->warn("Camera {} error - unsupported resolution ?",m_camera_holder->get_camera().index);
-  }
 }
 
 void GStreamerStream::stop() {
   m_console->debug("GStreamerStream::stop()");
-  if(!m_gst_pipeline){
-    m_console->debug("gst_pipeline==null");
-    return;
-  }
+  assert(m_gst_pipeline!= nullptr);
   openhd::gst_element_set_set_state_and_log_result(m_gst_pipeline, GST_STATE_PAUSED);
   m_console->debug(openhd::gst_element_get_current_state_as_string(m_gst_pipeline));
 }
 
 void GStreamerStream::cleanup_pipe() {
   m_console->debug("GStreamerStream::cleanup_pipe() begin");
+  assert(m_gst_pipeline!= nullptr);
   // Jan 22: Confirmed this hangs quite a lot of pipeline(s) - removed for that reason
   /*m_console->debug("send EOS begin");
   // according to @Alex W we need a EOS signal here to properly shut down the pipeline
@@ -488,7 +456,6 @@ void GStreamerStream::loop_infinite() {
         continue ;
       }
       // First, we start the stream
-      m_console->debug("starting");
       if(m_opt_action_handler){
         m_opt_action_handler->set_cam_info_status(m_camera_holder->get_camera().index,CAM_STATUS_RESTARTING);
       }
@@ -515,6 +482,7 @@ void GStreamerStream::loop_infinite() {
       const uint64_t timeout_ns=std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::milliseconds(40)).count();
       // For 'bugged camera restart' fix
       std::chrono::steady_clock::time_point m_last_camera_frame=std::chrono::steady_clock::now();
+      m_frame_fragments.resize(0);
       while (true){
         // Quickly terminate if openhd wants to terminate
         if(!m_keep_looping) break ;
@@ -575,7 +543,6 @@ void GStreamerStream::loop_infinite() {
       // If we land here, we need to clean up the pipe and (re) start
       stop();
       cleanup_pipe();
-      m_frame_fragments.resize(0);
     } catch (std::exception &ex) {
       std::cerr << "GStreamerStream::Error: " << ex.what() << std::endl;
     } catch (...) {
