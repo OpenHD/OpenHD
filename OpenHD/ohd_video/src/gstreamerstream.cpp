@@ -513,12 +513,12 @@ void GStreamerStream::loop_infinite() {
       // We use a timeout of 40ms to not unnecessarily wake up the thread on up to 30fps (33ms) but also
       // quickly respond to restart requests or bitrate change(s)
       const uint64_t timeout_ns=std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::milliseconds(40)).count();
-      // We constantly monitor the camera output - if we do not get a frame from gst for more than X seconds,
-      // we restart the camera in the hopes of fixing things
+      // For 'bugged camera restart' fix
       std::chrono::steady_clock::time_point m_last_camera_frame=std::chrono::steady_clock::now();
       while (true){
+        // Quickly terminate if openhd wants to terminate
         if(!m_keep_looping) break ;
-        // ANNOYING BUGGED CAMERAS FIX
+        // ANNOYING BUGGED CAMERAS FIX - we restart the pipeline if we don't get a frame from the camera for more than X seconds
         if(std::chrono::steady_clock::now()-m_last_camera_frame>std::chrono::seconds(5)){
           m_console->warn("Restarting camera due to no frame after 5 seconds");
           m_request_restart=true;
