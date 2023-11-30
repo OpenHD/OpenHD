@@ -316,9 +316,6 @@ int main(int argc, char *argv[]) {
           break;
         }
       }
-      if(ohd_video_air){
-        ohd_video_air->restartIfStopped();
-      }
     }
     // --- terminate openhd, most likely requested by a developer with sigterm
     m_console->debug("Terminating openhd");
