@@ -20,11 +20,7 @@ int main(int argc, char *argv[]) {
   }
   OHDVideoAir ohdVideo(*platform,cameras, nullptr, nullptr);
   std::cout << "OHDVideo started\n";
-  while (true) {
-    std::this_thread::sleep_for(std::chrono::seconds(5));
-    std::cout<<"XOHDVid\n";
-    std::cout<<ohdVideo.createDebug();
-  }
+  OHDUtil::keep_alive_until_sigterm();
   std::cerr << "OHDVideo stopped\n";
   return 0;
 }
