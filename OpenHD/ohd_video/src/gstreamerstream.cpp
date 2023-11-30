@@ -534,8 +534,10 @@ void GStreamerStream::loop_infinite() {
           GstBuffer* buffer = gst_sample_get_buffer(sample);
           if (buffer) {
             auto buff_copy=openhd::gst_copy_buffer(buffer);
-            on_new_rtp_frame_fragment(std::move(buff_copy),buffer->dts);
-            m_last_camera_frame=std::chrono::steady_clock::now();
+            if(!buff_copy->empty()){
+              on_new_rtp_frame_fragment(std::move(buff_copy),buffer->dts);
+              m_last_camera_frame=std::chrono::steady_clock::now();
+            }
           }
           gst_sample_unref(sample);
         }
