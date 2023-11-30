@@ -23,7 +23,7 @@ GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHol
     : CameraStream(platform,std::move(camera_holder),std::move(out_cb)),
       m_opt_action_handler(std::move(opt_action_handler))
 {
-  m_console=openhd::log::create_or_get("v_gststream");
+  m_console=openhd::log::create_or_get(fmt::format("cam{}",m_camera_holder->get_camera().index));
   assert(m_console);
   m_console->debug("GStreamerStream::GStreamerStream()");
   // Since the dummy camera is SW, we generally cannot do more than 640x480@30 anyways.
@@ -50,13 +50,14 @@ GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHol
 }
 
 GStreamerStream::~GStreamerStream() {
-  terminate_looping();
+  GStreamerStream::terminate_looping();
 }
 
 void GStreamerStream::start_looping() {
   m_keep_looping=true;
   m_loop_thread=std::make_unique<std::thread>(&GStreamerStream::loop_infinite, this);
 }
+
 void GStreamerStream::terminate_looping() {
   m_keep_looping=false;
   if(m_loop_thread){
@@ -72,11 +73,6 @@ void GStreamerStream::setup() {
   const auto& setting= m_camera_holder->get_settings();
   // atomic & called in regular intervals if variable bitrate is enabled.
   m_curr_dynamic_bitrate_kbits=setting.h26x_bitrate_kbits;
-  if(!setting.enable_streaming){
-    // When streaming is disabled, we just don't create the pipeline. We fully restart on all changes anyways.
-    m_console->info("Streaming disabled");
-    return;
-  }
   m_pipeline_content.str("");
   m_pipeline_content.clear();
   m_bitrate_ctrl_element= std::nullopt;
@@ -448,103 +444,7 @@ void GStreamerStream::handle_update_arming_state(bool armed) {
 void GStreamerStream::loop_infinite() {
   while (m_keep_looping){
     try{
-      // The user can disable streaming for a camera, in which case a restart is requested and after that we land here
-      // (and do nothing)
-      if(!m_camera_holder->get_settings().enable_streaming){
-        m_console->debug("streaming disabled");
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-        continue ;
-      }
-      // First, we start the stream
-      if(m_opt_action_handler){
-        m_opt_action_handler->set_cam_info_status(m_camera_holder->get_camera().index,CAM_STATUS_RESTARTING);
-      }
-      setup();
-      start();
-      // Check if we were able to successfully start the camera stream.
-      bool succesfully_streaming=false;
-      m_console->debug(openhd::gst_element_get_current_state_as_string(m_gst_pipeline,&succesfully_streaming));
-      if(!succesfully_streaming){
-        m_console->warn("Camera {} error - unsupported resolution ?",m_camera_holder->get_camera().index);
-        cleanup_pipe();
-        // Sleep a bit and hope it works next time
-        std::this_thread::sleep_for(std::chrono::seconds(5));
-        continue ;
-      }
-      if(m_opt_action_handler){
-        m_opt_action_handler->set_cam_info_status(m_camera_holder->get_camera().index,CAM_STATUS_STREAMING);
-      }
-      // Bitrate is the only value we (NEED) to support changing without a restart
-      int currently_applied_bitrate=m_camera_holder->get_settings().h26x_bitrate_kbits;
-      // Now we should have a running pipeline and are able to pull samples from it
-      // We use a timeout of 40ms to not unnecessarily wake up the thread on up to 30fps (33ms) but also
-      // quickly respond to restart requests or bitrate change(s)
-      const uint64_t timeout_ns=std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::milliseconds(40)).count();
-      // For 'bugged camera restart' fix
-      std::chrono::steady_clock::time_point m_last_camera_frame=std::chrono::steady_clock::now();
-      m_frame_fragments.resize(0);
-      while (true){
-        // Quickly terminate if openhd wants to terminate
-        if(!m_keep_looping) break ;
-        // ANNOYING BUGGED CAMERAS FIX - we restart the pipeline if we don't get a frame from the camera for more than X seconds
-        if(std::chrono::steady_clock::now()-m_last_camera_frame>std::chrono::seconds(5)){
-          m_console->warn("Restarting camera due to no frame after 5 seconds");
-          m_request_restart=true;
-        }
-        // Bitrate change (by WB link)
-        { // 2) Check if we need to set a new bitrate
-          if(currently_applied_bitrate != m_curr_dynamic_bitrate_kbits){
-            const int new_bitrate=m_curr_dynamic_bitrate_kbits;
-            m_console->debug("Got new bitrate {} for camera {}",new_bitrate,m_camera_holder->get_camera().index);
-            if(m_bitrate_ctrl_element!=std::nullopt){
-              // apply the new bitrate
-              // Don't forget, the rpi csi hdmi needs the 'half bitrate' hack
-              auto hacked_bitrate_kbits=new_bitrate;
-              if(m_camera_holder->requires_half_bitrate_workaround()){
-                m_console->debug("applying hack - reduce bitrate by 2 to get actual correct bitrate");
-                hacked_bitrate_kbits =  hacked_bitrate_kbits / 2;
-              }
-              auto bitrate_ctrl_element=m_bitrate_ctrl_element.value();
-              if(change_bitrate(bitrate_ctrl_element,hacked_bitrate_kbits)){
-                currently_applied_bitrate=new_bitrate;
-              }else{
-                m_console->warn("Cannot apply bitrate though code assumes itl work");
-              }
-            }else{
-              // Sad, but if the camera doesn't support changing the bitrate without a restart, we need to restart
-              m_console->info("Bitrate change requires restart (Not good)");
-              m_request_restart= true;
-            }
-          }
-          if(m_opt_action_handler){
-            m_opt_action_handler->set_cam_info_bitrate(m_camera_holder->get_camera().index,m_curr_dynamic_bitrate_kbits);
-          }
-        }
-        // 1) Check if we require a full restart
-        bool tmp_true= true;
-        if(m_request_restart.compare_exchange_strong(tmp_true, false)){
-          // Something that requires a whole restart of the pipeline happened
-          m_console->debug("Restart requested, restarting");
-          break ;
-        }
-        // try get a new frame from gst
-        GstSample* sample = gst_app_sink_try_pull_sample(GST_APP_SINK(m_app_sink_element),timeout_ns);
-        if (sample) {
-          // If we got a new sample, forward it to the link
-          GstBuffer* buffer = gst_sample_get_buffer(sample);
-          if (buffer) {
-            auto buff_copy=openhd::gst_copy_buffer(buffer);
-            if(!buff_copy->empty()){
-              on_new_rtp_frame_fragment(std::move(buff_copy),buffer->dts);
-              m_last_camera_frame=std::chrono::steady_clock::now();
-            }
-          }
-          gst_sample_unref(sample);
-        }
-      }
-      // If we land here, we need to clean up the pipe and (re) start
-      stop();
-      cleanup_pipe();
+      stream_once();
     } catch (std::exception &ex) {
       std::cerr << "GStreamerStream::Error: " << ex.what() << std::endl;
     } catch (...) {
@@ -553,3 +453,110 @@ void GStreamerStream::loop_infinite() {
   }
 }
 
+void GStreamerStream::stream_once() {
+  // The user can disable streaming for a camera, in which case a restart is requested and after that we land here
+  // (and do nothing)
+  if(!m_camera_holder->get_settings().enable_streaming){
+    m_console->debug("streaming disabled");
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    return ;
+  }
+  // First, we (try) starting the pipeline using the current settings
+  if(m_opt_action_handler){
+    m_opt_action_handler->set_cam_info_status(m_camera_holder->get_camera().index,CAM_STATUS_RESTARTING);
+  }
+  setup();
+  start();
+  // Check if we were able to successfully start the pipeline. If - for example - the camera doesn't exist
+  // or the resolution set is not supported by the camera, we won't get further than this.
+  bool succesfully_streaming=false;
+  m_console->debug(openhd::gst_element_get_current_state_as_string(m_gst_pipeline,&succesfully_streaming));
+  if(!succesfully_streaming){
+    m_console->warn("Cannot start streaming. Valid resolution ?",m_camera_holder->get_camera().index);
+    cleanup_pipe();
+    // Sleep a bit and hope it works next time
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+    return ;
+  }
+  if(m_opt_action_handler){
+    m_opt_action_handler->set_cam_info_status(m_camera_holder->get_camera().index,CAM_STATUS_STREAMING);
+  }
+  //
+  // Here we begin the loop where the camera only
+  // 1) Constantly produces data
+  // 2) reacts to bitrate change(s) from wb link
+  // 3) breaks out of if a restart is requested (changed settings) or no data is generated
+  //    for X seconds.
+  //
+  // Bitrate is the only value we (NEED) to support changing without a restart
+  int currently_applied_bitrate=m_camera_holder->get_settings().h26x_bitrate_kbits;
+  // Now we should have a running pipeline and are able to pull samples from it
+  // We use a timeout of 40ms to not unnecessarily wake up the thread on up to 30fps (33ms) but also
+  // quickly respond to restart requests or bitrate change(s)
+  const uint64_t timeout_ns=std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::milliseconds(40)).count();
+  // For 'bugged camera restart' fix
+  std::chrono::steady_clock::time_point m_last_camera_frame=std::chrono::steady_clock::now();
+  m_frame_fragments.resize(0);
+  while (true){
+    // Quickly terminate if openhd wants to terminate
+    if(!m_keep_looping) break ;
+    // ANNOYING BUGGED CAMERAS FIX - we restart the pipeline if we don't get a frame from the camera for more than X seconds
+    if(std::chrono::steady_clock::now()-m_last_camera_frame>std::chrono::seconds(5)){
+      m_console->warn("Restarting camera due to no frame after 5 seconds");
+      m_request_restart=true;
+    }
+    {
+      // Check if we need to set a new bitrate
+      if(currently_applied_bitrate != m_curr_dynamic_bitrate_kbits){
+        const int new_bitrate=m_curr_dynamic_bitrate_kbits;
+        m_console->debug("Got new bitrate {} for camera {}",new_bitrate,m_camera_holder->get_camera().index);
+        if(m_bitrate_ctrl_element!=std::nullopt){
+          // apply the new bitrate
+          // Don't forget, the rpi csi hdmi needs the 'half bitrate' hack
+          auto hacked_bitrate_kbits=new_bitrate;
+          if(m_camera_holder->requires_half_bitrate_workaround()){
+            m_console->debug("applying hack - reduce bitrate by 2 to get actual correct bitrate");
+            hacked_bitrate_kbits =  hacked_bitrate_kbits / 2;
+          }
+          auto bitrate_ctrl_element=m_bitrate_ctrl_element.value();
+          if(change_bitrate(bitrate_ctrl_element,hacked_bitrate_kbits)){
+            currently_applied_bitrate=new_bitrate;
+            if(m_opt_action_handler){
+              m_opt_action_handler->set_cam_info_bitrate(m_camera_holder->get_camera().index,currently_applied_bitrate);
+            }
+          }else{
+            m_console->warn("Cannot apply bitrate though code assumes itl work");
+          }
+        }else{
+          // Sad, but if the camera doesn't support changing the bitrate without a restart, we need to restart
+          m_console->info("Bitrate change requires restart (Not good)");
+          m_request_restart= true;
+        }
+      }
+    }
+    // Check if we require a full restart
+    bool tmp_true= true;
+    if(m_request_restart.compare_exchange_strong(tmp_true, false)){
+      // Something that requires a whole restart of the pipeline happened
+      m_console->debug("Restart requested, restarting");
+      break ;
+    }
+    // try get a new frame from gst
+    GstSample* sample = gst_app_sink_try_pull_sample(GST_APP_SINK(m_app_sink_element),timeout_ns);
+    if (sample) {
+      // If we got a new sample, forward it to the link
+      GstBuffer* buffer = gst_sample_get_buffer(sample);
+      if (buffer) {
+        auto buff_copy=openhd::gst_copy_buffer(buffer);
+        if(!buff_copy->empty()){
+          on_new_rtp_frame_fragment(std::move(buff_copy),buffer->dts);
+          m_last_camera_frame=std::chrono::steady_clock::now();
+        }
+      }
+      gst_sample_unref(sample);
+    }
+  }
+  // If we land here, we need to clean up the pipe and (re) start
+  stop();
+  cleanup_pipe();
+}

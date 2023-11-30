@@ -57,6 +57,7 @@ class GStreamerStream : public CameraStream {
   // this is called when the FC reports itself as armed / disarmed
   void handle_update_arming_state(bool armed) override;
   void loop_infinite();
+  void stream_once();
   // To reduce the time on the param callback(s) - they need to return immediately to not block the param server
   void request_restart();
  private:
