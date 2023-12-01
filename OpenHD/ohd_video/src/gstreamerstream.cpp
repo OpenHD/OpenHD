@@ -507,33 +507,31 @@ void GStreamerStream::stream_once() {
       m_console->warn("Restarting camera due to no frame after 5 seconds");
       m_request_restart=true;
     }
-    {
-      // Check if we need to set a new bitrate
-      if(currently_applied_bitrate != m_curr_dynamic_bitrate_kbits){
-        const int new_bitrate=m_curr_dynamic_bitrate_kbits;
-        m_console->debug("Got new bitrate {} for camera {}",new_bitrate,m_camera_holder->get_camera().index);
-        if(m_bitrate_ctrl_element!=std::nullopt){
-          // apply the new bitrate
-          // Don't forget, the rpi csi hdmi needs the 'half bitrate' hack
-          auto hacked_bitrate_kbits=new_bitrate;
-          if(m_camera_holder->requires_half_bitrate_workaround()){
-            m_console->debug("applying hack - reduce bitrate by 2 to get actual correct bitrate");
-            hacked_bitrate_kbits =  hacked_bitrate_kbits / 2;
-          }
-          auto bitrate_ctrl_element=m_bitrate_ctrl_element.value();
-          if(change_bitrate(bitrate_ctrl_element,hacked_bitrate_kbits)){
-            currently_applied_bitrate=new_bitrate;
-            if(m_opt_action_handler){
-              m_opt_action_handler->set_cam_info_bitrate(m_camera_holder->get_camera().index,currently_applied_bitrate);
-            }
-          }else{
-            m_console->warn("Cannot apply bitrate though code assumes itl work");
+    // Check if we need to set a new bitrate
+    if(currently_applied_bitrate != m_curr_dynamic_bitrate_kbits){
+      const int new_bitrate=m_curr_dynamic_bitrate_kbits;
+      m_console->debug("Bitrate change, old:{} new:{}",currently_applied_bitrate,new_bitrate);
+      if(m_bitrate_ctrl_element!=std::nullopt){
+        // apply the new bitrate
+        // Don't forget, the rpi csi hdmi needs the 'half bitrate' hack
+        auto hacked_bitrate_kbits=new_bitrate;
+        if(m_camera_holder->requires_half_bitrate_workaround()){
+          m_console->debug("applying hack - reduce bitrate by 2 to get actual correct bitrate");
+          hacked_bitrate_kbits =  hacked_bitrate_kbits / 2;
+        }
+        auto bitrate_ctrl_element=m_bitrate_ctrl_element.value();
+        if(change_bitrate(bitrate_ctrl_element,hacked_bitrate_kbits)){
+          currently_applied_bitrate=new_bitrate;
+          if(m_opt_action_handler){
+            m_opt_action_handler->set_cam_info_bitrate(m_camera_holder->get_camera().index,currently_applied_bitrate);
           }
         }else{
-          // Sad, but if the camera doesn't support changing the bitrate without a restart, we need to restart
-          m_console->info("Bitrate change requires restart (Not good)");
-          m_request_restart= true;
+          m_console->warn("Cannot apply bitrate though code assumes itl work");
         }
+      }else{
+        // Sad, but if the camera doesn't support changing the bitrate without a restart, we need to restart
+        m_console->info("Bitrate change requires restart (Not good)");
+        m_request_restart= true;
       }
     }
     // Check if we require a full restart
