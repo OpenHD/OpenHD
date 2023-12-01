@@ -71,8 +71,6 @@ void GStreamerStream::setup() {
   m_console->debug("GStreamerStream::setup() begin");
   const auto& camera= m_camera_holder->get_camera();
   const auto& setting= m_camera_holder->get_settings();
-  // atomic & called in regular intervals if variable bitrate is enabled.
-  m_curr_dynamic_bitrate_kbits=setting.h26x_bitrate_kbits;
   m_pipeline_content.str("");
   m_pipeline_content.clear();
   m_bitrate_ctrl_element= std::nullopt;
@@ -378,8 +376,11 @@ void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkB
   }
   // The gst thread is responsible for changing the bitrate - it will be applied (as long as the cam is not bugged or the OS is overloaded)
   // after a max delay of 40ms
-  m_camera_holder->unsafe_get_settings().h26x_bitrate_kbits=bitrate_for_encoder_kbits;
   m_curr_dynamic_bitrate_kbits=bitrate_for_encoder_kbits;
+  if(m_camera_holder->get_settings().h26x_bitrate_kbits!=bitrate_for_encoder_kbits){
+    m_camera_holder->unsafe_get_settings().h26x_bitrate_kbits=bitrate_for_encoder_kbits;
+    m_camera_holder->persist(false);
+  }
 }
 
 void GStreamerStream::on_new_rtp_fragmented_frame(std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments) {
@@ -490,6 +491,7 @@ void GStreamerStream::stream_once() {
   //
   // Bitrate is the only value we (NEED) to support changing without a restart
   int currently_applied_bitrate=m_camera_holder->get_settings().h26x_bitrate_kbits;
+  m_curr_dynamic_bitrate_kbits=currently_applied_bitrate;
   // Now we should have a running pipeline and are able to pull samples from it
   // We use a timeout of 40ms to not unnecessarily wake up the thread on up to 30fps (33ms) but also
   // quickly respond to restart requests or bitrate change(s)
