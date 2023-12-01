@@ -56,37 +56,19 @@ target_link_libraries(OHDVideoLib PRIVATE
 
 find_package(Threads REQUIRED)
 
-set(sources 
-    "inc/camerastream.h"
-    "inc/camera_discovery.h"
-    "inc/gstreamerstream.h"
-    "src/libcamera_detect.hpp"
-    "inc/gst_helper.hpp"
-    #inc/gst_recorder.h
-    inc/gst_recording_demuxer.h
-    "inc/ohd_video_air.h"
-    "inc/camera.hpp"
-    "inc/camera_enums.hpp"
-    "inc/camera_holder.h"
-    "inc/camera_settings.hpp"
-    "inc/rtp_eof_helper.h"
-    "inc/v_validate_settings.h"
-    inc/ohd_video_ground.h
-    inc/openhd-rpi-os-configure-vendor-cam.hpp
-
+set(sources
     "src/camera_discovery_helper.hpp"
     "src/ffmpeg_videosamples.hpp"
-
     "src/camerastream.cpp"
     "src/camera_discovery.cpp"
     "src/gstreamerstream.cpp"
     "src/ohd_video_air.cpp"
     "src/rtp_eof_helper.cpp"
-    src/ohd_video_ground.cpp
-    #src/gst_recorder.cpp
+     src/ohd_video_ground.cpp
+     #src/gst_recorder.cpp
      src/gst_recording_demuxer.cpp
-        src/camera_holder.cpp
-    src/ohd_video_air_generic_settings.cpp
+     src/camera_holder.cpp
+     src/ohd_video_air_generic_settings.cpp
 )
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})

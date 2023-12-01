@@ -76,13 +76,14 @@ OHDVideoAir::~OHDVideoAir() {
 
 std::string OHDVideoAir::createDebug() const {
   // TODO make it much more verbose
-  std::stringstream ss;
+  /*std::stringstream ss;
   ss << "OHDVideo::N camera streams:" << m_camera_streams.size() << "\n";
   for (int i = 0; i < m_camera_streams.size(); i++) {
     const auto &stream = m_camera_streams.at(i);
     ss << "Camera stream:" << i << stream->createDebug() << "\n";
   }
-  return ss.str();
+  return ss.str();*/
+  return "";
 }
 
 void OHDVideoAir::configure(const std::shared_ptr<CameraHolder>& camera_holder) {
@@ -107,20 +108,13 @@ void OHDVideoAir::configure(const std::shared_ptr<CameraHolder>& camera_holder) 
     case CameraType::DUMMY_SW: {
       m_console->debug("GStreamerStream for Camera index:{}",camera.index);
       auto stream = std::make_shared<GStreamerStream>(m_platform.platform_type, camera_holder,frame_cb,m_opt_action_handler);
-      stream->setup();
-      stream->start();
+      stream->start_looping();
       m_camera_streams.push_back(stream);
       break;
     }
     default: {
       m_console->error("Unknown camera type, skipping");
     }
-  }
-}
-
-void OHDVideoAir::restartIfStopped() {
-  for(auto& stream:m_camera_streams){
-    stream->restartIfStopped();
   }
 }
 

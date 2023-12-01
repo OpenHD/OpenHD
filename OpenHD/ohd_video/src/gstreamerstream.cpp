@@ -3,20 +3,19 @@
 #include <gst/gst.h>
 #include <unistd.h>
 
+#include <iostream>
 #include <regex>
 #include <utility>
 #include <vector>
 
 #include "air_recording_helper.hpp"
 #include "ffmpeg_videosamples.hpp"
-#include "gst_helper.hpp"
-
 #include "gst_appsink_helper.h"
 #include "gst_debug_helper.h"
-#include "rtp_eof_helper.h"
+#include "gst_helper.hpp"
 #include "gst_recording_demuxer.h"
-
 #include "openhd_util.h"
+#include "rtp_eof_helper.h"
 
 GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,
                                  openhd::ON_ENCODE_FRAME_CB out_cb,std::shared_ptr<openhd::ActionHandler> opt_action_handler)
@@ -24,7 +23,7 @@ GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHol
     : CameraStream(platform,std::move(camera_holder),std::move(out_cb)),
       m_opt_action_handler(std::move(opt_action_handler))
 {
-  m_console=openhd::log::create_or_get("v_gststream");
+  m_console=openhd::log::create_or_get(fmt::format("cam{}",m_camera_holder->get_camera().index));
   assert(m_console);
   m_console->debug("GStreamerStream::GStreamerStream()");
   // Since the dummy camera is SW, we generally cannot do more than 640x480@30 anyways.
@@ -39,10 +38,10 @@ GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHol
     // right now, every time the settings for this camera change, we just re-start the whole stream.
     // That is not ideal, since some cameras support changing for example the bitrate or white balance during operation.
     // But wiring that up is not that easy.
-    // We call restart_async() to make sure to not perform heavy operation(s) on the mavlink settings callback, since we need to send the
+    // We call request_restart() to make sure to not perform heavy operation(s) on the mavlink settings callback, since we need to send the
     // acknowledging response in time. Also, gstreamer and camera(s) are sometimes buggy, so in the worst case gstreamer can become unresponsive
     // and block on the restart operation(s) which would be fatal for telemetry.
-    this->restart_async();
+    this->request_restart();
   });
   assert(setting.streamed_video_format.isValid());
   OHDGstHelper::initGstreamerOrThrow();
@@ -51,22 +50,27 @@ GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHol
 }
 
 GStreamerStream::~GStreamerStream() {
-  // they are safe to call, regardless if we are already in cleaned up state or not
-  GStreamerStream::stop();
-  GStreamerStream::cleanup_pipe();
+  GStreamerStream::terminate_looping();
+}
+
+void GStreamerStream::start_looping() {
+  m_keep_looping=true;
+  m_loop_thread=std::make_unique<std::thread>(&GStreamerStream::loop_infinite, this);
+}
+
+void GStreamerStream::terminate_looping() {
+  m_keep_looping=false;
+  if(m_loop_thread){
+    m_console->debug("Wating for loop thread to terminate");
+    m_loop_thread->join();
+    m_loop_thread=nullptr;
+  }
 }
 
 void GStreamerStream::setup() {
   m_console->debug("GStreamerStream::setup() begin");
   const auto& camera= m_camera_holder->get_camera();
   const auto& setting= m_camera_holder->get_settings();
-  // atomic & called in regular intervals if variable bitrate is enabled.
-  m_curr_dynamic_bitrate_kbits=setting.h26x_bitrate_kbits;
-  if(!setting.enable_streaming){
-    // When streaming is disabled, we just don't create the pipeline. We fully restart on all changes anyways.
-    m_console->info("Streaming disabled");
-    return;
-  }
   m_pipeline_content.str("");
   m_pipeline_content.clear();
   m_bitrate_ctrl_element= std::nullopt;
@@ -164,7 +168,6 @@ void GStreamerStream::setup() {
   GError *error = nullptr;
   m_gst_pipeline = gst_parse_launch(m_pipeline_content.str().c_str(), &error);
   m_console->debug("GStreamerStream::setup() end");
-  m_stream_creation_time=std::chrono::steady_clock::now();
   if (error) {
     m_console->error( "Failed to create pipeline: {}",error->message);
     return;
@@ -173,8 +176,6 @@ void GStreamerStream::setup() {
   // we pull data out of the gst pipeline as cpu memory buffer(s) using the gstreamer "appsink" element
   m_app_sink_element=gst_bin_get_by_name(GST_BIN(m_gst_pipeline), "out_appsink");
   assert(m_app_sink_element);
-  m_pull_samples_run= true;
-  m_pull_samples_thread=std::make_unique<std::thread>(&GStreamerStream::loop_pull_samples, this);
   if(m_opt_action_handler){
     const auto index=m_camera_holder->get_camera().index;
     const auto cam_type= camera_type_to_int(m_camera_holder->get_camera().type);
@@ -293,86 +294,28 @@ void GStreamerStream::setup_sw_dummy_camera() {
 
 void GStreamerStream::setup_custom_unmanaged_camera() {
   m_console->debug("Setting up custom unmanaged camera");
-  const auto& setting= m_camera_holder->get_settings();
+  const auto& setting = m_camera_holder->get_settings();
   m_pipeline_content << OHDGstHelper::create_input_custom_udp_rtp_port(setting);
-}
-
-void GStreamerStream::stop_cleanup_restart() {
-  const auto before=std::chrono::steady_clock::now();
-  if(m_opt_action_handler){
-      // Restarting status
-      m_opt_action_handler->set_cam_info_status(m_camera_holder->get_camera().index,CAM_STATUS_RESTARTING);
-  }
-  stop();
-  cleanup_pipe();
-  setup();
-  start();
-  const auto elapsed=std::chrono::steady_clock::now()-before;
-  m_console->debug("stop_cleanup_restart took {}",OHDUtil::time_readable(elapsed));
-}
-
-std::string GStreamerStream::createDebug(){
-  std::unique_lock<std::mutex> lock(m_pipeline_mutex, std::try_to_lock);
-  if(!lock.owns_lock()){
-    // We can just discard statistics data during a re-start
-    return "GStreamerStream::No debug during restart\n";
-  }
-  if(!m_camera_holder->get_settings().enable_streaming){
-    return fmt::format("GStreamerStream for camera {} disabled",m_camera_holder->get_camera().to_short_string());
-  }
-  std::stringstream ss;
-  GstState state;
-  GstState pending;
-  auto returnValue = gst_element_get_state(m_gst_pipeline, &state, &pending, 1000000000);
-  ss << "GStreamerStream for camera:"<< m_camera_holder->get_camera().to_short_string()<<" State:"<< returnValue << "." << state << "." << pending << ".";
-  return ss.str();
 }
 
 void GStreamerStream::start() {
   m_console->debug("GStreamerStream::start()");
-  if(!m_gst_pipeline){
-    m_console->warn("gst_pipeline==null");
-    return;
-  }
+  assert(m_gst_pipeline!= nullptr);
   openhd::register_message_cb(m_gst_pipeline);
   const auto ret=gst_element_set_state(m_gst_pipeline, GST_STATE_PLAYING);
   m_console->debug("State change ret:{}",openhd::gst_state_change_return_to_string(ret));
-  // assume the cam is streaming okay - we log a message otherwise
-  if(m_opt_action_handler){
-     m_opt_action_handler->set_cam_info_status(m_camera_holder->get_camera().index,CAM_STATUS_STREAMING);
-  }
-  bool succesfully_streaming=false;
-  m_console->debug(openhd::gst_element_get_current_state_as_string(m_gst_pipeline,&succesfully_streaming));
-  if(!succesfully_streaming){
-      // Not successfully in changing state, we'l restart the next time it is to check streaming state - but most likely
-      // the cam doesn't support the set resolution
-      m_console->warn("Camera {} error - unsupported resolution ?",m_camera_holder->get_camera().index);
-  }
 }
 
 void GStreamerStream::stop() {
   m_console->debug("GStreamerStream::stop()");
-  if(!m_gst_pipeline){
-    m_console->debug("gst_pipeline==null");
-    return;
-  }
+  assert(m_gst_pipeline!= nullptr);
   openhd::gst_element_set_set_state_and_log_result(m_gst_pipeline, GST_STATE_PAUSED);
   m_console->debug(openhd::gst_element_get_current_state_as_string(m_gst_pipeline));
 }
 
 void GStreamerStream::cleanup_pipe() {
   m_console->debug("GStreamerStream::cleanup_pipe() begin");
-  if(m_pull_samples_thread){
-    m_console->debug("terminating appsink poll thread begin");
-    m_pull_samples_run= false;
-    if(m_pull_samples_thread->joinable())m_pull_samples_thread->join();
-    m_pull_samples_thread= nullptr;
-    m_console->debug("terminating appsink poll thread end");
-  }
-  if(!m_gst_pipeline){
-    m_console->debug("gst_pipeline==null");
-    return;
-  }
+  assert(m_gst_pipeline!= nullptr);
   // Jan 22: Confirmed this hangs quite a lot of pipeline(s) - removed for that reason
   /*m_console->debug("send EOS begin");
   // according to @Alex W we need a EOS signal here to properly shut down the pipeline
@@ -406,65 +349,8 @@ void GStreamerStream::cleanup_pipe() {
   m_console->debug("GStreamerStream::cleanup_pipe() end");
 }
 
-void GStreamerStream::restartIfStopped() {
-  std::lock_guard<std::mutex> guard(m_pipeline_mutex);
-  if(!m_gst_pipeline){
-    m_console->debug("gst_pipeline==null");
-    return;
-  }
-  if(OHDFilesystemUtil::get_remaining_space_in_mb()<MINIMUM_AMOUNT_FREE_SPACE_FOR_AIR_RECORDING_MB){
-    if(m_camera_holder->get_settings().air_recording==AIR_RECORDING_ON
-        || m_camera_holder->get_settings().air_recording==AIR_RECORDING_AUTO_ARM_DISARM){
-      m_console->warn("Disabling recording, not enough free space (<300MB)");
-      m_camera_holder->unsafe_get_settings().air_recording=AIR_RECORDING_OFF;
-      m_camera_holder->persist();
-      stop_cleanup_restart();
-    }
-  }
-  if(m_camera_holder->get_camera().type==CameraType::CUSTOM_UNMANAGED_CAMERA){
-    // this pattern doesn't work here
-    return;
-  }
-  const auto elapsed_since_start=std::chrono::steady_clock::now()-m_stream_creation_time;
-  if(elapsed_since_start<std::chrono::seconds(5)){
-    // give the cam X seconds in the beginning to properly start before restarting
-    return;
-  }
-  GstState state;
-  GstState pending;
-  auto returnValue = gst_element_get_state(m_gst_pipeline, &state, &pending, 1000000000); // timeout in ns
-  if (returnValue == 0) {
-    m_console->debug("Panic gstreamer pipeline state is not running, restarting camera stream for camera:{}",m_camera_holder->get_camera().name);
-    // We fully restart the whole pipeline, since some issues might not be fixable by just setting paused
-    // This will also show up in QOpenHD (log level >= warn), but we are limited by the n of characters in mavlink
-    m_console->warn("Restarting camera, check your parameters / connection");
-    stop_cleanup_restart();
-    m_console->debug("Restarted");
-  }
-}
-
-// Restart after a new settings value has been applied
-void GStreamerStream::restart_after_new_setting() {
-  std::lock_guard<std::mutex> guard(m_pipeline_mutex);
-  m_console->debug("GStreamerStream::restart_after_new_setting() begin");
-  // R.N we need to fully re-set the pipeline if any camera setting has changed
-  stop_cleanup_restart();
-  m_console->debug("GStreamerStream::restart_after_new_setting() end");
-}
-
-void GStreamerStream::restart_async() {
-  std::lock_guard<std::mutex> guard(m_async_thread_mutex);
-  // If there is already an async operation running, we need to wait for it to complete.
-  // If the user was to change parameters to quickly, this would be a problem.
-  if(m_async_thread != nullptr){
-    if(m_async_thread->joinable()){
-      m_console->info("restart_async: waiting for previous operation to finish");
-      m_async_thread->join();
-      m_console->info("restart_async: previous operation finished");
-    }
-    m_async_thread =nullptr;
-  }
-  m_async_thread =std::make_unique<std::thread>(&GStreamerStream::restart_after_new_setting,this);
+void GStreamerStream::request_restart() {
+  m_request_restart=true;
 }
 
 void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkBitrateInformation lb) {
@@ -488,49 +374,13 @@ void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkB
       bitrate_for_encoder_kbits =max_bitrate_kbits;
     }
   }
-  if(m_curr_dynamic_bitrate_kbits==bitrate_for_encoder_kbits){
-    //m_console->debug("Cam already at {}",m_curr_dynamic_bitrate_kbits);
-    return ;
-  }
-  m_console->debug("Changing bitrate to from {} kBit/s to {} kBit/s",m_camera_holder->get_settings().h26x_bitrate_kbits,bitrate_for_encoder_kbits);
-  if(try_dynamically_change_bitrate( bitrate_for_encoder_kbits)){
+  // The gst thread is responsible for changing the bitrate - it will be applied (as long as the cam is not bugged or the OS is overloaded)
+  // after a max delay of 40ms
+  m_curr_dynamic_bitrate_kbits=bitrate_for_encoder_kbits;
+  if(m_camera_holder->get_settings().h26x_bitrate_kbits!=bitrate_for_encoder_kbits){
     m_camera_holder->unsafe_get_settings().h26x_bitrate_kbits=bitrate_for_encoder_kbits;
-    // Do not trigger a full restart - we already changed the bitrate dynamically
     m_camera_holder->persist(false);
-    m_curr_dynamic_bitrate_kbits= bitrate_for_encoder_kbits;
-    if(m_opt_action_handler){
-      m_opt_action_handler->set_cam_info_bitrate(m_camera_holder->get_camera().index,m_curr_dynamic_bitrate_kbits);
-    }
-  }else{
-    if(cam_type==CameraType::RPI_CSI_LIBCAMERA || cam_type==CameraType::RPI_CSI_VEYE_V4l2 || cam_type==CameraType::ROCKCHIP_CSI){
-      m_console->warn("Bitrate change requires restart");
-      // These cameras are known to handle a restart quickly, but it still sucks v4l2h264enc does not support changing the bitrate at run time
-      m_camera_holder->unsafe_get_settings().h26x_bitrate_kbits=bitrate_for_encoder_kbits;
-      // This triggers a restart of the pipeline
-      m_camera_holder->persist();
-    }else{
-      m_console->warn("Please disable variable bitrate");
-    }
   }
-}
-
-bool GStreamerStream::try_dynamically_change_bitrate(int bitrate_kbits) {
-  std::lock_guard<std::mutex> guard(m_pipeline_mutex);
-  if(m_gst_pipeline== nullptr){
-    m_console->debug("cannot change_bitrate, no pipeline");
-    return false;
-  }
-  if(m_bitrate_ctrl_element==std::nullopt){
-    m_console->warn("Camera {} does not support changing bitrate dynamically",m_camera_holder->get_camera().name);
-    return false;
-  }
-  auto bitrate_ctrl_element=m_bitrate_ctrl_element.value();
-  auto hacked_bitrate_kbits=bitrate_kbits;
-  if(m_camera_holder->requires_half_bitrate_workaround()){
-    m_console->debug("applying hack - reduce bitrate by 2 to get actual correct bitrate");
-    hacked_bitrate_kbits =  hacked_bitrate_kbits / 2;
-  }
-  return change_bitrate(bitrate_ctrl_element,hacked_bitrate_kbits);
 }
 
 void GStreamerStream::on_new_rtp_fragmented_frame(std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments) {
@@ -577,15 +427,6 @@ void GStreamerStream::on_new_rtp_frame_fragment(std::shared_ptr<std::vector<uint
   }*/
 }
 
-void GStreamerStream::loop_pull_samples() {
-  assert(m_app_sink_element);
-  auto cb=[this](std::shared_ptr<std::vector<uint8_t>> fragment,uint64_t dts){
-    on_new_rtp_frame_fragment(std::move(fragment),dts);
-  };
-  openhd::loop_pull_appsink_samples(m_pull_samples_run,m_app_sink_element,cb);
-  m_frame_fragments.resize(0);
-}
-
 void GStreamerStream::handle_update_arming_state(bool armed) {
   m_console->debug("handle_update_arming_state: {}",armed);
   const auto settings=m_camera_holder->get_settings();
@@ -597,6 +438,125 @@ void GStreamerStream::handle_update_arming_state(bool armed) {
       m_armed_enable_air_recording= false;
     }
     // restart pipeline such that recording is started / stopped
-    restart_async();
+    request_restart();
   }
+}
+
+void GStreamerStream::loop_infinite() {
+  while (m_keep_looping){
+    try{
+      stream_once();
+    } catch (std::exception &ex) {
+      std::cerr << "GStreamerStream::Error: " << ex.what() << std::endl;
+    } catch (...) {
+      std::cerr << "GStreamerStream::Unknown exception occurred" << std::endl;
+    }
+  }
+}
+
+void GStreamerStream::stream_once() {
+  // The user can disable streaming for a camera, in which case a restart is requested and after that we land here
+  // (and do nothing)
+  if(!m_camera_holder->get_settings().enable_streaming){
+    m_console->debug("streaming disabled");
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    return ;
+  }
+  // First, we (try) starting the pipeline using the current settings
+  if(m_opt_action_handler){
+    m_opt_action_handler->set_cam_info_status(m_camera_holder->get_camera().index,CAM_STATUS_RESTARTING);
+  }
+  setup();
+  start();
+  // Check if we were able to successfully start the pipeline. If - for example - the camera doesn't exist
+  // or the resolution set is not supported by the camera, we won't get further than this.
+  bool succesfully_streaming=false;
+  m_console->debug(openhd::gst_element_get_current_state_as_string(m_gst_pipeline,&succesfully_streaming));
+  if(!succesfully_streaming){
+    m_console->warn("Cannot start streaming. Valid resolution ?",m_camera_holder->get_camera().index);
+    cleanup_pipe();
+    // Sleep a bit and hope it works next time
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+    return ;
+  }
+  if(m_opt_action_handler){
+    m_opt_action_handler->set_cam_info_status(m_camera_holder->get_camera().index,CAM_STATUS_STREAMING);
+  }
+  //
+  // Here we begin the loop where the camera only
+  // 1) Constantly produces data
+  // 2) reacts to bitrate change(s) from wb link
+  // 3) breaks out of if a restart is requested (changed settings) or no data is generated
+  //    for X seconds.
+  //
+  // Bitrate is the only value we (NEED) to support changing without a restart
+  int currently_applied_bitrate=m_camera_holder->get_settings().h26x_bitrate_kbits;
+  m_curr_dynamic_bitrate_kbits=currently_applied_bitrate;
+  // Now we should have a running pipeline and are able to pull samples from it
+  // We use a timeout of 40ms to not unnecessarily wake up the thread on up to 30fps (33ms) but also
+  // quickly respond to restart requests or bitrate change(s)
+  const uint64_t timeout_ns=std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::milliseconds(40)).count();
+  // For 'bugged camera restart' fix
+  std::chrono::steady_clock::time_point m_last_camera_frame=std::chrono::steady_clock::now();
+  m_frame_fragments.resize(0);
+  while (true){
+    // Quickly terminate if openhd wants to terminate
+    if(!m_keep_looping) break ;
+    // ANNOYING BUGGED CAMERAS FIX - we restart the pipeline if we don't get a frame from the camera for more than X seconds
+    if(std::chrono::steady_clock::now()-m_last_camera_frame>std::chrono::seconds(5)){
+      m_console->warn("Restarting camera due to no frame after 5 seconds");
+      m_request_restart=true;
+    }
+    // Check if we need to set a new bitrate
+    if(currently_applied_bitrate != m_curr_dynamic_bitrate_kbits){
+      const int new_bitrate=m_curr_dynamic_bitrate_kbits;
+      m_console->debug("Bitrate change, old:{} new:{}",currently_applied_bitrate,new_bitrate);
+      if(m_bitrate_ctrl_element!=std::nullopt){
+        // apply the new bitrate
+        // Don't forget, the rpi csi hdmi needs the 'half bitrate' hack
+        auto hacked_bitrate_kbits=new_bitrate;
+        if(m_camera_holder->requires_half_bitrate_workaround()){
+          m_console->debug("applying hack - reduce bitrate by 2 to get actual correct bitrate");
+          hacked_bitrate_kbits =  hacked_bitrate_kbits / 2;
+        }
+        auto bitrate_ctrl_element=m_bitrate_ctrl_element.value();
+        if(change_bitrate(bitrate_ctrl_element,hacked_bitrate_kbits)){
+          currently_applied_bitrate=new_bitrate;
+          if(m_opt_action_handler){
+            m_opt_action_handler->set_cam_info_bitrate(m_camera_holder->get_camera().index,currently_applied_bitrate);
+          }
+        }else{
+          m_console->warn("Cannot apply bitrate though code assumes itl work");
+        }
+      }else{
+        // Sad, but if the camera doesn't support changing the bitrate without a restart, we need to restart
+        m_console->info("Bitrate change requires restart (Not good)");
+        m_request_restart= true;
+      }
+    }
+    // Check if we require a full restart
+    bool tmp_true= true;
+    if(m_request_restart.compare_exchange_strong(tmp_true, false)){
+      // Something that requires a whole restart of the pipeline happened
+      m_console->debug("Restart requested, restarting");
+      break ;
+    }
+    // try get a new frame from gst
+    GstSample* sample = gst_app_sink_try_pull_sample(GST_APP_SINK(m_app_sink_element),timeout_ns);
+    if (sample) {
+      // If we got a new sample, forward it to the link
+      GstBuffer* buffer = gst_sample_get_buffer(sample);
+      if (buffer) {
+        auto buff_copy=openhd::gst_copy_buffer(buffer);
+        if(!buff_copy->empty()){
+          on_new_rtp_frame_fragment(std::move(buff_copy),buffer->dts);
+          m_last_camera_frame=std::chrono::steady_clock::now();
+        }
+      }
+      gst_sample_unref(sample);
+    }
+  }
+  // If we land here, we need to clean up the pipe and (re) start
+  stop();
+  cleanup_pipe();
 }

@@ -40,24 +40,11 @@ class CameraStream {
   CameraStream(const CameraStream&)=delete;
   CameraStream(const CameraStream&&)=delete;
 
-  // It is a good common programming practice to make them pure virtual
-  // setup everything needed to start streaming
-  virtual void setup() = 0;
-  // start streaming
-  virtual void start() = 0;
-  // stop streaming
-  virtual void stop() = 0;
-  /**
-   * Create a verbose debug string about the current state of the stream.
-   * @return a string, can be printed to stdout or similar.
-   */
-  [[nodiscard]] virtual std::string createDebug() = 0;
-
-  /**
-   * This can be called in regular intervals by the main OpenHD thread to
-   * restart a camera stream if it has stopped / crashed for some reason.
-   */
-  virtual void restartIfStopped() = 0;
+  // after start_looping is called the camera should start streaming (generating video data) as soon as possible
+  // terminate_loping() is called when openhd terminates (only for development)
+  // The camera is responsible to implement its loop thread such that it can react to setting changes
+  virtual void start_looping()=0;
+  virtual void terminate_looping()=0;
   /**
    * Handle a change in the bitrate, most likely requested by the RF link.
    * This is the only value an implementation should support changing without a complete restart of the pipeline /

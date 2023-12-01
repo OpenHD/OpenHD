@@ -27,18 +27,7 @@ int main(int argc, char *argv[]) {
   update_settings(0,*camera_holder);
   PlatformType platformType{};
   auto stream = std::make_unique<GStreamerStream>(platformType, camera_holder, nullptr);
-  stream->setup();
-  stream->start();
-
-  while (true) {
-	std::this_thread::sleep_for(std::chrono::seconds(10));
-	std::cout<<"XOHDVid\n";
-	std::cout << stream->createDebug() << "\n";
-        //update_settings(index,*camera_holder);
-        //index++;
-  }
-
-  std::cerr << "OHDVideo stopped\n";
-
+  stream->start_looping();
+  OHDUtil::keep_alive_until_sigterm();
   return 0;
 }

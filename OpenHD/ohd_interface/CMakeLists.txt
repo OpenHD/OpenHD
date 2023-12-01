@@ -14,31 +14,13 @@ add_library(OHDInterfaceLib STATIC) # initialized below
 add_library(OHDInterfaceLib::OHDInterfaceLib ALIAS OHDInterfaceLib)
 
 set(sources
-    inc/wifi_card_discovery.h
-    inc/ohd_interface.h
-    inc/wifi_card.h
-    inc/usb_tether_listener.h
-    inc/validate_settings_helper.h
-    inc/wb_link.h
-    inc/wb_link_manager.h
-        inc/wb_link_settings.h
-    inc/wifi_hotspot.h
-    inc/wb_link_helper.h
-    inc/wb_link_work_item.hpp
-        inc/wifi_channel.h
-    inc/wifi_command_helper.h
-    inc/ethernet_listener.h
-    inc/ethernet_hotspot.h
-    inc/networking_settings.h
-    #inc/wifi_command_helper2.h
-
     src/wifi_card_discovery.cpp
     src/ohd_interface.cpp
     src/usb_tether_listener.cpp
     src/wb_link.cpp
     src/wifi_hotspot.cpp
     src/wb_link_helper.cpp
-        src/wifi_command_helper.cpp
+    src/wifi_command_helper.cpp
     src/ethernet_listener.cpp
     src/ethernet_hotspot.cpp
     src/wifi_card.cpp
