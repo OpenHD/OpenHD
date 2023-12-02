@@ -48,7 +48,7 @@ jobs:
           echo "arm64" > /opt/ChrootCompilationTest/additionalFiles/arch.txt
           echo "debian" > /opt/ChrootCompilationTest/additionalFiles/distro.txt
           echo "bullseye" > /opt/ChrootCompilationTest/additionalFiles/flavor.txt
-          echo "dev-release" > /opt/ChrootCompilationTest/additionalFiles/repo.txt
+          echo "${{ github.ref_name }}" > /opt/ChrootCompilationTest/additionalFiles/repo.txt
 
           cd /opt/ChrootCompilationTest/
           sudo apt update
