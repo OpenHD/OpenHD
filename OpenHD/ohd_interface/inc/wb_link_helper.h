@@ -74,9 +74,7 @@ bool has_any_non_rtl8812au(const std::vector<WiFiCard>& cards);
 bool any_card_supports_stbc_ldpc_sgi(const std::vector<WiFiCard>& cards);
 
 std::vector<WifiChannel> get_scan_channels_frequencies(const WiFiCard& card,int channels_to_scan);
-std::vector<uint16_t> get_scan_channels_bandwidths(bool scan_20mhz,bool scan_40mhz);
-
-std::vector<WifiChannel> get_analyze_channels_frequencies(const WiFiCard& card);
+std::vector<WifiChannel> get_analyze_channels_frequencies(const WiFiCard& card,int channels_to_scan);
 
 /*
  * Removes network manager from the given cards (if it is running)

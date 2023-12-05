@@ -85,7 +85,7 @@ class WBLink :public OHDLink{
   // Those operations run asynchronous until completed, and during this time
   // all other "request_" setting changes are rejected (since the work thread does the long-running async operation)
   bool request_start_scan_channels(openhd::ActionHandler::ScanChannelsParam scan_channels_params);
-  bool request_start_analyze_channels();
+  bool request_start_analyze_channels(int channels_to_scan);
 
   // apply the frequency (wifi channel) and channel with for all wifibroadcast cards
   // r.n uses both iw and modifies the radiotap header
@@ -126,7 +126,7 @@ class WBLink :public OHDLink{
   // continuously broadcasts progress via mavlink.
   void perform_channel_scan(const openhd::ActionHandler::ScanChannelsParam& scan_channels_params);
   // similar to channel scan, analyze channel(s) for interference
-  void perform_channel_analyze();
+  void perform_channel_analyze(int channels_to_scan);
   void reset_all_rx_stats();
   void recommend_bitrate_to_encoder(int recommended_video_bitrate_kbits);
  private:

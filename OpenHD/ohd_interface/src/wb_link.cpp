@@ -193,8 +193,8 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
         return request_start_scan_channels(param);
       };
       m_opt_action_handler->wb_cmd_scan_channels=cb_scan;
-      std::function<bool()> cb_analyze=[this](){
-          return request_start_analyze_channels();
+      std::function<bool(int)> cb_analyze=[this](int channels_to_scan){
+          return request_start_analyze_channels(channels_to_scan);
       };
       m_opt_action_handler->wb_cmd_analyze_channels=cb_analyze;
       if(m_profile.is_air){
@@ -379,9 +379,9 @@ bool WBLink::request_start_scan_channels(openhd::ActionHandler::ScanChannelsPara
     return try_schedule_work_item(work_item);
 }
 
-bool WBLink::request_start_analyze_channels() {
-    auto work_item=std::make_shared<WorkItem>("ANALYZE_CHANNELS",[this](){
-        perform_channel_analyze();
+bool WBLink::request_start_analyze_channels(int channels_to_scan) {
+    auto work_item=std::make_shared<WorkItem>("ANALYZE_CHANNELS",[this,channels_to_scan](){
+        perform_channel_analyze(channels_to_scan);
     },std::chrono::steady_clock::now());
     return try_schedule_work_item(work_item);
 }
@@ -1033,14 +1033,14 @@ void WBLink::perform_channel_scan(const openhd::ActionHandler::ScanChannelsParam
   }
 }
 
-void WBLink::perform_channel_analyze() {
+void WBLink::perform_channel_analyze(int channels_to_scan) {
     const auto analyze_begin=std::chrono::steady_clock::now();
     struct AnalyzeResult{
         int frequency;
         int n_foreign_packets;
     };
     const WiFiCard& card=m_broadcast_cards.at(0);
-    const auto channels_to_analyze=openhd::wb::get_analyze_channels_frequencies(card);
+    const auto channels_to_analyze=openhd::wb::get_analyze_channels_frequencies(card,channels_to_scan);
     if(m_opt_action_handler) {
         auto stats_current = m_opt_action_handler->get_link_stats();
         stats_current.gnd_operating_mode.operating_mode = 2;

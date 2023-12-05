@@ -156,39 +156,18 @@ std::vector <openhd::WifiChannel> openhd::wb::get_scan_channels_frequencies(cons
     return openhd::frequencies_to_channels(supported);
 }
 
-std::vector<uint16_t> openhd::wb::get_scan_channels_bandwidths(bool scan_20mhz, bool scan_40mhz) {
-    std::vector<uint16_t> channel_widths_to_scan;
-    if(scan_20mhz){
-        channel_widths_to_scan.push_back(20);
+std::vector<openhd::WifiChannel> openhd::wb::get_analyze_channels_frequencies(const WiFiCard &card,int channels_to_scan) {
+    std::vector<openhd::WifiChannel> ret;
+    if(channels_to_scan==0){
+        // OpenHD channels 1 to 5 only
+        return openhd::get_openhd_channels_1_to_5();
     }
-    if(scan_40mhz){
-        channel_widths_to_scan.push_back(40);
+    if(channels_to_scan==1){
+        // 2.4G but we scan in 40Mhz increments
+        auto supported=card.supported_frequencies_2G;
+        return openhd::frequencies_to_channels(supported);
     }
-    return channel_widths_to_scan;
-}
-
-std::vector<openhd::WifiChannel> openhd::wb::get_analyze_channels_frequencies(const WiFiCard &card) {
-    std::vector<openhd::WifiChannel> channels_to_analyze;
-    const auto supported_freq_5G=card.supported_frequencies_5G;
-    const auto supported_freq_2G=card.supported_frequencies_2G;
-    for(const auto& freq:supported_freq_2G){
-        auto tmp=openhd::channel_from_frequency(freq);
-        if(tmp.has_value()){
-            //if(tmp->in_40Mhz_ht40_plus) {
-            //    channels_to_analyze.push_back(tmp.value());
-            //}
-            channels_to_analyze.push_back(tmp.value());
-        }
-    }
-    for(const auto freq:supported_freq_5G){
-        auto tmp=openhd::channel_from_frequency(freq);
-        if(tmp.has_value()){
-            if(tmp->in_40Mhz_ht40_plus){
-                channels_to_analyze.push_back(tmp.value());
-            }
-        }
-    }
-    return channels_to_analyze;
+    return openhd::filter_ht40plus_only(card.supported_frequencies_5G);
 }
 
 bool openhd::wb::has_any_rtl8812au(const std::vector<WiFiCard>& cards) {

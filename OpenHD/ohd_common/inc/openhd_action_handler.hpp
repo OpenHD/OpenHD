@@ -216,7 +216,7 @@ public:
   }
 public:
     std::function<std::vector<uint16_t>()> wb_get_supported_channels= nullptr;
-    std::function<bool()> wb_cmd_analyze_channels= nullptr;
+    std::function<bool(int)> wb_cmd_analyze_channels= nullptr;
 
 public:
     std::atomic<int> scan_channels_air_unit_progress=-1;

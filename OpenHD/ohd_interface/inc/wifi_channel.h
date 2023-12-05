@@ -240,5 +240,18 @@ static std::vector<WifiChannel> get_openhd_channels_1_to_5(){
   return frequencies_to_channels(frequencies);
 }
 
+static std::vector<WifiChannel> filter_ht40plus_only(const std::vector<uint32_t>& frequencies){
+  std::vector<WifiChannel> ret;
+  for(const auto& freq:frequencies){
+    auto tmp=openhd::channel_from_frequency(freq);
+    if(tmp.has_value()){
+      if(tmp->in_40Mhz_ht40_plus) {
+        ret.push_back(tmp.value());
+      }
+    }
+  }
+  return ret;
+}
+
 }
 #endif  // OPENHD_OPENHD_OHD_INTERFACE_INC_WIFI_CHANNEL_H_
