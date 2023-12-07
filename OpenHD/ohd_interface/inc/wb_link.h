@@ -129,6 +129,9 @@ class WBLink :public OHDLink{
   void perform_channel_analyze(int channels_to_scan);
   void reset_all_rx_stats();
   void recommend_bitrate_to_encoder(int recommended_video_bitrate_kbits);
+  // set passive mode to disabled (do not drop packets) unless we are ground
+  // and passive mode is enabled by the user
+  void re_enable_injection_unless_user_passive_mode_enabled();
  private:
   const OHDProfile m_profile;
   const OHDPlatform m_platform;

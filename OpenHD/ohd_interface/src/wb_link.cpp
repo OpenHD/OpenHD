@@ -388,10 +388,15 @@ bool WBLink::request_start_analyze_channels(int channels_to_scan) {
 
 bool WBLink::apply_frequency_and_channel_width(int frequency, int channel_width_rx, int channel_width_tx) {
     m_console->debug("apply_frequency_and_channel_width {}Mhz RX:{}Mhz TX:{}Mhz",frequency,channel_width_rx,channel_width_tx);
+    // Weird bug hunting - I hope this makes the driver less likely too crash
+    // Temporarily stop injecting packets
+    m_wb_txrx->set_passive_mode(true);
+    std::this_thread::sleep_for(std::chrono::milliseconds(10)); // Dirty - wait for any tx packets to drain
     const auto res=openhd::wb::set_frequency_and_channel_width_for_all_cards(frequency,channel_width_rx,m_broadcast_cards);
     m_tx_header_1->update_channel_width(channel_width_tx);
     m_wb_txrx->tx_reset_stats();
     m_wb_txrx->rx_reset_stats();
+    re_enable_injection_unless_user_passive_mode_enabled();
     return res;
 }
 
@@ -947,6 +952,9 @@ void WBLink::perform_channel_scan(const openhd::ActionHandler::ScanChannelsParam
   m_console->debug("Channel scan N channels to scan:{} N channel widths to scan:{}",
                    channels_to_scan.size(),channel_widths_to_scan.size());
   bool done_early=false;
+  // Disable injection during analyze
+  m_wb_txrx->set_passive_mode(true);
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
   // We need to loop through all possible channels
   for(int i=0;i<channels_to_scan.size();i++){
     const auto& channel=channels_to_scan[i];
@@ -1011,6 +1019,7 @@ void WBLink::perform_channel_scan(const openhd::ActionHandler::ScanChannelsParam
       }
     }
   }
+  re_enable_injection_unless_user_passive_mode_enabled();
   if(!result.success){
     m_console->warn("Channel scan failure, restore local settings");
     apply_frequency_and_channel_width_from_settings();
@@ -1046,6 +1055,9 @@ void WBLink::perform_channel_analyze(int channels_to_scan) {
         stats_current.gnd_operating_mode.operating_mode = 2;
         m_opt_action_handler->update_link_stats(stats_current);
     }
+    // Disable injection during analyze
+    m_wb_txrx->set_passive_mode(true);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     std::vector<AnalyzeResult> results{};
     for(int i=0; i < channels_to_analyze.size(); i++){
         const auto channel=channels_to_analyze[i];
@@ -1080,6 +1092,7 @@ void WBLink::perform_channel_analyze(int channels_to_scan) {
         ss<<results[i].frequency<<"@"<<results[i].n_foreign_packets<<"\n";
     }
     m_console->debug("{}",ss.str().c_str());*/
+    re_enable_injection_unless_user_passive_mode_enabled();
     m_console->debug("Done analyzing, took:{}",MyTimeHelper::R(std::chrono::steady_clock::now()-analyze_begin));
     // Go back to the previous frequency
     apply_frequency_and_channel_width_from_settings();
@@ -1133,3 +1146,10 @@ void WBLink::wt_perform_channel_width_management() {
     }
 }
 
+void WBLink::re_enable_injection_unless_user_passive_mode_enabled() {
+    bool enable_passive_mode= false;
+    if(m_profile.is_ground() && m_settings->get_settings().wb_enable_listen_only_mode){
+        enable_passive_mode= true;
+    }
+    m_wb_txrx->set_passive_mode(enable_passive_mode);
+}
