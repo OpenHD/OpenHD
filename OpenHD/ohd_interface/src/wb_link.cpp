@@ -952,9 +952,6 @@ void WBLink::perform_channel_scan(const openhd::ActionHandler::ScanChannelsParam
   m_console->debug("Channel scan N channels to scan:{} N channel widths to scan:{}",
                    channels_to_scan.size(),channel_widths_to_scan.size());
   bool done_early=false;
-  // Disable injection during analyze
-  m_wb_txrx->set_passive_mode(true);
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
   // We need to loop through all possible channels
   for(int i=0;i<channels_to_scan.size();i++){
     const auto& channel=channels_to_scan[i];
@@ -981,6 +978,8 @@ void WBLink::perform_channel_scan(const openhd::ActionHandler::ScanChannelsParam
           tmp.progress=OHDUtil::calculate_progress_perc(i,(int)channels_to_scan.size());
           m_opt_action_handler->add_scan_channels_progress(tmp);
       }
+      // Disable injection during scan
+      m_wb_txrx->set_passive_mode(true);
       // sleeep a bit - some cards /drivers might need time switching
       std::this_thread::sleep_for(std::chrono::milliseconds(200));
       m_console->debug("Scanning [{}] {}Mhz@{}Mhz",channel.channel,channel.frequency,channel_width);
@@ -1055,9 +1054,6 @@ void WBLink::perform_channel_analyze(int channels_to_scan) {
         stats_current.gnd_operating_mode.operating_mode = 2;
         m_opt_action_handler->update_link_stats(stats_current);
     }
-    // Disable injection during analyze
-    m_wb_txrx->set_passive_mode(true);
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     std::vector<AnalyzeResult> results{};
     for(int i=0; i < channels_to_analyze.size(); i++){
         const auto channel=channels_to_analyze[i];
@@ -1065,6 +1061,10 @@ void WBLink::perform_channel_analyze(int channels_to_scan) {
         const int channel_width=40;
         // set new frequency, reset the packet count, sleep, then check if any openhd packets have been received
         apply_frequency_and_channel_width(channel.frequency,channel_width,20);
+        // Disable injection during analyze
+        m_wb_txrx->set_passive_mode(true);
+        // Sleep a bit to give the card time to switch
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
         m_console->debug("Analyzing [{}] {}Mhz@{}Mhz",channel.channel,channel.frequency,channel_width);
         reset_all_rx_stats();
         std::this_thread::sleep_for(std::chrono::seconds(4));
