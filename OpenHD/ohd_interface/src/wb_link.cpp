@@ -193,8 +193,8 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
         return request_start_scan_channels(param);
       };
       m_opt_action_handler->wb_cmd_scan_channels=cb_scan;
-      std::function<bool()> cb_analyze=[this](){
-          return request_start_analyze_channels();
+      std::function<bool(int)> cb_analyze=[this](int channels_to_scan){
+          return request_start_analyze_channels(channels_to_scan);
       };
       m_opt_action_handler->wb_cmd_analyze_channels=cb_analyze;
       if(m_profile.is_air){
@@ -379,19 +379,24 @@ bool WBLink::request_start_scan_channels(openhd::ActionHandler::ScanChannelsPara
     return try_schedule_work_item(work_item);
 }
 
-bool WBLink::request_start_analyze_channels() {
-    auto work_item=std::make_shared<WorkItem>("ANALYZE_CHANNELS",[this](){
-        perform_channel_analyze();
+bool WBLink::request_start_analyze_channels(int channels_to_scan) {
+    auto work_item=std::make_shared<WorkItem>("ANALYZE_CHANNELS",[this,channels_to_scan](){
+        perform_channel_analyze(channels_to_scan);
     },std::chrono::steady_clock::now());
     return try_schedule_work_item(work_item);
 }
 
 bool WBLink::apply_frequency_and_channel_width(int frequency, int channel_width_rx, int channel_width_tx) {
     m_console->debug("apply_frequency_and_channel_width {}Mhz RX:{}Mhz TX:{}Mhz",frequency,channel_width_rx,channel_width_tx);
+    // Weird bug hunting - I hope this makes the driver less likely too crash
+    // Temporarily stop injecting packets
+    m_wb_txrx->set_passive_mode(true);
+    std::this_thread::sleep_for(std::chrono::milliseconds(10)); // Dirty - wait for any tx packets to drain
     const auto res=openhd::wb::set_frequency_and_channel_width_for_all_cards(frequency,channel_width_rx,m_broadcast_cards);
     m_tx_header_1->update_channel_width(channel_width_tx);
     m_wb_txrx->tx_reset_stats();
     m_wb_txrx->rx_reset_stats();
+    re_enable_injection_unless_user_passive_mode_enabled();
     return res;
 }
 
@@ -973,6 +978,8 @@ void WBLink::perform_channel_scan(const openhd::ActionHandler::ScanChannelsParam
           tmp.progress=OHDUtil::calculate_progress_perc(i,(int)channels_to_scan.size());
           m_opt_action_handler->add_scan_channels_progress(tmp);
       }
+      // Disable injection during scan
+      m_wb_txrx->set_passive_mode(true);
       // sleeep a bit - some cards /drivers might need time switching
       std::this_thread::sleep_for(std::chrono::milliseconds(200));
       m_console->debug("Scanning [{}] {}Mhz@{}Mhz",channel.channel,channel.frequency,channel_width);
@@ -1011,6 +1018,7 @@ void WBLink::perform_channel_scan(const openhd::ActionHandler::ScanChannelsParam
       }
     }
   }
+  re_enable_injection_unless_user_passive_mode_enabled();
   if(!result.success){
     m_console->warn("Channel scan failure, restore local settings");
     apply_frequency_and_channel_width_from_settings();
@@ -1033,14 +1041,14 @@ void WBLink::perform_channel_scan(const openhd::ActionHandler::ScanChannelsParam
   }
 }
 
-void WBLink::perform_channel_analyze() {
+void WBLink::perform_channel_analyze(int channels_to_scan) {
     const auto analyze_begin=std::chrono::steady_clock::now();
     struct AnalyzeResult{
         int frequency;
         int n_foreign_packets;
     };
     const WiFiCard& card=m_broadcast_cards.at(0);
-    const auto channels_to_analyze=openhd::wb::get_analyze_channels_frequencies(card);
+    const auto channels_to_analyze=openhd::wb::get_analyze_channels_frequencies(card,channels_to_scan);
     if(m_opt_action_handler) {
         auto stats_current = m_opt_action_handler->get_link_stats();
         stats_current.gnd_operating_mode.operating_mode = 2;
@@ -1053,6 +1061,10 @@ void WBLink::perform_channel_analyze() {
         const int channel_width=40;
         // set new frequency, reset the packet count, sleep, then check if any openhd packets have been received
         apply_frequency_and_channel_width(channel.frequency,channel_width,20);
+        // Disable injection during analyze
+        m_wb_txrx->set_passive_mode(true);
+        // Sleep a bit to give the card time to switch
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
         m_console->debug("Analyzing [{}] {}Mhz@{}Mhz",channel.channel,channel.frequency,channel_width);
         reset_all_rx_stats();
         std::this_thread::sleep_for(std::chrono::seconds(4));
@@ -1080,6 +1092,7 @@ void WBLink::perform_channel_analyze() {
         ss<<results[i].frequency<<"@"<<results[i].n_foreign_packets<<"\n";
     }
     m_console->debug("{}",ss.str().c_str());*/
+    re_enable_injection_unless_user_passive_mode_enabled();
     m_console->debug("Done analyzing, took:{}",MyTimeHelper::R(std::chrono::steady_clock::now()-analyze_begin));
     // Go back to the previous frequency
     apply_frequency_and_channel_width_from_settings();
@@ -1133,3 +1146,10 @@ void WBLink::wt_perform_channel_width_management() {
     }
 }
 
+void WBLink::re_enable_injection_unless_user_passive_mode_enabled() {
+    bool enable_passive_mode= false;
+    if(m_profile.is_ground() && m_settings->get_settings().wb_enable_listen_only_mode){
+        enable_passive_mode= true;
+    }
+    m_wb_txrx->set_passive_mode(enable_passive_mode);
+}

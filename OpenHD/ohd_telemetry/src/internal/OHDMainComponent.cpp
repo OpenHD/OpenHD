@@ -376,9 +376,12 @@ void OHDMainComponent::process_command_self(const mavlink_command_long_t &comman
             m_console->debug("Scan channels is only a feature for ground unit");
             return;
         }else{
+            const int channels_to_scan=static_cast<uint32_t>(command.param1);
+            m_console->debug("OPENHD_CMD_INITIATE_CHANNEL_ANALYZE {}",channels_to_scan);
             bool success= false;
-            if(m_opt_action_handler && m_opt_action_handler->wb_cmd_analyze_channels) {
-                success = m_opt_action_handler->wb_cmd_analyze_channels();
+            if(m_opt_action_handler && m_opt_action_handler->wb_cmd_analyze_channels
+                && channels_to_scan==0 || channels_to_scan==1 || channels_to_scan==2) {
+                success = m_opt_action_handler->wb_cmd_analyze_channels(channels_to_scan);
             }
             message_buffer.push_back(ack_command(source_sys_id,source_comp_id,command.command,success));
         }
