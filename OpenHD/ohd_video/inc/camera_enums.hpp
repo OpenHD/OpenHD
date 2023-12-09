@@ -87,7 +87,7 @@ static CameraType camera_type_from_string(const std::string& s){
   if(OHDUtil::contains_after_uppercase(s,"DUMMY_SW")){
     return CameraType::DUMMY_SW;
   }else if(OHDUtil::contains_after_uppercase(s,"RPI_CSI_MMAL")){
-    return CameraType::RPI_CSI_VEYE_V4l2;
+    return CameraType::RPI_CSI_MMAL;
   }else if(OHDUtil::contains_after_uppercase(s,"RPI_CSI_VEYE_V4l2")){
       return CameraType::RPI_CSI_VEYE_V4l2;
   }else if(OHDUtil::contains_after_uppercase(s,"RPI_CSI_LIBCAMERA")){
