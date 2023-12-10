@@ -59,6 +59,12 @@ class DCameras {
    */
    static std::vector<Camera> detect_jetson_csi(std::shared_ptr<spdlog::logger>& m_console);
 
+  /**
+    *  Detect qrb5165 CSI camera(s).
+    */
+    static std::vector<Camera> detect_qrb5165_csi(std::shared_ptr<spdlog::logger>& m_console);
+
+
    /**
     * NOTE: r.n only for USB UVC and UVCH264 camera(s)
     */

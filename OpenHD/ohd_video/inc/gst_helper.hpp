@@ -519,6 +519,20 @@ static std::string createAllwinnerStream(const int sensor_id,
   return ss.str();
 }
 
+/**
+ * For qrb5165 Cameras that do raw.
+ */
+static std::string createQrb5165Stream(
+    const int device_index, const CameraSettings& settings) {
+  std::stringstream ss;
+  ss << fmt::format("qtiqmmfsrc camera={} ! ", device_index);
+  ss << fmt::format("video/x-raw, format=NV12, width={}, height={}, framerate={}/1 ! ",
+                    settings.streamed_video_format.width,settings.streamed_video_format.height,
+                    settings.streamed_video_format.framerate);
+  ss << "qtic2venc ! ";
+  return ss.str();
+}
+
 // Camera quirks, omit arguments when set to 0 - some cameras refuse to work even though the correct width, height or fps is given
 static std::string gst_v4l2_width_height_fps_unless_omit(const CameraSettings& settings){
     std::stringstream ss;

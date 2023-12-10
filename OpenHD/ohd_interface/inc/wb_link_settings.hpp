@@ -15,9 +15,9 @@
 
 namespace openhd{
 
-static constexpr auto DEFAULT_5GHZ_FREQUENCY = 5180;
+static constexpr auto DEFAULT_5GHZ_FREQUENCY = 5805;
 static constexpr auto DEFAULT_2GHZ_FREQUENCY = 2412;
-static constexpr auto DEFAULT_MCS_INDEX=3;
+static constexpr auto DEFAULT_MCS_INDEX=0;
 // We always use a MCS index of X for the uplink, since (compared to the video link) it requires a negligible amount of bandwidth
 // and for those using RC over OpenHD, we have the benefit that the range of RC is "more" than the range for video
 static constexpr auto DEFAULT_GND_UPLINK_MCS_INDEX=0;
@@ -25,7 +25,7 @@ static constexpr auto DEFAULT_CHANNEL_WIDTH=20;
 // Consti10: Stephen used a default tx power of 3100 somewhere (not sure if that ever made it trough though)
 // This value seems a bit high to me, so I am going with a default of "1800" (which should be 18.0 dBm )
 // Used to be in dBm, but mW really is more verbose to the user - we convert from mW to dBm when using the iw dev set command
-static constexpr auto DEFAULT_WIFI_TX_POWER_MILLI_WATT=25;
+static constexpr auto DEFAULT_WIFI_TX_POWER_MILLI_WATT=30;
 // Measured to be about /below 25mW, RTL8812au only (or future cards who use the recommended power level index approach)
 static constexpr auto DEFAULT_RTL8812AU_TX_POWER_INDEX=22;
 
@@ -92,6 +92,7 @@ static int calculate_max_fec_block_size_for_platform(const OHDPlatform platform)
     case PlatformType::iMX6:
     case PlatformType::Rockchip:
     case PlatformType::Zynq:
+    case PlatformType::Qrb5165:
     case PlatformType::Unknown:
     default:
       return 20;

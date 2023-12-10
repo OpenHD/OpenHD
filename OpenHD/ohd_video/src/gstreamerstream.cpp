@@ -83,6 +83,10 @@ void GStreamerStream::setup() {
       setup_jetson_csi();
       break;
     }
+    case CameraType::QRB5165_CSI: {
+      setup_qrb5165_csi();
+      break;
+    }
     case CameraType::UVC: {
       setup_usb_uvc();
       break;
@@ -218,6 +222,14 @@ void GStreamerStream::setup_allwinner_csi() {
   const auto& setting=m_camera_holder->get_settings();
   m_pipeline_content << OHDGstHelper::createAllwinnerStream(0,setting.h26x_bitrate_kbits, setting.streamed_video_format, setting.h26x_keyframe_interval);
 }
+
+void GStreamerStream::setup_qrb5165_csi() {
+  m_console->debug("Setting up qrb5165 csi camera");
+  const auto& camera= m_camera_holder->get_camera();
+  const auto& setting= m_camera_holder->get_settings();
+  m_pipeline_content << OHDGstHelper::createQrb5165Stream(camera.index,setting);
+}
+
 
 void GStreamerStream::setup_usb_uvc() {
   const auto& camera= m_camera_holder->get_camera();

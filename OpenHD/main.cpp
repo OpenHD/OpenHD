@@ -17,8 +17,6 @@
 #include "openhd_rpi_gpio.hpp"
 #include "openhd_spdlog.h"
 #include "openhd_temporary_air_or_ground.h"
-// For logging the commit hash and more
-#include "git.h"
 
 ///Regarding AIR / GROUND detection: Previous OpenHD releases would detect weather this system is an air pi
 // or ground pi by checking weather it has a connected camera. However, this pattern has 2 problems:
@@ -194,7 +192,6 @@ int main(int argc, char *argv[]) {
       "run_time_seconds:"<<options.run_time_seconds<<"\n"<<
       "continue_without_wb_card:"<<OHDUtil::yes_or_no(options.continue_without_wb_card)<<"\n";
   std::cout<<"Version number:"<<openhd::VERSION_NUMBER_STRING<<"\n";
-  std::cout<<"Git info:Branch:"<<git_Branch()<<" SHA:"<<git_CommitSHA1()<<"Dirty:"<<OHDUtil::yes_or_no(git_AnyUncommittedChanges())<<"\n";
   openhd::debug_config();
   OHDInterface::print_internal_fec_optimization_method();
 

@@ -39,6 +39,7 @@ class GStreamerStream : public CameraStream {
   void setup_rockchip_hdmi();
   void setup_rockchip_csi();
   void setup_allwinner_csi();
+  void setup_qrb5165_csi();
   void setup_usb_uvc();
   void setup_usb_uvch264();
   void setup_ip_camera();

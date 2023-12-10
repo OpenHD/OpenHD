@@ -15,6 +15,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM( WiFiCardType, {
   {WiFiCardType::Ralink, "Ralink"},
   {WiFiCardType::Intel, "Intel"},
   {WiFiCardType::Broadcom, "Broadcom"},
+  {WiFiCardType::Qualcomm, "Qualcomm"},
 });
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WiFiCard,device_name,mac,phy80211_index,driver_name,type,
