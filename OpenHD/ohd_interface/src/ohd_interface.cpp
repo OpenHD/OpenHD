@@ -233,7 +233,7 @@ std::shared_ptr<openhd::ExternalDeviceManager> OHDInterface::get_ext_devices_man
 }
 
 void OHDInterface::generate_keys_from_pw_if_exists_and_delete() {
-  static constexpr auto PW_FILENAME="/boot/openhd/pw.txt";
+  static constexpr auto PW_FILENAME="/boot/openhd/password.txt";
   if(OHDFilesystemUtil::exists(PW_FILENAME)){
     auto pw=OHDFilesystemUtil::read_file(PW_FILENAME);
     OHDUtil::trim(pw);

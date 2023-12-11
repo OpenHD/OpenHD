@@ -5,13 +5,7 @@ on:
    branches:
       - "2.5-evo"
       - "dev-release"
-      - "releases"
-   paths-ignore:
-      - '**.md'
-      - '**.asciidoc'
-      - '**.adoc'
-      - '.gitignore'
-      - 'LICENSE'
+      - "release"
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)

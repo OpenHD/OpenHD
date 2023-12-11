@@ -6,12 +6,6 @@ on:
       - "2.5-evo"
       - "dev-release"
       - "release"
-   paths-ignore:
-      - '**.md'
-      - '**.asciidoc'
-      - '**.adoc'
-      - '.gitignore'
-      - 'LICENSE'
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
