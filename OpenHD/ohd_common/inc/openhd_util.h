@@ -163,6 +163,7 @@ std::string time_readable_ns(uint64_t nanoseconds);
 
 uint32_t get_micros(std::chrono::nanoseconds ns);
 
+std::string int_as_string(int number);
 }
 
 #endif
