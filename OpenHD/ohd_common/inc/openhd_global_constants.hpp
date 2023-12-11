@@ -32,5 +32,11 @@ static_assert(VIDEO_GROUND_VIDEO_STREAM_1_UDP != VIDEO_GROUND_VIDEO_STREAM_2_UDP
 
 static constexpr auto VERSION_NUMBER_STRING="2.5.3-evo-release";
 
+// This optional file contains an encryption keypair (up/down).
+// It is generated at first boot if the user specifies a pw during flash.
+// If this file does not exist, the default keypair from the default pw (openhd)
+// is generated at run time.
+static constexpr auto SECURITY_KEYPAIR_FILENAME="/usr/local/share/openhd/txrx.key";
+
 }
 #endif //OPEN_HD_OPNHD_GLOBAL_CONSTANTS_H

@@ -3,13 +3,14 @@
 //
 
 #include "ohd_interface.h"
-#include "openhd_config.h"
-#include "openhd_util_filesystem.h"
 
 #include <wifi_card_discovery.h>
 
 #include <utility>
 
+#include "openhd_config.h"
+#include "openhd_global_constants.hpp"
+#include "openhd_util_filesystem.h"
 #include "wb_link.h"
 
 OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared_ptr<openhd::ActionHandler> opt_action_handler,bool continue_without_wb_card)
@@ -239,7 +240,7 @@ void OHDInterface::generate_keys_from_pw_if_exists_and_delete() {
     OHDUtil::trim(pw);
     openhd::log::get_default()->info("Generating key(s) from pw xxx"); // don't show the pw
     auto keys=wb::generate_keypair_from_bind_phrase(pw);
-    wb::write_keypair_to_file(keys,"/boot/openhd/txrx.key");
+    wb::write_keypair_to_file(keys,openhd::SECURITY_KEYPAIR_FILENAME);
     // delete the file
     OHDFilesystemUtil::remove_if_existing(PW_FILENAME);
   }
