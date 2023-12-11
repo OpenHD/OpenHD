@@ -54,6 +54,8 @@ class WBLink :public OHDLink{
    * @return the current wb channel space
    */
   [[nodiscard]] openhd::WifiSpace get_current_frequency_channel_space()const;
+  //static constexpr auto OPENHD_KEYPAIR_FILENAME="/boot/openhd/txrx.key";
+  static constexpr auto OPENHD_KEYPAIR_FILENAME="/usr/local/share/openhd/txrx.key";
  private:
   // NOTE:
   // For everything prefixed with 'request_', we validate the param (since it comes from mavlink and might be unsafe to apply)

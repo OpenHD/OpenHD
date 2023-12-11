@@ -55,10 +55,9 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   //txrx_options.debug_decrypt_time= true;
   //txrx_options.debug_encrypt_time= true;
   //txrx_options.debug_packet_gaps= true;
-  const auto keypair_file= "/boot/openhd/txrx.key";
-  if(OHDFilesystemUtil::exists(keypair_file)){
-    txrx_options.secure_keypair=wb::read_keypair_from_file(keypair_file);
-    m_console->debug("Using key from file {}",keypair_file);
+  if(OHDFilesystemUtil::exists(OPENHD_KEYPAIR_FILENAME)){
+    txrx_options.secure_keypair=wb::read_keypair_from_file(OPENHD_KEYPAIR_FILENAME);
+    m_console->debug("Using key from file {}",OPENHD_KEYPAIR_FILENAME);
   }else{
       txrx_options.secure_keypair = std::nullopt;
       m_console->debug("Using key from default bind phrase");
@@ -391,7 +390,7 @@ bool WBLink::apply_frequency_and_channel_width(int frequency, int channel_width_
     // Weird bug hunting - I hope this makes the driver less likely too crash
     // Temporarily stop injecting packets
     m_wb_txrx->set_passive_mode(true);
-    std::this_thread::sleep_for(std::chrono::milliseconds(10)); // Dirty - wait for any tx packets to drain
+    std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Dirty - wait for any tx packets to drain
     const auto res=openhd::wb::set_frequency_and_channel_width_for_all_cards(frequency,channel_width_rx,m_broadcast_cards);
     m_tx_header_1->update_channel_width(channel_width_tx);
     m_wb_txrx->tx_reset_stats();
