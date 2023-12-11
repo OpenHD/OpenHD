@@ -55,9 +55,9 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   //txrx_options.debug_decrypt_time= true;
   //txrx_options.debug_encrypt_time= true;
   //txrx_options.debug_packet_gaps= true;
-  if(OHDFilesystemUtil::exists(OPENHD_KEYPAIR_FILENAME)){
-    txrx_options.secure_keypair=wb::read_keypair_from_file(OPENHD_KEYPAIR_FILENAME);
-    m_console->debug("Using key from file {}",OPENHD_KEYPAIR_FILENAME);
+  if(OHDFilesystemUtil::exists(openhd::SECURITY_KEYPAIR_FILENAME)){
+    txrx_options.secure_keypair=wb::read_keypair_from_file(openhd::SECURITY_KEYPAIR_FILENAME);
+    m_console->debug("Using key from file {}",openhd::SECURITY_KEYPAIR_FILENAME);
   }else{
       txrx_options.secure_keypair = std::nullopt;
       m_console->debug("Using key from default bind phrase");
