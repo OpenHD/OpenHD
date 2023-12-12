@@ -335,4 +335,8 @@ void OHDUtil::trim(std::string &s) {
     rtrim(s);
     ltrim(s);
 }
-
+std::string OHDUtil::int_as_string(int number) {
+    std::stringstream ss;
+    ss<<number;
+    return ss.str();
+}

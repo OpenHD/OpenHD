@@ -31,6 +31,20 @@ static std::string get_localtime_string(){
   return ss.str();
 }
 
+static int get_recording_index_track_count(){ // File to keep track of recording numbers
+  const std::string recording_track_filename=std::string(RECORDINGS_PATH)+"track_count.txt";
+  int track_count=1;
+  const auto opt_content=OHDFilesystemUtil::opt_read_file(recording_track_filename);
+  if(opt_content.has_value()){
+    const auto last_track_count=OHDUtil::string_to_int(opt_content.value());
+    if(last_track_count.has_value()){
+      track_count=last_track_count.value()+1;
+    }
+  }
+  OHDFilesystemUtil::write_file(recording_track_filename,OHDUtil::int_as_string(track_count));
+  return track_count;
+}
+
 /**
  * Creates a new not yet used filename (aka the file does not yet exists) to be used for air recording.
  * @param suffix the suffix of the filename,e.g. ".avi" or ".mp4"
@@ -39,7 +53,12 @@ static std::string create_unused_recording_filename(const std::string& suffix){
   if(!OHDFilesystemUtil::exists(RECORDINGS_PATH)){
     OHDFilesystemUtil::create_directories(RECORDINGS_PATH);
   }
-  return RECORDINGS_PATH+get_localtime_string()+suffix;
+  // TEMPORARY - considering how many users use RPI (where date is not reliable)
+  // we just name the files ascending
+  // recording-1, recording-2 ...
+  // we also make sure that we always use ascending numbers, even if the user deletes a video
+  const int track_index=get_recording_index_track_count();
+  return fmt::format("{}recording_{}{}",RECORDINGS_PATH,track_index,suffix);
   /*for(int i=0;i<10000;i++){
     // Suffix might be either .
     std::stringstream filename;
