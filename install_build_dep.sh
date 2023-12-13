@@ -26,6 +26,7 @@ PLATFORM_PACKAGES_REMOVE=""
  apt install -y curl
  curl -1sLf 'https://dl.cloudsmith.io/public/openhd/release/setup.deb.sh'| sudo -E bash
  apt update
+ apt upgrade -y
 
 # Main function
  
