@@ -5,7 +5,9 @@
 # exclude everything that is created by intellij when you open this repository
 .idea
 
-build
+OpenHD/build
+OpenHD/build_debug
+OpenHD/build_release
 
 # Created by https://www.toptal.com/developers/gitignore/api/visualstudio,visualstudiocode
 # Edit at https://www.toptal.com/developers/gitignore?templates=visualstudio,visualstudiocode
