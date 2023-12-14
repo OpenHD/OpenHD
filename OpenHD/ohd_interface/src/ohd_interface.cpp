@@ -234,15 +234,30 @@ std::shared_ptr<openhd::ExternalDeviceManager> OHDInterface::get_ext_devices_man
 }
 
 void OHDInterface::generate_keys_from_pw_if_exists_and_delete() {
+  // Make sure this stupid sodium init has been called
+  if (sodium_init() == -1) {
+    std::cerr<<"Cannot init libsodium"<<std::endl;
+    exit(EXIT_FAILURE);
+  }
   static constexpr auto PW_FILENAME="/boot/openhd/password.txt";
   if(OHDFilesystemUtil::exists(PW_FILENAME)){
     auto pw=OHDFilesystemUtil::read_file(PW_FILENAME);
     OHDUtil::trim(pw);
-    openhd::log::get_default()->info("Generating key(s) from pw xxx"); // don't show the pw
+    openhd::log::get_default()->info("Generating key(s) from pw [{}]",OHDUtil::password_as_hidden_str(pw)); // don't show the pw
     auto keys=wb::generate_keypair_from_bind_phrase(pw);
+    openhd::log::get_default()->debug("XX:{}",keys.key_1.secret_key[2]);
     wb::write_keypair_to_file(keys,openhd::SECURITY_KEYPAIR_FILENAME);
-    // delete the file
-    OHDFilesystemUtil::remove_if_existing(PW_FILENAME);
+    // Stupid check - if the keypair file was not written correctly, log warning and try again another time
+    auto content=OHDFilesystemUtil::opt_read_file(openhd::SECURITY_KEYPAIR_FILENAME);
+    if(content.has_value()&&content->size()>10){
+      // delete the file
+      OHDFilesystemUtil::remove_if_existing(PW_FILENAME);
+      OHDFilesystemUtil::make_file_read_write_everyone(PW_FILENAME);
+    }else{
+      openhd::log::get_default()->error("Cannot create keypair !");
+      // remove the (broken) keypair file
+      OHDFilesystemUtil::remove_if_existing(openhd::SECURITY_KEYPAIR_FILENAME);
+    }
   }
 }
 

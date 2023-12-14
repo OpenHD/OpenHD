@@ -172,6 +172,9 @@ int main(int argc, char *argv[]) {
   // Create the folder structure for the (per-module-specific) settings if needed
   openhd::generateSettingsDirectoryIfNonExists();
 
+  // Generate the keys and delete pw if needed
+  OHDInterface::generate_keys_from_pw_if_exists_and_delete();
+
   // Parse the program arguments, also uses the "yes if file exists" pattern for some params
   const OHDRunOptions options=parse_run_parameters(argc,argv);
   if(options.hardware_config_file.has_value()){
@@ -204,9 +207,6 @@ int main(int argc, char *argv[]) {
   // First discover the platform:
   const auto platform = DPlatform::discover();
   m_console->info("Detected Platform:{}",platform->to_string());
-
-  // Generate the keys and delete pw if needed
-  OHDInterface::generate_keys_from_pw_if_exists_and_delete();
 
   // Create and link all the OpenHD modules.
   try {
