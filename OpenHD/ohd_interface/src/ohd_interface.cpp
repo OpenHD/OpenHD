@@ -252,7 +252,7 @@ void OHDInterface::generate_keys_from_pw_if_exists_and_delete() {
     if(content.has_value()&&content->size()>10){
       // delete the file
       OHDFilesystemUtil::remove_if_existing(PW_FILENAME);
-      OHDFilesystemUtil::make_file_read_write_everyone(PW_FILENAME);
+      OHDFilesystemUtil::make_file_read_write_everyone(openhd::SECURITY_KEYPAIR_FILENAME);
     }else{
       openhd::log::get_default()->error("Cannot create keypair !");
       // remove the (broken) keypair file
