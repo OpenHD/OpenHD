@@ -335,8 +335,19 @@ void OHDUtil::trim(std::string &s) {
     rtrim(s);
     ltrim(s);
 }
+
 std::string OHDUtil::int_as_string(int number) {
     std::stringstream ss;
     ss<<number;
+    return ss.str();
+}
+
+std::string OHDUtil::password_as_hidden_str(const std::string& pw) {
+    // Show first character and * for the rest
+    std::stringstream ss;
+    for(int i=0;i<pw.size();i++){
+        if(i==0)ss<<pw[i];
+        else ss<<"*";
+    }
     return ss.str();
 }
