@@ -472,8 +472,13 @@ void GStreamerStream::stream_once() {
   // or the resolution set is not supported by the camera, we won't get further than this.
   bool succesfully_streaming=false;
   m_console->debug(openhd::gst_element_get_current_state_as_string(m_gst_pipeline,&succesfully_streaming));
+  if(m_camera_holder->get_camera().rpi_csi_mmal_is_csi_to_hdmi || m_camera_holder->get_camera().type==CameraType::ALLWINNER_CSI){
+    m_console->warn("Not checking gst state after calling play (bugged)");
+    succesfully_streaming= true;
+  }
   if(!succesfully_streaming){
     m_console->warn("Cannot start streaming. Valid resolution ?",m_camera_holder->get_camera().index);
+    stop();
     cleanup_pipe();
     // Sleep a bit and hope it works next time
     std::this_thread::sleep_for(std::chrono::seconds(5));
