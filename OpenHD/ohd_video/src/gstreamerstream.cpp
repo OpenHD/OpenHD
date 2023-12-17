@@ -478,6 +478,7 @@ void GStreamerStream::stream_once() {
   }
   if(!succesfully_streaming){
     m_console->warn("Cannot start streaming. Valid resolution ?",m_camera_holder->get_camera().index);
+    stop();
     cleanup_pipe();
     // Sleep a bit and hope it works next time
     std::this_thread::sleep_for(std::chrono::seconds(5));
