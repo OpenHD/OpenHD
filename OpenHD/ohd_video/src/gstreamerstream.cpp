@@ -180,10 +180,11 @@ void GStreamerStream::setup() {
     const auto index=m_camera_holder->get_camera().index;
     const auto cam_type= camera_type_to_int(m_camera_holder->get_camera().type);
     auto cam_info=openhd::ActionHandler::CamInfo{true,
-     (uint8_t)index,cam_type,0,ADD_RECORDING_TO_PIPELINE, (uint8_t)video_codec_to_int(setting.streamed_video_format.videoCodec),(uint16_t)setting.h26x_bitrate_kbits,
+     (uint8_t)index,cam_type,CAM_STATUS_RESTARTING,ADD_RECORDING_TO_PIPELINE, (uint8_t)video_codec_to_int(setting.streamed_video_format.videoCodec),(uint16_t)setting.h26x_bitrate_kbits,
                                            (uint8_t)setting.h26x_keyframe_interval,(uint16_t )setting.streamed_video_format.width,
                                            (uint16_t )setting.streamed_video_format.height,(uint16_t )setting.streamed_video_format.framerate};
     m_opt_action_handler->set_cam_info(index,cam_info);
+
     //m_console->debug("Cam encoding format: {}",(int)cam_info.encoding_format);
   }
 }
