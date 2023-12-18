@@ -11,7 +11,10 @@
 #include "openhd_link.hpp"
 #include "openhd_util.h"
 
+//
 // Can be used to test / validate a camera implementation.
+// R.n prints info about the received frame(s) to stdout.
+// (See DummyDebugLink)
 //
 int main(int argc, char *argv[]) {
   // We need root to read / write camera settings.
