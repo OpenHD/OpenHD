@@ -91,4 +91,28 @@ class OHDLink{
   std::shared_ptr<ON_VIDEO_DATA_CB> m_video_data_cb;
 };
 
+class DummyDebugLink: public OHDLink{
+ public:
+  explicit DummyDebugLink(){
+    m_console_tele=openhd::log::create_or_get("tele");
+    m_console_video=openhd::log::create_or_get("video");
+  }
+  void transmit_telemetry_data(TelemetryTxPacket packet)override{
+    m_console_tele->debug("Got {} telemetry fragments",packet.data->size());
+  }
+  // Called by the camera stream on the air unit only
+  // transmit video data via wifibradcast
+  void transmit_video_data(int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame) override{
+    int64_t total_bytes=0;
+    for(const auto& fragment: fragmented_video_frame.frame_fragments){
+      total_bytes+=fragment->size();
+    }
+    m_console_video->debug("Got Frame. Fragments:{} total: {}Bytes",fragmented_video_frame.frame_fragments.size(),
+                          total_bytes);
+  }
+ private:
+  std::shared_ptr<spdlog::logger> m_console_video;
+  std::shared_ptr<spdlog::logger> m_console_tele;
+};
+
 #endif  // OPENHD_OPENHD_OHD_COMMON_OHD_LINK_HPP_
