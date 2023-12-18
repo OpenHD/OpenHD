@@ -316,6 +316,12 @@ void GStreamerStream::stop() {
 void GStreamerStream::cleanup_pipe() {
   m_console->debug("GStreamerStream::cleanup_pipe() begin");
   assert(m_gst_pipeline!= nullptr);
+  // Drop the reference to the bitrate control element (if it exists)
+  if(m_bitrate_ctrl_element.has_value()){
+    unref_bitrate_element(m_bitrate_ctrl_element.value());
+  }
+  // As well as the appsink (always exists)
+  openhd::unref_appsink_element(m_app_sink_element);
   // Jan 22: Confirmed this hangs quite a lot of pipeline(s) - removed for that reason
   /*m_console->debug("send EOS begin");
   // according to @Alex W we need a EOS signal here to properly shut down the pipeline
@@ -562,6 +568,9 @@ void GStreamerStream::stream_once() {
     }
   }
   // If we land here, we need to clean up the pipe and (re) start
+  const auto terminate_begin=std::chrono::steady_clock::now();
   stop();
   cleanup_pipe();
+  m_console->debug("Terminating pipeline took {}ms",
+                   std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-terminate_begin).count());
 }

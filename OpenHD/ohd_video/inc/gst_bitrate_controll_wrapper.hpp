@@ -74,4 +74,13 @@ static bool change_bitrate(const GstBitrateControlElement& ctrl_el,int bitrate_k
   return true;
 }
 
+static void unref_bitrate_element(GstBitrateControlElement& element){
+  if(element.encoder){
+    openhd::log::get_default()->debug("Unref bitrate control element begin");
+    gst_object_unref(element.encoder);
+    element.encoder= nullptr;
+    openhd::log::get_default()->debug("Unref bitrate control element end");
+  }
+}
+
 #endif  // OPENHD_OPENHD_OHD_VIDEO_INC_GST_BITRATE_CONTROLL_WRAPPER_H_

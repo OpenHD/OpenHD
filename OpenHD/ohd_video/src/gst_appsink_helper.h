@@ -101,5 +101,14 @@ static void loop_pull_appsink_samples(bool& keep_looping,GstElement *app_sink_el
   }
 }
 
+static void unref_appsink_element(GstElement *appsink){
+  if(appsink){
+    openhd::log::get_default()->debug("Unref appsink begin");
+    gst_object_unref(appsink);
+    appsink= nullptr;
+    openhd::log::get_default()->debug("Unref appsink end");
+  }
+}
+
 }
 #endif  // OPENHD_OPENHD_OHD_VIDEO_SRC_GST_APPSINK_HELPER_H_
