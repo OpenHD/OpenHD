@@ -140,15 +140,11 @@ void GStreamerStream::setup() {
   }
   // After we've written the parts for the different camera implementation(s) we just need to append the rtp part and the udp out
   // add rtp part
-  // Optimization: For high bitrate(s) we use slightly bigger rtp packet size
-  /*int rtp_fragment_size=1024;
-  if(setting.h26x_bitrate_kbits>10*1000){
-    rtp_fragment_size=1440;
-  }*/
-  const int rtp_fragment_size=1440;
+  /*const int rtp_fragment_size=1440;
   m_console->debug("Using {} for rtp fragmentation",rtp_fragment_size);
   m_pipeline_content << OHDGstHelper::create_parse_and_rtp_packetize(
-      setting.streamed_video_format.videoCodec,rtp_fragment_size);
+      setting.streamed_video_format.videoCodec,rtp_fragment_size);*/
+  //m_pipeline_content << OHDGstHelper::create_queue_and_parse(setting.streamed_video_format.videoCodec);
   // forward data via udp localhost or using appsink and data callback
   //m_pipeline_content << OHDGstHelper::createOutputUdpLocalhost(m_video_udp_port);
   m_pipeline_content << OHDGstHelper::createOutputAppSink();
@@ -570,8 +566,8 @@ void GStreamerStream::stream_once() {
       sample= nullptr;
       if(fragment_data && !fragment_data->empty()){
         // If we got a new sample, aggregate then forward
-        on_new_rtp_frame_fragment(std::move(fragment_data),buffer_dts);
-        //on_new_raw_frame(fragment_data);
+        //on_new_rtp_frame_fragment(std::move(fragment_data),buffer_dts);
+        on_new_raw_frame(fragment_data);
         m_last_camera_frame=std::chrono::steady_clock::now();
       }
     }
@@ -586,7 +582,7 @@ void GStreamerStream::stream_once() {
 
 void GStreamerStream::on_new_raw_frame(
     std::shared_ptr<std::vector<uint8_t>> frame) {
-  m_console->debug("Got frame");
+  // Experimental - fragment frame ourselves
   std::vector<std::shared_ptr<std::vector<uint8_t>>> fragments;
   int bytes_used=0;
   uint8_t* p=frame->data();
@@ -606,5 +602,6 @@ void GStreamerStream::on_new_raw_frame(
       break ;
     }
   }
+  fragments.resize(fragments.size()/4);
   on_new_rtp_fragmented_frame(fragments);
 }

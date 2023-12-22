@@ -670,6 +670,12 @@ static std::string create_parse_and_rtp_packetize(const VideoCodec videoCodec,in
   ss << create_rtp_packetize_for_codec(videoCodec,rtp_fragment_size);
   return ss.str();
 }
+static std::string create_queue_and_parse(const VideoCodec videoCodec) {
+  std::stringstream ss;
+  ss << "queue ! ";
+  ss << create_parse_for_codec(videoCodec);
+  return ss.str();
+}
 
 /**
  * Create the part of the pipeline that takes the rtp from gstreamer and sends
