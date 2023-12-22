@@ -752,5 +752,12 @@ static std::string create_ip_cam_stream_with_depacketize_and_parse(const std::st
   return ss.str();
 }
 
+static std::array<uint8_t,6> EXAMPLE_AUD={
+    0,0,0,1,9,48
+};
+static std::shared_ptr<std::vector<uint8_t>> get_h264_aud(){
+  return std::make_shared<std::vector<uint8_t>>(EXAMPLE_AUD.data(),EXAMPLE_AUD.data()+EXAMPLE_AUD.size());
+}
+
 }  // namespace OHDGstHelper
 #endif  // OPENHD_OHDGSTHELPER_H

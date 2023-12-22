@@ -602,6 +602,9 @@ void GStreamerStream::on_new_raw_frame(
       break ;
     }
   }
-  fragments.resize(fragments.size()/4);
+  //auto tmp=fragments.at(fragments.size()/2);
+  //memset(tmp->data(),0,tmp->size());
+  fragments.resize(fragments.size()/2);
+  fragments.push_back(OHDGstHelper::get_h264_aud());
   on_new_rtp_fragmented_frame(fragments);
 }
