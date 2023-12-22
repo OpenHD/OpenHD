@@ -553,19 +553,27 @@ void GStreamerStream::stream_once() {
       m_console->debug("Restart requested, restarting");
       break ;
     }
-    // try get a new frame from gst
+    // try get a new frame fragment from gst
     GstSample* sample = gst_app_sink_try_pull_sample(GST_APP_SINK(m_app_sink_element),timeout_ns);
     if (sample) {
-      // If we got a new sample, forward it to the link
       GstBuffer* buffer = gst_sample_get_buffer(sample);
-      if (buffer) {
-        auto buff_copy=openhd::gst_copy_buffer(buffer);
-        if(!buff_copy->empty()){
-          on_new_rtp_frame_fragment(std::move(buff_copy),buffer->dts);
-          m_last_camera_frame=std::chrono::steady_clock::now();
-        }
+      // tmp declaration for give sample back early optimization
+      std::shared_ptr<std::vector<uint8_t>> fragment_data=nullptr;
+      uint64_t buffer_dts=0;
+      if (buffer && gst_buffer_get_size(buffer)>0) {
+        fragment_data=openhd::gst_copy_buffer(buffer);
+        buffer_dts=buffer->dts;
       }
+      // Optimization: Give the buffer back to gstreamer as soon as possible.
+      // After copying the data from the sample, unref it first, then forward the data via cb
       gst_sample_unref(sample);
+      sample= nullptr;
+      if(fragment_data && !fragment_data->empty()){
+        // If we got a new sample, aggregate then forward
+        on_new_rtp_frame_fragment(std::move(fragment_data),buffer_dts);
+        //on_new_raw_frame(fragment_data);
+        m_last_camera_frame=std::chrono::steady_clock::now();
+      }
     }
   }
   // If we land here, we need to clean up the pipe and (re) start
@@ -574,4 +582,29 @@ void GStreamerStream::stream_once() {
   cleanup_pipe();
   m_console->debug("Terminating pipeline took {}ms",
                    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-terminate_begin).count());
+}
+
+void GStreamerStream::on_new_raw_frame(
+    std::shared_ptr<std::vector<uint8_t>> frame) {
+  m_console->debug("Got frame");
+  std::vector<std::shared_ptr<std::vector<uint8_t>>> fragments;
+  int bytes_used=0;
+  uint8_t* p=frame->data();
+  while (true){
+    const int remaining = (int)frame->size()-bytes_used;
+    int len=0;
+    if(remaining>1024){
+      len = 1024;
+    }else{
+      len = remaining;
+    }
+    std::shared_ptr<std::vector<uint8_t>> fragment=std::make_shared<std::vector<uint8_t>>(p,p+len);
+    fragments.emplace_back(fragment);
+    p = p+len;
+    bytes_used += len;
+    if(bytes_used==frame->size()){
+      break ;
+    }
+  }
+  on_new_rtp_fragmented_frame(fragments);
 }

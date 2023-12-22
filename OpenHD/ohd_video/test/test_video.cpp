@@ -24,7 +24,14 @@ int main(int argc, char *argv[]) {
   if(cameras.empty()){
     cameras.emplace_back(createDummyCamera());
   }
+  auto forwarder=SocketHelper::UDPForwarder("127.0.0.1",5600);
+  auto cb=[&forwarder](int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame){
+      for(auto& fragemnt: fragmented_video_frame.frame_fragments){
+        forwarder.forwardPacketViaUDP(fragemnt->data(),fragemnt->size());
+      }
+  };
   auto debug_link=std::make_shared<DummyDebugLink>();
+  debug_link->m_opt_frame_cb=cb;
   OHDVideoAir ohdVideo(*platform,cameras, nullptr, debug_link);
   std::cout << "OHDVideo started\n";
   OHDUtil::keep_alive_until_sigterm();
