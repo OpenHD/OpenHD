@@ -140,10 +140,10 @@ void GStreamerStream::setup() {
   }
   // After we've written the parts for the different camera implementation(s) we just need to append the rtp part and the udp out
   // add rtp part
-  /*const int rtp_fragment_size=1440;
+  const int rtp_fragment_size=1440;
   m_console->debug("Using {} for rtp fragmentation",rtp_fragment_size);
   m_pipeline_content << OHDGstHelper::create_parse_and_rtp_packetize(
-      setting.streamed_video_format.videoCodec,rtp_fragment_size);*/
+      setting.streamed_video_format.videoCodec,rtp_fragment_size);
   //m_pipeline_content << OHDGstHelper::create_queue_and_parse(setting.streamed_video_format.videoCodec);
   // forward data via udp localhost or using appsink and data callback
   //m_pipeline_content << OHDGstHelper::createOutputUdpLocalhost(m_video_udp_port);
@@ -566,8 +566,8 @@ void GStreamerStream::stream_once() {
       sample= nullptr;
       if(fragment_data && !fragment_data->empty()){
         // If we got a new sample, aggregate then forward
-        //on_new_rtp_frame_fragment(std::move(fragment_data),buffer_dts);
-        on_new_raw_frame(fragment_data);
+        on_new_rtp_frame_fragment(std::move(fragment_data),buffer_dts);
+        //on_new_raw_frame(fragment_data);
         m_last_camera_frame=std::chrono::steady_clock::now();
       }
     }
