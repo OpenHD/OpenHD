@@ -140,13 +140,16 @@ void GStreamerStream::setup() {
   }
   // After we've written the parts for the different camera implementation(s) we just need to append the rtp part and the udp out
   // add rtp part
-  const int rtp_fragment_size=1440;
+  /*const int rtp_fragment_size=1440;
   m_console->debug("Using {} for rtp fragmentation",rtp_fragment_size);
   m_pipeline_content << OHDGstHelper::create_parse_and_rtp_packetize(
-      setting.streamed_video_format.videoCodec,rtp_fragment_size);
+      setting.streamed_video_format.videoCodec,rtp_fragment_size);*/
   //m_pipeline_content << OHDGstHelper::create_queue_and_parse(setting.streamed_video_format.videoCodec);
   // forward data via udp localhost or using appsink and data callback
   //m_pipeline_content << OHDGstHelper::createOutputUdpLocalhost(m_video_udp_port);
+  m_pipeline_content << OHDGstHelper::create_queue_and_parse(setting.streamed_video_format.videoCodec);
+  m_pipeline_content <<  OHDGstHelper::create_caps_nal(setting.streamed_video_format.videoCodec);
+  //m_pipeline_content << " queue ! ";
   m_pipeline_content << OHDGstHelper::createOutputAppSink();
   if(ADD_RECORDING_TO_PIPELINE){
     const auto recording_filename=openhd::video::create_unused_recording_filename(
@@ -566,8 +569,8 @@ void GStreamerStream::stream_once() {
       sample= nullptr;
       if(fragment_data && !fragment_data->empty()){
         // If we got a new sample, aggregate then forward
-        on_new_rtp_frame_fragment(std::move(fragment_data),buffer_dts);
-        //on_new_raw_frame(fragment_data);
+        //on_new_rtp_frame_fragment(std::move(fragment_data),buffer_dts);
+        on_new_raw_frame(fragment_data);
         m_last_camera_frame=std::chrono::steady_clock::now();
       }
     }
@@ -582,12 +585,23 @@ void GStreamerStream::stream_once() {
 
 void GStreamerStream::on_new_raw_frame(
     std::shared_ptr<std::vector<uint8_t>> frame) {
+  //m_console->debug(OHDUtil::bytes_as_string(frame->data(),frame->size()));
   // Experimental - fragment frame ourselves
+  auto fragments= make_fragments(*frame);
+  //auto tmp=fragments.at(fragments.size()/2);
+  //memset(tmp->data(),0,tmp->size());
+  //fragments.resize(fragments.size()/2);
+  //fragments.push_back(OHDGstHelper::get_h264_aud());
+  on_new_rtp_fragmented_frame(fragments);
+}
+
+std::vector<std::shared_ptr<std::vector<uint8_t>>> GStreamerStream::make_fragments(
+    const std::vector<uint8_t>& frame) {
   std::vector<std::shared_ptr<std::vector<uint8_t>>> fragments;
   int bytes_used=0;
-  uint8_t* p=frame->data();
+  const uint8_t* p=frame.data();
   while (true){
-    const int remaining = (int)frame->size()-bytes_used;
+    const int remaining = (int)frame.size()-bytes_used;
     int len=0;
     if(remaining>1024){
       len = 1024;
@@ -598,13 +612,9 @@ void GStreamerStream::on_new_raw_frame(
     fragments.emplace_back(fragment);
     p = p+len;
     bytes_used += len;
-    if(bytes_used==frame->size()){
+    if(bytes_used==frame.size()){
       break ;
     }
   }
-  //auto tmp=fragments.at(fragments.size()/2);
-  //memset(tmp->data(),0,tmp->size());
-  fragments.resize(fragments.size()/2);
-  fragments.push_back(OHDGstHelper::get_h264_aud());
-  on_new_rtp_fragmented_frame(fragments);
+  return fragments;
 }

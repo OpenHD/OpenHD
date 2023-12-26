@@ -89,7 +89,7 @@ class GStreamerStream : public CameraStream {
   void on_new_rtp_fragmented_frame(std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments);
   void on_new_raw_frame(std::shared_ptr<std::vector<uint8_t>> frame);
   std::vector<std::shared_ptr<std::vector<uint8_t>>> m_frame_fragments;
-
+  static  std::vector<std::shared_ptr<std::vector<uint8_t>>> make_fragments(const std::vector<uint8_t>& frame);
 };
 
 #endif

@@ -677,6 +677,10 @@ static std::string create_queue_and_parse(const VideoCodec videoCodec) {
   return ss.str();
 }
 
+static std::string create_caps_nal(const VideoCodec& videoCodec){
+  return "video/x-h264,stream-format=byte-stream,alignment=nal ! ";
+}
+
 /**
  * Create the part of the pipeline that takes the rtp from gstreamer and sends
  * it to udp.

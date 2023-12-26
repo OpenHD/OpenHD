@@ -21,6 +21,7 @@ int main(int argc, char *argv[]) {
   OHDUtil::terminate_if_not_root();
   const auto platform=DPlatform::discover();
   auto cameras=DCameras::discover(*platform);
+  //auto cameras=std::vector<Camera>();
   if(cameras.empty()){
     cameras.emplace_back(createDummyCamera());
   }
