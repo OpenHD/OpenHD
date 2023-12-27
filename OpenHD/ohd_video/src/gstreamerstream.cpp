@@ -141,9 +141,9 @@ void GStreamerStream::setup() {
   // After we've written the parts for the different camera implementation(s) we just need to append the rtp part and the udp out
   // add rtp part
   if(dirty_use_raw){
-    m_pipeline_content << OHDGstHelper::create_queue_and_parse(setting.streamed_video_format.videoCodec);
+    /*m_pipeline_content << OHDGstHelper::create_queue_and_parse(setting.streamed_video_format.videoCodec);
     m_pipeline_content <<  OHDGstHelper::create_caps_nal(setting.streamed_video_format.videoCodec);
-    m_pipeline_content << " queue ! ";
+    m_pipeline_content << " queue ! ";*/
     m_pipeline_content << OHDGstHelper::createOutputAppSink();
     /*m_pipeline_content << "video/x-h264,stream-format=byte-stream ! ";
     m_pipeline_content << OHDGstHelper::createOutputAppSink();*/
@@ -573,7 +573,7 @@ void GStreamerStream::stream_once() {
       if(fragment_data && !fragment_data->empty()){
         // If we got a new sample, aggregate then forward
         if(dirty_use_raw){
-          on_new_raw_frame(fragment_data);
+          on_new_raw_frame(fragment_data,buffer_dts);
         }else{
           on_new_rtp_frame_fragment(std::move(fragment_data),buffer_dts);
         }
@@ -590,8 +590,9 @@ void GStreamerStream::stream_once() {
 }
 
 void GStreamerStream::on_new_raw_frame(
-    std::shared_ptr<std::vector<uint8_t>> frame) {
+    std::shared_ptr<std::vector<uint8_t>> frame,uint64_t dts) {
   //m_console->debug(OHDUtil::bytes_as_string(frame->data(),frame->size()));
+  //m_console->debug("delay {}ms", calculate_delta(dts).count()/1000/1000);
   // Experimental - fragment frame ourselves
   auto fragments= make_fragments(*frame);
   //auto tmp=fragments.at(fragments.size()/2);
@@ -600,7 +601,7 @@ void GStreamerStream::on_new_raw_frame(
   if(fragments.size()>4){
     int random=std::rand();
     if(random % 8==0){
-      //fragments.resize(fragments.size()/2);
+      fragments.resize(fragments.size()/2);
       //fragments.resize(0);
     }
   }

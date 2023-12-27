@@ -87,7 +87,7 @@ class GStreamerStream : public CameraStream {
   // The stuff here is to pull the data out of the gstreamer pipeline, such that we can forward it to the WB link
   void on_new_rtp_frame_fragment(std::shared_ptr<std::vector<uint8_t>> fragment,uint64_t dts);
   void on_new_rtp_fragmented_frame(std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments);
-  void on_new_raw_frame(std::shared_ptr<std::vector<uint8_t>> frame);
+  void on_new_raw_frame(std::shared_ptr<std::vector<uint8_t>> frame,uint64_t dts);
   std::vector<std::shared_ptr<std::vector<uint8_t>>> m_frame_fragments;
   static  std::vector<std::shared_ptr<std::vector<uint8_t>>> make_fragments(const std::vector<uint8_t>& frame);
   bool dirty_use_raw= true;
