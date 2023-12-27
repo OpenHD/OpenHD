@@ -1,15 +1,12 @@
 #include "gstreamerstream.h"
 
 #include <gst/gst.h>
-#include <unistd.h>
 
 #include <iostream>
-#include <regex>
 #include <utility>
 #include <vector>
 
 #include "air_recording_helper.hpp"
-#include "ffmpeg_videosamples.hpp"
 #include "gst_appsink_helper.h"
 #include "gst_debug_helper.h"
 #include "gst_helper.hpp"
@@ -601,11 +598,11 @@ void GStreamerStream::on_new_raw_frame(
   if(fragments.size()>4){
     int random=std::rand();
     if(random % 8==0){
-      fragments.resize(fragments.size()/2);
-      //fragments.resize(0);
+      //fragments.resize(fragments.size()/2);
+      fragments.resize(0);
     }
   }
-  //fragments.push_back(OHDGstHelper::get_h264_aud());
+  fragments.push_back(OHDGstHelper::get_h264_aud());
   on_new_rtp_fragmented_frame(fragments);
 }
 
