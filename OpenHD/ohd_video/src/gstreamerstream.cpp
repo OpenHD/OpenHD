@@ -145,6 +145,8 @@ void GStreamerStream::setup() {
     m_pipeline_content <<  OHDGstHelper::create_caps_nal(setting.streamed_video_format.videoCodec);
     m_pipeline_content << " queue ! ";
     m_pipeline_content << OHDGstHelper::createOutputAppSink();
+    /*m_pipeline_content << "video/x-h264,stream-format=byte-stream ! ";
+    m_pipeline_content << OHDGstHelper::createOutputAppSink();*/
   }else{
     const int rtp_fragment_size=1440;
     m_console->debug("Using {} for rtp fragmentation",rtp_fragment_size);
@@ -597,8 +599,9 @@ void GStreamerStream::on_new_raw_frame(
   //fragments.resize(fragments.size()/2);
   if(fragments.size()>4){
     int random=std::rand();
-    if(random % 4==0){
-      fragments.resize(fragments.size()/2);
+    if(random % 8==0){
+      //fragments.resize(fragments.size()/2);
+      //fragments.resize(0);
     }
   }
   //fragments.push_back(OHDGstHelper::get_h264_aud());
@@ -610,11 +613,12 @@ std::vector<std::shared_ptr<std::vector<uint8_t>>> GStreamerStream::make_fragmen
   std::vector<std::shared_ptr<std::vector<uint8_t>>> fragments;
   int bytes_used=0;
   const uint8_t* p=frame.data();
+  static constexpr auto MAX_FRAGMENT_SIZE=1024;
   while (true){
     const int remaining = (int)frame.size()-bytes_used;
     int len=0;
-    if(remaining>1024){
-      len = 1024;
+    if(remaining>MAX_FRAGMENT_SIZE){
+      len = MAX_FRAGMENT_SIZE;
     }else{
       len = remaining;
     }
