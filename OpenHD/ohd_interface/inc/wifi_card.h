@@ -15,6 +15,7 @@
 enum class WiFiCardType {
   OPENHD_RTL_88X2AU, // Supported
   OPENHD_RTL_88X2BU, // Supported
+  OPENHD_RTL_8852BU, // testing phase
   // These are all unsupported, but might / might not work
   RTL_88X2AU, // right card, but wrong driver
   RTL_88X2BU, // right card, but wrong driver
@@ -32,6 +33,8 @@ static std::string wifi_card_type_to_string(const WiFiCardType &card_type) {
           return "OPENHD_RTL_88X2AU";
       case WiFiCardType::OPENHD_RTL_88X2BU:
           return "OPENHD_RTL_88X2BU";
+      case WiFiCardType::OPENHD_RTL_8852BU:
+          return "OPENHD_RTL_8852BU";
       case WiFiCardType::RTL_88X2AU:
           return "RTL_88X2AU";
       case WiFiCardType::RTL_88X2BU:
@@ -92,12 +95,14 @@ struct WiFiCard {
 static bool wifi_card_supports_variable_mcs(const WiFiCard& wifi_card){
   if(wifi_card.type==WiFiCardType::OPENHD_RTL_88X2AU)return true;
   if(wifi_card.type==WiFiCardType::OPENHD_RTL_88X2BU)return true;
+  if(wifi_card.type==WiFiCardType::OPENHD_RTL_8852BU)return true;
   return false;
 }
 // Only RTL8812au / BU so far support a 40Mhz channel width during injection
 static bool wifi_card_supports_40Mhz_channel_width_injection(const WiFiCard& wifi_card){
     if(wifi_card.type==WiFiCardType::OPENHD_RTL_88X2AU)return true;
     if(wifi_card.type==WiFiCardType::OPENHD_RTL_88X2BU)return true;
+    if(wifi_card.type==WiFiCardType::OPENHD_RTL_8852BU)return true;
     return false;
 }
 
