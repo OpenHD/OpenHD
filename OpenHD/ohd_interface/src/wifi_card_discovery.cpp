@@ -19,6 +19,10 @@ static WiFiCardType driver_to_wifi_card_type(const std::string &driver_name) {
         // NOTE: "rtw_8822bu" is the bad kernel driver which is fucking horrible.
         return WiFiCardType::OPENHD_RTL_88X2BU;
     }
+    if(OHDUtil::equal_after_uppercase(driver_name,"rtl8852bu_ohd")){
+        // NOTE: "rtw_8822bu" is the bad kernel driver which is fucking horrible.
+        return WiFiCardType::OPENHD_RTL_8852BU;
+    }
     // The not supported, but perhaps working card(s)
     if(OHDUtil::contains_after_uppercase(driver_name,"ath9k")) {
         return WiFiCardType::ATHEROS;
@@ -59,6 +63,9 @@ static std::vector<uint32_t> supported_frequencies(const int phy_index,bool chec
 bool DWifiCards::is_openhd_supported(const WiFiCardType& type) {
   bool supports=false;
   switch (type) {
+      case WiFiCardType::OPENHD_RTL_8852BU:
+          supports= true;
+          break;
       case WiFiCardType::OPENHD_RTL_88X2BU:
           supports= true;
           break;
@@ -164,7 +171,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   card.xx_supports_5ghz=supported_freq.supports_any_5G;*/
   // but we now also have a method to figure out all the supported channels
   // RTL8812AU - since the openhd driver change, it reliably supports all wifi frequencies, no matter what CRDA has to say
-  if(card.type==WiFiCardType::OPENHD_RTL_88X2AU || card.type==WiFiCardType::OPENHD_RTL_88X2BU){
+  if(card.type==WiFiCardType::OPENHD_RTL_88X2AU || card.type==WiFiCardType::OPENHD_RTL_88X2BU || card.type==WiFiCardType::OPENHD_RTL_8852BU){
       card.supported_frequencies_2G= openhd::get_all_channel_frequencies(openhd::get_channels_2G_legal_at_least_one_country());
       card.supported_frequencies_5G=openhd::get_all_channel_frequencies(openhd::get_channels_5G_legal_at_least_one_country());
   }else{
@@ -222,6 +229,10 @@ std::vector<WiFiCard> reorder_monitor_mode_cards(std::vector<WiFiCard> cards){
     // Optimization 1: always show rtl8812au cards first
     for(auto& card:tmp){
         if(card.first.type==WiFiCardType::OPENHD_RTL_88X2BU){
+            ret.push_back(card.first);
+            card.second= true;
+        }
+        if(card.first.type==WiFiCardType::OPENHD_RTL_8852BU){
             ret.push_back(card.first);
             card.second= true;
         }
