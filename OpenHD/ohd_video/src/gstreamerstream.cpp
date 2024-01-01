@@ -13,6 +13,8 @@
 #include "gst_recording_demuxer.h"
 #include "openhd_util.h"
 #include "rtp_eof_helper.h"
+#include "nalu/CodecConfigFinder.hpp"
+#include "nalu/nalu_helper.h"
 
 GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,
                                  openhd::ON_ENCODE_FRAME_CB out_cb,std::shared_ptr<openhd::ActionHandler> opt_action_handler)
@@ -570,7 +572,8 @@ void GStreamerStream::stream_once() {
       if(fragment_data && !fragment_data->empty()){
         // If we got a new sample, aggregate then forward
         if(dirty_use_raw){
-          on_new_raw_frame(fragment_data,buffer_dts);
+          //on_new_raw_frame(fragment_data,buffer_dts);
+          on_gst_nalu_buffer(fragment_data->data(),fragment_data->size());
         }else{
           on_new_rtp_frame_fragment(std::move(fragment_data),buffer_dts);
         }
@@ -591,7 +594,7 @@ void GStreamerStream::on_new_raw_frame(
   //m_console->debug(OHDUtil::bytes_as_string(frame->data(),frame->size()));
   //m_console->debug("delay {}ms", calculate_delta(dts).count()/1000/1000);
   // Experimental - fragment frame ourselves
-  auto fragments= make_fragments(*frame);
+  auto fragments= make_fragments(frame->data(),frame->size());
   //auto tmp=fragments.at(fragments.size()/2);
   //memset(tmp->data(),0,tmp->size());
   //fragments.resize(fragments.size()/2);
@@ -606,27 +609,45 @@ void GStreamerStream::on_new_raw_frame(
   on_new_rtp_fragmented_frame(fragments);
 }
 
-std::vector<std::shared_ptr<std::vector<uint8_t>>> GStreamerStream::make_fragments(
-    const std::vector<uint8_t>& frame) {
-  std::vector<std::shared_ptr<std::vector<uint8_t>>> fragments;
-  int bytes_used=0;
-  const uint8_t* p=frame.data();
-  static constexpr auto MAX_FRAGMENT_SIZE=1024;
-  while (true){
-    const int remaining = (int)frame.size()-bytes_used;
-    int len=0;
-    if(remaining>MAX_FRAGMENT_SIZE){
-      len = MAX_FRAGMENT_SIZE;
-    }else{
-      len = remaining;
-    }
-    std::shared_ptr<std::vector<uint8_t>> fragment=std::make_shared<std::vector<uint8_t>>(p,p+len);
-    fragments.emplace_back(fragment);
-    p = p+len;
-    bytes_used += len;
-    if(bytes_used==frame.size()){
-      break ;
-    }
+void GStreamerStream::on_gst_nalu_buffer(const uint8_t* data, int data_len) {
+  //m_console->debug(OHDUtil::bytes_as_string(data,data_len));
+  int offset=0;
+  while (offset<data_len){
+    int nalu_len=find_next_nal(&data[offset],data_len);
+    on_new_nalu(&data[offset],nalu_len);
+    offset+=nalu_len;
   }
-  return fragments;
+}
+
+void GStreamerStream::on_new_nalu(const uint8_t* data, int data_len) {
+  //m_console->debug("Got new NAL {}",data_len);
+  const bool is_h265=false;
+  NALU nalu(data,data_len);
+  if(m_config_finder.allKeyFramesAvailable(is_h265)){
+    if(nalu.is_config()){
+      if(m_config_finder.check_is_still_same_config_data(nalu)){
+        // we can discard this NAL
+      }else{
+        m_config_finder.reset();
+        m_config_finder.saveIfKeyFrame(nalu);
+      }
+    }else{
+      if(nalu.is_sei() || nalu.is_aud()){
+        // We can discard (AUDs are written manually on the rx)
+      }else{
+        on_new_nalu_frame(data,data_len);
+      }
+    }
+  } else{
+    m_config_finder.saveIfKeyFrame(nalu);
+  }
+}
+
+void GStreamerStream::on_new_nalu_frame(const uint8_t* data, int data_len) {
+  if(m_config_finder.allKeyFramesAvailable()){
+    auto config=m_config_finder.get_keyframe_data(false);
+    on_new_rtp_fragmented_frame({config});
+  }
+  auto fragments= make_fragments(data,data_len);
+  on_new_rtp_fragmented_frame(fragments);
 }

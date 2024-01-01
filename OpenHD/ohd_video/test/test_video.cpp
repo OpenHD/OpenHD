@@ -20,8 +20,8 @@ int main(int argc, char *argv[]) {
   // We need root to read / write camera settings.
   OHDUtil::terminate_if_not_root();
   const auto platform=DPlatform::discover();
-  auto cameras=DCameras::discover(*platform);
-  //auto cameras=std::vector<Camera>();
+  //auto cameras=DCameras::discover(*platform);
+  auto cameras=std::vector<Camera>();
   if(cameras.empty()){
     cameras.emplace_back(createDummyCamera());
   }

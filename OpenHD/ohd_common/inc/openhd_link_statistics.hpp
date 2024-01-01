@@ -180,5 +180,27 @@ static MonitorModeLinkBitfield parse_monitor_link_bitfield(uint8_t bitfield){
   std::memcpy((uint8_t*)&ret,&bitfield,1);
   return ret;
 }
+
+using VALUE_BITRATE=uint16_t;
+using VALUE_DELAY=uint16_t;
+// User can change: BW, MCS, FREQUENCY, RESILIENCY_MODE
+struct LinkStatusAir{
+  uint8_t mcs_index;
+  uint8_t bw_mhz;
+  uint16_t frequency;
+  uint8_t throttle;
+  uint8_t resiliency_mode;
+  // Video bitrate (before FEC, ...)
+  VALUE_BITRATE video_bitrate;
+  VALUE_DELAY cam0_tx_delay;
+  uint8_t cam0_dropped_frames;
+  VALUE_DELAY cam1_tx_delay;
+  uint8_t cam1_dropped_frames;
+  uint8_t rx_loss_percent;
+};
+struct LinkStatusGround{
+
+};
+
 }
 #endif //OPENHD_OPENHD_OHD_COMMON_OPENHD_LINK_STATISTICS_HPP_

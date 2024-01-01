@@ -57,8 +57,8 @@ target_link_libraries(OHDVideoLib PRIVATE
 find_package(Threads REQUIRED)
 
 set(sources
-    "src/camera_discovery_helper.hpp"
-    "src/ffmpeg_videosamples.hpp"
+    "inc/camera_discovery_helper.hpp"
+    "inc/ffmpeg_videosamples.hpp"
     "src/camerastream.cpp"
     "src/camera_discovery.cpp"
     "src/gstreamerstream.cpp"
@@ -73,11 +73,7 @@ set(sources
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
 target_sources(OHDVideoLib PRIVATE ${sources})
-target_include_directories(OHDVideoLib 
-    PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-    PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc>)
+target_include_directories(OHDVideoLib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/inc)
 
 target_link_libraries(OHDVideoLib PUBLIC OHDCommonLib)
 
