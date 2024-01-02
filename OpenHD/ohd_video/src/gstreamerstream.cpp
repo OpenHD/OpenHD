@@ -391,50 +391,6 @@ void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkB
   }
 }
 
-void GStreamerStream::on_new_rtp_fragmented_frame(std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments) {
-  //m_console->debug("Got frame with {} fragments",frame_fragments.size());
-  if(m_output_cb){
-      const auto stream_index=m_camera_holder->get_camera().index;
-      auto frame=openhd::FragmentedVideoFrame{
-              std::move(frame_fragments),
-              std::chrono::steady_clock::now(),
-              m_camera_holder->get_settings().enable_ultra_secure_encryption};
-      m_output_cb(stream_index,frame);
-  }else{
-      m_console->debug("No output cb");
-  }
-}
-
-void GStreamerStream::on_new_rtp_frame_fragment(std::shared_ptr<std::vector<uint8_t>> fragment,uint64_t dts) {
-  m_frame_fragments.push_back(fragment);
-  const auto curr_video_codec=m_camera_holder->get_settings().streamed_video_format.videoCodec;
-  bool is_last_fragment_of_frame=false;
-  if(curr_video_codec==VideoCodec::H264){
-    if(openhd::rtp_eof_helper::h264_end_block(fragment->data(),fragment->size())){
-      is_last_fragment_of_frame= true;
-    }
-  }else if(curr_video_codec==VideoCodec::H265){
-    if(openhd::rtp_eof_helper::h265_end_block(fragment->data(),fragment->size())){
-      is_last_fragment_of_frame= true;
-    }
-  }else{
-    // Not supported yet, forward them in chuncks of 20 (NOTE: This workaround is not ideal, since it creates ~1 frame of latency).
-    is_last_fragment_of_frame=m_frame_fragments.size()>=20;
-  }
-  if(m_frame_fragments.size()>1000){
-    // Most likely something wrong with the "find end of frame" workaround
-    m_console->debug("No end of frame found after 1000 fragments");
-    is_last_fragment_of_frame= true;
-  }
-  if(is_last_fragment_of_frame){
-    on_new_rtp_fragmented_frame(m_frame_fragments);
-    m_frame_fragments.resize(0);
-  }
-  /*if(m_gst_video_recorder){
-    m_gst_video_recorder->enqueue_rtp_fragment(fragment);
-  }*/
-}
-
 void GStreamerStream::handle_update_arming_state(bool armed) {
   m_console->debug("handle_update_arming_state: {}",armed);
   const auto settings=m_camera_holder->get_settings();
@@ -587,6 +543,50 @@ void GStreamerStream::stream_once() {
   cleanup_pipe();
   m_console->debug("Terminating pipeline took {}ms",
                    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-terminate_begin).count());
+}
+
+void GStreamerStream::on_new_rtp_frame_fragment(std::shared_ptr<std::vector<uint8_t>> fragment,uint64_t dts) {
+  m_frame_fragments.push_back(fragment);
+  const auto curr_video_codec=m_camera_holder->get_settings().streamed_video_format.videoCodec;
+  bool is_last_fragment_of_frame=false;
+  if(curr_video_codec==VideoCodec::H264){
+    if(openhd::rtp_eof_helper::h264_end_block(fragment->data(),fragment->size())){
+      is_last_fragment_of_frame= true;
+    }
+  }else if(curr_video_codec==VideoCodec::H265){
+    if(openhd::rtp_eof_helper::h265_end_block(fragment->data(),fragment->size())){
+      is_last_fragment_of_frame= true;
+    }
+  }else{
+    // Not supported yet, forward them in chuncks of 20 (NOTE: This workaround is not ideal, since it creates ~1 frame of latency).
+    is_last_fragment_of_frame=m_frame_fragments.size()>=20;
+  }
+  if(m_frame_fragments.size()>1000){
+    // Most likely something wrong with the "find end of frame" workaround
+    m_console->debug("No end of frame found after 1000 fragments");
+    is_last_fragment_of_frame= true;
+  }
+  if(is_last_fragment_of_frame){
+    on_new_rtp_fragmented_frame(m_frame_fragments);
+    m_frame_fragments.resize(0);
+  }
+  /*if(m_gst_video_recorder){
+    m_gst_video_recorder->enqueue_rtp_fragment(fragment);
+  }*/
+}
+
+void GStreamerStream::on_new_rtp_fragmented_frame(std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments) {
+  //m_console->debug("Got frame with {} fragments",frame_fragments.size());
+  if(m_output_cb){
+    const auto stream_index=m_camera_holder->get_camera().index;
+    auto frame=openhd::FragmentedVideoFrame{
+        std::move(frame_fragments),
+        std::chrono::steady_clock::now(),
+        m_camera_holder->get_settings().enable_ultra_secure_encryption};
+    m_output_cb(stream_index,frame);
+  }else{
+    m_console->debug("No output cb");
+  }
 }
 
 void GStreamerStream::on_new_raw_frame(
