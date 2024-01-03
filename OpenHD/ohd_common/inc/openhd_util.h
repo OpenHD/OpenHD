@@ -148,6 +148,8 @@ std::string vec_as_string(const std::vector<T> &v);
 
 std::string str_vec_as_string(const std::vector<std::string> &v);
 
+std::string bytes_as_string(const uint8_t* data,int data_len);
+
 // maps [0,100] to [-1.0,1.0] with 50% == 0.0
 float map_int_percentage_to_minus1_to_1(int percentage);
 

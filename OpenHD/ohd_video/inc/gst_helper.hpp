@@ -670,6 +670,16 @@ static std::string create_parse_and_rtp_packetize(const VideoCodec videoCodec,in
   ss << create_rtp_packetize_for_codec(videoCodec,rtp_fragment_size);
   return ss.str();
 }
+static std::string create_queue_and_parse(const VideoCodec videoCodec) {
+  std::stringstream ss;
+  ss << "queue ! ";
+  ss << create_parse_for_codec(videoCodec);
+  return ss.str();
+}
+
+static std::string create_caps_nal(const VideoCodec& videoCodec){
+  return "video/x-h264,stream-format=byte-stream,alignment=nal ! ";
+}
 
 /**
  * Create the part of the pipeline that takes the rtp from gstreamer and sends
@@ -744,6 +754,13 @@ static std::string create_ip_cam_stream_with_depacketize_and_parse(const std::st
   ss<<createIpCameraStream(url);
   ss<<create_rtp_depacketize_for_codec(videoCodec);
   return ss.str();
+}
+
+static std::array<uint8_t,6> EXAMPLE_AUD={
+    0,0,0,1,9,48
+};
+static std::shared_ptr<std::vector<uint8_t>> get_h264_aud(){
+  return std::make_shared<std::vector<uint8_t>>(EXAMPLE_AUD.data(),EXAMPLE_AUD.data()+EXAMPLE_AUD.size());
 }
 
 }  // namespace OHDGstHelper

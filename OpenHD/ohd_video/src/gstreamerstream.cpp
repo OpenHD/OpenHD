@@ -1,21 +1,20 @@
 #include "gstreamerstream.h"
 
 #include <gst/gst.h>
-#include <unistd.h>
 
 #include <iostream>
-#include <regex>
 #include <utility>
 #include <vector>
 
 #include "air_recording_helper.hpp"
-#include "ffmpeg_videosamples.hpp"
 #include "gst_appsink_helper.h"
 #include "gst_debug_helper.h"
 #include "gst_helper.hpp"
 #include "gst_recording_demuxer.h"
 #include "openhd_util.h"
 #include "rtp_eof_helper.h"
+#include "nalu/CodecConfigFinder.hpp"
+#include "nalu/nalu_helper.h"
 
 GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,
                                  openhd::ON_ENCODE_FRAME_CB out_cb,std::shared_ptr<openhd::ActionHandler> opt_action_handler)
@@ -140,18 +139,20 @@ void GStreamerStream::setup() {
   }
   // After we've written the parts for the different camera implementation(s) we just need to append the rtp part and the udp out
   // add rtp part
-  // Optimization: For high bitrate(s) we use slightly bigger rtp packet size
-  /*int rtp_fragment_size=1024;
-  if(setting.h26x_bitrate_kbits>10*1000){
-    rtp_fragment_size=1440;
-  }*/
-  const int rtp_fragment_size=1440;
-  m_console->debug("Using {} for rtp fragmentation",rtp_fragment_size);
-  m_pipeline_content << OHDGstHelper::create_parse_and_rtp_packetize(
-      setting.streamed_video_format.videoCodec,rtp_fragment_size);
-  // forward data via udp localhost or using appsink and data callback
-  //m_pipeline_content << OHDGstHelper::createOutputUdpLocalhost(m_video_udp_port);
-  m_pipeline_content << OHDGstHelper::createOutputAppSink();
+  if(dirty_use_raw){
+    /*m_pipeline_content << OHDGstHelper::create_queue_and_parse(setting.streamed_video_format.videoCodec);
+    m_pipeline_content <<  OHDGstHelper::create_caps_nal(setting.streamed_video_format.videoCodec);
+    m_pipeline_content << " queue ! ";*/
+    m_pipeline_content << OHDGstHelper::createOutputAppSink();
+    /*m_pipeline_content << "video/x-h264,stream-format=byte-stream ! ";
+    m_pipeline_content << OHDGstHelper::createOutputAppSink();*/
+  }else{
+    const int rtp_fragment_size=1440;
+    m_console->debug("Using {} for rtp fragmentation",rtp_fragment_size);
+    m_pipeline_content << OHDGstHelper::create_parse_and_rtp_packetize(
+        setting.streamed_video_format.videoCodec,rtp_fragment_size);
+    m_pipeline_content << OHDGstHelper::createOutputAppSink();
+  }
   if(ADD_RECORDING_TO_PIPELINE){
     const auto recording_filename=openhd::video::create_unused_recording_filename(
         OHDGstHelper::file_suffix_for_video_codec(setting.streamed_video_format.videoCodec));
@@ -390,50 +391,6 @@ void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkB
   }
 }
 
-void GStreamerStream::on_new_rtp_fragmented_frame(std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments) {
-  //m_console->debug("Got frame with {} fragments",frame_fragments.size());
-  if(m_output_cb){
-      const auto stream_index=m_camera_holder->get_camera().index;
-      auto frame=openhd::FragmentedVideoFrame{
-              std::move(frame_fragments),
-              std::chrono::steady_clock::now(),
-              m_camera_holder->get_settings().enable_ultra_secure_encryption};
-      m_output_cb(stream_index,frame);
-  }else{
-      m_console->debug("No output cb");
-  }
-}
-
-void GStreamerStream::on_new_rtp_frame_fragment(std::shared_ptr<std::vector<uint8_t>> fragment,uint64_t dts) {
-  m_frame_fragments.push_back(fragment);
-  const auto curr_video_codec=m_camera_holder->get_settings().streamed_video_format.videoCodec;
-  bool is_last_fragment_of_frame=false;
-  if(curr_video_codec==VideoCodec::H264){
-    if(openhd::rtp_eof_helper::h264_end_block(fragment->data(),fragment->size())){
-      is_last_fragment_of_frame= true;
-    }
-  }else if(curr_video_codec==VideoCodec::H265){
-    if(openhd::rtp_eof_helper::h265_end_block(fragment->data(),fragment->size())){
-      is_last_fragment_of_frame= true;
-    }
-  }else{
-    // Not supported yet, forward them in chuncks of 20 (NOTE: This workaround is not ideal, since it creates ~1 frame of latency).
-    is_last_fragment_of_frame=m_frame_fragments.size()>=20;
-  }
-  if(m_frame_fragments.size()>1000){
-    // Most likely something wrong with the "find end of frame" workaround
-    m_console->debug("No end of frame found after 1000 fragments");
-    is_last_fragment_of_frame= true;
-  }
-  if(is_last_fragment_of_frame){
-    on_new_rtp_fragmented_frame(m_frame_fragments);
-    m_frame_fragments.resize(0);
-  }
-  /*if(m_gst_video_recorder){
-    m_gst_video_recorder->enqueue_rtp_fragment(fragment);
-  }*/
-}
-
 void GStreamerStream::handle_update_arming_state(bool armed) {
   m_console->debug("handle_update_arming_state: {}",armed);
   const auto settings=m_camera_holder->get_settings();
@@ -553,19 +510,31 @@ void GStreamerStream::stream_once() {
       m_console->debug("Restart requested, restarting");
       break ;
     }
-    // try get a new frame from gst
+    // try get a new frame fragment from gst
     GstSample* sample = gst_app_sink_try_pull_sample(GST_APP_SINK(m_app_sink_element),timeout_ns);
     if (sample) {
-      // If we got a new sample, forward it to the link
       GstBuffer* buffer = gst_sample_get_buffer(sample);
-      if (buffer) {
-        auto buff_copy=openhd::gst_copy_buffer(buffer);
-        if(!buff_copy->empty()){
-          on_new_rtp_frame_fragment(std::move(buff_copy),buffer->dts);
-          m_last_camera_frame=std::chrono::steady_clock::now();
-        }
+      // tmp declaration for give sample back early optimization
+      std::shared_ptr<std::vector<uint8_t>> fragment_data=nullptr;
+      uint64_t buffer_dts=0;
+      if (buffer && gst_buffer_get_size(buffer)>0) {
+        fragment_data=openhd::gst_copy_buffer(buffer);
+        buffer_dts=buffer->dts;
       }
+      // Optimization: Give the buffer back to gstreamer as soon as possible.
+      // After copying the data from the sample, unref it first, then forward the data via cb
       gst_sample_unref(sample);
+      sample= nullptr;
+      if(fragment_data && !fragment_data->empty()){
+        // If we got a new sample, aggregate then forward
+        if(dirty_use_raw){
+          //on_new_raw_frame(fragment_data,buffer_dts);
+          on_gst_nalu_buffer(fragment_data->data(),fragment_data->size());
+        }else{
+          on_new_rtp_frame_fragment(std::move(fragment_data),buffer_dts);
+        }
+        m_last_camera_frame=std::chrono::steady_clock::now();
+      }
     }
   }
   // If we land here, we need to clean up the pipe and (re) start
@@ -574,4 +543,111 @@ void GStreamerStream::stream_once() {
   cleanup_pipe();
   m_console->debug("Terminating pipeline took {}ms",
                    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-terminate_begin).count());
+}
+
+void GStreamerStream::on_new_rtp_frame_fragment(std::shared_ptr<std::vector<uint8_t>> fragment,uint64_t dts) {
+  m_frame_fragments.push_back(fragment);
+  const auto curr_video_codec=m_camera_holder->get_settings().streamed_video_format.videoCodec;
+  bool is_last_fragment_of_frame=false;
+  if(curr_video_codec==VideoCodec::H264){
+    if(openhd::rtp_eof_helper::h264_end_block(fragment->data(),fragment->size())){
+      is_last_fragment_of_frame= true;
+    }
+  }else if(curr_video_codec==VideoCodec::H265){
+    if(openhd::rtp_eof_helper::h265_end_block(fragment->data(),fragment->size())){
+      is_last_fragment_of_frame= true;
+    }
+  }else{
+    // Not supported yet, forward them in chuncks of 20 (NOTE: This workaround is not ideal, since it creates ~1 frame of latency).
+    is_last_fragment_of_frame=m_frame_fragments.size()>=20;
+  }
+  if(m_frame_fragments.size()>1000){
+    // Most likely something wrong with the "find end of frame" workaround
+    m_console->debug("No end of frame found after 1000 fragments");
+    is_last_fragment_of_frame= true;
+  }
+  if(is_last_fragment_of_frame){
+    on_new_rtp_fragmented_frame(m_frame_fragments);
+    m_frame_fragments.resize(0);
+  }
+  /*if(m_gst_video_recorder){
+    m_gst_video_recorder->enqueue_rtp_fragment(fragment);
+  }*/
+}
+
+void GStreamerStream::on_new_rtp_fragmented_frame(std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments) {
+  //m_console->debug("Got frame with {} fragments",frame_fragments.size());
+  if(m_output_cb){
+    const auto stream_index=m_camera_holder->get_camera().index;
+    auto frame=openhd::FragmentedVideoFrame{
+        std::move(frame_fragments),
+        std::chrono::steady_clock::now(),
+        m_camera_holder->get_settings().enable_ultra_secure_encryption};
+    m_output_cb(stream_index,frame);
+  }else{
+    m_console->debug("No output cb");
+  }
+}
+
+void GStreamerStream::on_new_raw_frame(
+    std::shared_ptr<std::vector<uint8_t>> frame,uint64_t dts) {
+  //m_console->debug(OHDUtil::bytes_as_string(frame->data(),frame->size()));
+  //m_console->debug("delay {}ms", calculate_delta(dts).count()/1000/1000);
+  // Experimental - fragment frame ourselves
+  auto fragments= make_fragments(frame->data(),frame->size());
+  //auto tmp=fragments.at(fragments.size()/2);
+  //memset(tmp->data(),0,tmp->size());
+  //fragments.resize(fragments.size()/2);
+  if(fragments.size()>4){
+    int random=std::rand();
+    if(random % 8==0){
+      //fragments.resize(fragments.size()/2);
+      fragments.resize(0);
+    }
+  }
+  fragments.push_back(OHDGstHelper::get_h264_aud());
+  on_new_rtp_fragmented_frame(fragments);
+}
+
+void GStreamerStream::on_gst_nalu_buffer(const uint8_t* data, int data_len) {
+  //m_console->debug(OHDUtil::bytes_as_string(data,data_len));
+  int offset=0;
+  while (offset<data_len){
+    int nalu_len=find_next_nal(&data[offset],data_len);
+    on_new_nalu(&data[offset],nalu_len);
+    offset+=nalu_len;
+  }
+}
+
+void GStreamerStream::on_new_nalu(const uint8_t* data, int data_len) {
+  //m_console->debug("Got new NAL {}",data_len);
+  const bool is_h265=false;
+  NALU nalu(data,data_len);
+  if(m_config_finder.allKeyFramesAvailable(is_h265)){
+    if(nalu.is_config()){
+      if(m_config_finder.check_is_still_same_config_data(nalu)){
+        // we can discard this NAL
+      }else{
+        m_config_finder.reset();
+        m_config_finder.saveIfKeyFrame(nalu);
+      }
+    }else{
+      if(nalu.is_sei() || nalu.is_aud()){
+        // We can discard (AUDs are written manually on the rx)
+      }else{
+        on_new_nalu_frame(data,data_len);
+      }
+    }
+  } else{
+    m_config_finder.saveIfKeyFrame(nalu);
+  }
+}
+
+void GStreamerStream::on_new_nalu_frame(const uint8_t* data, int data_len) {
+  if(m_config_finder.allKeyFramesAvailable()){
+    auto config=m_config_finder.get_keyframe_data(false);
+    on_new_rtp_fragmented_frame({config});
+  }
+  auto fragments= make_fragments(data,data_len);
+  on_new_rtp_fragmented_frame(fragments);
 }

@@ -351,3 +351,17 @@ std::string OHDUtil::password_as_hidden_str(const std::string& pw) {
     }
     return ss.str();
 }
+std::string OHDUtil::bytes_as_string(const uint8_t* data, int data_len) {
+    std::stringstream ss;
+    ss << "[";
+    for(int i=0;i<data_len;i++){
+        int tmp=data[i];
+        ss << tmp;
+        //ss<<v[i];
+        if(i!=data_len-1){
+            ss<<",";
+        }
+    }
+    ss << "]";
+    return ss.str();
+}

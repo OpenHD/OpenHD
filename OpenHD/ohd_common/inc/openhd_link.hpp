@@ -93,6 +93,7 @@ class OHDLink{
 
 class DummyDebugLink: public OHDLink{
  public:
+  openhd::ON_ENCODE_FRAME_CB m_opt_frame_cb= nullptr;
   explicit DummyDebugLink(){
     m_console_tele=openhd::log::create_or_get("tele");
     m_console_video=openhd::log::create_or_get("video");
@@ -109,6 +110,9 @@ class DummyDebugLink: public OHDLink{
     }
     m_console_video->debug("Got Frame. Fragments:{} total: {}Bytes",fragmented_video_frame.frame_fragments.size(),
                           total_bytes);
+    if(m_opt_frame_cb){
+      m_opt_frame_cb(stream_index,fragmented_video_frame);
+    }
   }
  private:
   std::shared_ptr<spdlog::logger> m_console_video;

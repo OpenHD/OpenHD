@@ -83,4 +83,11 @@ static void unref_bitrate_element(GstBitrateControlElement& element){
   }
 }
 
+static std::chrono::nanoseconds convert_ts(uint64_t dts){
+  return std::chrono::nanoseconds(dts);
+}
+static std::chrono::nanoseconds calculate_delta(uint64_t dts){
+  return convert_ts(std::chrono::steady_clock::now().time_since_epoch().count()- dts);
+}
+
 #endif  // OPENHD_OPENHD_OHD_VIDEO_INC_GST_BITRATE_CONTROLL_WRAPPER_H_
