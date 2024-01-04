@@ -177,9 +177,9 @@ bool wifi::commandhelper::iw_supports_monitor_mode(int phy_index) {
   return OHDUtil::contains(res_opt.value(),"* monitor");
 }
 
-static constexpr auto OPENHD_DRIVER_RTL8812AU_CHANNEL_OVERRIDE="/sys/module/88XXau_wfb/parameters/openhd_override_channel";
-static constexpr auto OPENHD_DRIVER_RTL88xxBU_CHANNEL_OVERRIDE="/sys/module/88x2bu/parameters/openhd_override_channel";
-static constexpr auto OPENHD_DRIVER_RTL88xxBU_TX_POWER_MW_OVERRIDE="/sys/module/88x2bu/parameters/openhd_override_tx_power_mbm";
+static constexpr auto OPENHD_DRIVER_RTL8812AU_CHANNEL_OVERRIDE="/sys/module/88XXau_ohd/parameters/openhd_override_channel";
+static constexpr auto OPENHD_DRIVER_RTL88xxBU_CHANNEL_OVERRIDE="/sys/module/88x2bu_ohd/parameters/openhd_override_channel";
+static constexpr auto OPENHD_DRIVER_RTL88xxBU_TX_POWER_MW_OVERRIDE="/sys/module/88x2bu_ohd/parameters/openhd_override_tx_power_mbm";
 
 bool wifi::commandhelper::openhd_driver_set_frequency_and_channel_width(int type,const std::string &device, uint32_t freq_mhz, uint32_t channel_width) {
     const auto channel_opt=openhd::channel_from_frequency(freq_mhz);
@@ -200,8 +200,8 @@ bool wifi::commandhelper::openhd_driver_set_frequency_and_channel_width(int type
         return true;
     }
     // /etc/modprobe.d
-    // options 88XXau_wfb openhd_override_channel=165 openhd_override_channel_width=1
-    // rmmod 88XXau_wfb
+    // options 88XXau_ohd openhd_override_channel=165 openhd_override_channel_width=1
+    // rmmod 88XXau_ohd
     OHDFilesystemUtil::write_file(CHANNEL_OVERRIDE_FILENAME,rtl8812au_channel);
     // Override stuff is set, now we just change to a channel that is always okay in crda such that the method is called -
     // ! the actually applied channel will be the overridden one !
