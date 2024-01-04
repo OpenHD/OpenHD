@@ -15,7 +15,6 @@
 enum class WiFiCardType {
   OPENHD_RTL_88X2AU, // Supported
   OPENHD_RTL_88X2BU, // Supported
-  OPENHD_RTL_8852BU, // testing phase
   // These are all unsupported, but might / might not work
   RTL_88X2AU, // right card, but wrong driver
   RTL_88X2BU, // right card, but wrong driver
@@ -24,6 +23,7 @@ enum class WiFiCardType {
   RALINK,
   INTEL,
   BROADCOM,
+  OPENHD_RTL_8852BU, // testing phase
   UNKNOWN
 };
 
