@@ -891,8 +891,15 @@ void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoF
       max_block_size_for_platform=openhd::DEFAULT_MAX_FEC_BLK_SIZE_FOR_PLATFORM;
     }
     const int fec_perc=m_settings->get_settings().wb_video_fec_percentage;
-    const auto res=tx.try_enqueue_block(fragmented_video_frame.frame_fragments, max_block_size_for_platform,fec_perc,
-                                          fragmented_video_frame.creation_time);
+    bool res= false;
+    if(fragmented_video_frame.dirty_frame!= nullptr){
+        // non rtp
+        res=tx.try_enqueue_frame(fragmented_video_frame.dirty_frame, max_block_size_for_platform,fec_perc,
+                                 fragmented_video_frame.creation_time);
+    }else{
+        res=tx.try_enqueue_block(fragmented_video_frame.frame_fragments, max_block_size_for_platform,fec_perc,
+                                 fragmented_video_frame.creation_time);
+    }
     if(!res){
         m_frame_drop_helper.notify_dropped_frame();
         if(stream_index==0){

@@ -25,6 +25,7 @@ struct FragmentedVideoFrame{
   // For the future: This hints that the link implementation should encrypt the data as secure as possible
   // even though that might result in higher CPU load.
   bool enable_ultra_secure_encryption= false;
+  std::shared_ptr<std::vector<uint8_t>> dirty_frame= nullptr; // replaces fragments
 };
 typedef std::function<void(int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame)> ON_ENCODE_FRAME_CB;
 

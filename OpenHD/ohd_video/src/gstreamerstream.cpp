@@ -646,8 +646,24 @@ void GStreamerStream::on_new_nalu(const uint8_t* data, int data_len) {
 void GStreamerStream::on_new_nalu_frame(const uint8_t* data, int data_len) {
   if(m_config_finder.allKeyFramesAvailable()){
     auto config=m_config_finder.get_keyframe_data(false);
-    on_new_rtp_fragmented_frame({config});
+    forward_video_frame(config);
   }
-  auto fragments= make_fragments(data,data_len);
-  on_new_rtp_fragmented_frame(fragments);
+  //auto fragments= make_fragments(data,data_len);
+  //on_new_rtp_fragmented_frame(fragments);
+  auto buff=std::make_shared<std::vector<uint8_t>>(data,data+data_len);
+  forward_video_frame(buff);
+}
+
+void GStreamerStream::forward_video_frame(std::shared_ptr<std::vector<uint8_t>> frame) {
+    if(m_output_cb){
+        const auto stream_index=m_camera_holder->get_camera().index;
+        auto ohd_frame=openhd::FragmentedVideoFrame{
+                {},
+                std::chrono::steady_clock::now(),
+                m_camera_holder->get_settings().enable_ultra_secure_encryption,
+                std::move(frame)};
+        m_output_cb(stream_index,ohd_frame);
+    }else{
+        m_console->debug("No output cb");
+    }
 }

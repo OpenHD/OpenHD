@@ -94,6 +94,7 @@ class GStreamerStream : public CameraStream {
   void on_gst_nalu_buffer(const uint8_t* data,int data_len);
   void on_new_nalu(const uint8_t* data,int data_len);
   void on_new_nalu_frame(const uint8_t* data,int data_len);
+  void forward_video_frame(std::shared_ptr<std::vector<uint8_t>> frame);
   CodecConfigFinder m_config_finder;
 };
 
