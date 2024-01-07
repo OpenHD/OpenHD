@@ -10,7 +10,7 @@
 #include "openhd_profile.h"
 #include "openhd_link.hpp"
 #include "openhd_util.h"
-#include "nalu/nalu_helper.h"
+#include "nalu/fragment_helper.h"
 
 //
 // Can be used to test / validate a camera implementation.
