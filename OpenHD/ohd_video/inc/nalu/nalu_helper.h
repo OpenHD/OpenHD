@@ -40,4 +40,17 @@ static int find_next_nal(const uint8_t* data,int data_len){
   return data_len;
 }
 
+static std::array<uint8_t,6> EXAMPLE_AUD={
+        0,0,0,1,9,48
+};
+static std::shared_ptr<std::vector<uint8_t>> get_h264_aud(){
+    return std::make_shared<std::vector<uint8_t>>(EXAMPLE_AUD.data(),EXAMPLE_AUD.data()+EXAMPLE_AUD.size());
+}
+static std::array<uint8_t,6> EXAMPLE_START_CODE={
+        0,0,0,1
+};
+static std::shared_ptr<std::vector<uint8_t>> get_h264_nalu_start_code(){
+    return std::make_shared<std::vector<uint8_t>>(EXAMPLE_START_CODE.begin(),EXAMPLE_START_CODE.end());
+}
+
 #endif  // OPENHD_NALU_HELPER_H

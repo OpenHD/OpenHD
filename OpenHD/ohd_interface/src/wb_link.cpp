@@ -149,6 +149,9 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
           auto secondary = std::make_unique<WBStreamTx>(m_wb_txrx, options_video_tx,m_tx_header_1);
           primary->set_encryption(false);
           secondary->set_encryption(false);
+          if(true){
+              primary->s
+          }
           m_wb_video_tx_list.push_back(std::move(primary));
           m_wb_video_tx_list.push_back(std::move(secondary));
       } else {
