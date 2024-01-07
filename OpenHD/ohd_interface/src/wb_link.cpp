@@ -72,6 +72,10 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
       int wb_type=card.type==WiFiCardType::OPENHD_RTL_88X2AU ? 1 : 0;
       tmp_wifi_cards.push_back(wifibroadcast::WifiCard{card.device_name,wb_type});
   }
+  if(use_dummy_link){
+      tmp_wifi_cards.resize(0);
+      tmp_wifi_cards.push_back(wifibroadcast::create_card_emulate(m_profile.is_air));
+  }
   m_tx_header_1=std::make_shared<RadiotapHeaderTxHolder>();
   m_tx_header_2=std::make_shared<RadiotapHeaderTxHolder>();
   {
