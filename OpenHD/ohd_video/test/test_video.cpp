@@ -10,6 +10,7 @@
 #include "openhd_profile.h"
 #include "openhd_link.hpp"
 #include "openhd_util.h"
+#include "nalu/nalu_helper.h"
 
 //
 // Can be used to test / validate a camera implementation.
@@ -29,6 +30,12 @@ int main(int argc, char *argv[]) {
   auto cb=[&forwarder](int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame){
       for(auto& fragemnt: fragmented_video_frame.frame_fragments){
         forwarder.forwardPacketViaUDP(fragemnt->data(),fragemnt->size());
+      }
+      if(fragmented_video_frame.dirty_frame){
+          auto fragments=make_fragments(fragmented_video_frame.dirty_frame->data(),fragmented_video_frame.dirty_frame->size());
+          for(auto& fragment:fragments){
+              forwarder.forwardPacketViaUDP(fragment->data(),fragment->size());
+          }
       }
   };
   auto debug_link=std::make_shared<DummyDebugLink>();

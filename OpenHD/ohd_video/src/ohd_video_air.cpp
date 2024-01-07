@@ -10,6 +10,7 @@
 #include "gstreamerstream.h"
 #include "openhd_config.h"
 #include "gst_recording_demuxer.h"
+#include "nalu/nalu_helper.h"
 
 OHDVideoAir::OHDVideoAir(OHDPlatform platform1,std::vector<Camera> cameras,
                    std::shared_ptr<openhd::ActionHandler> opt_action_handler,
@@ -346,6 +347,12 @@ void OHDVideoAir::on_video_data(int stream_index, const openhd::FragmentedVideoF
         auto& forwarder=stream_index==0 ? m_primary_video_forwarder : m_secondary_video_forwarder;
         for(auto& fragment:fragmented_video_frame.frame_fragments){
             forwarder->forwardPacketViaUDP(fragment->data(),fragment->size());
+        }
+        if(fragmented_video_frame.dirty_frame){
+            auto fragments=make_fragments(fragmented_video_frame.dirty_frame->data(),fragmented_video_frame.dirty_frame->size());
+            for(auto& fragment:fragments){
+                forwarder->forwardPacketViaUDP(fragment->data(),fragment->size());
+            }
         }
     }
 }
