@@ -149,9 +149,6 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
           auto secondary = std::make_unique<WBStreamTx>(m_wb_txrx, options_video_tx,m_tx_header_1);
           primary->set_encryption(false);
           secondary->set_encryption(false);
-          if(true){
-              primary->s
-          }
           m_wb_video_tx_list.push_back(std::move(primary));
           m_wb_video_tx_list.push_back(std::move(secondary));
       } else {
@@ -171,6 +168,12 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
           options_video_rx.radio_port=openhd::VIDEO_SECONDARY_RADIO_PORT;
           auto secondary = std::make_unique<WBStreamRx>(m_wb_txrx, options_video_rx);
           secondary->set_callback(cb2);
+          if(true){
+              auto block_cb=[](uint64_t block_idx,int n_fragments_total,int n_fragments_forwarded){
+                  //
+              };
+              primary->set_on_fec_block_done_cb(block_cb);
+          }
           m_wb_video_rx_list.push_back(std::move(primary));
           m_wb_video_rx_list.push_back(std::move(secondary));
       }
