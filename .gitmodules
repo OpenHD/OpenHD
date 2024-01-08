@@ -8,3 +8,6 @@
 	path = OpenHD/lib/wifibroadcast
 	url = https://github.com/OpenHD/wifibroadcast.git
 	branch = consti-dev
+[submodule "OpenHD/ohd_telemetry/lib/mavlink-headers"]
+	path = OpenHD/ohd_telemetry/lib/mavlink-headers
+	url = https://github.com/OpenHD/mavlink-headers.git
