@@ -630,7 +630,7 @@ void GStreamerStream::on_new_nalu_frame(const uint8_t* data, int data_len) {
   }
   auto buff=std::make_shared<std::vector<uint8_t>>(data,data+data_len);
   forward_video_frame(buff);
-  forward_video_frame(get_h264_aud());
+  //forward_video_frame(get_h264_aud());
   //forward_video_frame(get_h264_nalu_start_code());
 }
 

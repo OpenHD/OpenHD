@@ -15,6 +15,8 @@
 #include "wifi_card.h"
 #include "wb_link_rate_helper.hpp"
 
+#include "../../ohd_video/inc/nalu/nalu_helper.h"
+
 static constexpr auto WB_LINK_ARM_CHANGED_TX_POWER_TAG="wb_link_tx_power";
 
 WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> broadcast_cards,std::shared_ptr<openhd::ActionHandler> opt_action_handler)
@@ -111,6 +113,10 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
       m_tx_header_2->thread_safe_set(tmp_params2);
   }
   m_wb_txrx=std::make_shared<WBTxRx>(tmp_wifi_cards,txrx_options,m_tx_header_2);
+  auto dummy=m_wb_txrx->get_dummy_link();
+  if(dummy){
+      dummy->set_drop_mode(10);
+  }
   {
       // Setup the tx & rx instances for telemetry. Telemetry is bidirectional,aka
       // tx radio port on air is the same as rx on ground and verse visa
@@ -171,8 +177,11 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
           auto secondary = std::make_unique<WBStreamRx>(m_wb_txrx, options_video_rx);
           secondary->set_callback(cb2);
           if(true){
-              auto block_cb=[](uint64_t block_idx,int n_fragments_total,int n_fragments_forwarded){
-                  //
+              auto block_cb=[this](uint64_t block_idx,int n_fragments_total,int n_fragments_forwarded){
+                  if(n_fragments_forwarded>2){
+                      auto aud_buffer=get_h264_aud();
+                      on_receive_video_data(0,aud_buffer->data(),aud_buffer->size());
+                  }
               };
               primary->set_on_fec_block_done_cb(block_cb);
           }
