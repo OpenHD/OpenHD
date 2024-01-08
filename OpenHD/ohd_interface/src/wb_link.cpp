@@ -176,7 +176,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
           options_video_rx.radio_port=openhd::VIDEO_SECONDARY_RADIO_PORT;
           auto secondary = std::make_unique<WBStreamRx>(m_wb_txrx, options_video_rx);
           secondary->set_callback(cb2);
-          if(true){
+          if(false){
               auto block_cb=[this](uint64_t block_idx,int n_fragments_total,int n_fragments_forwarded){
                   if(n_fragments_forwarded>2){
                       auto aud_buffer=get_h264_aud();
