@@ -304,3 +304,14 @@ DWifiCards::ProcessedWifiCards DWifiCards::find_cards_from_manual_file(const std
   return ret;
 }
 
+WiFiCard DWifiCards::create_card_monitor_emulate() {
+    WiFiCard ret{};
+    ret.type=WiFiCardType::OPENHD_EMULATED;
+    ret.supports_monitor_mode= true;
+    ret.driver_name="dummy";
+    ret.is_openhd_supported= true;
+    ret.supported_frequencies_2G= openhd::get_all_channel_frequencies(openhd::get_channels_2G_legal_at_least_one_country());
+    ret.supported_frequencies_5G=openhd::get_all_channel_frequencies(openhd::get_channels_5G_legal_at_least_one_country());
+    return ret;
+}
+

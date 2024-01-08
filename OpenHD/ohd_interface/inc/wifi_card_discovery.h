@@ -47,6 +47,7 @@ ProcessedWifiCards process_and_evaluate_cards(const std::vector<WiFiCard>& disco
 // for users who use the manual file to define their card(s)
 ProcessedWifiCards find_cards_from_manual_file(const std::vector<std::string>& wifibroadcast_cards,const std::string& opt_hotspot_card);
 
+WiFiCard create_card_monitor_emulate();
 };
 
 #endif //OHD_DISCOVER_WiFI_CARDS

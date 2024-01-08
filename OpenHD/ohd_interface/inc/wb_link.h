@@ -191,7 +191,6 @@ private:
   openhd::wb::FrameDropsHelper m_frame_drop_helper;
   std::atomic_int m_primary_total_dropped_frames=0;
   std::atomic_int m_secondary_total_dropped_frames=0;
-  static constexpr bool use_dummy_link= false;
 };
 
 #endif

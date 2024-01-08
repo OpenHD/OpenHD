@@ -29,17 +29,14 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   m_console->info("Broadcast cards:{}",debug_cards(m_broadcast_cards));
   // sanity checks
   if(m_broadcast_cards.empty() || (m_profile.is_air && m_broadcast_cards.size()>1)) {
-    // NOTE: Here we crash, since it would be a programmer(s) error
-    // Air needs exactly one wifi card
-    // ground supports rx diversity, therefore can have more than one card
-    m_console->error("Without at least one wifi card, the stream(s) cannot be started");
-    exit(1);
+      // NOTE: Here we crash, since it would be a programmer(s) error
+      // Air needs exactly one wifi card
+      // ground supports rx diversity, therefore can have more than one card
+      m_console->error("Without at least one wifi card, the stream(s) cannot be started");
+      exit(1);
   }
-  openhd::wb::takeover_cards_monitor_mode(m_broadcast_cards,m_console);
   // this fetches the last settings, otherwise creates default ones
   m_settings =std::make_unique<openhd::WBLinkSettingsHolder>(m_platform, m_profile, m_broadcast_cards);
-  // fixup any settings coming from a previous use with a different wifi card (e.g. if user swaps around cards)
-  openhd::wb::fixup_unsupported_frequency(*m_settings, m_broadcast_cards,m_console);
   WBTxRx::Options txrx_options{};
   txrx_options.session_key_packet_interval=SESSION_KEY_PACKETS_INTERVAL;
   txrx_options.use_gnd_identifier=m_profile.is_ground();
@@ -69,12 +66,13 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   //assert(!card_names.empty());
   std::vector<wifibroadcast::WifiCard> tmp_wifi_cards;
   for(const auto& card: m_broadcast_cards){
-      int wb_type=card.type==WiFiCardType::OPENHD_RTL_88X2AU ? 1 : 0;
-      tmp_wifi_cards.push_back(wifibroadcast::WifiCard{card.device_name,wb_type});
-  }
-  if(use_dummy_link){
-      tmp_wifi_cards.resize(0);
-      tmp_wifi_cards.push_back(wifibroadcast::create_card_emulate(m_profile.is_air));
+      if(card.type==WiFiCardType::OPENHD_EMULATED){
+          assert(m_broadcast_cards.size()==1);
+          tmp_wifi_cards.push_back(wifibroadcast::create_card_emulate(m_profile.is_air));
+      }else{
+          int wb_type=card.type==WiFiCardType::OPENHD_RTL_88X2AU ? 1 : 0;
+          tmp_wifi_cards.push_back(wifibroadcast::WifiCard{card.device_name,wb_type});
+      }
   }
   m_tx_header_1=std::make_shared<RadiotapHeaderTxHolder>();
   m_tx_header_2=std::make_shared<RadiotapHeaderTxHolder>();
@@ -251,8 +249,6 @@ WBLink::~WBLink() {
   m_wb_video_tx_list.resize(0);
   m_wb_video_rx_list.resize(0);
   wifi::commandhelper::cleanup_openhd_driver_overrides();
-  // give the monitor mode cards back to network manager
-  openhd::wb::giveback_cards_monitor_mode(m_broadcast_cards,m_console);
   m_console->debug("WBLink::~WBLink() end");
 }
 

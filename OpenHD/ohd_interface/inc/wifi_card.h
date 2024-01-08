@@ -24,6 +24,7 @@ enum class WiFiCardType {
   INTEL,
   BROADCOM,
   OPENHD_RTL_8852BU, // testing phase
+  OPENHD_EMULATED,
   UNKNOWN
 };
 
@@ -93,6 +94,7 @@ struct WiFiCard {
 
 // Only RTL8812au / BU support changing the MCS index
 static bool wifi_card_supports_variable_mcs(const WiFiCard& wifi_card){
+  if(wifi_card.type==WiFiCardType::OPENHD_EMULATED)return true;
   if(wifi_card.type==WiFiCardType::OPENHD_RTL_88X2AU)return true;
   if(wifi_card.type==WiFiCardType::OPENHD_RTL_88X2BU)return true;
   if(wifi_card.type==WiFiCardType::OPENHD_RTL_8852BU)return true;
@@ -100,6 +102,7 @@ static bool wifi_card_supports_variable_mcs(const WiFiCard& wifi_card){
 }
 // Only RTL8812au / BU so far support a 40Mhz channel width during injection
 static bool wifi_card_supports_40Mhz_channel_width_injection(const WiFiCard& wifi_card){
+    if(wifi_card.type==WiFiCardType::OPENHD_EMULATED)return true;
     if(wifi_card.type==WiFiCardType::OPENHD_RTL_88X2AU)return true;
     if(wifi_card.type==WiFiCardType::OPENHD_RTL_88X2BU)return true;
     if(wifi_card.type==WiFiCardType::OPENHD_RTL_8852BU)return true;

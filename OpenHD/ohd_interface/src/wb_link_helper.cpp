@@ -91,6 +91,9 @@ bool openhd::wb::set_frequency_and_channel_width_for_all_cards(
     const std::vector<WiFiCard>& m_broadcast_cards) {
   bool ret=true;
   for(const auto& card: m_broadcast_cards){
+      if(card.type==WiFiCardType::OPENHD_EMULATED){
+          break;
+      }
       if(card.type==WiFiCardType::OPENHD_RTL_88X2AU || card.type==WiFiCardType::OPENHD_RTL_88X2BU || card.type==WiFiCardType::OPENHD_RTL_8852BU){
           const int type=card.type==WiFiCardType::OPENHD_RTL_88X2AU ? 0 : 1;
           wifi::commandhelper::openhd_driver_set_frequency_and_channel_width(type,card.device_name, frequency,channel_width);
@@ -109,6 +112,9 @@ bool openhd::wb::set_tx_power_for_all_cards(int tx_power_mw, int rtl8812au_tx_po
                                             const std::vector <WiFiCard> &m_broadcast_cards) {
     bool ret=true;
     for(const auto& card: m_broadcast_cards){
+        if(card.type==WiFiCardType::OPENHD_EMULATED){
+            break;
+        }
         if(card.type==WiFiCardType::OPENHD_RTL_88X2AU) {
             openhd::log::get_default()->debug("RTL8812AU tx_pwr_idx_override: {}", rtl8812au_tx_power_index_override);
             wifi::commandhelper::iw_set_tx_power(card.device_name, rtl8812au_tx_power_index_override);
@@ -137,6 +143,9 @@ std::vector<std::string> openhd::wb::get_card_names(const std::vector<WiFiCard>&
 
 bool openhd::wb::any_card_supports_stbc_ldpc_sgi(const std::vector<WiFiCard> &cards) {
     for(const auto& card: cards){
+        if(card.type==WiFiCardType::OPENHD_EMULATED){
+            return true;
+        }
         if(card.type==WiFiCardType::OPENHD_RTL_88X2AU || card.type==WiFiCardType::OPENHD_RTL_88X2BU || card.type==WiFiCardType::OPENHD_RTL_8852BU){
             return true;
         }
@@ -198,25 +207,34 @@ void openhd::wb::takeover_cards_monitor_mode(const std::vector<WiFiCard> &cards,
     // to ignore the cards we are doing wifibroadcast with, instead of killing all processes that might interfere with
     // wifibroadcast and therefore making other networking incredibly hard.
     // Tell network manager to ignore the cards we want to do wifibroadcast on
+    bool emulate= false;
     for(const auto& card: cards){
+        if(card.type==WiFiCardType::OPENHD_EMULATED){
+            return;
+        }
         wifi::commandhelper::nmcli_set_device_managed_status(card.device_name, false);
     }
-    wifi::commandhelper::rfkill_unblock_all();
-    // Apparently, we need to give nm / whoever a bit time before we start putting the cards into monitor mode
-    // not pretty, but works.
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-    // now we can enable monitor mode on the given cards.
-    for(const auto& card: cards) {
-        wifi::commandhelper::ip_link_set_card_state(card.device_name, false);
-        wifi::commandhelper::iw_enable_monitor_mode(card.device_name);
-        wifi::commandhelper::ip_link_set_card_state(card.device_name, true);
-        //wifi::commandhelper2::set_wifi_monitor_mode(card->_wifi_card.interface_name);
+    if(!emulate){
+        wifi::commandhelper::rfkill_unblock_all();
+        // Apparently, we need to give nm / whoever a bit time before we start putting the cards into monitor mode
+        // not pretty, but works.
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        // now we can enable monitor mode on the given cards.
+        for(const auto& card: cards) {
+            wifi::commandhelper::ip_link_set_card_state(card.device_name, false);
+            wifi::commandhelper::iw_enable_monitor_mode(card.device_name);
+            wifi::commandhelper::ip_link_set_card_state(card.device_name, true);
+            //wifi::commandhelper2::set_wifi_monitor_mode(card->_wifi_card.interface_name);
+        }
     }
     console->debug("takeover_cards_monitor_mode() end");
 }
 
 void openhd::wb::giveback_cards_monitor_mode(const std::vector<WiFiCard> &cards,std::shared_ptr<spdlog::logger> console) {
     for(const auto& card: cards){
+        if(card.type==WiFiCardType::OPENHD_EMULATED){
+            return;
+        }
         wifi::commandhelper::nmcli_set_device_managed_status(card.device_name, true);
     }
 }

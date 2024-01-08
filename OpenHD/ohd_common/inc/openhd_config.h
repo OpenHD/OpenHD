@@ -18,6 +18,7 @@ struct Config{
   bool WIFI_ENABLE_AUTODETECT= true;
   std::vector<std::string> WIFI_WB_LINK_CARDS{};
   std::string WIFI_WIFI_HOTSPOT_CARD;
+  bool WIFI_MONITOR_CARD_EMULATE= false;
   // CAMERAS
   bool CAMERA_ENABLE_AUTODETECT = true;
   int CAMERA_N_CAMERAS;
