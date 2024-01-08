@@ -122,7 +122,7 @@ add_library(mavlink INTERFACE)
 #You can supress the warnings in CMake using
 target_compile_options(mavlink INTERFACE -Wno-address-of-packed-member -Wno-cast-align)
 target_include_directories(mavlink INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/lib/mavlink-headers/mavlink/v2.0)
-target_link_libraries(OHDTelemetryLib PRIVATE mavlink)
+target_link_libraries(OHDTelemetryLib PUBLIC mavlink)
 
 # All the test files for development
 add_executable(test_serial_endpoint tests/test_serial_endpoint.cpp)
