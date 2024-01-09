@@ -12,7 +12,8 @@
 #include <optional>
 #include <vector>
 
-#include "openhd_spdlog.h"
+#include <openhd_spdlog.h>
+#include <openhd_util.h>
 
 std::vector<std::string> OHDFilesystemUtil::getAllEntriesFullPathInDirectory(
     const std::string &directory) {
@@ -125,4 +126,12 @@ long OHDFilesystemUtil::get_file_size_bytes(const std::string &filepath) {
   struct stat stat_buf{};
   int rc = stat(filepath.c_str(), &stat_buf);
   return rc == 0 ? stat_buf.st_size : -1;
+}
+
+std::optional<int> OHDFilesystemUtil::read_int_from_file(const std::string &filename) {
+    auto content= opt_read_file(filename);
+    if(!content.has_value()){
+        return std::nullopt;
+    }
+    return OHDUtil::string_to_int(content.value());
 }

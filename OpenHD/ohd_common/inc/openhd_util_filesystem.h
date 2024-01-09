@@ -63,6 +63,8 @@ int get_remaining_space_in_mb();
 // -1 if file does not exist
 long get_file_size_bytes(const std::string& filepath);
 
+std::optional<int> read_int_from_file(const std::string& filename);
+
 }
 
 #endif //OPENHD_OPENHD_OHD_COMMON_OPENHD_UTIL_FILESYSTEM_H_

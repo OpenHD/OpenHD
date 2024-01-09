@@ -13,6 +13,52 @@
 // NOTE: This does not include any (persistent) settings ! Immutable data (e.g. the discovered camera
 // and its capabilities) is seperated from the camera settings (see camera_settings.hpp)
 
+static constexpr int X_CAM_TYPE_DUMMY_SW=0; // Dummy sw picture
+static constexpr int X_CAM_TYPE_USB=1; // Any USB camera
+static constexpr int X_CAM_TYPE_EXTERNAL=2; // input via udp rtp
+static constexpr int X_CAM_TYPE_EXTERNAL_IP=3; // input via udp rtp & file start_ip_cam.txt is created.
+static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_AUTO=4;
+static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_IMX477M=5;
+static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_SKYMASTERHDR=6;
+static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_SKYVISIONPRO=7;
+static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_IMX477=8;
+static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_IMX462=9;
+static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_IMX327=10;
+static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_IMX290=11;
+static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_IMX462_LOWLIGHT_MINI=12;
+static constexpr int X_CAM_TYPE_RPI_VEYE_2MP=13;
+static constexpr int X_CAM_TYPE_RPI_VEYE_CSIMX307=14;
+static constexpr int X_CAM_TYPE_RPI_VEYE_CSSC132=15;
+static constexpr int X_CAM_TYPE_RPI_VEYE_MVCAM=16;
+static constexpr int X_CAM_TYPE_X20=17;
+static constexpr int X_CAM_TYPE_ROCKCHIP_X0=18; // reserved for future use
+static constexpr int X_CAM_TYPE_ROCKCHIP_X1=19;// reserved for future use
+static constexpr int X_CAM_TYPE_ROCKCHIP_X2=19;// reserved for future use
+//
+static constexpr int X_CAM_TYPE_DISABLED=0; // no camera, only exists to have a default value for secondary camera
+
+struct XCamera {
+    int camera_type = X_CAM_TYPE_DUMMY_SW;
+    // 0 for primary camera, 1 for secondary camera
+    int index;
+    // Only valid if camera is of type USB
+    std::string usb_v4l2_device_node;
+};
+
+static bool rpi_requires_mmal_pipeline(){
+    return false;
+}
+static bool rpi_requires_libcamera_pipeline(){
+    return false;
+}
+static bool rpi_requires_veye_pipeline(){
+    return false;
+}
+static bool is_valid_cam_type(int cam_type){
+    return cam_type>=0 && cam_type<=19;
+}
+
+
 /**
  * NOTE:
  * * Even though there is a move towards properly exposing CSI camera(s) via v4l2, this is error prone and

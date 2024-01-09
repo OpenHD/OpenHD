@@ -21,6 +21,7 @@
 #endif
 
 std::vector<Camera> DCameras::discover(const OHDPlatform platform) {
+  discover2(platform);
   auto m_console=openhd::log::create_or_get("v_dcameras");
   assert(m_console);
   auto m_enable_debug=OHDUtil::get_ohd_env_variable_bool("OHD_DISCOVER_CAMERAS_DEBUG");
@@ -307,4 +308,23 @@ std::vector<Camera> DCameras::detect_usb_cameras(const OHDPlatform& platform,std
     }
   }
   return ret;
+}
+
+static constexpr auto PRIMARY_CAM_TYPE_FILENAME="usr/local/share/openhd/video/cam0_type.txt";
+static constexpr auto SECONDARY_CAM_TYPE_FILENAME="usr/local/share/openhd/video/cam1_type.txt";
+static int read_cam_type(bool secondary){
+    auto filename= secondary ? SECONDARY_CAM_TYPE_FILENAME : PRIMARY_CAM_TYPE_FILENAME;
+    auto cam_type_opt=OHDFilesystemUtil::read_int_from_file(filename);
+    if(cam_type_opt.has_value() && is_valid_cam_type(cam_type_opt.value())){
+        return cam_type_opt.value();
+    }
+    int cam_type=secondary ? X_CAM_TYPE_DISABLED : X_CAM_TYPE_DUMMY_SW;
+    OHDFilesystemUtil::write_file(OHDUtil::int_as_string(cam_type),filename);
+    return cam_type;
+}
+
+std::vector<Camera> DCameras::discover2(const OHDPlatform &platform) {
+    const auto cam0_type= read_cam_type(false);
+    const auto cam1_type= read_cam_type(true);
+    return {};
 }

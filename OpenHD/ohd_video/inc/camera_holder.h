@@ -228,6 +228,16 @@ class CameraHolder:
       persist(false);
       return true;
   }
+  bool set_custom_script_param0(int value){
+      unsafe_get_settings().custom_script_value0=value;
+      persist(false);
+      return true;
+  }
+  bool set_custom_script_param1(int value){
+      unsafe_get_settings().custom_script_value1=value;
+      persist(false);
+      return true;
+  }
   // The CSI to HDMI adapter has an annoying bug where it actually doesn't allow changing the framerate but takes whatever the host provides
   // (e.g. the hdmi card). Util to check if we need to apply the "reduce bitrate by half"
   // NOTE: This is not completely correct - it assumes the provider (e.g. gopro) always gives 60fps
