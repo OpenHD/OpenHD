@@ -40,8 +40,7 @@ set(sources
     "src/openhd_spdlog.cpp"
     "src/openhd_reboot_util.cpp"
     "src/openhd_config.cpp"
-    "src/openhd_global.cpp"
-    "src/openhd_util_async.cpp"
+        "src/openhd_util_async.cpp"
     "src/openhd_external_device.cpp"
     )
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
