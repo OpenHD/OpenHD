@@ -11,7 +11,7 @@
 #include "ohd_video_air_generic_settings.h"
 #include "openhd_platform.h"
 #include "openhd_spdlog.h"
-#include "openhd_external_device.hpp"
+#include "openhd_external_device.h"
 #include "openhd_link.hpp"
 // Dirty
 #include "openhd-rpi-os-configure-vendor-cam.hpp"
@@ -46,11 +46,6 @@ class OHDVideoAir {
    */
   static std::vector<Camera> discover_cameras(const OHDPlatform& platform);
   /**
-   * Create a verbose debug string about the current state of OHDVideo.
-   * @return a verbose debug string.
-   */
-  [[nodiscard]] std::string createDebug() const;
-  /**
    * In ohd-telemetry, we create a mavlink settings component for each of the camera(s),instead of using one generic settings component
    * like for the rest of the settings.
    * Get all the settings for the discovered cameras. Settings for Camera0 are the first element, other cameras
@@ -61,8 +56,6 @@ class OHDVideoAir {
   std::vector<openhd::Setting> get_generic_settings();
   // r.n limited to primary and secondary camera
   static constexpr auto MAX_N_CAMERAS=2;
-  // react to dynamically connecting / disconnecting external device(s)
-  void set_ext_devices_manager(std::shared_ptr<openhd::ExternalDeviceManager> ext_device_manager);
   void update_arming_state(bool armed);
  private:
   const OHDPlatform m_platform;

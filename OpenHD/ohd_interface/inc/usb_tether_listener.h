@@ -8,7 +8,7 @@
 #include <atomic>
 #include <chrono>
 #include <mutex>
-#include <openhd_external_device.hpp>
+#include <openhd_external_device.h>
 #include <thread>
 #include <utility>
 

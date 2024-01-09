@@ -29,6 +29,13 @@ m_link_handle(std::move(link_handle)){
   }else{
     m_console->warn("No link handle, no video forwarding");
   }
+  // On the ground, forward video to all connected external devices via UDP
+  // (In addition to localhost)
+  // However, if a tcp client on localhost connects, we forward to the udp ports higher
+  // than 5600 on localhost - see the method below
+  openhd::ExternalDeviceManager::instance().register_listener([this](openhd::ExternalDevice external_device,bool connected){
+      start_stop_forwarding_external_device(external_device,connected);
+  });
 }
 
 OHDVideoGround::~OHDVideoGround() {
@@ -56,12 +63,6 @@ void OHDVideoGround::on_video_data(int stream_index, const uint8_t *data,
   }else{
     openhd::log::get_default()->debug("Invalid stream index {}",stream_index);
   }
-}
-
-void OHDVideoGround::set_ext_devices_manager(std::shared_ptr<openhd::ExternalDeviceManager> ext_device_manager) {
-  ext_device_manager->register_listener([this](openhd::ExternalDevice external_device,bool connected){
-      start_stop_forwarding_external_device(external_device,connected);
-  });
 }
 
 static bool ip_is_host_self(const std::string& ip){

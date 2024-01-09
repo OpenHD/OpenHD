@@ -7,7 +7,7 @@
 
 #define DIRTY_CONSOLE_FROM_OPENHD_SUBMODULES
 #include "../../lib/wifibroadcast/src/HelperSources/SocketHelper.hpp"
-#include "openhd_external_device.hpp"
+#include "openhd_external_device.h"
 #include "openhd_link.hpp"
 
 // The ground just stupidly forwards video (rtp fragments, to be exact) via UDP
@@ -23,8 +23,6 @@ class OHDVideoGround{
    */
   explicit OHDVideoGround(std::shared_ptr<OHDLink> link_handle);
   ~OHDVideoGround();
-  // react to dynamically connecting / disconnecting external device(s)
-  void set_ext_devices_manager(std::shared_ptr<openhd::ExternalDeviceManager> ext_device_manager);
  private:
   // Start forwarding to another ip
   void addForwarder(const std::string& client_addr);

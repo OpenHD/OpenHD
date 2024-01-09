@@ -6,7 +6,7 @@
 
 #include <openhd_util.h>
 
-#include <openhd_external_device.hpp>
+#include <openhd_external_device.h>
 #include <utility>
 
 #include "ethernet_helper.hpp"

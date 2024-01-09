@@ -269,10 +269,6 @@ int main(int argc, char *argv[]) {
     // Telemetry allows changing all settings (even from other modules)
     ohdTelemetry->add_settings_generic(ohdInterface->get_all_settings());
 
-    // Since telemetry handles the data stream(s) to external devices itself, we need to also react to
-    // changes to the external device(s) from ohd_interface
-    ohdTelemetry->set_ext_devices_manager(ohdInterface->get_ext_devices_manager());
-
     // either one is active, depending on air or ground
     std::unique_ptr<OHDVideoAir> ohd_video_air = nullptr;
     std::unique_ptr<OHDVideoGround> ohd_video_ground = nullptr;
@@ -284,10 +280,8 @@ int main(int argc, char *argv[]) {
         ohdTelemetry->add_settings_camera_component(i, settings_components.at(i)->get_all_settings());
       }
       ohdTelemetry->add_settings_generic(ohd_video_air->get_generic_settings());
-      ohd_video_air->set_ext_devices_manager(ohdInterface->get_ext_devices_manager());
     }else{
       ohd_video_ground = std::make_unique<OHDVideoGround>(ohdInterface->get_link_handle());
-      ohd_video_ground->set_ext_devices_manager(ohdInterface->get_ext_devices_manager());
     }
     // We do not add any more settings to ohd telemetry - the param set(s) are complete
     ohdTelemetry->settings_generic_ready();

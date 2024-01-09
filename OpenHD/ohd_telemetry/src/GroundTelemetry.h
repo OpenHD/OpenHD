@@ -13,7 +13,7 @@
 #include "internal/OHDMainComponent.h"
 #include "mavsdk_temporary/XMavlinkParamProvider.h"
 #include "openhd_action_handler.hpp"
-#include "openhd_external_device.hpp"
+#include "openhd_external_device.h"
 #include "openhd_link.hpp"
 #include "openhd_settings_imp.hpp"
 #include "openhd_spdlog.h"
@@ -60,8 +60,6 @@ class GroundTelemetry :public MavlinkSystem{
    * air unit are just discarded.
    */
   void set_link_handle(std::shared_ptr<OHDLink> link);
-  // react to dynamically connecting / disconnecting external device(s)
-  void set_ext_devices_manager(std::shared_ptr<openhd::ExternalDeviceManager> ext_device_manager);
  private:
   const OHDPlatform _platform;
   // called every time one or more messages from the air unit are received

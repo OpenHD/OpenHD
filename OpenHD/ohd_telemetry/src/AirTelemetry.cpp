@@ -28,9 +28,7 @@ AirTelemetry::AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHa
   // all their paramters.
   m_generic_mavlink_param_provider->add_params(get_all_settings());
   m_components.push_back(m_generic_mavlink_param_provider);
-  //TODO should we really enable a mavlink server on air ?
   m_tcp_server=std::make_unique<TCPEndpoint>(TCPEndpoint::Config{TCPEndpoint::DEFAULT_PORT});//1445
-  //m_tcp_server= nullptr;
   if(m_tcp_server){
     m_tcp_server->registerCallback([this](std::vector<MavlinkMessage> messages) {
       // Technically not correct, but works
@@ -246,10 +244,4 @@ void AirTelemetry::set_link_handle(std::shared_ptr<OHDLink> link) {
   m_wb_endpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
     on_messages_ground_unit(messages);
   });
-}
-
-void AirTelemetry::set_ext_devices_manager(std::shared_ptr<openhd::ExternalDeviceManager> ext_device_manager) {
-    if(m_tcp_server){
-        m_tcp_server->set_external_device_manager(ext_device_manager);
-    }
 }

@@ -52,6 +52,15 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,
   m_generic_mavlink_param_provider->add_params(get_all_settings());
   m_components.push_back(m_generic_mavlink_param_provider);
   setup_uart();
+  openhd::ExternalDeviceManager::instance().register_listener([this](openhd::ExternalDevice external_device,bool connected){
+      if(!external_device.discovered_by_mavlink_tcp_server){
+          if(connected){
+              add_external_ground_station_ip(external_device);
+          }else{
+              remove_external_ground_station_ip(external_device);
+          }
+      }
+  });
   m_console->debug("Created GroundTelemetry");
 }
 
@@ -322,24 +331,6 @@ void GroundTelemetry::set_link_handle(std::shared_ptr<OHDLink> link) {
   m_wb_endpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
     on_messages_air_unit(messages);
   });
-}
-
-void GroundTelemetry::set_ext_devices_manager(
-    std::shared_ptr<openhd::ExternalDeviceManager> ext_device_manager) {
-  assert(m_ext_device_manager== nullptr);// only call this once during lifetime
-  m_ext_device_manager=ext_device_manager;
-  m_ext_device_manager->register_listener([this](openhd::ExternalDevice external_device,bool connected){
-    if(!external_device.discovered_by_mavlink_tcp_server){
-        if(connected){
-            add_external_ground_station_ip(external_device);
-        }else{
-            remove_external_ground_station_ip(external_device);
-        }
-    }
-  });
-  if(m_tcp_server){
-      m_tcp_server->set_external_device_manager(ext_device_manager);
-  }
 }
 
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND

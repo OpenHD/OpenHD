@@ -60,73 +60,22 @@ typedef std::function<void(ExternalDevice external_device,bool connected)> EXTER
 
 class ExternalDeviceManager{
  public:
-  ExternalDeviceManager(){
-    // Here one can manually declare any IP addresses openhd should forward video / telemetry to
-    const auto config=openhd::load_config();
-    for(const auto& ip:config.NW_MANUAL_FORWARDING_IPS){
-      if(OHDUtil::is_valid_ip(ip)){
-        m_manual_ips.push_back(ip);
-      }else{
-        openhd::log::get_default()->warn("[{}] is not a valid ip",ip);
-      }
-    }
-    for(const auto& ip:m_manual_ips){
-      on_new_external_device(ExternalDevice{"manual",ip}, true);
-    }
-  }
-  ~ExternalDeviceManager(){
-    for(const auto& ip:m_manual_ips){
-      on_new_external_device(ExternalDevice{"manual",ip}, false);
-    }
-  }
-  // Might be called from different thread(s)
-  void on_new_external_device(const ExternalDevice& external_device,bool connected){
-    openhd::log::get_default()->debug("Got {} {}",external_device.to_string(),connected);
-    const auto id=external_device.create_identifier();
-    std::lock_guard<std::mutex> guard(m_ext_devices_lock);
-    if(connected){
-      if(m_curr_ext_devices.find(id)!=m_curr_ext_devices.end()){
-        openhd::log::get_default()->warn("Device {} already exists",external_device.to_string());
-        return;
-      }
-      // New external device connected
-      // log such that the message is shown in QOpenHD
-      openhd::log::log_via_mavlink(5,"External device connected");
-      m_curr_ext_devices[id]=external_device;
-      for(auto& cb:m_callbacks){
-        cb(external_device, true);
-      }
-    }else{
-      if(m_curr_ext_devices.find(id)==m_curr_ext_devices.end()){
-        openhd::log::get_default()->warn("Device {} does not exist",external_device.to_string());
-        return;
-      }
-      // warning in QOpenHD
-      openhd::log::get_default()->warn("External device disconnected");
-      // existing external device disconnected
-      m_curr_ext_devices.erase(id);
-      for(auto& cb:m_callbacks){
-        cb(external_device, false);
-      }
-    }
-  }
-  void register_listener(EXTERNAL_DEVICE_CALLBACK cb){
-    std::lock_guard<std::mutex> guard(m_ext_devices_lock);
-    // Notify the callback to register of any already connected devices
-    for(auto& [id,device]: m_curr_ext_devices){
-      cb(device,true);
-    }
-    m_callbacks.push_back(cb);
-  }
+  ExternalDeviceManager();
+  ~ExternalDeviceManager();
+  // We only have one global instance to be accessed by all opehd modules (core, telemetry,...)
+  static ExternalDeviceManager& instance();
   /**
-    * after calling this method with an external device's ip address
-    * (for example an externally connected tablet) data will be forwarded to the device's ip address.
-    * It is safe to call this method multiple times with the same IP address, since we internally keep track here.
+   * Thread-safe
+   * Called every time someone (for example the usb tether listener) discovered a new external device
+   * or detected that an external device has disconnected.
    */
+  void on_new_external_device(const ExternalDevice& external_device,bool connected);
   /**
-    * stop forwarding data to the device's ip address.
-    * Does nothing if the device's ip address is not registered for forwarding or already has ben removed.
+   * Thread-safe
+   * Register a listener that is called every time an external device is discovered or lost.
+   * If devices are discovered before the cb is registered, the cb is called for all the already connected devices.
    */
+  void register_listener(EXTERNAL_DEVICE_CALLBACK cb);
  private:
   std::mutex m_ext_devices_lock;
   std::map<std::string,ExternalDevice> m_curr_ext_devices;

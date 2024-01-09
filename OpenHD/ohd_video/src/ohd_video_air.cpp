@@ -61,6 +61,10 @@ OHDVideoAir::OHDVideoAir(OHDPlatform platform1,std::vector<Camera> cameras,
   if(m_platform.platform_type==PlatformType::RaspberryPi){
     m_rpi_os_change_config_handler=std::make_unique<openhd::rpi::os::ConfigChangeHandler>(m_platform);
   }
+  // On air, we start forwarding video (UDP) to all connected external device(s)
+  openhd::ExternalDeviceManager::instance().register_listener([this](openhd::ExternalDevice external_device,bool connected){
+    start_stop_forwarding_external_device(external_device,connected);
+  });
   // In case any non-demuxed recordings exists (e.g. due to a openhd crash, unsafe shutdown,...)
   //GstRecordingDemuxer::instance().demux_all_remaining_mkv_files_async();
   m_console->debug( "OHDVideo::running");
@@ -73,18 +77,6 @@ OHDVideoAir::~OHDVideoAir() {
     }
     // Stop all the camera stream(s)
     m_camera_streams.resize(0);
-}
-
-std::string OHDVideoAir::createDebug() const {
-  // TODO make it much more verbose
-  /*std::stringstream ss;
-  ss << "OHDVideo::N camera streams:" << m_camera_streams.size() << "\n";
-  for (int i = 0; i < m_camera_streams.size(); i++) {
-    const auto &stream = m_camera_streams.at(i);
-    ss << "Camera stream:" << i << stream->createDebug() << "\n";
-  }
-  return ss.str();*/
-  return "";
 }
 
 void OHDVideoAir::configure(const std::shared_ptr<CameraHolder>& camera_holder) {
@@ -312,12 +304,6 @@ std::vector<Camera> OHDVideoAir::discover_cameras(const OHDPlatform& platform) {
     OHDUtil::run_command("systemctl",{"start",CUSTOM_UNMANAGED_CAMERA_SERVICE_NAME});
   }
   return cameras;
-}
-
-void OHDVideoAir::set_ext_devices_manager(std::shared_ptr<openhd::ExternalDeviceManager> ext_device_manager) {
-    ext_device_manager->register_listener([this](openhd::ExternalDevice external_device,bool connected){
-        start_stop_forwarding_external_device(external_device,connected);
-    });
 }
 
 void OHDVideoAir::start_stop_forwarding_external_device(openhd::ExternalDevice external_device, bool connected) {

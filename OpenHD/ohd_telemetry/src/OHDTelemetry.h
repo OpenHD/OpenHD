@@ -10,7 +10,7 @@
 #include <utility>
 
 #include "openhd_action_handler.hpp"
-#include "openhd_external_device.hpp"
+#include "openhd_external_device.h"
 #include "openhd_link_statistics.hpp"
 #include "openhd_platform.h"
 #include "openhd_profile.h"
@@ -51,8 +51,6 @@ class OHDTelemetry {
   // OHDTelemetry is agnostic of the type of transmission between air and ground and also agnostic weather this
   // link exists or not (since it is already using a lossy link).
   void set_link_handle(std::shared_ptr<OHDLink> link);
-  //
-  void set_ext_devices_manager(std::shared_ptr<openhd::ExternalDeviceManager> ext_device_manager);
  private:
   // only either one of them both is active at a time.
   // active when air
