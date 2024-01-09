@@ -34,11 +34,10 @@ class USBTetherListener{
    * disconnected USB tether device.
    * @param external_device_manager connect / disconnect events are forwarded using this handle
    */
-  explicit USBTetherListener(std::shared_ptr<openhd::ExternalDeviceManager> external_device_manager);
+  explicit USBTetherListener();
   ~USBTetherListener();
  private:
   std::shared_ptr<spdlog::logger> m_console;
-  std::shared_ptr<openhd::ExternalDeviceManager> m_external_device_manager;
   std::unique_ptr<std::thread> m_check_connection_thread;
   std::atomic<bool> m_check_connection_thread_stop =false;
   /**

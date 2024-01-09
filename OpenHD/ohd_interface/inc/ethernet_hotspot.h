@@ -20,7 +20,7 @@
  */
 class EthernetHotspot{
  public:
-  explicit EthernetHotspot(std::shared_ptr<openhd::ExternalDeviceManager> external_device_manager,std::string device);
+  explicit EthernetHotspot(std::string device);
   EthernetHotspot(const EthernetHotspot&)=delete;
   EthernetHotspot(const EthernetHotspot&&)=delete;
   ~EthernetHotspot();
@@ -29,7 +29,6 @@ class EthernetHotspot{
   void set_enabled(bool enable);
  private:
   std::shared_ptr<spdlog::logger> m_console;
-  std::shared_ptr<openhd::ExternalDeviceManager> m_external_device_manager;
   const std::string m_device;
   std::unique_ptr<std::thread> m_check_connection_thread= nullptr;
   std::atomic<bool> m_check_connection_thread_stop =false;

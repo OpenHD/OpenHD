@@ -8,9 +8,7 @@
 
 #include "ethernet_helper.hpp"
 
-EthernetListener::EthernetListener(
-    std::shared_ptr<openhd::ExternalDeviceManager> external_device_manager,std::string device):
-m_external_device_manager(std::move(external_device_manager)),
+EthernetListener::EthernetListener(std::string device):
 m_device(std::move(device)){
   m_console = openhd::log::create_or_get("eth_listener");
   assert(m_console);
@@ -85,15 +83,11 @@ void EthernetListener::connect_once() {
     return;
   }
   m_console->info("found device:{}",external_device.to_string());
-  if(m_external_device_manager){
-    m_external_device_manager->on_new_external_device(external_device, true);
-  }
+  openhd::ExternalDeviceManager::instance().on_new_external_device(external_device, true);
   // check in regular intervals if the device disconnects
   while (!m_check_connection_thread_stop){
     std::this_thread::sleep_for(std::chrono::seconds(1));
     //TODO
   }
-  if(m_external_device_manager){
-    m_external_device_manager->on_new_external_device(external_device, false);
-  }
+  openhd::ExternalDeviceManager::instance().on_new_external_device(external_device, false);
 }

@@ -10,8 +10,7 @@
 
 #include "openhd_spdlog.h"
 
-USBTetherListener::USBTetherListener(std::shared_ptr<openhd::ExternalDeviceManager> external_device_manager) :
-    m_external_device_manager(std::move(external_device_manager)){
+USBTetherListener::USBTetherListener(){
   m_console = openhd::log::create_or_get("usb_listener");
   assert(m_console);
   m_check_connection_thread_stop =false;
@@ -84,9 +83,7 @@ void USBTetherListener::connectOnce() {
     return;
   }
   m_console->info("found device:{}",external_device.to_string());
-  if(m_external_device_manager){
-    m_external_device_manager->on_new_external_device(external_device, true);
-  }
+  openhd::ExternalDeviceManager::instance().on_new_external_device(external_device, true);
   // check in regular intervals if the tethering device disconnects.
   while (!m_check_connection_thread_stop){
     std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -95,9 +92,7 @@ void USBTetherListener::connectOnce() {
       break;
     }
   }
-  if(m_external_device_manager){
-    m_external_device_manager->on_new_external_device(external_device, false);
-  }
+  openhd::ExternalDeviceManager::instance().on_new_external_device(external_device, false);
 }
 
 

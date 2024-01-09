@@ -51,9 +51,6 @@ class OHDInterface {
   static void generate_keys_from_pw_if_exists_and_delete();
   // Agnostic of the link, even though r.n we only have a wifibroadcast implementation (but this might change).
   std::shared_ptr<OHDLink> get_link_handle();
-  // Both video and telemetry do the forwarding in their own way, this just provides the convenient methods to
-  // start / stop forwarding if external device(s) are connected / disconnected.
-  std::shared_ptr<openhd::ExternalDeviceManager> get_ext_devices_manager();
 private:
   void update_wifi_hotspot_enable();
  private:
@@ -66,7 +63,6 @@ private:
   std::unique_ptr<EthernetHotspot> m_ethernet_hotspot;
   std::unique_ptr<WifiHotspot> m_wifi_hotspot;
   std::unique_ptr<openhd::LEDBlinker> m_error_blinker;
-  std::shared_ptr<openhd::ExternalDeviceManager> m_external_devices_manager;
   std::vector<WiFiCard> m_monitor_mode_cards{};
   std::optional<WiFiCard> m_opt_hotspot_card=std::nullopt;
   NetworkingSettingsHolder m_nw_settings;

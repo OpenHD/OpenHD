@@ -11,7 +11,7 @@
 
 #include "openhd_util.h"
 
-TCPEndpoint::TCPEndpoint(TCPEndpoint::Config config,std::shared_ptr<openhd::ExternalDeviceManager> opt_external_device_manager)
+TCPEndpoint::TCPEndpoint(TCPEndpoint::Config config)
     : MEndpoint("TCPServer"),
       m_config(std::move(config))//,
       //m_opt_external_device_manager(opt_external_device_manager)
@@ -115,11 +115,6 @@ void TCPEndpoint::send_message_to_all_clients(const uint8_t *data, int data_len)
 }
 
 void TCPEndpoint::on_external_device(std::string ip, bool connected) {
-    /*std::lock_guard<std::mutex> guard(m_external_devices_mutex);
-    if(m_opt_external_device_manager){
-        auto external_device=openhd::ExternalDevice{"MAV TCP CLIENT",ip,true};
-        m_opt_external_device_manager->on_new_external_device(external_device,connected);
-    }*/
     auto external_device=openhd::ExternalDevice{"MAV TCP CLIENT",ip,true};
     openhd::ExternalDeviceManager::instance().on_new_external_device(external_device,connected);
 }

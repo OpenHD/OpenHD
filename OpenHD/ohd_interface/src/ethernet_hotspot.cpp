@@ -38,9 +38,8 @@ static void create_ethernet_hotspot_connection_if_needed(const std::shared_ptr<s
   m_console->debug("end create hotspot connection");
 }
 
-EthernetHotspot::EthernetHotspot(std::shared_ptr<openhd::ExternalDeviceManager> external_device_manager,std::string  device):
-      m_device(std::move(device)),
-      m_external_device_manager(std::move(external_device_manager)) {
+EthernetHotspot::EthernetHotspot(std::string  device):
+      m_device(std::move(device)) {
   m_console = openhd::log::create_or_get("eth_hs");
   m_console->debug("device:[{}]",m_device);
 }
@@ -111,9 +110,7 @@ void EthernetHotspot::discover_device_once() {
   // When we reach here we have a valid ip of the device connected - now check if it disconnects
   const auto external_device=openhd::ExternalDevice{"ETH0",ip_external_device};
   m_console->info("found device:{}",external_device.to_string());
-  if(m_external_device_manager){
-    m_external_device_manager->on_new_external_device(external_device, true);
-  }
+  openhd::ExternalDeviceManager::instance().on_new_external_device(external_device, true);
   // now check in regular intervals if the device disconnects
   while (!m_check_connection_thread_stop){
     std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -124,7 +121,5 @@ void EthernetHotspot::discover_device_once() {
     }
   }
   m_console->info("disconnected {}",external_device.to_string());
-  if(m_external_device_manager){
-    m_external_device_manager->on_new_external_device(external_device, false);
-  }
+  openhd::ExternalDeviceManager::instance().on_new_external_device(external_device, false);
 }

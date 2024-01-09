@@ -94,7 +94,6 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
     m_opt_action_handler(std::move(opt_action_handler)){
   m_console = openhd::log::create_or_get("interface");
   assert(m_console);
-  m_external_devices_manager=std::make_shared<openhd::ExternalDeviceManager>();
     m_monitor_mode_cards={};
     m_opt_hotspot_card=std::nullopt;
   const auto config=openhd::load_config();
@@ -125,7 +124,7 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
   // The USB tethering listener is always enabled on ground - it doesn't interfere with anything
   if(m_profile.is_ground()){
     // The USB tethering listener is always enabled on ground - it doesn't interfere with anything
-    m_usb_tether_listener =std::make_unique<USBTetherListener>(m_external_devices_manager);
+    m_usb_tether_listener =std::make_unique<USBTetherListener>();
   }
   // OpenHD can (but must not) "control" ethernet via network manager.
   // On rpi, we do that by default when on ground, on other platforms, only if the user explicitly requested it.
@@ -140,9 +139,9 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
     m_console->debug("OpenHD manages {}",ethernet_card);
     // NOTE: Persistence is a bit complicated with ethernet hotspot (we write a nm connection that needs to stay there
     // such that after a reboot, the rpi correctly the ethernet
-    m_ethernet_hotspot = std::make_unique<EthernetHotspot>(m_external_devices_manager,ethernet_card);
+    m_ethernet_hotspot = std::make_unique<EthernetHotspot>(ethernet_card);
     m_ethernet_hotspot->set_enabled(m_nw_settings.get_settings().ethernet_hotspot_enable);
-    m_ethernet_listener =  std::make_unique<EthernetListener>(m_external_devices_manager,ethernet_card);
+    m_ethernet_listener =  std::make_unique<EthernetListener>(ethernet_card);
     m_ethernet_listener->set_enabled(m_nw_settings.get_settings().ethernet_nonhotspot_enable_auto_forwarding);
   }else{
     m_console->debug("OpenHD does not manage ethernet");
@@ -244,10 +243,6 @@ std::shared_ptr<OHDLink> OHDInterface::get_link_handle() {
     return m_wb_link;
   }
   return nullptr;
-}
-
-std::shared_ptr<openhd::ExternalDeviceManager> OHDInterface::get_ext_devices_manager() {
-  return m_external_devices_manager;
 }
 
 void OHDInterface::generate_keys_from_pw_if_exists_and_delete() {

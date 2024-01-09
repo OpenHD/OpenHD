@@ -24,7 +24,7 @@ class TCPEndpoint : public MEndpoint {
     //std::string ip;
     int port;
   };
-  explicit TCPEndpoint(Config config,std::shared_ptr<openhd::ExternalDeviceManager> opt_external_device_manager= nullptr);
+  explicit TCPEndpoint(Config config);
   ~TCPEndpoint();
   static constexpr int DEFAULT_PORT=5760;
   //
@@ -33,7 +33,6 @@ class TCPEndpoint : public MEndpoint {
   const Config m_config;
   std::shared_ptr<spdlog::logger> m_console;
   std::unique_ptr<std::thread> m_accept_thread = nullptr;
-  //std::shared_ptr<openhd::ExternalDeviceManager> m_opt_external_device_manager;
   bool m_keep_accept_thread_alive=true;
   int server_fd=0;
   static constexpr const size_t READ_BUFF_SIZE = 65507;
