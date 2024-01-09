@@ -21,6 +21,8 @@ namespace openhd {
 // 2) How are these device(s) handled: Once detected (e.g. when a USB tethering connection is detected), find their IP adress,
 //    then call the callback function with the ip and connected==true when new device connected, as well as connected==false
 //    when this device disconnects
+// 3) How are these device(s) detected: Right now in oh_interface by usb, ethernet listeners and in ohd_telemetry by the mavlink
+//    tcp endpoint.
 
 struct ExternalDevice {
   // for debugging purposes only
