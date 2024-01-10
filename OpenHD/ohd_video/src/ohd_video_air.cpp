@@ -13,10 +13,8 @@
 #include "nalu/fragment_helper.h"
 
 OHDVideoAir::OHDVideoAir(OHDPlatform platform1,std::vector<Camera> cameras,
-                   std::shared_ptr<openhd::ActionHandler> opt_action_handler,
                    std::shared_ptr<OHDLink> link)
     : m_platform(platform1),
-      m_opt_action_handler(std::move(opt_action_handler)),
       m_link_handle(std::move(link))
 {
   m_console = openhd::log::create_or_get("v_air");
@@ -42,22 +40,21 @@ OHDVideoAir::OHDVideoAir(OHDPlatform platform1,std::vector<Camera> cameras,
   }
   std::vector<std::shared_ptr<CameraHolder>> camera_holders;
   for(const auto& camera:cameras){
-    camera_holders.emplace_back(std::make_unique<CameraHolder>(camera,m_opt_action_handler));
+    camera_holders.emplace_back(std::make_unique<CameraHolder>(camera));
   }
   startup_fix_common_issues(camera_holders);
   assert(camera_holders.size()<=MAX_N_CAMERAS);
   for (auto &camera: camera_holders) {
     configure(camera);
   }
-  if(m_opt_action_handler){
-    m_opt_action_handler->action_request_bitrate_change_register([this](openhd::ActionHandler::LinkBitrateInformation lb){
+    openhd::ActionHandler::instance().action_request_bitrate_change_register([this](openhd::ActionHandler::LinkBitrateInformation lb){
       this->handle_change_bitrate_request(lb);
     });
     auto cb_armed=[this](bool armed){
           this->update_arming_state(armed);
     };
     openhd::ArmingStateHelper::instance().register_listener("ohd_video_air",cb_armed);
-  }
+
   if(m_platform.platform_type==PlatformType::RaspberryPi){
     m_rpi_os_change_config_handler=std::make_unique<openhd::rpi::os::ConfigChangeHandler>(m_platform);
   }
@@ -71,10 +68,8 @@ OHDVideoAir::OHDVideoAir(OHDPlatform platform1,std::vector<Camera> cameras,
 }
 
 OHDVideoAir::~OHDVideoAir() {
-    if(m_opt_action_handler){
-       openhd::ArmingStateHelper::instance().unregister_listener("ohd_video_air");
-        m_opt_action_handler->action_request_bitrate_change_register(nullptr);
-    }
+    openhd::ArmingStateHelper::instance().unregister_listener("ohd_video_air");
+    openhd::ActionHandler::instance().action_request_bitrate_change_register(nullptr);
     // Stop all the camera stream(s)
     m_camera_streams.resize(0);
 }
@@ -100,7 +95,7 @@ void OHDVideoAir::configure(const std::shared_ptr<CameraHolder>& camera_holder) 
     case CameraType::RPI_CSI_LIBCAMERA:
     case CameraType::DUMMY_SW: {
       m_console->debug("GStreamerStream for Camera index:{}",camera.index);
-      auto stream = std::make_shared<GStreamerStream>(m_platform.platform_type, camera_holder,frame_cb,m_opt_action_handler);
+      auto stream = std::make_shared<GStreamerStream>(m_platform.platform_type, camera_holder,frame_cb);
       stream->start_looping();
       m_camera_streams.push_back(stream);
       break;

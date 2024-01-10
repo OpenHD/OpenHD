@@ -33,7 +33,6 @@ class OHDVideoAir {
    * @param link_handle handle for sending video data over the (currently only wb) link between air and ground
    */
   OHDVideoAir(OHDPlatform platform1,std::vector<Camera> cameras,
-           std::shared_ptr<openhd::ActionHandler> opt_action_handler,
            std::shared_ptr<OHDLink> link_handle);
   ~OHDVideoAir();
   OHDVideoAir(const OHDVideoAir&)=delete;
@@ -62,7 +61,6 @@ class OHDVideoAir {
   // All the created camera streams
   std::vector<std::shared_ptr<CameraStream>> m_camera_streams;
   std::shared_ptr<spdlog::logger> m_console;
-  std::shared_ptr<openhd::ActionHandler> m_opt_action_handler;
   std::shared_ptr<OHDLink> m_link_handle;
   // r.n only for multi camera support
   std::unique_ptr<AirCameraGenericSettingsHolder> m_generic_settings;

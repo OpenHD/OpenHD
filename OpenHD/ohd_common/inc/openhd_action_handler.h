@@ -16,8 +16,8 @@
 
 // This class exists to handle the rare case(s) when one openhd module needs to talk to another.
 // For example, the wb link (ohd_interface) might request a lower encoder bitrate (ohd_video)
-// Since we do not have any code dependencies between them, we have a single shared action handler for that
-// which calls the appropriate registered cb (if it has been registered)
+// Since we do not have any code dependencies between the subbmodules directly (other than that they
+// all depend on ohd_common) we solve this issue by exposing action handlers as singletons here.
 namespace openhd{
 
 // In a few places inside openhd we need to react to changes on the FC arming state.
@@ -25,18 +25,25 @@ namespace openhd{
 // The default arming state is disarmed
 class ArmingStateHelper{
 public:
+    ArmingStateHelper()=default;
+    ArmingStateHelper(const ArmingStateHelper&)=delete;
+    ArmingStateHelper(const ArmingStateHelper&&)=delete;
     static ArmingStateHelper& instance();
     typedef std::function<void(const bool armed)> STATE_CHANGED_CB;
+    /**
+     * Register a listener that is called reliably whenever the arming state changes (disarm, arm, disarm,... for example)
+     * @param tag needs to be a unique tag (per all submodules)
+     */
     void register_listener(const std::string& tag,STATE_CHANGED_CB cb);
+    /**
+     * Unregister a previously registered cb.
+     */
     void unregister_listener(const std::string& tag);
     // For fetching the arming state in a manner where a deterministic arm / disarm pattern is not needed
     bool is_currently_armed(){
         return m_is_armed;
     }
     void update_arming_state_if_changed(bool armed);
-    void disable_all(){
-        m_cbs.clear();
-    }
 private:
     std::atomic_bool m_is_armed=false;
     std::map<std::string,STATE_CHANGED_CB> m_cbs;
@@ -46,6 +53,9 @@ private:
 // In (only one) place right now we need to react to changes on the RC channels the FC reports
 class FCRcChannelsHelper{
 public:
+    FCRcChannelsHelper()=default;
+    FCRcChannelsHelper(const FCRcChannelsHelper&)=delete;
+    FCRcChannelsHelper(const FCRcChannelsHelper&&)=delete;
     static FCRcChannelsHelper& instance();
     typedef std::function<void(const std::array<int,18>& rc_channels)> ACTION_ON_ANY_RC_CHANNEL_CB;
     // called every time a rc channel value(s) mavlink packet is received from the FC
@@ -60,10 +70,10 @@ private:
 class ActionHandler{
  public:
   ActionHandler()=default;
-  // delete copy and move constructor
   ActionHandler(const ActionHandler&)=delete;
   ActionHandler(const ActionHandler&&)=delete;
- public:
+  static ActionHandler& instance();
+public:
   // Link bitrate change request
   struct LinkBitrateInformation{
     int recommended_encoder_bitrate_kbits;

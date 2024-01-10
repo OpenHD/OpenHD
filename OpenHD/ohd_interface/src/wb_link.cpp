@@ -19,11 +19,10 @@
 
 static constexpr auto WB_LINK_ARM_CHANGED_TX_POWER_TAG="wb_link_tx_power";
 
-WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> broadcast_cards,std::shared_ptr<openhd::ActionHandler> opt_action_handler)
+WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> broadcast_cards)
     : m_profile(std::move(profile)),
       m_platform(platform),
-      m_broadcast_cards(std::move(broadcast_cards)),
-      m_opt_action_handler(std::move(opt_action_handler))
+      m_broadcast_cards(std::move(broadcast_cards))
 {
   m_console = openhd::log::create_or_get("wb_streams");
   assert(m_console);
@@ -47,9 +46,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   txrx_options.tx_without_pcap= true;
   txrx_options.enable_auto_switch_tx_card= false; //TODO remove me
   txrx_options.max_sane_injection_time=std::chrono::milliseconds(1);
-  if(m_opt_action_handler){
-    txrx_options.rx_radiotap_debug_level=m_opt_action_handler->rf_metrics_level;
-  }
+  txrx_options.rx_radiotap_debug_level=openhd::ActionHandler::instance().rf_metrics_level;
   //txrx_options.advanced_debugging_rx= true;
   //txrx_options.debug_decrypt_time= true;
   //txrx_options.debug_encrypt_time= true;
@@ -204,15 +201,14 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   m_wb_txrx->start_receiving();
   m_work_thread_run = true;
   m_work_thread =std::make_unique<std::thread>(&WBLink::loop_do_work, this);
-  if(m_opt_action_handler){
       std::function<bool(openhd::ActionHandler::ScanChannelsParam)> cb_scan=[this](openhd::ActionHandler::ScanChannelsParam param){
         return request_start_scan_channels(param);
       };
-      m_opt_action_handler->wb_cmd_scan_channels=cb_scan;
+      openhd::ActionHandler::instance().wb_cmd_scan_channels=cb_scan;
       std::function<bool(int)> cb_analyze=[this](int channels_to_scan){
           return request_start_analyze_channels(channels_to_scan);
       };
-      m_opt_action_handler->wb_cmd_analyze_channels=cb_analyze;
+      openhd::ActionHandler::instance().wb_cmd_analyze_channels=cb_analyze;
       if(m_profile.is_air){
           // MCS is only changed on air
           auto cb_channel=[this](const std::array<int,18>& rc_channels){
@@ -233,8 +229,8 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
           }
           return ret;
       };
-      m_opt_action_handler->wb_get_supported_channels= wb_get_supported_channels;
-  }
+    openhd::ActionHandler::instance().wb_get_supported_channels= wb_get_supported_channels;
+
 }
 
 WBLink::~WBLink() {
@@ -245,12 +241,10 @@ WBLink::~WBLink() {
   }
   m_management_air= nullptr;
   m_management_gnd= nullptr;
-  if(m_opt_action_handler){
-      openhd::FCRcChannelsHelper::instance().action_on_any_rc_channel_register(nullptr);
-      openhd::ArmingStateHelper::instance().unregister_listener(WB_LINK_ARM_CHANGED_TX_POWER_TAG);
-      m_opt_action_handler->wb_cmd_scan_channels= nullptr;
-      m_opt_action_handler->wb_cmd_analyze_channels=nullptr;
-  }
+  openhd::FCRcChannelsHelper::instance().action_on_any_rc_channel_register(nullptr);
+  openhd::ArmingStateHelper::instance().unregister_listener(WB_LINK_ARM_CHANGED_TX_POWER_TAG);
+  openhd::ActionHandler::instance().wb_cmd_scan_channels= nullptr;
+  openhd::ActionHandler::instance().wb_cmd_analyze_channels=nullptr;
   m_wb_txrx->stop_receiving();
   // stop all the receiver/transmitter instances, after that, give card back to network manager
   m_wb_tele_rx.reset();
@@ -655,10 +649,8 @@ void WBLink::wt_update_statistics() {
       openhd::link_statistics::Xmavlink_openhd_stats_wb_video_air_fec_performance_t air_fec{};
       air_video.link_index=i;
       int rec_bitrate=0;
-      if(m_opt_action_handler){
-        auto cam_stats=m_opt_action_handler->get_cam_info(i);
-        rec_bitrate=cam_stats.encoding_bitrate_kbits;
-      }
+      auto cam_stats=openhd::ActionHandler::instance().get_cam_info(i);
+      rec_bitrate=cam_stats.encoding_bitrate_kbits;
       air_video.curr_recommended_bitrate=rec_bitrate;
       air_video.curr_measured_encoder_bitrate=curr_tx_stats.current_provided_bits_per_second;
       air_video.curr_injected_bitrate=curr_tx_stats.current_injected_bits_per_second;
@@ -782,9 +774,7 @@ void WBLink::wt_update_statistics() {
   }
   stats.is_air=m_profile.is_air;
   stats.ready=true;
-  if(m_opt_action_handler){
-    m_opt_action_handler->update_link_stats(stats);
-  }
+  openhd::ActionHandler::instance().update_link_stats(stats);
   if(m_profile.is_ground()){
     if(rxStats.likely_mismatching_encryption_key){
         const auto elapsed=std::chrono::steady_clock::now()-m_last_log_bind_phrase_mismatch;
@@ -857,13 +847,13 @@ void WBLink::wt_perform_rate_adjustment() {
 void WBLink::recommend_bitrate_to_encoder(int recommended_video_bitrate_kbits) {
     // Since settings might change dynamically at run time, we constantly recommend a bitrate to the encoder / camera -
     // The camera is responsible for "not doing anything" when we recommend the same bitrate to it multiple times
-    if(!m_opt_action_handler){
+    /*if(!m_opt_action_handler){
         m_console->debug("No action handler,cannot recommend bitrate to camera");
         return;
-    }
+    }*/
     openhd::ActionHandler::LinkBitrateInformation lb{};
     lb.recommended_encoder_bitrate_kbits = recommended_video_bitrate_kbits;
-    m_opt_action_handler->action_request_bitrate_change_handle(lb);
+    openhd::ActionHandler::instance().action_request_bitrate_change_handle(lb);
 }
 
 bool WBLink::try_schedule_work_item(const std::shared_ptr<WorkItem> &work_item) {
@@ -959,11 +949,11 @@ void WBLink::perform_channel_scan(const openhd::ActionHandler::ScanChannelsParam
   //}
   // We only scan 40Mhz, this way we get both 20Mhz and 40Mhz air unit(s)
   const std::vector<uint16_t> channel_widths_to_scan={40};
-  if(m_opt_action_handler) {
-    auto stats_current = m_opt_action_handler->get_link_stats();
+
+    auto stats_current = openhd::ActionHandler::instance().get_link_stats();
     stats_current.gnd_operating_mode.operating_mode = 1;
-    m_opt_action_handler->update_link_stats(stats_current);
-  }
+      openhd::ActionHandler::instance().update_link_stats(stats_current);
+
   struct ScanResult{
         bool success=false;
         int frequency =0;
@@ -992,14 +982,12 @@ void WBLink::perform_channel_scan(const openhd::ActionHandler::ScanChannelsParam
           m_console->warn("Cannot scan [{}] {}Mhz@{}Mhz",channel.channel,channel.frequency,channel_width);
           continue;
       }
-      if(m_opt_action_handler){
-          openhd::ActionHandler::ScanChannelsProgress tmp{};
-          tmp.channel_mhz=(int)channel.frequency;
-          tmp.channel_width_mhz=channel_width;
-          tmp.success= false;
-          tmp.progress=OHDUtil::calculate_progress_perc(i,(int)channels_to_scan.size());
-          m_opt_action_handler->add_scan_channels_progress(tmp);
-      }
+        openhd::ActionHandler::ScanChannelsProgress tmp{};
+        tmp.channel_mhz=(int)channel.frequency;
+        tmp.channel_width_mhz=channel_width;
+        tmp.success= false;
+        tmp.progress=OHDUtil::calculate_progress_perc(i,(int)channels_to_scan.size());
+        openhd::ActionHandler::instance().add_scan_channels_progress(tmp);
       // Disable injection during scan
       m_wb_txrx->set_passive_mode(true);
       // sleeep a bit - some cards /drivers might need time switching
@@ -1053,14 +1041,13 @@ void WBLink::perform_channel_scan(const openhd::ActionHandler::ScanChannelsParam
     m_gnd_curr_rx_channel_width=result.channel_width;
     apply_frequency_and_channel_width_from_settings();
   }
-  if(m_opt_action_handler){
-      openhd::ActionHandler::ScanChannelsProgress tmp{};
-      tmp.channel_mhz=(int)result.frequency;
-      tmp.channel_width_mhz=result.channel_width;
-      tmp.success= result.success;
-      tmp.progress=100;
-      m_opt_action_handler->add_scan_channels_progress(tmp);
-  }
+    openhd::ActionHandler::ScanChannelsProgress tmp{};
+    tmp.channel_mhz=(int)result.frequency;
+    tmp.channel_width_mhz=result.channel_width;
+    tmp.success= result.success;
+    tmp.progress=100;
+    openhd::ActionHandler::instance().add_scan_channels_progress(tmp);
+
 }
 
 void WBLink::perform_channel_analyze(int channels_to_scan) {
@@ -1071,11 +1058,9 @@ void WBLink::perform_channel_analyze(int channels_to_scan) {
     };
     const WiFiCard& card=m_broadcast_cards.at(0);
     const auto channels_to_analyze=openhd::wb::get_analyze_channels_frequencies(card,channels_to_scan);
-    if(m_opt_action_handler) {
-        auto stats_current = m_opt_action_handler->get_link_stats();
+        auto stats_current = openhd::ActionHandler::instance().get_link_stats();
         stats_current.gnd_operating_mode.operating_mode = 2;
-        m_opt_action_handler->update_link_stats(stats_current);
-    }
+        openhd::ActionHandler::instance().update_link_stats(stats_current);
     std::vector<AnalyzeResult> results{};
     for(int i=0; i < channels_to_analyze.size(); i++){
         const auto channel=channels_to_analyze[i];
@@ -1094,7 +1079,7 @@ void WBLink::perform_channel_analyze(int channels_to_scan) {
         const auto n_foreign_packets=stats.count_p_any-stats.count_p_valid;
         m_console->debug("Got {} foreign packets {}:{}",n_foreign_packets,stats.count_p_any,stats.count_p_valid);
         results.push_back(AnalyzeResult{(int)channel.frequency,(int)n_foreign_packets});
-        if(m_opt_action_handler){
+
             openhd::ActionHandler::AnalyzeChannelsResult tmp{};
             for(int j=0;j<30;j++){
                 if(j<results.size()){
@@ -1106,8 +1091,8 @@ void WBLink::perform_channel_analyze(int channels_to_scan) {
                 }
             }
             tmp.progress=OHDUtil::calculate_progress_perc(i+1, (int)channels_to_analyze.size());
-            m_opt_action_handler->add_analyze_result(tmp);
-        }
+            openhd::ActionHandler::instance().add_analyze_result(tmp);
+
     }
     /*std::stringstream ss;
     for(int i=0;i<results.size();i++){

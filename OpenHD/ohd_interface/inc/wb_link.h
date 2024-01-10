@@ -41,8 +41,7 @@ class WBLink :public OHDLink{
    * @param opt_action_handler global openhd action handler, optional (can be nullptr during testing of specific modules instead
    * of testing a complete running openhd instance)
    */
-  explicit WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> broadcast_cards,
-                     std::shared_ptr<openhd::ActionHandler> opt_action_handler);
+  explicit WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> broadcast_cards);
   WBLink(const WBLink&)=delete;
   WBLink(const WBLink&&)=delete;
   ~WBLink();
@@ -137,7 +136,6 @@ class WBLink :public OHDLink{
   const OHDProfile m_profile;
   const OHDPlatform m_platform;
   const std::vector<WiFiCard> m_broadcast_cards;
-  std::shared_ptr<openhd::ActionHandler> m_opt_action_handler=nullptr;
   std::shared_ptr<spdlog::logger> m_console;
   std::unique_ptr<openhd::WBLinkSettingsHolder> m_settings;
   std::shared_ptr<RadiotapHeaderTxHolder> m_tx_header_1;

@@ -256,15 +256,14 @@ int main(int argc, char *argv[]) {
 
     // create the global action handler that allows openhd modules to communicate with each other
     // e.g. when the rf link in ohd_interface needs to talk to the camera streams to reduce the bitrate
-    auto ohd_action_handler=std::make_shared<openhd::ActionHandler>();
-    ohd_action_handler->rf_metrics_level=options.rf_metrics_level;
+    openhd::ActionHandler::instance().rf_metrics_level=options.rf_metrics_level;
 
     // We start ohd_telemetry as early as possible, since even without a link (transmission) it still picks up local
     // log message(s) and forwards them to any ground station clients (e.g. QOpenHD)
-    auto ohdTelemetry = std::make_shared<OHDTelemetry>(*platform,* profile,ohd_action_handler);
+    auto ohdTelemetry = std::make_shared<OHDTelemetry>(*platform,* profile);
 
     // Then start ohdInterface, which discovers detected wifi cards and more.
-    auto ohdInterface = std::make_shared<OHDInterface>(*platform,*profile,ohd_action_handler,options.continue_without_wb_card);
+    auto ohdInterface = std::make_shared<OHDInterface>(*platform,*profile,options.continue_without_wb_card);
 
     // Telemetry allows changing all settings (even from other modules)
     ohdTelemetry->add_settings_generic(ohdInterface->get_all_settings());
@@ -273,7 +272,7 @@ int main(int argc, char *argv[]) {
     std::unique_ptr<OHDVideoAir> ohd_video_air = nullptr;
     std::unique_ptr<OHDVideoGround> ohd_video_ground = nullptr;
     if (profile->is_air) {
-      ohd_video_air = std::make_unique<OHDVideoAir>(*platform,cameras,ohd_action_handler,ohdInterface->get_link_handle());
+      ohd_video_air = std::make_unique<OHDVideoAir>(*platform,cameras,ohdInterface->get_link_handle());
       // Let telemetry handle the settings via mavlink
       auto settings_components= ohd_video_air->get_all_camera_settings();
       for(int i=0;i<settings_components.size();i++){
@@ -315,7 +314,7 @@ int main(int argc, char *argv[]) {
     // --- terminate openhd, most likely requested by a developer with sigterm
     m_console->debug("Terminating openhd");
     // Stop any communication between modules, to eliminate any issues created by threads during cleanup
-    ohd_action_handler->disable_all_callables();
+    openhd::ActionHandler::instance().disable_all_callables();
     openhd::ExternalDeviceManager::instance().remove_all();
     // dirty, wait a bit to make sure none of those action(s) are called anymore
     std::this_thread::sleep_for(std::chrono::seconds(1));

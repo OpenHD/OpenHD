@@ -35,7 +35,7 @@ class OHDInterface {
    * @param profile air or ground
    * @param opt_action_handler r.n used to propagate rate control from wb_link to ohd_video
    */
-  explicit OHDInterface(OHDPlatform platform,OHDProfile profile,std::shared_ptr<openhd::ActionHandler> opt_action_handler=nullptr,
+  explicit OHDInterface(OHDPlatform platform,OHDProfile profile,
                         bool continue_without_wb_card=false);
   OHDInterface(const OHDInterface&)=delete;
   OHDInterface(const OHDInterface&&)=delete;
@@ -66,7 +66,6 @@ private:
   std::vector<WiFiCard> m_monitor_mode_cards{};
   std::optional<WiFiCard> m_opt_hotspot_card=std::nullopt;
   NetworkingSettingsHolder m_nw_settings;
-  std::shared_ptr<openhd::ActionHandler> m_opt_action_handler;
 };
 
 #endif //OPENHD_OPENHD_INTERFACE_H

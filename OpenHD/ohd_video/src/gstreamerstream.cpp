@@ -18,10 +18,9 @@
 #include "nalu/fragment_helper.h"
 
 GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,
-                                 openhd::ON_ENCODE_FRAME_CB out_cb,std::shared_ptr<openhd::ActionHandler> opt_action_handler)
+                                 openhd::ON_ENCODE_FRAME_CB out_cb)
     //: CameraStream(platform, camera_holder, video_udp_port) {
-    : CameraStream(platform,std::move(camera_holder),std::move(out_cb)),
-      m_opt_action_handler(std::move(opt_action_handler))
+    : CameraStream(platform,std::move(camera_holder),std::move(out_cb))
 {
   m_console=openhd::log::create_or_get(fmt::format("cam{}",m_camera_holder->get_camera().index));
   assert(m_console);
@@ -178,17 +177,14 @@ void GStreamerStream::setup() {
   // we pull data out of the gst pipeline as cpu memory buffer(s) using the gstreamer "appsink" element
   m_app_sink_element=gst_bin_get_by_name(GST_BIN(m_gst_pipeline), "out_appsink");
   assert(m_app_sink_element);
-  if(m_opt_action_handler){
     const auto index=m_camera_holder->get_camera().index;
     const auto cam_type= camera_type_to_int(m_camera_holder->get_camera().type);
     auto cam_info=openhd::ActionHandler::CamInfo{true,
      (uint8_t)index,cam_type,CAM_STATUS_RESTARTING,ADD_RECORDING_TO_PIPELINE, (uint8_t)video_codec_to_int(setting.streamed_video_format.videoCodec),(uint16_t)setting.h26x_bitrate_kbits,
                                            (uint8_t)setting.h26x_keyframe_interval,(uint16_t )setting.streamed_video_format.width,
                                            (uint16_t )setting.streamed_video_format.height,(uint16_t )setting.streamed_video_format.framerate};
-    m_opt_action_handler->set_cam_info(index,cam_info);
-
+    openhd::ActionHandler::instance().set_cam_info(index,cam_info);
     //m_console->debug("Cam encoding format: {}",(int)cam_info.encoding_format);
-  }
 }
 
 void GStreamerStream::setup_raspberrypi_mmal_csi() {
@@ -428,9 +424,7 @@ void GStreamerStream::stream_once() {
     return ;
   }
   // First, we (try) starting the pipeline using the current settings
-  if(m_opt_action_handler){
-    m_opt_action_handler->set_cam_info_status(m_camera_holder->get_camera().index,CAM_STATUS_RESTARTING);
-  }
+  openhd::ActionHandler::instance().set_cam_info_status(m_camera_holder->get_camera().index,CAM_STATUS_RESTARTING);
   setup();
   start();
   // Check if we were able to successfully start the pipeline. If - for example - the camera doesn't exist
@@ -449,9 +443,7 @@ void GStreamerStream::stream_once() {
     std::this_thread::sleep_for(std::chrono::seconds(5));
     return ;
   }
-  if(m_opt_action_handler){
-    m_opt_action_handler->set_cam_info_status(m_camera_holder->get_camera().index,CAM_STATUS_STREAMING);
-  }
+  openhd::ActionHandler::instance().set_cam_info_status(m_camera_holder->get_camera().index,CAM_STATUS_STREAMING);
   //
   // Here we begin the loop where the camera only
   // 1) Constantly produces data
@@ -492,9 +484,7 @@ void GStreamerStream::stream_once() {
         auto bitrate_ctrl_element=m_bitrate_ctrl_element.value();
         if(change_bitrate(bitrate_ctrl_element,hacked_bitrate_kbits)){
           currently_applied_bitrate=new_bitrate;
-          if(m_opt_action_handler){
-            m_opt_action_handler->set_cam_info_bitrate(m_camera_holder->get_camera().index,currently_applied_bitrate);
-          }
+          openhd::ActionHandler::instance().set_cam_info_bitrate(m_camera_holder->get_camera().index,currently_applied_bitrate);
         }else{
           m_console->warn("Cannot apply bitrate though code assumes itl work");
         }

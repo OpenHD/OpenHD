@@ -88,10 +88,9 @@ static void discover_cards(const openhd::Config& config,const OHDProfile& m_prof
     }
 }
 
-OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared_ptr<openhd::ActionHandler> opt_action_handler,bool continue_without_wb_card)
+OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,bool continue_without_wb_card)
     : m_platform(platform1),
-    m_profile(std::move(profile1)),
-    m_opt_action_handler(std::move(opt_action_handler)){
+    m_profile(std::move(profile1)){
   m_console = openhd::log::create_or_get("interface");
   assert(m_console);
     m_monitor_mode_cards={};
@@ -119,7 +118,7 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
   }else{
     // Set the card(s) we have into monitor mode
     openhd::wb::takeover_cards_monitor_mode(m_monitor_mode_cards, m_console);
-    m_wb_link =std::make_shared<WBLink>(m_profile, m_platform, m_monitor_mode_cards, m_opt_action_handler);
+    m_wb_link =std::make_shared<WBLink>(m_profile, m_platform, m_monitor_mode_cards);
   }
   // The USB tethering listener is always enabled on ground - it doesn't interfere with anything
   if(m_profile.is_ground()){
@@ -286,10 +285,8 @@ void OHDInterface::update_wifi_hotspot_enable() {
         enable_wifi_hotspot= false;
     }
     m_wifi_hotspot->set_enabled_async(enable_wifi_hotspot);
-    if(m_opt_action_handler){
-        m_opt_action_handler->m_wifi_hotspot_state=enable_wifi_hotspot ? 2 : 1;
-        m_opt_action_handler->m_wifi_hotspot_frequency=m_wifi_hotspot->get_frequency();
-    }
+    openhd::ActionHandler::instance().m_wifi_hotspot_state = enable_wifi_hotspot ? 2 : 1;
+    openhd::ActionHandler::instance().m_wifi_hotspot_frequency=m_wifi_hotspot->get_frequency();
 }
 
 OHDInterface::~OHDInterface() {

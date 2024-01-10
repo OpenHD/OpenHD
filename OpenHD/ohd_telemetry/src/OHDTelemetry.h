@@ -27,7 +27,6 @@ class GroundTelemetry;
 class OHDTelemetry {
  public:
   OHDTelemetry(OHDPlatform platform1,OHDProfile profile1,
-               std::shared_ptr<openhd::ActionHandler> opt_action_handler=nullptr,
                bool enableExtendedLogging=false);
   OHDTelemetry(const OHDTelemetry&)=delete;
   OHDTelemetry(const OHDTelemetry&&)=delete;

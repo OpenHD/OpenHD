@@ -35,7 +35,7 @@
 // Note: Sending in this context means they are returned by generate_mavlink_messages() and then send out in the upper level.
 class OHDMainComponent : public MavlinkComponent{
  public:
-  explicit OHDMainComponent(OHDPlatform platform,uint8_t parent_sys_id,bool runsOnAir,std::shared_ptr<openhd::ActionHandler> opt_action_handler);
+  explicit OHDMainComponent(OHDPlatform platform,uint8_t parent_sys_id,bool runsOnAir);
   ~OHDMainComponent();
   // override from component
   std::vector<MavlinkMessage> generate_mavlink_messages() override;
@@ -48,7 +48,6 @@ class OHDMainComponent : public MavlinkComponent{
  private:
   const bool RUNS_ON_AIR;
   const OHDPlatform m_platform;
-  std::shared_ptr<openhd::ActionHandler> m_opt_action_handler;
   // Interval in between heartbeats
   const std::chrono::milliseconds m_heartbeats_interval;
   std::chrono::steady_clock::time_point m_last_heartbeat=std::chrono::steady_clock::now();

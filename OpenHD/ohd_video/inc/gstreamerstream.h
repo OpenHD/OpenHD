@@ -26,8 +26,7 @@
 class GStreamerStream : public CameraStream {
  public:
   GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,
-                  openhd::ON_ENCODE_FRAME_CB out_cb,
-                  std::shared_ptr<openhd::ActionHandler> opt_action_handler=nullptr);
+                  openhd::ON_ENCODE_FRAME_CB out_cb);
   ~GStreamerStream();
   void start_looping() override;
   void terminate_looping() override;
@@ -78,7 +77,6 @@ class GStreamerStream : public CameraStream {
   // Set to true if armed, used for auto record on arm
   bool m_armed_enable_air_recording= false;
   std::atomic<int> m_curr_dynamic_bitrate_kbits =-1;
-  std::shared_ptr<openhd::ActionHandler> m_opt_action_handler=nullptr;
   // Not working yet, keep the old approach
   //std::unique_ptr<GstVideoRecorder> m_gst_video_recorder=nullptr;
   std::atomic_bool m_request_restart= false;

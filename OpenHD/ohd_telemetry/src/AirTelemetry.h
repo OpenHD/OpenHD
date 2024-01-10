@@ -28,7 +28,7 @@
  */
 class AirTelemetry : public MavlinkSystem{
  public:
-  explicit AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHandler> opt_action_handler=nullptr);
+  explicit AirTelemetry(OHDPlatform platform);
   AirTelemetry(const AirTelemetry&)=delete;
   AirTelemetry(const AirTelemetry&&)=delete;
   ~AirTelemetry();

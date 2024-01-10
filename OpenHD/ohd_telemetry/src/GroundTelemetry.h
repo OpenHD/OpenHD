@@ -28,8 +28,7 @@
  */
 class GroundTelemetry :public MavlinkSystem{
  public:
-  explicit GroundTelemetry(OHDPlatform platform,
-                           std::shared_ptr<openhd::ActionHandler> opt_action_handler=nullptr);
+  explicit GroundTelemetry(OHDPlatform platform);
   GroundTelemetry(const GroundTelemetry&)=delete;
   GroundTelemetry(const GroundTelemetry&&)=delete;
   ~GroundTelemetry();

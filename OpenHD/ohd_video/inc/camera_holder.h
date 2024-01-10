@@ -24,7 +24,7 @@ class CameraHolder:
     // changes requested by the mavlink parameter protocol are propagated through lambda callbacks
     public openhd::ISettingsComponent{
  public:
-  explicit CameraHolder(Camera camera,std::shared_ptr<openhd::ActionHandler> opt_action_handler= nullptr):
+  explicit CameraHolder(Camera camera):
        m_camera(std::move(camera)),
        openhd::PersistentSettings<CameraSettings>(openhd::get_video_settings_directory()){
     // read previous settings or create default ones

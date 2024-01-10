@@ -11,13 +11,13 @@
 #include "openhd_temporary_air_or_ground.h"
 #include "openhd_util.h"
 
-AirTelemetry::AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHandler> opt_action_handler): m_platform(platform),MavlinkSystem(OHD_SYS_ID_AIR) {
+AirTelemetry::AirTelemetry(OHDPlatform platform): m_platform(platform),MavlinkSystem(OHD_SYS_ID_AIR) {
   m_console = openhd::log::create_or_get("air_tele");
   assert(m_console);
   m_air_settings =std::make_unique<openhd::telemetry::air::SettingsHolder>(platform);
   m_fc_serial =std::make_unique<SerialEndpointManager>();
   m_ohd_main_component =std::make_shared<OHDMainComponent>(
-      m_platform,_sys_id,true,opt_action_handler);
+      m_platform,_sys_id,true);
   m_components.push_back(m_ohd_main_component);
   //
   m_generic_mavlink_param_provider =std::make_shared<XMavlinkParamProvider>(_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER);
