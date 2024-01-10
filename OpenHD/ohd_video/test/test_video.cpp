@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
   };
   auto debug_link=std::make_shared<DummyDebugLink>();
   debug_link->m_opt_frame_cb=cb;
-  OHDVideoAir ohdVideo(*platform,cameras, nullptr, debug_link);
+  OHDVideoAir ohdVideo(*platform,cameras, debug_link);
   std::cout << "OHDVideo started\n";
   OHDUtil::keep_alive_until_sigterm();
   std::cerr << "OHDVideo stopped\n";
