@@ -70,7 +70,7 @@ class OHDVideoAir {
   // Add a CameraStream for a discovered camera.
   void configure(const std::shared_ptr<CameraHolder>& camera);
   // propagate a bitrate change request to the CameraStream implementation(s)
-  void handle_change_bitrate_request(openhd::ActionHandler::LinkBitrateInformation lb);
+  void handle_change_bitrate_request(openhd::LinkActionHandler::LinkBitrateInformation lb);
   // Called every time an encoded frame was generated
   void on_video_data(int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame);
   // NOTE: On air, by default, we do not forward video via UDP to save precious cpu time -

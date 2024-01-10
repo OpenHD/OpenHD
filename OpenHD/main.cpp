@@ -256,7 +256,7 @@ int main(int argc, char *argv[]) {
 
     // create the global action handler that allows openhd modules to communicate with each other
     // e.g. when the rf link in ohd_interface needs to talk to the camera streams to reduce the bitrate
-    openhd::ActionHandler::instance().rf_metrics_level=options.rf_metrics_level;
+    openhd::LinkActionHandler::instance().rf_metrics_level=options.rf_metrics_level;
 
     // We start ohd_telemetry as early as possible, since even without a link (transmission) it still picks up local
     // log message(s) and forwards them to any ground station clients (e.g. QOpenHD)
@@ -314,7 +314,7 @@ int main(int argc, char *argv[]) {
     // --- terminate openhd, most likely requested by a developer with sigterm
     m_console->debug("Terminating openhd");
     // Stop any communication between modules, to eliminate any issues created by threads during cleanup
-    openhd::ActionHandler::instance().disable_all_callables();
+    openhd::LinkActionHandler::instance().disable_all_callables();
     openhd::ExternalDeviceManager::instance().remove_all();
     // dirty, wait a bit to make sure none of those action(s) are called anymore
     std::this_thread::sleep_for(std::chrono::seconds(1));

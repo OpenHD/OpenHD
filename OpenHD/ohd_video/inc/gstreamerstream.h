@@ -53,7 +53,7 @@ class GStreamerStream : public CameraStream {
   void stop();
   // Set gst state to GST_STATE_NULL and properly cleanup the pipeline.
   void cleanup_pipe();
-  void handle_change_bitrate_request(openhd::ActionHandler::LinkBitrateInformation lb) override;
+  void handle_change_bitrate_request(openhd::LinkActionHandler::LinkBitrateInformation lb) override;
   // this is called when the FC reports itself as armed / disarmed
   void handle_update_arming_state(bool armed) override;
   void loop_infinite();

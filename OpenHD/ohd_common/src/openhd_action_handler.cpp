@@ -58,7 +58,7 @@ void openhd::FCRcChannelsHelper::action_on_any_rc_channel_register(
     m_action_rc_channel=std::make_shared<ACTION_ON_ANY_RC_CHANNEL_CB>(cb);
 }
 
-openhd::ActionHandler &openhd::ActionHandler::instance() {
-    static openhd::ActionHandler instance;
+openhd::LinkActionHandler &openhd::LinkActionHandler::instance() {
+    static openhd::LinkActionHandler instance;
     return instance;
 }

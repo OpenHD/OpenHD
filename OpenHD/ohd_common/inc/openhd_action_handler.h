@@ -67,12 +67,12 @@ private:
     std::shared_ptr<ACTION_ON_ANY_RC_CHANNEL_CB> m_action_rc_channel =nullptr;
 };
 
-class ActionHandler{
+class LinkActionHandler{
  public:
-  ActionHandler()=default;
-  ActionHandler(const ActionHandler&)=delete;
-  ActionHandler(const ActionHandler&&)=delete;
-  static ActionHandler& instance();
+  LinkActionHandler()=default;
+  LinkActionHandler(const LinkActionHandler&)=delete;
+  LinkActionHandler(const LinkActionHandler&&)=delete;
+  static LinkActionHandler& instance();
 public:
   // Link bitrate change request
   struct LinkBitrateInformation{

@@ -137,7 +137,7 @@ static MavlinkMessage pack_vid_gnd_fec_performance(const uint8_t system_id,const
   return msg;
 }
 
-static MavlinkMessage pack_camera_stats(const uint8_t system_id,const uint8_t component_id,const openhd::ActionHandler::CamInfo& cam_info){
+static MavlinkMessage pack_camera_stats(const uint8_t system_id,const uint8_t component_id,const openhd::LinkActionHandler::CamInfo& cam_info){
   MavlinkMessage msg;
   mavlink_openhd_camera_status_air_t tmp{};
   tmp.cam_type=cam_info.cam_type;
@@ -177,7 +177,7 @@ static MavlinkMessage generate_msg_openhd_wifibroadcast_supported_channels(const
     return msg;
 }
 
-static MavlinkMessage generate_msg_analyze_channels_progress(const uint8_t system_id,const uint8_t component_id,const openhd::ActionHandler::AnalyzeChannelsResult progress){
+static MavlinkMessage generate_msg_analyze_channels_progress(const uint8_t system_id,const uint8_t component_id,const openhd::LinkActionHandler::AnalyzeChannelsResult progress){
     MavlinkMessage msg;
     mavlink_openhd_wifbroadcast_analyze_channels_progress_t tmp{};
     static_assert(sizeof(tmp.channels_mhz)==sizeof(progress.channels_mhz));
@@ -189,7 +189,7 @@ static MavlinkMessage generate_msg_analyze_channels_progress(const uint8_t syste
     return msg;
 }
 
-static MavlinkMessage generate_msg_scan_channels_progress(const uint8_t system_id,const uint8_t component_id,const openhd::ActionHandler::ScanChannelsProgress progress){
+static MavlinkMessage generate_msg_scan_channels_progress(const uint8_t system_id,const uint8_t component_id,const openhd::LinkActionHandler::ScanChannelsProgress progress){
     MavlinkMessage msg;
     mavlink_openhd_wifbroadcast_scan_channels_progress_t tmp{};
     tmp.progress=progress.progress;
@@ -200,7 +200,7 @@ static MavlinkMessage generate_msg_scan_channels_progress(const uint8_t system_i
     return msg;
 }
 
-static MavlinkMessage generate_sys_status1(const uint8_t system_id,const uint8_t component_id,openhd::ActionHandler& action_handler){
+static MavlinkMessage generate_sys_status1(const uint8_t system_id,const uint8_t component_id,openhd::LinkActionHandler& action_handler){
     MavlinkMessage msg;
     mavlink_openhd_sys_status1_t tmp{};
     tmp.wifi_hotspot_state=action_handler.m_wifi_hotspot_state;

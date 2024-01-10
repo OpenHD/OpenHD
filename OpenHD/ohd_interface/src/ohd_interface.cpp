@@ -285,8 +285,8 @@ void OHDInterface::update_wifi_hotspot_enable() {
         enable_wifi_hotspot= false;
     }
     m_wifi_hotspot->set_enabled_async(enable_wifi_hotspot);
-    openhd::ActionHandler::instance().m_wifi_hotspot_state = enable_wifi_hotspot ? 2 : 1;
-    openhd::ActionHandler::instance().m_wifi_hotspot_frequency=m_wifi_hotspot->get_frequency();
+    openhd::LinkActionHandler::instance().m_wifi_hotspot_state = enable_wifi_hotspot ? 2 : 1;
+    openhd::LinkActionHandler::instance().m_wifi_hotspot_frequency=m_wifi_hotspot->get_frequency();
 }
 
 OHDInterface::~OHDInterface() {

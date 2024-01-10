@@ -47,7 +47,7 @@ OHDVideoAir::OHDVideoAir(OHDPlatform platform1,std::vector<Camera> cameras,
   for (auto &camera: camera_holders) {
     configure(camera);
   }
-    openhd::ActionHandler::instance().action_request_bitrate_change_register([this](openhd::ActionHandler::LinkBitrateInformation lb){
+    openhd::LinkActionHandler::instance().action_request_bitrate_change_register([this](openhd::LinkActionHandler::LinkBitrateInformation lb){
       this->handle_change_bitrate_request(lb);
     });
     auto cb_armed=[this](bool armed){
@@ -69,7 +69,7 @@ OHDVideoAir::OHDVideoAir(OHDPlatform platform1,std::vector<Camera> cameras,
 
 OHDVideoAir::~OHDVideoAir() {
     openhd::ArmingStateHelper::instance().unregister_listener("ohd_video_air");
-    openhd::ActionHandler::instance().action_request_bitrate_change_register(nullptr);
+    openhd::LinkActionHandler::instance().action_request_bitrate_change_register(nullptr);
     // Stop all the camera stream(s)
     m_camera_streams.resize(0);
 }
@@ -116,7 +116,7 @@ OHDVideoAir::get_all_camera_settings() {
   return ret;
 }
 
-void OHDVideoAir::handle_change_bitrate_request(openhd::ActionHandler::LinkBitrateInformation lb) {
+void OHDVideoAir::handle_change_bitrate_request(openhd::LinkActionHandler::LinkBitrateInformation lb) {
   if(m_camera_streams.size()==1){
     m_camera_streams[0]->handle_change_bitrate_request(lb);
     return;
@@ -126,8 +126,8 @@ void OHDVideoAir::handle_change_bitrate_request(openhd::ActionHandler::LinkBitra
     const auto primary_perc=m_generic_settings->get_settings().dualcam_primary_video_allocated_bandwidth_perc;
     const int bitrate_primary_kbits=lb.recommended_encoder_bitrate_kbits*primary_perc/100;
     const int bitrate_secondary_kbits=lb.recommended_encoder_bitrate_kbits-bitrate_primary_kbits;
-    openhd::ActionHandler::LinkBitrateInformation lb1{bitrate_primary_kbits};
-    openhd::ActionHandler::LinkBitrateInformation lb2{bitrate_secondary_kbits};
+    openhd::LinkActionHandler::LinkBitrateInformation lb1{bitrate_primary_kbits};
+    openhd::LinkActionHandler::LinkBitrateInformation lb2{bitrate_secondary_kbits};
     m_camera_streams[0]->handle_change_bitrate_request(lb1);
     m_camera_streams[1]->handle_change_bitrate_request(lb2);
     return ;
