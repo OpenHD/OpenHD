@@ -566,7 +566,7 @@ void GStreamerStream::on_new_rtp_frame_fragment(std::shared_ptr<std::vector<uint
 }
 
 void GStreamerStream::on_new_rtp_fragmented_frame(std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments) {
-  //m_console->debug("Got frame with {} fragments",frame_fragments.size());
+  //m_console->debug("Got frame with {} fragments",rtp_fragments.size());
   if(m_output_cb){
     const auto stream_index=m_camera_holder->get_camera().index;
     auto frame=openhd::FragmentedVideoFrame{

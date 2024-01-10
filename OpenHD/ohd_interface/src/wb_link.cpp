@@ -888,7 +888,7 @@ void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoF
   if(stream_index>=0 && stream_index< m_wb_video_tx_list.size()){
     auto& tx= *m_wb_video_tx_list[stream_index];
     tx.set_encryption(fragmented_video_frame.enable_ultra_secure_encryption);
-    //tx.tmp_feed_frame_fragments(fragmented_video_frame.frame_fragments,use_fixed_fec_instead);
+    //tx.tmp_feed_frame_fragments(fragmented_video_frame.rtp_fragments,use_fixed_fec_instead);
     int max_block_size_for_platform=m_settings->get_settings().wb_max_fec_block_size_for_platform;
     //openhd::log::get_default()->debug("max_block_size_for_platform:{}",max_block_size_for_platform);
     if(!openhd::valid_wb_max_fec_block_size_for_platform(max_block_size_for_platform)){
@@ -902,7 +902,7 @@ void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoF
         res=tx.try_enqueue_frame(fragmented_video_frame.dirty_frame, max_block_size_for_platform,fec_perc,
                                  fragmented_video_frame.creation_time);
     }else{
-        res=tx.try_enqueue_block(fragmented_video_frame.frame_fragments, max_block_size_for_platform,fec_perc,
+        res=tx.try_enqueue_block(fragmented_video_frame.rtp_fragments, max_block_size_for_platform, fec_perc,
                                  fragmented_video_frame.creation_time);
     }
     if(!res){

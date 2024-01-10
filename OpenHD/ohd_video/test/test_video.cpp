@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
   }
   auto forwarder=SocketHelper::UDPForwarder("127.0.0.1",5600);
   auto cb=[&forwarder](int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame){
-      for(auto& fragemnt: fragmented_video_frame.frame_fragments){
+      for(auto& fragemnt: fragmented_video_frame.rtp_fragments){
         forwarder.forwardPacketViaUDP(fragemnt->data(),fragemnt->size());
       }
       if(fragmented_video_frame.dirty_frame){
