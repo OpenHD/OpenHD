@@ -9,8 +9,7 @@ int main(int argc, char *argv[]) {
 
   OHDUtil::terminate_if_not_root();
 
-  auto ext_devices_manager=std::make_shared<openhd::ExternalDeviceManager>();
-  auto usb_tether_listener=std::make_unique<USBTetherListener>(ext_devices_manager);
+  auto usb_tether_listener=std::make_unique<USBTetherListener>();
 
   OHDUtil::keep_alive_until_sigterm();
 
