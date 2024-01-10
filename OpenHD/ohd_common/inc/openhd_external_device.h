@@ -78,11 +78,14 @@ class ExternalDeviceManager{
    * If devices are discovered before the cb is registered, the cb is called for all the already connected devices.
    */
   void register_listener(EXTERNAL_DEVICE_CALLBACK cb);
+  // This only exists to terminate openhd properly (which only happens in a test environment)
+  void remove_all();
  private:
   std::mutex m_ext_devices_lock;
   std::map<std::string,ExternalDevice> m_curr_ext_devices;
   std::vector<EXTERNAL_DEVICE_CALLBACK> m_callbacks;
   std::vector<std::string> m_manual_ips;
+  bool m_remove_all_called= false;
 };
 
 }

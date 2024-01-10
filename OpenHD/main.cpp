@@ -316,6 +316,7 @@ int main(int argc, char *argv[]) {
     m_console->debug("Terminating openhd");
     // Stop any communication between modules, to eliminate any issues created by threads during cleanup
     ohd_action_handler->disable_all_callables();
+    openhd::ExternalDeviceManager::instance().remove_all();
     // dirty, wait a bit to make sure none of those action(s) are called anymore
     std::this_thread::sleep_for(std::chrono::seconds(1));
     // unique ptr would clean up for us, but this way we are a bit more verbose

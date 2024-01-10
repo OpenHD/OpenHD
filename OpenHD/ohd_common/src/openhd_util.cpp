@@ -49,22 +49,30 @@ int OHDUtil::run_command(const std::string& command,
 
 std::optional<std::string> OHDUtil::run_command_out(const std::string& command,
                                                     const bool debug) {
-  if (debug) {
-    openhd::log::get_default()->debug("run command out begin [{}]", command);
+    auto console=openhd::log::get_default();
+    try{
+      if (debug) {
+          console->debug("run command out begin [{}]", command);
+      }
+      std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command.c_str(), "r"),
+                                                    pclose);
+      if (!pipe) {
+          // if the pipe opening fails, this doesn't mean the command failed (see above) But rather we need to find a different way to implement this functionality on this platform.
+          openhd::log::get_default()->error("Cannot execute command [{}]", command);
+          return std::nullopt;
+      }
+      std::string raw_value;
+      std::array<char, 512> buffer{};
+      while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+          raw_value += buffer.data();
+      }
+      return raw_value;
+  }catch(std::exception& e){
+      console->warn("Exception {} on command [{}]",e.what(),command);
+  }catch(...){
+      console->warn("Unknown exception on command [{}]",command);
   }
-  std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command.c_str(), "r"),
-                                                pclose);
-  if (!pipe) {
-    // if the pipe opening fails, this doesn't mean the command failed (see above) But rather we need to find a different way to implement this functionality on this platform.
-    openhd::log::get_default()->error("Cannot execute command [{}]", command);
-    return std::nullopt;
-  }
-  std::string raw_value;
-  std::array<char, 512> buffer{};
-  while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-    raw_value += buffer.data();
-  }
-  return raw_value;
+  return std::nullopt;
 }
 
 void OHDUtil::keep_alive_until_sigterm() {

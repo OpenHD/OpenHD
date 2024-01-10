@@ -29,9 +29,15 @@ TCPEndpoint::~TCPEndpoint() {
   shutdown(server_fd, SHUT_RDWR); // This will break out of select
   m_accept_thread->join();
   m_accept_thread= nullptr;
-  m_keep_accept_thread_alive= false;
-  // this signals the fd to stop if needed
-  shutdown(server_fd, SHUT_RDWR);
+  server_fd=0;
+  // Then we make sure to clean up any connected client(s) (If there are any)
+  for(const auto& client:m_clients_list){
+      client->marked_to_be_removed= true;
+      client->keep_rx_looping= false;
+      shutdown(client->sock_fd, SHUT_RDWR);
+      client->rx_loop_thread->join();
+      client->rx_loop_thread= nullptr;
+  }
   m_console->debug("TCPEndpoint::~TCPEndpoint() end");
 }
 

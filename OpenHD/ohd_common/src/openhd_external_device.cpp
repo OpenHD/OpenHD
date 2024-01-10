@@ -32,9 +32,10 @@ openhd::ExternalDeviceManager &openhd::ExternalDeviceManager::instance() {
 
 void
 openhd::ExternalDeviceManager::on_new_external_device(const openhd::ExternalDevice &external_device, bool connected) {
+    std::lock_guard<std::mutex> guard(m_ext_devices_lock);
+    if(m_remove_all_called)return;
     openhd::log::get_default()->debug("Got {} {}",external_device.to_string(),connected);
     const auto id=external_device.create_identifier();
-    std::lock_guard<std::mutex> guard(m_ext_devices_lock);
     if(connected){
         if(m_curr_ext_devices.find(id)!=m_curr_ext_devices.end()){
             openhd::log::get_default()->warn("Device {} already exists",external_device.to_string());
@@ -69,5 +70,21 @@ void openhd::ExternalDeviceManager::register_listener(openhd::EXTERNAL_DEVICE_CA
         cb(device,true);
     }
     m_callbacks.push_back(cb);
+}
+
+void openhd::ExternalDeviceManager::remove_all() {
+    auto console=openhd::log::create_or_get("ExternalDeviceManager");
+    console->debug("removing all devices - begin");
+    std::lock_guard<std::mutex> guard(m_ext_devices_lock);
+    for(auto& device_and_ip:m_curr_ext_devices){
+        auto external_device=device_and_ip.second;
+        console->debug("Removing {}",external_device.to_string());
+        for(auto& cb:m_callbacks){
+            cb(external_device, false);
+        }
+    }
+    m_curr_ext_devices.clear();
+    m_remove_all_called=true;
+    console->debug("removing all devices - end");
 }
 
