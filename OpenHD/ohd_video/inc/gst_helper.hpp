@@ -60,7 +60,7 @@ static std::string createSwEncoder(const CameraSettings& settings){
     // is a good idea anyways to do so, since on platforms like rpi we do not want to hog too much of the CPU to not overload the system and
     // on x86 2 threads / cores are enough for sw encode of most resolutions anyways.
     // NOTE: While not exactly true, latency is ~ as many frame(s) as there are threads, aka 2 frames for 2 threads
-    ss<<fmt::format("x264enc name=swencoder bitrate={} speed-preset=ultrafast  tune=zerolatency key-int-max={} sliced-threads=0 threads=2 intra-refresh={} ! ",
+    ss<<fmt::format("x264enc name=swencoder bitrate={} speed-preset=ultrafast  tune=zerolatency key-int-max={} sliced-threads=false threads=2 intra-refresh={} dct8x8=true ! ",
                       common_encoder_params.h26X_bitrate_kbits,common_encoder_params.h26X_keyframe_interval,settings.h26x_intra_refresh_type<0 ? "false" : "true");
   }else if(common_encoder_params.videoCodec==VideoCodec::H265){
     //TODO: jetson sw encoder (x265enc) is so old it doesn't have the key-int-max param

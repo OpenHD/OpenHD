@@ -189,6 +189,10 @@ private:
   openhd::wb::FrameDropsHelper m_frame_drop_helper;
   std::atomic_int m_primary_total_dropped_frames=0;
   std::atomic_int m_secondary_total_dropped_frames=0;
+private:
+    const bool DIRTY_forward_gapped_fragments= false;
+    const bool DIRTY_add_aud_nal= false;
+    const int DIRTY_emulate_drop_mode=0;
 };
 
 #endif

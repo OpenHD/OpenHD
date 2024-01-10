@@ -112,7 +112,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   m_wb_txrx=std::make_shared<WBTxRx>(tmp_wifi_cards,txrx_options,m_tx_header_2);
   auto dummy=m_wb_txrx->get_dummy_link();
   if(dummy){
-      dummy->set_drop_mode(10);
+      dummy->set_drop_mode(DIRTY_emulate_drop_mode);
   }
   {
       // Setup the tx & rx instances for telemetry. Telemetry is bidirectional,aka
@@ -168,13 +168,15 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
           //options_video_rx.enable_fec_debug_log=true;
           options_video_rx.enable_fec= true;
           options_video_rx.radio_port=openhd::VIDEO_PRIMARY_RADIO_PORT;
+          options_video_rx.forward_gapped_fragments= DIRTY_forward_gapped_fragments;
           auto primary = std::make_unique<WBStreamRx>(m_wb_txrx, options_video_rx);
           primary->set_callback(cb1);
           options_video_rx.radio_port=openhd::VIDEO_SECONDARY_RADIO_PORT;
           auto secondary = std::make_unique<WBStreamRx>(m_wb_txrx, options_video_rx);
           secondary->set_callback(cb2);
-          if(false){
+          if(DIRTY_add_aud_nal){
               auto block_cb=[this](uint64_t block_idx,int n_fragments_total,int n_fragments_forwarded){
+                  m_console->debug("Got {} {}",n_fragments_total,n_fragments_forwarded);
                   if(n_fragments_forwarded>2){
                       auto aud_buffer=get_h264_aud();
                       on_receive_video_data(0,aud_buffer->data(),aud_buffer->size());
