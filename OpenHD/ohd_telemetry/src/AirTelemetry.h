@@ -19,7 +19,7 @@
 #include "endpoints/WBEndpoint.h"
 #include "gpio_control/RaspberryPiGPIOControl.h"
 #include "mavsdk_temporary/XMavlinkParamProvider.h"
-#include "openhd_action_handler.hpp"
+#include "openhd_action_handler.h"
 #include "openhd_link.hpp"
 #include "openhd_spdlog.h"
 

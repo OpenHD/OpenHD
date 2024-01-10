@@ -13,7 +13,7 @@
 
 #include "../mav_helper.h"
 #include "OnboardComputerStatusProvider.h"
-#include "openhd_action_handler.hpp"
+#include "openhd_action_handler.h"
 #include "openhd_link_statistics.hpp"
 #include "openhd_platform.h"
 #include "openhd_spdlog.h"

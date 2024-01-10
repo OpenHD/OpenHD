@@ -9,7 +9,7 @@
 #include <thread>
 #include <utility>
 
-#include "openhd_action_handler.hpp"
+#include "openhd_action_handler.h"
 #include "openhd_external_device.h"
 #include "openhd_link_statistics.hpp"
 #include "openhd_platform.h"

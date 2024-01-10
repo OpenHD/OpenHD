@@ -218,12 +218,12 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
           auto cb_channel=[this](const std::array<int,18>& rc_channels){
             m_rc_channel_helper.set_rc_channels(rc_channels);
           };
-          m_opt_action_handler->fc_rc_channels.action_on_any_rc_channel_register(cb_channel);
+          openhd::FCRcChannelsHelper::instance().action_on_any_rc_channel_register(cb_channel);
       }
       auto cb_arm=[this](bool armed){
         update_arming_state(armed);
       };
-      m_opt_action_handler->arm_state.register_listener(WB_LINK_ARM_CHANGED_TX_POWER_TAG,cb_arm);
+      openhd::ArmingStateHelper::instance().register_listener(WB_LINK_ARM_CHANGED_TX_POWER_TAG,cb_arm);
       std::function<std::vector<uint16_t>(void)> wb_get_supported_channels=[this](){
           std::vector<uint16_t> ret;
           const auto frequencies=m_broadcast_cards.at(0).get_supported_frequencies_2G_5G();
@@ -246,8 +246,8 @@ WBLink::~WBLink() {
   m_management_air= nullptr;
   m_management_gnd= nullptr;
   if(m_opt_action_handler){
-      m_opt_action_handler->fc_rc_channels.action_on_any_rc_channel_register(nullptr);
-      m_opt_action_handler->arm_state.unregister_listener(WB_LINK_ARM_CHANGED_TX_POWER_TAG);
+      openhd::FCRcChannelsHelper::instance().action_on_any_rc_channel_register(nullptr);
+      openhd::ArmingStateHelper::instance().unregister_listener(WB_LINK_ARM_CHANGED_TX_POWER_TAG);
       m_opt_action_handler->wb_cmd_scan_channels= nullptr;
       m_opt_action_handler->wb_cmd_analyze_channels=nullptr;
   }

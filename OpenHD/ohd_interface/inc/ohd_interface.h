@@ -10,7 +10,7 @@
 
 #include "ethernet_hotspot.h"
 #include "ethernet_listener.h"
-#include "openhd_action_handler.hpp"
+#include "openhd_action_handler.h"
 #include "openhd_external_device.h"
 #include "openhd_led_codes.hpp"
 #include "openhd_platform.h"

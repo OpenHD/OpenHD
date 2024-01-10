@@ -11,7 +11,7 @@
 #include "../../lib/wifibroadcast/src/WBStreamTx.h"
 #include "../../lib/wifibroadcast/src/WBStreamRx.h"
 #include "../../lib/wifibroadcast/src/encryption/EncryptionFsUtils.h"
-#include "openhd_action_handler.hpp"
+#include "openhd_action_handler.h"
 #include "openhd_link.hpp"
 #include "openhd_link_statistics.hpp"
 #include "openhd_platform.h"

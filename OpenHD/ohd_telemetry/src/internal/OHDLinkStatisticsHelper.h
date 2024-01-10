@@ -7,7 +7,7 @@
 
 #include "../mav_include.h"
 #include "openhd_link_statistics.hpp"
-#include "openhd_action_handler.hpp"
+#include "openhd_action_handler.h"
 
 namespace openhd::LinkStatisticsHelper{
 
