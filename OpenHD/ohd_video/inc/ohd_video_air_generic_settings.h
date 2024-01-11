@@ -21,6 +21,8 @@ struct AirCameraGenericSettings {
   // the link recommends a total video bitrate to us - in case of dual camera, we need to split that up into
   // bitrate for primary and secondary video
   int dualcam_primary_video_allocated_bandwidth_perc=60; // Default X%:Y split
+  int primary_camera_type=0;
+  int secondary_camera_type=0;
 };
 
 static bool is_valid_dualcam_primary_video_allocated_bandwidth(int dualcam_primary_video_allocated_bandwidth_perc){

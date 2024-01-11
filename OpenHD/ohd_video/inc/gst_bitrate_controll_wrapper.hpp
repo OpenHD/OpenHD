@@ -11,6 +11,8 @@
 
 #include "openhd_spdlog.h"
 
+#define EXPERIMENTAL_USE_OPENH264_ENCODER
+
 // Bitrate is one of the few params we want to support changing dynamically at run time
 // without the need for a pipeline restart.
 // This just wraps the differences for those pipelines nicely
@@ -34,7 +36,11 @@ static std::optional<GstBitrateControlElement> get_dynamic_bitrate_control_eleme
     // NOTE: With UVC we might not do sw encode - in which case we cannot do variable bitrate control
     ret.encoder= gst_bin_get_by_name(GST_BIN(gst_pipeline), "swencoder");
     ret.property_name="bitrate";
+#ifdef EXPERIMENTAL_USE_OPENH264_ENCODER
+    ret.takes_kbit= false;
+#else
     ret.takes_kbit= true;
+#endif
   } else if(camera_type==CameraType::ALLWINNER_CSI ){
     // We can change bitrate dynamically
     ret.encoder= gst_bin_get_by_name(GST_BIN(gst_pipeline), "sunxisrc");

@@ -14,6 +14,8 @@
 
 #include "camera_settings.hpp"
 
+#define EXPERIMENTAL_USE_OPENH264_ENCODER
+
 /**
  * Helper methods to create parts of gstreamer pipes.
  * Note: Unless a pipeline part is used at the end, all pipelines should end
@@ -49,12 +51,21 @@ static void initGstreamerOrThrow() {
   }
 }
 
+static std::string createCiscoH264SwEncoder(const CameraSettings& settings){
+    const auto common_encoder_params= extract_common_encoder_params(settings);
+    return fmt::format("openh264enc name=swencoder bitrate={} complexity=low num-slices=4 slice-mode=1 rate-control=bitrate gop-size=1 !",
+                       kbits_to_bits_per_second(common_encoder_params.h26X_bitrate_kbits));
+}
+
 // SW encoding is slow, but should work on all platforms (at least for low resolutions/framerate(s) )
 // Note that not every sw encoder accepts every type of input format - I420 seems to work for all of them though.
 static std::string createSwEncoder(const CameraSettings& settings){
   const auto common_encoder_params= extract_common_encoder_params(settings);
   std::stringstream ss;
   if(common_encoder_params.videoCodec==VideoCodec::H264){
+#ifdef EXPERIMENTAL_USE_OPENH264_ENCODER
+    ss<<createCiscoH264SwEncoder(settings);
+#else
     // Now this is a bit annoying - we cannot deal with frame(s) using sliced encoding yet,so we have to disable it. But from that we get
     // quite high latency, due to how x264enc needs to parallelize encoding. By using threads=2 we can reduce this issue a bit - and it probably
     // is a good idea anyways to do so, since on platforms like rpi we do not want to hog too much of the CPU to not overload the system and
@@ -62,6 +73,7 @@ static std::string createSwEncoder(const CameraSettings& settings){
     // NOTE: While not exactly true, latency is ~ as many frame(s) as there are threads, aka 2 frames for 2 threads
     ss<<fmt::format("x264enc name=swencoder bitrate={} speed-preset=ultrafast  tune=zerolatency key-int-max={} sliced-threads=false threads=2 intra-refresh={} dct8x8=true ! ",
                       common_encoder_params.h26X_bitrate_kbits,common_encoder_params.h26X_keyframe_interval,settings.h26x_intra_refresh_type<0 ? "false" : "true");
+#endif
   }else if(common_encoder_params.videoCodec==VideoCodec::H265){
     //TODO: jetson sw encoder (x265enc) is so old it doesn't have the key-int-max param
     ss<<fmt::format("x265enc name=swencoder bitrate={} speed-preset=ultrafast tune=zerolatency key-int-max={} ! ",
