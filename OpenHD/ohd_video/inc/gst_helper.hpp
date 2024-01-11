@@ -14,7 +14,7 @@
 
 #include "camera_settings.hpp"
 
-#define EXPERIMENTAL_USE_OPENH264_ENCODER
+//#define EXPERIMENTAL_USE_OPENH264_ENCODER
 
 /**
  * Helper methods to create parts of gstreamer pipes.
@@ -53,8 +53,10 @@ static void initGstreamerOrThrow() {
 
 static std::string createCiscoH264SwEncoder(const CameraSettings& settings){
     const auto common_encoder_params= extract_common_encoder_params(settings);
-    return fmt::format("openh264enc name=swencoder bitrate={} complexity=low num-slices=4 slice-mode=1 rate-control=bitrate gop-size=1 !",
-                       kbits_to_bits_per_second(common_encoder_params.h26X_bitrate_kbits));
+    return fmt::format("openh264enc name=swencoder complexity=low bitrate={} num-slices=4 slice-mode=1 rate-control=bitrate gop-size={} !",
+                       kbits_to_bits_per_second(common_encoder_params.h26X_bitrate_kbits),
+                       //settings.h26x_num_slices,
+                       settings.h26x_keyframe_interval);
 }
 
 // SW encoding is slow, but should work on all platforms (at least for low resolutions/framerate(s) )

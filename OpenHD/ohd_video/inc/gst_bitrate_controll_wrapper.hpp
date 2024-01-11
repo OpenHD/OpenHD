@@ -11,7 +11,7 @@
 
 #include "openhd_spdlog.h"
 
-#define EXPERIMENTAL_USE_OPENH264_ENCODER
+//#define EXPERIMENTAL_USE_OPENH264_ENCODER
 
 // Bitrate is one of the few params we want to support changing dynamically at run time
 // without the need for a pipeline restart.

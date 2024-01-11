@@ -88,6 +88,9 @@ struct CameraSettings {
   // See gst-rpicamsrc for more info on mmal (there we have different intra options)
   // sw encoder only has off (-1) and on (anything not -1)
   int h26x_intra_refresh_type =-1;
+  // N of slices. Not supported on all hardware (none to be exact unless the cisco sw encoder) as of now
+  // 0 == frame slicing off
+  int h26x_num_slices=0;
   // MJPEG has no bitrate parameter, only a "quality" param. This value is only used if the
   // user selected MJPEG as its video codec
   int mjpeg_quality_percent=DEFAULT_MJPEG_QUALITY_PERCENT;
