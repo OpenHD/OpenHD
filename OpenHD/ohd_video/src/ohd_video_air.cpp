@@ -345,9 +345,6 @@ void OHDVideoAir::update_arming_state(bool armed) {
 }
 
 static std::vector<std::string> x_discover_usb_cameras(const OHDPlatform& platform,int num_usb_cameras){
-    if(num_usb_cameras==0){
-        return {};
-    }
     auto console=openhd::log::get_default();
     const auto discovery_begin=std::chrono::steady_clock::now();
     console->debug("Waiting for usb camera(s)");
@@ -364,8 +361,14 @@ static std::vector<std::string> x_discover_usb_cameras(const OHDPlatform& platfo
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
     std::vector<std::string> bus_names;
-    for(auto& tmp:usb_cameras){
-        bus_names.push_back(tmp.bus);
+    for(int i=0;i<num_usb_cameras;i++){
+        if(i<usb_cameras.size()){
+            bus_names.push_back(usb_cameras[i].bus);
+        }else{
+            // We didn't find the usb cam - guess it
+            const std::string guess_bus_name=i==0 ? "/dev/video0" : "/dev/video1";
+            bus_names.push_back(guess_bus_name);
+        }
     }
     return bus_names;
 }
@@ -381,26 +384,15 @@ static int get_num_usb_cameras(const int primary_camera_type,const int secondary
     return num_usb_cameras;
 }
 
-static int get_num_active_cameras(const int primary_cam_type,const int secondary_cam_type){
-    int num_active_cameras=0;
-    if(primary_cam_type!=X_CAM_TYPE_DISABLED){
-        num_active_cameras++;
-    }
-    if(secondary_cam_type!=X_CAM_TYPE_DISABLED){
-        num_active_cameras++;
-    }
-    return num_active_cameras;
-}
-
 std::vector<XCamera> OHDVideoAir::discover_cameras2(const OHDPlatform &platform) {
     auto global_settings_holder=std::make_unique<AirCameraGenericSettingsHolder>();
     auto global_settings=global_settings_holder->get_settings();
     auto console=openhd::log::get_default();
-    // ONLY usb cameras we need to discover
     const int num_usb_cameras= get_num_usb_cameras(global_settings.primary_camera_type,global_settings.secondary_camera_type);
-    const int num_active_cameras= get_num_active_cameras(global_settings.primary_camera_type,global_settings.secondary_camera_type);
+    const int num_active_cameras=global_settings.secondary_camera_type==X_CAM_TYPE_DISABLED ? 1 : 2;
     std::vector<std::string> usb_cam_bus_names;
     if(num_usb_cameras>0){
+        // ONLY usb cameras we need to discover
         usb_cam_bus_names= x_discover_usb_cameras(platform, num_usb_cameras);
     }
     std::vector<XCamera> ret;
@@ -408,9 +400,7 @@ std::vector<XCamera> OHDVideoAir::discover_cameras2(const OHDPlatform &platform)
     for(int i=0;i<num_active_cameras;i++){
         auto cam_type=i==0 ? global_settings.primary_camera_type : global_settings.secondary_camera_type;
         if(cam_type==X_CAM_TYPE_USB){
-            const std::string guess_bus_name=i==0 ? "/dev/video0" : "/dev/video1";
-            std::string bus= usb_cameras_offset < usb_cam_bus_names.size() ? usb_cam_bus_names[usb_cameras_offset] : guess_bus_name;
-            ret.push_back(XCamera{X_CAM_TYPE_USB,i,bus});
+            ret.push_back(XCamera{X_CAM_TYPE_USB,i,usb_cam_bus_names[usb_cameras_offset]});
             usb_cameras_offset++;
         }else{
             ret.push_back(XCamera{cam_type,i,""});

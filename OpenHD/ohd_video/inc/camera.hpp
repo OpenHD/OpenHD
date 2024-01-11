@@ -34,8 +34,9 @@ static constexpr int X_CAM_TYPE_X20=17;
 static constexpr int X_CAM_TYPE_ROCKCHIP_X0=18; // reserved for future use
 static constexpr int X_CAM_TYPE_ROCKCHIP_X1=19;// reserved for future use
 static constexpr int X_CAM_TYPE_ROCKCHIP_X2=19;// reserved for future use
-//
-static constexpr int X_CAM_TYPE_DISABLED=0; // no camera, only exists to have a default value for secondary camera
+// no camera, only exists to have a default value for secondary camera (which is disabled by default).
+// NOTE: The primary camera cannot be disabled !
+static constexpr int X_CAM_TYPE_DISABLED=2147483647;
 
 struct XCamera {
     int camera_type = X_CAM_TYPE_DUMMY_SW;
