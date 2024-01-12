@@ -13,80 +13,6 @@
 #include "openhd_util_filesystem.h"
 #include "wb_link.h"
 
-static void discover_cards(const openhd::Config& config,const OHDProfile& m_profile,
-                           const OHDPlatform& m_platform,
-                           const bool continue_without_wb_card,
-                           std::shared_ptr<spdlog::logger>& m_console,
-                           std::vector<WiFiCard>& m_monitor_mode_cards,
-                           std::optional<WiFiCard>& m_opt_hotspot_card){
-    if(config.WIFI_MONITOR_CARD_EMULATE){
-        m_monitor_mode_cards.push_back(DWifiCards::create_card_monitor_emulate());
-        m_opt_hotspot_card= std::nullopt;
-        return;
-    }
-    if(config.WIFI_ENABLE_AUTODETECT){
-        // We need to discover the connected cards and reason about their usage
-        //Find out which cards are connected first
-        auto connected_cards =DWifiCards::discover_connected_wifi_cards();
-        // Issue on rpi with Atheros: For some reason, openhd is sometimes started before the card
-        // finishes some initialization steps ?! and is therefore not discovered.
-        // Change January 05, 23: We always wait for a card doing monitor mode unless a (developer) has specified the option to do otherwise
-        // (which can be usefully for testing, but is not a behaviour we want when running on a user image)
-        if(!continue_without_wb_card) {
-            const auto begin = std::chrono::steady_clock::now();
-            while (true) {
-                const auto n_openhd_supported_cards=DWifiCards::n_cards_openhd_supported(connected_cards);
-                // On the air unit, we stop the discovery as soon as we have one wb capable card
-                if(m_profile.is_air && n_openhd_supported_cards>=1){
-                    break ;
-                }
-                // On the ground unit, we stop the discovery as soon as we have 2 or more wb capable card(s), or timeout
-                if(m_profile.is_ground() && n_openhd_supported_cards>=2){
-                    break ;
-                }
-                const auto elapsed = std::chrono::steady_clock::now() - begin;
-                const auto message=fmt::format("Waiting for supported WiFi, Found:{}",n_openhd_supported_cards);
-                if (elapsed > std::chrono::seconds(3)) {
-                    m_console->warn(message);
-                } else {
-                    m_console->debug(message);
-                }
-                std::this_thread::sleep_for(std::chrono::seconds(1));
-                connected_cards = DWifiCards::discover_connected_wifi_cards();
-                // after 10 seconds, we are happy with a card that only does monitor mode, aka is not known for injection,
-                // or no card at all
-                if (elapsed > std::chrono::seconds(10)) {
-                    // We only found 1 fully wb capable card
-                    if(DWifiCards::any_wifi_card_openhd_supported(connected_cards)){
-                        m_console->warn("Using {} OpenHD supported cards",DWifiCards::n_cards_openhd_supported(connected_cards));
-                        break ;
-                    }
-                    if (DWifiCards::any_wifi_card_supporting_monitor_mode(connected_cards)) {
-                        // we only found a not fully wb capable card, but better than nothing
-                        m_console->warn("Using card without injection capabilities");
-                        break ;
-                    }
-                    // continue with reduced functionality (e.g. only wifi hotspot if hotspot card exists, and no wb functionality)
-                    m_console->warn("NO WB CARD FOUND !!!!");
-                    break;
-                }
-            }
-        }
-        // now decide what to use the card(s) for
-        const auto evaluated=DWifiCards::process_and_evaluate_cards(connected_cards, m_platform, m_profile);
-        m_monitor_mode_cards=evaluated.monitor_mode_cards;
-        m_opt_hotspot_card=evaluated.hotspot_card;
-    }else{
-        // Much easier to do, no weird trying to figure out what to use the card(s) for
-        auto processed=DWifiCards::find_cards_from_manual_file(config.WIFI_WB_LINK_CARDS,config.WIFI_WIFI_HOTSPOT_CARD);
-        m_monitor_mode_cards=processed.monitor_mode_cards;
-        m_opt_hotspot_card=processed.hotspot_card;
-        if(m_profile.is_air && m_monitor_mode_cards.size() > 1){
-            m_console->warn("WB only supports one wifi card on air");
-            m_monitor_mode_cards.resize(1);
-        }
-    }
-}
 
 OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,bool continue_without_wb_card)
     : m_platform(platform1),
@@ -96,7 +22,7 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,bool contin
     m_monitor_mode_cards={};
     m_opt_hotspot_card=std::nullopt;
   const auto config=openhd::load_config();
-    discover_cards(config,m_profile,m_platform,continue_without_wb_card,m_console,
+  DWifiCards::main_discover_an_process_wifi_cards(config,m_profile,m_platform,continue_without_wb_card,m_console,
                    m_monitor_mode_cards,m_opt_hotspot_card);
   m_console->debug("monitor_mode card(s):{}",debug_cards(m_monitor_mode_cards));
   if(m_opt_hotspot_card.has_value()){
