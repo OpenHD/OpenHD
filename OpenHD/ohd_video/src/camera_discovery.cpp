@@ -315,7 +315,7 @@ static constexpr auto SECONDARY_CAM_TYPE_FILENAME="usr/local/share/openhd/video/
 static int read_cam_type(bool secondary){
     auto filename= secondary ? SECONDARY_CAM_TYPE_FILENAME : PRIMARY_CAM_TYPE_FILENAME;
     auto cam_type_opt=OHDFilesystemUtil::read_int_from_file(filename);
-    if(cam_type_opt.has_value() && is_valid_cam_type(cam_type_opt.value())){
+    if(cam_type_opt.has_value() && x_is_valid_cam_type(cam_type_opt.value())){
         return cam_type_opt.value();
     }
     int cam_type=secondary ? X_CAM_TYPE_DISABLED : X_CAM_TYPE_DUMMY_SW;
