@@ -406,5 +406,13 @@ std::vector<XCamera> OHDVideoAir::discover_cameras2(const OHDPlatform &platform)
             ret.push_back(XCamera{cam_type,i,""});
         }
     }
+    if(global_settings.switch_primary_and_secondary && num_active_cameras==2){
+        // Swap primary and secondary around
+        auto tmp=ret[0];
+        ret[0]=ret[1];
+        ret[1]=tmp;
+        ret[0].index=0;
+        ret[0].index=1;
+    }
     return ret;
 }

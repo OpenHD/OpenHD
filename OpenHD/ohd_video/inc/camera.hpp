@@ -17,6 +17,8 @@ static constexpr int X_CAM_TYPE_DUMMY_SW=0; // Dummy sw picture
 static constexpr int X_CAM_TYPE_USB=1; // Any USB camera
 static constexpr int X_CAM_TYPE_EXTERNAL=2; // input via udp rtp
 static constexpr int X_CAM_TYPE_EXTERNAL_IP=3; // input via udp rtp & file start_ip_cam.txt is created.
+static constexpr int X_CAM_TYPE_RPI_MMAL=4;
+static constexpr int X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI=5;
 static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_AUTO=4;
 static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_IMX477M=5;
 static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_SKYMASTERHDR=6;
@@ -30,7 +32,7 @@ static constexpr int X_CAM_TYPE_RPI_VEYE_2MP=13;
 static constexpr int X_CAM_TYPE_RPI_VEYE_CSIMX307=14;
 static constexpr int X_CAM_TYPE_RPI_VEYE_CSSC132=15;
 static constexpr int X_CAM_TYPE_RPI_VEYE_MVCAM=16;
-static constexpr int X_CAM_TYPE_X20=17;
+static constexpr int X_CAM_TYPE_CUSTOM_HARDWARE_X20=17;
 static constexpr int X_CAM_TYPE_ROCKCHIP_X0=18; // reserved for future use
 static constexpr int X_CAM_TYPE_ROCKCHIP_X1=19;// reserved for future use
 static constexpr int X_CAM_TYPE_ROCKCHIP_X2=19;// reserved for future use
@@ -46,6 +48,7 @@ struct XCamera {
     std::string usb_v4l2_device_node;
 };
 
+
 static bool rpi_requires_mmal_pipeline(){
     return false;
 }
@@ -55,6 +58,15 @@ static bool rpi_requires_libcamera_pipeline(){
 static bool rpi_requires_veye_pipeline(){
     return false;
 }
+struct DefaultResolutionFPS{
+    int width_px;
+    int height_px;
+    int fps;
+};
+static DefaultResolutionFPS get_default_resolution_for_camera(){
+    return {1920,1080,30};
+}
+
 static bool is_valid_cam_type(int cam_type){
     return cam_type>=0 && cam_type<=19;
 }

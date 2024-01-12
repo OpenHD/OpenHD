@@ -224,3 +224,8 @@ void write_platform_manifest(const OHDPlatform& ohdPlatform) {
   ss<<"Board type:"<<board_type_to_string(ohdPlatform.board_type)<<"\n";
   OHDFilesystemUtil::write_file(PLATFORM_MANIFEST_FILENAME,ss.str());
 }
+
+const OHDPlatform &OHDPlatform::instance() {
+    static std::shared_ptr<OHDPlatform> platform=DPlatform::discover();
+    return *platform;
+}

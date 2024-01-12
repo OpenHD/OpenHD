@@ -64,6 +64,7 @@ struct OHDPlatform {
   [[nodiscard]] std::string to_string()const{
     return fmt::format("[{}:{}]",platform_type_to_string(platform_type),board_type_to_string(board_type));
   }
+  static const OHDPlatform& instance();
 };
 
 // We need to differentiate between rpi 4 and other pi's to use the right fec params.
