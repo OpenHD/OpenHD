@@ -36,10 +36,14 @@ static constexpr int X_CAM_TYPE_RPI_VEYE_2MP=13;
 static constexpr int X_CAM_TYPE_RPI_VEYE_CSIMX307=14;
 static constexpr int X_CAM_TYPE_RPI_VEYE_CSSC132=15;
 static constexpr int X_CAM_TYPE_RPI_VEYE_MVCAM=16;
+static constexpr int X_CAM_TYPE_RPI_VEYE_RESERVED0=16;
+static constexpr int X_CAM_TYPE_RPI_VEYE_RESERVED1=16;
 static constexpr int X_CAM_TYPE_CUSTOM_HARDWARE_X20=17;
-static constexpr int X_CAM_TYPE_ROCKCHIP_X0=18; // reserved for future use
-static constexpr int X_CAM_TYPE_ROCKCHIP_X1=19;// reserved for future use
-static constexpr int X_CAM_TYPE_ROCKCHIP_X2=19;// reserved for future use
+static constexpr int X_CAM_TYPE_CUSTOM_HARDWARE_X20_RESERVED0=17;
+static constexpr int X_CAM_TYPE_CUSTOM_HARDWARE_X20_RESERVED1=17;
+static constexpr int X_CAM_TYPE_ROCKCHIP_RESERVED0=18; // reserved for future use
+static constexpr int X_CAM_TYPE_ROCKCHIP_RESERVED1=19;// reserved for future use
+static constexpr int X_CAM_TYPE_ROCKCHIP_RESERVED2=19;// reserved for future use
 // no camera, only exists to have a default value for secondary camera (which is disabled by default).
 // NOTE: The primary camera cannot be disabled !
 static constexpr int X_CAM_TYPE_DISABLED=2147483647;
@@ -55,22 +59,23 @@ struct XCamera {
     }
     bool requires_rpi_libcamera_pipeline()const{
         return camera_type==X_CAM_TYPE_RPI_LIBCAMERA_AUTO || camera_type==X_CAM_TYPE_RPI_LIBCAMERA_IMX477M ||
-            camera_type==X_CAM_TYPE_RPI_LIBCAMERA_SKYMASTERHDR || camera_type== X_CAM_TYPE_RPI_LIBCAMERA_SKYVISIONPRO ||
-            camera_type==X_CAM_TYPE_RPI_LIBCAMERA_IMX477 || camera_type==X_CAM_TYPE_RPI_LIBCAMERA_IMX462 ||
-            camera_type== X_CAM_TYPE_RPI_LIBCAMERA_IMX327 || camera_type==X_CAM_TYPE_RPI_LIBCAMERA_IMX290 ||
-            camera_type== X_CAM_TYPE_RPI_LIBCAMERA_IMX462_LOWLIGHT_MINI || camera_type==X_CAM_TYPE_RPI_LIBCAMERA_RESERVED0 ||
-            camera_type==X_CAM_TYPE_RPI_LIBCAMERA_RESERVED1 || camera_type==X_CAM_TYPE_RPI_LIBCAMERA_RESERVED2 ||
-            camera_type==X_CAM_TYPE_RPI_LIBCAMERA_RESERVED3;
+               camera_type==X_CAM_TYPE_RPI_LIBCAMERA_SKYMASTERHDR || camera_type== X_CAM_TYPE_RPI_LIBCAMERA_SKYVISIONPRO ||
+               camera_type==X_CAM_TYPE_RPI_LIBCAMERA_IMX477 || camera_type==X_CAM_TYPE_RPI_LIBCAMERA_IMX462 ||
+               camera_type== X_CAM_TYPE_RPI_LIBCAMERA_IMX327 || camera_type==X_CAM_TYPE_RPI_LIBCAMERA_IMX290 ||
+               camera_type== X_CAM_TYPE_RPI_LIBCAMERA_IMX462_LOWLIGHT_MINI || camera_type==X_CAM_TYPE_RPI_LIBCAMERA_RESERVED0 ||
+               camera_type==X_CAM_TYPE_RPI_LIBCAMERA_RESERVED1 || camera_type==X_CAM_TYPE_RPI_LIBCAMERA_RESERVED2 ||
+               camera_type==X_CAM_TYPE_RPI_LIBCAMERA_RESERVED3;
     }
     bool requires_rpi_veye_pipeline()const{
         return camera_type==X_CAM_TYPE_RPI_VEYE_2MP || camera_type==X_CAM_TYPE_RPI_VEYE_CSIMX307 ||
-        camera_type==X_CAM_TYPE_RPI_VEYE_CSSC132 || camera_type==X_CAM_TYPE_RPI_VEYE_MVCAM;
+               camera_type==X_CAM_TYPE_RPI_VEYE_CSSC132 || camera_type==X_CAM_TYPE_RPI_VEYE_MVCAM;
     }
     bool requires_x20_cedar_pipeline()const{
         return camera_type==X_CAM_TYPE_CUSTOM_HARDWARE_X20;
     }
     bool requires_rockchip_mpp_pipeline()const{
-        return camera_type==X_CAM_TYPE_ROCKCHIP_X0 || camera_type==X_CAM_TYPE_ROCKCHIP_X1 || camera_type==X_CAM_TYPE_ROCKCHIP_X2;
+        return camera_type==X_CAM_TYPE_ROCKCHIP_RESERVED0 || camera_type==X_CAM_TYPE_ROCKCHIP_RESERVED1 ||
+               camera_type==X_CAM_TYPE_ROCKCHIP_RESERVED2;
     }
 };
 
