@@ -21,7 +21,7 @@
 namespace openhd{
 
 // In a few places inside openhd we need to react to changes on the FC arming state.
-// Here once can register / unregister a cb that is called whenever the arming state changes
+// Here one can register / unregister a cb that is called whenever the arming state changes
 // The default arming state is disarmed
 class ArmingStateHelper{
 public:

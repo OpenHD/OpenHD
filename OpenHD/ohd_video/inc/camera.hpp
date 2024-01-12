@@ -28,6 +28,10 @@ static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_IMX462=9;
 static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_IMX327=10;
 static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_IMX290=11;
 static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_IMX462_LOWLIGHT_MINI=12;
+static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_RESERVED0=13;
+static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_RESERVED1=13;
+static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_RESERVED2=13;
+static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_RESERVED3=13;
 static constexpr int X_CAM_TYPE_RPI_VEYE_2MP=13;
 static constexpr int X_CAM_TYPE_RPI_VEYE_CSIMX307=14;
 static constexpr int X_CAM_TYPE_RPI_VEYE_CSSC132=15;
@@ -46,30 +50,29 @@ struct XCamera {
     int index;
     // Only valid if camera is of type USB
     std::string usb_v4l2_device_node;
+    bool requires_rpi_mmal_pipeline()const{
+        return camera_type==X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI || camera_type==X_CAM_TYPE_RPI_MMAL;
+    }
+    bool requires_rpi_libcamera_pipeline()const{
+        return camera_type==X_CAM_TYPE_RPI_LIBCAMERA_AUTO || camera_type==X_CAM_TYPE_RPI_LIBCAMERA_IMX477M ||
+            camera_type==X_CAM_TYPE_RPI_LIBCAMERA_SKYMASTERHDR || camera_type== X_CAM_TYPE_RPI_LIBCAMERA_SKYVISIONPRO ||
+            camera_type==X_CAM_TYPE_RPI_LIBCAMERA_IMX477 || camera_type==X_CAM_TYPE_RPI_LIBCAMERA_IMX462 ||
+            camera_type== X_CAM_TYPE_RPI_LIBCAMERA_IMX327 || camera_type==X_CAM_TYPE_RPI_LIBCAMERA_IMX290 ||
+            camera_type== X_CAM_TYPE_RPI_LIBCAMERA_IMX462_LOWLIGHT_MINI || camera_type==X_CAM_TYPE_RPI_LIBCAMERA_RESERVED0 ||
+            camera_type==X_CAM_TYPE_RPI_LIBCAMERA_RESERVED1 || camera_type==X_CAM_TYPE_RPI_LIBCAMERA_RESERVED2 ||
+            camera_type==X_CAM_TYPE_RPI_LIBCAMERA_RESERVED3;
+    }
+    bool requires_rpi_veye_pipeline()const{
+        return camera_type==X_CAM_TYPE_RPI_VEYE_2MP || camera_type==X_CAM_TYPE_RPI_VEYE_CSIMX307 ||
+        camera_type==X_CAM_TYPE_RPI_VEYE_CSSC132 || camera_type==X_CAM_TYPE_RPI_VEYE_MVCAM;
+    }
+    bool requires_x20_cedar_pipeline()const{
+        return camera_type==X_CAM_TYPE_CUSTOM_HARDWARE_X20;
+    }
+    bool requires_rockchip_mpp_pipeline()const{
+        return camera_type==X_CAM_TYPE_ROCKCHIP_X0 || camera_type==X_CAM_TYPE_ROCKCHIP_X1 || camera_type==X_CAM_TYPE_ROCKCHIP_X2;
+    }
 };
-
-
-static bool rpi_requires_mmal_pipeline(){
-    return false;
-}
-static bool rpi_requires_libcamera_pipeline(){
-    return false;
-}
-static bool rpi_requires_veye_pipeline(){
-    return false;
-}
-struct DefaultResolutionFPS{
-    int width_px;
-    int height_px;
-    int fps;
-};
-static DefaultResolutionFPS get_default_resolution_for_camera(){
-    return {1920,1080,30};
-}
-
-static bool is_valid_cam_type(int cam_type){
-    return cam_type>=0 && cam_type<=19;
-}
 
 
 /**
