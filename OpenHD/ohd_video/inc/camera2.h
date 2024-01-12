@@ -47,6 +47,7 @@ struct XCamera {
     // 0 for primary camera, 1 for secondary camera
     int index;
     // Only valid if camera is of type USB
+    // For CSI camera(s) we in general 'know' from platform and cam type how to tell the pipeline which cam/source to use.
     std::string usb_v4l2_device_node;
     bool requires_rpi_mmal_pipeline()const{
         return camera_type==X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI || camera_type==X_CAM_TYPE_RPI_MMAL;
@@ -75,6 +76,9 @@ struct XCamera {
 
 static bool x_is_valid_cam_type(int cam_type){
     return cam_type>=0 && cam_type<=30;
+}
+static std::string cam_type_as_string(int cam_type){
+    return "todo";
 }
 
 #endif //OPENHD_CAMERA2_H

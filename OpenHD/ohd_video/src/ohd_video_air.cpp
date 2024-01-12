@@ -385,34 +385,35 @@ static int get_num_usb_cameras(const int primary_camera_type,const int secondary
 }
 
 std::vector<XCamera> OHDVideoAir::discover_cameras2(const OHDPlatform &platform) {
-    auto global_settings_holder=std::make_unique<AirCameraGenericSettingsHolder>();
-    auto global_settings=global_settings_holder->get_settings();
-    auto console=openhd::log::get_default();
-    const int num_usb_cameras= get_num_usb_cameras(global_settings.primary_camera_type,global_settings.secondary_camera_type);
-    const int num_active_cameras=global_settings.secondary_camera_type==X_CAM_TYPE_DISABLED ? 1 : 2;
+    auto global_settings_holder = std::make_unique<AirCameraGenericSettingsHolder>();
+    auto global_settings = global_settings_holder->get_settings();
+    auto console = openhd::log::get_default();
+    const int num_usb_cameras = get_num_usb_cameras(global_settings.primary_camera_type,
+                                                    global_settings.secondary_camera_type);
+    const int num_active_cameras = global_settings.secondary_camera_type == X_CAM_TYPE_DISABLED ? 1 : 2;
     std::vector<std::string> usb_cam_bus_names;
-    if(num_usb_cameras>0){
+    if (num_usb_cameras > 0) {
         // ONLY usb cameras we need to discover
-        usb_cam_bus_names= x_discover_usb_cameras(platform, num_usb_cameras);
+        usb_cam_bus_names = x_discover_usb_cameras(platform, num_usb_cameras);
     }
     std::vector<XCamera> ret;
-    int usb_cameras_offset=0;
-    for(int i=0;i<num_active_cameras;i++){
-        auto cam_type=i==0 ? global_settings.primary_camera_type : global_settings.secondary_camera_type;
-        if(cam_type==X_CAM_TYPE_USB){
-            ret.push_back(XCamera{X_CAM_TYPE_USB,i,usb_cam_bus_names[usb_cameras_offset]});
+    int usb_cameras_offset = 0;
+    for (int i = 0; i < num_active_cameras; i++) {
+        auto cam_type = i == 0 ? global_settings.primary_camera_type : global_settings.secondary_camera_type;
+        if (cam_type == X_CAM_TYPE_USB) {
+            ret.push_back(XCamera{X_CAM_TYPE_USB, i, usb_cam_bus_names[usb_cameras_offset]});
             usb_cameras_offset++;
-        }else{
-            ret.push_back(XCamera{cam_type,i,""});
+        } else {
+            ret.push_back(XCamera{cam_type, i, ""});
         }
     }
-    if(global_settings.switch_primary_and_secondary && num_active_cameras==2){
+    if (global_settings.switch_primary_and_secondary && num_active_cameras == 2) {
         // Swap primary and secondary around
-        auto tmp=ret[0];
-        ret[0]=ret[1];
-        ret[1]=tmp;
-        ret[0].index=0;
-        ret[0].index=1;
+        auto tmp = ret[0];
+        ret[0] = ret[1];
+        ret[1] = tmp;
+        ret[0].index = 0;
+        ret[0].index = 1;
     }
     return ret;
 }
