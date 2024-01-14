@@ -4,7 +4,6 @@
 #include "ohd_video_air_generic_settings.h"
 #include "include_json.hpp"
 #include "openhd_platform.h"
-#include "camera.hpp"
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(AirCameraGenericSettings,switch_primary_and_secondary,n_cameras_to_wait_for,
                                    dualcam_primary_video_allocated_bandwidth_perc,

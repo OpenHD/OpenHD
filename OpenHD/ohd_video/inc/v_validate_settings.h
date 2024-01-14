@@ -38,9 +38,9 @@ static bool validate_video_width_height_fps(int video_w,int video_h,int fps){
   return validate_video_with(video_w) && validate_video_height(video_h) && validate_video_fps(fps);
 }
 
-// 0,1 or 2 -> h264,h265 or mjpeg
+// 0 or 1 (h264 or h265)
 static bool validate_video_codec(int codec){
-  return codec==0 || codec==1 || codec==2;
+  return codec==0 || codec==1 ;
 }
 
 static bool validate_bitrate_mbits(int bitrate_mbits){
@@ -127,14 +127,6 @@ static bool validate_rpi_libcamera_exposure_index(int value){
 // cannot really be validated, depends on camera
 static bool validate_rpi_libcamera_shutter_microseconds(int value){
   return value>=0 && value<=1000*100;
-}
-
-static bool validate_mjpeg_quality_percent(int value){
-  const bool ret=value<=100 && value>=1;
-  if(!ret){
-    openhd::log::get_default()->warn("Invalid mjpeg_quality_percent: {}",value);
-  }
-  return ret;
 }
 
 struct TmpVideoFormat{

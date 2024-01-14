@@ -25,15 +25,17 @@ struct GstBitrateControlElement {
   std::string property_name="bitrate";
 };
 
-static std::optional<GstBitrateControlElement> get_dynamic_bitrate_control_element_in_pipeline(GstElement *gst_pipeline,CameraType camera_type){
+static std::optional<GstBitrateControlElement> get_dynamic_bitrate_control_element_in_pipeline(GstElement *gst_pipeline,
+                                                                                               const CameraHolder& camera_holder){
+  auto camera=camera_holder.get_camera();
+  auto settings=camera_holder.get_settings();
   GstBitrateControlElement ret{};
   ret.encoder= nullptr;
-  if(camera_type==CameraType::RPI_CSI_MMAL){
+  if(camera.requires_rpi_mmal_pipeline()){
     ret.encoder= gst_bin_get_by_name(GST_BIN(gst_pipeline), "rpicamsrc");
     ret.property_name="bitrate";
     ret.takes_kbit= false;
-  }else if(camera_type==CameraType::DUMMY_SW || camera_type==CameraType::UVC){
-    // NOTE: With UVC we might not do sw encode - in which case we cannot do variable bitrate control
+  }else if(camera.camera_type==X_CAM_TYPE_DUMMY_SW || camera.camera_type==X_CAM_TYPE_USB || settings.force_sw_encode ){
     ret.encoder= gst_bin_get_by_name(GST_BIN(gst_pipeline), "swencoder");
     ret.property_name="bitrate";
 #ifdef EXPERIMENTAL_USE_OPENH264_ENCODER
@@ -41,19 +43,14 @@ static std::optional<GstBitrateControlElement> get_dynamic_bitrate_control_eleme
 #else
     ret.takes_kbit= true;
 #endif
-  } else if(camera_type==CameraType::ALLWINNER_CSI ){
+  } else if(camera.requires_x20_cedar_pipeline()){
     // We can change bitrate dynamically
     ret.encoder= gst_bin_get_by_name(GST_BIN(gst_pipeline), "sunxisrc");
     ret.property_name="bitrate";
     ret.takes_kbit= true;
-  }else if(camera_type==CameraType::RPI_CSI_LIBCAMERA || camera_type==CameraType::RPI_CSI_VEYE_V4l2){
-    // ARGH - cannot change extra-controls without restart
-    //ret.encoder= gst_bin_get_by_name(GST_BIN(gst_pipeline), "rpi_v4l2_encoder");
-    //ret.property_name="video_bitrate";
-    //ret.takes_kbit= false;
   }
   if(ret.encoder== nullptr){
-    openhd::log::get_default()->debug("Cannot find dynamic bitrate control element for camera {}", camera_type_to_string(camera_type));
+    openhd::log::get_default()->debug("Cannot find dynamic bitrate control element for camera {}", camera.cam_type_as_verbose_string());
     return std::nullopt;
   }
   // try fetching the value for testing if it actually works
@@ -63,7 +60,7 @@ static std::optional<GstBitrateControlElement> get_dynamic_bitrate_control_eleme
     openhd::log::get_default()->warn("dynamic bitrate control element doesn't work");
     return std::nullopt;
   }
-  openhd::log::get_default()->info("Got bitrate control for camera {}, current:{}",camera_type_to_string(camera_type),actual_bits_per_second);
+  openhd::log::get_default()->info("Got bitrate control for camera {}, current:{}",camera.cam_type_as_verbose_string(),actual_bits_per_second);
   return ret;
 }
 

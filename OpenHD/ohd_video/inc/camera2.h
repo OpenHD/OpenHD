@@ -72,13 +72,34 @@ struct XCamera {
         return camera_type==X_CAM_TYPE_ROCKCHIP_RESERVED0 || camera_type==X_CAM_TYPE_ROCKCHIP_RESERVED1 ||
                camera_type==X_CAM_TYPE_ROCKCHIP_RESERVED2;
     }
+    std::string cam_type_as_verbose_string()const{
+        return "TODO";
+    }
+    struct ResolutionFramerate{
+        int width_px;
+        int height_px;
+        int fps;
+    };
+    [[nodiscard]] ResolutionFramerate get_default_resolution_fps()const{
+        if(requires_rpi_veye_pipeline()){
+            // Veye camera(s) only do 1080p30
+            return {1920,1080,30};
+        }else if(requires_x20_cedar_pipeline()){
+            return {1280,720,60};
+        }else if(requires_rpi_libcamera_pipeline()){
+            return {1920,1080,30};
+        }else if(camera_type==X_CAM_TYPE_USB){
+            // TODO properly
+            return {640,490,30};
+        }else if(camera_type==X_CAM_TYPE_DUMMY_SW){
+            return {640,480,30};
+        }
+        return {1920,1080,30};
+    }
 };
 
 static bool x_is_valid_cam_type(int cam_type){
     return cam_type>=0 && cam_type<=30;
-}
-static std::string cam_type_as_string(int cam_type){
-    return "TODO";
 }
 
 #endif //OPENHD_CAMERA2_H

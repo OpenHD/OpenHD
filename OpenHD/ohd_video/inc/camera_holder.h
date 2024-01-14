@@ -5,7 +5,6 @@
 #ifndef OPENHD_OPENHD_OHD_VIDEO_INC_CAMERA_HOLDER_H_
 #define OPENHD_OPENHD_OHD_VIDEO_INC_CAMERA_HOLDER_H_
 
-#include "camera.hpp"
 #include "camera2.h"
 #include "camera_settings.hpp"
 #include "openhd_action_handler.h"
@@ -25,13 +24,13 @@ class CameraHolder:
     // changes requested by the mavlink parameter protocol are propagated through lambda callbacks
     public openhd::ISettingsComponent{
  public:
-  explicit CameraHolder(Camera camera):
+  explicit CameraHolder(XCamera camera):
        m_camera(std::move(camera)),
        openhd::PersistentSettings<CameraSettings>(openhd::get_video_settings_directory()){
     // read previous settings or create default ones
     init();
   }
-  [[nodiscard]] const Camera& get_camera()const{
+  [[nodiscard]] const XCamera& get_camera()const{
     return m_camera;
   }
   // Settings hacky begin
@@ -86,7 +85,7 @@ class CameraHolder:
     return false;
   }
   bool set_camera_rotation(int value){
-    if(!m_camera.supports_rotation())return false;
+    //if(!m_camera.supports_rotation())return false;
     if(!openhd::validate_camera_rotation(value)){
       return false;
     }
@@ -107,7 +106,7 @@ class CameraHolder:
     return true;
   }
   bool set_camera_awb(int value){
-    if(!m_camera.supports_awb())return false;
+    //if(!m_camera.supports_awb())return false;
     if(!openhd::validate_rpi_awb_mode(value)){
       return false;
     }
@@ -116,19 +115,11 @@ class CameraHolder:
     return true;
   }
   bool set_camera_exposure(int value){
-    if(!m_camera.supports_exp())return false;
+    //if(!m_camera.supports_exp())return false;
     if(!openhd::validate_rpi_exp_mode(value)){
       return false;
     }
     unsafe_get_settings().exposure_mode=value;
-    persist();
-    return true;
-  }
-  bool set_mjpeg_quality_percent(int value){
-    if(!openhd::validate_mjpeg_quality_percent(value)){
-      return false;
-    }
-    unsafe_get_settings().mjpeg_quality_percent=value;
     persist();
     return true;
   }
@@ -216,12 +207,6 @@ class CameraHolder:
     persist(true);
     return true;
   }
-  bool set_ip_cam_url(std::string value){
-    if(value.size()>50)return false;
-    unsafe_get_settings().ip_cam_url=value;
-    persist();
-    return true;
-  }
   bool set_encryption_enable(int enable){
       if(!openhd::validate_yes_or_no(enable))return false;
       unsafe_get_settings().enable_ultra_secure_encryption=enable;
@@ -245,21 +230,23 @@ class CameraHolder:
   // and in case the user selects 720p@49fps for example, the bitrate is too low.
   // However, rather be too low than too high - the user can always go higher if he needs to.
   bool requires_half_bitrate_workaround()const{
-    return m_camera.type==CameraType::RPI_CSI_MMAL && m_camera.rpi_csi_mmal_is_csi_to_hdmi && get_settings().streamed_video_format.framerate!=60;
+    if(m_camera.camera_type==X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI && get_settings().streamed_video_format.framerate!=60)return true;
+    return false;
   }
   // Settings hacky end
  private:
   // Camera info is immutable
-  const Camera m_camera;
+  const XCamera m_camera;
  private:
   [[nodiscard]] std::string get_unique_filename()const override{
-    return m_camera.get_unique_settings_filename();
+    return "TODO";
+    //return m_camera.get_unique_settings_filename();
   }
   std::optional<CameraSettings> impl_deserialize(const std::string& file_as_string)const override;
   std::string imp_serialize(const CameraSettings& data)const override;
   [[nodiscard]] CameraSettings create_default()const override{
     auto ret=CameraSettings{};
-    if(m_camera.type==CameraType::RPI_CSI_MMAL || m_camera.type==CameraType::RPI_CSI_LIBCAMERA){
+    /*if(m_camera.type==CameraType::RPI_CSI_MMAL || m_camera.type==CameraType::RPI_CSI_LIBCAMERA){
       ret.streamed_video_format.width=1280;
       ret.streamed_video_format.height=720;
       ret.streamed_video_format.framerate=30;
@@ -295,17 +282,9 @@ class CameraHolder:
         return ret;
       }
       openhd::log::get_default()->warn("Cannot find valid default resolution for USB camera");
-    }
+    }*/
     return ret;
   }
 };
-
-static std::shared_ptr<CameraHolder> createDummyCamera2(){
-  return std::make_shared<CameraHolder>(createDummyCamera());
-}
-
-void startup_fix_common_issues(std::vector<std::shared_ptr<CameraHolder>>& camera_holders);
-
-void write_camera_manifest(const std::vector<Camera> &cameras);
 
 #endif  // OPENHD_OPENHD_OHD_VIDEO_INC_CAMERA_HOLDER_H_

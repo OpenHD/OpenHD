@@ -32,19 +32,12 @@ class OHDVideoAir {
    * @param opt_action_handler openhd global handler for communication between different ohd modules.
    * @param link_handle handle for sending video data over the (currently only wb) link between air and ground
    */
-  OHDVideoAir(OHDPlatform platform1,std::vector<Camera> cameras,
+  OHDVideoAir(OHDPlatform platform1,std::vector<XCamera> cameras,
            std::shared_ptr<OHDLink> link_handle);
   ~OHDVideoAir();
   OHDVideoAir(const OHDVideoAir&)=delete;
   OHDVideoAir(const OHDVideoAir&&)=delete;
-  /**
-   * Discover connected cameras at run time. CSI and USB cameras generally can be auto-detected,
-   * IP Cameras (and/or really "specific" setups) not. Automatic discovery can be completely overridden by editing the .config file.
-   * @return the camera(s) openhd should use, guaranteed to be at least one (in case no cam is found,
-   * a dummy sw camera is created)
-   */
-  static std::vector<Camera> discover_cameras(const OHDPlatform& platform);
-  static std::vector<XCamera> discover_cameras2(const OHDPlatform& platform);
+  static std::vector<XCamera> discover_cameras(const OHDPlatform& platform);
   /**
    * In ohd-telemetry, we create a mavlink settings component for each of the camera(s),instead of using one generic settings component
    * like for the rest of the settings.

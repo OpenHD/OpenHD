@@ -16,7 +16,6 @@ namespace openhd::rtp_eof_helper{
 // returns true if this is the end of a rtp fragmentation unit
 bool h264_end_block(const uint8_t *payload, std::size_t payloadSize);
 bool h265_end_block(const uint8_t *payload, std::size_t payloadSize);
-bool mjpeg_end_block(const uint8_t *payload, std::size_t payloadSize);
 
 }
 

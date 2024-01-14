@@ -21,7 +21,7 @@ void main_discover_an_process_wifi_cards(const openhd::Config& config,const OHDP
                                         const bool continue_without_wb_card,
                                         std::shared_ptr<spdlog::logger>& m_console,
                                         std::vector<WiFiCard>& m_monitor_mode_cards,
-                                        std::optional<WiFiCard>& m_opt_hotspot_card)
+                                        std::optional<WiFiCard>& m_opt_hotspot_card);
 
 // Returns true if the card is supported (we only support a few, but keep working with other cards)
 bool is_openhd_supported(const WiFiCardType& type);

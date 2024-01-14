@@ -103,9 +103,3 @@ bool openhd::rtp_eof_helper::h265_end_block(const uint8_t *payload,
   }*/
   return false;
 }
-
-bool openhd::rtp_eof_helper::mjpeg_end_block(const uint8_t *payload,
-                                        const std::size_t payloadSize) {
-  // TODO not yet supported
-  return false;
-}

@@ -21,10 +21,11 @@ int main(int argc, char *argv[]) {
   // We need root to read / write camera settings.
   OHDUtil::terminate_if_not_root();
   const auto platform=DPlatform::discover();
-  auto cameras=DCameras::discover(*platform);
+
+  auto cameras=OHDVideoAir::discover_cameras(*platform);
   //auto cameras=std::vector<Camera>();
   if(cameras.empty()){
-    cameras.emplace_back(createDummyCamera());
+    //cameras.emplace_back(createDummyCamera());
   }
   auto forwarder=SocketHelper::UDPForwarder("127.0.0.1",5600);
   auto cb=[&forwarder](int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame){

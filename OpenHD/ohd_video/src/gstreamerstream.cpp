@@ -99,58 +99,7 @@ void GStreamerStream::setup() {
   m_pipeline_content.str("");
   m_pipeline_content.clear();
   m_bitrate_ctrl_element= std::nullopt;
-  switch (camera.type) {
-    case CameraType::RPI_CSI_MMAL: {
-      setup_raspberrypi_mmal_csi();
-      break;
-    }
-    case CameraType::RPI_CSI_LIBCAMERA: {
-      setup_raspberrypi_libcamera();
-      break;
-    }
-    case CameraType::JETSON_CSI: {
-      setup_jetson_csi();
-      break;
-    }
-    case CameraType::UVC: {
-      setup_usb_uvc();
-      break;
-    }
-    case CameraType::UVC_H264: {
-      setup_usb_uvch264();
-      break;
-    }
-    case CameraType::IP: {
-      setup_ip_camera();
-      break;
-    }
-    case CameraType::ALLWINNER_CSI: {
-      setup_allwinner_csi();
-      break;
-    }
-    case CameraType::DUMMY_SW: {
-      setup_sw_dummy_camera();
-      break;
-    }
-    case CameraType::RPI_CSI_VEYE_V4l2:{
-      setup_raspberrypi_veye_v4l2();
-      break;
-    }
-    case CameraType::ROCKCHIP_CSI:
-      setup_rockchip_csi();     
-      break;
-    case CameraType::ROCKCHIP_HDMI: {
-      setup_rockchip_hdmi();
-      break;
-    }
-    case CameraType::CUSTOM_UNMANAGED_CAMERA:{
-      setup_custom_unmanaged_camera();
-    }break;
-    case CameraType::UNKNOWN: {
-      m_console->warn( "Unknown camera type");
-      return;
-    }
-  }
+  m_pipeline_content<<create_source_encode_pipeline(*m_camera_holder);
   // quick check,here the pipeline should end with a "! ";
   if(!OHDUtil::endsWith(m_pipeline_content.str(),"! ")){
     m_console->warn("Probably ill-formatted pipeline: [{}]",m_pipeline_content.str());
@@ -199,128 +148,18 @@ void GStreamerStream::setup() {
     m_console->error( "Failed to create pipeline: {}",error->message);
     return;
   }
-  m_bitrate_ctrl_element=get_dynamic_bitrate_control_element_in_pipeline(m_gst_pipeline,camera.type);
+  m_bitrate_ctrl_element=get_dynamic_bitrate_control_element_in_pipeline(m_gst_pipeline,*m_camera_holder);
   // we pull data out of the gst pipeline as cpu memory buffer(s) using the gstreamer "appsink" element
   m_app_sink_element=gst_bin_get_by_name(GST_BIN(m_gst_pipeline), "out_appsink");
   assert(m_app_sink_element);
     const auto index=m_camera_holder->get_camera().index;
-    const auto cam_type= camera_type_to_int(m_camera_holder->get_camera().type);
+    const auto cam_type= 0;//camera_type_to_int(m_camera_holder->get_camera().type);
     auto cam_info=openhd::LinkActionHandler::CamInfo{true,
                                                      (uint8_t)index, cam_type, CAM_STATUS_RESTARTING, ADD_RECORDING_TO_PIPELINE, (uint8_t)video_codec_to_int(setting.streamed_video_format.videoCodec), (uint16_t)setting.h26x_bitrate_kbits,
                                                      (uint8_t)setting.h26x_keyframe_interval, (uint16_t )setting.streamed_video_format.width,
                                                      (uint16_t )setting.streamed_video_format.height, (uint16_t )setting.streamed_video_format.framerate};
     openhd::LinkActionHandler::instance().set_cam_info(index, cam_info);
     //m_console->debug("Cam encoding format: {}",(int)cam_info.encoding_format);
-}
-
-void GStreamerStream::setup_raspberrypi_mmal_csi() {
-  m_console->debug("Setting up Raspberry Pi CSI camera");
-  // similar to jetson, for now we assume there is only one CSI camera connected.
-  const auto& setting= m_camera_holder->get_settings();
-  m_pipeline_content << OHDGstHelper::createRpicamsrcStream(-1, setting,m_camera_holder->requires_half_bitrate_workaround());
-}
-
-void GStreamerStream::setup_raspberrypi_veye_v4l2() {
-  m_console->debug("setup_raspberrypi_veye_v4l2");
-  // similar to jetson, for now we assume there is only one CSI camera connected.
-  const auto& setting= m_camera_holder->get_settings();
-  m_pipeline_content << OHDGstHelper::create_veye_vl2_stream(setting,m_camera_holder->get_camera().bus);
-}
-
-void GStreamerStream::setup_raspberrypi_libcamera() {
-  m_console->debug("Setting up Raspberry Pi libcamera camera");
-  // similar to jetson, for now we assume there is only one CSI camera
-  // connected.
-  const auto& setting = m_camera_holder->get_settings();
-  m_pipeline_content << OHDGstHelper::createLibcamerasrcStream(
-      m_camera_holder->get_camera().name, setting);
-}
-
-void GStreamerStream::setup_jetson_csi() {
-  m_console->debug("Setting up Jetson CSI camera");
-  // Well, i fixed the bug in the detection, with v4l2_open.
-  // But still, /dev/video1 can be camera index 0 on jetson.
-  // Therefore, for now, we just default to no camera index rn and let nvarguscamerasrc figure out the camera index.
-  // This will work as long as there is no more than 1 CSI camera.
-  const auto& setting= m_camera_holder->get_settings();
-  m_pipeline_content << OHDGstHelper::createJetsonStream(-1,setting);
-}
-
-void GStreamerStream::setup_rockchip_hdmi() {
-  m_console->debug("Setting up Rockchip HDMI");
-  const auto& setting= m_camera_holder->get_settings();
-  m_pipeline_content << OHDGstHelper::createRockchipHDMIStream(false, setting.h26x_bitrate_kbits, setting.streamed_video_format, setting.recordingFormat, setting.h26x_keyframe_interval);
-}
-
-void GStreamerStream::setup_rockchip_csi() {
-  m_console->debug("Setting up Rockchip CSI");
-  const auto& setting= m_camera_holder->get_settings();
-  m_pipeline_content << OHDGstHelper::createRockchipCSIStream(false, setting.h26x_bitrate_kbits, setting.camera_rotation_degree, setting.streamed_video_format, setting.recordingFormat, setting.h26x_keyframe_interval);
-}
-
-void GStreamerStream::setup_allwinner_csi() {
-  m_console->debug("Setting up Allwinner CSI camera");
-  const auto& setting=m_camera_holder->get_settings();
-  m_pipeline_content << OHDGstHelper::createAllwinnerStream(0,setting.h26x_bitrate_kbits, setting.streamed_video_format, setting.h26x_keyframe_interval);
-}
-
-void GStreamerStream::setup_usb_uvc() {
-  const auto& camera= m_camera_holder->get_camera();
-  const auto& setting= m_camera_holder->get_settings();
-  m_console->debug("Setting up usb UVC camera Name:{}",camera.name);
-  // Upcoming change - we do not do any non-raw formats anymore, since usb cameras with an integrated
-  // encoder just don't have a way to reliably set params on the encoder
-  if(!setting.force_sw_encode){
-    // First we try and start a hw encoded path, (but hw encode by the camera encoder, not a local hw encoder)
-    // where v4l2src directly provides encoded video buffers
-    // (unless force sw encode is explicitly requested by the user)
-    const auto opt_endpoint_for_codec= get_endpoint_supporting_codec(camera.v4l2_endpoints,setting.streamed_video_format.videoCodec);
-    if(opt_endpoint_for_codec.has_value()){
-      m_console->debug("Selected non-raw endpoint");
-      m_pipeline_content << OHDGstHelper::createV4l2SrcAlreadyEncodedStream(opt_endpoint_for_codec.value().v4l2_device_node, setting);
-      return;
-    }
-  }
-  // If we land here, we need to do SW encoding, the v4l2src can only do raw video formats like YUV
-  const auto opt_raw_endpoint= get_endpoint_supporting_raw(camera.v4l2_endpoints);
-  if(opt_raw_endpoint.has_value()){
-    m_console->debug("Selected RAW endpoint");
-    m_pipeline_content << OHDGstHelper::createV4l2SrcRawAndSwEncodeStream(opt_raw_endpoint.value().v4l2_device_node,setting);
-    return;
-  }
-  // If we land here, we couldn't create a stream for this camera.
-  m_console->error("Setup USB UVC failed");
-}
-
-void GStreamerStream::setup_usb_uvch264() {
-  m_console->debug("Setting up UVC H264 camera");
-  const auto& camera= m_camera_holder->get_camera();
-  const auto& setting= m_camera_holder->get_settings();
-  const auto endpoint = camera.v4l2_endpoints.front();
-  // this one is always h264
-  m_pipeline_content << OHDGstHelper::createUVCH264Stream(endpoint.v4l2_device_node,setting);
-}
-
-void GStreamerStream::setup_ip_camera() {
-  m_console->debug("Setting up IP camera");
-  const auto& setting= m_camera_holder->get_settings();
-  if (setting.ip_cam_url.empty()) {
-    //setting.url = "rtsp://192.168.0.10:554/user=admin&password=&channel=1&stream=0.sdp";
-  }
-  m_pipeline_content << OHDGstHelper::create_ip_cam_stream_with_depacketize_and_parse(
-      setting.ip_cam_url,setting.streamed_video_format.videoCodec);
-}
-
-void GStreamerStream::setup_sw_dummy_camera() {
-  m_console->debug("Setting up SW dummy camera");
-  const auto& setting= m_camera_holder->get_settings();
-  m_pipeline_content << OHDGstHelper::createDummyStream(setting);
-}
-
-void GStreamerStream::setup_custom_unmanaged_camera() {
-  m_console->debug("Setting up custom unmanaged camera");
-  const auto& setting = m_camera_holder->get_settings();
-  m_pipeline_content << OHDGstHelper::create_input_custom_udp_rtp_port(setting);
 }
 
 void GStreamerStream::start() {
@@ -396,7 +235,7 @@ void GStreamerStream::handle_change_bitrate_request(openhd::LinkActionHandler::L
     //m_console->debug("Cam cannot do <{}", kbits_per_second_to_string(MIN_BITRATE_KBITS));
     bitrate_for_encoder_kbits =MIN_BITRATE_KBITS;
   }
-  const auto cam_type=m_camera_holder->get_camera().type;
+  /*const auto cam_type=m_camera_holder->get_camera().type;
   if(cam_type==CameraType::RPI_CSI_MMAL || cam_type==CameraType::RPI_CSI_LIBCAMERA || cam_type==CameraType::RPI_CSI_VEYE_V4l2){
     // upper-bound - hard coded for now, since pi cannot do more than 20MBit/s
     static constexpr auto max_bitrate_kbits=19999;
@@ -404,7 +243,7 @@ void GStreamerStream::handle_change_bitrate_request(openhd::LinkActionHandler::L
       //m_console->debug("Cam cannot do more than {}", kbits_per_second_to_string(max_bitrate_kbits));
       bitrate_for_encoder_kbits =max_bitrate_kbits;
     }
-  }
+  }*/
   // The gst thread is responsible for changing the bitrate - it will be applied (as long as the cam is not bugged or the OS is overloaded)
   // after a max delay of 40ms
   m_curr_dynamic_bitrate_kbits=bitrate_for_encoder_kbits;
@@ -457,10 +296,10 @@ void GStreamerStream::stream_once() {
   // or the resolution set is not supported by the camera, we won't get further than this.
   bool succesfully_streaming=false;
   m_console->debug(openhd::gst_element_get_current_state_as_string(m_gst_pipeline,&succesfully_streaming));
-  if(m_camera_holder->get_camera().rpi_csi_mmal_is_csi_to_hdmi || m_camera_holder->get_camera().type==CameraType::ALLWINNER_CSI){
+  /*if(m_camera_holder->get_camera().rpi_csi_mmal_is_csi_to_hdmi || m_camera_holder->get_camera().type==CameraType::ALLWINNER_CSI){
     m_console->warn("Not checking gst state after calling play (bugged)");
     succesfully_streaming= true;
-  }
+  }*/
   if(!succesfully_streaming){
     m_console->warn("Cannot start streaming. Valid resolution ?",m_camera_holder->get_camera().index);
     stop();

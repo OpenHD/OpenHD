@@ -3,7 +3,6 @@
 //
 
 #include <OHDTelemetry.h>
-#include <camera_discovery.h>
 #include <getopt.h>
 #include <ohd_interface.h>
 #include <ohd_video_air.h>
@@ -243,13 +242,9 @@ int main(int argc, char *argv[]) {
       }
     }
     // Now we need to discover camera(s) if we are on the air
-    std::vector<Camera> cameras{};
+    std::vector<XCamera> cameras{};
     if(profile->is_air){
       cameras = OHDVideoAir::discover_cameras(*platform);
-    }
-    // Now print the actual cameras used by OHD. Of course, this prints nothing on ground (where we have no cameras connected).
-    for(const auto& camera:cameras){
-      m_console->info(camera.to_long_string());
     }
     // And start the blinker (TODO LED output is really dirty right now).
     auto alive_blinker=std::make_unique<openhd::GreenLedAliveBlinker>(*platform,profile->is_air);

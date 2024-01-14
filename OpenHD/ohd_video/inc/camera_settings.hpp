@@ -15,7 +15,6 @@ static constexpr int DEFAULT_BITRATE_KBITS = 8000;
 // Higher values result in less key frames, and better image quality at the same bitrate, but increases the risk for
 // "stuttering" in case frames are lost.
 static constexpr int DEFAULT_KEYFRAME_INTERVAL = 5;
-static constexpr int DEFAULT_MJPEG_QUALITY_PERCENT = 50;
 
 static constexpr int DEFAULT_RECORDING_KBITS = 10000;
 static constexpr int DEFAULT_RECORDING_QP = 26;
@@ -38,14 +37,6 @@ static bool check_bitrate_sane(const int bitrateKBits) {
   }
   return true;
 }
-
-// IP cams are a bit different regarding their settings.
-// These just map to corresponding gst rtsp settings
-struct IPCameraSettings{
-  std::string location="rtsp://admin:admin@192.168.2.176:554/stream=0";
-  // Whatever the user wants
-  std::string extraparam_1;
-};
 
 // User-selectable camera options
 // These values are settings that can change dynamically at run time
@@ -75,7 +66,6 @@ struct CameraSettings {
   // bitrates, especially really low ones. How an encoder handles a specific constant bitrate is vendor specific.
   // Note that we always use a constant bitrate in OpenHD, since it is the only way to properly adjust the bitrate
   // depending on the link quality (once we have that wired up).
-  // Also note that his param is for h264 and h265 - mjpeg normally does not have a bitrate param, only a quality param.
   int h26x_bitrate_kbits = DEFAULT_BITRATE_KBITS;
   // Interval (in frames) between I frames. -1 = automatic, 0 = single-keyframe , else positive values up to 2147483647
   // note that with 0 and/or sometimes -1, you can create issues like no decoded image at all,
@@ -91,11 +81,6 @@ struct CameraSettings {
   // N of slices. Not supported on all hardware (none to be exact unless the cisco sw encoder) as of now
   // 0 == frame slicing off
   int h26x_num_slices=0;
-  // MJPEG has no bitrate parameter, only a "quality" param. This value is only used if the
-  // user selected MJPEG as its video codec
-  int mjpeg_quality_percent=DEFAULT_MJPEG_QUALITY_PERCENT;
-  // Only for network cameras (CameraTypeIP) URL in the rtp:// ... or similar
-  std::string ip_cam_url="rtsp://admin:admin@192.168.1.168:554/0";
   // enable/disable recording to file
   int air_recording=AIR_RECORDING_OFF;
   //

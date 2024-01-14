@@ -31,21 +31,6 @@ class GStreamerStream : public CameraStream {
   void start_looping() override;
   void terminate_looping() override;
  private:
-  // Build (parts) of the gstreamer pipeline for all the different cameras we support.
-  // If params (like for example resolution, framerate, exposure,...) are changeable on the camera type,
-  // it sets them accordingly by reading them from @CameraStream::m_camera_holder
-  void setup_raspberrypi_mmal_csi();
-  void setup_raspberrypi_veye_v4l2();
-  void setup_raspberrypi_libcamera();
-  void setup_jetson_csi();
-  void setup_rockchip_hdmi();
-  void setup_rockchip_csi();
-  void setup_allwinner_csi();
-  void setup_usb_uvc();
-  void setup_usb_uvch264();
-  void setup_ip_camera();
-  void setup_sw_dummy_camera();
-  void setup_custom_unmanaged_camera();
   // Creates a valid gstreamer pipeline for the given camera,
   // including the source and encoder, not including appsink
   static std::string create_source_encode_pipeline(const CameraHolder& cam_holder);

@@ -30,13 +30,11 @@ struct CommonEncoderParams{
   int h26X_bitrate_kbits;
   // For h264/h265 only, often also called key-int-max or similar.
   int h26X_keyframe_interval;
-  // for MJPEG only, usually in a [0,100] range
-  int mjpeg_quality_percent;
 };
 
 static CommonEncoderParams extract_common_encoder_params(const CameraSettings& settings){
   return {.videoCodec=settings.streamed_video_format.videoCodec,.h26X_bitrate_kbits=settings.h26x_bitrate_kbits,
-  .h26X_keyframe_interval=settings.h26x_keyframe_interval,.mjpeg_quality_percent=settings.mjpeg_quality_percent};
+  .h26X_keyframe_interval=settings.h26x_keyframe_interval};
 }
 
 /**
@@ -80,9 +78,6 @@ static std::string createSwEncoder(const CameraSettings& settings){
     //TODO: jetson sw encoder (x265enc) is so old it doesn't have the key-int-max param
     ss<<fmt::format("x265enc name=swencoder bitrate={} speed-preset=ultrafast tune=zerolatency key-int-max={} ! ",
                       common_encoder_params.h26X_bitrate_kbits,common_encoder_params.h26X_keyframe_interval);
-  }else{
-    assert(common_encoder_params.videoCodec==VideoCodec::MJPEG);
-    ss<<fmt::format("jpegenc quality={} ! ",common_encoder_params.mjpeg_quality_percent);
   }
   return ss.str();
 }
@@ -93,8 +88,6 @@ static std::string gst_create_rtp_caps(const VideoCodec& videoCodec){
     ss<<"caps=\"application/x-rtp, media=(string)video, encoding-name=(string)H264, payload=(int)96\"";
   }else if(videoCodec==VideoCodec::H265){
     ss<<"caps=\"application/x-rtp, media=(string)video, encoding-name=(string)H265\"";
-  }else{
-    ss<<"caps=\"application/x-rtp, media=(string)video, encoding-name=(string)mjpeg\"";
   }
   return ss.str();
 }
@@ -103,7 +96,6 @@ static std::string gst_create_rtp_caps(const VideoCodec& videoCodec){
 static std::string create_rtp_packetize_for_codec(const VideoCodec codec,const uint32_t mtu){
   if(codec==VideoCodec::H264) return fmt::format("rtph264pay mtu={} ! ",mtu);
   if(codec==VideoCodec::H265) return fmt::format("rtph265pay mtu={} ! ",mtu);
-  if(codec==VideoCodec::MJPEG) return fmt::format("rtpjpegpay mtu={} ! ",mtu);
   assert(false);
   return "";
 }
@@ -111,7 +103,6 @@ static std::string create_rtp_packetize_for_codec(const VideoCodec codec,const u
 static std::string create_rtp_depacketize_for_codec(const VideoCodec& codec){
   if(codec==VideoCodec::H264)return "rtph264depay ! ";
   if(codec==VideoCodec::H265)return "rtph265depay ! ";
-  if(codec==VideoCodec::MJPEG)return "rtpjpegdepay ! ";
   assert(false);
   return "";
 }
@@ -119,28 +110,27 @@ static std::string create_parse_for_codec(const VideoCodec& codec){
   // config-interval=-1 = makes 100% sure each keyframe has SPS and PPS
   if(codec==VideoCodec::H264)return "h264parse config-interval=-1 ! ";
   if(codec==VideoCodec::H265)return "h265parse config-interval=-1  ! ";
-  if(codec==VideoCodec::MJPEG)return "jpegparse ! ";
   assert(false);
   return "";
 }
 
 
-// a createXXXStream function always ends wth an encoded "h164,h265 or mjpeg
+// a createXXXStream function always ends wth an encoded "h264,h265
 // stream ! " aka after that, one can add a rtp encoder or similar. All these
 // methods also start from zero - aka have a source like videotestsrc,
 // nvarguscamerasr usw in the beginning and end with a OpenHD supported video
-// codec (e.g. h264,h265 or mjpeg)
+// codec
 // ------------- crateXXXStream begin -------------
 /**
  * Create a encoded dummy stream for the selected video format, that means a
  * stream that takes raw data coming from a videotestsrc and encodes it in
- * either h264, h265 or mjpeg.
+ * either h264 or h265
  */
 static std::string createDummyStream(const CameraSettings& settings) {
   std::stringstream ss;
   ss << "videotestsrc name=videotestsrc ! ";
   // h265 cannot do NV12, but I420.
-  // x264 and mjpeg can do both NV12 and I420
+  // x264 can do both NV12 and I420
   // so we use I420 here since every SW encoder can do it.
   ss << fmt::format(
       "video/x-raw, format=I420,width={},height={},framerate={}/1 ! ",
@@ -151,7 +141,7 @@ static std::string createDummyStream(const CameraSettings& settings) {
 }
 
 /**
- * Create a encoded stream for rpicamsrc, which supports h264 encode in HW, mjpeg and h264 in SW (unusably slow)
+ * Create a encoded stream for rpicamsrc, which supports h264 encode in HW, and h265 in SW (unusably slow)
  * @param camera_number use -1 to let rpicamsrc decide
  * See https://gstreamer.freedesktop.org/documentation/rpicamsrc/index.html?gi-language=c#GstRpiCamSrcAWBMode for more complicated params
  */
@@ -345,13 +335,7 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
       // after the libcamerasrc part, we can just append the rpi v4l2 h264 encoder part
       ss<<create_rpi_v4l2_h264_encoder(settings);
     }
-  } else if (settings.streamed_video_format.videoCodec == VideoCodec::MJPEG) {
-    ss << fmt::format(
-        "capsfilter caps=video/x-raw,width={},height={},format=YVYU,framerate={}/1,interlace-mode=progressive,colorimetry=bt709 ! ",
-        settings.streamed_video_format.width, settings.streamed_video_format.height, settings.streamed_video_format.framerate);
-    ss << fmt::format("v4l2jpegenc extra-controls=\"controls,compression_quality={}\" ! ",50); //mjpeg has a compression quality not bitrate
-  }
-  else {
+  }else {
     openhd::log::get_default()->warn("No h265 encoder on rpi, using SW encode (will almost 100% result in frame drops/performance issues)");
     ss << fmt::format("video/x-raw, width={}, height={}, framerate={}/1 ! ",
                       settings.streamed_video_format.width, settings.streamed_video_format.height,
@@ -427,10 +411,6 @@ static std::string createJetsonEncoderPipeline(const CommonEncoderParams& common
       ss<<"maxperf-enable=true ";
       ss<<"! ";
     }
-  }else{
-    assert(common_encoder_params.videoCodec==VideoCodec::MJPEG);
-    ss<<"nvjpegenc quality="<<common_encoder_params.mjpeg_quality_percent<<" ";
-    ss<<"! ";
   }
   return ss.str();
 }
@@ -484,13 +464,6 @@ static std::string createRockchipEncoderPipeline(const int width, const int heig
     ss<<" height="<<height;
     ss<<" rotation="<<rotate_degrees;
     ss<<" gop="<<encoder_params.h26X_keyframe_interval<<" ! ";
-  }else{
-    assert(encoder_params.videoCodec==VideoCodec::MJPEG);
-    ss<<"mppjpegenc rc-mode=fixqp quant="<<(encoder_params.mjpeg_quality_percent/10);
-    ss<<" width="<<width;
-    ss<<" height="<<height;
-    ss<<" rotation="<<rotate_degrees;
-    ss<<" ! ";
   }
   return ss.str();
 }
@@ -505,11 +478,6 @@ static std::string createRockchipRecordingPipeline(const int width, const int he
     ss<<" height="<<height;
   }else if(encoder_params.videoCodec==VideoCodec::H265){
     ss<<"mpph265enc rc-mode=0 bps="<<bps;
-    ss<<" width="<<width;
-    ss<<" height="<<height;
-  }else{
-    assert(encoder_params.videoCodec==VideoCodec::MJPEG);
-    ss<<"mppjpegenc rc-mode=fixqp quant="<<(encoder_params.mjpeg_quality_percent/10);
     ss<<" width="<<width;
     ss<<" height="<<height;
   }
@@ -533,8 +501,8 @@ static std::string createRockchipHDMIStream(
 ) {
   std::stringstream ss;
   ss<<createRockchipV4L2Pipeline(0, videoFormat.framerate);
-  if(recording) ss<<createRockchipRecordingPipeline(recordingFormat.width, recordingFormat.height, {recordingFormat.videoCodec, bitrateKBits, keyframe_interval,50});
-  ss<<createRockchipEncoderPipeline(videoFormat.width, videoFormat.height, 0, {videoFormat.videoCodec, bitrateKBits, keyframe_interval,50});
+  if(recording) ss<<createRockchipRecordingPipeline(recordingFormat.width, recordingFormat.height, {recordingFormat.videoCodec, bitrateKBits, keyframe_interval});
+  ss<<createRockchipEncoderPipeline(videoFormat.width, videoFormat.height, 0, {videoFormat.videoCodec, bitrateKBits, keyframe_interval});
   return ss.str();
 }
 
@@ -548,8 +516,8 @@ static std::string createRockchipCSIStream(
 ) {
   std::stringstream ss;
   ss<<createRockchipV4L2Pipeline(11, videoFormat.framerate);
-  if(recording) ss<<createRockchipRecordingPipeline(recordingFormat.width, recordingFormat.height, {recordingFormat.videoCodec, bitrateKBits, keyframe_interval,50});
-  ss<<createRockchipEncoderPipeline(videoFormat.width, videoFormat.height, rotate_degrees, {videoFormat.videoCodec, bitrateKBits, keyframe_interval,50});
+  if(recording) ss<<createRockchipRecordingPipeline(recordingFormat.width, recordingFormat.height, {recordingFormat.videoCodec, bitrateKBits, keyframe_interval});
+  ss<<createRockchipEncoderPipeline(videoFormat.width, videoFormat.height, rotate_degrees, {videoFormat.videoCodec, bitrateKBits, keyframe_interval});
   return ss.str();
 }
 
@@ -582,9 +550,9 @@ static std::string createAllwinnerEncoderPipeline(const CommonEncoderParams& com
 static std::string createAllwinnerStream(const int sensor_id,
                                       const int bitrateKBits,
                                       const VideoFormat videoFormat,
-                                                                         const int keyframe_interval) {
+                                      const int keyframe_interval) {
   std::stringstream ss;
-  ss<<createAllwinnerEncoderPipeline({videoFormat.videoCodec,bitrateKBits,keyframe_interval,50});
+  ss<<createAllwinnerEncoderPipeline({videoFormat.videoCodec,bitrateKBits,keyframe_interval});
   return ss.str();
 }
 
@@ -635,9 +603,6 @@ static std::string createV4l2SrcAlreadyEncodedStream(
       ss << "video/x-h264";
   } else if (video_codec == VideoCodec::H265) {
       ss<<"video/x-h265";
-  } else {
-    assert(video_codec == VideoCodec::MJPEG);
-    ss<<"image/jpeg";
   }
   ss<< gst_v4l2_width_height_fps_unless_omit(settings);
   ss<<" ! ";
@@ -735,15 +700,10 @@ static std::string createRecordingForVideoCodec(const VideoCodec videoCodec,cons
     ss << "h264parse ! ";
   } else if (videoCodec == VideoCodec::H265) {
     ss << "h265parse ! ";
-  } else {
-    assert(videoCodec == VideoCodec::MJPEG);
-    ss << "jpegparse ! ";
   }
   //ss <<"mp4mux ! filesink location="<<out_filename;
   if(videoCodec==VideoCodec::H264 || videoCodec==VideoCodec::H265){
     ss <<"matroskamux ! filesink location="<<out_filename;
-  }else{
-    ss <<"avimux ! filesink location="<<out_filename;
   }
   return ss.str();
 }
