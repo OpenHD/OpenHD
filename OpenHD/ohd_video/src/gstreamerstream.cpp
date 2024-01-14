@@ -29,10 +29,6 @@ GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHol
   // (640x48@30 might already be too much on embedded devices).
   const auto& camera= m_camera_holder->get_camera();
   const auto& setting= m_camera_holder->get_settings();
-  if (camera.type == CameraType::DUMMY_SW && (setting.streamed_video_format.width > 640 ||
-      setting.streamed_video_format.height > 480 || setting.streamed_video_format.framerate > 30)) {
-    m_console->warn("Warning- Dummy camera is done in sw, high resolution/framerate might not work");
-  }
   m_camera_holder->register_listener([this](){
     // right now, every time the settings for this camera change, we just re-start the whole stream.
     // That is not ideal, since some cameras support changing for example the bitrate or white balance during operation.
@@ -42,7 +38,6 @@ GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHol
     // and block on the restart operation(s) which would be fatal for telemetry.
     this->request_restart();
   });
-  assert(setting.streamed_video_format.isValid());
   OHDGstHelper::initGstreamerOrThrow();
   //m_gst_video_recorder=std::make_unique<GstVideoRecorder>();
   m_console->debug("GStreamerStream::GStreamerStream done");
@@ -64,6 +59,37 @@ void GStreamerStream::terminate_looping() {
     m_loop_thread->join();
     m_loop_thread=nullptr;
   }
+}
+
+std::string GStreamerStream::create_source_encode_pipeline(const CameraHolder &cam_holder) {
+    //const auto& camera= cam_holder.get_camera();
+    const XCamera camera{};
+    const auto& setting= cam_holder.get_settings();
+    std::stringstream pipeline;
+    if(camera.requires_rpi_mmal_pipeline()){
+        pipeline<< OHDGstHelper::createRpicamsrcStream(-1, setting,cam_holder.requires_half_bitrate_workaround());
+    }else if(camera.requires_rpi_libcamera_pipeline()){
+        auto cam_name="TODO";
+        pipeline<<OHDGstHelper::createLibcamerasrcStream(cam_name, setting);
+    }else if(camera.requires_rpi_veye_pipeline()){
+        auto bus="TODO";
+        pipeline<<OHDGstHelper::create_veye_vl2_stream(setting,bus);
+    }else if(camera.requires_rockchip_mpp_pipeline()){
+        // TODO hdmi or csi ?
+        pipeline<<OHDGstHelper::createRockchipCSIStream(false, setting.h26x_bitrate_kbits, setting.camera_rotation_degree, setting.streamed_video_format, setting.recordingFormat, setting.h26x_keyframe_interval);
+    }else if(camera.requires_x20_cedar_pipeline()){
+        pipeline<<OHDGstHelper::createAllwinnerStream(0,setting.h26x_bitrate_kbits, setting.streamed_video_format, setting.h26x_keyframe_interval);
+    }else if(camera.camera_type==X_CAM_TYPE_USB){
+        // TODO
+    }else if(camera.camera_type==X_CAM_TYPE_DUMMY_SW){
+        pipeline<<OHDGstHelper::createDummyStream(setting);
+    }else if(camera.camera_type==X_CAM_TYPE_EXTERNAL || camera.camera_type==X_CAM_TYPE_EXTERNAL_IP){
+        pipeline<<OHDGstHelper::create_input_custom_udp_rtp_port(setting);
+    }else{
+        openhd::log::get_default()->warn("UNKNOWN CAMERA TYPE");
+        pipeline<<"ERROR";
+    }
+    return pipeline.str();
 }
 
 void GStreamerStream::setup() {

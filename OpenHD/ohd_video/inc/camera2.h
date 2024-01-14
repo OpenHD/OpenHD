@@ -78,7 +78,7 @@ static bool x_is_valid_cam_type(int cam_type){
     return cam_type>=0 && cam_type<=30;
 }
 static std::string cam_type_as_string(int cam_type){
-    return "todo";
+    return "TODO";
 }
 
 #endif //OPENHD_CAMERA2_H

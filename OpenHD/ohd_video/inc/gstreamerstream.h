@@ -46,6 +46,9 @@ class GStreamerStream : public CameraStream {
   void setup_ip_camera();
   void setup_sw_dummy_camera();
   void setup_custom_unmanaged_camera();
+  // Creates a valid gstreamer pipeline for the given camera,
+  // including the source and encoder, not including appsink
+  static std::string create_source_encode_pipeline(const CameraHolder& cam_holder);
   void setup();
   // Set gst state to PLAYING
   void start();
