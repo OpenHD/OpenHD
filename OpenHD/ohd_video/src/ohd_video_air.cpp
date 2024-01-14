@@ -159,6 +159,16 @@ std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
     };
     ret.push_back(openhd::Setting{"V_N_CAMERAS",openhd::IntSetting{m_generic_settings->get_settings().n_cameras_to_wait_for,cb}});
   }
+  if(false){
+      auto cb1=[this](std::string,int value){
+          return x_set_camera_type(true,value);
+      };
+      auto cb2=[this](std::string,int value){
+          return x_set_camera_type(false,value);
+      };
+      ret.push_back(openhd::Setting{"X_TYPE_CAM0",openhd::IntSetting{m_generic_settings->get_settings().primary_camera_type,cb1}});
+      ret.push_back(openhd::Setting{"X_TYPE_CAM1",openhd::IntSetting{m_generic_settings->get_settings().secondary_camera_type,cb2}});
+  }
   // Only show dual-cam settings if dual-cam is actually used
   const auto n_cameras=static_cast<int>(m_camera_streams.size());
   if(n_cameras>1){
@@ -416,4 +426,15 @@ std::vector<XCamera> OHDVideoAir::discover_cameras2(const OHDPlatform &platform)
         ret[0].index = 1;
     }
     return ret;
+}
+
+bool OHDVideoAir::x_set_camera_type(bool primary, int cam_type) {
+    if(primary){
+        m_generic_settings->unsafe_get_settings().primary_camera_type=cam_type;
+    }else{
+        m_generic_settings->unsafe_get_settings().secondary_camera_type=cam_type;
+    }
+    m_generic_settings->persist(false);
+    // TODO: Configure os
+    return true;
 }

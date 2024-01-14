@@ -82,6 +82,8 @@ class OHDVideoAir {
   std::unique_ptr<SocketHelper::UDPMultiForwarder> m_secondary_video_forwarder= nullptr;
   // Optimization for 0 overhead on air when not enabled
   std::atomic_bool m_has_localhost_forwarding_enabled=false;
+  //
+  bool x_set_camera_type(bool primary,int cam_type);
 };
 
 #endif  // OPENHD_VIDEO_OHDVIDEO_H
