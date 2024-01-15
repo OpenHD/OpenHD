@@ -154,7 +154,7 @@ void GStreamerStream::setup() {
   m_app_sink_element=gst_bin_get_by_name(GST_BIN(m_gst_pipeline), "out_appsink");
   assert(m_app_sink_element);
     const auto index=m_camera_holder->get_camera().index;
-    const auto cam_type= 0;//camera_type_to_int(m_camera_holder->get_camera().type);
+    const uint8_t cam_type= (uint8_t)m_camera_holder->get_camera().camera_type;
     auto cam_info=openhd::LinkActionHandler::CamInfo{true,
                                                      (uint8_t)index, cam_type, CAM_STATUS_RESTARTING, ADD_RECORDING_TO_PIPELINE, (uint8_t)video_codec_to_int(setting.streamed_video_format.videoCodec), (uint16_t)setting.h26x_bitrate_kbits,
                                                      (uint8_t)setting.h26x_keyframe_interval, (uint16_t )setting.streamed_video_format.width,

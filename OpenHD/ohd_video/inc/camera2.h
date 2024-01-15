@@ -48,7 +48,7 @@ static constexpr int X_CAM_TYPE_ROCKCHIP_RESERVED1=29;// reserved for future use
 static constexpr int X_CAM_TYPE_ROCKCHIP_RESERVED2=30;// reserved for future use
 // no camera, only exists to have a default value for secondary camera (which is disabled by default).
 // NOTE: The primary camera cannot be disabled !
-static constexpr int X_CAM_TYPE_DISABLED=2147483647;
+static constexpr int X_CAM_TYPE_DISABLED=255; // Max for uint8_t
 
 struct XCamera {
     int camera_type = X_CAM_TYPE_DUMMY_SW;

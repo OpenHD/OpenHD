@@ -128,15 +128,15 @@ std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
     ret.push_back(openhd::Setting{"V_OS_CAM_CONFIG",openhd::IntSetting {openhd::rpi::os::cam_config_to_int(openhd::rpi::os::get_current_cam_config_from_file()),
                                                                         c_rpi_os_camera_configuration}});
   }
-  if(false){
+  if(true){
       auto cb1=[this](std::string,int value){
           return x_set_camera_type(true,value);
       };
       auto cb2=[this](std::string,int value){
           return x_set_camera_type(false,value);
       };
-      ret.push_back(openhd::Setting{"X_TYPE_CAM0",openhd::IntSetting{m_generic_settings->get_settings().primary_camera_type,cb1}});
-      ret.push_back(openhd::Setting{"X_TYPE_CAM1",openhd::IntSetting{m_generic_settings->get_settings().secondary_camera_type,cb2}});
+      ret.push_back(openhd::Setting{"TYPE_CAM0",openhd::IntSetting{m_generic_settings->get_settings().primary_camera_type,cb1}});
+      ret.push_back(openhd::Setting{"TYPE_CAM1",openhd::IntSetting{m_generic_settings->get_settings().secondary_camera_type,cb2}});
   }
   // Only show dual-cam settings if dual-cam is actually used
   const auto n_cameras=static_cast<int>(m_camera_streams.size());
@@ -162,7 +162,6 @@ std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
   return ret;
 }
 
-static const auto CUSTOM_UNMANAGED_CAMERA_SERVICE_NAME="custom_unmanaged_camera";
 
 void OHDVideoAir::start_stop_forwarding_external_device(openhd::ExternalDevice external_device, bool connected) {
     const std::string client_addr=external_device.external_device_ip;
@@ -270,14 +269,6 @@ std::vector<XCamera> OHDVideoAir::discover_cameras(const OHDPlatform &platform) 
             ret.push_back(XCamera{cam_type, i, ""});
         }
     }
-    if (global_settings.switch_primary_and_secondary && num_active_cameras == 2) {
-        // Swap primary and secondary around
-        auto tmp = ret[0];
-        ret[0] = ret[1];
-        ret[1] = tmp;
-        ret[0].index = 0;
-        ret[0].index = 1;
-    }
     return ret;
 }
 
@@ -288,6 +279,6 @@ bool OHDVideoAir::x_set_camera_type(bool primary, int cam_type) {
         m_generic_settings->unsafe_get_settings().secondary_camera_type=cam_type;
     }
     m_generic_settings->persist(false);
-    // TODO: Configure os
+    // TODO: REBOOT NEEDED !
     return true;
 }
