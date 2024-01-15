@@ -10,6 +10,7 @@
 
 #include "openhd_settings_directories.hpp"
 #include "openhd_settings_persistent.h"
+#include "camera2.h"
 
 struct AirCameraGenericSettings {
   // Make primary camera secondary camera and other way around (aka if they are detected in the wrong order)
@@ -21,6 +22,7 @@ struct AirCameraGenericSettings {
   // the link recommends a total video bitrate to us - in case of dual camera, we need to split that up into
   // bitrate for primary and secondary video
   int dualcam_primary_video_allocated_bandwidth_perc=60; // Default X%:Y split
+  // Default camera type(s) depend on platform - see below
   int primary_camera_type=0;
   int secondary_camera_type=0;
 };
@@ -40,7 +42,10 @@ class AirCameraGenericSettingsHolder: public openhd::PersistentSettings<AirCamer
     return "air_camera_generic.json";
   }
   [[nodiscard]] AirCameraGenericSettings create_default()const override{
-    return AirCameraGenericSettings{};
+    AirCameraGenericSettings ret{};
+    ret.primary_camera_type=X_CAM_TYPE_DUMMY_SW;
+    ret.secondary_camera_type=X_CAM_TYPE_DISABLED;
+    return ret;
   }
 std::optional<AirCameraGenericSettings> impl_deserialize(const std::string& file_as_string)const override;
 std::string imp_serialize(const AirCameraGenericSettings& data)const override;

@@ -13,6 +13,16 @@
 #include "camera_enums.hpp"
 #include "openhd_util.h"
 
+struct EndpointFormat{
+    // pixel format as string, never empty
+    std::string format;
+    int width;
+    int height;
+    int fps;
+    std::string debug()const{
+        return fmt::format("{}|{}x{}@{}",format,width,height,fps);
+    }
+};
 /**
  * Helper for the discover thermal cameras step.
  * It is a bit more complicated, once we actually support them the code here

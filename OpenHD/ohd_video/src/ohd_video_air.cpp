@@ -10,6 +10,7 @@
 #include "openhd_config.h"
 #include "gst_recording_demuxer.h"
 #include "nalu/fragment_helper.h"
+#include "camera_discovery.h"
 
 OHDVideoAir::OHDVideoAir(OHDPlatform platform1,std::vector<XCamera> cameras,
                    std::shared_ptr<OHDLink> link)
@@ -221,7 +222,7 @@ static std::vector<std::string> x_discover_usb_cameras(const OHDPlatform& platfo
     auto console=openhd::log::get_default();
     const auto discovery_begin=std::chrono::steady_clock::now();
     console->debug("Waiting for usb camera(s)");
-    /*std::vector<Camera> usb_cameras;
+    std::vector<DCameras::DiscoveredUSBCamera> usb_cameras;
     while (true){
         usb_cameras=DCameras::detect_usb_cameras(platform,console);
         if(usb_cameras.size()>=num_usb_cameras){
@@ -236,15 +237,14 @@ static std::vector<std::string> x_discover_usb_cameras(const OHDPlatform& platfo
     std::vector<std::string> bus_names;
     for(int i=0;i<num_usb_cameras;i++){
         if(i<usb_cameras.size()){
-            bus_names.push_back(usb_cameras[i].bus);
+            bus_names.push_back(usb_cameras[i].device_name);
         }else{
             // We didn't find the usb cam - guess it
             const std::string guess_bus_name=i==0 ? "/dev/video0" : "/dev/video1";
             bus_names.push_back(guess_bus_name);
         }
-    }*/
-    return {};
-    //return bus_names;
+    }
+    return bus_names;
 }
 
 static int get_num_usb_cameras(const int primary_camera_type,const int secondary_camera_type){

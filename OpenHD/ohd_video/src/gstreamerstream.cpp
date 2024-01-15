@@ -63,8 +63,8 @@ void GStreamerStream::terminate_looping() {
 
 std::string GStreamerStream::create_source_encode_pipeline(const CameraHolder &cam_holder) {
     //const auto& camera= cam_holder.get_camera();
-    const XCamera camera{};
     const auto& setting= cam_holder.get_settings();
+    const auto& camera=cam_holder.get_camera();
     std::stringstream pipeline;
     if(camera.requires_rpi_mmal_pipeline()){
         pipeline<< OHDGstHelper::createRpicamsrcStream(-1, setting,cam_holder.requires_half_bitrate_workaround());
@@ -80,7 +80,7 @@ std::string GStreamerStream::create_source_encode_pipeline(const CameraHolder &c
     }else if(camera.requires_x20_cedar_pipeline()){
         pipeline<<OHDGstHelper::createAllwinnerStream(0,setting.h26x_bitrate_kbits, setting.streamed_video_format, setting.h26x_keyframe_interval);
     }else if(camera.camera_type==X_CAM_TYPE_USB){
-        // TODO
+        pipeline<<OHDGstHelper::createV4l2SrcRawAndSwEncodeStream(camera.usb_v4l2_device_node,setting);
     }else if(camera.camera_type==X_CAM_TYPE_DUMMY_SW){
         pipeline<<OHDGstHelper::createDummyStream(setting);
     }else if(camera.camera_type==X_CAM_TYPE_EXTERNAL || camera.camera_type==X_CAM_TYPE_EXTERNAL_IP){

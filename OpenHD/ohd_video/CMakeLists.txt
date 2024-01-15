@@ -60,7 +60,7 @@ set(sources
     "inc/camera_discovery_helper.hpp"
     "inc/ffmpeg_videosamples.hpp"
     "src/camerastream.cpp"
-    #"src/camera_discovery.cpp"
+    "src/camera_discovery.cpp"
     "src/gstreamerstream.cpp"
     "src/ohd_video_air.cpp"
     "src/rtp_eof_helper.cpp"
@@ -105,5 +105,3 @@ target_link_libraries(OHDVideoLib PRIVATE ${V4L2_LIBRARY})
 # Executables for testing manually, note that some might need to run after discovery
 add_executable(test_video test/test_video.cpp)
 target_link_libraries(test_video OHDVideoLib)
-add_executable(test_dummy_gstreamer test/test_dummy_gstreamer.cpp)
-target_link_libraries(test_dummy_gstreamer OHDVideoLib)

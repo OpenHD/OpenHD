@@ -12,8 +12,6 @@ NLOHMANN_JSON_SERIALIZE_ENUM( VideoCodec, {
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(VideoFormat,videoCodec,width,height,framerate)
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(EndpointFormat,format,width,height,fps)
-
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CameraSettings, enable_streaming,
                                    streamed_video_format, h26x_bitrate_kbits,
                                    h26x_keyframe_interval, h26x_intra_refresh_type,air_recording,

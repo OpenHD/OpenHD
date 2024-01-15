@@ -82,15 +82,4 @@ enum class RateControlMode {
   RC_CRF  // constnat rate factor
 };
 
-struct EndpointFormat{
-  // pixel format as string, never empty
-  std::string format;
-  int width;
-  int height;
-  int fps;
-  std::string debug()const{
-    return fmt::format("{}|{}x{}@{}",format,width,height,fps);
-  }
-};
-
 #endif  // OPENHD_OPENHD_OHD_VIDEO_INC_OPENHD_CAMERA_ENUMS_H_

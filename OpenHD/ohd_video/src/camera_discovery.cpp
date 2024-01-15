@@ -9,7 +9,7 @@
 #include <iostream>
 #include <regex>
 
-#include "camera.hpp"
+#include "camera2.h"
 #include "camera_discovery_helper.hpp"
 #include "libcamera_detect.hpp"
 #include "openhd_util.h"
@@ -20,7 +20,7 @@
 #define V4L2_PIX_FMT_H265 V4L2_PIX_FMT_HEVC
 #endif
 
-std::vector<Camera> DCameras::discover(const OHDPlatform platform) {
+/*std::vector<Camera> DCameras::discover(const OHDPlatform platform) {
   discover2(platform);
   auto m_console=openhd::log::create_or_get("v_dcameras");
   assert(m_console);
@@ -327,4 +327,32 @@ std::vector<Camera> DCameras::discover2(const OHDPlatform &platform) {
     const auto cam0_type= read_cam_type(false);
     const auto cam1_type= read_cam_type(true);
     return {};
+}*/
+
+std::vector<DCameras::DiscoveredUSBCamera>
+DCameras::detect_usb_cameras(const OHDPlatform &platform, std::shared_ptr<spdlog::logger> &m_console) {
+    std::vector<DCameras::DiscoveredUSBCamera> ret;
+    const auto devices = openhd::v4l2::findV4l2VideoDevices();
+    for (const auto &device: devices) {
+        const auto probed_opt= openhd::v4l2::probe_v4l2_device(platform.platform_type,m_console,device);
+        if(!probed_opt.has_value()){
+            continue;
+        }
+        const auto& probed=probed_opt.value();
+        const std::string bus((char *)probed.caps.bus_info);
+        const std::string driver((char *)probed.caps.driver);
+        if(probed.formats.formats_raw.size()>0){
+            // (RAW) format usb camera candidate
+            bool found= false;
+            for(auto& tmp:ret){
+                if(tmp.bus==bus){
+                    found= true;
+                }
+            }
+            if(!found){
+                ret.push_back(DCameras::DiscoveredUSBCamera{.bus=bus,.device_name=device});
+            }
+        }
+    }
+    return ret;
 }
