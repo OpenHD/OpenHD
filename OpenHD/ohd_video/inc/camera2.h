@@ -7,10 +7,17 @@
 
 #include <string>
 
+// For development, always 'works' since fully emulated in SW.
 static constexpr int X_CAM_TYPE_DUMMY_SW=0; // Dummy sw picture
-static constexpr int X_CAM_TYPE_USB=1; // Any USB camera
-static constexpr int X_CAM_TYPE_EXTERNAL=2; // input via udp rtp
-static constexpr int X_CAM_TYPE_EXTERNAL_IP=3; // input via udp rtp & file start_ip_cam.txt is created.
+// OpenHD supports any usb camera outputting raw video (with sw encoding).
+// H264 usb cameras are not supported, since in general, they do not support changing bitrate/ encoding parameters.
+static constexpr int X_CAM_TYPE_USB=1;
+// Manually feed camera data (encoded,rtp) to openhd. Bitrate control and more is not working in this mode,
+// making it only valid for development and in extreme cases valid for users that want to use a specific ip camera.
+static constexpr int X_CAM_TYPE_EXTERNAL=2;
+// For openhd, this is exactly the same as X_CAM_TYPE_EXTERNAL - only file start_ip_cam.txt is created
+// Such that the ip cam service can start forwarding data to openhd core.
+static constexpr int X_CAM_TYPE_EXTERNAL_IP=3;
 static constexpr int X_CAM_TYPE_RPI_MMAL=4;
 static constexpr int X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI=5;
 static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_AUTO=6;
@@ -73,7 +80,43 @@ struct XCamera {
                camera_type==X_CAM_TYPE_ROCKCHIP_RESERVED2;
     }
     std::string cam_type_as_verbose_string()const{
-        return "TODO";
+        switch (camera_type) {
+            case X_CAM_TYPE_DUMMY_SW:
+                return "DUMMY";
+            case X_CAM_TYPE_EXTERNAL:
+                return "EXTERNAL";
+            case X_CAM_TYPE_EXTERNAL_IP:
+                return "EXTERNAL_IP";
+            case X_CAM_TYPE_RPI_MMAL:
+                return "MMAL";
+            case X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI:
+                return "MMAL_HDMI";
+            case X_CAM_TYPE_USB:
+                return "USB";
+            case X_CAM_TYPE_CUSTOM_HARDWARE_X20:
+                 X_CAM_TYPE_CUSTOM_HARDWARE_X20_RESERVED0:
+                 X_CAM_TYPE_CUSTOM_HARDWARE_X20_RESERVED1:
+                return "X20_CAM";
+            case X_CAM_TYPE_ROCKCHIP_RESERVED0:
+                 X_CAM_TYPE_ROCKCHIP_RESERVED1:
+                 X_CAM_TYPE_ROCKCHIP_RESERVED2:
+                return "ROCK_CAM";
+            case X_CAM_TYPE_RPI_VEYE_2MP:
+                return "VEYE_2MP";
+            case X_CAM_TYPE_RPI_VEYE_CSIMX307:
+                return "VEYE_IMX307";
+            case X_CAM_TYPE_RPI_VEYE_CSSC132:
+                return "VEYE_CSSC132";
+            case X_CAM_TYPE_RPI_VEYE_MVCAM:
+                return "VEYE_MVCAM";
+            case X_CAM_TYPE_RPI_VEYE_RESERVED0:
+            case X_CAM_TYPE_ROCKCHIP_RESERVED1:
+                return "VEYE_TODO";
+        }
+        if(requires_rpi_libcamera_pipeline()){
+            return "LIBCAMERA_TODO";
+        }
+        return "UNKNOWN";
     }
     struct ResolutionFramerate{
         int width_px;
