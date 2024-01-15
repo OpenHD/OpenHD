@@ -23,10 +23,7 @@ int main(int argc, char *argv[]) {
   const auto platform=DPlatform::discover();
 
   auto cameras=OHDVideoAir::discover_cameras(*platform);
-  //auto cameras=std::vector<Camera>();
-  if(cameras.empty()){
-    //cameras.emplace_back(createDummyCamera());
-  }
+
   auto forwarder=SocketHelper::UDPForwarder("127.0.0.1",5600);
   auto cb=[&forwarder](int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame){
       for(auto& fragemnt: fragmented_video_frame.rtp_fragments){
