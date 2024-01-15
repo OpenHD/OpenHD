@@ -69,14 +69,16 @@ std::string GStreamerStream::create_source_encode_pipeline(const CameraHolder &c
     if(camera.requires_rpi_mmal_pipeline()){
         pipeline<< OHDGstHelper::createRpicamsrcStream(-1, setting,cam_holder.requires_half_bitrate_workaround());
     }else if(camera.requires_rpi_libcamera_pipeline()){
-        auto cam_name="TODO";
-        pipeline<<OHDGstHelper::createLibcamerasrcStream(cam_name, setting);
+        pipeline<<OHDGstHelper::createLibcamerasrcStream(setting);
     }else if(camera.requires_rpi_veye_pipeline()){
-        auto bus="TODO";
+        auto bus="/dev/video11";
         pipeline<<OHDGstHelper::create_veye_vl2_stream(setting,bus);
     }else if(camera.requires_rockchip_mpp_pipeline()){
-        // TODO hdmi or csi ?
-        pipeline<<OHDGstHelper::createRockchipCSIStream(false, setting.h26x_bitrate_kbits, setting.camera_rotation_degree, setting.streamed_video_format, setting.recordingFormat, setting.h26x_keyframe_interval);
+        if(camera.camera_type==X_CAM_TYPE_ROCKCHIP_HDMI){
+            //pipeline<<OHDGstHelper::createRockchipHDMIStream(false,)
+        }else{
+            pipeline<<OHDGstHelper::createRockchipCSIStream(false, setting.h26x_bitrate_kbits, setting.camera_rotation_degree, setting.streamed_video_format, setting.recordingFormat, setting.h26x_keyframe_interval);
+        }
     }else if(camera.requires_x20_cedar_pipeline()){
         pipeline<<OHDGstHelper::createAllwinnerStream(0,setting.h26x_bitrate_kbits, setting.streamed_video_format, setting.h26x_keyframe_interval);
     }else if(camera.camera_type==X_CAM_TYPE_USB){

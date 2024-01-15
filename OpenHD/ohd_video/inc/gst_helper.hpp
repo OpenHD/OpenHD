@@ -267,11 +267,11 @@ static std::string create_rpi_v4l2_h264_encoder(const CameraSettings& settings){
       "video/x-h264,level=(string){} ! ",bitrateBitsPerSecond,settings.h26x_keyframe_interval,OPENHD_H264_MIN_QP_VALUE,rpi_h264_encode_level);
 }
 
-static std::string createLibcamerasrcStream(const std::string& camera_name,
-                                         const CameraSettings& settings) {
+static std::string createLibcamerasrcStream(const CameraSettings& settings) {
   assert(settings.streamed_video_format.isValid());
   std::stringstream ss;
-  ss << fmt::format("libcamerasrc camera-name={} ",camera_name);
+  //ss << fmt::format("libcamerasrc camera-name={} ",camera_name.value);
+  ss << "libcamerasrc "; // camera_name is not needed for us - we only support one libcamera at a time. rpi cannot do more than that anyway.
   // NOTE: those options require openhd/arducam lbcamera !!
   // We make sure not to write them out explicitly when default(s) are still in use
   // openhd-libcamera specific options begin

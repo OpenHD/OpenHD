@@ -57,8 +57,7 @@ target_link_libraries(OHDVideoLib PRIVATE
 find_package(Threads REQUIRED)
 
 set(sources
-    "inc/camera_discovery_helper.hpp"
-    "inc/ffmpeg_videosamples.hpp"
+        "inc/ffmpeg_videosamples.hpp"
     "src/camerastream.cpp"
     "src/camera_discovery.cpp"
     "src/gstreamerstream.cpp"

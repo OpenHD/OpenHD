@@ -239,13 +239,16 @@ class CameraHolder:
   const XCamera m_camera;
  private:
   [[nodiscard]] std::string get_unique_filename()const override{
-    return "TODO";
-    //return m_camera.get_unique_settings_filename();
+    return fmt::format("{}_{}",m_camera.cam_type_as_verbose_string(),m_camera.index);
   }
   std::optional<CameraSettings> impl_deserialize(const std::string& file_as_string)const override;
   std::string imp_serialize(const CameraSettings& data)const override;
   [[nodiscard]] CameraSettings create_default()const override{
     auto ret=CameraSettings{};
+    auto default_resolution=m_camera.get_default_resolution_fps();
+    ret.streamed_video_format.width=default_resolution.width_px;
+    ret.streamed_video_format.height=default_resolution.height_px;
+    ret.streamed_video_format.framerate=default_resolution.fps;
     /*if(m_camera.type==CameraType::RPI_CSI_MMAL || m_camera.type==CameraType::RPI_CSI_LIBCAMERA){
       ret.streamed_video_format.width=1280;
       ret.streamed_video_format.height=720;

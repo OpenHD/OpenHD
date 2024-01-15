@@ -42,7 +42,8 @@ static constexpr int X_CAM_TYPE_RPI_VEYE_RESERVED1=24;
 static constexpr int X_CAM_TYPE_CUSTOM_HARDWARE_X20=25;
 static constexpr int X_CAM_TYPE_CUSTOM_HARDWARE_X20_RESERVED0=26;
 static constexpr int X_CAM_TYPE_CUSTOM_HARDWARE_X20_RESERVED1=27;
-static constexpr int X_CAM_TYPE_ROCKCHIP_RESERVED0=28; // reserved for future use
+// RK3568 HDMI in
+static constexpr int X_CAM_TYPE_ROCKCHIP_HDMI=28;
 static constexpr int X_CAM_TYPE_ROCKCHIP_RESERVED1=29;// reserved for future use
 static constexpr int X_CAM_TYPE_ROCKCHIP_RESERVED2=30;// reserved for future use
 // no camera, only exists to have a default value for secondary camera (which is disabled by default).
@@ -76,7 +77,7 @@ struct XCamera {
         return camera_type==X_CAM_TYPE_CUSTOM_HARDWARE_X20;
     }
     bool requires_rockchip_mpp_pipeline()const{
-        return camera_type==X_CAM_TYPE_ROCKCHIP_RESERVED0 || camera_type==X_CAM_TYPE_ROCKCHIP_RESERVED1 ||
+        return camera_type == X_CAM_TYPE_ROCKCHIP_HDMI || camera_type == X_CAM_TYPE_ROCKCHIP_RESERVED1 ||
                camera_type==X_CAM_TYPE_ROCKCHIP_RESERVED2;
     }
     std::string cam_type_as_verbose_string()const{
@@ -97,7 +98,7 @@ struct XCamera {
                  X_CAM_TYPE_CUSTOM_HARDWARE_X20_RESERVED0:
                  X_CAM_TYPE_CUSTOM_HARDWARE_X20_RESERVED1:
                 return "X20_CAM";
-            case X_CAM_TYPE_ROCKCHIP_RESERVED0:
+            case X_CAM_TYPE_ROCKCHIP_HDMI:
                  X_CAM_TYPE_ROCKCHIP_RESERVED1:
                  X_CAM_TYPE_ROCKCHIP_RESERVED2:
                 return "ROCK_CAM";
