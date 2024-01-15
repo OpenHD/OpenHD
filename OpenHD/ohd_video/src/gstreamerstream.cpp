@@ -62,7 +62,6 @@ void GStreamerStream::terminate_looping() {
 }
 
 std::string GStreamerStream::create_source_encode_pipeline(const CameraHolder &cam_holder) {
-    //const auto& camera= cam_holder.get_camera();
     const auto& setting= cam_holder.get_settings();
     const auto& camera=cam_holder.get_camera();
     std::stringstream pipeline;
