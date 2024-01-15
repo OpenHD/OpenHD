@@ -5,6 +5,7 @@
 #include <linux/videodev2.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
+#include <libusb.h>
 
 #include <iostream>
 #include <regex>
