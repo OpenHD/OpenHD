@@ -49,7 +49,7 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
       openhd::Setting{"VIDEO_CODEC",openhd::IntSetting{video_codec_to_int(get_settings().streamed_video_format.videoCodec), c_codec}},
       openhd::Setting{"V_AIR_RECORDING",openhd::IntSetting{get_settings().air_recording,c_recording}},
       // for debugging
-      //openhd::create_read_only_string("V_CAM_TYPE",camera_type_to_string(m_camera.type)),
+      openhd::create_read_only_string("V_CAM_TYPE",m_camera.cam_type_as_verbose_string()),
       //openhd::create_read_only_string("V_CAM_NAME",m_camera.name)
   };
   //if(m_camera.sensor_name!="unknown"){

@@ -24,11 +24,7 @@ GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHol
 {
   m_console=openhd::log::create_or_get(fmt::format("cam{}",m_camera_holder->get_camera().index));
   assert(m_console);
-  m_console->debug("GStreamerStream::GStreamerStream()");
-  // Since the dummy camera is SW, we generally cannot do more than 640x480@30 anyways.
-  // (640x48@30 might already be too much on embedded devices).
-  const auto& camera= m_camera_holder->get_camera();
-  const auto& setting= m_camera_holder->get_settings();
+  m_console->debug("GStreamerStream::GStreamerStream for cam{}",m_camera_holder->get_camera().cam_type_as_verbose_string());
   m_camera_holder->register_listener([this](){
     // right now, every time the settings for this camera change, we just re-start the whole stream.
     // That is not ideal, since some cameras support changing for example the bitrate or white balance during operation.
@@ -73,7 +69,7 @@ std::string GStreamerStream::create_source_encode_pipeline(const CameraHolder &c
         auto bus="/dev/video11";
         pipeline<<OHDGstHelper::create_veye_vl2_stream(setting,bus);
     }else if(camera.requires_rockchip_mpp_pipeline()){
-        if(camera.camera_type==X_CAM_TYPE_ROCKCHIP_HDMI){
+        if(camera.camera_type==X_CAM_TYPE_ROCK_HDMI_IN){
             //pipeline<<OHDGstHelper::createRockchipHDMIStream(false,)
         }else{
             pipeline<<OHDGstHelper::createRockchipCSIStream(false, setting.h26x_bitrate_kbits, setting.camera_rotation_degree, setting.streamed_video_format, setting.recordingFormat, setting.h26x_keyframe_interval);

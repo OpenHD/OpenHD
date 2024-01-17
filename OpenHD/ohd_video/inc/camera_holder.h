@@ -5,7 +5,7 @@
 #ifndef OPENHD_OPENHD_OHD_VIDEO_INC_CAMERA_HOLDER_H_
 #define OPENHD_OPENHD_OHD_VIDEO_INC_CAMERA_HOLDER_H_
 
-#include "camera2.h"
+#include "camera.hpp"
 #include "camera_settings.hpp"
 #include "openhd_action_handler.h"
 #include "openhd_bitrate_conversions.hpp"

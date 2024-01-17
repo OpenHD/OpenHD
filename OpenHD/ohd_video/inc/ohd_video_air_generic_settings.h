@@ -10,7 +10,7 @@
 
 #include "openhd_settings_directories.hpp"
 #include "openhd_settings_persistent.h"
-#include "camera2.h"
+#include "camera.hpp"
 
 struct AirCameraGenericSettings {
   // Make primary camera secondary camera and other way around (aka if they are detected in the wrong order)

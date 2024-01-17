@@ -10,7 +10,7 @@
 #include <iostream>
 #include <regex>
 
-#include "camera2.h"
+#include "camera.hpp"
 #include "libcamera_detect.hpp"
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"

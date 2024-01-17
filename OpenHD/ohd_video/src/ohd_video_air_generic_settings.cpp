@@ -26,11 +26,11 @@ AirCameraGenericSettings AirCameraGenericSettingsHolder::create_default() const 
     ret.secondary_camera_type=X_CAM_TYPE_DISABLED;
     if(OHDPlatform::instance().platform_type==PlatformType::RaspberryPi){
         // TODO IMAGE WRITER
-        ret.primary_camera_type=X_CAM_TYPE_RPI_MMAL;
+        ret.primary_camera_type=X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI;
     }else if(OHDPlatform::instance().platform_type==PlatformType::Allwinner){
-        ret.primary_camera_type=X_CAM_TYPE_CUSTOM_HARDWARE_X20;
+        ret.primary_camera_type=X_CAM_TYPE_X20_RUNCAM_NANO;
     }else if(OHDPlatform::instance().platform_type==PlatformType::Rockchip){
-        ret.primary_camera_type=X_CAM_TYPE_ROCKCHIP_RESERVED1;
+        ret.primary_camera_type=X_CAM_TYPE_ROCK_HDMI_IN;
     }
     return ret;
 }
