@@ -281,8 +281,10 @@ bool OHDVideoAir::x_set_camera_type(bool primary, int cam_type) {
     }
     if(primary){
         m_generic_settings->unsafe_get_settings().primary_camera_type=cam_type;
+        openhd::LinkActionHandler::instance().set_cam_info_type(0,cam_type);
     }else{
         m_generic_settings->unsafe_get_settings().secondary_camera_type=cam_type;
+        openhd::LinkActionHandler::instance().set_cam_info_type(1,cam_type);
     }
     m_generic_settings->persist(false);
     // TODO: REBOOT NEEDED !
