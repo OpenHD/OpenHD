@@ -239,7 +239,7 @@ class CameraHolder:
   const XCamera m_camera;
  private:
   [[nodiscard]] std::string get_unique_filename()const override{
-    return fmt::format("{}_{}",m_camera.cam_type_as_verbose_string(),m_camera.index);
+    return fmt::format("{}_{}.json",m_camera.cam_type_as_verbose_string(),m_camera.index);
   }
   std::optional<CameraSettings> impl_deserialize(const std::string& file_as_string)const override;
   std::string imp_serialize(const CameraSettings& data)const override;
