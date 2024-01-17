@@ -134,6 +134,15 @@ void GStreamerStream::setup() {
   }else{
     m_opt_curr_recording_filename=std::nullopt;
   }
+  {
+      const auto index=m_camera_holder->get_camera().index;
+      const uint8_t cam_type= (uint8_t)m_camera_holder->get_camera().camera_type;
+      auto cam_info=openhd::LinkActionHandler::CamInfo{true,
+                                                         (uint8_t)index, cam_type, CAM_STATUS_RESTARTING, ADD_RECORDING_TO_PIPELINE, (uint8_t)video_codec_to_int(setting.streamed_video_format.videoCodec), (uint16_t)setting.h26x_bitrate_kbits,
+                                                         (uint8_t)setting.h26x_keyframe_interval, (uint16_t )setting.streamed_video_format.width,
+                                                         (uint16_t )setting.streamed_video_format.height, (uint16_t )setting.streamed_video_format.framerate};
+      openhd::LinkActionHandler::instance().set_cam_info(index, cam_info);
+  }
   m_console->debug("Starting pipeline:[{}]",m_pipeline_content.str());
   // Protect against unwanted use - stop and free the pipeline first
   assert(m_gst_pipeline == nullptr);
@@ -149,14 +158,7 @@ void GStreamerStream::setup() {
   // we pull data out of the gst pipeline as cpu memory buffer(s) using the gstreamer "appsink" element
   m_app_sink_element=gst_bin_get_by_name(GST_BIN(m_gst_pipeline), "out_appsink");
   assert(m_app_sink_element);
-    const auto index=m_camera_holder->get_camera().index;
-    const uint8_t cam_type= (uint8_t)m_camera_holder->get_camera().camera_type;
-    auto cam_info=openhd::LinkActionHandler::CamInfo{true,
-                                                     (uint8_t)index, cam_type, CAM_STATUS_RESTARTING, ADD_RECORDING_TO_PIPELINE, (uint8_t)video_codec_to_int(setting.streamed_video_format.videoCodec), (uint16_t)setting.h26x_bitrate_kbits,
-                                                     (uint8_t)setting.h26x_keyframe_interval, (uint16_t )setting.streamed_video_format.width,
-                                                     (uint16_t )setting.streamed_video_format.height, (uint16_t )setting.streamed_video_format.framerate};
-    openhd::LinkActionHandler::instance().set_cam_info(index, cam_info);
-    //m_console->debug("Cam encoding format: {}",(int)cam_info.encoding_format);
+  //m_console->debug("Cam encoding format: {}",(int)cam_info.encoding_format);
 }
 
 void GStreamerStream::start() {
