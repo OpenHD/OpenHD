@@ -132,7 +132,7 @@ struct XCamera {
             return {1920,1080,30};
         }else if(camera_type==X_CAM_TYPE_USB){
             // TODO properly
-            return {640,490,30};
+            return {640,480,30};
         }else if(camera_type==X_CAM_TYPE_DUMMY_SW){
             return {640,480,30};
         }
