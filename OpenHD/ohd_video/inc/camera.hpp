@@ -112,6 +112,8 @@ struct XCamera {
             // All the rock begin
             case X_CAM_TYPE_ROCK_HDMI_IN:return "ROCK_HDMI_IN";
             case X_CAM_TYPE_ROCK_IMX219: return "ROCK_IMX219";
+            case X_CAM_TYPE_DISABLED: return "DISABLED";
+            default:break;
         }
         std::stringstream ss;
         ss<<"UNKNOWN ("<<camera_type<<")";
