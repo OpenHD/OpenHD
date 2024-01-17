@@ -273,6 +273,12 @@ std::vector<XCamera> OHDVideoAir::discover_cameras(const OHDPlatform &platform) 
 }
 
 bool OHDVideoAir::x_set_camera_type(bool primary, int cam_type) {
+    // Validation depends on primary / secondary -we are quite lazy here
+    if(primary){
+        if(!is_valid_primary_cam_type(cam_type))return false;
+    }else{
+        if(!is_valid_secondary_cam_type(cam_type))return false;
+    }
     if(primary){
         m_generic_settings->unsafe_get_settings().primary_camera_type=cam_type;
     }else{

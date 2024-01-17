@@ -142,4 +142,15 @@ struct XCamera {
     }
 };
 
+static bool is_valid_primary_cam_type(int cam_type){
+    if(cam_type>=0 && cam_type<X_CAM_TYPE_DISABLED)return true;
+    return false;
+}
+static bool is_valid_secondary_cam_type(int cam_type){
+    if(cam_type==X_CAM_TYPE_DUMMY_SW || cam_type==X_CAM_TYPE_USB || cam_type==X_CAM_TYPE_EXTERNAL || cam_type==X_CAM_TYPE_EXTERNAL_IP){
+        return true;
+    }
+    return false;
+}
+
 #endif //OPENHD_CAMERA_HPP
