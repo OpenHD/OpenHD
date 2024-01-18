@@ -305,6 +305,10 @@ int main(int argc, char *argv[]) {
           break;
         }
       }
+      if(openhd::TerminateHelper::instance().terminate){
+          m_console->debug("Terminating requested somewhere");
+          break;
+      }
     }
     // --- terminate openhd, most likely requested by a developer with sigterm
     m_console->debug("Terminating openhd");

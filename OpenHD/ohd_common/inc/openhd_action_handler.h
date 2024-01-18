@@ -255,6 +255,12 @@ public:
     int rf_metrics_level=0;
 };
 
+class TerminateHelper{
+public:
+    static TerminateHelper& instance();
+    std::atomic_bool terminate= false;
+};
+
 }
 
 #endif //OPENHD_OPENHD_OHD_COMMON_OPENHD_ACTION_HANDLER_HPP_

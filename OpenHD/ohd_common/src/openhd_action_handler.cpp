@@ -62,3 +62,8 @@ openhd::LinkActionHandler &openhd::LinkActionHandler::instance() {
     static openhd::LinkActionHandler instance;
     return instance;
 }
+
+openhd::TerminateHelper &openhd::TerminateHelper::instance() {
+    static TerminateHelper instance;
+    return instance;
+}

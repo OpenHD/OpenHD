@@ -294,6 +294,7 @@ bool OHDVideoAir::x_set_camera_type(bool primary, int cam_type) {
         openhd::LinkActionHandler::instance().set_cam_info_type(1,cam_type);
     }
     m_generic_settings->persist(false);
+    openhd::TerminateHelper::instance().terminate=true;
     // TODO: REBOOT NEEDED !
     return true;
 }
