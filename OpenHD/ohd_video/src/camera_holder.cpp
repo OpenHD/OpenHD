@@ -35,23 +35,36 @@ std::string CameraHolder::imp_serialize(const CameraSettings &data) const {
 }
 
 std::vector<openhd::Setting> CameraHolder::get_all_settings() {
-  auto c_enable_streaming=[this](std::string,int value) {
-    return set_enable_streaming(value);
-  };
-  auto c_codec=[this](std::string, int value) {
-    return set_video_codec(value);
-  };
-  auto c_recording=[this](std::string,int value) {
-    return set_air_recording(value);
-  };
-  std::vector<openhd::Setting> ret={
-      openhd::Setting{"V_E_STREAMING",openhd::IntSetting{get_settings().enable_streaming,c_enable_streaming}},
-      openhd::Setting{"VIDEO_CODEC",openhd::IntSetting{video_codec_to_int(get_settings().streamed_video_format.videoCodec), c_codec}},
-      openhd::Setting{"V_AIR_RECORDING",openhd::IntSetting{get_settings().air_recording,c_recording}},
-      // for debugging
-      openhd::create_read_only_string("V_CAM_TYPE",m_camera.cam_type_as_verbose_string()),
-      //openhd::create_read_only_string("V_CAM_NAME",m_camera.name)
-  };
+    std::vector<openhd::Setting> ret;
+    if(true){
+        auto c_width_height_framerate=[this](std::string,std::string value){
+            auto tmp_opt=openhd::parse_video_format(value);
+            if(tmp_opt.has_value()){
+                const auto& tmp=tmp_opt.value();
+                return set_video_width_height_framerate(tmp.width_px,tmp.height_px,tmp.framerate);
+            }
+            return false;
+        };
+        // Width, height and FPS are done together now (V_FORMAT)
+        const auto format_string=openhd::video_format_from_int_values(get_settings().streamed_video_format.width,
+                                                                      get_settings().streamed_video_format.height,
+                                                                      get_settings().streamed_video_format.framerate);
+        ret.push_back(openhd::Setting{"V_FORMAT",openhd::StringSetting{format_string,c_width_height_framerate}});
+    }
+  if(true){
+      auto c_enable_streaming=[this](std::string,int value) {
+          return set_enable_streaming(value);
+      };
+      auto c_codec=[this](std::string, int value) {
+          return set_video_codec(value);
+      };
+      auto c_recording=[this](std::string,int value) {
+          return set_air_recording(value);
+      };
+      ret.push_back(openhd::Setting{"V_E_STREAMING",openhd::IntSetting{get_settings().enable_streaming,c_enable_streaming}});
+      ret.push_back(openhd::Setting{"VIDEO_CODEC",openhd::IntSetting{video_codec_to_int(get_settings().streamed_video_format.videoCodec), c_codec}});
+      ret.push_back(openhd::Setting{"V_AIR_RECORDING",openhd::IntSetting{get_settings().air_recording,c_recording}});
+  }
   //if(m_camera.sensor_name!="unknown"){
   //  ret.emplace_back(openhd::create_read_only_string("V_CAM_SENSOR",m_camera.sensor_name));
   //}
@@ -72,21 +85,6 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
       return set_video_bitrate(value);
     };
     ret.push_back(openhd::Setting{"V_BITRATE_MBITS",openhd::IntSetting{static_cast<int>(get_settings().h26x_bitrate_kbits / 1000),c_bitrate}});
-  }
-  if(true){
-    auto c_width_height_framerate=[this](std::string,std::string value){
-      auto tmp_opt=openhd::parse_video_format(value);
-      if(tmp_opt.has_value()){
-        const auto& tmp=tmp_opt.value();
-        return set_video_width_height_framerate(tmp.width_px,tmp.height_px,tmp.framerate);
-      }
-      return false;
-    };
-    // Width, height and FPS are done together now (V_FORMAT)
-    const auto format_string=openhd::video_format_from_int_values(get_settings().streamed_video_format.width,
-                                                                  get_settings().streamed_video_format.height,
-                                                                  get_settings().streamed_video_format.framerate);
-    ret.push_back(openhd::Setting{"V_FORMAT",openhd::StringSetting{format_string,c_width_height_framerate}});
   }
   if(true){
     auto c_keyframe_interval=[this](std::string,int value) {
