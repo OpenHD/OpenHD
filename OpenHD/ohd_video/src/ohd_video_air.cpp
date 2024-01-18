@@ -86,13 +86,30 @@ void OHDVideoAir::configure(const std::shared_ptr<CameraHolder>& camera_holder) 
   m_camera_streams.push_back(stream);
 }
 
-std::vector<std::shared_ptr<openhd::ISettingsComponent>>
+std::array<std::vector<openhd::Setting>,2>
 OHDVideoAir::get_all_camera_settings() {
-  std::vector<std::shared_ptr<openhd::ISettingsComponent>> ret;
-  ret.reserve(m_camera_streams.size());
-  for(auto& stream: m_camera_streams){
-    ret.push_back(stream->m_camera_holder);
-  }
+    std::array<std::vector<openhd::Setting>,2> ret{};
+    for(int i=0;i<2;i++){
+        // Changing the cam type is special - it requires a restart of openhd (often also an OS reboot)
+        auto cb1=[this](std::string,int value){
+            return x_set_camera_type(true,value);
+        };
+        auto cb2=[this](std::string,int value){
+            return x_set_camera_type(false,value);
+        };
+        if(i==0){
+            ret[0].push_back(openhd::Setting{"CAMERA_TYPE",openhd::IntSetting{m_generic_settings->get_settings().primary_camera_type,cb1}});
+        }else{
+            ret[1].push_back(openhd::Setting{"CAMERA_TYPE",openhd::IntSetting{m_generic_settings->get_settings().secondary_camera_type,cb2}});
+        }
+        // Then add the generic camera settings (there might be none)
+        if(i<m_camera_streams.size()){
+            auto settings=m_camera_streams[i]->m_camera_holder->get_all_settings();
+            for(auto& setting:settings){
+                ret[i].push_back(setting);
+            }
+        }
+    }
   return ret;
 }
 
@@ -127,16 +144,6 @@ std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
     };
     ret.push_back(openhd::Setting{"V_OS_CAM_CONFIG",openhd::IntSetting {openhd::rpi::os::cam_config_to_int(openhd::rpi::os::get_current_cam_config_from_file()),
                                                                         c_rpi_os_camera_configuration}});
-  }
-  if(true){
-      auto cb1=[this](std::string,int value){
-          return x_set_camera_type(true,value);
-      };
-      auto cb2=[this](std::string,int value){
-          return x_set_camera_type(false,value);
-      };
-      ret.push_back(openhd::Setting{"TYPE_CAM0",openhd::IntSetting{m_generic_settings->get_settings().primary_camera_type,cb1}});
-      ret.push_back(openhd::Setting{"TYPE_CAM1",openhd::IntSetting{m_generic_settings->get_settings().secondary_camera_type,cb2}});
   }
   // Only show dual-cam settings if dual-cam is actually used
   const auto n_cameras=static_cast<int>(m_camera_streams.size());

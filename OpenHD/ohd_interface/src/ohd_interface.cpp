@@ -139,15 +139,6 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings(){
     };
     ret.push_back(openhd::Setting{"ETH_PASSIVE_F",openhd::IntSetting{settings.ethernet_nonhotspot_enable_auto_forwarding,cb_enable}});
   }
-  if(m_monitor_mode_cards.empty()){
-    auto setting=openhd::create_read_only_string(fmt::format("WIFI_CARD{}",0), "NOTFOUND");
-    ret.emplace_back(setting);
-  }else{
-    for(int i=0; i < m_monitor_mode_cards.size(); i++){
-      auto setting=openhd::create_read_only_string(fmt::format("WIFI_CARD{}",i), wifi_card_type_to_string(m_monitor_mode_cards[i].type));
-      ret.emplace_back(setting);
-    }
-  }
   if(m_opt_hotspot_card){
     auto setting=openhd::create_read_only_string(fmt::format("HOTSPOT_CARD"), wifi_card_type_to_string(m_opt_hotspot_card.value().type));
     ret.emplace_back(setting);

@@ -268,11 +268,11 @@ int main(int argc, char *argv[]) {
     std::unique_ptr<OHDVideoGround> ohd_video_ground = nullptr;
     if (profile->is_air) {
       ohd_video_air = std::make_unique<OHDVideoAir>(*platform,cameras,ohdInterface->get_link_handle());
-      // Let telemetry handle the settings via mavlink
+      // First add camera specific settings (primary & secondary camera)
       auto settings_components= ohd_video_air->get_all_camera_settings();
-      for(int i=0;i<settings_components.size();i++){
-        ohdTelemetry->add_settings_camera_component(i, settings_components.at(i)->get_all_settings());
-      }
+      ohdTelemetry->add_settings_camera_component(0,settings_components[0]);
+      ohdTelemetry->add_settings_camera_component(1,settings_components[1]);
+      // Then the rest
       ohdTelemetry->add_settings_generic(ohd_video_air->get_generic_settings());
     }else{
       ohd_video_ground = std::make_unique<OHDVideoGround>(ohdInterface->get_link_handle());

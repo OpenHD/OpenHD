@@ -7,6 +7,7 @@
 
 #include <string>
 #include <sstream>
+#include <vector>
 
 // For development, always 'works' since fully emulated in SW.
 static constexpr int X_CAM_TYPE_DUMMY_SW=0; // Dummy sw picture
@@ -140,7 +141,37 @@ struct XCamera {
         }
         return {1920,1080,30};
     }
+    // Returns a list of known supported resolution(s).
+    // The first element is what openhd uses as default.
+    // Must always return at least one resolution
+    // Might not return all resolutions a camera supports per HW
+    // (In qopenhd, we have the experiment checkbox, where the user can enter anything he likes)
+    std::vector<ResolutionFramerate> get_supported_resolutions()const{
+        if(requires_rpi_veye_pipeline()){
+            // Veye camera(s) only do 1080p30
+            return {ResolutionFramerate{1920,1080,30}};
+        }else if(requires_x20_cedar_pipeline()){
+            // also easy, 720p60 only (for now)
+            return {ResolutionFramerate{1280,720,60}};
+        } else if(camera_type==X_CAM_TYPE_USB){ // TODO properly
+            return {ResolutionFramerate{640,480,30}};
+        }else if(requires_rpi_libcamera_pipeline()){// TODO properly
+            std::vector<ResolutionFramerate> ret;
+            ret.push_back(ResolutionFramerate{1920,1080,30});
+            return ret;
+        }else if(camera_type==X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI){
+            std::vector<ResolutionFramerate> ret;
+            ret.push_back(ResolutionFramerate{1920,1080,30});
+            ret.push_back(ResolutionFramerate{1280,720,30});
+            ret.push_back(ResolutionFramerate{1280,720,60});
+            return ret;
+        }
+        // Not mapped yet
+        return {ResolutionFramerate{1920,1080,30}};
+    }
 };
+
+
 
 static bool is_valid_primary_cam_type(int cam_type){
     if(cam_type>=0 && cam_type<X_CAM_TYPE_DISABLED)return true;

@@ -41,10 +41,10 @@ class OHDVideoAir {
   /**
    * In ohd-telemetry, we create a mavlink settings component for each of the camera(s),instead of using one generic settings component
    * like for the rest of the settings.
-   * Get all the settings for the discovered cameras. Settings for Camera0 are the first element, other cameras
-   * (if existing) follow.
+   * Get all the settings for the discovered cameras. Settings for Camera0 are the first element,
+   * settings for camera1 the second
    */
-  std::vector<std::shared_ptr<openhd::ISettingsComponent>> get_all_camera_settings();
+  std::array<std::vector<openhd::Setting>,2> get_all_camera_settings();
   // r.n only for debugging
   std::vector<openhd::Setting> get_generic_settings();
   // r.n limited to primary and secondary camera

@@ -20,9 +20,7 @@
 // Changes in the camera settings are propagated through this class.
 class CameraHolder:
     // persistence via JSON
-    public openhd::PersistentSettings<CameraSettings>,
-    // changes requested by the mavlink parameter protocol are propagated through lambda callbacks
-    public openhd::ISettingsComponent{
+    public openhd::PersistentSettings<CameraSettings>{
  public:
   explicit CameraHolder(XCamera camera):
        m_camera(std::move(camera)),
@@ -34,7 +32,7 @@ class CameraHolder:
     return m_camera;
   }
   // Settings hacky begin
-  std::vector<openhd::Setting> get_all_settings() override;
+  std::vector<openhd::Setting> get_all_settings();
   bool set_enable_streaming(int enable){
     if(!openhd::validate_yes_or_no(enable))return false;
     unsafe_get_settings().enable_streaming=static_cast<bool>(enable);
