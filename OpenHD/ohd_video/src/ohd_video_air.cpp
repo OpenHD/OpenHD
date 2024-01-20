@@ -113,38 +113,8 @@ OHDVideoAir::get_all_camera_settings() {
   return ret;
 }
 
-void OHDVideoAir::handle_change_bitrate_request(openhd::LinkActionHandler::LinkBitrateInformation lb) {
-  if(m_camera_streams.size()==1){
-    m_camera_streams[0]->handle_change_bitrate_request(lb);
-    return;
-  }
-  if(m_camera_streams.size()==2){
-    // Just split the available bitrate between primary and secondary cam, according to the user's preferences
-    const auto primary_perc=m_generic_settings->get_settings().dualcam_primary_video_allocated_bandwidth_perc;
-    const int bitrate_primary_kbits=lb.recommended_encoder_bitrate_kbits*primary_perc/100;
-    const int bitrate_secondary_kbits=lb.recommended_encoder_bitrate_kbits-bitrate_primary_kbits;
-    openhd::LinkActionHandler::LinkBitrateInformation lb1{bitrate_primary_kbits};
-    openhd::LinkActionHandler::LinkBitrateInformation lb2{bitrate_secondary_kbits};
-    m_camera_streams[0]->handle_change_bitrate_request(lb1);
-    m_camera_streams[1]->handle_change_bitrate_request(lb2);
-    return ;
-  }
-  m_console->warn("openhd should always have either 1 or 2 cameras");
-}
-
 std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
   std::vector<openhd::Setting> ret;
-  // Camera related, but strongly interacts with the OS
-  // This way one can switch between different OS configuration(s) that then provide access to different
-  // vendor-specific camera(s) - hacky/dirty I know ;/
-  if(m_platform.platform_type==PlatformType::RaspberryPi){
-    assert(m_rpi_os_change_config_handler!= nullptr);
-    auto c_rpi_os_camera_configuration=[this](std::string,int value){
-      return m_rpi_os_change_config_handler->change_rpi_os_camera_configuration(value);
-    };
-    ret.push_back(openhd::Setting{"V_OS_CAM_CONFIG",openhd::IntSetting {openhd::rpi::os::cam_config_to_int(openhd::rpi::os::get_current_cam_config_from_file()),
-                                                                        c_rpi_os_camera_configuration}});
-  }
   // Only show dual-cam settings if dual-cam is actually used
   const auto n_cameras=static_cast<int>(m_camera_streams.size());
   if(n_cameras>1){
@@ -169,6 +139,24 @@ std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
   return ret;
 }
 
+void OHDVideoAir::handle_change_bitrate_request(openhd::LinkActionHandler::LinkBitrateInformation lb) {
+    if(m_camera_streams.size()==1){
+        m_camera_streams[0]->handle_change_bitrate_request(lb);
+        return;
+    }
+    if(m_camera_streams.size()==2){
+        // Just split the available bitrate between primary and secondary cam, according to the user's preferences
+        const auto primary_perc=m_generic_settings->get_settings().dualcam_primary_video_allocated_bandwidth_perc;
+        const int bitrate_primary_kbits=lb.recommended_encoder_bitrate_kbits*primary_perc/100;
+        const int bitrate_secondary_kbits=lb.recommended_encoder_bitrate_kbits-bitrate_primary_kbits;
+        openhd::LinkActionHandler::LinkBitrateInformation lb1{bitrate_primary_kbits};
+        openhd::LinkActionHandler::LinkBitrateInformation lb2{bitrate_secondary_kbits};
+        m_camera_streams[0]->handle_change_bitrate_request(lb1);
+        m_camera_streams[1]->handle_change_bitrate_request(lb2);
+        return ;
+    }
+    m_console->warn("openhd should always have either 1 or 2 cameras");
+}
 
 void OHDVideoAir::start_stop_forwarding_external_device(openhd::ExternalDevice external_device, bool connected) {
     const std::string client_addr=external_device.external_device_ip;
