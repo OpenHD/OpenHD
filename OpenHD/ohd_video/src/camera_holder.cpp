@@ -49,7 +49,7 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
         const auto format_string=openhd::video_format_from_int_values(get_settings().streamed_video_format.width,
                                                                       get_settings().streamed_video_format.height,
                                                                       get_settings().streamed_video_format.framerate);
-        ret.push_back(openhd::Setting{"V_FORMAT",openhd::StringSetting{format_string,c_width_height_framerate}});
+        ret.push_back(openhd::Setting{"RESOLUTION_FPS",openhd::StringSetting{format_string,c_width_height_framerate}});
     }
     if(true){
         auto c_codec=[this](std::string, int value) {
@@ -69,7 +69,7 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
         auto c_rotation=[this](std::string,int value) {
             return set_camera_rotation(value);
         };
-        ret.push_back(openhd::Setting{"V_CAM_ROT_DEG",openhd::IntSetting{get_settings().camera_rotation_degree,c_rotation}});
+        ret.push_back(openhd::Setting{"ROTATION_DEG",openhd::IntSetting{get_settings().camera_rotation_degree,c_rotation}});
     }
     if(true){
         auto c_horizontal_flip=[this](std::string,int value) {
@@ -78,8 +78,8 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
         auto c_vertical_flip=[this](std::string,int value) {
             return set_vertical_flip(value);
         };
-        ret.push_back(openhd::Setting{"V_VERT_FLIP",openhd::IntSetting{get_settings().vertical_flip,c_vertical_flip}});
-        ret.push_back(openhd::Setting{"V_HORIZ_FLIP",openhd::IntSetting{get_settings().horizontal_flip,c_horizontal_flip}});
+        ret.push_back(openhd::Setting{"VERT_FLIP",openhd::IntSetting{get_settings().vertical_flip,c_vertical_flip}});
+        ret.push_back(openhd::Setting{"HORIZ_FLIP",openhd::IntSetting{get_settings().horizontal_flip,c_horizontal_flip}});
     }
   if(true){
       auto c_enable_streaming=[this](std::string,int value) {
@@ -88,8 +88,8 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
       auto c_recording=[this](std::string,int value) {
           return set_air_recording(value);
       };
-      ret.push_back(openhd::Setting{"V_E_STREAMING",openhd::IntSetting{get_settings().enable_streaming,c_enable_streaming}});
-      ret.push_back(openhd::Setting{"V_AIR_RECORDING",openhd::IntSetting{get_settings().air_recording,c_recording}});
+      ret.push_back(openhd::Setting{"STREAMING_E",openhd::IntSetting{get_settings().enable_streaming,c_enable_streaming}});
+      ret.push_back(openhd::Setting{"AIR_RECORDING_E",openhd::IntSetting{get_settings().air_recording,c_recording}});
   }
   //if(m_camera.sensor_name!="unknown"){
   //  ret.emplace_back(openhd::create_read_only_string("V_CAM_SENSOR",m_camera.sensor_name));
@@ -101,7 +101,7 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
       persist();
       return true;
     };
-    ret.push_back(openhd::Setting{"V_FORCE_SW_ENC",openhd::IntSetting {get_settings().force_sw_encode,cb}});
+    ret.push_back(openhd::Setting{"FORCE_SW_ENC",openhd::IntSetting {get_settings().force_sw_encode,cb}});
   }
   if(true){
     // NOTE: OpenHD stores the bitrate in kbit/s, but for now we use MBit/s for the setting
@@ -110,49 +110,49 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
     auto c_bitrate=[this](std::string,int value) {
       return set_video_bitrate(value);
     };
-    ret.push_back(openhd::Setting{"V_BITRATE_MBITS",openhd::IntSetting{static_cast<int>(get_settings().h26x_bitrate_kbits / 1000),c_bitrate}});
+    ret.push_back(openhd::Setting{"BITRATE_MBITS",openhd::IntSetting{static_cast<int>(get_settings().h26x_bitrate_kbits / 1000),c_bitrate}});
   }
   if(true){
     auto c_keyframe_interval=[this](std::string,int value) {
       return set_keyframe_interval(value);
     };
-    ret.push_back(openhd::Setting{"V_KEYFRAME_I",openhd::IntSetting{get_settings().h26x_keyframe_interval,c_keyframe_interval}});
+    ret.push_back(openhd::Setting{"KEYFRAME_I",openhd::IntSetting{get_settings().h26x_keyframe_interval,c_keyframe_interval}});
   }
   if(true){
     auto cb=[this](std::string,int value) {
       return set_camera_awb(value);
     };
-    ret.push_back(openhd::Setting{"V_AWB_MODE",openhd::IntSetting{get_settings().awb_mode,cb}});
+    ret.push_back(openhd::Setting{"AWB_MODE",openhd::IntSetting{get_settings().awb_mode,cb}});
   }
   if(true){
     auto cb=[this](std::string,int value) {
       return set_camera_exposure(value);
     };
-    ret.push_back(openhd::Setting{"V_EXP_MODE",openhd::IntSetting{get_settings().exposure_mode,cb}});
+    ret.push_back(openhd::Setting{"EXP_MODE",openhd::IntSetting{get_settings().exposure_mode,cb}});
   }
   if(true){ // Always show intra, on libcamera without sw encode it unfortunately is 'just not mapped' and ignored.
     auto c_intra_refresh_type=[this](std::string,int value) {
       return set_intra_refresh_type(value);
     };
-    ret.push_back(openhd::Setting{"V_INTRA_REFRESH",openhd::IntSetting{get_settings().h26x_intra_refresh_type,c_intra_refresh_type}});
+    ret.push_back(openhd::Setting{"INTRA_REFRESH",openhd::IntSetting{get_settings().h26x_intra_refresh_type,c_intra_refresh_type}});
   }
   if(true){
     auto c_brightness=[this](std::string,int value) {
       return set_brightness(value);
     };
-    ret.push_back(openhd::Setting{"V_BRIGHTNESS",openhd::IntSetting{get_settings().brightness_percentage,c_brightness}});
+    ret.push_back(openhd::Setting{"BRIGHTNESS",openhd::IntSetting{get_settings().brightness_percentage,c_brightness}});
   }
   if(true){
     auto c_iso=[this](std::string,int value) {
       return set_rpi_rpicamsrc_iso(value);
     };
-    ret.push_back(openhd::Setting{"V_ISO",openhd::IntSetting{get_settings().rpi_rpicamsrc_iso,c_iso}});
+    ret.push_back(openhd::Setting{"ISO",openhd::IntSetting{get_settings().rpi_rpicamsrc_iso,c_iso}});
   }
   if(true){
     auto cb=[this](std::string,int value) {
       return set_rpi_rpicamsrc_metering_mode(value);
     };
-    ret.push_back(openhd::Setting{"V_METERING_MODE",openhd::IntSetting{get_settings().rpi_rpicamsrc_metering_mode,cb}});
+    ret.push_back(openhd::Setting{"METERING_MODE",openhd::IntSetting{get_settings().rpi_rpicamsrc_metering_mode,cb}});
   }
   // These are rpi libcamera specific image quality settings
   if(true){
