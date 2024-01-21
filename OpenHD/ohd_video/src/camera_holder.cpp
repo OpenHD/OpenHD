@@ -57,6 +57,30 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
         };
         ret.push_back(openhd::Setting{"VIDEO_CODEC",openhd::IntSetting{video_codec_to_int(get_settings().streamed_video_format.videoCodec), c_codec}});
     }
+    {
+        // Supported by all cameras, since it has actually nothing to do with the camera, only the link -
+        // but for the user, it is more of a camera setting
+        auto cb_encryption=[this](std::string,int value) {
+            return set_encryption_enable(value);
+        };
+        ret.push_back(openhd::Setting{"HIGH_ENCRYPTION",openhd::IntSetting{get_settings().enable_ultra_secure_encryption,cb_encryption}});
+    }
+    if(true){
+        auto c_rotation=[this](std::string,int value) {
+            return set_camera_rotation(value);
+        };
+        ret.push_back(openhd::Setting{"V_CAM_ROT_DEG",openhd::IntSetting{get_settings().camera_rotation_degree,c_rotation}});
+    }
+    if(true){
+        auto c_horizontal_flip=[this](std::string,int value) {
+            return set_horizontal_flip(value);
+        };
+        auto c_vertical_flip=[this](std::string,int value) {
+            return set_vertical_flip(value);
+        };
+        ret.push_back(openhd::Setting{"V_VERT_FLIP",openhd::IntSetting{get_settings().vertical_flip,c_vertical_flip}});
+        ret.push_back(openhd::Setting{"V_HORIZ_FLIP",openhd::IntSetting{get_settings().horizontal_flip,c_horizontal_flip}});
+    }
   if(true){
       auto c_enable_streaming=[this](std::string,int value) {
           return set_enable_streaming(value);
@@ -105,22 +129,6 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
       return set_camera_exposure(value);
     };
     ret.push_back(openhd::Setting{"V_EXP_MODE",openhd::IntSetting{get_settings().exposure_mode,cb}});
-  }
-  if(true){
-    auto c_rotation=[this](std::string,int value) {
-      return set_camera_rotation(value);
-    };
-    ret.push_back(openhd::Setting{"V_CAM_ROT_DEG",openhd::IntSetting{get_settings().camera_rotation_degree,c_rotation}});
-  }
-  if(true){
-    auto c_horizontal_flip=[this](std::string,int value) {
-      return set_horizontal_flip(value);
-    };
-    auto c_vertical_flip=[this](std::string,int value) {
-      return set_vertical_flip(value);
-    };
-    ret.push_back(openhd::Setting{"V_VERT_FLIP",openhd::IntSetting{get_settings().vertical_flip,c_vertical_flip}});
-    ret.push_back(openhd::Setting{"V_HORIZ_FLIP",openhd::IntSetting{get_settings().horizontal_flip,c_horizontal_flip}});
   }
   if(true){ // Always show intra, on libcamera without sw encode it unfortunately is 'just not mapped' and ignored.
     auto c_intra_refresh_type=[this](std::string,int value) {
@@ -185,14 +193,6 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
       return set_rpi_libcamera_shutter_microseconds(value);
     };
     ret.push_back(openhd::Setting{"SHUTTER_US_LC",openhd::IntSetting{get_settings().rpi_libcamera_shutter_microseconds,cb_shutter}});
-  }
-  {
-    // Supported by all cameras, since it has actually nothing to do with the camera, only the link -
-    // but for the user, it is more of a camera setting
-    auto cb_encryption=[this](std::string,int value) {
-      return set_encryption_enable(value);
-    };
-    ret.push_back(openhd::Setting{"HIGH_ENCRYPTION",openhd::IntSetting{get_settings().enable_ultra_secure_encryption,cb_encryption}});
   }
   return ret;
 }
