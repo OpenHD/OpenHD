@@ -244,7 +244,7 @@ static bool rpi_needs_level_4_2(const VideoFormat& video_format){
 
 // v4l2 h264 encoder on raspberry pi
 // we configure the v4l2 h264 encoder by using the extra controls
-// We want constant bitrate (e.g. what the user has set) as long as we don't dynamcially adjust anything
+// We want constant bitrate (e.g. what the user has set) as long as we don't dynamically adjust anything
 // in this regard (video_bitrate_mode)
 // 24.10.22: something seems t be bugged on the rpi v4l2 encoder, setting constant bitrate doesn't work and
 // somehow increases latency (,video_bitrate_mode=1)
@@ -360,89 +360,6 @@ static std::string create_veye_vl2_stream(const CameraSettings& settings,const s
     openhd::log::get_default()->warn("No h265 encoder on rpi, using SW encode (will almost 100% result in frame drops/performance issues)");
     ss << createSwEncoder(settings);
   }
-  return ss.str();
-}
-
-// For jetson we have a nice separation between camera / ISP and encoder
-// This creates the encoding part of the gstreamer pipeline
-static std::string createJetsonEncoderPipeline(const CommonEncoderParams& common_encoder_params){
-  std::stringstream ss;
-  // Consti10: I would like to use the nvv4l2h264/5encoder, but r.n it looks to me as if
-  // the stream created by it cannot be decoded properly by multiple platform(s). With the omxh26Xdec equivalents,
-  // this issue does not exist.
-  // UPDATE: It is even more complicated. For h264, we need to use omx encode and nvv4 decode
-  // For h265, we need to use nvv4 encode and nvv4 decode
-  // https://developer.download.nvidia.com/embedded/L4T/r31_Release_v1.0/Docs/Accelerated_GStreamer_User_Guide.pdf?E_vSS50FKrZaJBjDtnCBmtaY8hWM1QCYlMHtXBqvZ_Jeuw0GXuLNaQwMBWUDABSnWCD-p8ABlBpBpP-kb2ADgWugbW8mgGPxUWJG_C4DWaL1yKjUVMy1AxH1RTaGOW82yFJ549mea--FBPuZUH3TT1MoEd4-sgdrZal5qr1J0McEFeFaVUc&t=eyJscyI6InJlZiIsImxzZCI6IlJFRi1kb2NzLm52aWRpYS5jb21cLyJ9
-  // jetson is also bits per second
-  const auto bitrateBitsPerSecond =kbits_to_bits_per_second(common_encoder_params.h26X_bitrate_kbits);
-  if(common_encoder_params.videoCodec==VideoCodec::H264){
-    const bool use_omx_encoder= true;
-    if(use_omx_encoder){
-      // for omx control-rate=2 means constant, in constrast to nvv4l2h264enc
-      ss<<"omxh264enc control-rate=2 insert-sps-pps=true bitrate="<<bitrateBitsPerSecond<<" ";
-      ss<<"iframeinterval="<<common_encoder_params.h26X_keyframe_interval<<" ";
-      // this was added to test if it fixes issues when decoding jetson h264 on rpi
-      ss<<"insert-vui=true ";
-      ss<<"! ";
-    }else{
-      ss<<"nvv4l2h264enc control-rate=1 insert-sps-pps=true bitrate="<<bitrateBitsPerSecond<<" ";
-      ss<<"iframeinterval="<<common_encoder_params.h26X_keyframe_interval<<" ";
-      // https://forums.developer.nvidia.com/t/high-decoding-latency-for-stream-produced-by-nvv4l2h264enc-compared-to-omxh264enc/159517
-      // https://forums.developer.nvidia.com/t/parameter-poc-type-missing-on-jetson-though-mentioned-in-the-documentation/164545
-      // NOTE: This is quite important, without it jetson nvv4l2decoder cannot properly decode (confirmed) (WTF nvidia you cannot encode your own data haha ;) )
-      // As well as a lot of phones (confirmed) and perhaps the rpi,too (not confirmed).
-      ss<<"poc-type=2 ";
-      // TODO should we make max-perf-enable on by default ?
-      ss<<"maxperf-enable=true ";
-      ss<<"! ";
-    }
-  }else if(common_encoder_params.videoCodec==VideoCodec::H265){
-	  const bool use_omx_encoder= false;
-    if(use_omx_encoder){
-      // for omx control-rate=2 means constant, in contrast to nvv4l2h264enc
-      ss<<"omxh265enc control-rate=2 insert-sps-pps=true bitrate="<<bitrateBitsPerSecond<<" ";
-      ss<<"iframeinterval="<<common_encoder_params.h26X_keyframe_interval<<" ";
-      ss<<"! ";
-    }else{
-      ss<<"nvv4l2h265enc control-rate=1 insert-sps-pps=true bitrate="<<bitrateBitsPerSecond<<" ";
-      // TODO what is the difference between iframeinterval and idrinterval
-      ss<<"iframeinterval="<<common_encoder_params.h26X_keyframe_interval<<" ";
-      ss<<"idrinterval="<<common_encoder_params.h26X_keyframe_interval<<" ";
-      ss<<"maxperf-enable=true ";
-      ss<<"! ";
-    }
-  }
-  return ss.str();
-}
-
-/**
- * This creates the sensor/ISP (nvarguscamerasrc) part of the gstreamer pipeline.
- * @param sensor_id sensor id, set to -1 to let nvarguscamerasrc figure it out
- */
-static std::string createJetsonSensorPipeline(const int sensor_id,const int width,const int height,const int framerate){
-  std::stringstream ss;
-  // possible to omit the sensor id, nvarguscamerasrc will then figure out the
-  // right sensor id. This only works with one csi camera though.
-  if (sensor_id == -1) {
-	  ss << "nvarguscamerasrc do-timestamp=true ! ";
-  } else {
-	  ss<<"nvarguscamerasrc do-timestamp=true sensor-id="<<sensor_id<<" ! ";
-  }
-  ss<<"video/x-raw(memory:NVMM), format=NV12, ";
-  ss<<"width="<<width<<", ";
-  ss<<"height="<<height<<", ";
-  ss<<"framerate="<<framerate<<"/1 ! ";
-  return ss.str();
-}
-/**
- * Create a encoded stream for the jetson, which is fully hardware accelerated
- * for h264,h265 and mjpeg.
- */
-static std::string createJetsonStream(const int sensor_id,
-                                      const CameraSettings& settings) {
-  std::stringstream ss;
-  ss<<createJetsonSensorPipeline(sensor_id,settings.streamed_video_format.width,settings.streamed_video_format.height,settings.streamed_video_format.framerate);
-  ss<<createJetsonEncoderPipeline(extract_common_encoder_params(settings));
   return ss.str();
 }
 
@@ -608,32 +525,6 @@ static std::string createV4l2SrcAlreadyEncodedStream(
   ss<<" ! ";
   return ss.str();
 }
-
-// These are not tested
-static std::string createUVCH264Stream(const std::string &device_node,const CameraSettings& settings) {
-  assert(settings.streamed_video_format.videoCodec == VideoCodec::H264);
-  // https://gstreamer.freedesktop.org/documentation/uvch264/uvch264src.html?gi-language=c#uvch264src:average-bitrate
-  // bitrate in bits per second
-  const int bitrateBitsPerSecond = kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
-  std::stringstream ss;
-  ss << fmt::format(
-      "uvch264src device={} peak-bitrate={} initial-bitrate={} "
-      "average-bitrate={} rate-control=1 iframe-period={} "
-      "auto-start=true encodectrl.vidsrc ! ",
-      device_node, bitrateBitsPerSecond, bitrateBitsPerSecond,
-      bitrateBitsPerSecond,settings.h26x_keyframe_interval);
-  ss << "video/x-h264"<<gst_v4l2_width_height_fps_unless_omit(settings)<<" ! ";
-  return ss.str();
-}
-static std::string createIpCameraStream(const std::string &url) {
-  std::stringstream ss;
-  // none of the other params are used at the moment, we would need to set them
-  // with ONVIF or a per-camera API of some sort, however most people seem to
-  // set them in advance with the proprietary app that came with the camera
-  // anyway
-  ss << fmt::format("rtspsrc location=\"{}\" latency=0 ! ", url);
-  return ss.str();
-}
 // ------------- crateXXXStream end  -------------
 
 /**
@@ -715,18 +606,6 @@ static std::string create_input_custom_udp_rtp_port(const CameraSettings& settin
   ss<<fmt::format("udpsrc address={} port={} {} ! ",address, input_port,
       gst_create_rtp_caps(settings.streamed_video_format.videoCodec));
   ss<<create_rtp_depacketize_for_codec(settings.streamed_video_format.videoCodec);
-  return ss.str();
-}
-
-// We cannot really rely on the IP camera giving us an rtp stream in the right format / with the right NALU format.
-// Therefore, we parse the rtp data, such that we can then append the normal openhd
-// 1) parse (important: with the config-interval=-1) and
-// 2) rtp packetize
-// data after. E.g. the data is de-packetized, then properly parsed (keyframe(s) added if needed) and then packetized again.
-static std::string create_ip_cam_stream_with_depacketize_and_parse(const std::string& url,const VideoCodec videoCodec){
-  std::stringstream ss;
-  ss<<createIpCameraStream(url);
-  ss<<create_rtp_depacketize_for_codec(videoCodec);
   return ss.str();
 }
 

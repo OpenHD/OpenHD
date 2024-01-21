@@ -56,8 +56,6 @@ class GStreamerStream : public CameraStream {
   // not supported by all camera(s).
   // for dynamically changing the bitrate
   std::optional<GstBitrateControlElement> m_bitrate_ctrl_element=std::nullopt;
-  // The pipeline that is started in the end
-  std::stringstream m_pipeline_content;
   // If a pipeline is started with air recording enabled, the file name the recording is written to is stored here
   // otherwise, it is set to std::nullopt
   std::optional<std::string> m_opt_curr_recording_filename=std::nullopt;

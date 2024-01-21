@@ -93,13 +93,12 @@ void GStreamerStream::setup() {
   m_console->debug("GStreamerStream::setup() begin");
   const auto& camera= m_camera_holder->get_camera();
   const auto& setting= m_camera_holder->get_settings();
-  m_pipeline_content.str("");
-  m_pipeline_content.clear();
+  std::stringstream pipeline_content;
   m_bitrate_ctrl_element= std::nullopt;
-  m_pipeline_content<<create_source_encode_pipeline(*m_camera_holder);
+  pipeline_content << create_source_encode_pipeline(*m_camera_holder);
   // quick check,here the pipeline should end with a "! ";
-  if(!OHDUtil::endsWith(m_pipeline_content.str(),"! ")){
-    m_console->warn("Probably ill-formatted pipeline: [{}]",m_pipeline_content.str());
+  if(!OHDUtil::endsWith(pipeline_content.str(), "! ")){
+    m_console->warn("Probably ill-formatted pipeline: [{}]", pipeline_content.str());
   }
   const bool ADD_RECORDING_TO_PIPELINE=
       setting.air_recording==AIR_RECORDING_ON ||
@@ -107,29 +106,29 @@ void GStreamerStream::setup() {
   // for safety we only add the tee command at the right place if recording is enabled.
   if(ADD_RECORDING_TO_PIPELINE){
     m_console->info("Air recording active");
-    m_pipeline_content <<"tee name=t ! ";
+    pipeline_content << "tee name=t ! ";
   }
   // After we've written the parts for the different camera implementation(s) we just need to append the rtp part and the udp out
   // add rtp part
   if(dirty_use_raw){
-    /*m_pipeline_content << OHDGstHelper::create_queue_and_parse(setting.streamed_video_format.videoCodec);
-    m_pipeline_content <<  OHDGstHelper::create_caps_nal(setting.streamed_video_format.videoCodec);
-    m_pipeline_content << " queue ! ";*/
-    m_pipeline_content << OHDGstHelper::createOutputAppSink();
-    /*m_pipeline_content << "video/x-h264,stream-format=byte-stream ! ";
-    m_pipeline_content << OHDGstHelper::createOutputAppSink();*/
+    /*pipeline_content << OHDGstHelper::create_queue_and_parse(setting.streamed_video_format.videoCodec);
+    pipeline_content <<  OHDGstHelper::create_caps_nal(setting.streamed_video_format.videoCodec);
+    pipeline_content << " queue ! ";*/
+    pipeline_content << OHDGstHelper::createOutputAppSink();
+    /*pipeline_content << "video/x-h264,stream-format=byte-stream ! ";
+    pipeline_content << OHDGstHelper::createOutputAppSink();*/
   }else{
     const int rtp_fragment_size=1440;
     m_console->debug("Using {} for rtp fragmentation",rtp_fragment_size);
-    m_pipeline_content << OHDGstHelper::create_parse_and_rtp_packetize(
+    pipeline_content << OHDGstHelper::create_parse_and_rtp_packetize(
         setting.streamed_video_format.videoCodec,rtp_fragment_size);
-    m_pipeline_content << OHDGstHelper::createOutputAppSink();
+    pipeline_content << OHDGstHelper::createOutputAppSink();
   }
   if(ADD_RECORDING_TO_PIPELINE){
     const auto recording_filename=openhd::video::create_unused_recording_filename(
         OHDGstHelper::file_suffix_for_video_codec(setting.streamed_video_format.videoCodec));
     m_console->debug("Using [{}] for recording",recording_filename);
-    m_pipeline_content <<OHDGstHelper::createRecordingForVideoCodec(setting.streamed_video_format.videoCodec,recording_filename);
+    pipeline_content << OHDGstHelper::createRecordingForVideoCodec(setting.streamed_video_format.videoCodec, recording_filename);
     m_opt_curr_recording_filename=recording_filename;
   }else{
     m_opt_curr_recording_filename=std::nullopt;
@@ -143,12 +142,12 @@ void GStreamerStream::setup() {
                                                          (uint16_t )setting.streamed_video_format.height, (uint16_t )setting.streamed_video_format.framerate};
       openhd::LinkActionHandler::instance().set_cam_info(index, cam_info);
   }
-  m_console->debug("Starting pipeline:[{}]",m_pipeline_content.str());
+  m_console->debug("Starting pipeline:[{}]", pipeline_content.str());
   // Protect against unwanted use - stop and free the pipeline first
   assert(m_gst_pipeline == nullptr);
   // Now start the (as a string) built pipeline
   GError *error = nullptr;
-  m_gst_pipeline = gst_parse_launch(m_pipeline_content.str().c_str(), &error);
+  m_gst_pipeline = gst_parse_launch(pipeline_content.str().c_str(), &error);
   m_console->debug("GStreamerStream::setup() end");
   if (error) {
     m_console->error( "Failed to create pipeline: {}",error->message);
