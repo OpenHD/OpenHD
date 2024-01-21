@@ -51,18 +51,20 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
                                                                       get_settings().streamed_video_format.framerate);
         ret.push_back(openhd::Setting{"V_FORMAT",openhd::StringSetting{format_string,c_width_height_framerate}});
     }
+    if(true){
+        auto c_codec=[this](std::string, int value) {
+            return set_video_codec(value);
+        };
+        ret.push_back(openhd::Setting{"VIDEO_CODEC",openhd::IntSetting{video_codec_to_int(get_settings().streamed_video_format.videoCodec), c_codec}});
+    }
   if(true){
       auto c_enable_streaming=[this](std::string,int value) {
           return set_enable_streaming(value);
-      };
-      auto c_codec=[this](std::string, int value) {
-          return set_video_codec(value);
       };
       auto c_recording=[this](std::string,int value) {
           return set_air_recording(value);
       };
       ret.push_back(openhd::Setting{"V_E_STREAMING",openhd::IntSetting{get_settings().enable_streaming,c_enable_streaming}});
-      ret.push_back(openhd::Setting{"VIDEO_CODEC",openhd::IntSetting{video_codec_to_int(get_settings().streamed_video_format.videoCodec), c_codec}});
       ret.push_back(openhd::Setting{"V_AIR_RECORDING",openhd::IntSetting{get_settings().air_recording,c_recording}});
   }
   //if(m_camera.sensor_name!="unknown"){
