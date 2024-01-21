@@ -45,7 +45,6 @@ class OHDVideoAir {
    * settings for camera1 the second
    */
   std::array<std::vector<openhd::Setting>,2> get_all_camera_settings();
-  // r.n only for debugging
   std::vector<openhd::Setting> get_generic_settings();
   // r.n limited to primary and secondary camera
   static constexpr auto MAX_N_CAMERAS=2;
