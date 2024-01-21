@@ -30,7 +30,7 @@ static constexpr auto VIDEO_GROUND_VIDEO_STREAM_1_UDP = 5600;
 static constexpr auto VIDEO_GROUND_VIDEO_STREAM_2_UDP = 5601;
 static_assert(VIDEO_GROUND_VIDEO_STREAM_1_UDP != VIDEO_GROUND_VIDEO_STREAM_2_UDP, "Must be different");
 
-static constexpr auto VERSION_NUMBER_STRING="2.5.3-evo-release";
+static constexpr auto VERSION_NUMBER_STRING="2.5.4-evo-alpha";
 
 // This optional file contains an encryption keypair (up/down).
 // It is generated at first boot if the user specifies a pw during flash.
