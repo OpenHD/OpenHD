@@ -1,7 +1,6 @@
 //
 // Created by consti10 on 03.05.22.
 //
-//#include <openhd-global-constants.hpp>
 #include "ohd_video_air.h"
 
 #include <utility>

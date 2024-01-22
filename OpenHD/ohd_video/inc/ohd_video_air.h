@@ -11,9 +11,9 @@
 #include "ohd_video_air_generic_settings.h"
 #include "openhd_platform.h"
 #include "openhd_spdlog.h"
-#include "openhd_external_device.h"
 #include "openhd_link.hpp"
 #include "openhd_udp.h"
+#include "openhd_external_device.h"
 
 /**
  * Main entry point for OpenHD video streaming for discovered cameras on the air unit.

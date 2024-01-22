@@ -6,8 +6,8 @@
 #define OPENHD_OPENHD_OHD_VIDEO_INC_OHD_VIDEO_GROUND_H_
 
 #include "openhd_udp.h"
-#include "openhd_external_device.h"
 #include "openhd_link.hpp"
+#include "openhd_external_device.h"
 
 // The ground just stupidly forwards video (rtp fragments, to be exact) via UDP
 // for QOpenHD and/or more device(s) to decode and display.
