@@ -507,24 +507,6 @@ static std::string createV4l2SrcRawAndSwEncodeStream(
   ss<<createSwEncoder(settings);
   return ss.str();
 }
-
-/**
- * This one is for v4l2src cameras that outputs already encoded video.
- */
-static std::string createV4l2SrcAlreadyEncodedStream(
-    const std::string &device_node, const CameraSettings& settings) {
-  std::stringstream ss;
-  ss << fmt::format("v4l2src device={} ! ", device_node);
-  const auto video_codec=settings.streamed_video_format.videoCodec;
-  if (video_codec == VideoCodec::H264) {
-      ss << "video/x-h264";
-  } else if (video_codec == VideoCodec::H265) {
-      ss<<"video/x-h265";
-  }
-  ss<< gst_v4l2_width_height_fps_unless_omit(settings);
-  ss<<" ! ";
-  return ss.str();
-}
 // ------------- crateXXXStream end  -------------
 
 /**
