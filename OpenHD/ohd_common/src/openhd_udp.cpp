@@ -2,12 +2,12 @@
 // Created by consti10 on 22.01.24.
 //
 #include "openhd_udp.h"
+#include "openhd_spdlog.h"
 #include <algorithm>
 #include <sstream>
 #include <cstring>
 #include <arpa/inet.h>
-#include <csignal>
-#include "openhd_spdlog.h"
+#include <unistd.h>
 
 static std::shared_ptr<spdlog::logger> get_console(){
     return openhd::log::create_or_get("UDP");
