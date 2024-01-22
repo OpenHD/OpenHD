@@ -13,8 +13,6 @@
 #include "openhd_spdlog.h"
 #include "openhd_external_device.h"
 #include "openhd_link.hpp"
-// Dirty
-#include "openhd-rpi-os-configure-vendor-cam.hpp"
 #define DIRTY_CONSOLE_FROM_OPENHD_SUBMODULES
 #include "../../lib/wifibroadcast/src/HelperSources/SocketHelper.hpp"
 
@@ -57,8 +55,6 @@ class OHDVideoAir {
   std::shared_ptr<OHDLink> m_link_handle;
   // r.n only for multi camera support
   std::unique_ptr<AirCameraGenericSettingsHolder> m_generic_settings;
-  // dirty / annoying. Interacts heavily with the OS aka can break QOpenHD
-  std::unique_ptr<openhd::rpi::os::ConfigChangeHandler> m_rpi_os_change_config_handler=nullptr;
  private:
   // Add a CameraStream for a discovered camera.
   void configure(const std::shared_ptr<CameraHolder>& camera);

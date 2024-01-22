@@ -53,10 +53,6 @@ OHDVideoAir::OHDVideoAir(OHDPlatform platform1,std::vector<XCamera> cameras,
           this->update_arming_state(armed);
     };
     openhd::ArmingStateHelper::instance().register_listener("ohd_video_air",cb_armed);
-
-  if(m_platform.platform_type==PlatformType::RaspberryPi){
-    m_rpi_os_change_config_handler=std::make_unique<openhd::rpi::os::ConfigChangeHandler>(m_platform);
-  }
   // On air, we start forwarding video (UDP) to all connected external device(s)
   openhd::ExternalDeviceManager::instance().register_listener([this](openhd::ExternalDevice external_device,bool connected){
     start_stop_forwarding_external_device(external_device,connected);

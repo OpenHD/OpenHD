@@ -11,7 +11,7 @@
 #include <regex>
 
 #include "camera.hpp"
-#include "libcamera_detect.hpp"
+//#include "libcamera_detect.hpp"
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"
 
