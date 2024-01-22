@@ -16,7 +16,7 @@ UDPEndpoint2::UDPEndpoint2(const std::string &TAG,int senderPort,int receiverPor
   const auto cb = [this](const uint8_t *payload, const std::size_t payloadSize)mutable {
     this->parseNewData(payload, (int)payloadSize);
   };
-  m_receiver_sender = std::make_unique<SocketHelper::UDPReceiver>(RECV_IP, RECV_PORT, cb);
+  m_receiver_sender = std::make_unique<openhd::UDPReceiver>(RECV_IP, RECV_PORT, cb);
   m_receiver_sender->runInBackground();
 }
 

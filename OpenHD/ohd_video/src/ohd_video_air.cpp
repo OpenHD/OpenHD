@@ -21,8 +21,8 @@ OHDVideoAir::OHDVideoAir(OHDPlatform platform1,std::vector<XCamera> cameras,
   assert(m_console);
   assert(!cameras.empty());
   m_console->debug("OHDVideo::OHDVideo()");
-  m_primary_video_forwarder = std::make_unique<SocketHelper::UDPMultiForwarder>();
-  m_secondary_video_forwarder = std::make_unique<SocketHelper::UDPMultiForwarder>();
+  m_primary_video_forwarder = std::make_unique<openhd::UDPMultiForwarder>();
+  m_secondary_video_forwarder = std::make_unique<openhd::UDPMultiForwarder>();
   if(cameras.size()>MAX_N_CAMERAS){
     m_console->warn("More than {} cameras, dropping cameras",MAX_N_CAMERAS);
     cameras.resize(MAX_N_CAMERAS);

@@ -7,9 +7,7 @@
 
 #include <map>
 #include <thread>
-// dirty, pull in header only
-#define DIRTY_CONSOLE_FROM_OPENHD_SUBMODULES
-#include "../../../lib/wifibroadcast/src/HelperSources/SocketHelper.hpp"
+#include "openhd_udp.h"
 #include "MEndpoint.h"
 
 /**
@@ -22,7 +20,7 @@
 class UDPEndpoint2 : public MEndpoint {
  public:
   UDPEndpoint2(const std::string& TAG,int senderPort, int receiverPort,
-			  std::string senderIp=SocketHelper::ADDRESS_LOCALHOST,std::string receiverIp=SocketHelper::ADDRESS_LOCALHOST);
+			  std::string senderIp=openhd::ADDRESS_LOCALHOST,std::string receiverIp=openhd::ADDRESS_LOCALHOST);
   ~UDPEndpoint2();
   // Delete copy and move
   UDPEndpoint2(const UDPEndpoint2&)=delete;
@@ -37,7 +35,7 @@ class UDPEndpoint2 : public MEndpoint {
   const int SEND_PORT;
   const std::string RECV_IP;
   const int RECV_PORT;
-  std::unique_ptr<SocketHelper::UDPReceiver> m_receiver_sender;
+  std::unique_ptr<openhd::UDPReceiver> m_receiver_sender;
   //
   std::mutex m_sender_mutex;
   std::map<std::string,void*> m_other_dest_ips{};

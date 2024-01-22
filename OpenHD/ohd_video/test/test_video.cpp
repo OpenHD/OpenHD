@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
 
   auto cameras=OHDVideoAir::discover_cameras(*platform);
 
-  auto forwarder=SocketHelper::UDPForwarder("127.0.0.1",5600);
+  auto forwarder=openhd::UDPForwarder("127.0.0.1",5600);
   auto cb=[&forwarder](int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame){
       for(auto& fragemnt: fragmented_video_frame.rtp_fragments){
         forwarder.forwardPacketViaUDP(fragemnt->data(),fragemnt->size());

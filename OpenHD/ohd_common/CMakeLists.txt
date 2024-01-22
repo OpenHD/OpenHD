@@ -43,6 +43,7 @@ set(sources
         "src/openhd_util_async.cpp"
     "src/openhd_external_device.cpp"
     "src/openhd_action_handler.cpp"
+    "src/openhd_udp.cpp"
     )
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
 

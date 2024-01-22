@@ -11,6 +11,7 @@
 #include <netinet/ip.h>
 
 #include "openhd_external_device.h"
+#include <queue>
 
 // Simple TCP Mavlink server
 // Really nice tutorial: https://www.geeksforgeeks.org/socket-programming-in-cc-handling-multiple-clients-on-server-without-multi-threading/

@@ -14,8 +14,6 @@
 
 #include "../mav_helper.h"
 #include "../mav_include.h"
-// dirty, pull in header only
-#include "../../../lib/wifibroadcast/src/HelperSources/TimeHelper.hpp"
 #include "openhd_spdlog.h"
 
 // Mavlink Endpoint
@@ -63,7 +61,6 @@ class MEndpoint {
   [[nodiscard]] std::string createInfo()const;
   // can be public since immutable
   const std::string TAG;
-  std::string get_tx_rx_stats();
  protected:
   // parse new data as it comes in, extract mavlink messages and forward them on the registered callback (if it has been registered)
   void parseNewData(const uint8_t *data,int data_len);
@@ -94,8 +91,6 @@ class MEndpoint {
   // Used to measure incoming / outgoing bits per second
   int m_tx_n_bytes=0;
   int m_rx_n_bytes=0;
-  BitrateCalculator m_tx_calc{};
-  BitrateCalculator m_rx_calc{};
  private:
   const bool m_debug_mavlink_msg_packet_loss;
   mavlink_status_t m_last_status;

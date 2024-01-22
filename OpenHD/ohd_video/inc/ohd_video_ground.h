@@ -5,8 +5,7 @@
 #ifndef OPENHD_OPENHD_OHD_VIDEO_INC_OHD_VIDEO_GROUND_H_
 #define OPENHD_OPENHD_OHD_VIDEO_INC_OHD_VIDEO_GROUND_H_
 
-#define DIRTY_CONSOLE_FROM_OPENHD_SUBMODULES
-#include "../../lib/wifibroadcast/src/HelperSources/SocketHelper.hpp"
+#include "openhd_udp.h"
 #include "openhd_external_device.h"
 #include "openhd_link.hpp"
 
@@ -31,8 +30,8 @@ class OHDVideoGround{
  private:
   std::shared_ptr<spdlog::logger> m_console;
   std::shared_ptr<OHDLink> m_link_handle;
-  std::unique_ptr<SocketHelper::UDPMultiForwarder> m_primary_video_forwarder;
-  std::unique_ptr<SocketHelper::UDPMultiForwarder> m_secondary_video_forwarder;
+  std::unique_ptr<openhd::UDPMultiForwarder> m_primary_video_forwarder;
+  std::unique_ptr<openhd::UDPMultiForwarder> m_secondary_video_forwarder;
   /**
    * Forward video to all device(s) consuming video.
    * Called by the ohd link handle (aka only wb right now)

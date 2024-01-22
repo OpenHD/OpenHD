@@ -13,8 +13,7 @@
 #include "openhd_spdlog.h"
 #include "openhd_external_device.h"
 #include "openhd_link.hpp"
-#define DIRTY_CONSOLE_FROM_OPENHD_SUBMODULES
-#include "../../lib/wifibroadcast/src/HelperSources/SocketHelper.hpp"
+#include "openhd_udp.h"
 
 /**
  * Main entry point for OpenHD video streaming for discovered cameras on the air unit.
@@ -66,8 +65,8 @@ class OHDVideoAir {
   // but we allow user(s) to connect to the air unit via mavlink TCP directly,
   // in which case we start forwarding of video data to the device.
   void start_stop_forwarding_external_device(openhd::ExternalDevice external_device,bool connected);
-  std::unique_ptr<SocketHelper::UDPMultiForwarder> m_primary_video_forwarder= nullptr;
-  std::unique_ptr<SocketHelper::UDPMultiForwarder> m_secondary_video_forwarder= nullptr;
+  std::unique_ptr<openhd::UDPMultiForwarder> m_primary_video_forwarder= nullptr;
+  std::unique_ptr<openhd::UDPMultiForwarder> m_secondary_video_forwarder= nullptr;
   // Optimization for 0 overhead on air when not enabled
   std::atomic_bool m_has_localhost_forwarding_enabled=false;
   //

@@ -80,12 +80,6 @@ void MEndpoint::onNewMavlinkMessages(std::vector<MavlinkMessage> messages) {
   }
 }
 
-std::string MEndpoint::get_tx_rx_stats() {
-  return fmt::format("Tx bps:{} Rx bps:{}",
-                     m_tx_calc.get_last_or_recalculate(m_tx_n_bytes,std::chrono::seconds(1)),
-                     m_rx_calc.get_last_or_recalculate(m_rx_n_bytes,std::chrono::seconds(1)));
-}
-
 int MEndpoint::checkoutFreeChannel() {
     static std::mutex _channels_used_mutex;
     static int channel_idx=0;

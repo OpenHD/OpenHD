@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <csignal>
 #include <utility>
+#include <queue>
 
 #include "openhd_util.h"
 
