@@ -1,8 +1,10 @@
 rpi:
-openhd@raspberrypi:~/Open.HD/OpenHD/build $ v4l2-ctl -d 11 --list-ctrls-menu
+openhd@openhd:~/OpenHD/OpenHD/build_debug $ sudo v4l2-ctl -d 11 --list-ctrls-menu
 
 Codec Controls
 
+                 video_b_frames 0x009909ca (int)    : min=0 max=0 step=1 default=0 value=0 flags=update
+                 video_gop_size 0x009909cb (int)    : min=0 max=2147483647 step=1 default=60 value=60
              video_bitrate_mode 0x009909ce (menu)   : min=0 max=1 default=0 value=0 flags=update
 				0: Variable Bitrate
 				1: Constant Bitrate
@@ -37,6 +39,7 @@ Codec Controls
 				1: Constrained Baseline
 				2: Main
 				4: High
+
 
 // -----------------------
 openhd@raspberrypi:~/Open.HD/OpenHD/build $ gst-inspect-1.0 v4l2h264enc

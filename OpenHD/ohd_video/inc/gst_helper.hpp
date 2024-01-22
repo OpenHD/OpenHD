@@ -540,5 +540,20 @@ static std::string create_input_custom_udp_rtp_port(const CameraSettings& settin
   return ss.str();
 }
 
+static std::string createDummyStreamRPI(const CameraSettings& settings) {
+    std::stringstream ss;
+    ss << "videotestsrc name=videotestsrc ! ";
+    // h265 cannot do NV12, but I420.
+    // x264 can do both NV12 and I420
+    // so we use I420 here since every SW encoder can do it.
+    ss << fmt::format(
+            "video/x-raw, format=I420,width={},height={},framerate={}/1 ! ",
+            settings.streamed_video_format.width, settings.streamed_video_format.height, settings.streamed_video_format.framerate);
+    // since the primary purpose here is testing, use sw encoder, which is always guaranteed to work
+    //ss << createSwEncoder(settings);
+    ss << create_rpi_v4l2_h264_encoder(settings);
+    return ss.str();
+}
+
 }  // namespace OHDGstHelper
 #endif  // OPENHD_OHDGSTHELPER_H
