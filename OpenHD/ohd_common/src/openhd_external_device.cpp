@@ -3,6 +3,10 @@
 //
 
 #include "openhd_external_device.h"
+#include "openhd_settings_directories.hpp"
+#include "openhd_spdlog.h"
+#include "openhd_util.h"
+#include "openhd_config.h"
 
 openhd::ExternalDeviceManager::ExternalDeviceManager() {
     // Here one can manually declare any IP addresses openhd should forward video / telemetry to
@@ -88,3 +92,18 @@ void openhd::ExternalDeviceManager::remove_all() {
     console->debug("removing all devices - end");
 }
 
+std::string openhd::ExternalDevice::to_string() const {
+    //return fmt::format("ExternalDevice {} [local:[{}] remote:[{}]]",tag,local_network_ip,external_device_ip);
+    return fmt::format("ExternalDevice {} remote:[{}]]",tag,external_device_ip);
+}
+
+bool openhd::ExternalDevice::is_valid() const {
+    //return OHDUtil::is_valid_ip(local_network_ip) && OHDUtil::is_valid_ip(external_device_ip);
+    return OHDUtil::is_valid_ip(external_device_ip);
+}
+
+std::string openhd::ExternalDevice::create_identifier() const {
+    assert(is_valid());
+    //return local_network_ip + "_" + external_device_ip;
+    return external_device_ip;
+}

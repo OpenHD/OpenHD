@@ -7,11 +7,9 @@
 
 #include <map>
 #include <string>
-
-#include "openhd_settings_directories.hpp"
-#include "openhd_spdlog.h"
-#include "openhd_util.h"
-#include "openhd_config.h"
+#include <mutex>
+#include <vector>
+#include <functional>
 
 namespace openhd {
 
@@ -40,20 +38,10 @@ struct ExternalDevice {
   // We have slightly different forwarding behaviour in this case
   bool discovered_by_mavlink_tcp_server= false;
   // returns true if both IP addresses are valid
-  [[nodiscard]] bool is_valid() const {
-    //return OHDUtil::is_valid_ip(local_network_ip) && OHDUtil::is_valid_ip(external_device_ip);
-    return OHDUtil::is_valid_ip(external_device_ip);
-  }
+  [[nodiscard]] bool is_valid() const;
   // For when using a map of external device(s)
-  [[nodiscard]] std::string create_identifier() const {
-    assert(is_valid());
-    //return local_network_ip + "_" + external_device_ip;
-    return external_device_ip;
-  }
-  [[nodiscard]] std::string to_string()const{
-    //return fmt::format("ExternalDevice {} [local:[{}] remote:[{}]]",tag,local_network_ip,external_device_ip);
-    return fmt::format("ExternalDevice {} remote:[{}]]",tag,external_device_ip);
-  }
+  [[nodiscard]] std::string create_identifier() const;
+  [[nodiscard]] std::string to_string()const;
 };
 
 // connected=true: A new external device uniquely indexed by "IP address" has been detected - start forwarding of ohd video and telemetry data
