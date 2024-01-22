@@ -79,8 +79,8 @@ std::string GStreamerStream::create_source_encode_pipeline(const CameraHolder &c
     }else if(camera.camera_type==X_CAM_TYPE_USB){
         pipeline<<OHDGstHelper::createV4l2SrcRawAndSwEncodeStream(camera.usb_v4l2_device_node,setting);
     }else if(camera.camera_type==X_CAM_TYPE_DUMMY_SW){
+        pipeline<<OHDGstHelper::createDummyStreamRPI(setting);
         //pipeline<<OHDGstHelper::createDummyStreamRPI(setting);
-        pipeline<<OHDGstHelper::createDummyStream(setting);
     }else if(camera.camera_type==X_CAM_TYPE_EXTERNAL || camera.camera_type==X_CAM_TYPE_EXTERNAL_IP){
         pipeline<<OHDGstHelper::create_input_custom_udp_rtp_port(setting);
     }else{
