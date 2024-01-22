@@ -5,8 +5,6 @@
 #ifndef OPENHD_OPENHD_UDP_H
 #define OPENHD_OPENHD_UDP_H
 
-
-// UDP Stuff
 #include <string>
 #include <netinet/in.h>
 #include <memory>
@@ -16,6 +14,9 @@
 #include <functional>
 #include <thread>
 
+//
+// openhd UDP helpers
+//
 namespace openhd{
 // Wrapper around an UDP port you can send data to
 // opens port on construction, closes port on destruction
