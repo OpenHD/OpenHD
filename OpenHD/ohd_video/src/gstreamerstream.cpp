@@ -72,10 +72,10 @@ std::string GStreamerStream::create_source_encode_pipeline(const CameraHolder &c
         if(camera.camera_type==X_CAM_TYPE_ROCK_HDMI_IN){
             //pipeline<<OHDGstHelper::createRockchipHDMIStream(false,)
         }else{
-            pipeline<<OHDGstHelper::createRockchipCSIStream(false, setting.h26x_bitrate_kbits, setting.camera_rotation_degree, setting.streamed_video_format, setting.recordingFormat, setting.h26x_keyframe_interval);
+            pipeline<<OHDGstHelper::createRockchipCSIStream(setting);
         }
     }else if(camera.requires_x20_cedar_pipeline()){
-        pipeline<<OHDGstHelper::createAllwinnerStream(0,setting.h26x_bitrate_kbits, setting.streamed_video_format, setting.h26x_keyframe_interval);
+        pipeline<<OHDGstHelper::createAllwinnerStream(setting);
     }else if(camera.camera_type==X_CAM_TYPE_USB){
         pipeline<<OHDGstHelper::createV4l2SrcRawAndSwEncodeStream(camera.usb_v4l2_device_node,setting);
     }else if(camera.camera_type==X_CAM_TYPE_DUMMY_SW){

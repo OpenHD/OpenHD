@@ -22,21 +22,6 @@
  * with '! '. This way we avoid syntax errors.
  */
 namespace OHDGstHelper {
-
-// These most basic params are supported on pretty much any platform / every good encoder implementation
-struct CommonEncoderParams{
-  VideoCodec videoCodec;
-  // For h264/h265 only. MJPEG in general only supports a "quality" param, not bitrate(s)
-  int h26X_bitrate_kbits;
-  // For h264/h265 only, often also called key-int-max or similar.
-  int h26X_keyframe_interval;
-};
-
-static CommonEncoderParams extract_common_encoder_params(const CameraSettings& settings){
-  return {.videoCodec=settings.streamed_video_format.videoCodec,.h26X_bitrate_kbits=settings.h26x_bitrate_kbits,
-  .h26X_keyframe_interval=settings.h26x_keyframe_interval};
-}
-
 /**
  * Check if we can find gstreamer at run time, throw a runtime error if not.
  */
@@ -50,9 +35,8 @@ static void initGstreamerOrThrow() {
 }
 
 static std::string createCiscoH264SwEncoder(const CameraSettings& settings){
-    const auto common_encoder_params= extract_common_encoder_params(settings);
     return fmt::format("openh264enc name=swencoder complexity=low bitrate={} num-slices=4 slice-mode=1 rate-control=bitrate gop-size={} !",
-                       kbits_to_bits_per_second(common_encoder_params.h26X_bitrate_kbits),
+                       kbits_to_bits_per_second(settings.h26x_bitrate_kbits),
                        //settings.h26x_num_slices,
                        settings.h26x_keyframe_interval);
 }
@@ -60,9 +44,8 @@ static std::string createCiscoH264SwEncoder(const CameraSettings& settings){
 // SW encoding is slow, but should work on all platforms (at least for low resolutions/framerate(s) )
 // Note that not every sw encoder accepts every type of input format - I420 seems to work for all of them though.
 static std::string createSwEncoder(const CameraSettings& settings){
-  const auto common_encoder_params= extract_common_encoder_params(settings);
   std::stringstream ss;
-  if(common_encoder_params.videoCodec==VideoCodec::H264){
+  if(settings.streamed_video_format.videoCodec==VideoCodec::H264){
 #ifdef EXPERIMENTAL_USE_OPENH264_ENCODER
     ss<<createCiscoH264SwEncoder(settings);
 #else
@@ -72,12 +55,12 @@ static std::string createSwEncoder(const CameraSettings& settings){
     // on x86 2 threads / cores are enough for sw encode of most resolutions anyways.
     // NOTE: While not exactly true, latency is ~ as many frame(s) as there are threads, aka 2 frames for 2 threads
     ss<<fmt::format("x264enc name=swencoder bitrate={} speed-preset=ultrafast  tune=zerolatency key-int-max={} sliced-threads=false threads=2 intra-refresh={} dct8x8=true ! ",
-                      common_encoder_params.h26X_bitrate_kbits,common_encoder_params.h26X_keyframe_interval,settings.h26x_intra_refresh_type<0 ? "false" : "true");
+                      settings.h26x_bitrate_kbits,settings.h26x_keyframe_interval,settings.h26x_intra_refresh_type<0 ? "false" : "true");
 #endif
-  }else if(common_encoder_params.videoCodec==VideoCodec::H265){
+  }else if(settings.streamed_video_format.videoCodec==VideoCodec::H265){
     //TODO: jetson sw encoder (x265enc) is so old it doesn't have the key-int-max param
     ss<<fmt::format("x265enc name=swencoder bitrate={} speed-preset=ultrafast tune=zerolatency key-int-max={} ! ",
-                      common_encoder_params.h26X_bitrate_kbits,common_encoder_params.h26X_keyframe_interval);
+                    settings.h26x_bitrate_kbits,settings.h26x_keyframe_interval);
   }
   return ss.str();
 }
@@ -366,39 +349,22 @@ static std::string create_veye_vl2_stream(const CameraSettings& settings,const s
 /**
 We could also make the qp variable variable is kinda weird, low means high quality, high means low quality, it's also interfearing with the bitrate and makes everything panic sometimes ...
 */
-static std::string createRockchipEncoderPipeline(const int width, const int height, int rotate_degrees, const CommonEncoderParams& encoder_params){
+static std::string createRockchipEncoderPipeline(const CameraSettings& settings){
   std::stringstream ss;
-  const int bps = kbits_to_bits_per_second(encoder_params.h26X_bitrate_kbits);
-  if(encoder_params.videoCodec==VideoCodec::H264){
+  const int bps = kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
+  if(settings.streamed_video_format.videoCodec==VideoCodec::H264){
     ss<<"mpph264enc rc-mode=cbr qp-min=1 qp-max=1 bps="<<bps;
-    ss<<" width="<<width;
-    ss<<" height="<<height;
-    ss<<" rotation="<<rotate_degrees;
-    ss<<" gop="<<encoder_params.h26X_keyframe_interval<<" ! ";
-  }else if(encoder_params.videoCodec==VideoCodec::H265){
+    ss<<" width="<<settings.streamed_video_format.width;
+    ss<<" height="<<settings.streamed_video_format.height;
+    ss<<" rotation="<<settings.camera_rotation_degree;
+    ss<<" gop="<<settings.h26x_keyframe_interval<<" ! ";
+  }else{
     ss<<"mpph265enc rc-mode=cbr qp-min=48 qp-max=26 bps="<<bps;
-    ss<<" width="<<width;
-    ss<<" height="<<height;
-    ss<<" rotation="<<rotate_degrees;
-    ss<<" gop="<<encoder_params.h26X_keyframe_interval<<" ! ";
+    ss<<" width="<<settings.streamed_video_format.width;
+    ss<<" height="<<settings.streamed_video_format.height;
+    ss<<" rotation="<<settings.camera_rotation_degree;
+    ss<<" gop="<<settings.h26x_keyframe_interval<<" ! ";
   }
-  return ss.str();
-}
-
-static std::string createRockchipRecordingPipeline(const int width, const int height, const CommonEncoderParams& encoder_params){
-  std::stringstream ss;
-  const int bps = kbits_to_bits_per_second(encoder_params.h26X_bitrate_kbits);
-  ss<<"tee name=o ! ";
-  if(encoder_params.videoCodec==VideoCodec::H264){
-    ss<<"mpph264enc rc-mode=0 bps="<<bps;
-    ss<<" width="<<width;
-    ss<<" height="<<height;
-  }else if(encoder_params.videoCodec==VideoCodec::H265){
-    ss<<"mpph265enc rc-mode=0 bps="<<bps;
-    ss<<" width="<<width;
-    ss<<" height="<<height;
-  }
-  ss<<" name=t o. ! ";
   return ss.str();
 }
 
@@ -409,38 +375,24 @@ static std::string createRockchipV4L2Pipeline(const int video_dev, const int fra
   return ss.str();
 }
 
-static std::string createRockchipHDMIStream(
-  bool recording,
-  const int bitrateKBits,
-  const VideoFormat videoFormat,
-  const VideoFormat recordingFormat,
-  const int keyframe_interval
-) {
+static std::string createRockchipHDMIStream(const CameraSettings& settings) {
   std::stringstream ss;
-  ss<<createRockchipV4L2Pipeline(0, videoFormat.framerate);
-  if(recording) ss<<createRockchipRecordingPipeline(recordingFormat.width, recordingFormat.height, {recordingFormat.videoCodec, bitrateKBits, keyframe_interval});
-  ss<<createRockchipEncoderPipeline(videoFormat.width, videoFormat.height, 0, {videoFormat.videoCodec, bitrateKBits, keyframe_interval});
+  ss<<createRockchipV4L2Pipeline(0, settings.streamed_video_format.framerate);
+  ss<<createRockchipEncoderPipeline(settings);
   return ss.str();
 }
 
-static std::string createRockchipCSIStream(
-  bool recording,
-  const int bitrateKBits,
-  int rotate_degrees,
-  const VideoFormat videoFormat,
-  const VideoFormat recordingFormat,
-  const int keyframe_interval
-) {
+static std::string createRockchipCSIStream(const CameraSettings& settings) {
   std::stringstream ss;
-  ss<<createRockchipV4L2Pipeline(11, videoFormat.framerate);
-  if(recording) ss<<createRockchipRecordingPipeline(recordingFormat.width, recordingFormat.height, {recordingFormat.videoCodec, bitrateKBits, keyframe_interval});
-  ss<<createRockchipEncoderPipeline(videoFormat.width, videoFormat.height, rotate_degrees, {videoFormat.videoCodec, bitrateKBits, keyframe_interval});
+  ss<<createRockchipV4L2Pipeline(11, settings.streamed_video_format.framerate);
+  ss<<createRockchipEncoderPipeline(settings);
   return ss.str();
 }
 
 /**
  * Creates stream for Allwinner camera (v4l2)
- * @param sensor_id sensor id 
+ * @param sensor_id sensor id
+ * OBSOLETE !
  */
 static std::string createAllwinnerSensorPipeline(const int sensor_id,const int width,const int height,const int framerate){
   std::stringstream ss;
@@ -453,23 +405,20 @@ static std::string createAllwinnerSensorPipeline(const int sensor_id,const int w
 }
 
 // using cedar (closed source) HW acceleration.
-static std::string createAllwinnerEncoderPipeline(const CommonEncoderParams& common_encoder_params){
+static std::string createAllwinnerEncoderPipeline(const CameraSettings& settings){
   std::stringstream ss;
-    assert(common_encoder_params.videoCodec==VideoCodec::H264);
-    ss << "sunxisrc name=sunxisrc bitrate=" << common_encoder_params.h26X_bitrate_kbits <<
-    " keyint=" << common_encoder_params.h26X_keyframe_interval << " !  video/x-h264 ! ";
+    assert(settings.streamed_video_format.videoCodec==VideoCodec::H264);
+    ss << "sunxisrc name=sunxisrc bitrate=" << settings.h26x_bitrate_kbits <<
+    " keyint=" << settings.h26x_keyframe_interval << " !  video/x-h264 ! ";
   return ss.str();
 }
 
 /**
  * Create a encoded stream for the allwinner, which is fully hardware accelerated
  */
-static std::string createAllwinnerStream(const int sensor_id,
-                                      const int bitrateKBits,
-                                      const VideoFormat videoFormat,
-                                      const int keyframe_interval) {
+static std::string createAllwinnerStream(const CameraSettings& settings) {
   std::stringstream ss;
-  ss<<createAllwinnerEncoderPipeline({videoFormat.videoCodec,bitrateKBits,keyframe_interval});
+  ss<<createAllwinnerEncoderPipeline(settings);
   return ss.str();
 }
 
