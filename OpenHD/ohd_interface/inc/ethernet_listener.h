@@ -8,6 +8,7 @@
 #include <atomic>
 #include <memory>
 #include <openhd_external_device.h>
+#include "openhd_spdlog.h"
 #include <thread>
 
 // Same/Similar pattern as usb_tether_listener.h

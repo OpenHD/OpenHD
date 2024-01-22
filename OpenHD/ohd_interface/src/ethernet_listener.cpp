@@ -7,6 +7,7 @@
 #include <utility>
 
 #include "ethernet_helper.hpp"
+#include "openhd_util.h"
 
 EthernetListener::EthernetListener(std::string device):
 m_device(std::move(device)){

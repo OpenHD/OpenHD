@@ -14,6 +14,7 @@
 
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"
+#include "openhd_spdlog.h"
 
 /**
  * USB hotspot (USB Tethering).
