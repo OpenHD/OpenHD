@@ -39,7 +39,6 @@ class TCPEndpoint : public MEndpoint {
   void loop_accept();
   bool sendMessagesImpl(const std::vector<MavlinkMessage>& messages) override;
   void send_message_to_all_clients(const uint8_t* data,int data_len);
-  std::mutex m_external_devices_mutex;
   void on_external_device(std::string ip,bool connected);
 private:
     struct ConnectedClient{
