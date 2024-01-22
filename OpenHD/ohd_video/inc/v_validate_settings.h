@@ -151,7 +151,7 @@ static std::optional<TmpVideoFormat> parse_video_format(const std::string& video
   std::smatch result;
   if (std::regex_search(videoFormat, result, reg)) {
 	if (result.size() == 4) {
-	  openhd::log::get_default()->debug("result[0]=["+result[0].str()+"]");
+	  //openhd::log::get_default()->debug("result[0]=["+result[0].str()+"]");
 	  tmp_video_format.width_px=atoi(result[1].str().c_str());
 	  tmp_video_format.height_px=atoi(result[2].str().c_str());
 	  tmp_video_format.framerate=atoi(result[3].str().c_str());
