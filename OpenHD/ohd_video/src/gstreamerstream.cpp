@@ -70,7 +70,7 @@ std::string GStreamerStream::create_source_encode_pipeline(const CameraHolder &c
         pipeline<<OHDGstHelper::create_veye_vl2_stream(setting,bus);
     }else if(camera.requires_rockchip_mpp_pipeline()){
         if(camera.camera_type==X_CAM_TYPE_ROCK_HDMI_IN){
-            //pipeline<<OHDGstHelper::createRockchipHDMIStream(false,)
+            pipeline<<OHDGstHelper::createRockchipHDMIStream(setting);
         }else{
             pipeline<<OHDGstHelper::createRockchipCSIStream(setting);
         }

@@ -353,13 +353,13 @@ static std::string createRockchipEncoderPipeline(const CameraSettings& settings)
   std::stringstream ss;
   const int bps = kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
   if(settings.streamed_video_format.videoCodec==VideoCodec::H264){
-    ss<<"mpph264enc rc-mode=cbr qp-min=1 qp-max=1 bps="<<bps;
+    ss<<"mpph264enc rc-mode=cbr qp-min=10 qp-max=52 bps="<<bps;
     ss<<" width="<<settings.streamed_video_format.width;
     ss<<" height="<<settings.streamed_video_format.height;
     ss<<" rotation="<<settings.camera_rotation_degree;
     ss<<" gop="<<settings.h26x_keyframe_interval<<" ! ";
   }else{
-    ss<<"mpph265enc rc-mode=cbr qp-min=48 qp-max=26 bps="<<bps;
+    ss<<"mpph265enc rc-mode=cbr qp-min=10 qp-max=52 bps="<<bps;
     ss<<" width="<<settings.streamed_video_format.width;
     ss<<" height="<<settings.streamed_video_format.height;
     ss<<" rotation="<<settings.camera_rotation_degree;
