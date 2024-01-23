@@ -139,10 +139,10 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings(){
     };
     ret.push_back(openhd::Setting{"ETH_PASSIVE_F",openhd::IntSetting{settings.ethernet_nonhotspot_enable_auto_forwarding,cb_enable}});
   }
-  if(m_opt_hotspot_card){
+ /* if(m_opt_hotspot_card){
     auto setting=openhd::create_read_only_string(fmt::format("HOTSPOT_CARD"), wifi_card_type_to_string(m_opt_hotspot_card.value().type));
     ret.emplace_back(setting);
-  }
+  }*/
   if(!m_profile.is_air){
     //openhd::testing::append_dummy_int_and_string(ret);
   }
