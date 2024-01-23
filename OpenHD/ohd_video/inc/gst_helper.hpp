@@ -7,6 +7,7 @@
 
 #include "openhd_spdlog.h"
 #include "openhd_bitrate_conversions.hpp"
+#include "openhd_platform.h"
 #include <gst/gst.h>
 
 #include <sstream>
@@ -540,7 +541,8 @@ static std::string create_input_custom_udp_rtp_port(const CameraSettings& settin
   return ss.str();
 }
 
-static std::string createDummyStreamRPI(const CameraSettings& settings) {
+// Dummy stream using the HW encoder
+static std::string createDummyStreamX(const OHDPlatform& platform,const CameraSettings& settings) {
     std::stringstream ss;
     ss << "videotestsrc name=videotestsrc ! ";
     // h265 cannot do NV12, but I420.
@@ -549,9 +551,19 @@ static std::string createDummyStreamRPI(const CameraSettings& settings) {
     ss << fmt::format(
             "video/x-raw, format=I420,width={},height={},framerate={}/1 ! ",
             settings.streamed_video_format.width, settings.streamed_video_format.height, settings.streamed_video_format.framerate);
+    if(settings.force_sw_encode){
+        ss << createSwEncoder(settings);
+    }else{
+        if(platform.platform_type==PlatformType::RaspberryPi){
+            ss << create_rpi_v4l2_h264_encoder(settings);
+        }else if(platform.platform_type==PlatformType::Rockchip){
+            ss << createRockchipEncoderPipeline(settings);
+        }else{
+            ss << createSwEncoder(settings);
+        }
+    }
     // since the primary purpose here is testing, use sw encoder, which is always guaranteed to work
     //ss << createSwEncoder(settings);
-    ss << create_rpi_v4l2_h264_encoder(settings);
     return ss.str();
 }
 
