@@ -66,6 +66,4 @@ struct OHDPlatform {
 // We need to differentiate between rpi 4 and other pi's to use the right fec params.
 bool platform_rpi_is_high_performance(const OHDPlatform& platform);
 
-void write_platform_manifest(const OHDPlatform &ohdPlatform);
-
 #endif

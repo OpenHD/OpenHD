@@ -209,21 +209,19 @@ static OHDPlatform internal_discover(){
   return OHDPlatform(res5.first,res5.second);
 }
 
+static void write_platform_manifest(const OHDPlatform& ohdPlatform) {
+    std::stringstream ss;
+    ss<<"Platform:"<<platform_type_to_string(ohdPlatform.platform_type)<<"\n";
+    ss<<"Board type:"<<board_type_to_string(ohdPlatform.board_type)<<"\n";
+    static constexpr auto PLATFORM_MANIFEST_FILENAME = "/tmp/platform_manifest.txt";
+    OHDFilesystemUtil::write_file(PLATFORM_MANIFEST_FILENAME,ss.str());
+}
 
 static OHDPlatform discover_and_write_manifest() {
   openhd::log::get_default()->debug("Platform::discover_and_write_manifest()");
   auto platform=internal_discover();
   write_platform_manifest(platform);
   return platform;
-}
-
-static constexpr auto PLATFORM_MANIFEST_FILENAME = "/tmp/platform_manifest.txt";
-
-void write_platform_manifest(const OHDPlatform& ohdPlatform) {
-  std::stringstream ss;
-  ss<<"Platform:"<<platform_type_to_string(ohdPlatform.platform_type)<<"\n";
-  ss<<"Board type:"<<board_type_to_string(ohdPlatform.board_type)<<"\n";
-  OHDFilesystemUtil::write_file(PLATFORM_MANIFEST_FILENAME,ss.str());
 }
 
 bool platform_rpi_is_high_performance(const OHDPlatform &platform) {
