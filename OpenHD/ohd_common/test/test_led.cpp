@@ -11,13 +11,13 @@
 
 int main(int argc, char *argv[]) {
 
-  auto platform=DPlatform::discover();
+  auto platform=OHDPlatform::instance();
   std::cout<<"First ground\n";
-  auto blinker=std::make_unique<openhd::GreenLedAliveBlinker>(*platform,false);
+  auto blinker=std::make_unique<openhd::GreenLedAliveBlinker>(platform,false);
   std::this_thread::sleep_for(std::chrono::seconds(10));
   std::cout<<"Now air\n";
   blinker= nullptr;
-  blinker=std::make_unique<openhd::GreenLedAliveBlinker>(*platform,true);
+  blinker=std::make_unique<openhd::GreenLedAliveBlinker>(platform,true);
   std::this_thread::sleep_for(std::chrono::seconds(10));
 
   /*const auto start1=std::chrono::steady_clock::now();

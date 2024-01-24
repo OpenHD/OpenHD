@@ -75,3 +75,7 @@ target_link_libraries(test_config OHDCommonLib)
 
 add_executable(test_logging test/test_logging.cpp)
 target_link_libraries(test_logging OHDCommonLib)
+
+# this one is here but not really part of interface
+add_executable(test_led test/test_led.cpp)
+target_link_libraries(test_led OHDCommonLib)
