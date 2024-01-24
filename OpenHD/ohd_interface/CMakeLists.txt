@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_subdirectory(../ohd_common commonlib EXCLUDE_FROM_ALL)
 
 # Build and include wifibroadcast
-include(../lib/wifibroadcast/WBLib.cmake)
+include(lib/wifibroadcast/WBLib.cmake)
 
 add_library(OHDInterfaceLib STATIC) # initialized below
 add_library(OHDInterfaceLib::OHDInterfaceLib ALIAS OHDInterfaceLib)
