@@ -204,9 +204,9 @@ int main(int argc, char *argv[]) {
   // not guaranteed, but better than nothing, check if openhd is already running (kinda) and print warning if yes.
   openhd::check_currently_running_file_and_write();
 
-  // First discover the platform:
-  const auto platform = DPlatform::discover();
-  m_console->info("Detected Platform:{}",platform->to_string());
+  // First discover the platform -
+  const auto platform = OHDPlatform::instance();
+  m_console->info("Detected Platform:{}",platform.to_string());
 
   // Create and link all the OpenHD modules.
   try {
@@ -219,7 +219,7 @@ int main(int argc, char *argv[]) {
       openhd::clean_all_interface_settings();
     }
     // on rpi, we have the gpio input such that users don't have to create the reset frequencies file
-    if(platform->platform_type==PlatformType::RaspberryPi){
+    if(platform.platform_type==PlatformType::RaspberryPi){
       // Or input via rpi gpio 26
       openhd::rpi::gpio26_configure();
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -245,10 +245,10 @@ int main(int argc, char *argv[]) {
     // Now we need to discover camera(s) if we are on the air
     std::vector<XCamera> cameras{};
     if(profile->is_air){
-      cameras = OHDVideoAir::discover_cameras(*platform);
+      cameras = OHDVideoAir::discover_cameras(platform);
     }
     // And start the blinker (TODO LED output is really dirty right now).
-    auto alive_blinker=std::make_unique<openhd::GreenLedAliveBlinker>(*platform,profile->is_air);
+    auto alive_blinker=std::make_unique<openhd::GreenLedAliveBlinker>(platform,profile->is_air);
 
     // create the global action handler that allows openhd modules to communicate with each other
     // e.g. when the rf link in ohd_interface needs to talk to the camera streams to reduce the bitrate
@@ -256,10 +256,10 @@ int main(int argc, char *argv[]) {
 
     // We start ohd_telemetry as early as possible, since even without a link (transmission) it still picks up local
     // log message(s) and forwards them to any ground station clients (e.g. QOpenHD)
-    auto ohdTelemetry = std::make_shared<OHDTelemetry>(*platform,* profile);
+    auto ohdTelemetry = std::make_shared<OHDTelemetry>(platform,* profile);
 
     // Then start ohdInterface, which discovers detected wifi cards and more.
-    auto ohdInterface = std::make_shared<OHDInterface>(*platform,*profile,options.continue_without_wb_card);
+    auto ohdInterface = std::make_shared<OHDInterface>(platform,*profile,options.continue_without_wb_card);
 
     // Telemetry allows changing all settings (even from other modules)
     ohdTelemetry->add_settings_generic(ohdInterface->get_all_settings());
@@ -268,7 +268,7 @@ int main(int argc, char *argv[]) {
     std::unique_ptr<OHDVideoAir> ohd_video_air = nullptr;
     std::unique_ptr<OHDVideoGround> ohd_video_ground = nullptr;
     if (profile->is_air) {
-      ohd_video_air = std::make_unique<OHDVideoAir>(*platform,cameras,ohdInterface->get_link_handle());
+      ohd_video_air = std::make_unique<OHDVideoAir>(platform,cameras,ohdInterface->get_link_handle());
       // First add camera specific settings (primary & secondary camera)
       auto settings_components= ohd_video_air->get_all_camera_settings();
       ohdTelemetry->add_settings_camera_component(0,settings_components[0]);

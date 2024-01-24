@@ -11,6 +11,7 @@
 
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"
+#include "openhd_spdlog.h"
 
 std::string platform_type_to_string(PlatformType platform_type) {
   switch (platform_type) {
@@ -187,32 +188,32 @@ static std::pair<PlatformType,BoardType> detect_pc(){
   return std::make_pair(PlatformType::PC, BoardType::GenericPC);
 }
 
-static std::shared_ptr<OHDPlatform> internal_discover(){
+static OHDPlatform internal_discover(){
   const auto res=detect_raspberrypi();
   if(res.has_value()){
-    return std::make_shared<OHDPlatform>(res.value().first,res.value().second);
+    return OHDPlatform(res.value().first,res.value().second);
   }
   const auto res2=detect_jetson();
   if(res2.has_value()){
-    return std::make_shared<OHDPlatform>(res2.value().first,res2.value().second);
+    return OHDPlatform(res2.value().first,res2.value().second);
   }
   const auto res3 = detect_rockchip();
   if(res3.has_value()){
-    return std::make_shared<OHDPlatform>(res3.value().first,res3.value().second);
+    return OHDPlatform(res3.value().first,res3.value().second);
   }
   const auto res4=detect_allwinner();
   if(res4.has_value()){
-    return std::make_shared<OHDPlatform>(res4.value().first,res4.value().second);
+    return OHDPlatform(res4.value().first,res4.value().second);
   }
   const auto res5=detect_pc();
-  return std::make_shared<OHDPlatform>(res5.first,res5.second);
+  return OHDPlatform(res5.first,res5.second);
 }
 
 
-std::shared_ptr<OHDPlatform> DPlatform::discover() {
-  openhd::log::get_default()->debug("Platform::discover()");
+static OHDPlatform discover_and_write_manifest() {
+  openhd::log::get_default()->debug("Platform::discover_and_write_manifest()");
   auto platform=internal_discover();
-  write_platform_manifest(*platform);
+  write_platform_manifest(platform);
   return platform;
 }
 
@@ -225,7 +226,20 @@ void write_platform_manifest(const OHDPlatform& ohdPlatform) {
   OHDFilesystemUtil::write_file(PLATFORM_MANIFEST_FILENAME,ss.str());
 }
 
+bool platform_rpi_is_high_performance(const OHDPlatform &platform) {
+    assert(platform.platform_type==PlatformType::RaspberryPi);
+    const auto rpi_board_type=platform.board_type;
+    if(rpi_board_type==BoardType::RaspberryPi4B || rpi_board_type==BoardType::RaspberryPiCM4){
+        return true;
+    }
+    return false;
+}
+
 const OHDPlatform &OHDPlatform::instance() {
-    static std::shared_ptr<OHDPlatform> platform=DPlatform::discover();
-    return *platform;
+    static OHDPlatform instance=discover_and_write_manifest();
+    return instance;
+}
+
+std::string OHDPlatform::to_string() const {
+    return fmt::format("[{}:{}]",platform_type_to_string(platform_type),board_type_to_string(board_type));
 }

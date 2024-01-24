@@ -8,6 +8,7 @@
 #include <sstream>
 #include <vector>
 #include <cstdint>
+#include "openhd_spdlog.h"
 
 // USefully links:
 // https://www.bundesnetzagentur.de/SharedDocs/Downloads/DE/Sachgebiete/Telekommunikation/Unternehmen_Institutionen/Frequenzen/20190705_Frequenzplan_EntwurfStandMai.pdf?__blob=publicationFile&v=1

@@ -3,10 +3,8 @@
 
 #include <string>
 
-#include "openhd_spdlog.h"
-
 /**
- * Util to discover and then store the platform we are running on.
+ * Util to discover_and_write_manifest and then store the platform we are running on.
  */
 
 enum class PlatformType {
@@ -61,29 +59,13 @@ struct OHDPlatform {
   const PlatformType platform_type;
   // The board type we are running on, for example rpi 3B+
   const BoardType board_type;
-  [[nodiscard]] std::string to_string()const{
-    return fmt::format("[{}:{}]",platform_type_to_string(platform_type),board_type_to_string(board_type));
-  }
+  [[nodiscard]] std::string to_string()const;
   static const OHDPlatform& instance();
 };
 
 // We need to differentiate between rpi 4 and other pi's to use the right fec params.
-static bool platform_rpi_is_high_performance(const OHDPlatform& platform){
-  assert(platform.platform_type==PlatformType::RaspberryPi);
-  const auto rpi_board_type=platform.board_type;
-  if(rpi_board_type==BoardType::RaspberryPi4B || rpi_board_type==BoardType::RaspberryPiCM4){
-    return true;
-  }
-  return false;
-}
+bool platform_rpi_is_high_performance(const OHDPlatform& platform);
 
 void write_platform_manifest(const OHDPlatform &ohdPlatform);
-
-namespace DPlatform{
-
-std::shared_ptr<OHDPlatform> discover();
-
-}
-
 
 #endif
