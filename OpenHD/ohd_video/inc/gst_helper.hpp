@@ -248,7 +248,7 @@ static std::string create_rpi_v4l2_h264_encoder(const CameraSettings& settings){
       rpi_h264_encode_level="4.2";
   }
   // ,number_of_intra_refresh_mbs={}
-  return fmt::format("v4l2h264enc name=rpi_v4l2_encoder extra-controls=\"controls,repeat_sequence_header=1,h264_profile=1,h264_level=11,video_bitrate={},h264_i_frame_period={},h264_minimum_qp_value={}\" ! "
+  return fmt::format("v4l2h264enc name=rpi_v4l2_encoder extra-controls=\"controls,repeat_sequence_header=1,h264_profile=1,h264_level=11,video_bitrate={},h264_i_frame_period={},h264_minimum_qp_value={},generate_access_unit_delimiters=1\" ! "
       "video/x-h264,level=(string){} ! ",bitrateBitsPerSecond,settings.h26x_keyframe_interval,OPENHD_H264_MIN_QP_VALUE,rpi_h264_encode_level);
 }
 
