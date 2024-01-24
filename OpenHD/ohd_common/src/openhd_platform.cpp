@@ -77,7 +77,7 @@ static std::optional<std::pair<PlatformType,BoardType>> detect_raspberrypi(){
   const std::regex r{R"(Revision\t*:\s*([\w]+))"};
 
   if (!std::regex_search(proc_cpuinfo, result, r)) {
-    openhd::log::get_default()->debug("Detect rpi no result");
+    //openhd::log::get_default()->debug("Detect rpi no result");
     return {};
   }
 
