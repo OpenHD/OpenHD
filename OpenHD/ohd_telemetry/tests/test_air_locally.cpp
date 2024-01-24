@@ -16,8 +16,8 @@ int main() {
   std::unique_ptr<OHDTelemetry> air;
   {
 	OHDProfile profile{true, "YY"};
-        const auto platform=DPlatform::discover();
-	air = std::make_unique<OHDTelemetry>(*platform, profile,true);
+        const auto platform=OHDPlatform::instance();
+	air = std::make_unique<OHDTelemetry>(platform, profile,true);
   }
   static bool quit=false;
   signal(SIGTERM, [](int sig){ quit= true;});

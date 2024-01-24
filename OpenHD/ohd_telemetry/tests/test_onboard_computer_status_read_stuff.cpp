@@ -11,7 +11,7 @@
 
 int main() {
 
-  const auto platform=DPlatform::discover();
+  const auto platform=OHDPlatform::instance();
   const auto provider=std::make_unique<OnboardComputerStatusProvider>(*platform);
 
   static bool quit=false;

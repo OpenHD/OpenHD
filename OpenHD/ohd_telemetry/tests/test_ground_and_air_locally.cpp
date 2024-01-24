@@ -16,13 +16,13 @@ int main() {
   std::unique_ptr<OHDTelemetry> ohdTelemAir;
   {
     OHDProfile profile{false, "XX"};
-    const auto platform=DPlatform::discover();
+    const auto platform=OHDPlatform::instance();
     ohdTelemGround = std::make_unique<OHDTelemetry>(*platform, profile);
     ohdTelemGround->add_settings_generic(openhd::testing::create_dummy_ground_settings());
   }
   {
     OHDProfile profile{true, "XX"};
-    const auto platform=DPlatform::discover();
+    const auto platform=OHDPlatform::instance();
     ohdTelemAir = std::make_unique<OHDTelemetry>(*platform, profile);
     ohdTelemAir->add_settings_generic(openhd::testing::create_dummy_camera_settings());
   }
