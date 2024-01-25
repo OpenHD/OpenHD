@@ -1162,3 +1162,12 @@ void WBLink::re_enable_injection_unless_user_passive_mode_enabled() {
     }
     m_wb_txrx->set_passive_mode(enable_passive_mode);
 }
+
+void WBLink::wt_perform_air_hotspot_after_timeout() {
+    if(!m_profile.is_air)return;
+    // If we are armed, we never go into hs mode
+    if(openhd::ArmingStateHelper::instance().is_currently_armed()){
+        // Reset timeout
+        m_hs_timeout=std::chrono::steady_clock::now();
+    }
+}

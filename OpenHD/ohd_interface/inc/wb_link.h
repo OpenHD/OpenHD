@@ -107,6 +107,8 @@ class WBLink :public OHDLink{
   void wt_perform_channel_width_management();
   // this is special, mcs index can not only be changed via mavlink param, but also via RC channel (if enabled)
   void wt_perform_mcs_via_rc_channel_if_enabled();
+  // Time out to go from wifibroadcast mode to wifi hotspot mode
+  void wt_perform_air_hotspot_after_timeout();
   // Returns true if the work item queue is currently empty and the item has been added
   // false otherwise. In general, we only suport one item on the work queue - otherwise we reject the param,
   // since the user can just try again later (and in case the work queue is currently busy with a frequency scan for example,
@@ -193,6 +195,9 @@ private:
     const bool DIRTY_forward_gapped_fragments= false;
     const bool DIRTY_add_aud_nal= false;
     const int DIRTY_emulate_drop_mode=0;
+private:
+    const std::chrono::steady_clock::time_point m_wb_link_start_ts=std::chrono::steady_clock::now();
+    std::optional<std::chrono::steady_clock::time_point> m_hs_timeout=std::chrono::steady_clock::now();
 };
 
 #endif
