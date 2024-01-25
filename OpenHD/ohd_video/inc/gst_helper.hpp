@@ -248,9 +248,15 @@ static std::string create_rpi_v4l2_h264_encoder(const CameraSettings& settings){
   if(rpi_needs_level_4_2(settings.streamed_video_format,settings.h26x_bitrate_kbits)){
       rpi_h264_encode_level="4.2";
   }
-  // ,number_of_intra_refresh_mbs={}
-  return fmt::format("v4l2h264enc name=rpi_v4l2_encoder extra-controls=\"controls,repeat_sequence_header=1,h264_profile=1,h264_level=11,video_bitrate={},h264_i_frame_period={},h264_minimum_qp_value={},generate_access_unit_delimiters=1,intra_refresh_period=1\" ! "
-      "video/x-h264,level=(string){} ! ",bitrateBitsPerSecond,settings.h26x_keyframe_interval,OPENHD_H264_MIN_QP_VALUE,rpi_h264_encode_level);
+  std::string intra_refresh_period;
+  if(settings.h26x_intra_refresh_type!=-1){
+      intra_refresh_period=",intra_refresh_period=1";
+  }
+  std::stringstream ret;
+  ret<<fmt::format("v4l2h264enc name=rpi_v4l2_encoder extra-controls=\"controls,repeat_sequence_header=1,h264_profile=1,h264_level=11,video_bitrate={},h264_i_frame_period={},h264_minimum_qp_value={},generate_access_unit_delimiters=1{}\" ! "
+                 ,bitrateBitsPerSecond,settings.h26x_keyframe_interval,OPENHD_H264_MIN_QP_VALUE,intra_refresh_period);
+  ret << fmt::format("video/x-h264,level=(string){} ! ",rpi_h264_encode_level);
+  return ret.str();
 }
 
 static std::string createLibcamerasrcStream(const CameraSettings& settings) {
@@ -543,7 +549,7 @@ static std::string create_input_custom_udp_rtp_port(const CameraSettings& settin
   return ss.str();
 }
 
-// Dummy stream using the HW encoder
+// Dummy stream using either HW or SW encode.
 static std::string createDummyStreamX(const OHDPlatform& platform,const CameraSettings& settings) {
     std::stringstream ss;
     ss << "videotestsrc name=videotestsrc ! ";
