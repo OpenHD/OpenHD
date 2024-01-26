@@ -20,6 +20,7 @@ static constexpr int X_CAM_TYPE_EXTERNAL=2;
 // For openhd, this is exactly the same as X_CAM_TYPE_EXTERNAL - only file start_ip_cam.txt is created
 // Such that the ip cam service can start forwarding data to openhd core.
 static constexpr int X_CAM_TYPE_EXTERNAL_IP=3;
+static constexpr int X_CAM_TYPE_DEVELOPMENT_FILESRC=4;
 //
 // RPI Specific starts here
 //
@@ -91,6 +92,7 @@ struct XCamera {
             case X_CAM_TYPE_USB: return "USB";
             case X_CAM_TYPE_EXTERNAL: return "EXTERNAL";
             case X_CAM_TYPE_EXTERNAL_IP: return "EXTERNAL_IP";
+            case X_CAM_TYPE_DEVELOPMENT_FILESRC: return "DEV_FILESRC";
             // All the rpi stuff begin
             case X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI: return "MMAL_HDMI";
             case X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V1_OV5647: return "RPIF_V1_OV5647";

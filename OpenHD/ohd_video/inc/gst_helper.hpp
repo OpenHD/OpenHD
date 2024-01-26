@@ -575,5 +575,18 @@ static std::string createDummyStreamX(const OHDPlatform& platform,const CameraSe
     return ss.str();
 }
 
+static std::string create_dummy_filesrc_stream(const CameraSettings& settings){
+    auto files=OHDFilesystemUtil::getAllEntriesFullPathInDirectory("/usr/local/share/openhd/dev");
+    std::string filename="/usr/local/share/openhd/dev/test.mp4";
+    if(!files.empty())filename=files.at(0);
+    std::stringstream ss;
+    ss<<"filesrc location="<<filename<<" ! ";
+    ss<<"decodebin ! ";
+    ss<<"video/x-raw, format=I420 ! ";
+    ss<<createSwEncoder(settings);
+    //ss<<"qtdemux ! queue ! h264parse config-interval=-1 ! video/x-h264,stream-format=byte-stream,alignment=au !";
+    return ss.str();
+}
+
 }  // namespace OHDGstHelper
 #endif  // OPENHD_OHDGSTHELPER_H
