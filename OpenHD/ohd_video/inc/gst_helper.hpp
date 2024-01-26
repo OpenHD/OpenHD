@@ -580,7 +580,8 @@ static std::string create_dummy_filesrc_stream(const OHDPlatform& platform,const
     std::string filename="/usr/local/share/openhd/dev/test.mp4";
     if(!files.empty())filename=files.at(0);
     std::stringstream ss;
-    ss<<"multifilesrc location="<<filename<<" loop=true ! ";
+    //ss<<"multifilesrc location="<<filename<<" loop=true ! ";
+    ss<<"filesrc location="<<filename<<" loop=true ! ";
     ss<<"decodebin ! ";
     ss<<"video/x-raw, format=I420 ! ";
     //ss<<createSwEncoder(settings);
