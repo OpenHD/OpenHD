@@ -585,7 +585,7 @@ static std::string create_dummy_filesrc_stream(const OHDPlatform& platform,const
     ss<<"filesrc location="<<filename<<" ! ";
     ss<<"decodebin ! ";
     ss<<"queue ! ";
-    ss<<"videoconvert ! ";
+    ss<<"videoscale ! ";
     ss<<"video/x-raw, format=I420";
     ss<<fmt::format(",width={}, height={} ! ",settings.streamed_video_format.width,settings.streamed_video_format.height);
     //ss<<createSwEncoder(settings);
