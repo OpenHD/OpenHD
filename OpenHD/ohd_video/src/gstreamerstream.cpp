@@ -448,6 +448,8 @@ void GStreamerStream::on_new_nalu(const uint8_t* data, int data_len) {
   //m_console->debug("Got new NAL {}",data_len);
   const bool is_h265=false;
   NALU nalu(data,data_len);
+  //m_console->debug("Got new NAL {} {}",data_len,nalu.get_nal_unit_type_as_string());
+  //if(nalu.is_sei())return;
   if(m_config_finder.allKeyFramesAvailable(is_h265)){
     if(nalu.is_config()){
       if(m_config_finder.check_is_still_same_config_data(nalu)){
