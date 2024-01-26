@@ -84,7 +84,7 @@ std::string GStreamerStream::create_source_encode_pipeline(const CameraHolder &c
     }else if(camera.camera_type==X_CAM_TYPE_EXTERNAL || camera.camera_type==X_CAM_TYPE_EXTERNAL_IP){
         pipeline<<OHDGstHelper::create_input_custom_udp_rtp_port(setting);
     }else if(camera.camera_type==X_CAM_TYPE_DEVELOPMENT_FILESRC) {
-        pipeline<<OHDGstHelper::create_dummy_filesrc_stream(setting);
+        pipeline<<OHDGstHelper::create_dummy_filesrc_stream(OHDPlatform::instance(),setting);
     } else{
         openhd::log::get_default()->warn("UNKNOWN CAMERA TYPE");
         pipeline<<"ERROR";
