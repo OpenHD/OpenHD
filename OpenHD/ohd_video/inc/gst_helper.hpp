@@ -251,7 +251,7 @@ static std::string create_rpi_v4l2_h264_encoder(const CameraSettings& settings){
   }
   std::string intra_refresh_period;
   if(settings.h26x_intra_refresh_type!=-1){
-      intra_refresh_period=",intra_refresh_period=300,number_of_mbs_in_a_slice=12";
+      intra_refresh_period=",intra_refresh_period=300"; // ,number_of_mbs_in_a_slice=12
   }
   std::stringstream ret;
   ret<<fmt::format("v4l2h264enc name=rpi_v4l2_encoder extra-controls=\"controls,repeat_sequence_header=1,h264_profile=1,h264_level=11,video_bitrate={},h264_i_frame_period={},h264_minimum_qp_value={},generate_access_unit_delimiters=1{}\" ! "
