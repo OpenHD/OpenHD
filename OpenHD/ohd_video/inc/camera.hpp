@@ -20,6 +20,7 @@ static constexpr int X_CAM_TYPE_EXTERNAL=2;
 // For openhd, this is exactly the same as X_CAM_TYPE_EXTERNAL - only file start_ip_cam.txt is created
 // Such that the ip cam service can start forwarding data to openhd core.
 static constexpr int X_CAM_TYPE_EXTERNAL_IP=3;
+// For development, camera that reads input from a file, and then re-encodes it using the platform encoder
 static constexpr int X_CAM_TYPE_DEVELOPMENT_FILESRC=4;
 //
 // RPI Specific starts here
