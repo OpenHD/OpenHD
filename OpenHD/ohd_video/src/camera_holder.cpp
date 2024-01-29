@@ -14,7 +14,8 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(VideoFormat,videoCodec,width,height,framerate
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CameraSettings, enable_streaming,
                                    streamed_video_format, h26x_bitrate_kbits,
-                                   h26x_keyframe_interval, h26x_intra_refresh_type,air_recording,
+                                   h26x_keyframe_interval, h26x_intra_refresh_type,h26x_num_slices,
+                                   air_recording,
                                    camera_rotation_degree, horizontal_flip, vertical_flip,
                                    awb_mode, exposure_mode, brightness_percentage, rpi_rpicamsrc_iso, rpi_rpicamsrc_metering_mode,
                                     // rpi libcamera specific IQ params begin
@@ -135,6 +136,10 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
       return set_intra_refresh_type(value);
     };
     ret.push_back(openhd::Setting{"INTRA_REFRESH",openhd::IntSetting{get_settings().h26x_intra_refresh_type,c_intra_refresh_type}});
+      auto c_h26x_num_slices=[this](std::string,int value) {
+          return set_h26x_num_slices(value);
+      };
+      ret.push_back(openhd::Setting{"SLICE_N",openhd::IntSetting{get_settings().h26x_num_slices,c_h26x_num_slices}});
   }
   if(true){
     auto c_brightness=[this](std::string,int value) {

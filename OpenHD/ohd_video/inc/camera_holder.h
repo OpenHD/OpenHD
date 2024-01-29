@@ -103,6 +103,11 @@ class CameraHolder:
     persist();
     return true;
   }
+  bool set_h26x_num_slices(int value){
+      unsafe_get_settings().h26x_num_slices=value;
+      persist();
+      return true;
+  }
   bool set_camera_awb(int value){
     //if(!m_camera.supports_awb())return false;
     if(!openhd::validate_rpi_awb_mode(value)){
