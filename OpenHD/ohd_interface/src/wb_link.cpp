@@ -895,7 +895,7 @@ void WBLink::transmit_telemetry_data(TelemetryTxPacket packet) {
 void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame){
   assert(m_profile.is_air);
   if(stream_index>=0 && stream_index< m_wb_video_tx_list.size()){
-    m_console->debug("Got {}",fragmented_video_frame.rtp_fragments.size());
+    //m_console->debug("Got {}",fragmented_video_frame.rtp_fragments.size());
     auto& tx= *m_wb_video_tx_list[stream_index];
     tx.set_encryption(fragmented_video_frame.enable_ultra_secure_encryption);
     //tx.tmp_feed_frame_fragments(fragmented_video_frame.rtp_fragments,use_fixed_fec_instead);
