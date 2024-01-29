@@ -283,7 +283,7 @@ static std::string create_rpi_v4l2_h264_encoder(const CameraSettings& settings){
   }
   std::string intra_refresh_period_str;
   if(settings.h26x_intra_refresh_type!=-1){
-      const int period= rpi_calculate_intra_refresh_period(settings.streamed_video_format.width,settings.streamed_video_format.height,5);
+      const int period= rpi_calculate_intra_refresh_period(settings.streamed_video_format.width,settings.streamed_video_format.height,8);
       intra_refresh_period_str=fmt::format(",intra_refresh_period={}",period);
   }
   std::string slicing_str;
