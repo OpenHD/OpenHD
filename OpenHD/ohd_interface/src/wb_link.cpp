@@ -834,7 +834,8 @@ void WBLink::wt_perform_rate_adjustment() {
     m_frame_drop_helper.delay_for(std::chrono::seconds(5));
     return;
   }
-  const bool dropping_many_frames=m_frame_drop_helper.needs_bitrate_reduction();
+  //const bool dropping_many_frames=m_frame_drop_helper.needs_bitrate_reduction();
+    const bool dropping_many_frames= false;
   //m_console->debug("Dropped since last check:{}",dropped_since_last_check);
   if(dropping_many_frames){
     // We are dropping frames / too many tx error hint(s), we need to reduce bitrate.
