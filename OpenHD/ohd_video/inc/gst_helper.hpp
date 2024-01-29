@@ -270,8 +270,6 @@ static int rpi_calculate_intra_refresh_period(int frame_width_px,int frame_heigh
 // on scenes with less change (openhd values consistency over everything else)
 static std::string create_rpi_v4l2_h264_encoder(const CameraSettings& settings){
   assert(settings.streamed_video_format.videoCodec==VideoCodec::H264);
-  // rpi v4l2 encoder takes bit/s instead of kbit/s
-  const int bitrateBitsPerSecond = kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
   // Level wikipedia: https://de.wikipedia.org/wiki/H.264#Level
   // If the level selected is too low, the stream will straight out not start (pi cannot really do more than level 4.0, at least not low latency,
   // but for experimenting, at least make those higher resolutions create a valid pipeline
@@ -295,9 +293,14 @@ static std::string create_rpi_v4l2_h264_encoder(const CameraSettings& settings){
       const int number_of_mbs_in_a_slice= rpi_calculate_number_of_mbs_in_a_slice(settings.streamed_video_format.height,settings.h26x_num_slices);
       slicing_str=fmt::format(",number_of_mbs_in_a_slice={}",number_of_mbs_in_a_slice);
   }
+  // BUG RPI FOUNDATION: video_bitrate_mode=1 makes encoder non functional
+  // rpi v4l2 encoder takes bit/s instead of kbit/s
+  const int bitrateBitsPerSecond = kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
+  std::string bitrate_str;
+  bitrate_str=fmt::format(",video_bitrate={}",bitrateBitsPerSecond);
   std::stringstream ret;
-  ret<<fmt::format("v4l2h264enc name=rpi_v4l2_encoder extra-controls=\"controls,repeat_sequence_header=1,h264_profile=1,h264_level={},video_bitrate_mode=1,video_bitrate={},h264_i_frame_period={}{},generate_access_unit_delimiters=1{}{}\" ! "
-        ,rpi_h264_encode_level_v4l2_int,bitrateBitsPerSecond,settings.h26x_keyframe_interval,quantization_str,intra_refresh_period_str,slicing_str);
+  ret<<fmt::format("v4l2h264enc name=rpi_v4l2_encoder extra-controls=\"controls,repeat_sequence_header=1,h264_profile=1,h264_level={}{},h264_i_frame_period={},generate_access_unit_delimiters=1{}{}{}\" ! "
+        ,rpi_h264_encode_level_v4l2_int,bitrate_str,settings.h26x_keyframe_interval,quantization_str,intra_refresh_period_str,slicing_str);
   ret << fmt::format("video/x-h264,level=(string){},profile=constrained-baseline ! ",rpi_h264_encode_level);
   return ret.str();
 }
