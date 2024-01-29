@@ -272,8 +272,6 @@ static std::string create_rpi_v4l2_h264_encoder(const CameraSettings& settings){
   assert(settings.streamed_video_format.videoCodec==VideoCodec::H264);
   // rpi v4l2 encoder takes bit/s instead of kbit/s
   const int bitrateBitsPerSecond = kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
-  // NOTE: higher quantization parameter -> lower image quality, and lower bitrate
-  static constexpr auto OPENHD_H264_MIN_QP_VALUE=10;
   // Level wikipedia: https://de.wikipedia.org/wiki/H.264#Level
   // If the level selected is too low, the stream will straight out not start (pi cannot really do more than level 4.0, at least not low latency,
   // but for experimenting, at least make those higher resolutions create a valid pipeline
@@ -281,6 +279,9 @@ static std::string create_rpi_v4l2_h264_encoder(const CameraSettings& settings){
   if(rpi_needs_level_4_2(settings.streamed_video_format,settings.h26x_bitrate_kbits || true)){
       rpi_h264_encode_level="4.2";
   }
+  // NOTE: higher quantization parameter -> lower image quality, and lower bitrate
+  static constexpr auto OPENHD_H264_MIN_QP_VALUE=10;
+  std::string quantization_str=fmt::format(",h264_minimum_qp_value={},h264_maximum_qp_value={}",10,80);
   std::string intra_refresh_period_str;
   if(settings.h26x_intra_refresh_type!=-1){
       const int period= rpi_calculate_intra_refresh_period(settings.streamed_video_format.width,settings.streamed_video_format.height,8);
@@ -292,8 +293,8 @@ static std::string create_rpi_v4l2_h264_encoder(const CameraSettings& settings){
       slicing_str=fmt::format(",number_of_mbs_in_a_slice={}",number_of_mbs_in_a_slice);
   }
   std::stringstream ret;
-  ret<<fmt::format("v4l2h264enc name=rpi_v4l2_encoder extra-controls=\"controls,repeat_sequence_header=1,h264_profile=1,h264_level=11,video_bitrate={},h264_i_frame_period={},h264_minimum_qp_value={},generate_access_unit_delimiters=1{}{}\" ! "
-                 ,bitrateBitsPerSecond,settings.h26x_keyframe_interval,OPENHD_H264_MIN_QP_VALUE,intra_refresh_period_str,slicing_str);
+  ret<<fmt::format("v4l2h264enc name=rpi_v4l2_encoder extra-controls=\"controls,repeat_sequence_header=1,h264_profile=1,h264_level=11,video_bitrate={},h264_i_frame_period={}{},generate_access_unit_delimiters=1{}{}\" ! "
+                 ,bitrateBitsPerSecond,settings.h26x_keyframe_interval,quantization_str,intra_refresh_period_str,slicing_str);
   ret << fmt::format("video/x-h264,level=(string){},profile=constrained-baseline ! ",rpi_h264_encode_level);
   return ret.str();
 }
