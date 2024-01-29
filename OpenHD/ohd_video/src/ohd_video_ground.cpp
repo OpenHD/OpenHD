@@ -16,7 +16,7 @@ m_link_handle(std::move(link_handle)){
   // We always forward video to localhost::5600 (primary) and 5601 (secondary) for the default Ground control application (e.g. QOpenHD) to pick up
   addForwarder("127.0.0.1");
   // See the description in the .config file for more info
-  if(openhd::load_config().NW_FORWARD_TO_LOCALHOST_58XX){
+  if(openhd::load_config().NW_FORWARD_TO_LOCALHOST_58XX || true){
     m_console->debug("Forwarding video to 5800/5801 localhost is enabled");
     // Adding forwarder for WebRTC
     m_primary_video_forwarder->addForwarder("127.0.0.1", 5800);

@@ -174,13 +174,20 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
           options_video_rx.radio_port=openhd::VIDEO_SECONDARY_RADIO_PORT;
           auto secondary = std::make_unique<WBStreamRx>(m_wb_txrx, options_video_rx);
           secondary->set_callback(cb2);
-          if(DIRTY_add_aud_nal){
+          if(DIRTY_add_aud_nal || true){
               auto block_cb=[this](uint64_t block_idx,int n_fragments_total,int n_fragments_forwarded){
-                  m_console->debug("Got {} {}",n_fragments_total,n_fragments_forwarded);
-                  if(n_fragments_forwarded>2){
+                  static int64_t last_block=0;
+                  if(last_block+1!=block_idx){
+                      const int n_missing=block_idx-last_block;
+                      //m_console->debug("Missing {}",n_missing);
+                  }
+                  //m_console->debug("Got {} {} {}",block_idx,n_fragments_total,n_fragments_forwarded);
+                  last_block=block_idx;
+                  //m_console->debug("Got {} {} {}",block_idx,n_fragments_total,n_fragments_forwarded);
+                  /*if(n_fragments_forwarded>2){
                       auto aud_buffer=get_h264_aud();
                       on_receive_video_data(0,aud_buffer->data(),aud_buffer->size());
-                  }
+                  }*/
               };
               primary->set_on_fec_block_done_cb(block_cb);
           }
@@ -888,6 +895,7 @@ void WBLink::transmit_telemetry_data(TelemetryTxPacket packet) {
 void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame){
   assert(m_profile.is_air);
   if(stream_index>=0 && stream_index< m_wb_video_tx_list.size()){
+    m_console->debug("Got {}",fragmented_video_frame.rtp_fragments.size());
     auto& tx= *m_wb_video_tx_list[stream_index];
     tx.set_encryption(fragmented_video_frame.enable_ultra_secure_encryption);
     //tx.tmp_feed_frame_fragments(fragmented_video_frame.rtp_fragments,use_fixed_fec_instead);
