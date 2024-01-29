@@ -237,7 +237,7 @@ static int ALIGN(int value,int multiple){
 
 static int rpi_calculate_number_of_mbs_in_a_slice(int frame_height_px,int n_slices){
     if(n_slices<2)return 0;
-    int frame_mb_rows = ALIGN_UP(frame_height_px,16)/4;
+    int frame_mb_rows = ALIGN_UP(frame_height_px,16)/16;
     if(n_slices > frame_mb_rows){
         openhd::log::get_default()->warn("Too many slices, frame_mb_rows:%d slices:%d",frame_mb_rows,n_slices);
         return frame_mb_rows;
