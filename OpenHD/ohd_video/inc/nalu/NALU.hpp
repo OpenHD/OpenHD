@@ -15,7 +15,7 @@
 #include <vector>
 #include <variant>
 #include <optional>
-#include <assert.h>
+#include <cassert>
 #include <memory>
 
 #include "NALUnitType.hpp"

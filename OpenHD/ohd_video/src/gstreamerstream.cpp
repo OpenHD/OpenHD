@@ -452,13 +452,13 @@ void GStreamerStream::on_new_nalu(const uint8_t* data, int data_len) {
   NALU nalu(data,data_len);
   //m_console->debug("Got new NAL {} {}",data_len,nalu.get_nal_unit_type_as_string());
   //if(nalu.is_sei())return;
-  if(m_config_finder.allKeyFramesAvailable(is_h265)){
+  if(m_config_finder.all_config_available(is_h265)){
     if(nalu.is_config()){
       if(m_config_finder.check_is_still_same_config_data(nalu)){
         // we can discard this NAL
       }else{
         m_config_finder.reset();
-        m_config_finder.saveIfKeyFrame(nalu);
+          m_config_finder.save_if_config(nalu);
       }
     }else{
       if(nalu.is_sei() || nalu.is_aud()){
@@ -468,13 +468,13 @@ void GStreamerStream::on_new_nalu(const uint8_t* data, int data_len) {
       }
     }
   } else{
-    m_config_finder.saveIfKeyFrame(nalu);
+      m_config_finder.save_if_config(nalu);
   }
 }
 
 void GStreamerStream::on_new_nalu_frame(const uint8_t* data, int data_len) {
-  if(m_config_finder.allKeyFramesAvailable()){
-    auto config=m_config_finder.get_keyframe_data(false);
+  if(m_config_finder.all_config_available()){
+    auto config= m_config_finder.get_config_data(false);
     forward_video_frame(config);
   }
   auto buff=std::make_shared<std::vector<uint8_t>>(data,data+data_len);

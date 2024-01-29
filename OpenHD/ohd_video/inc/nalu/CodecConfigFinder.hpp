@@ -20,7 +20,7 @@ private:
     // VPS are only used in H265
     std::unique_ptr<NALUBuffer> VPS=nullptr;
 public:
-    bool saveIfKeyFrame(const NALU &nalu){
+    bool save_if_config(const NALU &nalu){
         if(nalu.getSize()<=0)return false;
         if(nalu.isSPS()){
             SPS=std::make_unique<NALUBuffer>(nalu);
@@ -41,14 +41,14 @@ public:
     }
     // H264 needs sps and pps
     // H265 needs sps,pps and vps
-    bool allKeyFramesAvailable(const bool IS_H265=false){
+    bool all_config_available(const bool IS_H265=false){
         if(IS_H265){
             return SPS != nullptr && PPS != nullptr && VPS!=nullptr;
         }
         return SPS != nullptr && PPS != nullptr;
     }
-    std::shared_ptr<std::vector<uint8_t>> get_keyframe_data(const bool IS_H265=false){
-        assert(allKeyFramesAvailable(IS_H265));
+    std::shared_ptr<std::vector<uint8_t>> get_config_data(const bool IS_H265=false){
+        assert(all_config_available(IS_H265));
         if(IS_H265){
             // Looks like avcodec wants the VPS before sps and pps
             auto& sps=SPS->get_nal();
@@ -74,7 +74,7 @@ public:
     // returns false if the config data (SPS,PPS,optional VPS) has changed
     // true otherwise
     bool check_is_still_same_config_data(const NALU &nalu){
-        assert(allKeyFramesAvailable(nalu.IS_H265_PACKET));
+        assert(all_config_available(nalu.IS_H265_PACKET));
         if(nalu.isSPS()){
             return compare(nalu,SPS->get_nal());
         }else if(nalu.isPPS()){
