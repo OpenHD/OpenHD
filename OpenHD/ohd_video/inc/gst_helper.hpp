@@ -276,8 +276,10 @@ static std::string create_rpi_v4l2_h264_encoder(const CameraSettings& settings){
   // If the level selected is too low, the stream will straight out not start (pi cannot really do more than level 4.0, at least not low latency,
   // but for experimenting, at least make those higher resolutions create a valid pipeline
   std::string rpi_h264_encode_level="4";
+  std::string rpi_h264_encode_level_v4l2_int="11";
   if(rpi_needs_level_4_2(settings.streamed_video_format,settings.h26x_bitrate_kbits || true)){
-      rpi_h264_encode_level="4.2";
+      rpi_h264_encode_level="4.2"; // Used for gstreamer caps
+      rpi_h264_encode_level_v4l2_int="13"; // Used for 4l2 control
   }
   // NOTE: higher quantization parameter -> lower image quality, and lower bitrate
   // NOTE: The range of QP value is from 0 to 51. Any value more than 51 is clamped to 51
@@ -294,8 +296,8 @@ static std::string create_rpi_v4l2_h264_encoder(const CameraSettings& settings){
       slicing_str=fmt::format(",number_of_mbs_in_a_slice={}",number_of_mbs_in_a_slice);
   }
   std::stringstream ret;
-  ret<<fmt::format("v4l2h264enc name=rpi_v4l2_encoder extra-controls=\"controls,repeat_sequence_header=1,h264_profile=1,h264_level=11,video_bitrate={},h264_i_frame_period={}{},generate_access_unit_delimiters=1{}{}\" ! "
-                 ,bitrateBitsPerSecond,settings.h26x_keyframe_interval,quantization_str,intra_refresh_period_str,slicing_str);
+  ret<<fmt::format("v4l2h264enc name=rpi_v4l2_encoder extra-controls=\"controls,repeat_sequence_header=1,h264_profile=1,h264_level={},video_bitrate={},h264_i_frame_period={}{},generate_access_unit_delimiters=1{}{}\" ! "
+        ,rpi_h264_encode_level_v4l2_int,bitrateBitsPerSecond,settings.h26x_keyframe_interval,quantization_str,intra_refresh_period_str,slicing_str);
   ret << fmt::format("video/x-h264,level=(string){},profile=constrained-baseline ! ",rpi_h264_encode_level);
   return ret.str();
 }
