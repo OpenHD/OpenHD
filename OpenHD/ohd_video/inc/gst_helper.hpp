@@ -626,7 +626,10 @@ static std::string create_dummy_filesrc_stream(const OHDPlatform& platform,const
     //std::string filename="/usr/local/share/openhd/dev/test.mp4";
     //if(!files.empty())filename=files.at(0);
     //const std::string PATH="/usr/local/share/openhd/dev/";
-    const std::string PATH="/home/openhd/";
+    std::string PATH="/home/openhd/";
+    if(OHDFilesystemUtil::exists("/home/consti10/Desktop/intra_test/out/")){
+        PATH="/home/consti10/Desktop/intra_test/out/";
+    }
     std::string filename="";
     const int width_px=settings.streamed_video_format.width;
     if(width_px>=1920){
@@ -641,6 +644,7 @@ static std::string create_dummy_filesrc_stream(const OHDPlatform& platform,const
     //ss<<"multifilesrc location="<<filename<<" loop=true ! ";
     ss<<"filesrc location="<<path_filename<<" ! ";
     ss<<"decodebin ! ";
+    ss<<fmt::format("videorate max-rate={} ! ",settings.streamed_video_format.framerate);
     ss<<"queue ! ";
     ss<<"videoscale ! ";
     ss<<"video/x-raw, format=I420";
