@@ -17,14 +17,14 @@
  * This actually makes sense, it is just different to how EZ-WB / OpenHD used to do telemetry forwarding all the time.
  * But it means that we have to listen and send from the same UDP port.
  */
-class UDPEndpoint2 : public MEndpoint {
+class UDPEndpoint : public MEndpoint {
  public:
-  UDPEndpoint2(const std::string& TAG,int senderPort, int receiverPort,
-			  std::string senderIp=openhd::ADDRESS_LOCALHOST,std::string receiverIp=openhd::ADDRESS_LOCALHOST);
-  ~UDPEndpoint2();
+  UDPEndpoint(const std::string& TAG, int senderPort, int receiverPort,
+              std::string senderIp=openhd::ADDRESS_LOCALHOST, std::string receiverIp=openhd::ADDRESS_LOCALHOST);
+  ~UDPEndpoint();
   // Delete copy and move
-  UDPEndpoint2(const UDPEndpoint2&)=delete;
-  UDPEndpoint2(const UDPEndpoint2&&)=delete;
+  UDPEndpoint(const UDPEndpoint&)=delete;
+  UDPEndpoint(const UDPEndpoint&&)=delete;
   // These are for "external device forwarding"
   void addAnotherDestIpAddress(const std::string& ip);
   void removeAnotherDestIpAddress(const std::string& ip);

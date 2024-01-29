@@ -2,11 +2,11 @@
 // Created by consti10 on 11.06.22.
 //
 
-#include "UDPEndpoint2.h"
+#include "UDPEndpoint.h"
 
 #include <utility>
 
-UDPEndpoint2::UDPEndpoint2(const std::string &TAG,int senderPort,int receiverPort,std::string senderIp,std::string receiverIp)
+UDPEndpoint::UDPEndpoint(const std::string &TAG, int senderPort, int receiverPort, std::string senderIp, std::string receiverIp)
     : MEndpoint(TAG),
       SEND_PORT(senderPort), RECV_PORT(receiverPort),
       SENDER_IP(std::move(senderIp)),
@@ -20,11 +20,11 @@ UDPEndpoint2::UDPEndpoint2(const std::string &TAG,int senderPort,int receiverPor
   m_receiver_sender->runInBackground();
 }
 
-UDPEndpoint2::~UDPEndpoint2() {
+UDPEndpoint::~UDPEndpoint() {
   m_receiver_sender->stopBackground();
 }
 
-bool UDPEndpoint2::sendMessagesImpl(const std::vector<MavlinkMessage>& messages) {
+bool UDPEndpoint::sendMessagesImpl(const std::vector<MavlinkMessage>& messages) {
   auto message_buffers= aggregate_pack_messages(messages);
   const auto other_ips=get_all_curr_dest_ips();
   for(const auto& message_buffer:message_buffers){
@@ -36,19 +36,19 @@ bool UDPEndpoint2::sendMessagesImpl(const std::vector<MavlinkMessage>& messages)
   return true;
 }
 
-void UDPEndpoint2::addAnotherDestIpAddress(const std::string& ip) {
+void UDPEndpoint::addAnotherDestIpAddress(const std::string& ip) {
   std::lock_guard<std::mutex> lock(m_sender_mutex);
   m_console->debug("addAnotherDestIpAddress {}",ip);
   m_other_dest_ips[ip]=nullptr;
 }
 
-void UDPEndpoint2::removeAnotherDestIpAddress(const std::string& ip) {
+void UDPEndpoint::removeAnotherDestIpAddress(const std::string& ip) {
   std::lock_guard<std::mutex> lock(m_sender_mutex);
   m_console->debug("removeAnotherDestIpAddress {}",ip);
   m_other_dest_ips.erase(ip);
 }
 
-std::vector<std::string> UDPEndpoint2::get_all_curr_dest_ips() {
+std::vector<std::string> UDPEndpoint::get_all_curr_dest_ips() {
   std::vector<std::string> ret;
   std::lock_guard<std::mutex> lock(m_sender_mutex);
   for(const auto& [key,value]: m_other_dest_ips){

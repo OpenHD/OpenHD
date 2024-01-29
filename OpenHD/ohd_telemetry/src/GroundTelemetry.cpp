@@ -18,7 +18,7 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform):
   m_gnd_settings =std::make_unique<openhd::telemetry::ground::SettingsHolder>();
   m_endpoint_tracker=std::make_unique<SerialEndpointManager>();
   m_gcs_endpoint =
-      std::make_unique<UDPEndpoint2>("GroundStationUDP",OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN,
+      std::make_unique<UDPEndpoint>("GroundStationUDP", OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN,
                                      // We send data to localhost::14550 and any other external device IPs
                                      "127.0.0.1",
                                      // and we accept udp data from anybody on 14551
