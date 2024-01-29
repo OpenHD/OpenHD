@@ -252,7 +252,7 @@ static int rpi_calculate_number_of_mbs_in_a_slice(int frame_height_px,int n_slic
 static int rpi_calculate_intra_refresh_period(int frame_width_px,int frame_height_px,int intra_refresh_period){
     int32_t mbs=0;
     mbs = ALIGN(frame_width_px, 16) * ALIGN(frame_height_px, 16);
-    mbs /= 16 * 16;
+    mbs /= (16 * 16);
     if (mbs % intra_refresh_period)
         mbs++;
     mbs /= intra_refresh_period;
