@@ -56,6 +56,7 @@ void OHDVideoGround::removeForwarder(const std::string& client_addr) {
 
 void OHDVideoGround::on_video_data(int stream_index, const uint8_t *data,
                                    int data_len) {
+  //openhd::log::get_default()->debug("on_video_data {}",stream_index);
   if(stream_index==0){
     m_primary_video_forwarder->forwardPacketViaUDP(data,data_len);
   }else if(stream_index==1){

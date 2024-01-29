@@ -40,6 +40,9 @@ public:
  */
 class UDPMultiForwarder {
 public:
+    explicit UDPMultiForwarder()=default;
+    UDPMultiForwarder(const UDPMultiForwarder &) = delete;
+    UDPMultiForwarder &operator=(const UDPMultiForwarder &) = delete;
     /**
     * Start forwarding data to another IP::Port tuple
      */
@@ -64,7 +67,7 @@ private:
 // Open the specified port for udp receiving
 // sets SO_REUSEADDR to true if possible
 // throws a runtime exception if opening the socket fails
-static int openUdpSocketForReceiving(const std::string& address,const int port);
+static int openUdpSocketForReceiving(const std::string& address,int port);
 
 // Set the reuse flag on the socket, so it doesn't care if there is a broken down process
 // still on the socket or not.
