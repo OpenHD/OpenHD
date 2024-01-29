@@ -147,7 +147,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
           // For now, have a fifo of X frame(s) to smooth out extreme edge cases of bitrate overshoot
           // TODO: In ohd_video,  differentiate between "frame" and NALU (nalu can also be config data)
           // such that we can make this queue smaller.
-          options_video_tx.block_data_queue_size=5;
+          options_video_tx.block_data_queue_size=1;
           options_video_tx.radio_port=openhd::VIDEO_PRIMARY_RADIO_PORT;
           auto primary = std::make_unique<WBStreamTx>(m_wb_txrx, options_video_tx,m_tx_header_1);
           options_video_tx.radio_port=openhd::VIDEO_SECONDARY_RADIO_PORT;
