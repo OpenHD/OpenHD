@@ -228,6 +228,38 @@ static bool rpi_needs_level_4_2(const VideoFormat& video_format,int bitrate_kbit
     return true;
 }
 
+static int ALIGN_UP(int value,int multiple){
+    return value + (value % multiple);
+}
+static int ALIGN(int value,int multiple){
+    return value + (value % multiple);
+}
+
+static int rpi_calculate_number_of_mbs_in_a_slice(int frame_height_px,int n_slices){
+    if(n_slices<2)return 0;
+    int frame_mb_rows = ALIGN_UP(frame_height_px,16)/4;
+    if(n_slices > frame_mb_rows){
+        openhd::log::get_default()->warn("Too many slices, frame_mb_rows:%d slices:%d",frame_mb_rows,n_slices);
+        return frame_mb_rows;
+    }
+    int slice_row_mb = frame_mb_rows/n_slices;
+    if (frame_mb_rows - n_slices*slice_row_mb)
+        slice_row_mb++; //must round up to avoid extra slice if not evenly divided
+    openhd::log::get_default()->debug("frame_height_px:%d n_slices:%d frame_mb_rows:%d slice_row_mb:%d",frame_height_px,n_slices,
+                                     frame_mb_rows,slice_row_mb);
+    return slice_row_mb;
+}
+static int rpi_calculate_intra_refresh_period(int frame_width_px,int frame_height_px,int intra_refresh_period){
+    int32_t mbs=0;
+    mbs = ALIGN(frame_width_px, 16) * ALIGN(frame_height_px, 16);
+    mbs /= 16 * 16;
+    if (mbs % intra_refresh_period)
+        mbs++;
+    mbs /= intra_refresh_period;
+    openhd::log::get_default()->debug("%dx%d intra_refresh_period:%d mbs:%d",frame_width_px,frame_height_px,intra_refresh_period,mbs);
+    return mbs;
+}
+
 // v4l2 h264 encoder on raspberry pi
 // we configure the v4l2 h264 encoder by using the extra controls
 // We want constant bitrate (e.g. what the user has set) as long as we don't dynamically adjust anything
@@ -249,14 +281,20 @@ static std::string create_rpi_v4l2_h264_encoder(const CameraSettings& settings){
   if(rpi_needs_level_4_2(settings.streamed_video_format,settings.h26x_bitrate_kbits)){
       rpi_h264_encode_level="4.2";
   }
-  std::string intra_refresh_period;
+  std::string intra_refresh_period_str;
   if(settings.h26x_intra_refresh_type!=-1){
-      intra_refresh_period=",intra_refresh_period=300 ,number_of_mbs_in_a_slice=0";
+      const int period= rpi_calculate_intra_refresh_period(settings.streamed_video_format.width,settings.streamed_video_format.height,5);
+      intra_refresh_period_str=fmt::format(",intra_refresh_period={}",period);
+  }
+  std::string slicing_str;
+  if(settings.h26x_num_slices>=2){
+      const int number_of_mbs_in_a_slice= rpi_calculate_number_of_mbs_in_a_slice(settings.streamed_video_format.height,settings.h26x_num_slices);
+      slicing_str=fmt::format(",number_of_mbs_in_a_slice={}",number_of_mbs_in_a_slice);
   }
   std::stringstream ret;
-  ret<<fmt::format("v4l2h264enc name=rpi_v4l2_encoder extra-controls=\"controls,repeat_sequence_header=1,h264_profile=1,h264_level=11,video_bitrate={},h264_i_frame_period={},h264_minimum_qp_value={},generate_access_unit_delimiters=1{}\" ! "
-                 ,bitrateBitsPerSecond,settings.h26x_keyframe_interval,OPENHD_H264_MIN_QP_VALUE,intra_refresh_period);
-  ret << fmt::format("video/x-h264,level=(string){} ! ",rpi_h264_encode_level);
+  ret<<fmt::format("v4l2h264enc name=rpi_v4l2_encoder extra-controls=\"controls,repeat_sequence_header=1,h264_profile=1,h264_level=11,video_bitrate={},h264_i_frame_period={},h264_minimum_qp_value={},generate_access_unit_delimiters=1{}{}\" ! "
+                 ,bitrateBitsPerSecond,settings.h26x_keyframe_interval,OPENHD_H264_MIN_QP_VALUE,intra_refresh_period_str,slicing_str);
+  ret << fmt::format("video/x-h264,level=(string){},profile=constrained-baseline ! ",rpi_h264_encode_level);
   return ret.str();
 }
 
