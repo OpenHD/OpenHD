@@ -56,36 +56,6 @@ bool openhd::wb::any_card_support_frequency(uint32_t frequency, const std::vecto
     return any_supports_frequency;
 }
 
-void openhd::wb::fixup_unsupported_frequency(
-    openhd::WBLinkSettingsHolder& settings,
-    const std::vector<WiFiCard>& m_broadcast_cards,
-    std::shared_ptr<spdlog::logger> m_console) {
-  if(!m_console) {
-    m_console=openhd::log::get_default();
-  }
-  // For now, we only check whatever the first card can do and assume the rest can do the same
-  const WiFiCard& first_card= m_broadcast_cards.at(0);
-
-  if(!wifi_card_supports_frequency(first_card,settings.get_settings().wb_frequency)){
-    m_console->warn("Card {} doesn't support {}Mhz, applying defaults",first_card.device_name,settings.get_settings().wb_frequency);
-    if(first_card.supports_5GHz()){
-      settings.unsafe_get_settings().wb_frequency=DEFAULT_5GHZ_FREQUENCY;
-      settings.persist();
-    }else{
-      settings.unsafe_get_settings().wb_frequency=DEFAULT_2GHZ_FREQUENCY;
-      settings.persist();
-    }
-  }
-  // NOTE: The card might not support setting the MCS index
-  /*if(!all_cards_support_setting_mcs_index(m_broadcast_cards)){
-    m_console->warn("Card {} doesn't support setting MCS index, applying defaults",first_card.device_name);
-    // cards that do not support changing the mcs index are always fixed to mcs3 on openhd drivers
-    settings.unsafe_get_settings().wb_air_mcs_index=3;
-    settings.persist();
-  }*/
-  settings.persist();
-}
-
 bool openhd::wb::set_frequency_and_channel_width_for_all_cards(
     uint32_t frequency, uint32_t channel_width,
     const std::vector<WiFiCard>& m_broadcast_cards) {
