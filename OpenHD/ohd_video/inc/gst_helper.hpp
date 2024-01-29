@@ -280,8 +280,9 @@ static std::string create_rpi_v4l2_h264_encoder(const CameraSettings& settings){
       rpi_h264_encode_level="4.2";
   }
   // NOTE: higher quantization parameter -> lower image quality, and lower bitrate
+  // NOTE: The range of QP value is from 0 to 51. Any value more than 51 is clamped to 51
   static constexpr auto OPENHD_H264_MIN_QP_VALUE=10;
-  std::string quantization_str=fmt::format(",h264_minimum_qp_value={},h264_maximum_qp_value={}",10,80);
+  std::string quantization_str=fmt::format(",h264_minimum_qp_value={},h264_maximum_qp_value={}",10,51);
   std::string intra_refresh_period_str;
   if(settings.h26x_intra_refresh_type!=-1){
       const int period= rpi_calculate_intra_refresh_period(settings.streamed_video_format.width,settings.streamed_video_format.height,8);
