@@ -296,7 +296,7 @@ static std::string create_rpi_v4l2_h264_encoder(const CameraSettings& settings){
       slicing_str=fmt::format(",number_of_mbs_in_a_slice={}",number_of_mbs_in_a_slice);
   }
   std::stringstream ret;
-  ret<<fmt::format("v4l2h264enc name=rpi_v4l2_encoder extra-controls=\"controls,repeat_sequence_header=1,h264_profile=1,h264_level={},video_bitrate={},h264_i_frame_period={}{},generate_access_unit_delimiters=1{}{}\" ! "
+  ret<<fmt::format("v4l2h264enc name=rpi_v4l2_encoder extra-controls=\"controls,repeat_sequence_header=1,h264_profile=1,h264_level={},video_bitrate_mode=1,video_bitrate={},h264_i_frame_period={}{},generate_access_unit_delimiters=1{}{}\" ! "
         ,rpi_h264_encode_level_v4l2_int,bitrateBitsPerSecond,settings.h26x_keyframe_interval,quantization_str,intra_refresh_period_str,slicing_str);
   ret << fmt::format("video/x-h264,level=(string){},profile=constrained-baseline ! ",rpi_h264_encode_level);
   return ret.str();
