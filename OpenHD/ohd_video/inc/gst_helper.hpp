@@ -278,7 +278,7 @@ static std::string create_rpi_v4l2_h264_encoder(const CameraSettings& settings){
   // If the level selected is too low, the stream will straight out not start (pi cannot really do more than level 4.0, at least not low latency,
   // but for experimenting, at least make those higher resolutions create a valid pipeline
   std::string rpi_h264_encode_level="4";
-  if(rpi_needs_level_4_2(settings.streamed_video_format,settings.h26x_bitrate_kbits)){
+  if(rpi_needs_level_4_2(settings.streamed_video_format,settings.h26x_bitrate_kbits || true)){
       rpi_h264_encode_level="4.2";
   }
   std::string intra_refresh_period_str;
