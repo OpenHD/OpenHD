@@ -618,7 +618,6 @@ static std::string create_dummy_filesrc_stream(const OHDPlatform& platform,const
     auto files=OHDFilesystemUtil::getAllEntriesFullPathInDirectory("/usr/local/share/openhd/dev");
     //std::string filename="/usr/local/share/openhd/dev/test.mp4";
     //if(!files.empty())filename=files.at(0);
-    //std::stringstream ss;
     //const std::string PATH="/usr/local/share/openhd/dev/";
     const std::string PATH="/home/openhd/";
     std::string filename="";
@@ -631,6 +630,7 @@ static std::string create_dummy_filesrc_stream(const OHDPlatform& platform,const
         filename="wing_848x480p60.mkv";
     }
     const std::string path_filename=PATH+filename;
+    std::stringstream ss;
     //ss<<"multifilesrc location="<<filename<<" loop=true ! ";
     ss<<"filesrc location="<<path_filename<<" ! ";
     ss<<"decodebin ! ";
