@@ -277,7 +277,7 @@ static std::string create_rpi_v4l2_h264_encoder(const CameraSettings& settings){
   // but for experimenting, at least make those higher resolutions create a valid pipeline
   std::string rpi_h264_encode_level="4";
   std::string rpi_h264_encode_level_v4l2_int="11";
-  if(rpi_needs_level_4_2(settings.streamed_video_format,settings.h26x_bitrate_kbits || true)){
+  if(rpi_needs_level_4_2(settings.streamed_video_format,settings.h26x_bitrate_kbits) || true){
       rpi_h264_encode_level="4.2"; // Used for gstreamer caps
       rpi_h264_encode_level_v4l2_int="13"; // Used for 4l2 control
   }
