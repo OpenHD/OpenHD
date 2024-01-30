@@ -174,6 +174,9 @@ struct XCamera {
         // Not mapped yet
         return {ResolutionFramerate{1920,1080,30}};
     }
+    bool is_camera_type_usb_infiray()const{
+        return camera_type==X_CAM_TYPE_USB; // TODO how figure out if infiray
+    };
 };
 
 

@@ -125,8 +125,9 @@ struct CameraSettings {
   // OpenHD WB supports changing encryption on the fly per camera stream
   bool enable_ultra_secure_encryption= false;
   // these are customizable settings
-  int custom_script_value0=0;
-  int custom_script_value1=0;
+  // 34817 == black hot
+  // actually not zoom
+  int infiray_custom_control_zoom_absolute_colorpalete=34817;
 };
 
 

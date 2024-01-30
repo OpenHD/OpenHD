@@ -35,6 +35,9 @@ GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHol
     this->request_restart();
   });
   OHDGstHelper::initGstreamerOrThrow();
+  if(m_camera_holder->get_camera().is_camera_type_usb_infiray()){
+      openhd::set_infiray_custom_control_zoom_absolute_async(m_camera_holder->get_settings().infiray_custom_control_zoom_absolute_colorpalete);
+  }
   //m_gst_video_recorder=std::make_unique<GstVideoRecorder>();
   m_console->debug("GStreamerStream::GStreamerStream done");
 }

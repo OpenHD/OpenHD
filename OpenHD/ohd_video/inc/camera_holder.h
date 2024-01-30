@@ -12,6 +12,7 @@
 #include "openhd_settings_directories.hpp"
 #include "openhd_settings_imp.hpp"
 #include "openhd_settings_persistent.h"
+#include "usb_thermal_cam_helper.h"
 
 // Holds the immutable (camera) and mutable (camera_settings) information about a camera
 // Camera Holder is used to differentiate between
@@ -217,14 +218,11 @@ class CameraHolder:
       persist(false);
       return true;
   }
-  bool set_custom_script_param0(int value){
-      unsafe_get_settings().custom_script_value0=value;
-      persist(false);
-      return true;
-  }
-  bool set_custom_script_param1(int value){
-      unsafe_get_settings().custom_script_value1=value;
-      persist(false);
+  bool set_infiray_custom_control_zoom_absolute_colorpalete(int value){
+      if(!openhd::is_valid_infiray_custom_control_zoom_absolute_value(value))return false;
+      unsafe_get_settings().infiray_custom_control_zoom_absolute_colorpalete=value;
+      persist(false); // No restart required
+      openhd::set_infiray_custom_control_zoom_absolute_async(value);
       return true;
   }
   // The CSI to HDMI adapter has an annoying bug where it actually doesn't allow changing the framerate but takes whatever the host provides

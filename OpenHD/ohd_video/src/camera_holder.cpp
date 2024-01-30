@@ -24,7 +24,8 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CameraSettings, enable_streaming,
                                    rpi_libcamera_shutter_microseconds,
                                     // rpi libcamera specific IQ params end
                                    force_sw_encode,
-                                   enable_ultra_secure_encryption)
+                                   enable_ultra_secure_encryption,
+                                   infiray_custom_control_zoom_absolute_colorpalete)
 
 std::optional<CameraSettings> CameraHolder::impl_deserialize(const std::string &file_as_string) const {
     return openhd_json_parse<CameraSettings>(file_as_string);
@@ -198,6 +199,12 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
       return set_rpi_libcamera_shutter_microseconds(value);
     };
     ret.push_back(openhd::Setting{"SHUTTER_US_LC",openhd::IntSetting{get_settings().rpi_libcamera_shutter_microseconds,cb_shutter}});
+  }
+  if(m_camera.is_camera_type_usb_infiray()){
+      auto cb_infiray=[this](std::string,int value) {
+          return set_infiray_custom_control_zoom_absolute_colorpalete(value);
+      };
+      ret.push_back(openhd::Setting{"COLOR_PALETE",openhd::IntSetting{get_settings().infiray_custom_control_zoom_absolute_colorpalete,cb_infiray}});
   }
   return ret;
 }
