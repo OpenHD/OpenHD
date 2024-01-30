@@ -152,8 +152,8 @@ namespace DThermalCamerasHelper {
 
             std::vector<std::string> ar{"start", "seekthermal"};
             OHDUtil::run_command("systemctl", ar);
-#endif // OPENHD_LIBUSB_PRESENT
         }
+#endif // OPENHD_LIBUSB_PRESENT
     }
 }  // namespace DThermalCamerasHelper
 
