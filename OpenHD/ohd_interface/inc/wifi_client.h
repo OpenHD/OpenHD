@@ -10,8 +10,10 @@
 #include "wifi_card.h"
 
 /**
- * Looks if a file with wifi network name and password exists
- * If this file exists, try connecting to the given network
+ * FEATURE: Disable hotspot and automatically connect to a given network
+ * USAGE: Create file /boot/openhd/wifi_client.txt containing 2 lines -
+ * ssid in first line, pw in second line
+ * Then reboot.
  */
 class WiFiClient {
 public:
