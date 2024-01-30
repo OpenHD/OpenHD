@@ -40,13 +40,12 @@ struct SettingImpl{
   std::function<T()> get_callback= nullptr;
 };
 using IntSetting=SettingImpl<int>;
-using FloatSetting=SettingImpl<float>;
 using StringSetting=SettingImpl<std::string>;
 
 struct Setting{
   // Do not mutate me
   std::string id;
-  std::variant<IntSetting,FloatSetting,StringSetting> setting;
+  std::variant<IntSetting,StringSetting> setting;
 };
 
 // we need to have unique setting string ids. Creating duplicates by accident is not uncommon when adding new settings, and when

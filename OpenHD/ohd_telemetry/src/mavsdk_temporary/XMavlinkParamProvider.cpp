@@ -22,16 +22,12 @@ void XMavlinkParamProvider::add_param(const openhd::Setting& setting) {
     if(intSetting.get_callback!= nullptr){
         m_int_settings_with_update_functionality.push_back(setting);
     }
-  } else if (std::holds_alternative<openhd::FloatSetting>(setting.setting)) {
-	const auto floatSetting=std::get<openhd::FloatSetting>(setting.setting);
-	const auto result = _mavlink_parameter_receiver->provide_server_param<float>(setting.id,floatSetting.value,floatSetting.change_callback);
-	assert(result == mavsdk::MavlinkParameterReceiver::Result::Success);
   } else if (std::holds_alternative<openhd::StringSetting>(setting.setting)) {
 	const auto stringSetting=std::get<openhd::StringSetting>(setting.setting);
 	const auto result = _mavlink_parameter_receiver->provide_server_param<std::string>(setting.id,stringSetting.value,stringSetting.change_callback);
 	assert(result == mavsdk::MavlinkParameterReceiver::Result::Success);
   } else {
-	assert(true);
+	assert(false);
   }
 }
 
