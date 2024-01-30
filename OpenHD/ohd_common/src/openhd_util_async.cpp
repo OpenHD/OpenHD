@@ -37,15 +37,16 @@ void openhd::AsyncHandle::execute_async(const std::string tag, std::function<voi
     task->runnable=std::move(runnable);
     task->done= false;
     task->worker_thread=std::make_shared<std::thread>([task](){
-        openhd::log::get_default()->debug("{} begin",task->tag);
+        auto console=openhd::log::get_default();
+        console->debug("{} begin",task->tag);
         try{
             task->runnable();
         } catch (std::exception &ex) {
-            openhd::log::get_default()->warn("Exception on {},{}",task->tag,ex.what());
+            console->warn("Exception on {},{}",task->tag,ex.what());
         } catch (...) {
-            openhd::log::get_default()->warn("Unknown Exception on {}",task->tag);
+            console->warn("Unknown Exception on {}",task->tag);
         }
-        openhd::log::get_default()->debug("{} done",task->tag);
+        console->debug("{} done",task->tag);
         task->done=true;
     });
     std::lock_guard<std::mutex> lock(m_threads_mutex);
@@ -56,7 +57,7 @@ void openhd::AsyncHandle::execute_command_async(std::string tag, std::string com
     auto runnable=[command](){
         OHDUtil::run_command(command,{}, true);
     };
-    openhd::AsyncHandle::instance().execute_async(std::move(tag),runnable);
+    execute_async(std::move(tag),runnable);
 }
 
 bool openhd::AsyncHandle::terminate_when_done(const openhd::AsyncHandle::RunningTask &task) {
@@ -69,12 +70,24 @@ bool openhd::AsyncHandle::terminate_when_done(const openhd::AsyncHandle::Running
 
 void openhd::AsyncHandle::check_watchdog() {
     while (m_watchdog_run){
-        std::lock_guard<std::mutex> lock(m_threads_mutex);
-        m_tasks.erase(std::remove_if(m_tasks.begin(),
-                                     m_tasks.end(),
-                                     [](std::shared_ptr<RunningTask>& task) {
-                                         return terminate_when_done(*task);
-        }),m_tasks.end());
+        {
+            std::lock_guard<std::mutex> lock(m_threads_mutex);
+            m_tasks.erase(std::remove_if(m_tasks.begin(),
+                                         m_tasks.end(),
+                                         [](std::shared_ptr<RunningTask>& task) {
+                                             // returns true if task is done
+                                             return terminate_when_done(*task);
+                                         }),m_tasks.end());
+            for(auto& task:m_tasks){
+                const auto elapsed_task=std::chrono::steady_clock::now()-task->start_time;
+                if(elapsed_task>std::chrono::seconds(10)){
+                    // Log a warning message every 3 seconds on a (presumably) hanging task
+                    if(std::chrono::steady_clock::now()-task->last_watchdog_error_log>std::chrono::seconds(3)){
+                        openhd::log::get_default()->warn("Async Task [{}] hanging ?",task->tag);
+                    }
+                }
+            }
+        }
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 }

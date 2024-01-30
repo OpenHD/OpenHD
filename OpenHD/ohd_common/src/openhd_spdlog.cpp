@@ -66,7 +66,7 @@ void openhd::log::MavlinkLogMessageBuffer::enqueue_log_message(
     openhd::log::MavlinkLogMessage message) {
   std::lock_guard<std::mutex> lock(m_mutex);
   if(m_buffer.size()>10){
-    std::cerr<<"Dropping log message:"<<message.message;
+    std::cerr<<"Dropping log message:"<<message.message<<std::endl;
     return ;
   }
   m_buffer.push_back(message);

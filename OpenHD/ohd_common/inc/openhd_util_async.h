@@ -25,7 +25,7 @@ public:
     ~AsyncHandle();
     static AsyncHandle& instance();
     void execute_async(std::string tag,std::function<void()> runnable);
-    static void execute_command_async(std::string tag,std::string command);
+    void execute_command_async(std::string tag,std::string command);
     int get_n_current_tasks();
 private:
     std::mutex m_threads_mutex;
@@ -35,6 +35,7 @@ private:
         std::string tag;
         bool done= false;
         std::chrono::steady_clock::time_point start_time=std::chrono::steady_clock::now();
+        std::chrono::steady_clock::time_point last_watchdog_error_log=std::chrono::steady_clock::now();
     };
     std::deque<std::shared_ptr<RunningTask>> m_tasks;
     bool m_watchdog_run= true;
