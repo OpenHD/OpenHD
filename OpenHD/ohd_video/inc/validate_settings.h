@@ -6,9 +6,7 @@
 #define OPENHD_OPENHD_OHD_VIDEO_INC_V_VALIDATE_SETTINGS_H_
 
 #include <optional>
-#include <regex>
-
-#include "openhd_spdlog.h"
+#include <string>
 
 // For now, only basic sanity checking on video settings
 namespace openhd{
@@ -43,21 +41,9 @@ static bool validate_video_codec(int codec){
   return codec==0 || codec==1 ;
 }
 
-static bool validate_bitrate_mbits(int bitrate_mbits){
-  const bool ret=bitrate_mbits>=1 && bitrate_mbits <=50;
-  if(!ret){
-    openhd::log::get_default()->warn("Invalid bitrate_mbits: {}",bitrate_mbits);
-  }
-  return ret;
-}
+bool validate_bitrate_mbits(int bitrate_mbits);
 
-static bool validate_camera_rotation(int value){
-  const bool ret= value==0 || value==90 || value==180 || value==270;
-  if(!ret){
-    openhd::log::get_default()->warn("Invalid camera_rotation: {}",value);
-  }
-  return ret;
-}
+bool validate_camera_rotation(int value);
 
 static bool validate_rpi_awb_mode(int value){
   return value >=0 && value<=9;
@@ -75,22 +61,10 @@ static bool validate_rpi_rpicamsrc_iso(int value){
 }
 
 // from gst-rpicamsrc: keyframe-interval   : Interval (in frames) between I frames. -1 = automatic, 0 = single-keyframe
-static bool validate_rpi_keyframe_interval(int value){
-  const bool ret=value>=-1 && value < 2147483647;
-  if(!ret){
-    openhd::log::get_default()->warn("Invalid rpi_keyframe_interval: {}",value);
-  }
-  return ret;
-}
+bool validate_rpi_keyframe_interval(int value);
 
 // see gst-rpicamsrc documentation
-static bool validate_rpi_intra_refresh_type(int value){
-  const bool ret=(value>=-1 && value<=2) || value==2130706433;
-  if(!ret){
-    openhd::log::get_default()->warn("Invalid intra_refresh_type: {}",value);
-  }
-  return ret;
-}
+bool validate_rpi_intra_refresh_type(int value);
 
 // see gst-rpicamsrc documentation
 static bool validate_rpi_rpicamsrc_metering_mode(int value){
@@ -134,46 +108,17 @@ struct TmpVideoFormat{
   int height_px;
   int framerate;
 };
-static std::string video_format_from_int_values(int width,int height,int framerate){
-  std::stringstream ss;
-  ss<<width<<"x"<<height<<"@"<<framerate;
-  return ss.str();
-}
+std::string video_format_from_int_values(int width,int height,int framerate);
 // Takes a string in the from {width}x{height}@{framerate}
 // e.g. 1280x720@30
-static std::optional<TmpVideoFormat> parse_video_format(const std::string& videoFormat){
-  if(videoFormat.size()<=5){
-	return std::nullopt;
-  }
-  openhd::log::get_default()->debug("Parsing:["+videoFormat+"]");
-  TmpVideoFormat tmp_video_format{0,0,0};
-  const std::regex reg{R"((\d*)x(\d*)\@(\d*))"};
-  std::smatch result;
-  if (std::regex_search(videoFormat, result, reg)) {
-	if (result.size() == 4) {
-	  //openhd::log::get_default()->debug("result[0]=["+result[0].str()+"]");
-	  tmp_video_format.width_px=atoi(result[1].str().c_str());
-	  tmp_video_format.height_px=atoi(result[2].str().c_str());
-	  tmp_video_format.framerate=atoi(result[3].str().c_str());
-	  if(validate_video_with(tmp_video_format.width_px) &&
-	  	validate_video_height(tmp_video_format.height_px)&& validate_video_fps(tmp_video_format.framerate)){
-		std::stringstream log;
-		log<<"Final result:{"<<video_format_from_int_values(tmp_video_format.width_px,tmp_video_format.height_px,tmp_video_format.framerate);
-		log<<"}";
-		openhd::log::get_default()->debug(log.str());
-		return tmp_video_format;
-	  }
-	}
-  }
-  return std::nullopt;
-}
+std::optional<TmpVideoFormat> parse_video_format(const std::string& videoFormat);
 
 // remap the openhd libcamera image quality values where we use int
 // (but libcamera uses float)
 // They are sharpness,contrast,saturation
 static float remap_libcamera_openhd_int_to_libcamera_float(int value){
-        float tmp=static_cast<float>(value);
-        return value/100.0f;
+        auto tmp=static_cast<float>(value);
+        return tmp/100.0f;
 }
 
 }

@@ -2,7 +2,7 @@
 #define OPENHD_CAMERA_H
 
 #include "camera_enums.hpp"
-#include "v_validate_settings.h"
+#include "validate_settings.h"
 
 // Mutable data for a discovered camera
 // See camera_holder for how the settings are created the first time a camera is detected and

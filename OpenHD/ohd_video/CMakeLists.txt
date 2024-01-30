@@ -25,6 +25,7 @@ set(sources
     src/gst_recording_demuxer.cpp
     src/camera_holder.cpp
     src/ohd_video_air_generic_settings.cpp
+    src/validate_settings.cpp
 )
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
