@@ -12,7 +12,7 @@
 #include "openhd_global_constants.hpp"
 #include "openhd_util_filesystem.h"
 #include "wb_link.h"
-
+#include <wifi_client.h>
 
 OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,bool continue_without_wb_card)
     : m_platform(platform1),
@@ -73,10 +73,14 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,bool contin
   }
   // Wi-Fi hotspot functionality if possible.
   if(m_opt_hotspot_card.has_value()){
-    const openhd::WifiSpace wb_frequency_space= (m_wb_link!= nullptr) ? m_wb_link->get_current_frequency_channel_space() : openhd::WifiSpace::G5_8;
-    // OHD hotspot needs to know the wifibroadcast frequency - it is always on the opposite spectrum
-    m_wifi_hotspot =std::make_unique<WifiHotspot>(m_profile, m_opt_hotspot_card.value(), wb_frequency_space);
-    update_wifi_hotspot_enable();
+    if(WiFiClient::create_if_enabled()){
+        // Wifi client active
+    }else{
+        const openhd::WifiSpace wb_frequency_space= (m_wb_link!= nullptr) ? m_wb_link->get_current_frequency_channel_space() : openhd::WifiSpace::G5_8;
+        // OHD hotspot needs to know the wifibroadcast frequency - it is always on the opposite spectrum
+        m_wifi_hotspot =std::make_unique<WifiHotspot>(m_profile, m_opt_hotspot_card.value(), wb_frequency_space);
+        update_wifi_hotspot_enable();
+    }
   }
   // automatically disable Wi-Fi hotspot if FC is armed
   if(m_wifi_hotspot){

@@ -27,6 +27,7 @@ set(sources
     src/wb_link_manager.cpp
     src/networking_settings.cpp
     src/wb_link_settings.cpp
+    src/wifi_client.cpp
     #src/wifi_command_helper2.cpp
 )
 
