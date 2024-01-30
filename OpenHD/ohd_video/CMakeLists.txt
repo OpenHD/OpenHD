@@ -14,42 +14,6 @@ add_subdirectory(../ohd_common commonlib EXCLUDE_FROM_ALL)
 #You can supress the warnings in CMake using
 add_compile_options(-Wno-address-of-packed-member -Wno-cast-align)
 
-# From libcamera-apps !! begin
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(LIBCAMERA QUIET libcamera)
-if(LIBCAMERA_FOUND)
-    message(STATUS "libcamera library found:")
-    message(STATUS "    version: ${LIBCAMERA_VERSION}")
-    message(STATUS "    libraries: ${LIBCAMERA_LINK_LIBRARIES}")
-    message(STATUS "    include path: ${LIBCAMERA_INCLUDE_DIRS}")
-else()
-    message(STATUS "LIBCAMERA features will be unavailable!")
-endif()
-
-# From libcamera-apps !! end
-
-# FUCKING GSTREAMER !! begin
-find_package(PkgConfig REQUIRED)
-pkg_search_module(GST REQUIRED gstreamer-1.0>=1.4
-        gstreamer-sdp-1.0>=1.4
-        gstreamer-video-1.0>=1.4
-        gstreamer-app-1.0>=1.4)
-## xx
-# https://stackoverflow.com/questions/64078308/how-to-write-a-cmake-file-which-successfully-links-gstreamer-basic-tutorial-5
-pkg_search_module(gstreamer REQUIRED IMPORTED_TARGET gstreamer-1.0>=1.4)
-pkg_search_module(gstreamer-sdp REQUIRED IMPORTED_TARGET gstreamer-sdp-1.0>=1.4)
-pkg_search_module(gstreamer-app REQUIRED IMPORTED_TARGET gstreamer-app-1.0>=1.4)
-pkg_search_module(gstreamer-video REQUIRED IMPORTED_TARGET gstreamer-video-1.0>=1.4)
-target_link_libraries(OHDVideoLib PRIVATE
-        PkgConfig::gstreamer
-        PkgConfig::gstreamer-sdp
-        PkgConfig::gstreamer-app
-        PkgConfig::gstreamer-video)
-## xx
-# FUCKING GSTREAMER !! end
-
-
-
 set(sources
     src/camerastream.cpp
     src/camera_discovery.cpp
@@ -75,17 +39,43 @@ target_compile_options(OHDVideoLib PRIVATE -Wno-packed-bitfield-compat)
 find_package(Threads REQUIRED)
 target_link_libraries(OHDVideoLib PUBLIC Threads::Threads)
 
+# From libcamera-apps !! begin
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(LIBCAMERA QUIET libcamera)
+if(LIBCAMERA_FOUND)
+    message(STATUS "libcamera library found:")
+    message(STATUS "    version: ${LIBCAMERA_VERSION}")
+    message(STATUS "    libraries: ${LIBCAMERA_LINK_LIBRARIES}")
+    message(STATUS "    include path: ${LIBCAMERA_INCLUDE_DIRS}")
+else()
+    message(STATUS "LIBCAMERA features will be unavailable!")
+endif()
+# From libcamera-apps !! end
 if(LIBCAMERA_FOUND)
     target_include_directories(OHDVideoLib PRIVATE ${LIBCAMERA_INCLUDE_DIRS})
     target_link_libraries(OHDVideoLib PRIVATE ${LIBCAMERA_LINK_LIBRARIES})
     target_compile_definitions(OHDVideoLib PUBLIC OPENHD_LIBCAMERA_PRESENT)
 endif()
 
-# link and include gstreamer
-#target_include_directories(OHDVideoLib PUBLIC ${GST_INCLUDE_DIRS})
-#target_link_libraries(OHDVideoLib PUBLIC ${GST_LIBRARIES})
-# find and include all the other libs
-
+# FUCKING GSTREAMER !! begin
+find_package(PkgConfig REQUIRED)
+pkg_search_module(GST REQUIRED gstreamer-1.0>=1.4
+        gstreamer-sdp-1.0>=1.4
+        gstreamer-video-1.0>=1.4
+        gstreamer-app-1.0>=1.4)
+## xx
+# https://stackoverflow.com/questions/64078308/how-to-write-a-cmake-file-which-successfully-links-gstreamer-basic-tutorial-5
+pkg_search_module(gstreamer REQUIRED IMPORTED_TARGET gstreamer-1.0>=1.4)
+pkg_search_module(gstreamer-sdp REQUIRED IMPORTED_TARGET gstreamer-sdp-1.0>=1.4)
+pkg_search_module(gstreamer-app REQUIRED IMPORTED_TARGET gstreamer-app-1.0>=1.4)
+pkg_search_module(gstreamer-video REQUIRED IMPORTED_TARGET gstreamer-video-1.0>=1.4)
+target_link_libraries(OHDVideoLib PRIVATE
+        PkgConfig::gstreamer
+        PkgConfig::gstreamer-sdp
+        PkgConfig::gstreamer-app
+        PkgConfig::gstreamer-video)
+## xx
+# FUCKING GSTREAMER !! end
 
 include(cmake/FindLibUSB.cmake)
 if(LIBUSB_1_FOUND)
