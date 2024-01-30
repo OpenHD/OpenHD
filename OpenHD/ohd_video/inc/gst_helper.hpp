@@ -56,8 +56,14 @@ static std::string createSwEncoder(const CameraSettings& settings){
     // on x86 2 threads / cores are enough for sw encode of most resolutions anyways.
     // NOTE: While not exactly true, latency is ~ as many frame(s) as there are threads, aka 2 frames for 2 threads
     // dct8x8=true
-    ss<<fmt::format("x264enc name=swencoder bitrate={} speed-preset=ultrafast  tune=zerolatency key-int-max={} sliced-threads=false threads=2 intra-refresh={} qp_min=2 qp_step=10 ! ",
-                      settings.h26x_bitrate_kbits,settings.h26x_keyframe_interval,settings.h26x_intra_refresh_type<0 ? "false" : "true");
+    std::string slices_str;
+    if(settings.h26x_num_slices>=2){
+        slices_str=fmt::format(" option-string=\"slices={}\" ",settings.h26x_num_slices);
+    }
+    ss<<fmt::format("x264enc name=swencoder bitrate={} speed-preset=ultrafast  tune=zerolatency key-int-max={} sliced-threads=false threads=2"
+                    " intra-refresh={} qp_min=2 qp_step=10 {}! ",
+                      settings.h26x_bitrate_kbits,settings.h26x_keyframe_interval,settings.h26x_intra_refresh_type<0 ? "false" : "true",
+                      slices_str);
 #endif
   }else if(settings.streamed_video_format.videoCodec==VideoCodec::H265){
     //TODO: jetson sw encoder (x265enc) is so old it doesn't have the key-int-max param
