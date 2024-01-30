@@ -233,24 +233,6 @@ int main(int argc, char *argv[]) {
     const auto profile=DProfile::discover(options.run_as_air);
     write_profile_manifest(*profile);
 
-    // we need to start QOpenHD when we are running as ground, or stop / disable it when we are running as air.
-    // can be disabled for development purposes.
-    if(!options.no_qopenhd_autostart){
-      if(!profile->is_air){
-        OHDUtil::run_command("systemctl",{"start","qopenhd"});
-      }else{
-        OHDUtil::run_command("systemctl",{"stop","qopenhd"});
-      }
-    }
-    // Now we need to discover camera(s) if we are on the air
-    std::vector<Camera> cameras{};
-    if(profile->is_air){
-      cameras = OHDVideoAir::discover_cameras(*platform);
-    }
-    // Now print the actual cameras used by OHD. Of course, this prints nothing on ground (where we have no cameras connected).
-    for(const auto& camera:cameras){
-      m_console->info(camera.to_long_string());
-    }
     // And start the blinker (TODO LED output is really dirty right now).
     auto alive_blinker=std::make_unique<openhd::GreenLedAliveBlinker>(*platform,profile->is_air);
 
@@ -277,6 +259,16 @@ int main(int argc, char *argv[]) {
     std::unique_ptr<OHDVideoAir> ohd_video_air = nullptr;
     std::unique_ptr<OHDVideoGround> ohd_video_ground = nullptr;
     if (profile->is_air) {
+      OHDUtil::run_command("systemctl",{"stop","qopenhd"});
+
+      // Now we need to discover camera(s) if we are on the air
+      auto cameras = OHDVideoAir::discover_cameras(*platform);
+
+      // Now print the actual cameras used by OHD. Of course, this prints nothing on ground (where we have no cameras connected).
+      for(const auto& camera:cameras){
+        m_console->info(camera.to_long_string());
+      }
+
       ohd_video_air = std::make_unique<OHDVideoAir>(*platform,cameras,ohd_action_handler,ohdInterface->get_link_handle());
       // Let telemetry handle the settings via mavlink
       auto settings_components= ohd_video_air->get_all_camera_settings();
@@ -288,7 +280,14 @@ int main(int argc, char *argv[]) {
     }else{
       ohd_video_ground = std::make_unique<OHDVideoGround>(ohdInterface->get_link_handle());
       ohd_video_ground->set_ext_devices_manager(ohdInterface->get_ext_devices_manager());
+
+      // we need to start QOpenHD when we are running as ground, or stop / disable it when we are running as air.
+      // can be disabled for development purposes.
+      if(!options.no_qopenhd_autostart){
+          OHDUtil::run_command("systemctl",{"start","qopenhd"});
+      }
     }
+
     // We do not add any more settings to ohd telemetry - the param set(s) are complete
     ohdTelemetry->settings_generic_ready();
     // now telemetry can send / receive data via wifibroadcast
