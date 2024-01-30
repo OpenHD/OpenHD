@@ -18,6 +18,10 @@ std::string WiFiClient::create_command(const WiFiClient::Configuration &configur
     return fmt::format("sudo nmcli dev wifi connect \"{}\" password \"{}\"",configuration.network_name,configuration.password);
 }
 
+static std::shared_ptr<spdlog::logger> get_console(){
+    return openhd::log::create_or_get("WiFiClient");
+}
+
 std::optional<WiFiClient::Configuration> WiFiClient::get_configuration() {
     const auto content=OHDFilesystemUtil::opt_read_file(WIFI_CLIENT_CONFIG_FILE);
     if(!content.has_value())return std::nullopt;
@@ -25,10 +29,15 @@ std::optional<WiFiClient::Configuration> WiFiClient::get_configuration() {
     if(lines.size()<2)return std::nullopt;
     const auto ssid=lines[0];
     const auto pw=lines[1];
-    if(ssid.length()>3 && pw.length()>6){
-        return WiFiClient::Configuration{ssid,pw};
+    if(ssid.length()<3){
+        get_console()->debug("Invalid SSID:{}",ssid);
+        return std::nullopt;
     }
-    return std::nullopt;
+    if(pw.length()<6){
+        get_console()->debug("Invalid PW:{}",pw);
+        return std::nullopt;
+    }
+    return WiFiClient::Configuration{ssid,pw};
 }
 
 bool WiFiClient::create_if_enabled() {
