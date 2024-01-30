@@ -5,7 +5,9 @@
 #include <linux/videodev2.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
+#ifdef OPENHD_LIBUSB_PRESENT
 #include <libusb.h>
+#endif
 
 #include <iostream>
 #include <regex>
@@ -54,6 +56,7 @@ namespace DThermalCamerasHelper {
  * service doesn't yet have a thermal handling class
  */
     static void enableFlirIfFound() {
+#ifdef OPENHD_LIBUSB_PRESENT
         libusb_context *context = nullptr;
         int result = libusb_init(&context);
         if (result) {
@@ -67,6 +70,7 @@ namespace DThermalCamerasHelper {
         libusb_close(handle);
         // TODO missing r.n
         OHDUtil::run_command("systemctl", {"start", "flirone"});
+#endif //OPENHD_LIBUSB_PRESENT
     }
 
 /*
@@ -89,6 +93,7 @@ namespace DThermalCamerasHelper {
  * available
  */
     static void enableSeekIfFound() {
+#ifdef OPENHD_LIBUSB_PRESENT
         libusb_context *context = nullptr;
         int result = libusb_init(&context);
         if (result) {
@@ -147,6 +152,7 @@ namespace DThermalCamerasHelper {
 
             std::vector<std::string> ar{"start", "seekthermal"};
             OHDUtil::run_command("systemctl", ar);
+#endif // OPENHD_LIBUSB_PRESENT
         }
     }
 }  // namespace DThermalCamerasHelper
