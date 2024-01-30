@@ -26,6 +26,7 @@ public:
     static AsyncHandle& instance();
     void execute_async(std::string tag,std::function<void()> runnable);
     static void execute_command_async(std::string tag,std::string command);
+    int get_n_current_tasks();
 private:
     std::mutex m_threads_mutex;
     struct RunningTask{

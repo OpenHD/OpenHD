@@ -79,6 +79,11 @@ void openhd::AsyncHandle::check_watchdog() {
     }
 }
 
+int openhd::AsyncHandle::get_n_current_tasks() {
+    std::lock_guard<std::mutex> lock(m_threads_mutex);
+    return m_tasks.size();
+}
+
 
 
 

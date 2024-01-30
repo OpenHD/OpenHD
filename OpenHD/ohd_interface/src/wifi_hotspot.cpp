@@ -7,6 +7,7 @@
 #include <utility>
 
 #include "openhd_spdlog.h"
+#include "openhd_util_async.h"
 
 static constexpr auto OHD_WIFI_HOTSPOT_CONNECTION_NAME ="ohd_wifi_hotspot";
 
@@ -77,11 +78,15 @@ void WifiHotspot::stop() {
 }
 
 void WifiHotspot::start_async() {
-  m_last_async_operation=std::async(std::launch::async, &WifiHotspot::start,this);
+  openhd::AsyncHandle::instance().execute_async("WiFi HS",[this](){
+      WifiHotspot::start();
+  });
 }
 
 void WifiHotspot::stop_async() {
-  m_last_async_operation=std::async(std::launch::async, &WifiHotspot::stop,this);
+    openhd::AsyncHandle::instance().execute_async("WiFi HS",[this](){
+        WifiHotspot::stop();
+    });
 }
 
 void WifiHotspot::set_enabled_async(bool enable) {

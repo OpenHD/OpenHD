@@ -50,7 +50,6 @@ class WifiHotspot {
   const WiFiCard m_wifi_card;
   bool started=false;
   std::shared_ptr<spdlog::logger> m_console;
-  std::future<void> m_last_async_operation;
   bool m_use_5G_channel;
   bool m_is_enabled= false;
 };
