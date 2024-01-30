@@ -8,7 +8,7 @@
 
 #include "openhd_spdlog.h"
 
-static constexpr auto OHD_WIFI_HOTSPOT_CONNECTION_NAME ="ohd_wfi_hotspot";
+static constexpr auto OHD_WIFI_HOTSPOT_CONNECTION_NAME ="ohd_wifi_hotspot";
 
 static std::string get_ohd_wifi_hotspot_connection_nm_filename(){
   return fmt::format("/etc/NetworkManager/system-connections/{}.nmconnection",OHD_WIFI_HOTSPOT_CONNECTION_NAME);
