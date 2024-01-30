@@ -26,7 +26,10 @@ std::optional<WiFiClient::Configuration> WiFiClient::get_configuration() {
     const auto content=OHDFilesystemUtil::opt_read_file(WIFI_CLIENT_CONFIG_FILE);
     if(!content.has_value())return std::nullopt;
     const auto lines=OHDUtil::split_string_by_newline(content.value());
-    if(lines.size()<2)return std::nullopt;
+    if(lines.size()<2){
+        get_console()->debug("Invalid content [{}]",content.value());
+        return std::nullopt;
+    }
     const auto ssid=lines[0];
     const auto pw=lines[1];
     if(ssid.length()<3){
