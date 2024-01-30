@@ -47,27 +47,20 @@ target_link_libraries(OHDVideoLib PRIVATE
         PkgConfig::gstreamer-video)
 ## xx
 # FUCKING GSTREAMER !! end
-# We get fmt from speedlog
-#find_package(fmt REQUIRED)
-#SET(OHD_VIDEO_USED_LIBS ${OHD_VIDEO_USED_LIBS} fmt::fmt)
-
-#find_package(spdlog REQUIRED)
-#SET(OHD_VIDEO_USED_LIBS ${OHD_VIDEO_USED_LIBS} spdlog::spdlog)
 
 find_package(Threads REQUIRED)
 
 set(sources
-        "inc/ffmpeg_videosamples.hpp"
-    "src/camerastream.cpp"
-    "src/camera_discovery.cpp"
-    "src/gstreamerstream.cpp"
-    "src/ohd_video_air.cpp"
-    "src/rtp_eof_helper.cpp"
-     src/ohd_video_ground.cpp
-     #src/gst_recorder.cpp
-     src/gst_recording_demuxer.cpp
-     src/camera_holder.cpp
-     src/ohd_video_air_generic_settings.cpp
+    src/camerastream.cpp
+    src/camera_discovery.cpp
+    src/gstreamerstream.cpp
+    src/ohd_video_air.cpp
+    src/rtp_eof_helper.cpp
+    src/ohd_video_ground.cpp
+    #src/gst_recorder.cpp
+    src/gst_recording_demuxer.cpp
+    src/camera_holder.cpp
+    src/ohd_video_air_generic_settings.cpp
 )
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
