@@ -235,7 +235,8 @@ int main(int argc, char *argv[]) {
 
     // we need to start QOpenHD when we are running as ground, or stop / disable it when we are running as air.
     // can be disabled for development purposes.
-    if(!options.no_qopenhd_autostart){
+    // On x20, we do not have qopenhd installed (we run as air only) so we can skip this step
+    if(!options.no_qopenhd_autostart && OHDPlatform::instance().platform_type!=PlatformType::Allwinner){
       if(!profile->is_air){
         OHDUtil::run_command("systemctl",{"start","qopenhd"});
       }else{
