@@ -25,7 +25,7 @@ static std::shared_ptr<spdlog::logger> get_console(){
 std::optional<WiFiClient::Configuration> WiFiClient::get_configuration() {
     const auto content=OHDFilesystemUtil::opt_read_file(WIFI_CLIENT_CONFIG_FILE);
     if(!content.has_value())return std::nullopt;
-    const auto lines=OHDUtil::split_string_by_newline(content.value());
+    const auto lines=OHDUtil::split_string_by_newline(content.value(), false);
     if(lines.size()<2){
         get_console()->debug("Invalid content [{}]",content.value());
         return std::nullopt;
