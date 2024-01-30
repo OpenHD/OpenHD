@@ -14,5 +14,5 @@ void openhd::set_infiray_custom_control_zoom_absolute_async(int value) {
         return;
     }
     const auto command=fmt::format("v4l2-ctl -d /dev/video0 -c zoom_absolute={}",value);
-    openhd::AsyncHandle::execute_command_async("INFIRAY",command);
+    openhd::AsyncHandle::instance().execute_command_async("INFIRAY",command);
 }
