@@ -5,8 +5,8 @@
 #ifndef OPENHD_OPENHD_OHD_VIDEO_INC_OPENHD_CAMERA_ENUMS_H_
 #define OPENHD_OPENHD_OHD_VIDEO_INC_OPENHD_CAMERA_ENUMS_H_
 
-#include "openhd_spdlog.h"
-#include "openhd_util.h"
+#include <string>
+#include <sstream>
 
 enum class VideoCodec {
   H264=0,
@@ -68,7 +68,10 @@ struct VideoFormat {
    * @return the video format in a readable form.
    */
   [[nodiscard]] std::string toString() const {
-    return fmt::format("{}|{}x{}@{}",video_codec_to_string(videoCodec),width,height,framerate);
+      std::stringstream ss;
+      ss<<video_codec_to_string(videoCodec)<<"|";
+      ss<<width<<"x"<<height<<"@"<<framerate;
+      return ss.str();
   }
 };
 
