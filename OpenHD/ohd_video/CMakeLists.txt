@@ -48,7 +48,7 @@ target_link_libraries(OHDVideoLib PRIVATE
 ## xx
 # FUCKING GSTREAMER !! end
 
-find_package(Threads REQUIRED)
+
 
 set(sources
     src/camerastream.cpp
@@ -69,22 +69,23 @@ target_include_directories(OHDVideoLib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/inc)
 
 target_link_libraries(OHDVideoLib PUBLIC OHDCommonLib)
 
+# disable compiler warning since we don't link against GCC before 4.4
+target_compile_options(OHDVideoLib PRIVATE -Wno-packed-bitfield-compat)
+
+find_package(Threads REQUIRED)
+target_link_libraries(OHDVideoLib PUBLIC Threads::Threads)
+
 if(LIBCAMERA_FOUND)
     target_include_directories(OHDVideoLib PRIVATE ${LIBCAMERA_INCLUDE_DIRS})
     target_link_libraries(OHDVideoLib PRIVATE ${LIBCAMERA_LINK_LIBRARIES})
     target_compile_definitions(OHDVideoLib PUBLIC OPENHD_LIBCAMERA_PRESENT)
 endif()
 
-# disable compiler warning since we don't link against GCC before 4.4
-target_compile_options(OHDVideoLib PRIVATE -Wno-packed-bitfield-compat)
-
-target_link_libraries(OHDVideoLib PUBLIC ${OHD_VIDEO_USED_LIBS})
 # link and include gstreamer
-target_include_directories(OHDVideoLib PUBLIC ${GST_INCLUDE_DIRS})
-target_link_libraries(OHDVideoLib PUBLIC ${GST_LIBRARIES})
+#target_include_directories(OHDVideoLib PUBLIC ${GST_INCLUDE_DIRS})
+#target_link_libraries(OHDVideoLib PUBLIC ${GST_LIBRARIES})
 # find and include all the other libs
 
-target_link_libraries(OHDVideoLib PUBLIC Threads::Threads)
 
 include(cmake/FindLibUSB.cmake)
 if(LIBUSB_1_FOUND)

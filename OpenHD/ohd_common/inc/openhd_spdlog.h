@@ -13,7 +13,7 @@
 //#include <spdlog/fmt/fmt.h>
 #include <spdlog/common.h>
 #include <spdlog/spdlog.h>
-# define FMT_STRING(s) s
+//# define FMT_STRING(s) s
 
 namespace openhd::log{
 
