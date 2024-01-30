@@ -3,10 +3,14 @@
 //
 
 #include <OHDTelemetry.h>
-#include <camera_discovery.h>
 #include <getopt.h>
 #include <ohd_interface.h>
+
+#ifdef ENABLE_AIR
 #include <ohd_video_air.h>
+#include <camera_discovery.h>
+#endif
+
 #include <ohd_video_ground.h>
 
 #include <csignal>
@@ -256,9 +260,12 @@ int main(int argc, char *argv[]) {
     ohdTelemetry->set_ext_devices_manager(ohdInterface->get_ext_devices_manager());
 
     // either one is active, depending on air or ground
+#ifdef ENABLE_AIR
     std::unique_ptr<OHDVideoAir> ohd_video_air = nullptr;
+#endif
     std::unique_ptr<OHDVideoGround> ohd_video_ground = nullptr;
     if (profile->is_air) {
+#ifdef ENABLE_AIR
       OHDUtil::run_command("systemctl",{"stop","qopenhd"});
 
       // Now we need to discover camera(s) if we are on the air
@@ -277,6 +284,7 @@ int main(int argc, char *argv[]) {
       }
       ohdTelemetry->add_settings_generic(ohd_video_air->get_generic_settings());
       ohd_video_air->set_ext_devices_manager(ohdInterface->get_ext_devices_manager());
+#endif
     }else{
       ohd_video_ground = std::make_unique<OHDVideoGround>(ohdInterface->get_link_handle());
       ohd_video_ground->set_ext_devices_manager(ohdInterface->get_ext_devices_manager());
@@ -325,11 +333,13 @@ int main(int argc, char *argv[]) {
     std::this_thread::sleep_for(std::chrono::seconds(1));
     // unique ptr would clean up for us, but this way we are a bit more verbose
     // since some of those modules talk to each other, this is a bit prone to failures.
+#ifdef ENABLE_AIR
     if(ohd_video_air){
       m_console->debug("Terminating ohd_video_air - begin");
       ohd_video_air.reset();
       m_console->debug("Terminating ohd_video_air - end");
     }
+#endif
     if(ohd_video_ground){
       m_console->debug("Terminating ohd_video_ground- begin");
       ohd_video_ground.reset();

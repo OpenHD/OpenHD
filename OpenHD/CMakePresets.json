@@ -20,6 +20,13 @@
           "sourceDir": "$env{HOME}/.vs/$ms{projectDirName}"
         }
       }
+    },
+    {
+      "name": "linux-debug-ground-only",
+      "inherits": "linux-debug",
+      "cacheVariables": {
+        "ENABLE_AIR": "OFF"
+      }
     }
   ]
 }
