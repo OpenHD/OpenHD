@@ -33,11 +33,15 @@ static bool create_hotspot_connection_file(const WiFiCard& card,const bool is_ai
   OHDUtil::run_command("nmcli",{"con modify",OHD_WIFI_HOTSPOT_CONNECTION_NAME,"ipv4.addresses 192.168.3.1/24"});
   return true;
 }
-static void remove_hotspot_connection_file(){
-    // cleanup - proper stop of openhd, do not leave any traces behind.
-    OHDUtil::run_command("nmcli",{"con", "delete", OHD_WIFI_HOTSPOT_CONNECTION_NAME});
-}
 
+bool WifiHotspot::util_delete_nm_file() {
+    // cleanup - proper stop of openhd, do not leave any traces behind.
+    if(OHDFilesystemUtil::exists(get_ohd_wifi_hotspot_connection_nm_filename())){
+        OHDUtil::run_command("nmcli",{"con","delete", OHD_WIFI_HOTSPOT_CONNECTION_NAME});
+        return true;
+    }
+    return false;
+}
 
 WifiHotspot::WifiHotspot(OHDProfile profile,WiFiCard wifiCard,const openhd::WifiSpace& wifibroadcast_frequency_space)
         :m_profile(std::move(profile)),
@@ -52,7 +56,7 @@ WifiHotspot::WifiHotspot(OHDProfile profile,WiFiCard wifiCard,const openhd::Wifi
 }
 
 WifiHotspot::~WifiHotspot() {
- remove_hotspot_connection_file();
+    util_delete_nm_file();
 }
 
 
@@ -108,3 +112,4 @@ uint16_t WifiHotspot::get_frequency() {
   if(m_use_5G_channel) return 5180;
   return 2412;
 }
+

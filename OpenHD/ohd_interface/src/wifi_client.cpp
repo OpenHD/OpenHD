@@ -5,6 +5,7 @@
 #include "wifi_client.h"
 #include "wifi_card.h"
 #include <openhd_spdlog.h>
+#include "wifi_hotspot.h"
 
 static constexpr auto OHD_WIFI_CLIENT_CONNECTION_NAME ="ohd_wfi_client";
 
@@ -48,6 +49,10 @@ bool WiFiClient::create_if_enabled() {
     if(!config.has_value()){
         openhd::log::get_default()->debug("WiFi Client disabled");
         return false;
+    }
+    // Disble the wifi hotspot if needed
+    if(WifiHotspot::util_delete_nm_file()){
+        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
     const auto command= create_command(config.value());
     OHDUtil::run_command(command,{}, true);

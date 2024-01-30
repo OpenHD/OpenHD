@@ -36,6 +36,7 @@ class WifiHotspot {
   //
   void set_enabled_async(bool enable);
   uint16_t get_frequency();
+  static bool util_delete_nm_file();
  private:
   // NOTE: might block, use async
   // just runs the appropriate network manager (nmcli) command to start an already created wifi hotspot connection
