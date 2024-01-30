@@ -207,7 +207,7 @@ static std::string createRpicamsrcStream(const int camera_number,
           settings.streamed_video_format.width, settings.streamed_video_format.height, settings.streamed_video_format.framerate);
     }
   }else{
-    openhd::log::get_default()->warn("No h265 / MJPEG encoder on rpi, using SW encode (might result in frame drops/performance issues");
+    openhd::log::get_default()->warn("No h265 encoder on rpi, using SW encode (might result in frame drops/performance issues");
     ss<<fmt::format(
         "video/x-raw, width={}, height={}, framerate={}/1 ! ",
         settings.streamed_video_format.width, settings.streamed_video_format.height, settings.streamed_video_format.framerate);

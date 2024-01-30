@@ -122,11 +122,6 @@ struct CameraSettings {
   // Enabling this is no guarantee a sw encoded pipeline exists for this camera.
   bool force_sw_encode=false;
 
-  // only used on RK3588, dirty, r.n not persistent
-  VideoFormat recordingFormat{VideoCodec::H264, 0, 0, 0}; // 0 means copy
-  int recordingKBits = DEFAULT_RECORDING_KBITS;
-  int recordingQP = DEFAULT_RECORDING_QP;
-  RateControlMode recordingRCMode = DEFAULT_RC_MODE;
   // OpenHD WB supports changing encryption on the fly per camera stream
   bool enable_ultra_secure_encryption= false;
   // these are customizable settings
