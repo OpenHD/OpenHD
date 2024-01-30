@@ -139,7 +139,7 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
       auto c_h26x_num_slices=[this](std::string,int value) {
           return set_h26x_num_slices(value);
       };
-      ret.push_back(openhd::Setting{"SLICE_N",openhd::IntSetting{get_settings().h26x_num_slices,c_h26x_num_slices}});
+      ret.push_back(openhd::Setting{"N_SLICES",openhd::IntSetting{get_settings().h26x_num_slices,c_h26x_num_slices}});
   }
   if(true){
     auto c_brightness=[this](std::string,int value) {
