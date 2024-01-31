@@ -650,9 +650,16 @@ static std::string create_dummy_filesrc_stream(const OHDPlatform& platform,const
     ss<<fmt::format("videorate max-rate={} ! ",settings.streamed_video_format.framerate);
     ss<<"queue ! ";
     ss<<"videoscale ! ";
-    ss<<"video/x-raw, format=I420";
-    ss<<fmt::format(",width={}, height={}, framerate={}/1 ! ",settings.streamed_video_format.width,settings.streamed_video_format.height,
-                    settings.streamed_video_format.framerate);
+    if(platform.platform_type==PlatformType::Rockchip){
+      // ROCK needs NV12
+      ss<<"video/x-raw, format=NV12";
+      ss<<fmt::format(",width={}, height={}, framerate={}/1 ! ",settings.streamed_video_format.width,settings.streamed_video_format.height,
+                        settings.streamed_video_format.framerate);
+    }else{
+      ss<<"video/x-raw, format=I420";
+      ss<<fmt::format(",width={}, height={}, framerate={}/1 ! ",settings.streamed_video_format.width,settings.streamed_video_format.height,
+                        settings.streamed_video_format.framerate);
+    }
     //ss<<createSwEncoder(settings);
     if(settings.force_sw_encode){
         ss << createSwEncoder(settings);
