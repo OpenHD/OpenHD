@@ -250,11 +250,6 @@ int main(int argc, char *argv[]) {
         OHDUtil::run_command("systemctl",{"stop","qopenhd"});
       }
     }
-    // Now we need to discover camera(s) if we are on the air
-    std::vector<XCamera> cameras{};
-    if(profile->is_air){
-      cameras = OHDVideoAir::discover_cameras(platform);
-    }
     // And start the blinker (TODO LED output is really dirty right now).
     auto alive_blinker=std::make_unique<openhd::GreenLedAliveBlinker>(platform,profile->is_air);
 
@@ -280,6 +275,7 @@ int main(int argc, char *argv[]) {
 #ifdef ENABLE_AIR
     std::unique_ptr<OHDVideoAir> ohd_video_air = nullptr;
     if (profile->is_air) {
+      auto cameras = OHDVideoAir::discover_cameras(platform);
       ohd_video_air = std::make_unique<OHDVideoAir>(platform,cameras,ohdInterface->get_link_handle());
       // First add camera specific settings (primary & secondary camera)
       auto settings_components= ohd_video_air->get_all_camera_settings();
