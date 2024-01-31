@@ -390,5 +390,8 @@ void DWifiCards::main_discover_an_process_wifi_cards(const openhd::Config &confi
   const auto evaluated=DWifiCards::process_and_evaluate_cards(connected_cards, m_platform, m_profile);
   m_monitor_mode_cards=evaluated.monitor_mode_cards;
   m_opt_hotspot_card=evaluated.hotspot_card;
+  if(m_monitor_mode_cards.empty()){
+    m_monitor_mode_cards.push_back(DWifiCards::create_card_monitor_emulate());
+  }
 }
 
