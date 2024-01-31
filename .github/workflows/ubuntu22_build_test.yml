@@ -41,6 +41,24 @@ jobs:
         run: |
           cd OpenHD
           ./build_submodules_independently.sh
+          
+  build-air-only-test:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Install Dependencies
+        run: |
+          sudo apt update
+          sudo ./install_build_dep.sh ubuntu-x86
+      - name: Build with air support explicitly disabled
+        run: |
+          cd OpenHD
+          ./build_air_disabled.sh
+          
+                    
   build:
     #runs-on: ubuntu-18.04
     #runs-on: ubuntu-20.04
