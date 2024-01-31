@@ -1,8 +1,10 @@
 name: ubuntu22_build_test
 
-# NOTE: This test only checks if the code in the repository builds under ubuntu x86 (dependencies installed)
-# Which is - simply put - the most basic test. If this test fails, there is something wrong with the code.
-
+# Far away from unit tests, but here we check if 
+# 1) The code compiles (no unwanted dependencies have been added / mistakes have been made)
+# 2) Nothing unexpected happens if we let the code run for a few seconds (air & ground) and terminate properly (cleanup)
+# Sounds simple, but in the scope of this project, needed
+⠀⠀⠀⠀
 #⠀⠀⠀⠀⠀⠀⢀⣀⣀⣀⣤⣤⣤⣤⣤⣤⣤⣤⣤⣤⣤⣤⣤⣀⣀⠀⠀⠀⠀⠀
 #⠀⠀⠀⠀⠀⠀⣾⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠀⠀⠀⠀⢀⠀⠈⡇⠀⠀⠀⠀
 #⠀⠀⠀⠀⠀⠀⣿⠀⠁⠀⠘⠁⠀⠀⠀⠀⠀⣀⡀⠀⠀⠀⠈⠀⠀⡇⠀⠀⠀⠀
@@ -15,17 +17,42 @@ name: ubuntu22_build_test
 #⠀⠀⠀⠀⠀⠸⣤⡴⠋⠸⣇⣠⠼⠁⠀⠀⠀⠹⣄⣠⠞⠀⢾⡀⣠⠃⠀⠀⠀⠀
 #   ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠁⠀⠀⠀⠀⠀
 
-on:
-  push:
-
-env:
-  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
-  BUILD_TYPE: Release
-
 jobs:
-  build:
-    #runs-on: ubuntu-18.04
-    #runs-on: ubuntu-20.04
+  build-submodules-independently-test:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+          
+      - name: Install Dependencies
+        run: |
+          sudo apt update
+          sudo ./install_build_dep.sh ubuntu-x86
+          
+      - name: Build submodules independently
+        run: |
+          cd OpenHD
+          ./build_submodules_independently.sh
+  
+  build-air-only-test:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Install Dependencies
+        run: |
+          sudo apt update
+          sudo ./install_build_dep.sh ubuntu-x86
+      - name: Build with air support explicitly disabled
+        run: |
+          cd OpenHD
+          ./build_air_disabled.sh
+          
+  build-and-run-air-ground-test:
     runs-on: ubuntu-22.04
 
     steps:
@@ -33,26 +60,24 @@ jobs:
         uses: actions/checkout@v3
         with:
           submodules: recursive
-
       - name: Install Dependencies
         run: |
           sudo apt update
           sudo ./install_build_dep.sh ubuntu-x86
-      - name: Build submodules independently
-        run: |
-          cd OpenHD
-          ./build_submodules_independently.sh
-      - name: First, build with air support explicitly disabled
-        run: |
-          cd OpenHD
-          ./build_air_disabled.sh
       - name: Build with make
         run: |
           cd OpenHD
           ./build_cmake.sh
+      - name: enable dummy wifi card
+        run: |
+          mkdir /boot/openhd
+          cp OpenHD/OpenHD/common/hardware.config /boot/openhd/hardware.config
+          sed -i 's/\(^WIFI_MONITOR_CARD_EMULATE =\).*/\1true/' /boot/openhd/hardware.config
+          
+              
       - name: Run as air, but limited to X seconds
         run: |
-          sudo ./OpenHD/build/openhd -a --run-time-seconds 10 --continue-without-wb-card
+          sudo ./OpenHD/build/openhd -a --run-time-seconds 10
       - name: Run as ground, but limited to X seconds
         run: |
-          sudo ./OpenHD/build/openhd -g --run-time-seconds 10 --continue-without-wb-card
+          sudo ./OpenHD/build/openhd -g --run-time-seconds 10
