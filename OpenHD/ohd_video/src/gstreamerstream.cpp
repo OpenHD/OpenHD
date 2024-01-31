@@ -72,14 +72,15 @@ std::string GStreamerStream::create_source_encode_pipeline(const CameraHolder &c
         auto bus="/dev/video11";
         pipeline<<OHDGstHelper::create_veye_vl2_stream(setting,bus);
     }else if(camera.requires_rockchip_mpp_pipeline()){
-        if(camera.camera_type==X_CAM_TYPE_ROCK_HDMI_IN){
-            pipeline<<OHDGstHelper::createRockchipHDMIStream(setting);
-        }else{
-            // TODO: Differences Radxa zero and RK3588
-            // RK3566 has camera on /dev/video0, RK3588 has it on /dev/video11
-            int v4l2_filenumber=0;
-            pipeline<<OHDGstHelper::createRockchipCSIStream(v4l2_filenumber,setting);
-        }
+      if(camera.camera_type==X_CAM_TYPE_ROCK_HDMI_IN){
+        pipeline<<OHDGstHelper::createRockchipHDMIStream(setting);
+      }else{
+        // TODO: Differences Radxa zero and RK3588
+        // RK3566 has camera on /dev/video0, RK3588 has it on /dev/video11
+        const int v4l2_filenumber=
+            OHDPlatform::instance().platform_type==X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W ? 0 : 11;
+        pipeline<<OHDGstHelper::createRockchipCSIStream(v4l2_filenumber,setting);
+      }
     }else if(camera.requires_x20_cedar_pipeline()){
         pipeline<<OHDGstHelper::createAllwinnerStream(setting);
     }else if(camera.camera_type==X_CAM_TYPE_USB){
