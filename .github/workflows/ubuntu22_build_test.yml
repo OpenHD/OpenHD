@@ -45,7 +45,7 @@ jobs:
           cd OpenHD
           ./build_air_disabled.sh
           
-  build-air-ground-test:
+  build-and-run-air-ground-test:
     runs-on: ubuntu-22.04
 
     steps:
@@ -61,9 +61,16 @@ jobs:
         run: |
           cd OpenHD
           ./build_cmake.sh
+      - name: enable dummy wifi card
+        run: |
+          mkdir /boot/openhd
+          cp OpenHD/OpenHD/common/hardware.config /boot/openhd/hardware.config
+          sed -i 's/\(^WIFI_MONITOR_CARD_EMULATE =\).*/\1true/' /boot/openhd/hardware.config
+          
+              
       - name: Run as air, but limited to X seconds
         run: |
-          sudo ./OpenHD/build/openhd -a --run-time-seconds 10 --continue-without-wb-card
+          sudo ./OpenHD/build/openhd -a --run-time-seconds 10
       - name: Run as ground, but limited to X seconds
         run: |
-          sudo ./OpenHD/build/openhd -g --run-time-seconds 10 --continue-without-wb-card
+          sudo ./OpenHD/build/openhd -g --run-time-seconds 10
