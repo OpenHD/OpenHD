@@ -14,11 +14,7 @@
 
 TCPEndpoint::TCPEndpoint(openhd::TCPServer::Config config)
     : MEndpoint("TCPServer"),
-      openhd::TCPServer("MTCPServer",config)
-      //m_opt_external_device_manager(opt_external_device_manager)
-{
-
-}
+      openhd::TCPServer("MTCPServer",config){}
 
 
 bool TCPEndpoint::sendMessagesImpl(const std::vector<MavlinkMessage>& messages) {
@@ -29,7 +25,6 @@ bool TCPEndpoint::sendMessagesImpl(const std::vector<MavlinkMessage>& messages) 
     }
     return true;
 }
-
 
 void TCPEndpoint::on_external_device(std::string ip, bool connected) {
     auto external_device=openhd::ExternalDevice{"MAV TCP CLIENT",ip,true};
