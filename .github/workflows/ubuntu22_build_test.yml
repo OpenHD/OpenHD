@@ -47,10 +47,7 @@ jobs:
       - name: First, build with air support explicitly disabled
         run: |
           cd OpenHD
-          mkdir build_no_air
-          cd build_no_air
-          cmake ... -DENABLE_AIR=false
-          make
+          ./build_air_disabled.sh
 
       - name: Build with make
         run: |
