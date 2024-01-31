@@ -122,6 +122,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       m_curr_onboard_computer_status.ram_total=curr_ram_usage.ram_total_mb;
       m_curr_onboard_computer_status.link_tx_rate[0]=curr_rpi_undervolt ? 1 : 0;
     }
+    std::this_thread::sleep_for(std::chrono::seconds(1));
   }
 }
 
