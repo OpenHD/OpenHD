@@ -7,9 +7,9 @@
 
 #include <unistd.h>
 
-static int find_next_nal(const uint8_t* data,int data_len){
-  int nalu_search_state=0;
-  for(int i=0;i<data_len;i++){
+static int find_next_nal(const uint8_t* data, int data_len) {
+  int nalu_search_state = 0;
+  for (int i = 0; i < data_len; i++) {
     switch (nalu_search_state) {
       case 0:
       case 1:
@@ -20,16 +20,16 @@ static int find_next_nal(const uint8_t* data,int data_len){
         break;
       case 2:
       case 3:
-        if(data[i]==0){
+        if (data[i] == 0) {
           nalu_search_state++;
-        } else if(data[i]==1){
+        } else if (data[i] == 1) {
           // 0,0,0,1 or 0,0,1
-          const int len=nalu_search_state==2 ? 2 : 3;
-          if(i>len){
-            return i-len;
+          const int len = nalu_search_state == 2 ? 2 : 3;
+          if (i > len) {
+            return i - len;
           }
           nalu_search_state = 0;
-        }else{
+        } else {
           nalu_search_state = 0;
         }
         break;
@@ -40,17 +40,15 @@ static int find_next_nal(const uint8_t* data,int data_len){
   return data_len;
 }
 
-static std::array<uint8_t,6> EXAMPLE_AUD={
-        0,0,0,1,9,48
-};
-static std::shared_ptr<std::vector<uint8_t>> get_h264_aud(){
-    return std::make_shared<std::vector<uint8_t>>(EXAMPLE_AUD.data(),EXAMPLE_AUD.data()+EXAMPLE_AUD.size());
+static std::array<uint8_t, 6> EXAMPLE_AUD = {0, 0, 0, 1, 9, 48};
+static std::shared_ptr<std::vector<uint8_t>> get_h264_aud() {
+  return std::make_shared<std::vector<uint8_t>>(
+      EXAMPLE_AUD.data(), EXAMPLE_AUD.data() + EXAMPLE_AUD.size());
 }
-static std::array<uint8_t,6> EXAMPLE_START_CODE={
-        0,0,0,1
-};
-static std::shared_ptr<std::vector<uint8_t>> get_h264_nalu_start_code(){
-    return std::make_shared<std::vector<uint8_t>>(EXAMPLE_START_CODE.begin(),EXAMPLE_START_CODE.end());
+static std::array<uint8_t, 6> EXAMPLE_START_CODE = {0, 0, 0, 1};
+static std::shared_ptr<std::vector<uint8_t>> get_h264_nalu_start_code() {
+  return std::make_shared<std::vector<uint8_t>>(EXAMPLE_START_CODE.begin(),
+                                                EXAMPLE_START_CODE.end());
 }
 
 #endif  // OPENHD_NALU_HELPER_H
