@@ -17,6 +17,10 @@ name: ubuntu22_build_test
 #⠀⠀⠀⠀⠀⠸⣤⡴⠋⠸⣇⣠⠼⠁⠀⠀⠀⠹⣄⣠⠞⠀⢾⡀⣠⠃⠀⠀⠀⠀
 #   ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠁⠀⠀⠀⠀⠀
 
+
+on:
+  push:
+  
 jobs:
   build-submodules-independently-test:
     runs-on: ubuntu-22.04
