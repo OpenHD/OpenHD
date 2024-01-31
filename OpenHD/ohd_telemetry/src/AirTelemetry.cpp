@@ -28,7 +28,7 @@ AirTelemetry::AirTelemetry(OHDPlatform platform): m_platform(platform),MavlinkSy
   // all their paramters.
   m_generic_mavlink_param_provider->add_params(get_all_settings());
   m_components.push_back(m_generic_mavlink_param_provider);
-  m_tcp_server=std::make_unique<TCPEndpoint>(TCPEndpoint::Config{TCPEndpoint::DEFAULT_PORT});//1445
+  m_tcp_server=std::make_unique<TCPEndpoint>(openhd::TCPServer::Config{TCPEndpoint::DEFAULT_PORT});//1445
   if(m_tcp_server){
     m_tcp_server->registerCallback([this](std::vector<MavlinkMessage> messages) {
       // Technically not correct, but works

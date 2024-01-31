@@ -26,7 +26,7 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform):
   m_gcs_endpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
     on_messages_ground_station_clients(messages);
   });
-  m_tcp_server=std::make_unique<TCPEndpoint>(TCPEndpoint::Config{TCPEndpoint::DEFAULT_PORT});//1445
+  m_tcp_server=std::make_unique<TCPEndpoint>(openhd::TCPServer::Config{TCPEndpoint::DEFAULT_PORT});//1445
   //m_tcp_server= nullptr;
   if(m_tcp_server){
     m_tcp_server->registerCallback([this](std::vector<MavlinkMessage> messages) {
