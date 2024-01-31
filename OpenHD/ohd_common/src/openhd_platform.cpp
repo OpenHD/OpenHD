@@ -79,6 +79,7 @@ static OHDPlatform discover_and_write_manifest() {
   auto platform_int=internal_discover_platform();
   auto platform=OHDPlatform(platform_int);
   write_platform_manifest(platform);
+  openhd::log::get_default()->info("{}",platform.to_string());
   return platform;
 }
 

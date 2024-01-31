@@ -30,11 +30,11 @@ static constexpr int X_PLATFORM_TYPE_ALWINNER_X20=30;
 static constexpr int X_PLATFORM_TYPE_SIGMASTAR_UNDEFINED=36;
 
 
-static std::string x_platform_type_to_string(int platform_type);
+std::string x_platform_type_to_string(int platform_type);
 
 // Depends on single threaded CPU performance & weather NEON is available
 // Rough estimate
-static int get_fec_max_block_size_for_platform(int platform_type);
+int get_fec_max_block_size_for_platform(int platform_type);
 
 // All these members must not change during run time once they have been discovered !
 struct OHDPlatform {

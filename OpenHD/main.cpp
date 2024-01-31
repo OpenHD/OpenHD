@@ -206,7 +206,6 @@ int main(int argc, char *argv[]) {
 
   // First discover the platform -
   const auto platform = OHDPlatform::instance();
-  m_console->info("Detected Platform:{}",platform.to_string());
 
   // Create and link all the OpenHD modules.
   try {
