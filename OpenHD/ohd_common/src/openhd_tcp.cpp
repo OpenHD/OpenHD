@@ -36,8 +36,6 @@ openhd::TCPServer::~TCPServer() {
   m_console->debug("TCPEndpoint::~TCPEndpoint() end");
 }
 
-void openhd::TCPServer::on_packet_any_tcp_client(const uint8_t *data,
-                                                 int data_len) {}
 
 void openhd::TCPServer::loop_accept() {
   struct sockaddr_in sockaddr{};
@@ -85,7 +83,7 @@ void openhd::TCPServer::loop_accept() {
     new_client->port=client_port;
     new_client->keep_rx_looping= true;
     new_client->parent= this;
-    new_client->rx_loop_thread=std::make_shared<std::thread>(&TCPEndpoint::ConnectedClient::loop_rx,new_client.get());
+    new_client->rx_loop_thread=std::make_shared<std::thread>(&TCPServer::ConnectedClient::loop_rx,new_client.get());
     on_external_device(client_ip, true);
     {
       std::lock_guard<std::mutex> guard(m_clients_list_mutex);
@@ -93,12 +91,21 @@ void openhd::TCPServer::loop_accept() {
     }
   }
 }
+
 void openhd::TCPServer::send_message_to_all_clients(const uint8_t *data,
                                                     int data_len) {
-
-}
-void openhd::TCPServer::on_external_device(std::string ip, bool connected) {
-
+  std::lock_guard<std::mutex> guard(m_clients_list_mutex);
+  for(auto& client:m_clients_list){
+    if(!client->marked_to_be_removed){
+      const int flags =MSG_DONTWAIT |  // otherwise we might block if the socket got disconnected
+                        MSG_NOSIGNAL; //otherwise we might crash if the socket disconnects
+      if(!send(client->sock_fd, data, data_len, flags)){
+        m_console->debug("Client {} disconnected (cannot send data)",client->ip);
+        // Will be disconnected / removed by the accept thread
+        client->marked_to_be_removed= true;
+      }
+    }
+  }
 }
 
 void openhd::TCPServer::ConnectedClient::loop_rx() {

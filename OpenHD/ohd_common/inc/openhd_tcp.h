@@ -22,7 +22,23 @@ class TCPServer{
   };
   explicit TCPServer(std::string tag,Config config,bool debug=false);
   ~TCPServer();
-  void on_packet_any_tcp_client(const uint8_t* data,int data_len);
+  /**
+   * Needs to be overridden by implementation.
+   * Called every time a packet (from any client) has been received.
+   * The thread calling the method is different for every client.
+   */
+  virtual void on_packet_any_tcp_client(const uint8_t* data,int data_len)=0;
+  /**
+   * Send the given message to all (currently) connected clients.
+   * Non-blocking -
+   */
+  void send_message_to_all_clients(const uint8_t* data,int data_len);
+  /**
+   * Needs to be overridden by implementation.
+   * Called with connected=true once a client connects, and connected==false once a client disconnects
+   * (Or is dead and has been disconnected as a caution feature)
+   */
+  virtual void on_external_device(std::string ip,bool connected)=0;
  private:
   const Config m_config;
   const bool m_debug;
@@ -32,8 +48,6 @@ class TCPServer{
   int server_fd=0;
   static constexpr const size_t READ_BUFF_SIZE = 65507;
   void loop_accept();
-  void send_message_to_all_clients(const uint8_t* data,int data_len);
-  void on_external_device(std::string ip,bool connected);
  private:
   struct ConnectedClient{
     int sock_fd;
@@ -47,7 +61,6 @@ class TCPServer{
   };
   std::mutex m_clients_list_mutex;
   std::deque<std::shared_ptr<ConnectedClient>> m_clients_list;
-  std::mutex m_rx_parse_mutex;
   template <typename... Args>
   void debug_if(spdlog::format_string_t<Args...> fmt, Args &&...args) {
     if(m_debug){
