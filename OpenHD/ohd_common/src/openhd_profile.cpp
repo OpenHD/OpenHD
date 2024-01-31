@@ -19,7 +19,7 @@ void write_profile_manifest(const OHDProfile& ohdProfile) {
 }
 
 std::shared_ptr<OHDProfile> DProfile::discover(bool is_air) {
-  openhd::log::get_default()->debug("Profile::discover()");
+  openhd::log::get_default()->debug("Profile:[{}]",is_air ? "AIR" : "GND");
   // We read the unit id from the persistent storage, later write it to the tmp storage json
   const auto unit_id = openhd::getOrCreateUnitId();
   // We are air pi if there is at least one camera

@@ -68,7 +68,7 @@ static std::string getOrCreateUnitId() {
   auto unit_id_opt=OHDFilesystemUtil::opt_read_file(get_unit_id_file_path());
   if(unit_id_opt.has_value()){
     std::string unit_id=unit_id_opt.value();
-    openhd::log::get_default()->debug("Read unit id:{}",unit_id);
+    //openhd::log::get_default()->debug("Read unit id:{}",unit_id);
     return unit_id;
   }
   // No unit id exists yet - create new one
