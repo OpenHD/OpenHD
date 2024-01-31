@@ -25,7 +25,7 @@
 // better fit your needs (see CameraStream.h)
 class GStreamerStream : public CameraStream {
  public:
-  GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,
+  GStreamerStream(OHDPlatform platform,std::shared_ptr<CameraHolder> camera_holder,
                   openhd::ON_ENCODE_FRAME_CB out_cb);
   ~GStreamerStream();
   void start_looping() override;

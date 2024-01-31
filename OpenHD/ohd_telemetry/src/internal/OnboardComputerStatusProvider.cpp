@@ -87,7 +87,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       curr_ina219_voltage=voltage;
       curr_ina219_current=current;
     }
-    if(m_platform.platform_type==PlatformType::RaspberryPi){
+    if(m_platform.is_rpi()){
       curr_temperature_core=(int8_t)openhd::onboard::rpi::read_temperature_soc_degree();
       // temporary, until we have our own message
       curr_clock_cpu=openhd::onboard::rpi::read_curr_frequency_mhz(openhd::onboard::rpi::VCGENCMD_CLOCK_CPU);

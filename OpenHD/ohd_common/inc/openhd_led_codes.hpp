@@ -24,7 +24,7 @@ class GreenLedAliveBlinker{
  private:
   void run_infinite() const{
     while (run){
-      if(m_platform.platform_type==PlatformType::RaspberryPi){
+      if(m_platform.is_rpi()){
         openhd::rpi::green_led_on_off_delayed(std::chrono::seconds(1),std::chrono::seconds(m_is_air ? 2: 1));
       }else{
         std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -46,7 +46,7 @@ class LEDBlinker {
     const auto start = std::chrono::steady_clock::now();
     while (((std::chrono::steady_clock::now() - start) <= duration) && !terminate) {
       //openhd::log::get_default()->warn(message);
-      if (_platform.platform_type == PlatformType::RaspberryPi) {
+      if (_platform.is_rpi()) {
         rpi::red_led_on_off_delayed(std::chrono::seconds(1),std::chrono::seconds(1));
       } else {
         std::this_thread::sleep_for(std::chrono::seconds(1));

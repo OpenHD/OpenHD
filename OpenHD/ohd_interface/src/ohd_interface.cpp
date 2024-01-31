@@ -56,7 +56,7 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1)
   std::optional<std::string> opt_ethernet_card=std::nullopt;
   if(openhd::nw_ethernet_card_manual_active(config)){
     opt_ethernet_card = config.NW_ETHERNET_CARD;
-  }else if(m_profile.is_ground() && m_platform.platform_type==PlatformType::RaspberryPi){
+  }else if(m_profile.is_ground() && m_platform.is_rpi()){
     opt_ethernet_card=std::string("eth0");
   }
   if(opt_ethernet_card!=std::nullopt){

@@ -13,224 +13,113 @@
 #include "openhd_util_filesystem.h"
 #include "openhd_spdlog.h"
 
-std::string platform_type_to_string(PlatformType platform_type) {
-  switch (platform_type) {
-    case PlatformType::Jetson: return "jetson";
-    case PlatformType::RaspberryPi: return "raspberrypi";
-    case PlatformType::Allwinner: return "allwinner";
-    case PlatformType::iMX6: return "imx6";
-    case PlatformType::Zynq: return "zynq";
-    case PlatformType::PC: return "pc";
-    case PlatformType::Rockchip: return "rockchip";
-    default: return "unknown";
-  }
-}
-
-std::string board_type_to_string(BoardType board_type) {
-  switch (board_type) {
-    case BoardType::GenericPC: return "generic-pc";
-    case BoardType::RaspberryPiZero: return "pizero";
-    case BoardType::RaspberryPiZeroW: return "pizerow";
-    case BoardType::RaspberryPiZero2W: return "pizero2w";
-    case BoardType::RaspberryPi2B: return "pi2b";
-    case BoardType::RaspberryPi3A: return "pi3a";
-    case BoardType::RaspberryPi3APlus: return "pi3aplus";
-    case BoardType::RaspberryPi3B: return "pi3b";
-    case BoardType::RaspberryPi3BPlus: return "pi3bplus";
-    case BoardType::RaspberryPiCM: return "picm";
-    case BoardType::RaspberryPiCM3: return "picm3";
-    case BoardType::RaspberryPiCM3Plus: return "picm3plus";
-    case BoardType::RaspberryPiCM4: return "picm4";
-    case BoardType::RaspberryPi4B: return "pi4b";
-    case BoardType::JetsonNano: return "jetson-nano";
-    case BoardType::JetsonTX1: return "jetson-tx1";
-    case BoardType::JetsonTX2: return "jetson-tx2";
-    case BoardType::JetsonNX: return "jetson-nx";
-    case BoardType::JetsonAGX: return "jetson-agx";
-    case BoardType::Allwinner: return "allwinner";
-    case BoardType::PynqZ1: return "pynqz1";
-    case BoardType::PynqZ2: return "pynqz2";
-    case BoardType::X3DRSolo: return "3dr-solo";
-    case BoardType::RK3588: return "rk3588";
-    case BoardType::RV1109: return "rv1109";
-    case BoardType::RV1126: return "rv1126";
-    default: return "unknown";
-  }
-}
-
 
 static constexpr auto JETSON_BOARDID_PATH = "/proc/device-tree/nvidia,boardids";
 static constexpr auto DEVICE_TREE_COMPATIBLE_PATH = "/proc/device-tree/compatible";
 static constexpr auto ALLWINNER_BOARDID_PATH = "/dev/cedar_dev";
 
-static std::optional<std::pair<PlatformType,BoardType>> detect_raspberrypi(){
-  const auto filename_proc_cpuinfo="/proc/cpuinfo";
-  const auto proc_cpuinfo_opt=OHDFilesystemUtil::opt_read_file("/proc/cpuinfo");
-  if(!proc_cpuinfo_opt.has_value()){
-    openhd::log::get_default()->warn("File {} does not exist, rpi detection unavailable",filename_proc_cpuinfo);
-    return {};
-  }
-  const auto& proc_cpuinfo=proc_cpuinfo_opt.value();
 
-  std::smatch result;
-  // example "Revision	: 2a020d3"
-  const std::regex r{R"(Revision\t*:\s*([\w]+))"};
-
-  if (!std::regex_search(proc_cpuinfo, result, r)) {
-    //openhd::log::get_default()->debug("Detect rpi no result");
-    return {};
+static int internal_discover_platform(){
+  //These are the 'easy ones'
+  if(OHDFilesystemUtil::exists(ALLWINNER_BOARDID_PATH)){
+    return X_PLATFORM_TYPE_ALWINNER_X20;
   }
-
-  if (result.size() != 2) {
-    openhd::log::get_default()->debug("Detect rpi result doesnt match");
-    return {};
-  }
-
-  const PlatformType platform_type = PlatformType::RaspberryPi;
-  BoardType board_type=BoardType::Unknown;
-
-  const std::string raspberry_identifier = result[1];
-  if(raspberry_identifier == "0000")
-  {
-    openhd::log::get_default()->debug("Pi identifier:[{}] is not raspberry pi",raspberry_identifier);
-    return {};
-  }
-  openhd::log::get_default()->debug("Pi identifier:[{}]",raspberry_identifier);
-
-  const std::set<std::string> pi4b_identifiers = {"a03111", "b03111", "b03112", "c03111", "c03112", "d03114","b03115"};
-  if (pi4b_identifiers.find(raspberry_identifier) != pi4b_identifiers.end()) {
-    board_type = BoardType::RaspberryPi4B;
-  }
-
-  const std::set<std::string> pi3b_identifiers = {"2a02082", "2a22082", "2a32082", "2a52082"};
-  if (pi3b_identifiers.find(raspberry_identifier) != pi3b_identifiers.end()) {
-    board_type = BoardType::RaspberryPi3B;
-  }
-
-  const std::set<std::string> pizero_identifiers = {"2900092", "2900093", "2920092", "2920093"};
-  if (pizero_identifiers.find(raspberry_identifier) != pizero_identifiers.end()) {
-    board_type = BoardType::RaspberryPiZero;
-  }
-
-  const std::set<std::string> pi2b_identifiers = {"2a22042", "2a21041", "2a01041", "2a01040"};
-  if (pi2b_identifiers.find(raspberry_identifier) != pi2b_identifiers.end()) {
-    board_type = BoardType::RaspberryPi2B;
-  }
-
-  if (raspberry_identifier == "29020e0") {
-    board_type = BoardType::RaspberryPi3APlus;
-  }
-
-  if (raspberry_identifier == "2a020d3") {
-    board_type = BoardType::RaspberryPi3BPlus;
-  }
-
-  if (raspberry_identifier == "29000c1") {
-    board_type = BoardType::RaspberryPiZeroW;
-  }
-
-  if (raspberry_identifier == "902120") {
-    board_type = BoardType::RaspberryPiZero2W;
-  }
-  return std::make_pair(platform_type,board_type);
-}
-static std::optional<std::pair<PlatformType,BoardType>> detect_jetson(){
-  if (OHDFilesystemUtil::exists(JETSON_BOARDID_PATH)) {
-    return std::make_pair(PlatformType::Jetson,BoardType::JetsonNano);
-  }
-  return {};
-}
-static std::optional<std::pair<PlatformType,BoardType>> detect_rockchip(){
   if (OHDFilesystemUtil::exists(DEVICE_TREE_COMPATIBLE_PATH)) {
     std::string compatible_content = OHDFilesystemUtil::read_file(DEVICE_TREE_COMPATIBLE_PATH);
-
     std::regex r("rockchip,(r[kv][0-9]+)");
     std::smatch sm;
-
     if (regex_search(compatible_content, sm, r)) {
       const std::string chip = sm[1];
       if(chip == "rk3588"){
-        return std::make_pair(PlatformType::Rockchip, BoardType::RK3588);
-      }else if(chip == "rv1109"){
-        return std::make_pair(PlatformType::Rockchip, BoardType::RV1109);
-      }else if(chip == "rv1126"){
-        return std::make_pair(PlatformType::Rockchip, BoardType::RV1126);
-      }else{
-        return std::make_pair(PlatformType::Rockchip, BoardType::Unknown);
+        return X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5;
+      }else if(chip=="rk3566"){
+        return X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W;
+      }else if(chip=="rv1126"){
+        return X_PLATFORM_TYPE_ROCKCHIP_RV1126_UNDEFINED;
       }
     }
   }
-  return {};
-}
-static std::optional<std::pair<PlatformType,BoardType>> detect_allwinner(){
-  if (OHDFilesystemUtil::exists(ALLWINNER_BOARDID_PATH)) {
-    return std::make_pair(PlatformType::Allwinner,BoardType::Allwinner);
+  // If this file exists we can be sure we are on (any) RPI
+  if(OHDFilesystemUtil::exists("/boot/config.txt")){
+    const auto filename_proc_cpuinfo="/proc/cpuinfo";
+    const auto proc_cpuinfo_opt=OHDFilesystemUtil::opt_read_file("/proc/cpuinfo");
+    if(!proc_cpuinfo_opt.has_value()){
+      openhd::log::get_default()->warn("File {} does not exist, rpi detection unavailable",filename_proc_cpuinfo);
+      return  X_PLATFORM_TYPE_RPI_OLD;
+    }
+    // TODO properly
+    return X_PLATFORM_TYPE_RPI_OLD;
   }
-  return {};
-}
-static std::pair<PlatformType,BoardType> detect_pc(){
-  const auto arch_opt=OHDUtil::run_command_out("arch");
-  if(arch_opt==std::nullopt){
-    openhd::log::get_default()->warn("Arch not found");
-    return {PlatformType::Unknown,BoardType::Unknown};
+  {
+    // X86
+    const auto arch_opt=OHDUtil::run_command_out("arch");
+    if(arch_opt==std::nullopt){
+      openhd::log::get_default()->warn("Arch not found");
+      return X_PLATFORM_TYPE_UNKNOWN;
+    }
+    const auto arch=arch_opt.value();
+    std::smatch result;
+    std::regex r1{"x86_64"};
+    auto res1 = std::regex_search(arch, result, r1);
+    if(res1){
+      return X_PLATFORM_TYPE_X86;
+    }
   }
-  const auto arch=arch_opt.value();
-  std::smatch result;
-  std::regex r1{"x86_64"};
-  auto res1 = std::regex_search(arch, result, r1);
+  openhd::log::get_default()->warn("Unknown platform");
+  return X_PLATFORM_TYPE_UNKNOWN;
+}
 
-  std::regex r2{"i386"};
-  auto res2 = std::regex_search(arch, result, r2);
-
-  if (!res1 && !res2) {
-    return {PlatformType::Unknown,BoardType::Unknown};
-  }
-  return std::make_pair(PlatformType::PC, BoardType::GenericPC);
-}
-
-static OHDPlatform internal_discover(){
-  const auto res=detect_raspberrypi();
-  if(res.has_value()){
-    return OHDPlatform(res.value().first,res.value().second);
-  }
-  const auto res2=detect_jetson();
-  if(res2.has_value()){
-    return OHDPlatform(res2.value().first,res2.value().second);
-  }
-  const auto res3 = detect_rockchip();
-  if(res3.has_value()){
-    return OHDPlatform(res3.value().first,res3.value().second);
-  }
-  const auto res4=detect_allwinner();
-  if(res4.has_value()){
-    return OHDPlatform(res4.value().first,res4.value().second);
-  }
-  const auto res5=detect_pc();
-  return OHDPlatform(res5.first,res5.second);
-}
 
 static void write_platform_manifest(const OHDPlatform& ohdPlatform) {
-    std::stringstream ss;
-    ss<<"Platform:"<<platform_type_to_string(ohdPlatform.platform_type)<<"\n";
-    ss<<"Board type:"<<board_type_to_string(ohdPlatform.board_type)<<"\n";
     static constexpr auto PLATFORM_MANIFEST_FILENAME = "/tmp/platform_manifest.txt";
-    OHDFilesystemUtil::write_file(PLATFORM_MANIFEST_FILENAME,ss.str());
+    OHDFilesystemUtil::write_file(PLATFORM_MANIFEST_FILENAME,ohdPlatform.to_string());
 }
 
 static OHDPlatform discover_and_write_manifest() {
-  openhd::log::get_default()->debug("Platform::discover_and_write_manifest()");
-  auto platform=internal_discover();
+  auto platform_int=internal_discover_platform();
+  auto platform=OHDPlatform(platform_int);
   write_platform_manifest(platform);
   return platform;
 }
 
-bool platform_rpi_is_high_performance(const OHDPlatform &platform) {
-    assert(platform.platform_type==PlatformType::RaspberryPi);
-    const auto rpi_board_type=platform.board_type;
-    if(rpi_board_type==BoardType::RaspberryPi4B || rpi_board_type==BoardType::RaspberryPiCM4){
-        return true;
-    }
-    return false;
+std::string x_platform_type_to_string(int platform_type) {
+  switch (platform_type) {
+    case X_PLATFORM_TYPE_UNKNOWN:return "UNKNOWN";
+    case X_PLATFORM_TYPE_X86:return "X86";
+    case X_PLATFORM_TYPE_RPI_OLD: return "RPI <=3";
+    case X_PLATFORM_TYPE_RPI_4: return "RPI 4";
+    case X_PLATFORM_TYPE_RPI_5: return "RPI 5";
+    // RPI END
+    case X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W: return "RADXA ZERO3W";
+    case X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5: return "RADXA ROCK5";
+    case X_PLATFORM_TYPE_ROCKCHIP_RV1126_UNDEFINED: return "RV1126 UNDEFINED";
+    // ROCK END
+    case X_PLATFORM_TYPE_ALWINNER_X20: return "X20";
+    case X_PLATFORM_TYPE_SIGMASTAR_UNDEFINED: return "SIGMASTAR UNDEFINED";
+    default:
+      break;
+  }
+  return "ERR-UNDEFINED";
+}
+int get_fec_max_block_size_for_platform(int platform_type) {
+  if(platform_type==X_PLATFORM_TYPE_RPI_4 || platform_type==X_PLATFORM_TYPE_RPI_CM4){
+    return 50;
+  }
+  if(platform_type==X_PLATFORM_TYPE_RPI_OLD){
+    return 30;
+  }
+  if(platform_type==X_PLATFORM_TYPE_X86){
+    return 50;
+  }
+  if(platform_type==X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W
+      || platform_type==X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5){
+    return 50;
+  }
+  // For now
+  if(platform_type==X_PLATFORM_TYPE_ALWINNER_X20){
+    return 50;
+  }
+  return 20;
 }
 
 const OHDPlatform &OHDPlatform::instance() {
@@ -239,5 +128,23 @@ const OHDPlatform &OHDPlatform::instance() {
 }
 
 std::string OHDPlatform::to_string() const {
-    return fmt::format("[{}:{}]",platform_type_to_string(platform_type),board_type_to_string(board_type));
+  std::stringstream ss;
+  ss<<"OHDPlatform:["<<x_platform_type_to_string(platform_type)<<"]";
+  return ss.str();
+}
+
+bool OHDPlatform::is_rpi() const {
+  return platform_type>=10 && platform_type<20;
+}
+
+bool OHDPlatform::is_rock() const {
+  return platform_type>=20 && platform_type<30;
+}
+
+bool OHDPlatform::is_rpi_or_x86()const {
+  return is_rpi() || platform_type==X_PLATFORM_TYPE_X86;
+}
+
+bool OHDPlatform::is_allwinner() const {
+  return platform_type==X_PLATFORM_TYPE_ALWINNER_X20;
 }

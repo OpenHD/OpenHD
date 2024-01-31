@@ -219,7 +219,7 @@ int main(int argc, char *argv[]) {
       openhd::clean_all_interface_settings();
     }
     // on rpi, we have the gpio input such that users don't have to create the reset frequencies file
-    if(platform.platform_type==PlatformType::RaspberryPi){
+    if(platform.is_rpi()){
       // Or input via rpi gpio 26
       openhd::rpi::gpio26_configure();
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -236,7 +236,7 @@ int main(int argc, char *argv[]) {
     // we need to start QOpenHD when we are running as ground, or stop / disable it when we are running as air.
     // can be disabled for development purposes.
     // On x20, we do not have qopenhd installed (we run as air only) so we can skip this step
-    if(!options.no_qopenhd_autostart && OHDPlatform::instance().platform_type!=PlatformType::Allwinner){
+    if(!options.no_qopenhd_autostart && !OHDPlatform::instance().is_allwinner()){
       if(!profile->is_air){
         OHDUtil::run_command("systemctl",{"start","qopenhd"});
       }else{

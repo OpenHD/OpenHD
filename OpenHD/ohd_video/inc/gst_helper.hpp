@@ -444,9 +444,9 @@ static std::string createRockchipHDMIStream(const CameraSettings& settings) {
   return ss.str();
 }
 
-static std::string createRockchipCSIStream(const CameraSettings& settings) {
+static std::string createRockchipCSIStream(int v4l2_filenumber,const CameraSettings& settings) {
   std::stringstream ss;
-  ss<<createRockchipV4L2Pipeline(11, settings.streamed_video_format.framerate);
+  ss<<createRockchipV4L2Pipeline(v4l2_filenumber, settings.streamed_video_format.framerate);
   ss<<createRockchipEncoderPipeline(settings);
   return ss.str();
 }
@@ -615,9 +615,9 @@ static std::string createDummyStreamX(const OHDPlatform& platform,const CameraSe
     if(settings.force_sw_encode){
         ss << createSwEncoder(settings);
     }else{
-        if(platform.platform_type==PlatformType::RaspberryPi){
+        if(platform.is_rpi()){
             ss << create_rpi_v4l2_h264_encoder(settings);
-        }else if(platform.platform_type==PlatformType::Rockchip){
+        }else if(platform.is_rock()){
             ss << createRockchipEncoderPipeline(settings);
         }else{
             ss << createSwEncoder(settings);
@@ -654,7 +654,7 @@ static std::string create_dummy_filesrc_stream(const OHDPlatform& platform,const
     ss<<fmt::format("videorate max-rate={} ! ",settings.streamed_video_format.framerate);
     ss<<"queue ! ";
     ss<<"videoscale ! ";
-    if(platform.platform_type==PlatformType::Rockchip){
+    if(platform.is_rock()){
       // ROCK needs NV12
       ss<<"video/x-raw, format=NV12";
       ss<<fmt::format(",width={}, height={}, framerate={}/1 ! ",settings.streamed_video_format.width,settings.streamed_video_format.height,
@@ -668,9 +668,9 @@ static std::string create_dummy_filesrc_stream(const OHDPlatform& platform,const
     if(settings.force_sw_encode){
         ss << createSwEncoder(settings);
     }else{
-        if(platform.platform_type==PlatformType::RaspberryPi){
+        if(platform.is_rpi()){
             ss << create_rpi_v4l2_h264_encoder(settings);
-        }else if(platform.platform_type==PlatformType::Rockchip){
+        }else if(platform.is_rock()){
             ss << createRockchipEncoderPipeline(settings);
         }else{
             ss << createSwEncoder(settings);

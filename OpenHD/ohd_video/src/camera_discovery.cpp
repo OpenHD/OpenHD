@@ -187,10 +187,10 @@ namespace openhd::v4l2 {
 // Util so we can't forget to close the fd
     class V4l2FPHolder{
     public:
-        V4l2FPHolder(const std::string &node,const PlatformType& platform_type){
+        V4l2FPHolder(const std::string &node,const OHDPlatform& platform){
             // fucking hell, on jetson v4l2_open seems to be bugged
             // https://forums.developer.nvidia.com/t/v4l2-open-create-core-with-jetpack-4-5-or-later/170624/6
-            if(platform_type==PlatformType::Jetson){
+            if(false){ //platform_type==PlatformType::Jetson
                 fd = open(node.c_str(), O_RDWR | O_NONBLOCK, 0);
             }else{
                 fd = v4l2_open(node.c_str(), O_RDWR);
@@ -332,7 +332,7 @@ namespace openhd::v4l2 {
         v4l2_capability caps;
         openhd::v4l2::EndpointFormats formats;
     };
-    static std::optional<XValidEndpoint> probe_v4l2_device(const PlatformType platform_tpye,std::shared_ptr<spdlog::logger>& m_console,const std::string& device_node){
+    static std::optional<XValidEndpoint> probe_v4l2_device(const OHDPlatform platform_tpye,std::shared_ptr<spdlog::logger>& m_console,const std::string& device_node){
         auto v4l2_fp_holder=std::make_unique<openhd::v4l2::V4l2FPHolder>(device_node,platform_tpye);
         if(!v4l2_fp_holder->opened_successfully()){
             m_console->debug("Can't open {}",device_node);
@@ -355,14 +355,14 @@ namespace openhd::v4l2 {
 
 std::vector<DCameras::DiscoveredUSBCamera>
 DCameras::detect_usb_cameras(const OHDPlatform &platform, std::shared_ptr<spdlog::logger> &m_console) {
-    if(platform.platform_type==PlatformType::RaspberryPi || platform.platform_type==PlatformType::PC){
+    if(platform.is_rpi_or_x86()){
         DThermalCamerasHelper::enableFlirIfFound();
         DThermalCamerasHelper::enableSeekIfFound();
     }
     std::vector<DCameras::DiscoveredUSBCamera> ret;
     const auto devices = openhd::v4l2::findV4l2VideoDevices();
     for (const auto &device: devices) {
-        const auto probed_opt= openhd::v4l2::probe_v4l2_device(platform.platform_type,m_console,device);
+        const auto probed_opt= openhd::v4l2::probe_v4l2_device(platform,m_console,device);
         if(!probed_opt.has_value()){
             continue;
         }

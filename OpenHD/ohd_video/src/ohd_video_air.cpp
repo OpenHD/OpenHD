@@ -75,7 +75,7 @@ void OHDVideoAir::configure(const std::shared_ptr<CameraHolder>& camera_holder) 
   // R.N we use gstreamer for pretty much everything
   // But this might change in the future
   m_console->debug("GStreamerStream for Camera index:{}",camera.index);
-  auto stream = std::make_shared<GStreamerStream>(m_platform.platform_type, camera_holder,frame_cb);
+  auto stream = std::make_shared<GStreamerStream>(m_platform, camera_holder,frame_cb);
   stream->start_looping();
   m_camera_streams.push_back(stream);
 }

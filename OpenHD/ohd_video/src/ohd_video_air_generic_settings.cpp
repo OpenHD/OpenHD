@@ -24,12 +24,12 @@ AirCameraGenericSettings AirCameraGenericSettingsHolder::create_default() const 
     AirCameraGenericSettings ret{};
     ret.primary_camera_type=X_CAM_TYPE_DUMMY_SW;
     ret.secondary_camera_type=X_CAM_TYPE_DISABLED;
-    if(OHDPlatform::instance().platform_type==PlatformType::RaspberryPi){
+    if(OHDPlatform::instance().is_rpi()){
         // TODO IMAGE WRITER
         ret.primary_camera_type=X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI;
-    }else if(OHDPlatform::instance().platform_type==PlatformType::Allwinner){
+    }else if(OHDPlatform::instance().is_allwinner()){
         ret.primary_camera_type=X_CAM_TYPE_X20_RUNCAM_NANO;
-    }else if(OHDPlatform::instance().platform_type==PlatformType::Rockchip){
+    }else if(OHDPlatform::instance().is_rock()){
         ret.primary_camera_type=X_CAM_TYPE_ROCK_HDMI_IN;
     }
     return ret;

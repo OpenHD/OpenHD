@@ -21,7 +21,7 @@ AirTelemetry::AirTelemetry(OHDPlatform platform): m_platform(platform),MavlinkSy
   m_components.push_back(m_ohd_main_component);
   //
   m_generic_mavlink_param_provider =std::make_shared<XMavlinkParamProvider>(_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER);
-  if(m_platform.platform_type==PlatformType::RaspberryPi){
+  if(m_platform.is_rpi()){
     m_opt_gpio_control=std::make_unique<openhd::telemetry::rpi::GPIOControl>();
   }
   // NOTE: We don't call set ready yet, since we have to wait until other modules have provided

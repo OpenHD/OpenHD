@@ -97,26 +97,7 @@ struct WBLinkSettings {
 };
 
 static int calculate_max_fec_block_size_for_platform(const OHDPlatform platform){
-  switch (platform.platform_type) {
-    case PlatformType::RaspberryPi:{
-      if(platform_rpi_is_high_performance(platform)){
-        return 30;
-      }
-      return 20;
-    }
-      break;
-    case PlatformType::PC: // x86 is so much more powerful than ARM so we can easily do 30, assuming no one uses HW from 2010 ;)
-      return 30;
-    case PlatformType::Jetson:
-    case PlatformType::Allwinner:
-    case PlatformType::iMX6:
-    case PlatformType::Rockchip:
-    case PlatformType::Zynq:
-    case PlatformType::Unknown:
-    default:
-      return 20;
-  }
-  return 20;
+  return get_fec_max_block_size_for_platform(platform.platform_type);
 }
 
 WBLinkSettings create_default_wb_stream_settings(const OHDPlatform& platform,const std::vector<WiFiCard>& wifibroadcast_cards);

@@ -17,7 +17,7 @@
 #include "nalu/nalu_helper.h"
 #include "nalu/fragment_helper.h"
 
-GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,
+GStreamerStream::GStreamerStream(OHDPlatform platform,std::shared_ptr<CameraHolder> camera_holder,
                                  openhd::ON_ENCODE_FRAME_CB out_cb)
     //: CameraStream(platform, camera_holder, video_udp_port) {
     : CameraStream(platform,std::move(camera_holder),std::move(out_cb))
@@ -75,7 +75,10 @@ std::string GStreamerStream::create_source_encode_pipeline(const CameraHolder &c
         if(camera.camera_type==X_CAM_TYPE_ROCK_HDMI_IN){
             pipeline<<OHDGstHelper::createRockchipHDMIStream(setting);
         }else{
-            pipeline<<OHDGstHelper::createRockchipCSIStream(setting);
+            // TODO: Differences Radxa zero and RK3588
+            // RK3566 has camera on /dev/video0, RK3588 has it on /dev/video11
+            int v4l2_filenumber=0;
+            pipeline<<OHDGstHelper::createRockchipCSIStream(v4l2_filenumber,setting);
         }
     }else if(camera.requires_x20_cedar_pipeline()){
         pipeline<<OHDGstHelper::createAllwinnerStream(setting);
