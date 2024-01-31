@@ -216,7 +216,7 @@ static std::string createRpicamsrcStream(const int camera_number,
   return ss.str();
 }
 
-static bool rpi_needs_level_4_2(const VideoFormat& video_format,int bitrate_kbits){
+static bool h264_needs_level_4_2(const VideoFormat& video_format,int bitrate_kbits){
     if(bitrate_kbits>=20000)return true;
     if(video_format.width<=640 && video_format.height<=480 && video_format.framerate<=90){
         // <= 480p 4:3 @ 90, level 4.0 enough
@@ -281,7 +281,7 @@ static std::string create_rpi_v4l2_h264_encoder(const CameraSettings& settings){
   // but for experimenting, at least make those higher resolutions create a valid pipeline
   std::string rpi_h264_encode_level="4";
   std::string rpi_h264_encode_level_v4l2_int="11";
-  if(rpi_needs_level_4_2(settings.streamed_video_format,settings.h26x_bitrate_kbits) || true){
+  if(h264_needs_level_4_2(settings.streamed_video_format,settings.h26x_bitrate_kbits)){
       rpi_h264_encode_level="4.2"; // Used for gstreamer caps
       rpi_h264_encode_level_v4l2_int="13"; // Used for 4l2 control
   }
@@ -423,6 +423,9 @@ static std::string createRockchipEncoderPipeline(const CameraSettings& settings)
     ss<<" rotation="<<settings.camera_rotation_degree;
   }
   ss<<" gop="<<settings.h26x_keyframe_interval;
+  if(h264_needs_level_4_2(settings.streamed_video_format,settings.h26x_bitrate_kbits)){
+    ss<<" level=42";
+  }
   ss<<" ! ";
   return ss.str();
 }

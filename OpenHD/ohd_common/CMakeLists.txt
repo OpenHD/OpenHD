@@ -83,3 +83,6 @@ target_link_libraries(test_led OHDCommonLib)
 
 add_executable(test_openhd_async test/test_openhd_async.cpp)
 target_link_libraries(test_openhd_async OHDCommonLib)
+
+add_executable(test_tcp_server test/test_tcp_server.cpp)
+target_link_libraries(test_tcp_server OHDCommonLib)
