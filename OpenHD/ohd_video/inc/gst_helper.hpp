@@ -423,6 +423,7 @@ static std::string createRockchipEncoderPipeline(const CameraSettings& settings)
     ss<<" rotation="<<settings.camera_rotation_degree;
   }
   ss<<" gop="<<settings.h26x_keyframe_interval;
+  ss<<" ! ";
   return ss.str();
 }
 
