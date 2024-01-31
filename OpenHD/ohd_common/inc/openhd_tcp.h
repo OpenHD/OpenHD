@@ -13,8 +13,16 @@
 namespace openhd{
 /**
  * Non-blocking multiple-client(s) multi-threaded TCP server
+ * FEATURES:
+ * 1) Multiple clients (multi-threaded)
+ * 2) Automatically disconnect dead clients
+ * 3) Generic interface where implementation can overwrite the following events:
+ *      a) client connected / disconnected
+ *      b) message received (any client)
+ *   And send messages with a broadcast-like interface.
  */
 class TCPServer{
+ public:
   struct Config{
     // always localhost
     //std::string ip;
