@@ -44,6 +44,14 @@ jobs:
           cd OpenHD
           ./build_submodules_independently.sh
 
+      - name: First, build with air support explicitly disabled
+        run: |
+          cd OpenHD
+          mkdir build_no_air
+          cd build_no_air
+          cmake ... -DENABLE_AIR=false
+          make
+
       - name: Build with make
         run: |
           cd OpenHD

@@ -5,7 +5,9 @@
 #include <OHDTelemetry.h>
 #include <getopt.h>
 #include <ohd_interface.h>
+#ifdef ENABLE_AIR
 #include <ohd_video_air.h>
+#endif // ENABLE_AIR
 #include <ohd_video_ground.h>
 
 #include <csignal>
@@ -160,6 +162,12 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
   if(OHDUtil::file_exists_and_delete(FILE_PATH_RESET_FREQUENCY)){
     ret.reset_frequencies=true;
   }
+#ifndef ENABLE_AIR
+  if(ret.run_as_air){
+    std::cerr<<"NOTE: COMPILED WITH GROUND ONLY SUPPORT,RUNNING AS GND"<<std::endl;
+    ret.run_as_air= false;
+  }
+#endif
   return ret;
 }
 
@@ -265,8 +273,12 @@ int main(int argc, char *argv[]) {
     ohdTelemetry->add_settings_generic(ohdInterface->get_all_settings());
 
     // either one is active, depending on air or ground
-    std::unique_ptr<OHDVideoAir> ohd_video_air = nullptr;
     std::unique_ptr<OHDVideoGround> ohd_video_ground = nullptr;
+    if(profile->is_ground()){
+      ohd_video_ground = std::make_unique<OHDVideoGround>(ohdInterface->get_link_handle());
+    }
+#ifdef ENABLE_AIR
+    std::unique_ptr<OHDVideoAir> ohd_video_air = nullptr;
     if (profile->is_air) {
       ohd_video_air = std::make_unique<OHDVideoAir>(platform,cameras,ohdInterface->get_link_handle());
       // First add camera specific settings (primary & secondary camera)
@@ -275,9 +287,8 @@ int main(int argc, char *argv[]) {
       ohdTelemetry->add_settings_camera_component(1,settings_components[1]);
       // Then the rest
       ohdTelemetry->add_settings_generic(ohd_video_air->get_generic_settings());
-    }else{
-      ohd_video_ground = std::make_unique<OHDVideoGround>(ohdInterface->get_link_handle());
     }
+#endif //ENABLE_AIR
     // We do not add any more settings to ohd telemetry - the param set(s) are complete
     ohdTelemetry->settings_generic_ready();
     // now telemetry can send / receive data via wifibroadcast
@@ -320,11 +331,13 @@ int main(int argc, char *argv[]) {
     std::this_thread::sleep_for(std::chrono::seconds(1));
     // unique ptr would clean up for us, but this way we are a bit more verbose
     // since some of those modules talk to each other, this is a bit prone to failures.
+#ifdef ENABLE_AIR
     if(ohd_video_air){
       m_console->debug("Terminating ohd_video_air - begin");
       ohd_video_air.reset();
       m_console->debug("Terminating ohd_video_air - end");
     }
+#endif
     if(ohd_video_ground){
       m_console->debug("Terminating ohd_video_ground- begin");
       ohd_video_ground.reset();
