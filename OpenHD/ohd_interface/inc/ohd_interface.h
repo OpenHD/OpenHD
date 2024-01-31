@@ -35,8 +35,7 @@ class OHDInterface {
    * @param profile air or ground
    * @param opt_action_handler r.n used to propagate rate control from wb_link to ohd_video
    */
-  explicit OHDInterface(OHDPlatform platform,OHDProfile profile,
-                        bool continue_without_wb_card=false);
+  explicit OHDInterface(OHDPlatform platform,OHDProfile profile);
   OHDInterface(const OHDInterface&)=delete;
   OHDInterface(const OHDInterface&&)=delete;
   ~OHDInterface();

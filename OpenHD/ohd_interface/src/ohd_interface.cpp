@@ -14,7 +14,7 @@
 #include "wb_link.h"
 #include <wifi_client.h>
 
-OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,bool continue_without_wb_card)
+OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1)
     : m_platform(platform1),
     m_profile(std::move(profile1)){
   m_console = openhd::log::create_or_get("interface");
@@ -22,7 +22,7 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,bool contin
     m_monitor_mode_cards={};
     m_opt_hotspot_card=std::nullopt;
   const auto config=openhd::load_config();
-  DWifiCards::main_discover_an_process_wifi_cards(config,m_profile,m_platform,continue_without_wb_card,m_console,
+  DWifiCards::main_discover_an_process_wifi_cards(config,m_profile,m_platform,m_console,
                    m_monitor_mode_cards,m_opt_hotspot_card);
   m_console->debug("monitor_mode card(s):{}",debug_cards(m_monitor_mode_cards));
   if(m_opt_hotspot_card.has_value()){

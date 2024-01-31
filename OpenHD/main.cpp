@@ -53,8 +53,6 @@ struct OHDRunOptions {
   bool reset_frequencies=false;
   bool no_qopenhd_autostart=false;
   int run_time_seconds=-1; //-1= infinite, only usefully for debugging
-  // do not wait for a card supporting injection (for development)
-  bool continue_without_wb_card=false;
   // Specify the hardware.config file, otherwise,
   // the default location (and default values if no file exists at the default location) is used
   std::optional<std::string> hardware_config_file;
@@ -92,9 +90,6 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
       case 'r':
         ret.run_time_seconds= atoi(tmp_optarg);
         break;
-      case 'q':
-        ret.continue_without_wb_card= true;
-        break;
       case 'h':
          ret.hardware_config_file=tmp_optarg;
          break;
@@ -110,7 +105,6 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
           ss <<"--clean-start -c  [Wipe all persistent settings OpenHD has written, can fix any boot issues when switching hw around] \n";
           ss <<"--no-qt-autostart [disable auto start of QOpenHD on ground] \n";
           ss <<"--run-time-seconds -r [Manually specify run time (default infinite),for debugging] \n";
-          ss <<"--continue-without-wb-card -q [continue the startup process even though no monitor mode card has been found yet] \n";
           ss <<"--hardware-config-file -h [specify path to hardware.config file]\n";
           ss <<"--rf-metrics -f [print a ton of rf metrics to stdout, for debugging. Try 1..3]\n";
           std::cout<<ss.str()<<std::flush;
@@ -195,7 +189,6 @@ int main(int argc, char *argv[]) {
       ss<<"reset_frequencies:" << OHDUtil::yes_or_no(options.reset_frequencies) <<"\n";
       ss<<"no-qopenhd-autostart:"<<OHDUtil::yes_or_no(options.no_qopenhd_autostart) <<"\n";
       ss<<"run_time_seconds:"<<options.run_time_seconds<<"\n";
-      ss<<"continue_without_wb_card:"<<OHDUtil::yes_or_no(options.continue_without_wb_card)<<"\n";
       ss<<"hardware-config-file:["<<options.hardware_config_file.value_or("DEFAULT")<<"]\n";
       ss<<"Version number:"<<openhd::VERSION_NUMBER_STRING<<"\n";
       ss<<"Git info:Branch:"<<git_Branch()<<" SHA:"<<git_CommitSHA1()<<" Dirty:"<<OHDUtil::yes_or_no(git_AnyUncommittedChanges())<<"\n";
@@ -262,7 +255,7 @@ int main(int argc, char *argv[]) {
     auto ohdTelemetry = std::make_shared<OHDTelemetry>(platform,* profile);
 
     // Then start ohdInterface, which discovers detected wifi cards and more.
-    auto ohdInterface = std::make_shared<OHDInterface>(platform,*profile,options.continue_without_wb_card);
+    auto ohdInterface = std::make_shared<OHDInterface>(platform,*profile);
 
     // Telemetry allows changing all settings (even from other modules)
     ohdTelemetry->add_settings_generic(ohdInterface->get_all_settings());
