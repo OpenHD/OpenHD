@@ -407,14 +407,11 @@ static std::string create_veye_vl2_stream(const CameraSettings& settings,const s
   return ss.str();
 }
 
-/**
-We could also make the qp variable variable is kinda weird, low means high quality, high means low quality, it's also interfearing with the bitrate and makes everything panic sometimes ...
-*/
 static std::string createRockchipEncoderPipeline(const CameraSettings& settings){
   std::stringstream ss;
   const int bps = kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
   if(settings.streamed_video_format.videoCodec==VideoCodec::H264){
-    ss<<"mpph264enc rc-mode=cbr qp-min=10 qp-max=52 bps="<<bps;
+    ss<<"mpph264enc rc-mode=cbr qp-min=10 qp-max=51 bps="<<bps;
     ss<<" width="<<settings.streamed_video_format.width;
     ss<<" height="<<settings.streamed_video_format.height;
     ss<<" rotation="<<settings.camera_rotation_degree;
