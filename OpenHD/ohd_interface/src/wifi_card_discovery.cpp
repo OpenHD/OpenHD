@@ -183,9 +183,9 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   // a card might report a specific channel but then since monitor mode is so hack not support the channel in monitor mode
   card.supports_monitor_mode= wifi::commandhelper::iw_supports_monitor_mode(card.phy80211_index);
   card.is_openhd_supported= is_openhd_supported(card.type);
-  openhd::log::get_default()->debug("Card {} reports driver:{} supports_2GHz:{} supports_5GHz:{} supports_monitor_mode:{} openhd_supported:{}",
+  /*openhd::log::get_default()->debug("Card {} reports driver:{} supports_2GHz:{} supports_5GHz:{} supports_monitor_mode:{} openhd_supported:{}",
                                     card.device_name,card.driver_name,card.supports_2GHz(),card.supports_5GHz(),
-                                    card.supports_monitor_mode,card.is_openhd_supported);
+                                    card.supports_monitor_mode,card.is_openhd_supported);*/
 
   // temporary,hacky, only hotspot on rpi integrated wifi
   if(card.type==WiFiCardType::BROADCOM){
