@@ -11,7 +11,7 @@
 
 int main() {
   openhd::log::get_default()->debug("test_tcp_server_endpoint:end");
-  std::unique_ptr<TCPEndpoint> m_server=std::make_unique<TCPEndpoint>(TCPEndpoint::Config{TCPEndpoint::DEFAULT_PORT});//1445
+  std::unique_ptr<TCPEndpoint> m_server=std::make_unique<TCPEndpoint>(openhd::TCPServer::Config{TCPEndpoint::DEFAULT_PORT});//1445
   auto cb=[](const std::vector<MavlinkMessage> messages){
     for(const auto& msg:messages){
       debugMavlinkMessage(msg.m, "TCP received");
