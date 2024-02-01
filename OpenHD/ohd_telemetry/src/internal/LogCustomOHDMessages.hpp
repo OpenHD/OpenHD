@@ -14,13 +14,17 @@
 #include "openhd_spdlog.h"
 
 /**
- * Helper for converting ohd custom messages to mavlink and printing them to stdout
+ * Helper for converting ohd custom messages to mavlink and printing them to
+ * stdout
  */
 namespace LogCustomOHDMessages {
 
-static void logOnboardComputerStatus(const mavlink_onboard_computer_status_t& decoded){
+static void logOnboardComputerStatus(
+    const mavlink_onboard_computer_status_t &decoded) {
   std::stringstream ss;
-  ss<<"MAVLINK_MSG_ID_ONBOARD_COMPUTER_STATUS: cpu_usage:"<<(int)decoded.cpu_cores[0]<<" temp:"<<(int)decoded.temperature_core[0];
+  ss << "MAVLINK_MSG_ID_ONBOARD_COMPUTER_STATUS: cpu_usage:"
+     << (int)decoded.cpu_cores[0]
+     << " temp:" << (int)decoded.temperature_core[0];
   openhd::log::get_default()->debug(ss.str());
 }
 
@@ -29,22 +33,24 @@ static void logLogMessage(const mavlink_message_t &msg) {
   mavlink_openhd_log_message_t decoded;
   mavlink_msg_openhd_log_message_decode(&msg, &decoded);
   std::stringstream ss;
-  openhd::log::get_default()->debug("Log: {} [{}]",decoded.severity,decoded.message);
+  openhd::log::get_default()->debug("Log: {} [{}]", decoded.severity,
+                                    decoded.message);
 }
 
 static void logOpenHDMessages(const std::vector<MavlinkMessage> &msges) {
-  for (const auto &msg: msges) {
+  for (const auto &msg : msges) {
     if (msg.m.msgid == MAVLINK_MSG_ID_ONBOARD_COMPUTER_STATUS) {
       mavlink_onboard_computer_status_t decoded;
-      mavlink_msg_onboard_computer_status_decode(&msg.m,&decoded);
+      mavlink_msg_onboard_computer_status_decode(&msg.m, &decoded);
       logOnboardComputerStatus(decoded);
     } else if (msg.m.msgid == MAVLINK_MSG_ID_OPENHD_LOG_MESSAGE) {
       logLogMessage(msg.m);
     } else {
-      openhd::log::get_default()->debug("unknown ohd msg with msgid:{}",msg.m.msgid);
+      openhd::log::get_default()->debug("unknown ohd msg with msgid:{}",
+                                        msg.m.msgid);
     }
   }
 }
-}
+}  // namespace LogCustomOHDMessages
 
-#endif //XMAVLINKSERVICE_LOGCUSTOMOHDMESSAGES_H
+#endif  // XMAVLINKSERVICE_LOGCUSTOMOHDMESSAGES_H

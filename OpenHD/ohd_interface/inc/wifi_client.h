@@ -5,8 +5,9 @@
 #ifndef OPENHD_WIFI_CLIENT_H
 #define OPENHD_WIFI_CLIENT_H
 
-#include <string>
 #include <optional>
+#include <string>
+
 #include "wifi_card.h"
 
 /**
@@ -14,9 +15,8 @@
  * USAGE: See hardware.config file !
  */
 class WiFiClient {
-public:
-    static bool create_if_enabled();
+ public:
+  static bool create_if_enabled();
 };
 
-
-#endif //OPENHD_WIFI_CLIENT_H
+#endif  // OPENHD_WIFI_CLIENT_H

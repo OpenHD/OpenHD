@@ -8,11 +8,13 @@
 #include "MEndpoint.h"
 #include "openhd_link.hpp"
 
-// Abstraction for sending / receiving data on/from the link between air and ground unit
-class WBEndpoint : public MEndpoint  {
+// Abstraction for sending / receiving data on/from the link between air and
+// ground unit
+class WBEndpoint : public MEndpoint {
  public:
-  explicit WBEndpoint(std::shared_ptr<OHDLink> link,std::string TAG);
+  explicit WBEndpoint(std::shared_ptr<OHDLink> link, std::string TAG);
   ~WBEndpoint();
+
  private:
   std::shared_ptr<OHDLink> m_link_handle;
   bool sendMessagesImpl(const std::vector<MavlinkMessage>& messages) override;

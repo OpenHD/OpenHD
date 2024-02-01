@@ -6,32 +6,37 @@
 #define OPENHD_OPENHD_OHD_INTERFACE_INC_ETHERNET_HOTSPOT_H_
 
 #include <openhd_external_device.h>
+
 #include <openhd_settings_imp.hpp>
 #include <string>
 #include <thread>
 
 /**
- * This class exists to expose the following (quite specific, but proven to be popular) functionality of
- * configuring the ground station to act as a DHCP provider (Hotspot) on the ethernet port
- * and then detecting if a device is connected via ethernet - this device then becomes a classic "external device"
+ * This class exists to expose the following (quite specific, but proven to be
+ * popular) functionality of configuring the ground station to act as a DHCP
+ * provider (Hotspot) on the ethernet port and then detecting if a device is
+ * connected via ethernet - this device then becomes a classic "external device"
  * regarding video and telemetry forwarding.
- * NOTE: Enabling / disabling this feature requires a reboot of the system (this stuff is just way too "dirty" to do it any other way) and we try and avoid
- * touching the networking of the host device from the OpenHD main executable for users that run OpenHD / QOpenHD on their own ubuntu installation.
+ * NOTE: Enabling / disabling this feature requires a reboot of the system (this
+ * stuff is just way too "dirty" to do it any other way) and we try and avoid
+ * touching the networking of the host device from the OpenHD main executable
+ * for users that run OpenHD / QOpenHD on their own ubuntu installation.
  */
-class EthernetHotspot{
+class EthernetHotspot {
  public:
   explicit EthernetHotspot(std::string device);
-  EthernetHotspot(const EthernetHotspot&)=delete;
-  EthernetHotspot(const EthernetHotspot&&)=delete;
+  EthernetHotspot(const EthernetHotspot&) = delete;
+  EthernetHotspot(const EthernetHotspot&&) = delete;
   ~EthernetHotspot();
   void enable();
   void disable();
   void set_enabled(bool enable);
+
  private:
   std::shared_ptr<spdlog::logger> m_console;
   const std::string m_device;
-  std::unique_ptr<std::thread> m_check_connection_thread= nullptr;
-  std::atomic<bool> m_check_connection_thread_stop =false;
+  std::unique_ptr<std::thread> m_check_connection_thread = nullptr;
+  std::atomic<bool> m_check_connection_thread_stop = false;
   void loop_infinite();
   // simple pattern: Wait for device to become available
   // forward connected event via ext devices manager
