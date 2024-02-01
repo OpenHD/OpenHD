@@ -70,7 +70,7 @@ bool openhd::AsyncHandle::terminate_when_done(const openhd::AsyncHandle::Running
 
 void openhd::AsyncHandle::check_watchdog() {
     while (m_watchdog_run){
-        {
+        {  // Let the mutex go out of scope before sleeping
             std::lock_guard<std::mutex> lock(m_threads_mutex);
             m_tasks.erase(std::remove_if(m_tasks.begin(),
                                          m_tasks.end(),
