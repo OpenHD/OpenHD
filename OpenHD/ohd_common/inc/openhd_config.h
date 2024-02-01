@@ -19,6 +19,10 @@ struct Config{
   std::vector<std::string> WIFI_WB_LINK_CARDS{};
   std::string WIFI_WIFI_HOTSPOT_CARD;
   bool WIFI_MONITOR_CARD_EMULATE= false;
+  bool WIFI_FORCE_NO_LINK_BUT_HOTSPOT = false;
+  bool WIFI_LOCAL_NETWORK_ENABLE= false;
+  std::string WIFI_LOCAL_NETWORK_SSID;
+  std::string WIFI_LOCAL_NETWORK_PASSWORD;
   // CAMERAS
   bool CAMERA_ENABLE_AUTODETECT = true;
   int CAMERA_N_CAMERAS;
