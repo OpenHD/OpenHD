@@ -7,8 +7,10 @@
 
 #include <array>
 #include <string>
+#include <optional>
 
 #include "openhd_spdlog.h"
+#include "openhd_util.h"
 
 // Util methods for simple channel mapping, where each channel's input can be
 // defined by the user.
