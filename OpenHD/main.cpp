@@ -231,8 +231,6 @@ int main(int argc, char *argv[]) {
         OHDUtil::run_command("systemctl",{"stop","qopenhd"});
       }
     }
-    // And start the blinker (TODO LED output is really dirty right now).
-    auto alive_blinker=std::make_unique<openhd::GreenLedAliveBlinker>(platform,profile->is_air);
 
     // create the global action handler that allows openhd modules to communicate with each other
     // e.g. when the rf link in ohd_interface needs to talk to the camera streams to reduce the bitrate
@@ -271,6 +269,8 @@ int main(int argc, char *argv[]) {
     // now telemetry can send / receive data via wifibroadcast
     ohdTelemetry->set_link_handle(ohdInterface->get_link_handle());
     m_console->info("All OpenHD modules running");
+    openhd::LEDManager::instance().set_green_led_status(openhd::LEDManager::STATUS_ON);
+    openhd::LEDManager::instance().set_red_led_status(openhd::LEDManager::STATUS_OFF);
 
     // run forever, everything has its own threads. Note that the only way to break out basically
     // is when one of the modules encounters an exception.

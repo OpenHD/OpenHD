@@ -12,7 +12,7 @@
 #include "ethernet_listener.h"
 #include "openhd_action_handler.h"
 #include "openhd_external_device.h"
-#include "openhd_led_codes.hpp"
+#include "openhd_led.h"
 #include "openhd_platform.h"
 #include "openhd_profile.h"
 #include "openhd_settings_imp.hpp"
@@ -61,7 +61,6 @@ private:
   std::unique_ptr<EthernetListener> m_ethernet_listener;
   std::unique_ptr<EthernetHotspot> m_ethernet_hotspot;
   std::unique_ptr<WifiHotspot> m_wifi_hotspot;
-  std::unique_ptr<openhd::LEDBlinker> m_error_blinker;
   std::vector<WiFiCard> m_monitor_mode_cards{};
   std::optional<WiFiCard> m_opt_hotspot_card=std::nullopt;
   NetworkingSettingsHolder m_nw_settings;

@@ -38,9 +38,6 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1)
     // TODO reason what to do. We do not support dynamically adding wifi cards at run time, so somehow
     // we need to signal to the user that something is completely wrong. However, as an Ground pi, we can still
     // run QOpenHD and OpenHD, just it will never connect to an Air PI
-    m_error_blinker=std::make_unique<openhd::LEDBlinker>(m_platform,message_for_user);
-    // we just continue as nothing happened, but OHD won't have any wifibroadcast connectivity
-    //exit(1);
   }else{
     // Set the card(s) we have into monitor mode
     openhd::wb::takeover_cards_monitor_mode(m_monitor_mode_cards, m_console);

@@ -6,33 +6,18 @@
 #include <thread>
 #include <iostream>
 
-#include "openhd_led_codes.hpp"
+#include "openhd_led.h"
 #include "openhd_util.h"
 
 int main(int argc, char *argv[]) {
 
-  auto platform=OHDPlatform::instance();
-  std::cout<<"First ground\n";
-  auto blinker=std::make_unique<openhd::GreenLedAliveBlinker>(platform,false);
-  std::this_thread::sleep_for(std::chrono::seconds(10));
-  std::cout<<"Now air\n";
-  blinker= nullptr;
-  blinker=std::make_unique<openhd::GreenLedAliveBlinker>(platform,true);
+  openhd::LEDManager::instance().set_red_led_status(openhd::LEDManager::STATUS_OFF);
+  openhd::LEDManager::instance().set_green_led_status(openhd::LEDManager::STATUS_OFF);
+
   std::this_thread::sleep_for(std::chrono::seconds(10));
 
-  /*const auto start1=std::chrono::steady_clock::now();
-  while((std::chrono::steady_clock::now()-start1)<std::chrono::seconds(10)){
-	openhd::rpi::toggle_red_led(false);
-	std::this_thread::sleep_for(std::chrono::seconds(1));
-	openhd::rpi::toggle_red_led(true);
-	std::this_thread::sleep_for(std::chrono::seconds(1));
-  }
+  openhd::LEDManager::instance().set_red_led_status(openhd::LEDManager::STATUS_ON);
+  openhd::LEDManager::instance().set_green_led_status(openhd::LEDManager::STATUS_ON);
 
-  const auto start2=std::chrono::steady_clock::now();
-  while((std::chrono::steady_clock::now()-start2)<std::chrono::seconds(10)){
-	openhd::rpi::toggle_green_led(false);
-	std::this_thread::sleep_for(std::chrono::seconds(1));
-	openhd::rpi::toggle_green_led(true);
-	std::this_thread::sleep_for(std::chrono::seconds(1));
-  }*/
+  std::this_thread::sleep_for(std::chrono::seconds(10));
 }

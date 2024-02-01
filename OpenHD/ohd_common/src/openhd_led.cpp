@@ -1,9 +1,8 @@
 //
-// Created by consti10 on 12.07.22.
+// Created by consti10 on 01.02.24.
 //
 
-#ifndef OPENHD_OPENHD_LED_ERROR_CODES_H
-#define OPENHD_OPENHD_LED_ERROR_CODES_H
+#include "openhd_led.h"
 
 #include <chrono>
 #include <thread>
@@ -13,6 +12,7 @@
 #include "openhd_spdlog.h"
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"
+#include "openhd_platform.h"
 
 // NOTE: Some PI's allow toggling both the red and green led
 // All pi's allow toggling the red led
@@ -57,4 +57,46 @@ static void green_led_on_off_delayed(const std::chrono::milliseconds &delay1,con
 
 }
 
-#endif //OPENHD_OPENHD_LED_ERROR_CODES_H
+openhd::LEDManager& openhd::LEDManager::instance() {
+  static LEDManager instance{};
+  return instance;
+}
+
+void openhd::LEDManager::set_red_led_status(int status) {
+  if(OHDPlatform::instance().is_rpi()){
+    if(status==STATUS_OFF){
+      openhd::rpi::toggle_red_led(false);
+    }else if(status==STATUS_ON){
+      openhd::rpi::toggle_red_led(true);
+    }
+  }
+}
+
+void openhd::LEDManager::set_green_led_status(int status) {
+  if(OHDPlatform::instance().is_rpi()){
+    if(status==STATUS_OFF){
+      openhd::rpi::toggle_green_led(false);
+    }else if(status==STATUS_ON){
+      openhd::rpi::toggle_green_led(true);
+    }
+  }
+}
+
+openhd::LEDManager::LEDManager() {
+  //m_run= true;
+  //m_manage_thread = std::make_unique<std::thread>(&LEDManager::loop, this);
+}
+
+openhd::LEDManager::~LEDManager() {
+  /*m_run= false;
+  if(m_manage_thread->joinable()){
+    m_manage_thread->join();
+  }
+  m_manage_thread= nullptr;*/
+}
+
+void openhd::LEDManager::loop() {
+  /*while (m_run){
+
+  }*/
+}
