@@ -44,7 +44,7 @@ static Rate20Mhz40Mhz rtl8812au_get_max_rate_5G_kbits(uint16_t mcs_index) {
       };
     case 2:
       //@Norbert: Successfully flown on MCS2 and 7MBit/s video, aka 8.4MBit/s
-      //after FEC theoretical:19.5 | 40.5
+      // after FEC theoretical:19.5 | 40.5
       // max injection rate possible measured on the bench: 15.2 | 26.6
       // OLD return 8500;
       return {

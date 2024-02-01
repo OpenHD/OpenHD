@@ -34,7 +34,7 @@ bool rfkill_unblock_all();
 //		active:   use active mode (ACK incoming unicast packets)
 //		mumimo-groupid <GROUP_ID>: use MUMIMO according to a group id
 //		mumimo-follow-mac <MAC_ADDRESS>: use MUMIMO according to a MAC
-//address
+// address
 bool iw_enable_monitor_mode(const std::string& device);
 
 // from iw documentation:
