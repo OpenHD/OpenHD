@@ -46,7 +46,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   txrx_options.tx_without_pcap= true;
   txrx_options.enable_auto_switch_tx_card= false; //TODO remove me
   txrx_options.max_sane_injection_time=std::chrono::milliseconds(1);
-  txrx_options.rx_radiotap_debug_level=openhd::LinkActionHandler::instance().rf_metrics_level;
+  txrx_options.rx_radiotap_debug_level=openhd::load_config().GEN_RF_METRICS_LEVEL;
   //txrx_options.advanced_debugging_rx= true;
   //txrx_options.debug_decrypt_time= true;
   //txrx_options.debug_encrypt_time= true;

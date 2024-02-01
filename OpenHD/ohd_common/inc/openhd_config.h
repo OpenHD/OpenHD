@@ -34,6 +34,8 @@ struct Config{
   bool NW_FORWARD_TO_LOCALHOST_58XX=false;
   // GENERAL
   bool GEN_ENABLE_LAST_KNOWN_POSITION= false;
+  int GEN_RF_METRICS_LEVEL = 0;
+  bool GEN_NO_QOPENHD_AUTOSTART = false;
 };
 // Otherwise, default location is used
 void set_config_file(const std::string& config_file_path);

@@ -39,11 +39,8 @@ static const struct option long_options[] = {
     {"air", no_argument, nullptr, 'a'},
     {"ground", no_argument, nullptr, 'g'},
     {"clean-start", no_argument, nullptr, 'c'},
-    {"no-qt-autostart", no_argument, nullptr, 'w'},
     {"run-time-seconds", required_argument, nullptr, 'r'},
-    {"continue-without-wb-card", no_argument, nullptr, 'q'},
     {"hardware-config-file", required_argument, nullptr, 'h'},
-    {"rf-metrics", required_argument, nullptr, 'f'},
     {nullptr, 0, nullptr, 0},
 };
 
@@ -51,12 +48,10 @@ struct OHDRunOptions {
   bool run_as_air=false;
   bool reset_all_settings=false;
   bool reset_frequencies=false;
-  bool no_qopenhd_autostart=false;
   int run_time_seconds=-1; //-1= infinite, only usefully for debugging
   // Specify the hardware.config file, otherwise,
   // the default location (and default values if no file exists at the default location) is used
   std::optional<std::string> hardware_config_file;
-  int rf_metrics_level=0;
 };
 
 static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
@@ -85,17 +80,12 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
         break;
       case 'c':ret.reset_all_settings = true;
         break;
-      case 'w':ret.no_qopenhd_autostart = true;
-        break;
       case 'r':
         ret.run_time_seconds= atoi(tmp_optarg);
         break;
       case 'h':
          ret.hardware_config_file=tmp_optarg;
          break;
-      case 'f':
-         ret.rf_metrics_level=atoi(tmp_optarg);
-         break ;
       case '?':
       default:{
           std::stringstream ss;
@@ -106,7 +96,7 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
           ss <<"--no-qt-autostart [disable auto start of QOpenHD on ground] \n";
           ss <<"--run-time-seconds -r [Manually specify run time (default infinite),for debugging] \n";
           ss <<"--hardware-config-file -h [specify path to hardware.config file]\n";
-          ss <<"--rf-metrics -f [print a ton of rf metrics to stdout, for debugging. Try 1..3]\n";
+          ss <<"Use /boot/openhd/hardware.conf for more configuration\n";
           std::cout<<ss.str()<<std::flush;
       }
       exit(1);
@@ -187,7 +177,6 @@ int main(int argc, char *argv[]) {
       ss<<"air:"<<  OHDUtil::yes_or_no(options.run_as_air)<<"\n";
       ss<<"reset_all_settings:" << OHDUtil::yes_or_no(options.reset_all_settings) <<"\n";
       ss<<"reset_frequencies:" << OHDUtil::yes_or_no(options.reset_frequencies) <<"\n";
-      ss<<"no-qopenhd-autostart:"<<OHDUtil::yes_or_no(options.no_qopenhd_autostart) <<"\n";
       ss<<"run_time_seconds:"<<options.run_time_seconds<<"\n";
       ss<<"hardware-config-file:["<<options.hardware_config_file.value_or("DEFAULT")<<"]\n";
       ss<<"Version number:"<<openhd::VERSION_NUMBER_STRING<<"\n";
@@ -235,7 +224,7 @@ int main(int argc, char *argv[]) {
     // we need to start QOpenHD when we are running as ground, or stop / disable it when we are running as air.
     // can be disabled for development purposes.
     // On x20, we do not have qopenhd installed (we run as air only) so we can skip this step
-    if(!options.no_qopenhd_autostart && !OHDPlatform::instance().is_allwinner()){
+    if(!openhd::load_config().GEN_NO_QOPENHD_AUTOSTART && !OHDPlatform::instance().is_allwinner()){
       if(!profile->is_air){
         OHDUtil::run_command("systemctl",{"start","qopenhd"});
       }else{
@@ -247,7 +236,7 @@ int main(int argc, char *argv[]) {
 
     // create the global action handler that allows openhd modules to communicate with each other
     // e.g. when the rf link in ohd_interface needs to talk to the camera streams to reduce the bitrate
-    openhd::LinkActionHandler::instance().rf_metrics_level=options.rf_metrics_level;
+    openhd::LinkActionHandler::instance();
 
     // We start ohd_telemetry as early as possible, since even without a link (transmission) it still picks up local
     // log message(s) and forwards them to any ground station clients (e.g. QOpenHD)

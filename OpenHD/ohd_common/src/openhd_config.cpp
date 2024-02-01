@@ -48,6 +48,8 @@ static openhd::Config load_or_default(){
       ret.NW_FORWARD_TO_LOCALHOST_58XX = r.Get<bool>("network","NW_FORWARD_TO_LOCALHOST_58XX");
 
       ret.GEN_ENABLE_LAST_KNOWN_POSITION =r.Get<bool>("generic","GEN_ENABLE_LAST_KNOWN_POSITION");
+      ret.GEN_RF_METRICS_LEVEL= r.Get<int>("generic","GEN_RF_METRICS_LEVEL");
+      ret.GEN_NO_QOPENHD_AUTOSTART= r.Get<int>("generic","GEN_NO_QOPENHD_AUTOSTART");
       return ret;
     }catch (std::exception& exception){
       get_logger()->error("Ill-formatted config file {}",std::string(exception.what()));
@@ -64,11 +66,13 @@ void openhd::debug_config(const openhd::Config& config) {
 get_logger()->debug("WIFI_ENABLE_AUTODETECT:{}, WIFI_WB_LINK_CARDS:{}, WIFI_WIFI_HOTSPOT_CARD:{},WIFI_MONITOR_CARD_EMULATE:{}\n"
       "WIFI_FORCE_NO_LINK_BUT_HOTSPOT:{}, WIFI_LOCAL_NETWORK_ENABLE:{}, WIFI_LOCAL_NETWORK_SSID:[{}], WIFI_LOCAL_NETWORK_PASSWORD:[{}]\n"
       "CAMERA_ENABLE_AUTODETECT:{}, CAMERA_N_CAMERAS:{}, CAMERA_CAMERA0_TYPE:{}, CAMERA_CAMERA1_TYPE:{}\n"
-      "NW_MANUAL_FORWARDING_IPS:{},NW_ETHERNET_CARD:{},NW_FORWARD_TO_LOCALHOST_58XX:{}\n",
+      "NW_MANUAL_FORWARDING_IPS:{},NW_ETHERNET_CARD:{},NW_FORWARD_TO_LOCALHOST_58XX:{}\n"
+      "GEN_RF_METRICS_LEVEL:{}, GEN_NO_QOPENHD_AUTOSTART:{}\n",
       config.WIFI_ENABLE_AUTODETECT,OHDUtil::str_vec_as_string(config.WIFI_WB_LINK_CARDS),config.WIFI_WIFI_HOTSPOT_CARD,config.WIFI_MONITOR_CARD_EMULATE,
       config.WIFI_FORCE_NO_LINK_BUT_HOTSPOT,config.WIFI_LOCAL_NETWORK_ENABLE,config.WIFI_LOCAL_NETWORK_SSID,config.WIFI_LOCAL_NETWORK_PASSWORD,
       config.CAMERA_ENABLE_AUTODETECT,config.CAMERA_N_CAMERAS,config.CAMERA_CAMERA0_TYPE,config.CAMERA_CAMERA1_TYPE,
-      OHDUtil::str_vec_as_string(config.NW_MANUAL_FORWARDING_IPS),config.NW_ETHERNET_CARD,config.NW_FORWARD_TO_LOCALHOST_58XX
+      OHDUtil::str_vec_as_string(config.NW_MANUAL_FORWARDING_IPS),config.NW_ETHERNET_CARD,config.NW_FORWARD_TO_LOCALHOST_58XX,
+      config.GEN_RF_METRICS_LEVEL,config.GEN_NO_QOPENHD_AUTOSTART
       );
 }
 
