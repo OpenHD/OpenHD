@@ -34,7 +34,7 @@
 
 // A few run time options, only for development. Way more configuration (during development)
 // can be done by using the hardware.config file
-static const char optstr[] = "?:agcwr:qh:f:";
+static const char optstr[] = "?:agcr:h:";
 static const struct option long_options[] = {
     {"air", no_argument, nullptr, 'a'},
     {"ground", no_argument, nullptr, 'g'},
@@ -47,7 +47,6 @@ static const struct option long_options[] = {
 struct OHDRunOptions {
   bool run_as_air=false;
   bool reset_all_settings=false;
-  bool reset_frequencies=false;
   int run_time_seconds=-1; //-1= infinite, only usefully for debugging
   // Specify the hardware.config file, otherwise,
   // the default location (and default values if no file exists at the default location) is used
@@ -140,12 +139,6 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
   if(OHDUtil::file_exists_and_delete(FILE_PATH_RESET)){
     ret.reset_all_settings= true;
   }
-  // If this file exists, delete all openhd wb link / frequency values, which results in default frequencies
-  // and fixes issue(s) when user swap hardware around with the wrong frequencies.
-  static constexpr auto FILE_PATH_RESET_FREQUENCY="/boot/openhd/reset_freq.txt";
-  if(OHDUtil::file_exists_and_delete(FILE_PATH_RESET_FREQUENCY)){
-    ret.reset_frequencies=true;
-  }
 #ifndef ENABLE_AIR
   if(ret.run_as_air){
     std::cerr<<"NOTE: COMPILED WITH GROUND ONLY SUPPORT,RUNNING AS GND"<<std::endl;
@@ -176,7 +169,6 @@ int main(int argc, char *argv[]) {
       ss<<"OpenHD START with \n";
       ss<<"air:"<<  OHDUtil::yes_or_no(options.run_as_air)<<"\n";
       ss<<"reset_all_settings:" << OHDUtil::yes_or_no(options.reset_all_settings) <<"\n";
-      ss<<"reset_frequencies:" << OHDUtil::yes_or_no(options.reset_frequencies) <<"\n";
       ss<<"run_time_seconds:"<<options.run_time_seconds<<"\n";
       ss<<"hardware-config-file:["<<options.hardware_config_file.value_or("DEFAULT")<<"]\n";
       ss<<"Version number:"<<openhd::VERSION_NUMBER_STRING<<"\n";
@@ -202,17 +194,13 @@ int main(int argc, char *argv[]) {
     if(options.reset_all_settings){
       openhd::clean_all_settings();
     }
-    // or only the wb_link module
-    if(options.reset_frequencies){
-      openhd::clean_all_interface_settings();
-    }
-    // on rpi, we have the gpio input such that users don't have to create the reset frequencies file
+    // on rpi, we have the gpio input such that users can reset their air unit
     if(platform.is_rpi()){
       // Or input via rpi gpio 26
       openhd::rpi::gpio26_configure();
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
       if(openhd::rpi::gpio26_user_wants_reset_frequencies()){
-        openhd::clean_all_interface_settings();
+        openhd::clean_all_settings();
       }
     }
 
