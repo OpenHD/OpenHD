@@ -1,5 +1,7 @@
 #bin/bash
 
+# Copies the hardware.config to the appropriate location (/boot/openhd/)
+
 SCRIPT=$(realpath "$0")
 SCRIPTPATH=$(dirname "$SCRIPT")
 
