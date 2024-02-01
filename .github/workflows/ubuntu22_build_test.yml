@@ -77,7 +77,7 @@ jobs:
           ./build_cmake.sh
       - name: enable dummy wifi card
         run: |
-          sudo ./OpenHD/OpenHD/ohd_common/copy_config_file.sh
+          sudo ./OpenHD/ohd_common/copy_config_file.sh
           sudo sed -i 's/\(^WIFI_MONITOR_CARD_EMULATE =\).*/\1true/' /boot/openhd/hardware.config
           
       - name: Run as air, but limited to X seconds
