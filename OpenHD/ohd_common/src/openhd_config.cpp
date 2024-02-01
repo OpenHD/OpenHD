@@ -49,7 +49,7 @@ static openhd::Config load_or_default(){
 
       ret.GEN_ENABLE_LAST_KNOWN_POSITION =r.Get<bool>("generic","GEN_ENABLE_LAST_KNOWN_POSITION");
       ret.GEN_RF_METRICS_LEVEL= r.Get<int>("generic","GEN_RF_METRICS_LEVEL");
-      ret.GEN_NO_QOPENHD_AUTOSTART= r.Get<int>("generic","GEN_NO_QOPENHD_AUTOSTART");
+      ret.GEN_NO_QOPENHD_AUTOSTART= r.Get<bool>("generic","GEN_NO_QOPENHD_AUTOSTART");
       return ret;
     }catch (std::exception& exception){
       get_logger()->error("Ill-formatted config file {}",std::string(exception.what()));
