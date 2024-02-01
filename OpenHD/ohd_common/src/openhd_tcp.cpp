@@ -84,7 +84,7 @@ void openhd::TCPServer::loop_accept() {
     new_client->keep_rx_looping= true;
     new_client->parent= this;
     new_client->rx_loop_thread=std::make_shared<std::thread>(&TCPServer::ConnectedClient::loop_rx,new_client.get());
-    on_external_device(client_ip, true);
+    on_external_device(client_ip,client_port, true);
     {
       std::lock_guard<std::mutex> guard(m_clients_list_mutex);
       m_clients_list.push_back(new_client);
@@ -125,5 +125,5 @@ void openhd::TCPServer::ConnectedClient::loop_rx() {
     }
     parent->on_packet_any_tcp_client(buff->data(),message_length);
   }
-  parent->on_external_device(ip, false);
+  parent->on_external_device(ip,port, false);
 }

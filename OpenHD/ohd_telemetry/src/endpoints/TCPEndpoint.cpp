@@ -26,7 +26,7 @@ bool TCPEndpoint::sendMessagesImpl(const std::vector<MavlinkMessage>& messages) 
     return true;
 }
 
-void TCPEndpoint::on_external_device(std::string ip, bool connected) {
+void TCPEndpoint::on_external_device(std::string ip,int port, bool connected) {
     auto external_device=openhd::ExternalDevice{"MAV TCP CLIENT",ip,true};
     openhd::ExternalDeviceManager::instance().on_new_external_device(external_device,connected);
 }

@@ -46,7 +46,7 @@ class TCPServer{
    * Called with connected=true once a client connects, and connected==false once a client disconnects
    * (Or is dead and has been disconnected as a caution feature)
    */
-  virtual void on_external_device(std::string ip,bool connected)=0;
+  virtual void on_external_device(std::string ip,int port,bool connected)=0;
  private:
   const Config m_config;
   const bool m_debug;

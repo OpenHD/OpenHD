@@ -8,11 +8,11 @@
 class TestServer:public openhd::TCPServer{
  public:
   explicit TestServer(): openhd::TCPServer("Test",openhd::TCPServer::Config{5760}){};
-  void on_external_device(std::string ip, bool connected)override{
+  void on_external_device(std::string ip,int port, bool connected)override{
       if(connected){
-        openhd::log::get_default()-> debug("Device {} connected",ip);
+        openhd::log::get_default()-> debug("Device {}:{} connected",ip,port);
       }else{
-        openhd::log::get_default()-> debug("Device {} disconnected",ip);
+        openhd::log::get_default()-> debug("Device {}:{} disconnected",ip,port);
       }
   };
   void on_packet_any_tcp_client(const uint8_t* data, int data_len)override{
