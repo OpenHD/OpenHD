@@ -325,6 +325,15 @@ void DWifiCards::main_discover_an_process_wifi_cards(const openhd::Config &confi
   if(config.WIFI_MONITOR_CARD_EMULATE){
     m_monitor_mode_cards.push_back(DWifiCards::create_card_monitor_emulate());
     m_opt_hotspot_card= std::nullopt;
+    if(config.WIFI_FORCE_NO_LINK_BUT_HOTSPOT){
+      auto connected_cards = DWifiCards::discover_connected_wifi_cards();
+      for(auto & connected_card : connected_cards){
+        if(connected_card.is_openhd_supported){
+          m_opt_hotspot_card=connected_card;
+          break;
+        }
+      }
+    }
     return;
   }
   if(!config.WIFI_ENABLE_AUTODETECT){
