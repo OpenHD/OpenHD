@@ -78,7 +78,7 @@ jobs:
       - name: enable dummy wifi card
         run: |
           sudo mkdir /boot/openhd
-          sudo cp OpenHD/OpenHD/common/hardware.config /boot/openhd/hardware.config
+          sudo cp OpenHD/OpenHD/ohd_common/config/hardware.config /boot/openhd/hardware.config
           sudo sed -i 's/\(^WIFI_MONITOR_CARD_EMULATE =\).*/\1true/' /boot/openhd/hardware.config
           
       - name: Run as air, but limited to X seconds
