@@ -69,6 +69,69 @@ static constexpr int X_CAM_TYPE_ROCK_IMX219 = 71;
 // disabled by default). NOTE: The primary camera cannot be disabled !
 static constexpr int X_CAM_TYPE_DISABLED = 255;  // Max for uint8_t
 
+static std::string x_cam_type_to_string(int camera_type){
+  switch (camera_type) {
+    case X_CAM_TYPE_DUMMY_SW:
+      return "DUMMY";
+    case X_CAM_TYPE_USB:
+      return "USB";
+    case X_CAM_TYPE_EXTERNAL:
+      return "EXTERNAL";
+    case X_CAM_TYPE_EXTERNAL_IP:
+      return "EXTERNAL_IP";
+    case X_CAM_TYPE_DEVELOPMENT_FILESRC:
+      return "DEV_FILESRC";
+    // All the rpi stuff begin
+    case X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI:
+      return "MMAL_HDMI";
+    case X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V1_OV5647:
+      return "RPIF_V1_OV5647";
+    case X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V2_IMX219:
+      return "RPIF_V2_IMX219";
+    case X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V3_IMX708:
+      return "RPIF_V3_IMX708";
+    case X_CAM_TYPE_RPI_LIBCAMERA_RPIF_HQ_IMX477:
+      return "RPIF_HQ_IMX477";
+    case X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_SKYMASTERHDR:
+      return "ARDUCAM_SKYMASTERHDR";
+    case X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_SKYVISIONPRO:
+      return "ARDUCAM_SKYVISIONPRO";
+    case X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX477M:
+      return "ARDUCAM_IMX477M";
+    case X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX462:
+      return "ARDUCAM_IMX462";
+    case X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX327:
+      return "ARDUCAM_IMX327";
+    case X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX290:
+      return "ARDUCAM_IMX290";
+    case X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX462_LOWLIGHT_MINI:
+      return "ARDUCAM_IMX462_LOWLIGHT_MINI";
+    case X_CAM_TYPE_RPI_V4L2_VEYE_2MP:
+      return "VEYE_2MP";
+    case X_CAM_TYPE_RPI_V4L2_VEYE_CSIMX307:
+      return "VEYE_IMX307";
+    case X_CAM_TYPE_RPI_V4L2_VEYE_CSSC132:
+      return "VEYE_CSSC132";
+    case X_CAM_TYPE_RPI_V4L2_VEYE_MVCAM:
+      return "VEYE_MVCAM";
+    // All the x20 begin
+    case X_CAM_TYPE_X20_RUNCAM_NANO:
+      return "X20_RUNCAM_NANO";
+    // All the rock begin
+    case X_CAM_TYPE_ROCK_HDMI_IN:
+      return "ROCK_HDMI_IN";
+    case X_CAM_TYPE_ROCK_IMX219:
+      return "ROCK_IMX219";
+    case X_CAM_TYPE_DISABLED:
+      return "DISABLED";
+    default:
+      break;
+  }
+  std::stringstream ss;
+  ss << "UNKNOWN (" << camera_type << ")";
+  return ss.str();
+};
+
 struct XCamera {
   int camera_type = X_CAM_TYPE_DUMMY_SW;
   // 0 for primary camera, 1 for secondary camera
@@ -93,66 +156,7 @@ struct XCamera {
     return camera_type >= 70 && camera_type < 80;
   }
   std::string cam_type_as_verbose_string() const {
-    switch (camera_type) {
-      case X_CAM_TYPE_DUMMY_SW:
-        return "DUMMY";
-      case X_CAM_TYPE_USB:
-        return "USB";
-      case X_CAM_TYPE_EXTERNAL:
-        return "EXTERNAL";
-      case X_CAM_TYPE_EXTERNAL_IP:
-        return "EXTERNAL_IP";
-      case X_CAM_TYPE_DEVELOPMENT_FILESRC:
-        return "DEV_FILESRC";
-      // All the rpi stuff begin
-      case X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI:
-        return "MMAL_HDMI";
-      case X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V1_OV5647:
-        return "RPIF_V1_OV5647";
-      case X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V2_IMX219:
-        return "RPIF_V2_IMX219";
-      case X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V3_IMX708:
-        return "RPIF_V3_IMX708";
-      case X_CAM_TYPE_RPI_LIBCAMERA_RPIF_HQ_IMX477:
-        return "RPIF_HQ_IMX477";
-      case X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_SKYMASTERHDR:
-        return "ARDUCAM_SKYMASTERHDR";
-      case X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_SKYVISIONPRO:
-        return "ARDUCAM_SKYVISIONPRO";
-      case X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX477M:
-        return "ARDUCAM_IMX477M";
-      case X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX462:
-        return "ARDUCAM_IMX462";
-      case X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX327:
-        return "ARDUCAM_IMX327";
-      case X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX290:
-        return "ARDUCAM_IMX290";
-      case X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX462_LOWLIGHT_MINI:
-        return "ARDUCAM_IMX462_LOWLIGHT_MINI";
-      case X_CAM_TYPE_RPI_V4L2_VEYE_2MP:
-        return "VEYE_2MP";
-      case X_CAM_TYPE_RPI_V4L2_VEYE_CSIMX307:
-        return "VEYE_IMX307";
-      case X_CAM_TYPE_RPI_V4L2_VEYE_CSSC132:
-        return "VEYE_CSSC132";
-      case X_CAM_TYPE_RPI_V4L2_VEYE_MVCAM:
-        return "VEYE_MVCAM";
-      // All the x20 begin
-      case X_CAM_TYPE_X20_RUNCAM_NANO:
-        return "X20_RUNCAM_NANO";
-      // All the rock begin
-      case X_CAM_TYPE_ROCK_HDMI_IN:
-        return "ROCK_HDMI_IN";
-      case X_CAM_TYPE_ROCK_IMX219:
-        return "ROCK_IMX219";
-      case X_CAM_TYPE_DISABLED:
-        return "DISABLED";
-      default:
-        break;
-    }
-    std::stringstream ss;
-    ss << "UNKNOWN (" << camera_type << ")";
-    return ss.str();
+    return x_cam_type_to_string(camera_type);
   }
   struct ResolutionFramerate {
     int width_px;
@@ -223,5 +227,10 @@ static bool is_valid_secondary_cam_type(int cam_type) {
   }
   return false;
 }
+
+static bool is_rpi_csi_camera(int cam_type){
+  return cam_type>=10 && cam_type<=59;
+}
+
 
 #endif  // OPENHD_CAMERA_HPP
