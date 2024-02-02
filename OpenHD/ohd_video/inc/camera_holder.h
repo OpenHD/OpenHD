@@ -89,7 +89,6 @@ class CameraHolder :
     return false;
   }
   bool set_camera_rotation(int value) {
-    // if(!m_camera.supports_rotation())return false;
     if (!openhd::validate_camera_rotation(value)) {
       return false;
     }
@@ -115,7 +114,6 @@ class CameraHolder :
     return true;
   }
   bool set_camera_awb(int value) {
-    // if(!m_camera.supports_awb())return false;
     if (!openhd::validate_rpi_awb_mode(value)) {
       return false;
     }
@@ -124,7 +122,6 @@ class CameraHolder :
     return true;
   }
   bool set_camera_exposure(int value) {
-    // if(!m_camera.supports_exp())return false;
     if (!openhd::validate_rpi_exp_mode(value)) {
       return false;
     }
