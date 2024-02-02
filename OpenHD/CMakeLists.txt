@@ -10,6 +10,13 @@ message("Air support enabled: ${ENABLE_AIR}")
 if (ENABLE_AIR)
         add_definitions(-DENABLE_AIR)
 endif ()
+
+option(ENABLE_MANAGED_CAMERAS "Managed cameras support" ON)
+message("Managed cameras enabled: ${ENABLE_MANAGED_CAMERAS}")
+if (ENABLE_MANAGED_CAMERAS)
+        add_definitions(-DENABLE_MANAGED_CAMERAS)
+endif ()
+
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
 # See https://github.com/andrew-hardin/cmake-git-version-tracking
