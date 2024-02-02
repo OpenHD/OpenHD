@@ -37,6 +37,14 @@ static std::string x_get_nal_unit_type_as_string(int value,bool is_h265){
   }
   return NALUnitType::H264::unit_type_to_string(extracted);
 }
+static bool is_idr_frame(int value,bool is_h265){
+  if(value<=0)return false;
+  const uint8_t extracted = extract_nal_unit_type(value,is_h265);
+  if(is_h265){
+    return extracted==NALUnitType::H265::NAL_UNIT_CODED_SLICE_IDR_N_LP;
+  }
+  return extracted==NALUnitType::H264::NAL_UNIT_TYPE_CODED_SLICE_IDR;
+}
 
 
 /**

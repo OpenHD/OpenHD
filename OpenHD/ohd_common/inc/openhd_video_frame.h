@@ -8,6 +8,7 @@
 #include <vector>
 #include <memory>
 #include <chrono>
+#include <sstream>
 
 namespace openhd{
 
@@ -31,8 +32,18 @@ struct FragmentedVideoFrame{
   // Set to true if this frame is an IDR frame and therefore we can safely drop previous frame(s)
   // without having complete corruption
   bool is_idr_frame= false;
+  std::string to_string()const{
+    int total_bytes=0;
+    for(auto& fragment:rtp_fragments)total_bytes+=fragment->size();
+    if(dirty_frame)total_bytes+=dirty_frame->size();
+    std::stringstream ss;
+    ss<<"Bytes:"<<total_bytes<<" Fragments:"<<rtp_fragments.size();
+    ss<<" IDR:"<<(is_idr_frame ? "Y" : "N");
+    return ss.str();
+  }
 };
 typedef std::function<void(int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame)> ON_ENCODE_FRAME_CB;
+
 
 }
 #endif  // OPENHD_OPENHD_OHD_COMMON_OPENHD_VIDEO_FRAME_H_

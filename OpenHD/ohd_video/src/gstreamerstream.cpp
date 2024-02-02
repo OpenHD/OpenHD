@@ -476,7 +476,6 @@ void GStreamerStream::on_new_rtp_frame_fragment(
   m_frame_fragments.push_back(fragment);
   const auto curr_video_codec =
       m_camera_holder->get_settings().streamed_video_format.videoCodec;
-  bool is_last_fragment_of_frame = false;
   openhd::rtp_eof_helper::RTPFragmentInfo info{};
   const bool is_h265=curr_video_codec==VideoCodec::H265;
   if(is_h265){
@@ -484,40 +483,48 @@ void GStreamerStream::on_new_rtp_frame_fragment(
   }else{
     info= openhd::rtp_eof_helper::h264_more_info(fragment->data(),fragment->size());
   }
+  if(info.is_fu_start){
+    if(is_idr_frame(info.nal_unit_type,is_h265)){
+      m_last_fu_s_idr= true;
+    }else{
+      m_last_fu_s_idr= false;
+    }
+  }
   m_console->debug("Fragment {} start:{} end:{} type:{}",m_frame_fragments.size(),
                    OHDUtil::yes_or_no(info.is_fu_start),
                    OHDUtil::yes_or_no(info.is_fu_end),
                    x_get_nal_unit_type_as_string(info.nal_unit_type,is_h265));
-  is_last_fragment_of_frame=info.is_fu_end;
+  bool is_last_fragment_of_frame=info.is_fu_end;
   if (m_frame_fragments.size() > 500) {
     // Most likely something wrong with the "find end of frame" workaround
     m_console->debug("No end of frame found after 1000 fragments");
     is_last_fragment_of_frame = true;
   }
   if (is_last_fragment_of_frame) {
-    on_new_rtp_fragmented_frame(m_frame_fragments);
+    on_new_rtp_fragmented_frame();
     m_frame_fragments.resize(0);
+    m_last_fu_s_idr= false;
   }
   /*if(m_gst_video_recorder){
     m_gst_video_recorder->enqueue_rtp_fragment(fragment);
   }*/
 }
 
-void GStreamerStream::on_new_rtp_fragmented_frame(
-    std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments) {
+void GStreamerStream::on_new_rtp_fragmented_frame() {
   // m_console->debug("Got frame with {} fragments",rtp_fragments.size());
   if (m_output_cb) {
     const auto stream_index = m_camera_holder->get_camera().index;
     const bool enable_ultra_secure_encryption=m_camera_holder->get_settings().enable_ultra_secure_encryption;
     const bool is_intra_enabled=m_camera_holder->get_settings().h26x_intra_refresh_type!=-1;
-    const bool is_intra_frame= false;
+    const bool is_intra_frame= m_last_fu_s_idr;
     auto frame = openhd::FragmentedVideoFrame{
-        std::move(frame_fragments), std::chrono::steady_clock::now(),
+        m_frame_fragments, std::chrono::steady_clock::now(),
         enable_ultra_secure_encryption,
         nullptr,
         is_intra_enabled,
         is_intra_frame
     };
+    m_console->debug("{}",frame.to_string());
     m_output_cb(stream_index, frame);
   } else {
     m_console->debug("No output cb");

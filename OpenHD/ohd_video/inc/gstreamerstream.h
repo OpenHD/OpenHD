@@ -75,15 +75,14 @@ class GStreamerStream : public CameraStream {
   std::atomic_bool m_request_restart = false;
   std::atomic_bool m_keep_looping = false;
   std::unique_ptr<std::thread> m_loop_thread = nullptr;
-
  private:
   // The stuff here is to pull the data out of the gstreamer pipeline, such that
   // we can forward it to the WB link
   void on_new_rtp_frame_fragment(std::shared_ptr<std::vector<uint8_t>> fragment,
                                  uint64_t dts);
-  void on_new_rtp_fragmented_frame(
-      std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments);
+  void on_new_rtp_fragmented_frame();
   std::vector<std::shared_ptr<std::vector<uint8_t>>> m_frame_fragments;
+  bool m_last_fu_s_idr= false;
   bool dirty_use_raw = false;
   void on_gst_nalu_buffer(const uint8_t* data, int data_len);
   void on_new_nalu(const uint8_t* data, int data_len);
