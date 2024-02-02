@@ -17,6 +17,16 @@ constexpr uint8_t BUS_ADC = ADC_12BIT;
 constexpr uint8_t SHUNT_ADC = ADC_12BIT;
 // INA219 stuff
 
+
+static int read_cpu_current_frequency_linux(){
+  static constexpr auto FILEPATH="/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq";
+  auto content=OHDFilesystemUtil::opt_read_file(FILEPATH);
+  if(!content.has_value())return -1;
+  auto value=OHDUtil::string_to_int(content.value());
+  if(!value.has_value())return -1;
+  return value.value();
+}
+
 OnboardComputerStatusProvider::OnboardComputerStatusProvider(
     OHDPlatform platform, bool enable)
     : m_platform(platform),
@@ -111,6 +121,9 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
     } else {
       const auto cpu_temp = (int8_t)openhd::onboard::readTemperature();
       curr_temperature_core = cpu_temp;
+      if(m_platform.is_rock() || m_platform.platform_type==X_PLATFORM_TYPE_X86){
+        curr_clock_cpu = read_cpu_current_frequency_linux();
+      }
     }
     {
       // lock mutex and write out
