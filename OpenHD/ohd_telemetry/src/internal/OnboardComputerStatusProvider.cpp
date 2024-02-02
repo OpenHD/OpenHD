@@ -18,13 +18,13 @@ constexpr uint8_t SHUNT_ADC = ADC_12BIT;
 // INA219 stuff
 
 
-static int read_cpu_current_frequency_linux(){
+static int read_cpu_current_frequency_linux_mhz(){
   static constexpr auto FILEPATH="/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq";
   auto content=OHDFilesystemUtil::opt_read_file(FILEPATH);
   if(!content.has_value())return -1;
   auto value=OHDUtil::string_to_int(content.value());
   if(!value.has_value())return -1;
-  return value.value();
+  return value.value() / 1000;
 }
 
 OnboardComputerStatusProvider::OnboardComputerStatusProvider(
@@ -122,7 +122,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       const auto cpu_temp = (int8_t)openhd::onboard::readTemperature();
       curr_temperature_core = cpu_temp;
       if(m_platform.is_rock() || m_platform.platform_type==X_PLATFORM_TYPE_X86){
-        curr_clock_cpu = read_cpu_current_frequency_linux();
+        curr_clock_cpu = read_cpu_current_frequency_linux_mhz();
       }
     }
     {
