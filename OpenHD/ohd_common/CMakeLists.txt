@@ -46,6 +46,7 @@ set(sources
     "src/openhd_udp.cpp"
     "src/openhd_tcp.cpp"
     src/openhd_led.cpp
+    src/openhd_buttons.cpp
     )
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
 

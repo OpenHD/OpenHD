@@ -17,7 +17,7 @@
 #include "openhd_global_constants.hpp"
 #include "openhd_platform.h"
 #include "openhd_profile.h"
-#include "openhd_rpi_gpio.hpp"
+#include "openhd_buttons.h"
 #include "openhd_spdlog.h"
 #include "openhd_temporary_air_or_ground.h"
 // For logging the commit hash and more
@@ -194,16 +194,9 @@ int main(int argc, char *argv[]) {
     if(options.reset_all_settings){
       openhd::clean_all_settings();
     }
-    // on rpi, we have the gpio input such that users can reset their air unit
-    if(platform.is_rpi()){
-      // Or input via rpi gpio 26
-      openhd::rpi::gpio26_configure();
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
-      if(openhd::rpi::gpio26_user_wants_reset_frequencies()){
-        openhd::clean_all_settings();
-      }
+    if(openhd::ButtonManager::instance().user_wants_reset_frequencies()){
+      openhd::clean_all_settings();
     }
-
     // Profile no longer depends on n discovered cameras,
     // But if we are air, we have at least one camera, sw if no camera was found
     const auto profile=DProfile::discover(options.run_as_air);
