@@ -69,7 +69,7 @@ static constexpr int X_CAM_TYPE_ROCK_IMX219 = 71;
 // disabled by default). NOTE: The primary camera cannot be disabled !
 static constexpr int X_CAM_TYPE_DISABLED = 255;  // Max for uint8_t
 
-static std::string x_cam_type_to_string(int camera_type){
+static std::string x_cam_type_to_string(int camera_type) {
   switch (camera_type) {
     case X_CAM_TYPE_DUMMY_SW:
       return "DUMMY";
@@ -228,9 +228,8 @@ static bool is_valid_secondary_cam_type(int cam_type) {
   return false;
 }
 
-static bool is_rpi_csi_camera(int cam_type){
-  return cam_type>=10 && cam_type<=59;
+static bool is_rpi_csi_camera(int cam_type) {
+  return cam_type >= 10 && cam_type <= 59;
 }
-
 
 #endif  // OPENHD_CAMERA_HPP
