@@ -22,6 +22,23 @@
 
 // dependency could be easily removed again
 
+
+static uint8_t extract_nal_unit_type(uint8_t value,bool is_h265){
+  if (is_h265) {
+    return (value & 0x7E) >> 1;
+  }
+  return value & 0x1f;
+}
+static std::string x_get_nal_unit_type_as_string(int value,bool is_h265){
+  if(value<0)return "{<0}";
+  const uint8_t extracted = extract_nal_unit_type(value,is_h265);
+  if (is_h265) {
+    return NALUnitType::H265::unit_type_to_string(extracted);
+  }
+  return NALUnitType::H264::unit_type_to_string(extracted);
+}
+
+
 /**
  * NOTE: NALU only takes a c-style data pointer - it does not do any memory
  * management. Use NALUBuffer if you need to store a NALU. Since H264 and H265
