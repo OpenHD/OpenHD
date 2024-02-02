@@ -89,7 +89,7 @@ std::string x_platform_type_to_string(int platform_type) {
   switch (platform_type) {
     case X_PLATFORM_TYPE_UNKNOWN:return "UNKNOWN";
     case X_PLATFORM_TYPE_X86:return "X86";
-    case X_PLATFORM_TYPE_RPI_OLD: return "RPI <=3";
+    case X_PLATFORM_TYPE_RPI_OLD: return "RPI<=3";
     case X_PLATFORM_TYPE_RPI_4: return "RPI 4";
     case X_PLATFORM_TYPE_RPI_5: return "RPI 5";
     // RPI END
