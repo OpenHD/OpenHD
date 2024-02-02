@@ -164,7 +164,10 @@ class FrameDropsHelper {
  public:
   // Thread-safe, aka can be called from the thread injecting frame(s) in
   // reference to the wb_link worker thread
-  void notify_dropped_frame() { m_frame_drop_counter++; }
+  void notify_dropped_frame(int n_dropped=1) {
+    m_frame_drop_counter+=n_dropped;
+  }
+  // Thread-safe as long as it is called from the thread performing management
   bool needs_bitrate_reduction() {
     if (m_opt_no_error_delay.has_value()) {
       if (std::chrono::steady_clock::now() >= m_opt_no_error_delay) {

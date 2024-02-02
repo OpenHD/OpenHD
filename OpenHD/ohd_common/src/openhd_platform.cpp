@@ -45,9 +45,11 @@ static int internal_discover_platform(){
     const auto proc_cpuinfo_opt=OHDFilesystemUtil::opt_read_file("/proc/cpuinfo");
     if(!proc_cpuinfo_opt.has_value()){
       openhd::log::get_default()->warn("File {} does not exist, rpi detection unavailable",filename_proc_cpuinfo);
-      return  X_PLATFORM_TYPE_RPI_OLD;
+      return X_PLATFORM_TYPE_RPI_OLD;
     }
-    // TODO properly
+    if(OHDUtil::contains(proc_cpuinfo_opt.value(),"BCM2711")){
+      return X_PLATFORM_TYPE_RPI_4;
+    }
     return X_PLATFORM_TYPE_RPI_OLD;
   }
   {
