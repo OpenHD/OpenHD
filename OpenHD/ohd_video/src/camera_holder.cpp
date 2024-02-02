@@ -152,18 +152,6 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
         "KEYFRAME_I", openhd::IntSetting{get_settings().h26x_keyframe_interval,
                                          c_keyframe_interval}});
   }
-  if (true) {
-    auto cb = [this](std::string, int value) { return set_camera_awb(value); };
-    ret.push_back(openhd::Setting{
-        "AWB_MODE", openhd::IntSetting{get_settings().awb_mode, cb}});
-  }
-  if (true) {
-    auto cb = [this](std::string, int value) {
-      return set_camera_exposure(value);
-    };
-    ret.push_back(openhd::Setting{
-        "EXP_MODE", openhd::IntSetting{get_settings().exposure_mode, cb}});
-  }
   if (true) {  // Always show intra, on libcamera without sw encode it
                // unfortunately is 'just not mapped' and ignored.
     auto c_intra_refresh_type = [this](std::string, int value) {
@@ -180,7 +168,20 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
         "N_SLICES",
         openhd::IntSetting{get_settings().h26x_num_slices, c_h26x_num_slices}});
   }
-  if (true) {
+  const bool SUPPORTS_IQ=m_camera.requires_rpi_libcamera_pipeline();
+  if (SUPPORTS_IQ) {
+    auto cb = [this](std::string, int value) { return set_camera_awb(value); };
+    ret.push_back(openhd::Setting{
+        "AWB_MODE", openhd::IntSetting{get_settings().awb_mode, cb}});
+  }
+  if (SUPPORTS_IQ) {
+    auto cb = [this](std::string, int value) {
+      return set_camera_exposure(value);
+    };
+    ret.push_back(openhd::Setting{
+        "EXP_MODE", openhd::IntSetting{get_settings().exposure_mode, cb}});
+  }
+  if (SUPPORTS_IQ) {
     auto c_brightness = [this](std::string, int value) {
       return set_brightness(value);
     };
@@ -188,14 +189,14 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
         "BRIGHTNESS", openhd::IntSetting{get_settings().brightness_percentage,
                                          c_brightness}});
   }
-  if (true) {
+  if (SUPPORTS_IQ) {
     auto c_iso = [this](std::string, int value) {
       return set_rpi_rpicamsrc_iso(value);
     };
     ret.push_back(openhd::Setting{
         "ISO", openhd::IntSetting{get_settings().rpi_rpicamsrc_iso, c_iso}});
   }
-  if (true) {
+  if (SUPPORTS_IQ) {
     auto cb = [this](std::string, int value) {
       return set_rpi_rpicamsrc_metering_mode(value);
     };
@@ -204,7 +205,7 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
         openhd::IntSetting{get_settings().rpi_rpicamsrc_metering_mode, cb}});
   }
   // These are rpi libcamera specific image quality settings
-  if (true) {
+  if (SUPPORTS_IQ) {
     auto cb_sharpness = [this](std::string, int value) {
       return set_rpi_libcamera_sharpness_as_int(value);
     };
