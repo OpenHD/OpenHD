@@ -477,22 +477,18 @@ void GStreamerStream::on_new_rtp_frame_fragment(
   const auto curr_video_codec =
       m_camera_holder->get_settings().streamed_video_format.videoCodec;
   bool is_last_fragment_of_frame = false;
-  if (curr_video_codec == VideoCodec::H264) {
-    if (openhd::rtp_eof_helper::h264_end_block(fragment->data(),
-                                               fragment->size())) {
-      is_last_fragment_of_frame = true;
-    }
-  } else if (curr_video_codec == VideoCodec::H265) {
-    if (openhd::rtp_eof_helper::h265_end_block(fragment->data(),
-                                               fragment->size())) {
-      is_last_fragment_of_frame = true;
-    }
-  } else {
-    // Not supported yet, forward them in chuncks of 20 (NOTE: This workaround
-    // is not ideal, since it creates ~1 frame of latency).
-    is_last_fragment_of_frame = m_frame_fragments.size() >= 20;
+  openhd::rtp_eof_helper::RTPFragmentInfo info{};
+  if(curr_video_codec==VideoCodec::H264){
+    info= openhd::rtp_eof_helper::h264_more_info(fragment->data(),fragment->size());
+  }else{
+    info= openhd::rtp_eof_helper::h265_more_info(fragment->data(),fragment->size());
   }
-  if (m_frame_fragments.size() > 1000) {
+  m_console->debug("Fragment {} start:{} end:{} type:{}",m_frame_fragments.size(),
+                   OHDUtil::yes_or_no(info.is_fu_start),
+                   OHDUtil::yes_or_no(info.is_fu_end),
+                   info.nal_unit_type);
+  is_last_fragment_of_frame=info.is_fu_end;
+  if (m_frame_fragments.size() > 500) {
     // Most likely something wrong with the "find end of frame" workaround
     m_console->debug("No end of frame found after 1000 fragments");
     is_last_fragment_of_frame = true;
