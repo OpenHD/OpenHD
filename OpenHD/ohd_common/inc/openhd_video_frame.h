@@ -26,6 +26,11 @@ struct FragmentedVideoFrame{
   // even though that might result in higher CPU load.
   bool enable_ultra_secure_encryption= false;
   std::shared_ptr<std::vector<uint8_t>> dirty_frame= nullptr; // replaces fragments
+  // Set to true if the stream is an intra frame
+  bool is_intra_stream= false;
+  // Set to true if this frame is an IDR frame and therefore we can safely drop previous frame(s)
+  // without having complete corruption
+  bool is_idr_frame= false;
 };
 typedef std::function<void(int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame)> ON_ENCODE_FRAME_CB;
 

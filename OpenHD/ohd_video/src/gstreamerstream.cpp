@@ -511,9 +511,16 @@ void GStreamerStream::on_new_rtp_fragmented_frame(
   // m_console->debug("Got frame with {} fragments",rtp_fragments.size());
   if (m_output_cb) {
     const auto stream_index = m_camera_holder->get_camera().index;
+    const bool enable_ultra_secure_encryption=m_camera_holder->get_settings().enable_ultra_secure_encryption;
+    const bool is_intra_enabled=m_camera_holder->get_settings().h26x_intra_refresh_type!=-1;
+    const bool is_intra_frame= false;
     auto frame = openhd::FragmentedVideoFrame{
         std::move(frame_fragments), std::chrono::steady_clock::now(),
-        m_camera_holder->get_settings().enable_ultra_secure_encryption};
+        enable_ultra_secure_encryption,
+        nullptr,
+        is_intra_enabled,
+        is_intra_frame
+    };
     m_output_cb(stream_index, frame);
   } else {
     m_console->debug("No output cb");

@@ -1132,6 +1132,19 @@ void WBLink::transmit_video_data(
       res = tx.try_enqueue_block(fragmented_video_frame.rtp_fragments,
                                  max_block_size_for_platform, fec_perc,
                                  fragmented_video_frame.creation_time);
+      //if(!res && ! fragmented_video_frame.is_intra_stream && fragmented_video_frame.is_idr_frame){
+      //if(!res && (fragmented_video_frame.is_intra_stream || (!fragmented_video_frame.is_intra_stream &&
+      //                                                           fragmented_video_frame.is_idr_frame))){
+      if(!res && fragmented_video_frame.is_intra_stream){
+        // Instead of dropping this frame, drop any already enqueued frames, then add in this frame
+        tx.try_remove_queued_blocks();
+        // Now we should have space to enqueue this frame !
+        if(!tx.try_enqueue_block(fragmented_video_frame.rtp_fragments,
+                                  max_block_size_for_platform, fec_perc,
+                                  fragmented_video_frame.creation_time)){
+          openhd::log::get_default()->warn("Cannot enqueue frame even though queue has been cleared");
+        }
+      }
     }
     if (!res) {
       m_frame_drop_helper.notify_dropped_frame();
