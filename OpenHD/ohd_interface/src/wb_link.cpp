@@ -299,6 +299,7 @@ WBLink::~WBLink() {
   m_wb_tele_tx.reset();
   m_wb_video_tx_list.resize(0);
   m_wb_video_rx_list.resize(0);
+  m_wb_txrx= nullptr;
   wifi::commandhelper::cleanup_openhd_driver_overrides();
   m_console->debug("WBLink::~WBLink() end");
 }

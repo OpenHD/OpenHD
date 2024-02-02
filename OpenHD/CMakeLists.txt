@@ -10,7 +10,8 @@ message("Air support enabled: ${ENABLE_AIR}")
 if (ENABLE_AIR)
         add_definitions(-DENABLE_AIR)
 endif ()
-
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
 # See https://github.com/andrew-hardin/cmake-git-version-tracking
 # This way we can track down bug reports to a commit hash and even more
 # (OpenHD prints the stuff at startup)
