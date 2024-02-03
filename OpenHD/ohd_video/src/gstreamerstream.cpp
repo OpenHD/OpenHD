@@ -490,10 +490,10 @@ void GStreamerStream::on_new_rtp_frame_fragment(
       m_last_fu_s_idr= false;
     }
   }
-  m_console->debug("Fragment {} start:{} end:{} type:{}",m_frame_fragments.size(),
-                   OHDUtil::yes_or_no(info.is_fu_start),
-                   OHDUtil::yes_or_no(info.is_fu_end),
-                   x_get_nal_unit_type_as_string(info.nal_unit_type,is_h265));
+  //m_console->debug("Fragment {} start:{} end:{} type:{}",m_frame_fragments.size(),
+  //                 OHDUtil::yes_or_no(info.is_fu_start),
+  //                 OHDUtil::yes_or_no(info.is_fu_end),
+  //                 x_get_nal_unit_type_as_string(info.nal_unit_type,is_h265));
   bool is_last_fragment_of_frame=info.is_fu_end;
   if (m_frame_fragments.size() > 500) {
     // Most likely something wrong with the "find end of frame" workaround
@@ -505,9 +505,6 @@ void GStreamerStream::on_new_rtp_frame_fragment(
     m_frame_fragments.resize(0);
     m_last_fu_s_idr= false;
   }
-  /*if(m_gst_video_recorder){
-    m_gst_video_recorder->enqueue_rtp_fragment(fragment);
-  }*/
 }
 
 void GStreamerStream::on_new_rtp_fragmented_frame() {
@@ -524,7 +521,7 @@ void GStreamerStream::on_new_rtp_fragmented_frame() {
         is_intra_enabled,
         is_intra_frame
     };
-    m_console->debug("{}",frame.to_string());
+    //m_console->debug("{}",frame.to_string());
     m_output_cb(stream_index, frame);
   } else {
     m_console->debug("No output cb");
