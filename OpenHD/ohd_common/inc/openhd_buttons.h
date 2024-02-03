@@ -20,7 +20,7 @@ class ButtonManager{
    * Called once at boot. Returns true if the button refering to the
    * 'Clean all settings / reset openhd core' functionality is pressed
    */
- bool user_wants_reset_frequencies();
+ bool user_wants_reset_openhd_core();
  private:
   explicit ButtonManager()=default;
 };

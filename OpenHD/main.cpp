@@ -194,7 +194,7 @@ int main(int argc, char *argv[]) {
     if(options.reset_all_settings){
       openhd::clean_all_settings();
     }
-    if(openhd::ButtonManager::instance().user_wants_reset_frequencies()){
+    if(openhd::ButtonManager::instance().user_wants_reset_openhd_core()){
       openhd::clean_all_settings();
     }
     // Profile no longer depends on n discovered cameras,

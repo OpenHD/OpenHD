@@ -38,7 +38,7 @@ openhd::ButtonManager& openhd::ButtonManager::instance() {
   return instance;
 }
 
-bool openhd::ButtonManager::user_wants_reset_frequencies() {
+bool openhd::ButtonManager::user_wants_reset_openhd_core() {
   // Right now only supported on rpi
   if(OHDPlatform::instance().is_rpi()){
     openhd::rpi::gpio26_configure();
