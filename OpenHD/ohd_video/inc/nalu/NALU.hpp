@@ -174,7 +174,7 @@ class NALU {
     }
     return (get_nal_unit_type() == NALUnitType::H264::NAL_UNIT_TYPE_DPS);
   }
-  bool is_config() { return isSPS() || isPPS() || (IS_H265_PACKET && isVPS()); }
+  bool is_config()const { return isSPS() || isPPS() || (IS_H265_PACKET && isVPS()); }
   // keyframe / IDR frame
   bool is_keyframe() const {
     const auto nut = get_nal_unit_type();
@@ -200,7 +200,7 @@ class NALU {
       p[0] = 0;
       p[1] = 0;
       p[2] = 0;
-      p[3] == 1;
+      p[3] = 1;
     } else {
       p[0] = 0;
       p[1] = 0;
@@ -218,10 +218,10 @@ class NALUBuffer {
     m_nalu = std::make_unique<NALU>(m_data->data(), m_data->size(), is_h265,
                                     creation_time);
   }
-  NALUBuffer(const NALU& nalu) {
+  explicit NALUBuffer(const NALU& nalu) {
     m_data = std::make_shared<std::vector<uint8_t>>(
         nalu.getData(), nalu.getData() + nalu.getSize());
-    m_nalu = std::make_unique<NALU>(m_data->data(), m_data->size(),
+    m_nalu = std::make_shared<NALU>(m_data->data(), m_data->size(),
                                     nalu.IS_H265_PACKET, nalu.creationTime);
   }
   NALUBuffer(const NALUBuffer&) = delete;
@@ -231,7 +231,7 @@ class NALUBuffer {
 
  private:
   std::shared_ptr<std::vector<uint8_t>> m_data;
-  std::unique_ptr<NALU> m_nalu;
+  std::shared_ptr<NALU> m_nalu;
 };
 
 #endif  // LIVE_VIDEO_10MS_ANDROID_NALU_H
