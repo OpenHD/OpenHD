@@ -68,6 +68,9 @@ enum class STATUS_LEVEL {
 };
 
 STATUS_LEVEL level_spdlog_to_mavlink(const spdlog::level::level_enum& level);
+
+// Please use sparingly.
+void log_to_kernel(const std::string& message);
 }
 
 

@@ -252,6 +252,7 @@ int main(int argc, char *argv[]) {
     m_console->info("All OpenHD modules running");
     openhd::LEDManager::instance().set_green_led_status(openhd::LEDManager::STATUS_ON);
     openhd::LEDManager::instance().set_red_led_status(openhd::LEDManager::STATUS_OFF);
+    openhd::log::log_to_kernel("All OpenHD modules running");
 
     // run forever, everything has its own threads. Note that the only way to break out basically
     // is when one of the modules encounters an exception.

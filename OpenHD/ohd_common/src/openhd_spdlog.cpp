@@ -14,6 +14,8 @@
 #include <mutex>
 #include <utility>
 
+#include "openhd_util.h"
+
 static openhd::log::MavlinkLogMessage safe_create(int level,const std::string& message){
   openhd::log::MavlinkLogMessage lmessage{};
   lmessage.level = static_cast<uint8_t>(level);
@@ -131,4 +133,8 @@ openhd::log::STATUS_LEVEL openhd::log::level_spdlog_to_mavlink(const spdlog::lev
       break;
   }
   return STATUS_LEVEL::DEBUG;
+}
+
+void openhd::log::log_to_kernel(const std::string& message) {
+  OHDUtil::run_command(fmt::format("echo \"{}\" > /dev/kmsg",message),{}, false);
 }
