@@ -5,7 +5,6 @@
 #ifndef OPENHD_OPENHD_OHD_VIDEO_SRC_GST_APPSINK_HELPER_H_
 #define OPENHD_OPENHD_OHD_VIDEO_SRC_GST_APPSINK_HELPER_H_
 
-#include <gst/app/gstappsink.h>
 #include <gst/gst.h>
 
 #include "openhd_spdlog.h"
@@ -69,45 +68,6 @@ void gst_debug_sample(GstSample* sample) {
     g_free(str);
   }
   openhd::log::get_default()->debug("{}", ss.str());
-}
-
-// based on
-// https://github.com/Samsung/kv2streamer/blob/master/kv2streamer-lib/gst-wrapper/GstAppSinkPipeline.cpp
-/**
- * Helper to pull data out of a gstreamer pipeline
- * @param keep_looping if set to false, method returns after max timeout_ns
- * @param app_sink_element the Gst App Sink to pull data from
- * @param out_cb fragments are forwarded via this cb
- */
-static void loop_pull_appsink_samples(
-    bool& keep_looping, GstElement* app_sink_element,
-    const std::function<void(std::shared_ptr<std::vector<uint8_t>> fragment,
-                             uint64_t dts)>& out_cb) {
-  assert(app_sink_element);
-  assert(out_cb);
-  const uint64_t timeout_ns =
-      std::chrono::duration_cast<std::chrono::nanoseconds>(
-          std::chrono::milliseconds(100))
-          .count();
-  while (keep_looping) {
-    GstSample* sample = gst_app_sink_try_pull_sample(
-        GST_APP_SINK(app_sink_element), timeout_ns);
-    if (sample) {
-      // openhd::log::get_default()->debug("Got sample");
-      // auto buffer_list=gst_sample_get_buffer_list(sample);
-      // openhd::log::get_default()->debug("Got sample {}",
-      // gst_buffer_list_length(buffer_list)); gst_debug_sample(sample);
-      GstBuffer* buffer = gst_sample_get_buffer(sample);
-      if (buffer) {
-        // openhd::gst_debug_buffer(buffer);
-        auto buff_copy = openhd::gst_copy_buffer(buffer);
-        // openhd::log::get_default()->debug("Got buffer size {}",
-        // buff_copy->size());
-        out_cb(buff_copy, buffer->dts);
-      }
-      gst_sample_unref(sample);
-    }
-  }
 }
 
 static void unref_appsink_element(GstElement* appsink) {
