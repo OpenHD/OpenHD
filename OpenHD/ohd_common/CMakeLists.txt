@@ -11,6 +11,8 @@ endif()
 #----------------------------------------------------------------------------------------------------------------------
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# Spams build due to nlohmann::json
+add_compile_options(-Wno-psabi)
 
 add_library(OHDCommonLib STATIC) # initialized below
 add_library(OHDCommonLib::OHDCommonLib ALIAS OHDCommonLib)
