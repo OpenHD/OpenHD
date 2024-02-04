@@ -1097,9 +1097,10 @@ void WBLink::transmit_telemetry_data(TelemetryTxPacket packet) {
   assert(packet.n_injections >= 1);
   std::lock_guard<std::mutex> guard(m_telemetry_tx_mutex);
   // m_console->debug("N injections:{}",packet.n_injections);
-  const auto res =
-      m_wb_tele_tx->try_enqueue_packet(packet.data, packet.n_injections);
-  if (!res) m_console->debug("Enqueing tele packet failed");
+  const auto n_dropped=m_wb_tele_tx->enqueue_packet_dropping(packet.data,packet.n_injections);
+  if(n_dropped>0){
+    m_console->debug("Telemetry queue jam, dropped {}",n_dropped);
+  }
 }
 
 void WBLink::transmit_video_data(
