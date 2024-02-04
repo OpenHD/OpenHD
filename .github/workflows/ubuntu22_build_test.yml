@@ -42,7 +42,7 @@ jobs:
           cd OpenHD
           ./build_submodules_independently.sh
           
-  build-air-only-test:
+  build-ground-only-test:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository and submodules
@@ -57,6 +57,8 @@ jobs:
         run: |
           cd OpenHD
           ./build_air_disabled.sh
+          cd build_air_disabled
+          sudo ./openhd -a -r 10
           
                     
   build-and-run-air-ground-test:
