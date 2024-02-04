@@ -1106,60 +1106,56 @@ void WBLink::transmit_video_data(
     int stream_index,
     const openhd::FragmentedVideoFrame& fragmented_video_frame) {
   assert(m_profile.is_air);
-  if (stream_index >= 0 && stream_index < m_wb_video_tx_list.size()) {
-    // m_console->debug("Got {}",fragmented_video_frame.rtp_fragments.size());
-    auto& tx = *m_wb_video_tx_list[stream_index];
-    tx.set_encryption(fragmented_video_frame.enable_ultra_secure_encryption);
-    // tx.tmp_feed_frame_fragments(fragmented_video_frame.rtp_fragments,use_fixed_fec_instead);
-    int max_block_size_for_platform =
-        m_settings->get_settings().wb_max_fec_block_size_for_platform;
-    // openhd::log::get_default()->debug("max_block_size_for_platform:{}",max_block_size_for_platform);
-    if (!openhd::valid_wb_max_fec_block_size_for_platform(
-            max_block_size_for_platform)) {
-      openhd::log::get_default()->warn("Invalid max_block_size_for_platform:{}",
-                                       max_block_size_for_platform);
-      max_block_size_for_platform =
-          openhd::DEFAULT_MAX_FEC_BLK_SIZE_FOR_PLATFORM;
-    }
-    const int fec_perc = m_settings->get_settings().wb_video_fec_percentage;
-    bool res = false;
-    if (fragmented_video_frame.dirty_frame != nullptr) {
-      // non rtp
-      res = tx.try_enqueue_frame(fragmented_video_frame.dirty_frame,
-                                 max_block_size_for_platform, fec_perc,
-                                 fragmented_video_frame.creation_time);
-    } else {
-      res = tx.try_enqueue_block(fragmented_video_frame.rtp_fragments,
-                                 max_block_size_for_platform, fec_perc,
-                                 fragmented_video_frame.creation_time);
-      if(!res){
-        if(fragmented_video_frame.is_intra_stream || fragmented_video_frame.is_idr_frame){
-          // Instead of dropping this frame, drop any already enqueued frames, then add in this frame
-          const int count_removed=tx.try_remove_queued_blocks();
-          // Now we should have space to enqueue this frame !
-          if(!tx.try_enqueue_block(fragmented_video_frame.rtp_fragments,
-                                    max_block_size_for_platform, fec_perc,
-                                    fragmented_video_frame.creation_time)){
-            openhd::log::get_default()->warn("Cannot enqueue frame even though queue has been cleared {}",count_removed);
-          }else{
-            openhd::log::get_default()->debug("Cleared {} frames to make space for frame {}",
-                                              count_removed,fragmented_video_frame.to_string());
-          }
-        }
-      }
-    }
-    if (!res) {
-      m_frame_drop_helper.notify_dropped_frame();
-      if (stream_index == 0) {
-        m_primary_total_dropped_frames++;
-      } else {
-        m_secondary_total_dropped_frames++;
-      }
-      m_console->debug("TX enqueue video frame failed, queue size:{}",
-                       tx.get_tx_queue_available_size_approximate());
+  if(stream_index<0 || stream_index > m_wb_video_tx_list.size()){
+    m_console->debug("Invalid camera stream_index {}", stream_index);
+    return;
+  }
+  // m_console->debug("Got {}",fragmented_video_frame.rtp_fragments.size());
+  auto& tx = *m_wb_video_tx_list[stream_index];
+  tx.set_encryption(fragmented_video_frame.enable_ultra_secure_encryption);
+  const int max_fec_block_size = get_max_fec_block_size();
+  const int fec_perc = m_settings->get_settings().wb_video_fec_percentage;
+  int n_dropped_frames=0;
+  if (fragmented_video_frame.dirty_frame != nullptr) {
+    // non rtp
+    const auto res = tx.try_enqueue_frame(fragmented_video_frame.dirty_frame,
+                                          max_fec_block_size, fec_perc,
+                                          fragmented_video_frame.creation_time);
+    if(!res){
+      // We dropped this frame
+      n_dropped_frames=1;
     }
   } else {
-    m_console->debug("Invalid camera stream_index {}", stream_index);
+    // Pushes out previous enqueued frames if there is not enough space in the queue
+    const bool use_dropping_enqueue =fragmented_video_frame.is_intra_stream || fragmented_video_frame.is_idr_frame;
+
+    if(use_dropping_enqueue){
+      const auto count_removed=tx.enqueue_block_dropping(fragmented_video_frame.rtp_fragments,
+                                                           max_fec_block_size, fec_perc,
+                                                           fragmented_video_frame.creation_time);
+      if(count_removed!=0){
+        openhd::log::get_default()->debug("Cleared {} frames to make space for frame {}",
+                                          count_removed,fragmented_video_frame.to_string());
+        n_dropped_frames=count_removed;
+      }
+    }else{
+      const auto res=tx.try_enqueue_block(fragmented_video_frame.rtp_fragments,
+                                            max_fec_block_size, fec_perc,
+                                            fragmented_video_frame.creation_time);
+      if(!res){
+        n_dropped_frames=1;
+        m_console->debug("TX enqueue video frame failed, queue size:{}",
+                         tx.get_tx_queue_available_size_approximate());
+      }
+    }
+  }
+  if (n_dropped_frames!=0) {
+    m_frame_drop_helper.notify_dropped_frame(n_dropped_frames);
+    if (stream_index == 0) {
+      m_primary_total_dropped_frames=n_dropped_frames;
+    } else {
+      m_secondary_total_dropped_frames+=n_dropped_frames;
+    }
   }
 }
 
@@ -1448,4 +1444,19 @@ void WBLink::wt_perform_air_hotspot_after_timeout() {
     // Reset timeout
     m_hs_timeout = std::chrono::steady_clock::now();
   }
+}
+
+int WBLink::get_max_fec_block_size() {
+  // tx.tmp_feed_frame_fragments(fragmented_video_frame.rtp_fragments,use_fixed_fec_instead);
+  int max_block_size_for_platform =
+      m_settings->get_settings().wb_max_fec_block_size_for_platform;
+  // openhd::log::get_default()->debug("max_block_size_for_platform:{}",max_block_size_for_platform);
+  if (!openhd::valid_wb_max_fec_block_size_for_platform(
+          max_block_size_for_platform)) {
+    openhd::log::get_default()->warn("Invalid max_block_size_for_platform:{}",
+                                     max_block_size_for_platform);
+    max_block_size_for_platform =
+        openhd::DEFAULT_MAX_FEC_BLK_SIZE_FOR_PLATFORM;
+  }
+  return max_block_size_for_platform;
 }

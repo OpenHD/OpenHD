@@ -158,7 +158,7 @@ class WBLink : public OHDLink {
   // set passive mode to disabled (do not drop packets) unless we are ground
   // and passive mode is enabled by the user
   void re_enable_injection_unless_user_passive_mode_enabled();
-
+  int get_max_fec_block_size();
  private:
   const OHDProfile m_profile;
   const OHDPlatform m_platform;
