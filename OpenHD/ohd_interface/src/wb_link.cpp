@@ -1031,6 +1031,8 @@ void WBLink::wt_perform_rate_adjustment() {
     // we drop frames during this period, we do not count it as errors that need
     // bitrate reduction.
     m_frame_drop_helper.delay_for(std::chrono::seconds(5));
+    m_primary_total_dropped_frames=0;
+    m_secondary_total_dropped_frames=0;
     return;
   }
   // const bool
