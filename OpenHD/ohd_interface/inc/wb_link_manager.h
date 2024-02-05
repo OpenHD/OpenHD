@@ -13,7 +13,7 @@
 #include <variant>
 #include <vector>
 
-#include "../lib/wifibroadcast/src/WBTxRx.h"
+#include "../lib/wifibroadcast/wifibroadcast/WBTxRx.h"
 
 /**
  * Quite a lot of complicated code to implement 40Mhz without sync of air and
