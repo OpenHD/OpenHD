@@ -1153,7 +1153,7 @@ void WBLink::transmit_video_data(
   if (n_dropped_frames!=0) {
     m_frame_drop_helper.notify_dropped_frame(n_dropped_frames);
     if (stream_index == 0) {
-      m_primary_total_dropped_frames=n_dropped_frames;
+      m_primary_total_dropped_frames+=n_dropped_frames;
     } else {
       m_secondary_total_dropped_frames+=n_dropped_frames;
     }
