@@ -9,7 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # by the OpenHD main executable CMakeLists.txt file - in which case this does nothing
 # Same for managed cameras support
 option(ENABLE_AIR "Enable air support" ON)
-option(ENABLE_MANAGED_CAMERAS "Managed cameras support" ON)
+option(ENABLE_USB_CAMERAS "USB cameras support" ON)
 find_package(PkgConfig REQUIRED)
 
 add_library(OHDVideoLib STATIC) # initialized below
@@ -52,7 +52,7 @@ if(ENABLE_AIR)
     target_link_libraries(OHDVideoLib PRIVATE PkgConfig::gstreamer PkgConfig::gstreamer-app)
 endif ()
 
-if (ENABLE_AIR AND ENABLE_MANAGED_CAMERAS)
+if (ENABLE_AIR AND ENABLE_USB_CAMERAS)
     # FUCKING GSTREAMER !! begin
     pkg_search_module(GST REQUIRED
             gstreamer-sdp-1.0>=1.4

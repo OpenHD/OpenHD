@@ -236,7 +236,7 @@ void OHDVideoAir::update_arming_state(bool armed) {
   }
 }
 
-#ifdef ENABLE_MANAGED_CAMERAS
+#ifdef ENABLE_USB_CAMERAS
 static std::vector<std::string> x_discover_usb_cameras(
     const OHDPlatform& platform, int num_usb_cameras) {
   auto console = openhd::log::get_default();
@@ -290,7 +290,7 @@ std::vector<XCamera> OHDVideoAir::discover_cameras(
   const int num_active_cameras =
       global_settings.secondary_camera_type == X_CAM_TYPE_DISABLED ? 1 : 2;
   std::vector<std::string> usb_cam_bus_names;
-#ifdef ENABLE_MANAGED_CAMERAS
+#ifdef ENABLE_USB_CAMERAS
   const int num_usb_cameras =
       get_num_usb_cameras(global_settings.primary_camera_type,
                           global_settings.secondary_camera_type);

@@ -2,7 +2,7 @@
 
 #include <fcntl.h>
 
-#ifdef  ENABLE_MANAGED_CAMERAS
+#ifdef  ENABLE_USB_CAMERAS
 #include <libv4l2.h>
 #include <linux/videodev2.h>
 #endif
@@ -161,7 +161,7 @@ static void enableSeekIfFound() {
 }
 }  // namespace DThermalCamerasHelper
 
-#ifdef ENABLE_MANAGED_CAMERAS
+#ifdef ENABLE_USB_CAMERAS
 /**
  * Try and break out some of the stuff from stephen.
  * Even though it mght not be re-used in multiple places, it makes the code more

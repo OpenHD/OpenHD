@@ -33,7 +33,7 @@
       "inherits": "linux-debug",
       "cacheVariables": {
         "ENABLE_AIR": "ON",
-        "ENABLE_MANAGED_CAMERAS": "OFF"
+        "ENABLE_USB_CAMERAS": "OFF"
       }
     }
   ]
