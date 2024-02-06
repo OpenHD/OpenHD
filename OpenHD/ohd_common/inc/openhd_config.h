@@ -23,11 +23,6 @@ struct Config{
   bool WIFI_LOCAL_NETWORK_ENABLE= false;
   std::string WIFI_LOCAL_NETWORK_SSID;
   std::string WIFI_LOCAL_NETWORK_PASSWORD;
-  // CAMERAS
-  bool CAMERA_ENABLE_AUTODETECT = true;
-  int CAMERA_N_CAMERAS;
-  std::string CAMERA_CAMERA0_TYPE;
-  std::string CAMERA_CAMERA1_TYPE;
   // NETWORKING
   std::string NW_ETHERNET_CARD=RPI_ETHERNET_ONLY;
   std::vector<std::string> NW_MANUAL_FORWARDING_IPS;
