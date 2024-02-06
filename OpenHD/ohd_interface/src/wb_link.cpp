@@ -233,6 +233,7 @@ WBLink::WBLink(OHDProfile profile, OHDPlatform platform,
     m_management_gnd = std::make_unique<ManagementGround>(m_wb_txrx);
     m_management_gnd->m_tx_header = m_tx_header_1;
     m_management_gnd->start();
+    m_gnd_curr_rx_frequency=static_cast<int>(m_settings->unsafe_get_settings().wb_frequency);
   } else {
     m_management_air = std::make_unique<ManagementAir>(
         m_wb_txrx, m_settings->get_settings().wb_frequency,
@@ -316,9 +317,8 @@ bool WBLink::request_set_frequency(int frequency) {
       [this, frequency]() {
         m_settings->unsafe_get_settings().wb_frequency = frequency;
         m_settings->persist();
-        if (m_profile.is_air)
-          m_management_air->m_curr_frequency_mhz = frequency;
         if (m_profile.is_air) {
+          m_management_air->m_curr_frequency_mhz = frequency;
           // We need to delay the change to make sure the mavlink ack has enough
           // time to make it to the ground
           std::this_thread::sleep_for(DELAY_FOR_TRANSMIT_ACK);
@@ -1418,7 +1418,23 @@ void WBLink::wt_perform_channel_width_management() {
     // management always on 20Mhz) And switch "up" to 40Mhz if needed
     const int air_reported_channel_width =
         m_management_gnd->m_air_reported_curr_channel_width;
-    if (air_reported_channel_width > 0 &&
+    const int air_reported_frequency =
+        m_management_gnd->m_air_reported_curr_frequency;
+    if((air_reported_channel_width==20 || air_reported_channel_width==40)
+        && air_reported_frequency>100){
+      if(m_gnd_curr_rx_channel_width!=air_reported_channel_width ||
+          m_gnd_curr_rx_frequency!=air_reported_frequency){
+        m_console->debug("GND changing from {}:{} to {}:{}",
+                         m_gnd_curr_rx_frequency, m_gnd_curr_rx_channel_width,
+                         air_reported_frequency,air_reported_channel_width);
+        m_gnd_curr_rx_frequency=air_reported_frequency;
+        m_gnd_curr_rx_channel_width=air_reported_channel_width;
+        m_settings->unsafe_get_settings().wb_frequency=air_reported_frequency;
+        m_settings->persist(false);
+        apply_frequency_and_channel_width(air_reported_frequency,air_reported_channel_width,20);
+      }
+    }
+    /*if (air_reported_channel_width > 0 &&
         m_gnd_curr_rx_channel_width != air_reported_channel_width) {
       const auto& curr_settings = m_settings->get_settings();
       m_console->debug("GND changing LISTEN bandwidth from {} to {}",
@@ -1427,7 +1443,7 @@ void WBLink::wt_perform_channel_width_management() {
       const int frequency = curr_settings.wb_frequency;
       const int rx_channel_width = m_gnd_curr_rx_channel_width;
       apply_frequency_and_channel_width(frequency, rx_channel_width, 20);
-    }
+    }*/
   }
 }
 
