@@ -5,12 +5,15 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+# Allows to explicitly disable air support - removes a few dependencies
 option(ENABLE_AIR "Enable air support" ON)
 message("Air support enabled: ${ENABLE_AIR}")
 if (ENABLE_AIR)
         add_definitions(-DENABLE_AIR)
 endif ()
 
+# Allows to explicitly disable USB camera support - removes a few dependencies
+# (Libusb an libv4l2), only makes sense if air support is enabled
 option(ENABLE_USB_CAMERAS "USB cameras support" ON)
 message("USB cameras enabled: ${ENABLE_USB_CAMERAS}")
 if (ENABLE_USB_CAMERAS)
