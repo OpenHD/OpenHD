@@ -346,8 +346,12 @@ void GStreamerStream::stream_once() {
   // The user can disable streaming for a camera, in which case a restart is
   // requested and after that we land here (and do nothing)
   if (!m_camera_holder->get_settings().enable_streaming) {
-    m_console->debug("streaming disabled");
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    const auto elapsed_log=std::chrono::steady_clock::now()-m_last_log_streaming_disabled;
+    if(elapsed_log>std::chrono::seconds(5)){
+      m_console->debug("streaming disabled");
+      m_last_log_streaming_disabled=std::chrono::steady_clock::now();
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     return;
   }
   // First, we (try) starting the pipeline using the current settings

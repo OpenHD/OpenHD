@@ -89,6 +89,7 @@ class GStreamerStream : public CameraStream {
   void on_new_nalu_frame(const uint8_t* data, int data_len);
   void forward_video_frame(std::shared_ptr<std::vector<uint8_t>> frame);
   CodecConfigFinder m_config_finder;
+  std::chrono::steady_clock::time_point m_last_log_streaming_disabled=std::chrono::steady_clock::now();
 };
 
 #endif
