@@ -1,2 +1,0 @@
-dtoverlay=vc4-kms-v3d
-dtoverlay=imx477
