@@ -318,10 +318,13 @@ bool WBLink::request_set_frequency(int frequency) {
         m_settings->unsafe_get_settings().wb_frequency = frequency;
         m_settings->persist();
         if (m_profile.is_air) {
+          // temporarily disable video streaming to free up BW
+          m_air_close_video_in=true;
           m_management_air->set_frequency(frequency);
           // We need to delay the change to make sure the mavlink ack has enough
           // time to make it to the ground
           std::this_thread::sleep_for(DELAY_FOR_TRANSMIT_ACK);
+          m_air_close_video_in= false;
         }
         apply_frequency_and_channel_width_from_settings();
         m_rate_adjustment_frequency_changed = true;
@@ -340,15 +343,17 @@ bool WBLink::request_set_air_tx_channel_width(int channel_width) {
   auto work_item = std::make_shared<WorkItem>(
       fmt::format("SET_CHWIDTH:{}", channel_width),
       [this, channel_width]() {
+        // temporarily disable video streaming to free up BW
+        m_air_close_video_in=true;
         m_settings->unsafe_get_settings().wb_air_tx_channel_width =
             channel_width;
         m_settings->persist();
-        if (m_profile.is_air){
-          m_management_air->set_channel_width(channel_width);
-        }
+        m_management_air->set_channel_width(channel_width);
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
         // Ground will automatically apply the right channel width once first
         // (broadcast) management frame is received.
         apply_frequency_and_channel_width_from_settings();
+        m_air_close_video_in= false;
       },
       std::chrono::steady_clock::now());
   return try_schedule_work_item(work_item);
@@ -1110,6 +1115,10 @@ void WBLink::transmit_video_data(
   assert(m_profile.is_air);
   if(stream_index<0 || stream_index > m_wb_video_tx_list.size()){
     m_console->debug("Invalid camera stream_index {}", stream_index);
+    return;
+  }
+  if(m_air_close_video_in.load(std::memory_order::memory_order_relaxed)){
+    m_console->debug("Video TX temporarily disabled");
     return;
   }
   // m_console->debug("Got {}",fragmented_video_frame.rtp_fragments.size());

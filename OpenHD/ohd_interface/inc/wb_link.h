@@ -218,9 +218,10 @@ class WBLink : public OHDLink {
   // We start on 40Mhz, and go down to 20Mhz if possible
   std::atomic<int> m_gnd_curr_rx_channel_width = 40;
   std::atomic<int> m_gnd_curr_rx_frequency=-1;
+  // Allows temporarily closing the video input
+  std::atomic_bool m_air_close_video_in=false;
   // TODO remove me
   std::mutex m_telemetry_tx_mutex;
-
  private:
   openhd::wb::ForeignPacketsHelper m_foreign_p_helper;
   openhd::wb::RCChannelHelper m_rc_channel_helper;
