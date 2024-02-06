@@ -58,7 +58,28 @@ jobs:
           cd OpenHD
           ./build_air_disabled.sh
           cd build_air_disabled
-          sudo ./openhd -a -r 10
+          sudo ./openhd -g -r 10
+          
+  build-usb-cam-disabled-test:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Install Dependencies
+        run: |
+          sudo apt update
+          sudo ./install_build_dep.sh ubuntu-x86
+          # Doesn't require libusb and libv4l2
+          sudo apt-get remove libv4l-dev
+          sudo apt-get remove libusb-1.0-0-dev
+      - name: Build with air support explicitly disabled
+        run: |
+          cd OpenHD
+          ./build_usb_cam_disabled.sh
+          cd build_usb_cam_disabled
+          sudo ./openhd -a -r 10          
           
                     
   build-and-run-air-ground-test:

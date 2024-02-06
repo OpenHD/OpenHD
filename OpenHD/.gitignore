@@ -19,3 +19,4 @@ cmake-build-debug-trace
 cmake-build-release
 build_release
 build_air_disabled
+build_usb_cam_disabled

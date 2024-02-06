@@ -50,21 +50,6 @@ if(ENABLE_AIR)
     pkg_search_module(gstreamer REQUIRED IMPORTED_TARGET gstreamer-1.0>=1.4)
     pkg_search_module(gstreamer-app REQUIRED IMPORTED_TARGET gstreamer-app-1.0>=1.4)
     target_link_libraries(OHDVideoLib PRIVATE PkgConfig::gstreamer PkgConfig::gstreamer-app)
-endif ()
-
-if (ENABLE_AIR AND ENABLE_USB_CAMERAS)
-    # FUCKING GSTREAMER !! begin
-    pkg_search_module(GST REQUIRED
-            gstreamer-sdp-1.0>=1.4
-            gstreamer-video-1.0>=1.4)
-    # https://stackoverflow.com/questions/64078308/how-to-write-a-cmake-file-which-successfully-links-gstreamer-basic-tutorial-5
-    pkg_search_module(gstreamer-sdp REQUIRED IMPORTED_TARGET gstreamer-sdp-1.0>=1.4)
-    pkg_search_module(gstreamer-video REQUIRED IMPORTED_TARGET gstreamer-video-1.0>=1.4)
-    target_link_libraries(OHDVideoLib PRIVATE
-            PkgConfig::gstreamer-sdp
-            PkgConfig::gstreamer-video)
-    # FUCKING GSTREAMER !! end
-
     # From libcamera-apps !! begin
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(LIBCAMERA QUIET libcamera)
@@ -82,6 +67,20 @@ if (ENABLE_AIR AND ENABLE_USB_CAMERAS)
         target_link_libraries(OHDVideoLib PRIVATE ${LIBCAMERA_LINK_LIBRARIES})
         target_compile_definitions(OHDVideoLib PUBLIC OPENHD_LIBCAMERA_PRESENT)
     endif()
+endif ()
+
+if (ENABLE_AIR AND ENABLE_USB_CAMERAS)
+    # FUCKING GSTREAMER !! begin
+    pkg_search_module(GST REQUIRED
+            gstreamer-sdp-1.0>=1.4
+            gstreamer-video-1.0>=1.4)
+    # https://stackoverflow.com/questions/64078308/how-to-write-a-cmake-file-which-successfully-links-gstreamer-basic-tutorial-5
+    pkg_search_module(gstreamer-sdp REQUIRED IMPORTED_TARGET gstreamer-sdp-1.0>=1.4)
+    pkg_search_module(gstreamer-video REQUIRED IMPORTED_TARGET gstreamer-video-1.0>=1.4)
+    target_link_libraries(OHDVideoLib PRIVATE
+            PkgConfig::gstreamer-sdp
+            PkgConfig::gstreamer-video)
+    # FUCKING GSTREAMER !! end
 
     include(cmake/FindLibUSB.cmake)
     if(LIBUSB_1_FOUND)
