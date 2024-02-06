@@ -7,7 +7,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # If we build this module standalone for testing, always support air -
 # otherwise, testing kinda doesn't make sense. The option might already be set to off
 # by the OpenHD main executable CMakeLists.txt file - in which case this does nothing
+# Same for managed cameras support
 option(ENABLE_AIR "Enable air support" ON)
+option(ENABLE_USB_CAMERAS "USB cameras support" ON)
+find_package(PkgConfig REQUIRED)
 
 add_library(OHDVideoLib STATIC) # initialized below
 add_library(OHDVideoLib::OHDVideoLib ALIAS OHDVideoLib)
@@ -39,7 +42,29 @@ if(ENABLE_AIR)
             src/validate_settings.cpp
             src/usb_thermal_cam_helper.cpp
     )
-    # Now to the packages
+
+    pkg_search_module(GST REQUIRED
+            gstreamer-1.0>=1.4
+            gstreamer-app-1.0>=1.4
+    )
+    pkg_search_module(gstreamer REQUIRED IMPORTED_TARGET gstreamer-1.0>=1.4)
+    pkg_search_module(gstreamer-app REQUIRED IMPORTED_TARGET gstreamer-app-1.0>=1.4)
+    target_link_libraries(OHDVideoLib PRIVATE PkgConfig::gstreamer PkgConfig::gstreamer-app)
+endif ()
+
+if (ENABLE_AIR AND ENABLE_USB_CAMERAS)
+    # FUCKING GSTREAMER !! begin
+    pkg_search_module(GST REQUIRED
+            gstreamer-sdp-1.0>=1.4
+            gstreamer-video-1.0>=1.4)
+    # https://stackoverflow.com/questions/64078308/how-to-write-a-cmake-file-which-successfully-links-gstreamer-basic-tutorial-5
+    pkg_search_module(gstreamer-sdp REQUIRED IMPORTED_TARGET gstreamer-sdp-1.0>=1.4)
+    pkg_search_module(gstreamer-video REQUIRED IMPORTED_TARGET gstreamer-video-1.0>=1.4)
+    target_link_libraries(OHDVideoLib PRIVATE
+            PkgConfig::gstreamer-sdp
+            PkgConfig::gstreamer-video)
+    # FUCKING GSTREAMER !! end
+
     # From libcamera-apps !! begin
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(LIBCAMERA QUIET libcamera)
@@ -57,23 +82,6 @@ if(ENABLE_AIR)
         target_link_libraries(OHDVideoLib PRIVATE ${LIBCAMERA_LINK_LIBRARIES})
         target_compile_definitions(OHDVideoLib PUBLIC OPENHD_LIBCAMERA_PRESENT)
     endif()
-    # FUCKING GSTREAMER !! begin
-    find_package(PkgConfig REQUIRED)
-    pkg_search_module(GST REQUIRED gstreamer-1.0>=1.4
-            gstreamer-sdp-1.0>=1.4
-            gstreamer-video-1.0>=1.4
-            gstreamer-app-1.0>=1.4)
-    # https://stackoverflow.com/questions/64078308/how-to-write-a-cmake-file-which-successfully-links-gstreamer-basic-tutorial-5
-    pkg_search_module(gstreamer REQUIRED IMPORTED_TARGET gstreamer-1.0>=1.4)
-    pkg_search_module(gstreamer-sdp REQUIRED IMPORTED_TARGET gstreamer-sdp-1.0>=1.4)
-    pkg_search_module(gstreamer-app REQUIRED IMPORTED_TARGET gstreamer-app-1.0>=1.4)
-    pkg_search_module(gstreamer-video REQUIRED IMPORTED_TARGET gstreamer-video-1.0>=1.4)
-    target_link_libraries(OHDVideoLib PRIVATE
-            PkgConfig::gstreamer
-            PkgConfig::gstreamer-sdp
-            PkgConfig::gstreamer-app
-            PkgConfig::gstreamer-video)
-    # FUCKING GSTREAMER !! end
 
     include(cmake/FindLibUSB.cmake)
     if(LIBUSB_1_FOUND)

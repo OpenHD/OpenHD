@@ -1,8 +1,12 @@
 #include "camera_discovery.h"
 
 #include <fcntl.h>
+
+#ifdef  ENABLE_USB_CAMERAS
 #include <libv4l2.h>
 #include <linux/videodev2.h>
+#endif
+
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #ifdef OPENHD_LIBUSB_PRESENT
@@ -157,6 +161,7 @@ static void enableSeekIfFound() {
 }
 }  // namespace DThermalCamerasHelper
 
+#ifdef ENABLE_USB_CAMERAS
 /**
  * Try and break out some of the stuff from stephen.
  * Even though it mght not be re-used in multiple places, it makes the code more
@@ -252,6 +257,7 @@ static std::optional<v4l2_capability> get_capabilities(
   }
   return caps;
 }
+
 struct EndpointFormat {
   // pixel format as string, never empty
   std::string format;
@@ -271,6 +277,7 @@ struct EndpointFormats {
   std::vector<EndpointFormat> formats_raw;
   bool has_any_valid_format = false;
 };
+
 // Enumerate all the ("pixel formats") we are after for a given v4l2 device
 static EndpointFormats iterate_supported_outputs(
     std::unique_ptr<openhd::v4l2::V4l2FPHolder> &v4l2_fp_holder) {
@@ -396,3 +403,5 @@ std::vector<DCameras::DiscoveredUSBCamera> DCameras::detect_usb_cameras(
   }
   return ret;
 }
+
+#endif

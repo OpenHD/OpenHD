@@ -27,6 +27,14 @@
       "cacheVariables": {
         "ENABLE_AIR": "OFF"
       }
+    },
+    {
+      "name": "linux-debug-air-unmanaged",
+      "inherits": "linux-debug",
+      "cacheVariables": {
+        "ENABLE_AIR": "ON",
+        "ENABLE_USB_CAMERAS": "OFF"
+      }
     }
   ]
 }

@@ -10,6 +10,13 @@ message("Air support enabled: ${ENABLE_AIR}")
 if (ENABLE_AIR)
         add_definitions(-DENABLE_AIR)
 endif ()
+
+option(ENABLE_USB_CAMERAS "USB cameras support" ON)
+message("USB cameras enabled: ${ENABLE_USB_CAMERAS}")
+if (ENABLE_USB_CAMERAS)
+        add_definitions(-DENABLE_USB_CAMERAS)
+endif ()
+
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
 # See https://github.com/andrew-hardin/cmake-git-version-tracking
