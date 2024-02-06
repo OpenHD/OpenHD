@@ -805,7 +805,11 @@ static std::string create_dummy_filesrc_stream(const OHDPlatform& platform,
     ss << createSwEncoder(settings);
   } else {
     if (platform.is_rpi()) {
-      ss << create_rpi_v4l2_h264_encoder(settings);
+      if(settings.streamed_video_format.videoCodec==VideoCodec::H264){
+        ss << create_rpi_v4l2_h264_encoder(settings);
+      }else{
+        ss << createSwEncoder(settings);
+      }
     } else if (platform.is_rock()) {
       ss << createRockchipEncoderPipeline(settings);
     } else {
