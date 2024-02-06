@@ -51,7 +51,7 @@ ManagementAir::ManagementAir(std::shared_ptr<WBTxRx> wb_tx_rx,
     : m_wb_txrx(std::move(wb_tx_rx)),
       m_curr_frequency_mhz(initial_freq_mhz),
       m_curr_channel_width_mhz(inital_channel_width_mhz),
-      m_last_channel_width_change_timestamp_ms{
+      m_last_change_timestamp_ms{
           OHDUtil::steady_clock_time_epoch_ms()} {
   m_console = openhd::log::create_or_get("wb_mngmt_air");
   auto cb_packet = [this](uint64_t nonce, int wlan_index, const uint8_t *data,
@@ -61,6 +61,19 @@ ManagementAir::ManagementAir(std::shared_ptr<WBTxRx> wb_tx_rx,
   auto mgmt_handler = std::make_shared<WBTxRx::StreamRxHandler>(
       MANAGEMENT_RADIO_PORT_GND_TX, cb_packet, nullptr);
   m_wb_txrx->rx_register_stream_handler(mgmt_handler);
+}
+
+int ManagementAir::get_last_received_packet_ts_ms() {
+  return m_last_received_packet_timestamp_ms;
+}
+void ManagementAir::set_frequency(int frequency) {
+  m_curr_frequency_mhz=frequency;
+  m_last_change_timestamp_ms=OHDUtil::steady_clock_time_epoch_ms();
+}
+
+void ManagementAir::set_channel_width(uint8_t bw) {
+  m_curr_channel_width_mhz=bw;
+  m_last_change_timestamp_ms=OHDUtil::steady_clock_time_epoch_ms();
 }
 
 void ManagementAir::start() {
@@ -84,10 +97,10 @@ void ManagementAir::loop() {
         std::chrono::milliseconds(500);  // default 2Hz
     const auto elapsed_since_last_change =
         OHDUtil::steady_clock_time_epoch_ms() -
-        m_last_channel_width_change_timestamp_ms;
+        m_last_change_timestamp_ms;
     if (elapsed_since_last_change < 5 * 1000) {
-      // If the last change is recent, send in higher interval (10Hz)
-      management_frame_interval = std::chrono::milliseconds(100);
+      // If the last change is recent, send in higher interval
+      management_frame_interval = std::chrono::milliseconds(20);
     }
     const auto elapsed_since_last_management_frame =
         std::chrono::steady_clock::now() - m_air_last_management_frame;
@@ -114,10 +127,6 @@ void ManagementAir::on_new_management_packet(const uint8_t *data,
     std::memcpy(&packet, &data[1], data_len - 1);
     // TODO
   }
-}
-
-int ManagementAir::get_last_received_packet_ts_ms() {
-  return m_last_received_packet_timestamp_ms;
 }
 
 ManagementGround::ManagementGround(std::shared_ptr<WBTxRx> wb_tx_rx)
