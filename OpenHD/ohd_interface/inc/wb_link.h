@@ -134,7 +134,6 @@ class WBLink : public OHDLink {
   // later (and in case the work queue is currently busy with a frequency scan
   // for example, we do not support changing the frequency or similar.
   bool try_schedule_work_item(const std::shared_ptr<WorkItem>& work_item);
-  static constexpr auto DELAY_FOR_TRANSMIT_ACK = std::chrono::seconds(2);
   // Called by telemetry on both air and ground (send to opposite, respective)
   void transmit_telemetry_data(TelemetryTxPacket packet) override;
   // Called by the camera stream on the air unit only

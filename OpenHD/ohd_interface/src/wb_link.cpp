@@ -321,9 +321,8 @@ bool WBLink::request_set_frequency(int frequency) {
           // temporarily disable video streaming to free up BW
           m_air_close_video_in=true;
           m_management_air->set_frequency(frequency);
-          // We need to delay the change to make sure the mavlink ack has enough
-          // time to make it to the ground
-          std::this_thread::sleep_for(DELAY_FOR_TRANSMIT_ACK);
+          // We need to delay the change to make sure at least one management packet goes through ..
+          std::this_thread::sleep_for(std::chrono::seconds(2));
           m_air_close_video_in= false;
         }
         apply_frequency_and_channel_width_from_settings();
