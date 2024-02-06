@@ -64,6 +64,11 @@ static constexpr int X_CAM_TYPE_X20_RUNCAM_NANO = 60;
 //
 static constexpr int X_CAM_TYPE_ROCK_HDMI_IN = 70;
 static constexpr int X_CAM_TYPE_ROCK_IMX219 = 71;
+//
+// OpenIPC specific starts here
+static constexpr int X_CAM_TYPE_OPENIPC_SOMETHING=80;
+//
+
 // ... rest is reserved for future use
 // no camera, only exists to have a default value for secondary camera (which is
 // disabled by default). NOTE: The primary camera cannot be disabled !
@@ -124,6 +129,8 @@ static std::string x_cam_type_to_string(int camera_type) {
       return "ROCK_IMX219";
     case X_CAM_TYPE_DISABLED:
       return "DISABLED";
+    case X_CAM_TYPE_OPENIPC_SOMETHING:
+      return "OPENIPC_X";
     default:
       break;
   }

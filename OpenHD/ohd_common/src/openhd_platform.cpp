@@ -98,7 +98,7 @@ std::string x_platform_type_to_string(int platform_type) {
     case X_PLATFORM_TYPE_ROCKCHIP_RV1126_UNDEFINED: return "RV1126 UNDEFINED";
     // ROCK END
     case X_PLATFORM_TYPE_ALWINNER_X20: return "X20";
-    case X_PLATFORM_TYPE_SIGMASTAR_UNDEFINED: return "SIGMASTAR UNDEFINED";
+    case X_PLATFORM_TYPE_OPENIPC_SIGMASTAR_UNDEFINED: return "OPENIPC SIGMASTAR";
     default:
       break;
   }

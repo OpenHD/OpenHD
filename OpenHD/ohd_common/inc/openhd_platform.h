@@ -27,7 +27,7 @@ static constexpr int X_PLATFORM_TYPE_ROCKCHIP_RV1126_UNDEFINED=22; // FUTRE
 static constexpr int X_PLATFORM_TYPE_ALWINNER_X20=30;
 
 // @Buldo is working on openipc / sigmastar, 36..40
-static constexpr int X_PLATFORM_TYPE_SIGMASTAR_UNDEFINED=36;
+static constexpr int X_PLATFORM_TYPE_OPENIPC_SIGMASTAR_UNDEFINED=36;
 
 
 std::string x_platform_type_to_string(int platform_type);
