@@ -95,10 +95,10 @@ void ManagementAir::loop() {
     // frame
     auto management_frame_interval =
         std::chrono::milliseconds(500);  // default 2Hz
-    const auto elapsed_since_last_change =
+    const auto elapsed_since_last_change_ms =
         OHDUtil::steady_clock_time_epoch_ms() -
         m_last_change_timestamp_ms;
-    if (elapsed_since_last_change < 5 * 1000) {
+    if (elapsed_since_last_change_ms < 2 * 1000) {
       // If the last change is recent, send in higher interval
       management_frame_interval = std::chrono::milliseconds(20);
     }
