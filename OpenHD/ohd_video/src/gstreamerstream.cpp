@@ -68,8 +68,23 @@ void GStreamerStream::terminate_looping() {
 
 std::string GStreamerStream::create_source_encode_pipeline(
     const CameraHolder& cam_holder) {
-  const auto& setting = cam_holder.get_settings();
   const auto& camera = cam_holder.get_camera();
+  CameraSettings setting=cam_holder.get_settings();
+  if(openhd::is_resolution_auto(setting.streamed_video_format.width,
+                                 setting.streamed_video_format.height,
+                                 setting.streamed_video_format.framerate)){
+    m_console->debug("AUTO resolution active");
+    if(camera.requires_rpi_libcamera_pipeline()){
+      int bitrate_kbits=m_curr_dynamic_bitrate_kbits.load();
+      if(bitrate_kbits<=0){
+        bitrate_kbits=setting.h26x_bitrate_kbits;
+      }
+      m_console->debug("BITRATE:{}",bitrate_kbits);
+      // TODO
+      if(bitrate_kbits>5*1000){
+      }
+    }
+  }
   std::stringstream pipeline;
   if (camera.requires_rpi_mmal_pipeline()) {
     pipeline << OHDGstHelper::createRpicamsrcStream(

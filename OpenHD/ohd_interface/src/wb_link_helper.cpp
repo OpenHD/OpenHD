@@ -248,6 +248,10 @@ bool openhd::wb::validate_frequency_change(
     m_console->warn("Not sanity checking frequency");
     return true;
   }
+  if(new_frequency==2484 && current_channel_width==40){
+    m_console->warn("40Mhz not supported on 2484Mhz");
+    return false;
+  }
   if (!openhd::wb::all_cards_support_frequency(new_frequency, m_broadcast_cards,
                                                m_console)) {
     m_console->warn(

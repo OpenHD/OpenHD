@@ -36,7 +36,7 @@ class GStreamerStream : public CameraStream {
  private:
   // Creates a valid gstreamer pipeline for the given camera,
   // including the source and encoder, not including appsink
-  static std::string create_source_encode_pipeline(
+  std::string create_source_encode_pipeline(
       const CameraHolder& cam_holder);
   void setup();
   // Set gst state to PLAYING

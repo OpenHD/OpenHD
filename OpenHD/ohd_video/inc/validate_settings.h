@@ -32,7 +32,15 @@ static bool validate_video_fps(int fps) {
   return fps >= 0;
 }
 
+static bool is_resolution_auto(int video_w,int video_h,int fps){
+  if(video_w==0 && video_h==0 && fps==0){
+    return true;
+  }
+  return false;
+}
+
 static bool validate_video_width_height_fps(int video_w, int video_h, int fps) {
+  if(is_resolution_auto(video_w,video_h,fps))return true;
   return validate_video_with(video_w) && validate_video_height(video_h) &&
          validate_video_fps(fps);
 }
