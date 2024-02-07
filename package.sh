@@ -24,12 +24,9 @@ create_package_directory() {
   if [[ "${PACKAGE_ARCH}" != "x86_64" ]]; then
     cp systemd/openhd.service "${PKGDIR}/etc/systemd/system/openhd.service" || exit 1
   fi
-  # always - copy the hardware.config file, the custom unmanaged camera service and the .sh file for it
+  # always - copy the hardware.config file
   mkdir -p "${PKGDIR}/boot/openhd/"
   cp OpenHD/ohd_common/config/hardware.config "${PKGDIR}/boot/openhd/hardware.config" || exit 1
-  mkdir -p "${PKGDIR}/boot/openhd/scripts/"
-  cp scripts/custom_unmanaged_camera.sh ${PKGDIR}/boot/openhd/scripts/ || exit 1
-  cp systemd/custom_unmanaged_camera.service "${PKGDIR}/etc/systemd/system/custom_unmanaged_camera.service" || exit 1
 }
 
 build_package() {
