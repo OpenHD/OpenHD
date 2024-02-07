@@ -20,9 +20,25 @@ add_library(OHDCommonLib::OHDCommonLib ALIAS OHDCommonLib)
 # We use spdlog and json pretty much everywhere in OpenHD. Build it here, then make publicly available
 # 1) spdlog
 #find_package(spdlog REQUIRED)
-add_subdirectory(lib/spdlog)
+#set(SPDLOG_MASTER_PROJECT OFF)
+#add_subdirectory(lib/spdlog)
 # Public since we use it throughout OpenHD
-target_link_libraries(OHDCommonLib PUBLIC spdlog::spdlog)
+#target_link_libraries(OHDCommonLib PUBLIC spdlog::spdlog)
+set(SPDLOG_MASTER_PROJECT OFF)
+set(SPDLOG_PROJECT_DIRECTORY  ${CMAKE_CURRENT_SOURCE_DIR}/lib/spdlog)
+set(SPDLOG_SOURCES_DIRECTORY  ${SPDLOG_PROJECT_DIRECTORY}/src)
+set(spdlog_sources
+        #"${SPDLOG_SOURCES_DIRECTORY}/async.cpp"
+        "${SPDLOG_SOURCES_DIRECTORY}/bundled_fmtlib_format.cpp"
+        #"${SPDLOG_SOURCES_DIRECTORY}/color_sinks.cpp"
+        #"${SPDLOG_SOURCES_DIRECTORY}/file_sinks.cpp"
+        #"${SPDLOG_SOURCES_DIRECTORY}/spdlog.cpp"
+        #"${SPDLOG_SOURCES_DIRECTORY}/stdout_sinks.cpp"
+)
+#target_sources(OHDCommonLib PRIVATE ${spdlog_sources})
+target_include_directories(OHDCommonLib
+        PUBLIC
+        ${SPDLOG_PROJECT_DIRECTORY}/include)
 
 # 2) nlohmann::json
 add_subdirectory(lib/json)
