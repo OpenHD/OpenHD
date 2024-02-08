@@ -348,7 +348,9 @@ bool WBLink::request_set_air_tx_channel_width(int channel_width) {
             channel_width;
         m_settings->persist();
         m_management_air->set_channel_width(channel_width);
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        //On ASUS, we have to reduce the TX power when on 40Mhz
+        apply_txpower();
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
         // Ground will automatically apply the right channel width once first
         // (broadcast) management frame is received.
         apply_frequency_and_channel_width_from_settings();
@@ -543,6 +545,13 @@ void WBLink::apply_txpower() {
                         openhd::WIFI_TX_POWER_MILLI_WATT_ARMED_DISABLED) {
     m_console->debug("Using power mw special for armed");
     pwr_mw = settings.wb_tx_power_milli_watt_armed;
+  }
+  if(m_profile.is_air){
+    if(m_broadcast_cards.at(0).type == WiFiCardType::OPENHD_RTL_88X2AU &&
+        pwr_index >50 && settings.wb_air_tx_channel_width==40){
+      m_console->debug("Reducing TX power due to 40Mhz");
+      pwr_index=50;
+    }
   }
   openhd::wb::set_tx_power_for_all_cards(pwr_mw, pwr_index, m_broadcast_cards);
   m_curr_tx_power_mw = pwr_mw;
