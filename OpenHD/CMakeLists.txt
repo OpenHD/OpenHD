@@ -4,6 +4,7 @@ project(OpenHD)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+#SET(CMAKE_CXX_FLAGS "-pg")
 
 # Allows to explicitly disable air support - removes a few dependencies
 option(ENABLE_AIR "Enable air support" ON)
