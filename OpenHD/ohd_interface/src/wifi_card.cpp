@@ -22,7 +22,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
                   });
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WiFiCard, device_name, mac, phy80211_index,
-                                   driver_name, type, is_openhd_supported,
+                                   driver_name, type,sub_type, is_openhd_supported,
                                    supports_monitor_mode, supports_hotspot,
                                    supported_frequencies_2G,
                                    supported_frequencies_5G,
