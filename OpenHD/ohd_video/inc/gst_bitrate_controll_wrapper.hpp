@@ -37,7 +37,7 @@ get_dynamic_bitrate_control_element_in_pipeline(
     ret.property_name = "bitrate";
     ret.takes_kbit = false;
   } else if (camera.camera_type == X_CAM_TYPE_DUMMY_SW ||
-             camera.camera_type == X_CAM_TYPE_USB || settings.force_sw_encode) {
+             is_usb_camera(camera.camera_type)  || settings.force_sw_encode) {
     ret.encoder = gst_bin_get_by_name(GST_BIN(gst_pipeline), "swencoder");
     ret.property_name = "bitrate";
 #ifdef EXPERIMENTAL_USE_OPENH264_ENCODER

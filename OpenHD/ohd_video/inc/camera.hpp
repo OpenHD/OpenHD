@@ -257,4 +257,8 @@ static bool supports_rotation(int cam_type){
   return is_rpi_csi_camera(cam_type);
 }
 
+static bool is_usb_camera(int cam_type){
+  return cam_type>=10 && cam_type<19;
+}
+
 #endif  // OPENHD_CAMERA_HPP

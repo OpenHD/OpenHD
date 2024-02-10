@@ -271,10 +271,10 @@ static std::vector<std::string> x_discover_usb_cameras(
 static int get_num_usb_cameras(const int primary_camera_type,
                                const int secondary_camera_type) {
   int num_usb_cameras = 0;
-  if (primary_camera_type == X_CAM_TYPE_USB) {
+  if (is_usb_camera(primary_camera_type)) {
     num_usb_cameras++;
   }
-  if (secondary_camera_type == X_CAM_TYPE_USB) {
+  if (is_usb_camera(secondary_camera_type)) {
     num_usb_cameras++;
   }
   return num_usb_cameras;
@@ -304,9 +304,9 @@ std::vector<XCamera> OHDVideoAir::discover_cameras(
   for (int i = 0; i < num_active_cameras; i++) {
     auto cam_type = i == 0 ? global_settings.primary_camera_type
                            : global_settings.secondary_camera_type;
-    if (cam_type == X_CAM_TYPE_USB) {
+    if (is_usb_camera(cam_type)) {
       ret.push_back(
-          XCamera{X_CAM_TYPE_USB, i, usb_cam_bus_names[usb_cameras_offset]});
+          XCamera{cam_type, i, usb_cam_bus_names[usb_cameras_offset]});
       usb_cameras_offset++;
     } else {
       ret.push_back(XCamera{cam_type, i, ""});

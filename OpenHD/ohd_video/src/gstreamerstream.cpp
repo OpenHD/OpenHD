@@ -110,7 +110,7 @@ std::string GStreamerStream::create_source_encode_pipeline(
     }
   } else if (camera.requires_x20_cedar_pipeline()) {
     pipeline << OHDGstHelper::createAllwinnerStream(setting);
-  } else if (camera.camera_type == X_CAM_TYPE_USB) {
+  } else if (is_usb_camera(camera.camera_type)) {
     pipeline << OHDGstHelper::createV4l2SrcRawAndSwEncodeStream(
         camera.usb_v4l2_device_node, setting);
   } else if (camera.camera_type == X_CAM_TYPE_DUMMY_SW) {
