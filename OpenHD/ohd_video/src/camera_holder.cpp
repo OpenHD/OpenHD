@@ -182,14 +182,6 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
         "EXP_MODE", openhd::IntSetting{get_settings().exposure_mode, cb}});
   }
   if (SUPPORTS_IQ) {
-    auto c_brightness = [this](std::string, int value) {
-      return set_openhd_brightness(value);
-    };
-    ret.push_back(openhd::Setting{
-        "BRIGHTNESS", openhd::IntSetting{get_settings().openhd_brightness,
-                                         c_brightness}});
-  }
-  if (SUPPORTS_IQ) {
     auto c_iso = [this](std::string, int value) {
       return set_rpi_rpicamsrc_iso(value);
     };
@@ -204,29 +196,38 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
         "METERING_MODE",
         openhd::IntSetting{get_settings().rpi_rpicamsrc_metering_mode, cb}});
   }
-  // These are rpi libcamera specific image quality settings
-  if (SUPPORTS_IQ) {
+  const bool SUPPORTS_OPENHD_IQ=SUPPORTS_IQ;
+  if(SUPPORTS_OPENHD_IQ){
     auto cb_sharpness = [this](std::string, int value) {
       return set_openhd_sharpness(value);
     };
     ret.push_back(openhd::Setting{
-        "SHARPNESS_LC",
+        "SHARPNESS",
         openhd::IntSetting{get_settings().openhd_sharpness,
                            cb_sharpness}});
     auto cb_contrast = [this](std::string, int value) {
       return set_openhd_contrast(value);
     };
     ret.push_back(openhd::Setting{
-        "CONTRAST_LC",
+        "CONTRAST",
         openhd::IntSetting{get_settings().openhd_contrast,
                            cb_contrast}});
     auto cb_saturation = [this](std::string, int value) {
-      return set_openhd_saturation(value);
+      return set_openhd_contrast(value);
     };
     ret.push_back(openhd::Setting{
-        "SATURATION_LC",
+        "SATURATION",
         openhd::IntSetting{get_settings().openhd_saturation,
                            cb_saturation}});
+    auto c_brightness = [this](std::string, int value) {
+      return set_openhd_brightness(value);
+    };
+    ret.push_back(openhd::Setting{
+        "BRIGHTNESS", openhd::IntSetting{get_settings().openhd_brightness,
+                                         c_brightness}});
+  }
+  // These are rpi libcamera specific image quality settings
+  if (SUPPORTS_IQ) {
     auto cb_ev = [this](std::string, int value) {
       return set_rpi_libcamera_ev_value(value);
     };
