@@ -142,8 +142,8 @@ class CameraHolder :
     return true;
   }
   bool set_brightness(int value) {
-    if (!openhd::validate_rpi_brightness(value)) return false;
-    unsafe_get_settings().brightness_percentage = value;
+    if (!openhd::validate_openhd_brightness(value)) return false;
+    unsafe_get_settings().openhd_brightness = value;
     persist();
     return true;
   }

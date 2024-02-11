@@ -285,6 +285,18 @@ float OHDUtil::map_int_percentage_to_minus1_to_1(int percentage) {
   return mapped;
 }
 
+float OHDUtil::map_int_percentage_0_200_to_minus1_to_1(int percentage) {
+  if(percentage<0 || percentage>200){
+    openhd::log::get_default()->warn("Percentage not in range [0,200] {}",percentage);
+    percentage=100;
+  }
+  if(percentage==0)return -1;
+  if(percentage==100) return 0;
+  if(percentage==200)return 1;
+  float mapped=static_cast<float>(percentage)*0.04f-1.0f;
+  return mapped;
+}
+
 int8_t OHDUtil::calculate_progress_perc(int progress, int total_count) {
     if(progress>=total_count)return 100;
     if(total_count<=0)return 100;

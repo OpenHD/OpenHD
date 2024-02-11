@@ -208,8 +208,8 @@ static std::string createRpicamsrcStream(
   if (openhd::validate_rpi_exp_mode(settings.exposure_mode)) {
     ss << "exposure-mode=" << settings.exposure_mode << " ";
   }
-  if (openhd::validate_rpi_brightness(settings.brightness_percentage)) {
-    ss << "brightness=" << settings.brightness_percentage << " ";
+  if (openhd::validate_openhd_brightness(settings.openhd_brightness) && settings.openhd_brightness !=OPENHD_BRIGHTNESS_DEFAULT) {
+    ss << "brightness=" << settings.openhd_brightness << " ";
   }
   if (openhd::validate_rpi_rpicamsrc_iso(settings.rpi_rpicamsrc_iso)) {
     ss << "iso=" << settings.rpi_rpicamsrc_iso << " ";
@@ -422,10 +422,10 @@ static std::string createLibcamerasrcStream(const CameraSettings& settings) {
       settings.rpi_libcamera_ev_value != RPI_LIBCAMERA_DEFAULT_EV) {
     ss << fmt::format("ev={} ", settings.rpi_libcamera_ev_value);
   }
-  if (openhd::validate_rpi_brightness(settings.brightness_percentage) &&
-      settings.brightness_percentage != 50) {
-    float brightness_minus1_to_1 = OHDUtil::map_int_percentage_to_minus1_to_1(
-        settings.brightness_percentage);
+  if (openhd::validate_openhd_brightness(settings.openhd_brightness) &&
+      settings.openhd_brightness != OPENHD_BRIGHTNESS_DEFAULT) {
+    float brightness_minus1_to_1 = OHDUtil::map_int_percentage_0_200_to_minus1_to_1(
+        settings.openhd_brightness);
     ss << fmt::format("brightness={} ", brightness_minus1_to_1);
   }
   if (openhd::validate_rpi_libcamera_doenise_index(

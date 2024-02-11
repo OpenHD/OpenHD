@@ -33,6 +33,8 @@ static constexpr int RPI_LIBCAMERA_DEFAULT_SATURATION_AS_INT = 100;
 static constexpr int RPI_LIBCAMERA_DEFAULT_SHARPNESS_AS_INT = 100;
 static constexpr int RPI_LIBCAMERA_DEFAULT_EV = 0;
 
+static constexpr int OPENHD_BRIGHTNESS_DEFAULT=100;
+
 // Return true if the bitrate is considered sane, false otherwise
 static bool check_bitrate_sane(const int bitrateKBits) {
   if (bitrateKBits <= 100 || bitrateKBits > (1000 * 1000 * 50)) {
@@ -100,12 +102,30 @@ struct CameraSettings {
   // horizontal / vertical flip, r.n only supported on rpicamsrc
   bool horizontal_flip = false;
   bool vertical_flip = false;
+
+  // Depending on the cam type, openhd uses hw-accelerated encoding whenever
+  // possible. However, in some cases (e.g. when using a USB camera that outputs
+  // raw and h264, but the hw encoder of the cam is bad) or for experimenting
+  // (e.g. when using libcamera / rpicamsrc and RPI4) one might prefer to use SW
+  // encode. Enabling this is no guarantee a sw encoded pipeline exists for this
+  // camera.
+  bool force_sw_encode = false;
+
+  // OpenHD WB supports changing encryption on the fly per camera stream
+  bool enable_ultra_secure_encryption = false;
+
+  // -----------------------------------------------------------------------------------------------------------------------
+  // IQ (Image quality) settings begin. Values prefixed with openhd_ are values where openhd defines the range,
+  // and each camera that implements the given functionality needs to use this range (re-mapping is possible,
+  // for example openhd_brightness is re-mapped for libcamera and gst-rpicamsrc.
+  // Values prefixed with a vendor-specific string (for example lc_ ) are values that cannot be generified and therefore
+  // need to be different for each camera.
   // R.n only for rpi camera, see
   // https://gstreamer.freedesktop.org/documentation/rpicamsrc/index.html?gi-language=c
   int awb_mode = 1;       // default 1 (auto)
   int exposure_mode = 1;  // default 1 (auto)
-  // default 50, range [0,100]
-  int brightness_percentage = 50;
+  // default 100, range [0,200]
+  int openhd_brightness = OPENHD_BRIGHTNESS_DEFAULT;
   // ISO value to use (0 = Auto)
   // Integer. Range: 0 - 3200 Default: 0
   int rpi_rpicamsrc_iso = 0;
@@ -129,16 +149,6 @@ struct CameraSettings {
   int rpi_libcamera_exposure_index = 0;        // 0=normal
   int rpi_libcamera_shutter_microseconds = 0;  // 0= auto
 
-  // Depending on the cam type, openhd uses hw-accelerated encoding whenever
-  // possible. However, in some cases (e.g. when using a USB camera that outputs
-  // raw and h264, but the hw encoder of the cam is bad) or for experimenting
-  // (e.g. when using libcamera / rpicamsrc and RPI4) one might prefer to use SW
-  // encode. Enabling this is no guarantee a sw encoded pipeline exists for this
-  // camera.
-  bool force_sw_encode = false;
-
-  // OpenHD WB supports changing encryption on the fly per camera stream
-  bool enable_ultra_secure_encryption = false;
   // these are customizable settings
   // 34817 == black hot
   // actually not zoom

@@ -59,8 +59,8 @@ static bool validate_rpi_exp_mode(int value) {
   return value >= 0 && value <= 12;
 }
 
-static bool validate_rpi_brightness(int value) {
-  return value >= 0 && value <= 100;
+static bool validate_openhd_brightness(int value){
+  return value >=0 && value <=100;
 }
 
 static bool validate_rpi_rpicamsrc_iso(int value) {

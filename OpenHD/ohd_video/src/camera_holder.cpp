@@ -17,7 +17,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
     CameraSettings, enable_streaming, streamed_video_format, h26x_bitrate_kbits,
     h26x_keyframe_interval, h26x_intra_refresh_type, h26x_num_slices,
     air_recording, camera_rotation_degree, horizontal_flip, vertical_flip,
-    awb_mode, exposure_mode, brightness_percentage, rpi_rpicamsrc_iso,
+    awb_mode, exposure_mode, openhd_brightness, rpi_rpicamsrc_iso,
     rpi_rpicamsrc_metering_mode,
     // rpi libcamera specific IQ params begin
     rpi_libcamera_sharpness_as_int, rpi_libcamera_contrast_as_int,
@@ -186,7 +186,7 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
       return set_brightness(value);
     };
     ret.push_back(openhd::Setting{
-        "BRIGHTNESS", openhd::IntSetting{get_settings().brightness_percentage,
+        "BRIGHTNESS", openhd::IntSetting{get_settings().openhd_brightness,
                                          c_brightness}});
   }
   if (SUPPORTS_IQ) {
