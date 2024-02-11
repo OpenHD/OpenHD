@@ -38,12 +38,15 @@ struct Settings {
   std::string fc_uart_connection_type = DEFAULT_UART_CONNECTION;
   int fc_uart_baudrate = DEFAULT_UART_BAUDRATE;
   bool fc_uart_flow_control = false;
+  // DANG ardupilot why do we have to make this an extra param ...
+  int fc_battery_n_cells=3;
 };
 
 // 16 chars limit !
 static constexpr auto FC_UART_CONNECTION_TYPE = "FC_UART_CONN";
 static constexpr auto FC_UART_BAUD_RATE = "FC_UART_BAUD";
 static constexpr auto FC_UART_FLOW_CONTROL = "FC_UART_FLWCTL";
+static constexpr auto FC_BATT_N_CELLS = "FC_BATT_N_CELLS";
 
 class SettingsHolder : public openhd::PersistentSettings<Settings> {
  public:

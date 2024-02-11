@@ -214,6 +214,12 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
     setup_uart();
     return true;
   };
+  auto c_fc_battery_n_cells=[this](std::string, int value) {
+    if(value<0)return false;
+    m_air_settings->unsafe_get_settings().fc_battery_n_cells=value;
+    m_air_settings->persist(false);
+    return true;
+  };
   ret.push_back(openhd::Setting{
       air::FC_UART_CONNECTION_TYPE,
       openhd::StringSetting{
@@ -229,7 +235,11 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
       openhd::IntSetting{
           static_cast<int>(m_air_settings->get_settings().fc_uart_flow_control),
           c_fc_uart_flow_control}});
-
+  ret.push_back(openhd::Setting{
+      air::FC_BATT_N_CELLS,
+      openhd::IntSetting{
+          static_cast<int>(m_air_settings->get_settings().fc_battery_n_cells),
+          c_fc_battery_n_cells}});
   // and this allows an advanced user to change its air unit to a ground unit
   // only expose this setting if OpenHD uses the file workaround to figure out
   // air or ground.
