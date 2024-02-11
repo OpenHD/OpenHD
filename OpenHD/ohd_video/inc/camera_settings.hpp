@@ -27,13 +27,12 @@ static constexpr RateControlMode DEFAULT_RC_MODE = RateControlMode::RC_CBR;
 // should be stopped. This feature is r.n already implemented for all cameras
 // (in gstreamerstream)
 static constexpr auto MINIMUM_AMOUNT_FREE_SPACE_FOR_AIR_RECORDING_MB = 300;
-
-static constexpr int RPI_LIBCAMERA_DEFAULT_CONTRAST_AS_INT = 100;
-static constexpr int RPI_LIBCAMERA_DEFAULT_SATURATION_AS_INT = 100;
-static constexpr int RPI_LIBCAMERA_DEFAULT_SHARPNESS_AS_INT = 100;
 static constexpr int RPI_LIBCAMERA_DEFAULT_EV = 0;
 
 static constexpr int OPENHD_BRIGHTNESS_DEFAULT=100;
+static constexpr int OPENHD_SATURATION_DEFAULT=100;
+static constexpr int OPENHD_CONTRAST_DEFAULT=100;
+static constexpr int OPENHD_SHARPNESS_DEFAULT=100;
 
 // Return true if the bitrate is considered sane, false otherwise
 static bool check_bitrate_sane(const int bitrateKBits) {
@@ -126,6 +125,9 @@ struct CameraSettings {
   int exposure_mode = 1;  // default 1 (auto)
   // default 100, range [0,200]
   int openhd_brightness = OPENHD_BRIGHTNESS_DEFAULT;
+  int openhd_saturation = OPENHD_SATURATION_DEFAULT;
+  int openhd_contrast = OPENHD_CONTRAST_DEFAULT;
+  int openhd_sharpness= OPENHD_SHARPNESS_DEFAULT;
   // ISO value to use (0 = Auto)
   // Integer. Range: 0 - 3200 Default: 0
   int rpi_rpicamsrc_iso = 0;
@@ -133,15 +135,6 @@ struct CameraSettings {
   // Default 0 (average)
   int rpi_rpicamsrc_metering_mode = 0;
   // libcamera params
-  // The following 3 params are float in libcamera - but floats suck, int or
-  // percentage is much more verbose to the user and easier to map as
-  // parameters. Which is why we have a different mapping on those parameters.
-  int rpi_libcamera_sharpness_as_int =
-      RPI_LIBCAMERA_DEFAULT_SHARPNESS_AS_INT;  // NOTE: float in libcamera
-  int rpi_libcamera_contrast_as_int =
-      RPI_LIBCAMERA_DEFAULT_CONTRAST_AS_INT;  // NOTE: float in libcamera
-  int rpi_libcamera_saturation_as_int =
-      RPI_LIBCAMERA_DEFAULT_SATURATION_AS_INT;  // NOTE: float in libcamera
   int rpi_libcamera_ev_value = RPI_LIBCAMERA_DEFAULT_EV;
   int rpi_libcamera_denoise_index = 0;
   int rpi_libcamera_awb_index = 0;             // 0=Auto

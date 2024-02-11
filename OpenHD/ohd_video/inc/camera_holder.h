@@ -141,10 +141,28 @@ class CameraHolder :
     persist();
     return true;
   }
-  bool set_brightness(int value) {
+  bool set_openhd_brightness(int value) {
     if (!openhd::validate_openhd_brightness(value)) return false;
     unsafe_get_settings().openhd_brightness = value;
     persist();
+    return true;
+  }
+  bool set_openhd_sharpness(int value) {
+    if (!openhd::validate_openhd_sharpness(value)) return false;
+    unsafe_get_settings().openhd_sharpness = value;
+    persist(true);
+    return true;
+  }
+  bool set_openhd_contrast(int value) {
+    if (!openhd::validate_openhd_contrast(value)) return false;
+    unsafe_get_settings().openhd_contrast = value;
+    persist(true);
+    return true;
+  }
+  bool set_openhd_saturation(int value) {
+    if (!openhd::validate_openhd_saturation(value)) return false;
+    unsafe_get_settings().openhd_saturation = value;
+    persist(true);
     return true;
   }
   bool set_rpi_rpicamsrc_iso(int value) {
@@ -157,24 +175,6 @@ class CameraHolder :
     if (!openhd::validate_rpi_rpicamsrc_metering_mode(value)) return false;
     unsafe_get_settings().rpi_rpicamsrc_metering_mode = value;
     persist();
-    return true;
-  }
-  bool set_rpi_libcamera_sharpness_as_int(int value) {
-    if (!openhd::validate_rpi_libcamera_sharpness_as_int(value)) return false;
-    unsafe_get_settings().rpi_libcamera_sharpness_as_int = value;
-    persist(true);
-    return true;
-  }
-  bool set_rpi_libcamera_contrast_as_int(int value) {
-    if (!openhd::validate_rpi_libcamera_contrast_as_int(value)) return false;
-    unsafe_get_settings().rpi_libcamera_contrast_as_int = value;
-    persist(true);
-    return true;
-  }
-  bool set_rpi_libcamera_saturation_as_int(int value) {
-    if (!openhd::validate_rpi_libcamera_saturation_as_int(value)) return false;
-    unsafe_get_settings().rpi_libcamera_saturation_as_int = value;
-    persist(true);
     return true;
   }
   bool set_rpi_libcamera_ev_value(int value) {

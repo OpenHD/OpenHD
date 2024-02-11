@@ -393,40 +393,31 @@ static std::string createLibcamerasrcStream(const CameraSettings& settings) {
   if (settings.vertical_flip) {
     ss << "vflip=1 ";
   }
-  if (openhd::validate_rpi_libcamera_sharpness_as_int(
-          settings.rpi_libcamera_sharpness_as_int) &&
-      settings.rpi_libcamera_sharpness_as_int !=
-          RPI_LIBCAMERA_DEFAULT_SHARPNESS_AS_INT) {
+  if(openhd::validate_openhd_sharpness(settings.openhd_sharpness) && settings.openhd_sharpness != OPENHD_SHARPNESS_DEFAULT){
     ss << fmt::format("sharpness={} ",
                       openhd::remap_libcamera_openhd_int_to_libcamera_float(
-                          settings.rpi_libcamera_sharpness_as_int));
+                          settings.openhd_sharpness));
   }
-  if (openhd::validate_rpi_libcamera_contrast_as_int(
-          settings.rpi_libcamera_contrast_as_int) &&
-      settings.rpi_libcamera_contrast_as_int !=
-          RPI_LIBCAMERA_DEFAULT_CONTRAST_AS_INT) {
+  if(openhd::validate_openhd_contrast(settings.openhd_contrast) && settings.openhd_contrast != OPENHD_CONTRAST_DEFAULT){
     ss << fmt::format("contrast={} ",
                       openhd::remap_libcamera_openhd_int_to_libcamera_float(
-                          settings.rpi_libcamera_contrast_as_int));
+                          settings.openhd_contrast));
   }
-  if (openhd::validate_rpi_libcamera_saturation_as_int(
-          settings.rpi_libcamera_saturation_as_int) &&
-      settings.rpi_libcamera_saturation_as_int !=
-          RPI_LIBCAMERA_DEFAULT_SATURATION_AS_INT) {
+  if(openhd::validate_openhd_saturation(settings.openhd_saturation) && settings.openhd_saturation != OPENHD_SATURATION_DEFAULT){
     ss << fmt::format("saturation={} ",
                       openhd::remap_libcamera_openhd_int_to_libcamera_float(
-                          settings.rpi_libcamera_saturation_as_int));
-  }
-  if (openhd::validate_rpi_libcamera_ev_value(
-          settings.rpi_libcamera_ev_value) &&
-      settings.rpi_libcamera_ev_value != RPI_LIBCAMERA_DEFAULT_EV) {
-    ss << fmt::format("ev={} ", settings.rpi_libcamera_ev_value);
+                          settings.openhd_saturation));
   }
   if (openhd::validate_openhd_brightness(settings.openhd_brightness) &&
       settings.openhd_brightness != OPENHD_BRIGHTNESS_DEFAULT) {
     float brightness_minus1_to_1 = OHDUtil::map_int_percentage_0_200_to_minus1_to_1(
         settings.openhd_brightness);
     ss << fmt::format("brightness={} ", brightness_minus1_to_1);
+  }
+  if (openhd::validate_rpi_libcamera_ev_value(
+          settings.rpi_libcamera_ev_value) &&
+      settings.rpi_libcamera_ev_value != RPI_LIBCAMERA_DEFAULT_EV) {
+    ss << fmt::format("ev={} ", settings.rpi_libcamera_ev_value);
   }
   if (openhd::validate_rpi_libcamera_doenise_index(
           settings.rpi_libcamera_denoise_index) &&

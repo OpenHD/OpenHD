@@ -17,11 +17,11 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
     CameraSettings, enable_streaming, streamed_video_format, h26x_bitrate_kbits,
     h26x_keyframe_interval, h26x_intra_refresh_type, h26x_num_slices,
     air_recording, camera_rotation_degree, horizontal_flip, vertical_flip,
-    awb_mode, exposure_mode, openhd_brightness, rpi_rpicamsrc_iso,
+    awb_mode, exposure_mode, rpi_rpicamsrc_iso,
+    openhd_brightness,openhd_sharpness,openhd_saturation,openhd_contrast,
     rpi_rpicamsrc_metering_mode,
     // rpi libcamera specific IQ params begin
-    rpi_libcamera_sharpness_as_int, rpi_libcamera_contrast_as_int,
-    rpi_libcamera_saturation_as_int, rpi_libcamera_ev_value,
+    rpi_libcamera_ev_value,
     rpi_libcamera_denoise_index, rpi_libcamera_awb_index,
     rpi_libcamera_metering_index, rpi_libcamera_exposure_index,
     rpi_libcamera_shutter_microseconds,
@@ -183,7 +183,7 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
   }
   if (SUPPORTS_IQ) {
     auto c_brightness = [this](std::string, int value) {
-      return set_brightness(value);
+      return set_openhd_brightness(value);
     };
     ret.push_back(openhd::Setting{
         "BRIGHTNESS", openhd::IntSetting{get_settings().openhd_brightness,
@@ -207,25 +207,25 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
   // These are rpi libcamera specific image quality settings
   if (SUPPORTS_IQ) {
     auto cb_sharpness = [this](std::string, int value) {
-      return set_rpi_libcamera_sharpness_as_int(value);
+      return set_openhd_sharpness(value);
     };
     ret.push_back(openhd::Setting{
         "SHARPNESS_LC",
-        openhd::IntSetting{get_settings().rpi_libcamera_sharpness_as_int,
+        openhd::IntSetting{get_settings().openhd_sharpness,
                            cb_sharpness}});
     auto cb_contrast = [this](std::string, int value) {
-      return set_rpi_libcamera_contrast_as_int(value);
+      return set_openhd_contrast(value);
     };
     ret.push_back(openhd::Setting{
         "CONTRAST_LC",
-        openhd::IntSetting{get_settings().rpi_libcamera_contrast_as_int,
+        openhd::IntSetting{get_settings().openhd_contrast,
                            cb_contrast}});
     auto cb_saturation = [this](std::string, int value) {
-      return set_rpi_libcamera_saturation_as_int(value);
+      return set_openhd_saturation(value);
     };
     ret.push_back(openhd::Setting{
         "SATURATION_LC",
-        openhd::IntSetting{get_settings().rpi_libcamera_saturation_as_int,
+        openhd::IntSetting{get_settings().openhd_saturation,
                            cb_saturation}});
     auto cb_ev = [this](std::string, int value) {
       return set_rpi_libcamera_ev_value(value);
