@@ -206,7 +206,7 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
         openhd::IntSetting{get_settings().openhd_sharpness,
                            cb_sharpness}});
     auto cb_contrast = [this](std::string, int value) {
-      return set_openhd_contrast(value);
+      return set_openhd_sharpness(value);
     };
     ret.push_back(openhd::Setting{
         "CONTRAST",
