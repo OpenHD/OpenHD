@@ -39,7 +39,8 @@ struct Settings {
   int fc_uart_baudrate = DEFAULT_UART_BAUDRATE;
   bool fc_uart_flow_control = false;
   // DANG ardupilot why do we have to make this an extra param ...
-  int fc_battery_n_cells=3;
+  // 0 means not configured (do not use)
+  int fc_battery_n_cells=0;
 };
 
 // 16 chars limit !
