@@ -9,6 +9,10 @@
 #include <string>
 #include <vector>
 
+/**
+ * NOTE: This file is copied into QOpenHD to populate the UI.
+ */
+
 // For development, always 'works' since fully emulated in SW.
 static constexpr int X_CAM_TYPE_DUMMY_SW = 0;  // Dummy sw picture
 // Manually feed camera data (encoded,rtp) to openhd. Bitrate control and more
