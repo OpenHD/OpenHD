@@ -202,6 +202,7 @@ struct XCamera {
     } else if (camera_type == X_CAM_TYPE_USB_INFIRAY) {
       return {ResolutionFramerate{384,292,25}};
     } else if(camera_type==X_CAM_TYPE_USB_GENERIC){
+      // Return what's most likely going to work
       return {ResolutionFramerate{640, 480, 30}};
     } else if (requires_rpi_libcamera_pipeline()) {
       std::vector<ResolutionFramerate> ret;
@@ -211,13 +212,19 @@ struct XCamera {
       return ret;
     } else if (camera_type == X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI) {
       std::vector<ResolutionFramerate> ret;
-      ret.push_back(ResolutionFramerate{1920, 1080, 30});
+      ret.push_back(ResolutionFramerate{1920, 1080, 25});
       ret.push_back(ResolutionFramerate{1280, 720, 30});
       ret.push_back(ResolutionFramerate{1280, 720, 60});
       return ret;
+    }else if(camera_type==X_CAM_TYPE_DUMMY_SW){
+      std::vector<ResolutionFramerate> ret;
+      ret.push_back(ResolutionFramerate{640,480,30});
+      ret.push_back(ResolutionFramerate{1280,720,30});
+      ret.push_back(ResolutionFramerate{1280,720,60});
     }
     // Not mapped yet
-    return {ResolutionFramerate{1920, 1080, 30}};
+    // return something that might work or might not work
+    return {ResolutionFramerate{640, 480, 30}};
   }
   [[nodiscard]] ResolutionFramerate get_default_resolution_fps() const {
     auto supported_resolutions=get_supported_resolutions();
