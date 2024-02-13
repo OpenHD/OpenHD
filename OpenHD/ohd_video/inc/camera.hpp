@@ -176,25 +176,12 @@ struct XCamera {
     int width_px;
     int height_px;
     int fps;
-  };
-  [[nodiscard]] ResolutionFramerate get_default_resolution_fps() const {
-    if (requires_rpi_veye_pipeline()) {
-      // Veye camera(s) only do 1080p30
-      return {1920, 1080, 30};
-    } else if (requires_x20_cedar_pipeline()) {
-      return {1280, 720, 60};
-    } else if (requires_rpi_libcamera_pipeline()) {
-      return {1920, 1080, 30};
-    } else if (camera_type == X_CAM_TYPE_USB_GENERIC) {
-      // We do not know
-      return {640, 480, 30};
-    } else if(camera_type==X_CAM_TYPE_USB_INFIRAY){
-      return {640, 480, 30};
-    } else if (camera_type == X_CAM_TYPE_DUMMY_SW) {
-      return {640, 480, 30};
+    std::string as_string()const{
+      std::stringstream ss;
+      ss<<width_px<<"x"<<height_px<<"@"<<fps;
+      return ss.str();
     }
-    return {1920, 1080, 30};
-  }
+  };
   // Returns a list of known supported resolution(s).
   // The first element is what openhd uses as default.
   // Must always return at least one resolution
@@ -209,7 +196,7 @@ struct XCamera {
       // also easy, 720p60 only (for now)
       return {ResolutionFramerate{1280, 720, 60}};
     } else if (camera_type == X_CAM_TYPE_USB_INFIRAY) {
-      return {ResolutionFramerate{640, 480, 30}};
+      return {ResolutionFramerate{384,292,25}};
     } else if(camera_type==X_CAM_TYPE_USB_GENERIC){
       return {ResolutionFramerate{640, 480, 30}};
     } else if (requires_rpi_libcamera_pipeline()) {
@@ -227,6 +214,10 @@ struct XCamera {
     }
     // Not mapped yet
     return {ResolutionFramerate{1920, 1080, 30}};
+  }
+  [[nodiscard]] ResolutionFramerate get_default_resolution_fps() const {
+    auto supported_resolutions=get_supported_resolutions();
+    return supported_resolutions.at(0);
   }
   bool is_camera_type_usb_infiray() const {
     return camera_type == X_CAM_TYPE_USB_INFIRAY;
