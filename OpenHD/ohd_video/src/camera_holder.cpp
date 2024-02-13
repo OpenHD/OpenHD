@@ -81,7 +81,9 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
         openhd::IntSetting{get_settings().enable_ultra_secure_encryption,
                            cb_encryption}});
   }
-  if (true) {
+  const bool supports_rotation_vflip_hflip=m_camera.requires_rpi_libcamera_pipeline() ||
+                                             m_camera.requires_rpi_mmal_pipeline();
+  if (supports_rotation_vflip_hflip) {
     auto c_rotation = [this](std::string, int value) {
       return set_camera_rotation(value);
     };
@@ -89,7 +91,7 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
         "ROTATION_DEG",
         openhd::IntSetting{get_settings().camera_rotation_degree, c_rotation}});
   }
-  if (true) {
+  if (supports_rotation_vflip_hflip) {
     auto c_horizontal_flip = [this](std::string, int value) {
       return set_horizontal_flip(value);
     };
@@ -168,35 +170,8 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
         "N_SLICES",
         openhd::IntSetting{get_settings().h26x_num_slices, c_h26x_num_slices}});
   }
-  const bool SUPPORTS_IQ=m_camera.requires_rpi_libcamera_pipeline();
-  if (SUPPORTS_IQ) {
-    auto cb = [this](std::string, int value) { return set_camera_awb(value); };
-    ret.push_back(openhd::Setting{
-        "AWB_MODE", openhd::IntSetting{get_settings().awb_mode, cb}});
-  }
-  if (SUPPORTS_IQ) {
-    auto cb = [this](std::string, int value) {
-      return set_camera_exposure(value);
-    };
-    ret.push_back(openhd::Setting{
-        "EXP_MODE", openhd::IntSetting{get_settings().exposure_mode, cb}});
-  }
-  if (SUPPORTS_IQ) {
-    auto c_iso = [this](std::string, int value) {
-      return set_rpi_rpicamsrc_iso(value);
-    };
-    ret.push_back(openhd::Setting{
-        "ISO", openhd::IntSetting{get_settings().rpi_rpicamsrc_iso, c_iso}});
-  }
-  if (SUPPORTS_IQ) {
-    auto cb = [this](std::string, int value) {
-      return set_rpi_rpicamsrc_metering_mode(value);
-    };
-    ret.push_back(openhd::Setting{
-        "METERING_MODE",
-        openhd::IntSetting{get_settings().rpi_rpicamsrc_metering_mode, cb}});
-  }
-  const bool SUPPORTS_OPENHD_IQ=SUPPORTS_IQ;
+  // right now only supported by libcamera
+  const bool SUPPORTS_OPENHD_IQ=m_camera.requires_rpi_libcamera_pipeline();
   if(SUPPORTS_OPENHD_IQ){
     auto cb_sharpness = [this](std::string, int value) {
       return set_openhd_sharpness(value);
@@ -225,6 +200,34 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
     ret.push_back(openhd::Setting{
         "BRIGHTNESS", openhd::IntSetting{get_settings().openhd_brightness,
                                          c_brightness}});
+  }
+  const bool SUPPORTS_IQ=m_camera.requires_rpi_libcamera_pipeline();
+  if (SUPPORTS_IQ) {
+    auto cb = [this](std::string, int value) { return set_camera_awb(value); };
+    ret.push_back(openhd::Setting{
+        "AWB_MODE", openhd::IntSetting{get_settings().awb_mode, cb}});
+  }
+  if (SUPPORTS_IQ) {
+    auto cb = [this](std::string, int value) {
+      return set_camera_exposure(value);
+    };
+    ret.push_back(openhd::Setting{
+        "EXP_MODE", openhd::IntSetting{get_settings().exposure_mode, cb}});
+  }
+  if (SUPPORTS_IQ) {
+    auto c_iso = [this](std::string, int value) {
+      return set_rpi_rpicamsrc_iso(value);
+    };
+    ret.push_back(openhd::Setting{
+        "ISO", openhd::IntSetting{get_settings().rpi_rpicamsrc_iso, c_iso}});
+  }
+  if (SUPPORTS_IQ) {
+    auto cb = [this](std::string, int value) {
+      return set_rpi_rpicamsrc_metering_mode(value);
+    };
+    ret.push_back(openhd::Setting{
+        "METERING_MODE",
+        openhd::IntSetting{get_settings().rpi_rpicamsrc_metering_mode, cb}});
   }
   // These are rpi libcamera specific image quality settings
   if (SUPPORTS_IQ) {
