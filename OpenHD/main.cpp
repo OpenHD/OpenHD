@@ -171,7 +171,7 @@ int main(int argc, char *argv[]) {
       ss<<"reset_all_settings:" << OHDUtil::yes_or_no(options.reset_all_settings) <<"\n";
       ss<<"run_time_seconds:"<<options.run_time_seconds<<"\n";
       ss<<"hardware-config-file:["<<options.hardware_config_file.value_or("DEFAULT")<<"]\n";
-      ss<<"Version number:"<<openhd::VERSION_NUMBER_STRING<<"\n";
+      ss<<"Version number:"<<openhd::get_ohd_version_as_string()<<"\n";
       ss<<"Git info:Branch:"<<git_Branch()<<" SHA:"<<git_CommitSHA1()<<" Dirty:"<<OHDUtil::yes_or_no(git_AnyUncommittedChanges())<<"\n";
       std::cout<<ss.str()<<std::flush;
       openhd::debug_config();

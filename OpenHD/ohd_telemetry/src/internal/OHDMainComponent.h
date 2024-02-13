@@ -83,8 +83,7 @@ class OHDMainComponent : public MavlinkComponent {
   [[nodiscard]] std::optional<MavlinkMessage> handle_timesync_message(
       const MavlinkMessage& message);
   [[nodiscard]] std::vector<MavlinkMessage> generate_mav_wb_stats();
-  [[nodiscard]] MavlinkMessage generate_ohd_version(
-      const std::string& commit_hash = "unknown") const;
+  [[nodiscard]] MavlinkMessage generate_ohd_version() const;
   // pack all the buffered log messages
   std::vector<MavlinkMessage> generateLogMessages();
   std::unique_ptr<OnboardComputerStatusProvider>
