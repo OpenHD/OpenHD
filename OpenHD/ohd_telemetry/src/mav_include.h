@@ -62,10 +62,9 @@ static std::vector<AggregatedMavlinkPacket> aggregate_pack_messages(
     const std::vector<MavlinkMessage>& messages, uint32_t max_mtu = 1024) {
   std::vector<AggregatedMavlinkPacket> ret;
   auto buff = std::make_shared<std::vector<uint8_t>>();
-  ;
+  buff->reserve(max_mtu);
   int recommended_n_retransmissions = 1;
   int n_aggregated_mavlink_packets = 0;
-  buff->reserve(max_mtu);
   for (const auto& msg : messages) {
     auto data = msg.pack();
     if (buff->size() + data.size() <= max_mtu) {
