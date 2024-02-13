@@ -126,13 +126,5 @@ std::string video_format_from_int_values(int width, int height, int framerate);
 std::optional<TmpVideoFormat> parse_video_format(
     const std::string& videoFormat);
 
-// remap the openhd libcamera image quality values where we use int
-// (but libcamera uses float)
-// They are sharpness,contrast,saturation
-static float remap_libcamera_openhd_int_to_libcamera_float(int value) {
-  auto tmp = static_cast<float>(value);
-  return tmp / 100.0f;
-}
-
 }  // namespace openhd
 #endif  // OPENHD_OPENHD_OHD_VIDEO_INC_V_VALIDATE_SETTINGS_H_

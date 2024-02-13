@@ -14,6 +14,7 @@
 #include "openhd_bitrate_conversions.hpp"
 #include "openhd_platform.h"
 #include "openhd_spdlog.h"
+#include "libcamera_iq_helper.h"
 
 // #define EXPERIMENTAL_USE_OPENH264_ENCODER
 
@@ -374,6 +375,7 @@ static std::string create_rpi_v4l2_h264_encoder(
 }
 
 static std::string createLibcamerasrcStream(const CameraSettings& settings) {
+  using namespace openhd;
   assert(settings.streamed_video_format.isValid());
   std::stringstream ss;
   // ss << fmt::format("libcamerasrc camera-name={} ",camera_name.value);
@@ -381,8 +383,7 @@ static std::string createLibcamerasrcStream(const CameraSettings& settings) {
                           // one libcamera at a time. rpi cannot do more than
                           // that anyway.
   // NOTE: those options require openhd/arducam lbcamera !!
-  // We make sure not to write them out explicitly when default(s) are still in
-  // use openhd-libcamera specific options begin
+  // We make sure not to write them out explicitly when default(s) are still in use
   if (openhd::validate_camera_rotation(settings.camera_rotation_degree) &&
       settings.camera_rotation_degree != 0) {
     ss << "rotation=" << settings.camera_rotation_degree << " ";
@@ -393,26 +394,21 @@ static std::string createLibcamerasrcStream(const CameraSettings& settings) {
   if (settings.vertical_flip) {
     ss << "vflip=1 ";
   }
-  if(openhd::validate_openhd_sharpness(settings.openhd_sharpness) && settings.openhd_sharpness != OPENHD_SHARPNESS_DEFAULT){
-    ss << fmt::format("sharpness={} ",
-                      openhd::remap_libcamera_openhd_int_to_libcamera_float(
-                          settings.openhd_sharpness));
+  const auto brightness=libcamera::get_brightness(settings);
+  if(brightness.has_value()){
+    ss << fmt::format("brightness={} ", brightness.value());
   }
-  if(openhd::validate_openhd_contrast(settings.openhd_contrast) && settings.openhd_contrast != OPENHD_CONTRAST_DEFAULT){
-    ss << fmt::format("contrast={} ",
-                      openhd::remap_libcamera_openhd_int_to_libcamera_float(
-                          settings.openhd_contrast));
+  const auto sharpness=libcamera::get_sharpness(settings);
+  if(sharpness.has_value()){
+    ss << fmt::format("sharpness={} ",sharpness.value());
   }
-  if(openhd::validate_openhd_saturation(settings.openhd_saturation) && settings.openhd_saturation != OPENHD_SATURATION_DEFAULT){
-    ss << fmt::format("saturation={} ",
-                      openhd::remap_libcamera_openhd_int_to_libcamera_float(
-                          settings.openhd_saturation));
+  const auto saturation=libcamera::get_saturation(settings);
+  if(saturation.has_value()){
+    ss << fmt::format("saturation={} ",saturation.value());
   }
-  if (openhd::validate_openhd_brightness(settings.openhd_brightness) &&
-      settings.openhd_brightness != OPENHD_BRIGHTNESS_DEFAULT) {
-    float brightness_minus1_to_1 = OHDUtil::map_int_percentage_0_200_to_minus1_to_1(
-        settings.openhd_brightness);
-    ss << fmt::format("brightness={} ", brightness_minus1_to_1);
+  const auto contrast=libcamera::get_contrast(settings);
+  if(contrast.has_value()){
+    ss << fmt::format("contrast={} ",contrast.value());
   }
   if (openhd::validate_rpi_libcamera_ev_value(
           settings.rpi_libcamera_ev_value) &&
