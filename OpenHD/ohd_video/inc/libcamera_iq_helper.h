@@ -52,10 +52,18 @@ static std::optional<float> get_saturation(const CameraSettings& settings){
 // higher than anyone could reasonably want. Negative values are not allowed. Note also that sharpening is
 // not applied to raw streams.
 static std::optional<float> get_sharpness(const CameraSettings& settings){
-  if(!openhd::validate_openhd_saturation(settings.openhd_sharpness))return std::nullopt;
-  if(settings.openhd_sharpness==OPENHD_SATURATION_DEFAULT)return std::nullopt;
+  if(!openhd::validate_openhd_sharpness(settings.openhd_sharpness))return std::nullopt;
+  if(settings.openhd_sharpness==OPENHD_SHARPNESS_DEFAULT)return std::nullopt;
   return remap_libcamera_openhd_int_to_libcamera_float(
       settings.openhd_sharpness);
+}
+
+static std::optional<int> get_rotation_degree(const CameraSettings& settings){
+  // Identity 0° is default
+  if(settings.camera_rotation_degree==0)return std::nullopt;
+  if(settings.camera_rotation_degree==180)return 180;
+  // anything other than 0 and 180° are not supported
+  return std::nullopt;
 }
 }
 

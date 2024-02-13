@@ -384,9 +384,9 @@ static std::string createLibcamerasrcStream(const CameraSettings& settings) {
                           // that anyway.
   // NOTE: those options require openhd/arducam lbcamera !!
   // We make sure not to write them out explicitly when default(s) are still in use
-  if (openhd::validate_camera_rotation(settings.camera_rotation_degree) &&
-      settings.camera_rotation_degree != 0) {
-    ss << "rotation=" << settings.camera_rotation_degree << " ";
+  const auto rotation_degree=libcamera::get_rotation_degree(settings);
+  if(rotation_degree.has_value()){
+    ss << "rotation=" << rotation_degree.value() << " ";
   }
   if (settings.horizontal_flip) {
     ss << "hflip=1 ";
