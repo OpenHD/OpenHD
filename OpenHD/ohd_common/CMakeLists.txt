@@ -41,7 +41,7 @@ set(spdlog_sources
 #)
 #target_precompile_headers(OHDCommonLib PRIVATE ${SPDLOG_PROJECT_DIRECTORY}/include)
 #target_precompile_headers(OHDCommonLib PRIVATE ${X_SPDLOG_HEADERS})
-target_precompile_headers(OHDCommonLib PRIVATE ${SPDLOG_PROJECT_DIRECTORY}/include/spdlog/spdlog.h)
+target_precompile_headers(OHDCommonLib PUBLIC ${SPDLOG_PROJECT_DIRECTORY}/include/spdlog/spdlog.h)
 target_include_directories(OHDCommonLib
         PUBLIC
         ${SPDLOG_PROJECT_DIRECTORY}/include)
