@@ -28,23 +28,12 @@ static void logOnboardComputerStatus(
   openhd::log::get_default()->debug(ss.str());
 }
 
-static void logLogMessage(const mavlink_message_t &msg) {
-  assert(msg.msgid == MAVLINK_MSG_ID_OPENHD_LOG_MESSAGE);
-  mavlink_openhd_log_message_t decoded;
-  mavlink_msg_openhd_log_message_decode(&msg, &decoded);
-  std::stringstream ss;
-  openhd::log::get_default()->debug("Log: {} [{}]", decoded.severity,
-                                    decoded.message);
-}
-
 static void logOpenHDMessages(const std::vector<MavlinkMessage> &msges) {
   for (const auto &msg : msges) {
     if (msg.m.msgid == MAVLINK_MSG_ID_ONBOARD_COMPUTER_STATUS) {
       mavlink_onboard_computer_status_t decoded;
       mavlink_msg_onboard_computer_status_decode(&msg.m, &decoded);
       logOnboardComputerStatus(decoded);
-    } else if (msg.m.msgid == MAVLINK_MSG_ID_OPENHD_LOG_MESSAGE) {
-      logLogMessage(msg.m);
     } else {
       openhd::log::get_default()->debug("unknown ohd msg with msgid:{}",
                                         msg.m.msgid);
