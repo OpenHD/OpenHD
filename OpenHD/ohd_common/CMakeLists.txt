@@ -36,6 +36,12 @@ set(spdlog_sources
         #"${SPDLOG_SOURCES_DIRECTORY}/stdout_sinks.cpp"
 )
 #target_sources(OHDCommonLib PRIVATE ${spdlog_sources})
+#file(GLOB_RECURSE X_SPDLOG_HEADERS
+#        ${SPDLOG_PROJECT_DIRECTORY}/include/*.h
+#)
+#target_precompile_headers(OHDCommonLib PRIVATE ${SPDLOG_PROJECT_DIRECTORY}/include)
+#target_precompile_headers(OHDCommonLib PRIVATE ${X_SPDLOG_HEADERS})
+target_precompile_headers(OHDCommonLib PRIVATE ${SPDLOG_PROJECT_DIRECTORY}/include/spdlog/spdlog.h)
 target_include_directories(OHDCommonLib
         PUBLIC
         ${SPDLOG_PROJECT_DIRECTORY}/include)
