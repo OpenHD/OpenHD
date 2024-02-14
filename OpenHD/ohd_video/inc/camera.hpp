@@ -5,9 +5,11 @@
 #ifndef OPENHD_CAMERA_HPP
 #define OPENHD_CAMERA_HPP
 
+#include <regex>
 #include <sstream>
 #include <string>
 #include <vector>
+#include <optional>
 
 /**
  * NOTE: This file is copied into QOpenHD to populate the UI.
@@ -150,6 +152,17 @@ static std::string x_cam_type_to_string(int camera_type) {
   return ss.str();
 };
 
+struct ResolutionFramerate {
+  int width_px;
+  int height_px;
+  int fps;
+  std::string as_string()const{
+    std::stringstream ss;
+    ss<<width_px<<"x"<<height_px<<"@"<<fps;
+    return ss.str();
+  }
+};
+
 struct XCamera {
   int camera_type = X_CAM_TYPE_DUMMY_SW;
   // 0 for primary camera, 1 for secondary camera
@@ -176,16 +189,7 @@ struct XCamera {
   std::string cam_type_as_verbose_string() const {
     return x_cam_type_to_string(camera_type);
   }
-  struct ResolutionFramerate {
-    int width_px;
-    int height_px;
-    int fps;
-    std::string as_string()const{
-      std::stringstream ss;
-      ss<<width_px<<"x"<<height_px<<"@"<<fps;
-      return ss.str();
-    }
-  };
+
   // Returns a list of known supported resolution(s).
   // The first element is what openhd uses as default.
   // Must always return at least one resolution
@@ -270,5 +274,52 @@ static bool supports_rotation(int cam_type){
 static bool is_usb_camera(int cam_type){
   return cam_type>=10 && cam_type<19;
 }
+
+// Takes a string in the from {width}x{height}@{framerate}
+// e.g. 1280x720@30
+std::optional<ResolutionFramerate> parse_video_format(const std::string& videoFormat){
+  if (videoFormat.size() <= 5) {
+    return std::nullopt;
+  }
+  ResolutionFramerate tmp_video_format{0, 0, 0};
+  const std::regex reg{R"((\d*)x(\d*)\@(\d*))"};
+  std::smatch result;
+  if (std::regex_search(videoFormat, result, reg)) {
+    if (result.size() == 4) {
+      // openhd::log::get_default()->debug("result[0]=["+result[0].str()+"]");
+      tmp_video_format.width_px = atoi(result[1].str().c_str());
+      tmp_video_format.height_px = atoi(result[2].str().c_str());
+      tmp_video_format.fps = atoi(result[3].str().c_str());
+      return tmp_video_format;
+    }
+  }
+  return std::nullopt;
+}
+
+//
+// Used in QOpenHD UI
+//
+static std::string get_verbose_string_of_resolution(const ResolutionFramerate& resolution_framerate){
+  if(resolution_framerate.width_px==0 && resolution_framerate.height_px==0 && resolution_framerate.fps==0){
+    return "AUTO";
+  }
+  std::stringstream ss;
+  if(resolution_framerate.width_px==640 && resolution_framerate.height_px==480){
+    ss<<"VGA 4:3";
+  }else if(resolution_framerate.width_px==896 && resolution_framerate.height_px== 504){
+    ss<<"SD 16:9";
+  }else if(resolution_framerate.width_px==1280 && resolution_framerate.height_px==720){
+    ss<<"HD 16:9";
+  }else if(resolution_framerate.width_px==1920 && resolution_framerate.height_px==1080){
+    ss<<"FHD 16:9\n";
+  }else if(resolution_framerate.width_px==2560 && resolution_framerate.height_px==1440){
+    ss<<"2K 16:9";
+  }else{
+    ss<<resolution_framerate.width_px<<"x"<<resolution_framerate.height_px<<"\n";
+  }
+  ss<<"\n"<<resolution_framerate.fps<<"fps";
+  return ss.str();
+}
+
 
 #endif  // OPENHD_CAMERA_HPP

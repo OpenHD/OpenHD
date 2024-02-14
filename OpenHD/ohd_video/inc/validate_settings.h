@@ -115,16 +115,7 @@ static bool validate_rpi_libcamera_shutter_microseconds(int value) {
   return value >= 0 && value <= 1000 * 100;
 }
 
-struct TmpVideoFormat {
-  int width_px;
-  int height_px;
-  int framerate;
-};
 std::string video_format_from_int_values(int width, int height, int framerate);
-// Takes a string in the from {width}x{height}@{framerate}
-// e.g. 1280x720@30
-std::optional<TmpVideoFormat> parse_video_format(
-    const std::string& videoFormat);
 
 }  // namespace openhd
 #endif  // OPENHD_OPENHD_OHD_VIDEO_INC_V_VALIDATE_SETTINGS_H_

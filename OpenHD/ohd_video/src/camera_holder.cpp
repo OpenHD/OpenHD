@@ -43,11 +43,11 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
   std::vector<openhd::Setting> ret;
   if (true) {
     auto c_width_height_framerate = [this](std::string, std::string value) {
-      auto tmp_opt = openhd::parse_video_format(value);
+      auto tmp_opt = parse_video_format(value);
       if (tmp_opt.has_value()) {
         const auto &tmp = tmp_opt.value();
         return set_video_width_height_framerate(tmp.width_px, tmp.height_px,
-                                                tmp.framerate);
+                                                tmp.fps);
       }
       return false;
     };
