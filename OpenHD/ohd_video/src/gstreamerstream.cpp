@@ -359,6 +359,7 @@ void GStreamerStream::stream_once() {
     m_console->warn("Not checking gst state after calling play (bugged)");
     succesfully_streaming= true;
   }*/
+  succesfully_streaming= true;
   if (!succesfully_streaming) {
     m_console->warn("Cannot start streaming. Valid resolution ?",
                     m_camera_holder->get_camera().index);
