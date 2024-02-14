@@ -14,10 +14,12 @@ namespace openhd::x20{
 static std::optional<int> get_x20_contrast(const CameraSettings& settings){
   if(settings.openhd_contrast==OPENHD_CONTRAST_DEFAULT)return std::nullopt;
   if(settings.openhd_contrast>OPENHD_CONTRAST_DEFAULT)return 3;
+  return std::nullopt;
 }
 static std::optional<int> get_x20_saturation(const CameraSettings& settings){
   if(settings.openhd_saturation==OPENHD_SATURATION_DEFAULT)return std::nullopt;
   if(settings.openhd_contrast>OPENHD_CONTRAST_DEFAULT)return 5;
+  return std::nullopt;
 }
 static std::optional<int> get_x20_flip(const CameraSettings& settings){
   if(settings.openhd_flip==OPENHD_FLIP_NONE)return std::nullopt;
