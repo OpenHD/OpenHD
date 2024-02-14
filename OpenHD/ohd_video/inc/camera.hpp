@@ -243,7 +243,6 @@ struct XCamera {
   // We default to the last supported resolution
   [[nodiscard]] ResolutionFramerate get_default_resolution_fps() const {
     auto supported_resolutions=get_supported_resolutions();
-    assert(!supported_resolutions.empty());
     return supported_resolutions.at(supported_resolutions.size()-1);
   }
 };
