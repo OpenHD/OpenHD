@@ -106,21 +106,21 @@ std::string x_platform_type_to_string(int platform_type) {
 }
 int get_fec_max_block_size_for_platform(int platform_type) {
   if(platform_type==X_PLATFORM_TYPE_RPI_4 || platform_type==X_PLATFORM_TYPE_RPI_CM4){
-    return 50;
+    return 30;
   }
   if(platform_type==X_PLATFORM_TYPE_RPI_OLD){
-    return 30;
+    return 20;
   }
   if(platform_type==X_PLATFORM_TYPE_X86){
     return 50;
   }
   if(platform_type==X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W
       || platform_type==X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5){
-    return 50;
+    return 30;
   }
   // For now
   if(platform_type==X_PLATFORM_TYPE_ALWINNER_X20){
-    return 50;
+    return 20;
   }
   return 20;
 }

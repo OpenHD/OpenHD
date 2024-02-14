@@ -117,11 +117,6 @@ struct WBLinkSettings {
   bool wb_dev_air_set_high_retransmit_count = false;
 };
 
-static int calculate_max_fec_block_size_for_platform(
-    const OHDPlatform platform) {
-  return get_fec_max_block_size_for_platform(platform.platform_type);
-}
-
 WBLinkSettings create_default_wb_stream_settings(
     const OHDPlatform& platform,
     const std::vector<WiFiCard>& wifibroadcast_cards);
