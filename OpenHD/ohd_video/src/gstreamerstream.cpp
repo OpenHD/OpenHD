@@ -16,6 +16,7 @@
 #include "nalu/nalu_helper.h"
 #include "openhd_util.h"
 #include "rtp_eof_helper.h"
+#include "x20_image_quality_helper.h"
 
 GStreamerStream::GStreamerStream(OHDPlatform platform,
                                  std::shared_ptr<CameraHolder> camera_holder,
@@ -70,11 +71,8 @@ std::string GStreamerStream::create_source_encode_pipeline(
     const CameraHolder& cam_holder) {
   const auto& camera = cam_holder.get_camera();
   CameraSettings setting=cam_holder.get_settings();
-  // On allwinner / X20 we set IQ params with scripts
   if(OHDPlatform::instance().is_allwinner()){
-    if(requires_vflip(setting) || requires_hflip(setting)){
-      OHDUtil::run_command(fmt::format("./usr/local/bin/x20/runcam_v2/runcam_flip.sh {}",setting.openhd_flip),{});
-    }
+    openhd::x20::apply_x20_runcam_iq_settings(setting);
   }
   std::stringstream pipeline;
   if (camera.requires_rpi_mmal_pipeline()) {
@@ -367,7 +365,7 @@ void GStreamerStream::stream_once() {
     stop();
     cleanup_pipe();
     // Sleep a bit and hope it works next time
-    std::this_thread::sleep_for(std::chrono::seconds(5));
+    std::this_thread::sleep_for(std::chrono::seconds(1));
     return;
   }
   openhd::LinkActionHandler::instance().set_cam_info_status(

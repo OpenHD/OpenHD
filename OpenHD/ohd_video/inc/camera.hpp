@@ -212,9 +212,10 @@ struct XCamera {
       return ret;
     } else if (camera_type == X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI) {
       std::vector<ResolutionFramerate> ret;
+      // 720p60 is the most commonly used / works in a lot of scenarios
+      ret.push_back(ResolutionFramerate{1280, 720, 60});
       ret.push_back(ResolutionFramerate{1920, 1080, 25});
       ret.push_back(ResolutionFramerate{1280, 720, 30});
-      ret.push_back(ResolutionFramerate{1280, 720, 60});
       return ret;
     }else if(camera_type==X_CAM_TYPE_DUMMY_SW){
       std::vector<ResolutionFramerate> ret;
