@@ -23,7 +23,7 @@ static std::string gst_state_change_return_to_string(
       "{}", gst_element_state_change_return_get_name(gst_state_change_return));
 }
 
-// BLocks up to 1 second, but should never block more than that
+// BLocks up to X seconds, but should never block more than that
 static std::string gst_element_get_current_state_as_string(
     GstElement *element, bool *out_is_succesfully_streaming = nullptr) {
   GstState state;
