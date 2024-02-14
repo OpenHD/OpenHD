@@ -151,3 +151,6 @@ bool OHDPlatform::is_rpi_or_x86()const {
 bool OHDPlatform::is_allwinner() const {
   return platform_type==X_PLATFORM_TYPE_ALWINNER_X20;
 }
+bool OHDPlatform::is_rpi_weak() const {
+  return is_rpi() && (!(platform_type==X_PLATFORM_TYPE_RPI_4 || platform_type==X_PLATFORM_TYPE_RPI_CM4));
+}

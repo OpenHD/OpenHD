@@ -45,6 +45,7 @@ struct OHDPlatform {
   [[nodiscard]] std::string to_string()const;
   static const OHDPlatform& instance();
   bool is_rpi()const;
+  bool is_rpi_weak()const;
   bool is_rock()const;
   bool is_rpi_or_x86()const;
   bool is_allwinner()const;
