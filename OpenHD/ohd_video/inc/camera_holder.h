@@ -130,7 +130,7 @@ class CameraHolder :
     return true;
   }
   bool set_openhd_flip(int value){
-    if(!(value==OPENHD_FLIP_VERTICAL || value==OPENHD_FLIP_HORIZONTAL || value==OPENHD_FLIP_VERTICAL_AND_HORIZONTAL))return false;
+    if(!(value>=OPENHD_FLIP_NONE && value<=OPENHD_FLIP_VERTICAL_AND_HORIZONTAL))return false;
     unsafe_get_settings().openhd_flip=value;
     persist();
     return true;
