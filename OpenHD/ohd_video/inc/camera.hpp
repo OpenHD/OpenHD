@@ -222,6 +222,11 @@ struct XCamera {
       ret.push_back(ResolutionFramerate{640,480,30});
       ret.push_back(ResolutionFramerate{1280,720,30});
       ret.push_back(ResolutionFramerate{1280,720,60});
+    }else if(camera_type==X_CAM_TYPE_DEVELOPMENT_FILESRC){
+      std::vector<ResolutionFramerate> ret;
+      ret.push_back(ResolutionFramerate{848,480,60});
+      ret.push_back(ResolutionFramerate{1280,720,60});
+      ret.push_back(ResolutionFramerate{1920,1080,60});
     }
     // Not mapped yet
     // return something that might work or might not work
