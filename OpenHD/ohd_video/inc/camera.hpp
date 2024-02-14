@@ -189,9 +189,11 @@ struct XCamera {
   std::string cam_type_as_verbose_string() const {
     return x_cam_type_to_string(camera_type);
   }
-
+  bool is_camera_type_usb_infiray() const {
+    return camera_type == X_CAM_TYPE_USB_INFIRAY;
+  };
   // Returns a list of known supported resolution(s).
-  // The first element is what openhd uses as default.
+  // They should be ordered in ascending resolution / framerate
   // Must always return at least one resolution
   // Might not return all resolutions a camera supports per HW
   // (In qopenhd, we have the experiment checkbox, where the user can enter
@@ -210,16 +212,16 @@ struct XCamera {
       return {ResolutionFramerate{640, 480, 30}};
     } else if (requires_rpi_libcamera_pipeline()) {
       std::vector<ResolutionFramerate> ret;
-      ret.push_back(ResolutionFramerate{1920, 1080, 30});
-      ret.push_back(ResolutionFramerate{1280, 720, 60});
       ret.push_back(ResolutionFramerate{640, 480, 60});
+      ret.push_back(ResolutionFramerate{1280, 720, 60});
+      ret.push_back(ResolutionFramerate{1920, 1080, 30});
       return ret;
     } else if (camera_type == X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI) {
       std::vector<ResolutionFramerate> ret;
       // 720p60 is the most commonly used / works in a lot of scenarios
-      ret.push_back(ResolutionFramerate{1280, 720, 60});
-      ret.push_back(ResolutionFramerate{1920, 1080, 25});
       ret.push_back(ResolutionFramerate{1280, 720, 30});
+      ret.push_back(ResolutionFramerate{1920, 1080, 25});
+      ret.push_back(ResolutionFramerate{1280, 720, 60});
       return ret;
     }else if(camera_type==X_CAM_TYPE_DUMMY_SW){
       std::vector<ResolutionFramerate> ret;
@@ -238,13 +240,12 @@ struct XCamera {
     // return something that might work or might not work
     return {ResolutionFramerate{640, 480, 30}};
   }
+  // We default to the last supported resolution
   [[nodiscard]] ResolutionFramerate get_default_resolution_fps() const {
     auto supported_resolutions=get_supported_resolutions();
-    return supported_resolutions.at(0);
+    assert(!supported_resolutions.empty());
+    return supported_resolutions.at(supported_resolutions.size()-1);
   }
-  bool is_camera_type_usb_infiray() const {
-    return camera_type == X_CAM_TYPE_USB_INFIRAY;
-  };
 };
 
 static bool is_valid_primary_cam_type(int cam_type) {
