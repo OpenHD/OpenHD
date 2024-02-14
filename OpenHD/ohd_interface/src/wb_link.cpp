@@ -151,13 +151,17 @@ WBLink::WBLink(OHDProfile profile, OHDPlatform platform,
     options_tele_rx.enable_fec = false;
     options_tele_rx.radio_port = radio_port_rx;
     options_tele_rx.enable_threading = true;
-    options_tele_rx.packet_queue_size = 20;
+    // receive queue: On air, up to 16 packets
+    // On ground, up to 32 packets
+    options_tele_rx.packet_queue_size = m_profile.is_air ? 16 : 32;
     m_wb_tele_rx = std::make_unique<WBStreamRx>(m_wb_txrx, options_tele_rx);
     m_wb_tele_rx->set_callback(cb_rx);
     WBStreamTx::Options options_tele_tx{};
     options_tele_tx.enable_fec = false;
     options_tele_tx.radio_port = radio_port_tx;
-    options_tele_tx.packet_data_queue_size = 32;
+    // Transmission queue: On air, up to 32 packets
+    // On ground, up to 16 packets
+    options_tele_tx.packet_data_queue_size = m_profile.is_air ? 32 : 16;
     m_wb_tele_tx =
         std::make_unique<WBStreamTx>(m_wb_txrx, options_tele_tx, m_tx_header_1);
     m_wb_tele_tx->set_encryption(true);

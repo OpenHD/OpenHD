@@ -250,10 +250,6 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
     ret.push_back(openhd::Setting{"CONFIG_BOOT_AIR",
                                   openhd::IntSetting{1, c_config_boot_as_air}});
   }
-  /*if(m_platform.platform_type==PlatformType::RaspberryPi){
-    const auto tmp=board_type_to_string(m_platform.board_type);
-    ret.push_back(openhd::create_read_only_string("BOARD_TYPE",tmp));
-  }*/
   if (m_opt_gpio_control != nullptr) {
     OHDUtil::vec_append(ret, m_opt_gpio_control->get_all_settings());
   }
