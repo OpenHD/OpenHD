@@ -306,6 +306,8 @@ static std::string get_verbose_string_of_resolution(const ResolutionFramerate& r
   std::stringstream ss;
   if(resolution_framerate.width_px==640 && resolution_framerate.height_px==480){
     ss<<"VGA 4:3";
+  }else if(resolution_framerate.width_px==848 && resolution_framerate.height_px==480){
+    ss<<"VGA 16:9";
   }else if(resolution_framerate.width_px==896 && resolution_framerate.height_px== 504){
     ss<<"SD 16:9";
   }else if(resolution_framerate.width_px==1280 && resolution_framerate.height_px==720){

@@ -332,7 +332,8 @@ bool OHDVideoAir::x_set_camera_type(bool primary, int cam_type) {
   if(primary){
     if(OHDPlatform::instance().is_rpi() && is_rpi_csi_camera(cam_type)){
       openhd::log::get_default()->warn("Calling image cam helper for cam type {}({})",cam_type, x_cam_type_to_string(cam_type));
-      OHDUtil::run_command(fmt::format("./usr/local/bin/ohd_camera_setup.sh {}",cam_type),{});
+      auto res=OHDUtil::run_command_out(fmt::format("bash /usr/local/bin/ohd_camera_setup.sh {}",cam_type),{});
+      openhd::log::get_default()->debug("script returned:[{}]",res.value_or("ERROR"));
     }
   }
   m_generic_settings->persist(false);
