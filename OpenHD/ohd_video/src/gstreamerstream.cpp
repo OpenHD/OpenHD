@@ -369,8 +369,6 @@ void GStreamerStream::stream_once() {
     std::this_thread::sleep_for(std::chrono::seconds(1));
     return;
   }
-  openhd::LinkActionHandler::instance().set_cam_info_status(
-      m_camera_holder->get_camera().index, CAM_STATUS_STREAMING);
   //
   // Here we begin the loop where the camera only
   // 1) Constantly produces data
@@ -395,6 +393,8 @@ void GStreamerStream::stream_once() {
   std::chrono::steady_clock::time_point m_last_camera_frame =
       std::chrono::steady_clock::now();
   m_frame_fragments.resize(0);
+  // As soon as we get the first frame, we change the status to streaming
+  bool has_first_frame=false;
   while (true) {
     // Quickly terminate if openhd wants to terminate
     if (!m_keep_looping) break;
@@ -446,6 +446,11 @@ void GStreamerStream::stream_once() {
     GstSample* sample = gst_app_sink_try_pull_sample(
         GST_APP_SINK(m_app_sink_element), timeout_ns);
     if (sample) {
+      if(!has_first_frame){
+        has_first_frame= true;
+        openhd::LinkActionHandler::instance().set_cam_info_status(
+            m_camera_holder->get_camera().index, CAM_STATUS_STREAMING);
+      }
       GstBuffer* buffer = gst_sample_get_buffer(sample);
       // tmp declaration for give sample back early optimization
       std::shared_ptr<std::vector<uint8_t>> fragment_data = nullptr;
