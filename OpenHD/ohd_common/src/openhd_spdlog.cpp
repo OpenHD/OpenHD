@@ -12,7 +12,6 @@
 
 #include <iostream>
 #include <mutex>
-#include <utility>
 
 #include "openhd_util.h"
 
