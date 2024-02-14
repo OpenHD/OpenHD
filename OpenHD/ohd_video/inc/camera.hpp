@@ -311,7 +311,7 @@ static std::string get_verbose_string_of_resolution(const ResolutionFramerate& r
   }else if(resolution_framerate.width_px==1280 && resolution_framerate.height_px==720){
     ss<<"HD 16:9";
   }else if(resolution_framerate.width_px==1920 && resolution_framerate.height_px==1080){
-    ss<<"FHD 16:9\n";
+    ss<<"FHD 16:9";
   }else if(resolution_framerate.width_px==2560 && resolution_framerate.height_px==1440){
     ss<<"2K 16:9";
   }else{
