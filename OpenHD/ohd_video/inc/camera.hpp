@@ -277,7 +277,7 @@ static bool is_usb_camera(int cam_type){
 
 // Takes a string in the from {width}x{height}@{framerate}
 // e.g. 1280x720@30
-std::optional<ResolutionFramerate> parse_video_format(const std::string& videoFormat){
+static std::optional<ResolutionFramerate> parse_video_format(const std::string& videoFormat){
   if (videoFormat.size() <= 5) {
     return std::nullopt;
   }
