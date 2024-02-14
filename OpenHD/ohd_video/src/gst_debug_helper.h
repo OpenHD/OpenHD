@@ -28,7 +28,7 @@ static std::string gst_element_get_current_state_as_string(
     GstElement *element, bool *out_is_succesfully_streaming = nullptr) {
   GstState state;
   GstState pending;
-  const auto timeout = std::chrono::seconds(1);
+  const auto timeout = std::chrono::seconds(3);
   auto returnValue = gst_element_get_state(
       element, &state, &pending,
       std::chrono::duration_cast<std::chrono::nanoseconds>(timeout).count());
