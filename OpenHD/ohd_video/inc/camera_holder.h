@@ -129,15 +129,9 @@ class CameraHolder :
     persist();
     return true;
   }
-  bool set_vertical_flip(int value) {
-    if (!openhd::validate_yes_or_no(value)) return false;
-    unsafe_get_settings().vertical_flip = static_cast<bool>(value);
-    persist();
-    return true;
-  }
-  bool set_horizontal_flip(int value) {
-    if (!openhd::validate_yes_or_no(value)) return false;
-    unsafe_get_settings().horizontal_flip = static_cast<bool>(value);
+  bool set_openhd_flip(int value){
+    if(!(value==OPENHD_FLIP_VERTICAL || value==OPENHD_FLIP_HORIZONTAL || value==OPENHD_FLIP_VERTICAL_AND_HORIZONTAL))return false;
+    unsafe_get_settings().openhd_flip=value;
     persist();
     return true;
   }

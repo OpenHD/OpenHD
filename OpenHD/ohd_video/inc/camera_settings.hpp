@@ -34,6 +34,11 @@ static constexpr int OPENHD_SATURATION_DEFAULT=100;
 static constexpr int OPENHD_CONTRAST_DEFAULT=100;
 static constexpr int OPENHD_SHARPNESS_DEFAULT=100;
 
+static constexpr int OPENHD_FLIP_NONE=0;
+static constexpr int OPENHD_FLIP_HORIZONTAL=1;
+static constexpr int OPENHD_FLIP_VERTICAL=2;
+static constexpr int OPENHD_FLIP_VERTICAL_AND_HORIZONTAL=3;
+
 // Return true if the bitrate is considered sane, false otherwise
 static bool check_bitrate_sane(const int bitrateKBits) {
   if (bitrateKBits <= 100 || bitrateKBits > (1000 * 1000 * 50)) {
@@ -98,9 +103,8 @@ struct CameraSettings {
   // camera rotation, only supported on rpicamsrc at the moment
   // 0 nothing, 90° to the right, 180° to the right, 270° to the right
   int camera_rotation_degree = 0;
-  // horizontal / vertical flip, r.n only supported on rpicamsrc
-  bool horizontal_flip = false;
-  bool vertical_flip = false;
+  // horizontal / vertical flip, r.n only supported on rpicamsrc, libcamera, (x20 ?)
+  int openhd_flip=OPENHD_FLIP_NONE;
 
   // Depending on the cam type, openhd uses hw-accelerated encoding whenever
   // possible. However, in some cases (e.g. when using a USB camera that outputs
@@ -147,5 +151,15 @@ struct CameraSettings {
   // actually not zoom
   int infiray_custom_control_zoom_absolute_colorpalete = 34817;
 };
+
+
+static bool requires_hflip(const CameraSettings& settings){
+  if(settings.openhd_flip==OPENHD_FLIP_HORIZONTAL || settings.openhd_flip==OPENHD_FLIP_VERTICAL_AND_HORIZONTAL)return true;
+  return false;
+}
+static bool requires_vflip(const CameraSettings& settings){
+  if(settings.openhd_flip==OPENHD_FLIP_VERTICAL || settings.openhd_flip==OPENHD_FLIP_VERTICAL_AND_HORIZONTAL)return true;
+  return false;
+}
 
 #endif

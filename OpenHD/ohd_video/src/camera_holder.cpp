@@ -16,7 +16,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(VideoFormat, videoCodec, width, height,
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
     CameraSettings, enable_streaming, streamed_video_format, h26x_bitrate_kbits,
     h26x_keyframe_interval, h26x_intra_refresh_type, h26x_num_slices,
-    air_recording, camera_rotation_degree, horizontal_flip, vertical_flip,
+    air_recording, camera_rotation_degree,openhd_flip,
     awb_mode, exposure_mode, rpi_rpicamsrc_iso,
     openhd_brightness,openhd_sharpness,openhd_saturation,openhd_contrast,
     rpi_rpicamsrc_metering_mode,
@@ -92,18 +92,12 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
         openhd::IntSetting{get_settings().camera_rotation_degree, c_rotation}});
   }
   if (supports_rotation_vflip_hflip) {
-    auto c_horizontal_flip = [this](std::string, int value) {
-      return set_horizontal_flip(value);
-    };
-    auto c_vertical_flip = [this](std::string, int value) {
-      return set_vertical_flip(value);
+    auto c_openhd_flip = [this](std::string, int value) {
+      return set_openhd_flip(value);
     };
     ret.push_back(openhd::Setting{
-        "VERT_FLIP",
-        openhd::IntSetting{get_settings().vertical_flip, c_vertical_flip}});
-    ret.push_back(openhd::Setting{
-        "HORIZ_FLIP",
-        openhd::IntSetting{get_settings().horizontal_flip, c_horizontal_flip}});
+        "ROTATION_FLIP",
+        openhd::IntSetting{get_settings().openhd_flip, c_openhd_flip}});
   }
   if (true) {
     auto c_enable_streaming = [this](std::string, int value) {

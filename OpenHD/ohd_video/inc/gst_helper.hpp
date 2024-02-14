@@ -197,10 +197,10 @@ static std::string createRpicamsrcStream(
   if (openhd::validate_camera_rotation(settings.camera_rotation_degree)) {
     ss << "rotation=" << settings.camera_rotation_degree << " ";
   }
-  if (settings.horizontal_flip) {
+  if(requires_hflip(settings)){
     ss << "hflip=1 ";
   }
-  if (settings.vertical_flip) {
+  if(requires_vflip(settings)){
     ss << "vflip=1 ";
   }
   if (openhd::validate_rpi_awb_mode(settings.awb_mode)) {
@@ -388,10 +388,10 @@ static std::string createLibcamerasrcStream(const CameraSettings& settings) {
   if(rotation_degree.has_value()){
     ss << "rotation=" << rotation_degree.value() << " ";
   }
-  if (settings.horizontal_flip) {
+  if(requires_hflip(settings)){
     ss << "hflip=1 ";
   }
-  if (settings.vertical_flip) {
+  if(requires_vflip(settings)){
     ss << "vflip=1 ";
   }
   const auto brightness=libcamera::get_brightness(settings);
