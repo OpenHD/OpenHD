@@ -9,6 +9,7 @@
 #include "gstreamerstream.h"
 #include "nalu/fragment_helper.h"
 #include "openhd_config.h"
+#include "openhd_reboot_util.h"
 
 OHDVideoAir::OHDVideoAir(OHDPlatform platform1, std::vector<XCamera> cameras,
                          std::shared_ptr<OHDLink> link)
@@ -334,6 +335,7 @@ bool OHDVideoAir::x_set_camera_type(bool primary, int cam_type) {
       openhd::log::get_default()->warn("Calling image cam helper for cam type {}({})",cam_type, x_cam_type_to_string(cam_type));
       auto res=OHDUtil::run_command_out(fmt::format("bash /usr/local/bin/ohd_camera_setup.sh {}",cam_type),{});
       openhd::log::get_default()->debug("script returned:[{}]",res.value_or("ERROR"));
+      openhd::reboot::systemctl_reboot();
     }
   }
   m_generic_settings->persist(false);
