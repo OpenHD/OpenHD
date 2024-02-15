@@ -139,5 +139,12 @@ static bool requires_vflip(const CameraSettings& settings){
   if(settings.openhd_flip==OPENHD_FLIP_VERTICAL || settings.openhd_flip==OPENHD_FLIP_VERTICAL_AND_HORIZONTAL)return true;
   return false;
 }
+// TODO - some platforms (only) flip, some platforms rotate the full range
+static int get_rotation_degree_0_90_180_270(const CameraSettings& settings){
+  if(settings.openhd_flip==OPENHD_FLIP_NONE)return 0;
+  if(settings.openhd_flip==OPENHD_FLIP_HORIZONTAL)return 180;
+  if(settings.openhd_flip==OPENHD_FLIP_VERTICAL_AND_HORIZONTAL)return 180;
+  return 0;
+}
 
 #endif
