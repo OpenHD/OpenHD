@@ -330,15 +330,20 @@ bool OHDVideoAir::x_set_camera_type(bool primary, int cam_type) {
     m_generic_settings->unsafe_get_settings().secondary_camera_type = cam_type;
     openhd::LinkActionHandler::instance().set_cam_info_type(1, cam_type);
   }
+  bool reboot_required=false;
   if(primary){
-    if(OHDPlatform::instance().is_rpi() && is_rpi_csi_camera(cam_type)){
+    if(OHDPlatform::instance().is_rpi() && is_rpi_csi_camera(cam_type) ||
+        OHDPlatform::instance().is_rock() && is_rock_csi_camera(cam_type) ){
       openhd::log::get_default()->warn("Calling image cam helper for cam type {}({})",cam_type, x_cam_type_to_string(cam_type));
       auto res=OHDUtil::run_command_out(fmt::format("bash /usr/local/bin/ohd_camera_setup.sh {}",cam_type),{});
       openhd::log::get_default()->debug("script returned:[{}]",res.value_or("ERROR"));
-      openhd::reboot::systemctl_reboot();
+      reboot_required=true;
     }
   }
   m_generic_settings->persist(false);
   openhd::TerminateHelper::instance().terminate = true;
+  if(reboot_required){
+    openhd::reboot::systemctl_reboot();
+  }
   return true;
 }

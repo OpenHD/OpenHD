@@ -264,11 +264,10 @@ static bool is_valid_secondary_cam_type(int cam_type) {
 }
 
 static bool is_rpi_csi_camera(int cam_type) {
-  return cam_type >= 10 && cam_type <= 59;
+  return cam_type >= 20 && cam_type <= 69;
 }
-
-static bool supports_rotation(int cam_type){
-  return is_rpi_csi_camera(cam_type);
+static bool is_rock_csi_camera(int cam_type) {
+  return cam_type==X_CAM_TYPE_ROCK_IMX219;
 }
 
 static bool is_usb_camera(int cam_type){
