@@ -113,22 +113,6 @@ class CameraHolder :
     persist();
     return true;
   }
-  bool set_camera_awb(int value) {
-    if (!openhd::validate_rpi_awb_mode(value)) {
-      return false;
-    }
-    unsafe_get_settings().awb_mode = value;
-    persist();
-    return true;
-  }
-  bool set_camera_exposure(int value) {
-    if (!openhd::validate_rpi_exp_mode(value)) {
-      return false;
-    }
-    unsafe_get_settings().exposure_mode = value;
-    persist();
-    return true;
-  }
   bool set_openhd_flip(int value){
     if(!(value>=OPENHD_FLIP_NONE && value<=OPENHD_FLIP_VERTICAL_AND_HORIZONTAL))return false;
     unsafe_get_settings().openhd_flip=value;
@@ -157,18 +141,6 @@ class CameraHolder :
     if (!openhd::validate_openhd_saturation(value)) return false;
     unsafe_get_settings().openhd_saturation = value;
     persist(true);
-    return true;
-  }
-  bool set_rpi_rpicamsrc_iso(int value) {
-    if (!openhd::validate_rpi_rpicamsrc_iso(value)) return false;
-    unsafe_get_settings().rpi_rpicamsrc_iso = value;
-    persist();
-    return true;
-  }
-  bool set_rpi_rpicamsrc_metering_mode(int value) {
-    if (!openhd::validate_rpi_rpicamsrc_metering_mode(value)) return false;
-    unsafe_get_settings().rpi_rpicamsrc_metering_mode = value;
-    persist();
     return true;
   }
   bool set_rpi_libcamera_ev_value(int value) {
@@ -257,48 +229,6 @@ class CameraHolder :
     ret.streamed_video_format.width = default_resolution.width_px;
     ret.streamed_video_format.height = default_resolution.height_px;
     ret.streamed_video_format.framerate = default_resolution.fps;
-    /*if(m_camera.type==CameraType::RPI_CSI_MMAL ||
-    m_camera.type==CameraType::RPI_CSI_LIBCAMERA){
-      ret.streamed_video_format.width=1280;
-      ret.streamed_video_format.height=720;
-      ret.streamed_video_format.framerate=30;
-    }
-    if(m_camera.type==CameraType::RPI_CSI_VEYE_V4l2){
-      // most veye cameras can only do 1080p30, nothing else
-      ret.streamed_video_format.width=1920;
-      ret.streamed_video_format.height=1080;
-      ret.streamed_video_format.framerate=30;
-    }
-    if(m_camera.type==CameraType::UVC){
-      // We need to find a resolution / framerate format that is supported by
-    the camera, note that OpenHD always defaults to h264 const auto
-    opt_h264_endpoint=
-    get_endpoint_supporting_codec(m_camera.v4l2_endpoints,VideoCodec::H264);
-      if(opt_h264_endpoint.has_value()){
-        // Just pick the first one from the array
-        assert(!opt_h264_endpoint.value().formats_h264.empty());
-        const auto format=opt_h264_endpoint.value().formats_h264.at(0);
-        openhd::log::get_default()->debug("Selecting {} as
-    default",format.debug()); ret.streamed_video_format.width=format.width;
-        ret.streamed_video_format.height=format.height;
-        ret.streamed_video_format.framerate=format.fps;
-        return ret;
-      }
-      const auto opt_raw_endpoint=
-    get_endpoint_supporting_raw(m_camera.v4l2_endpoints);
-      if(opt_raw_endpoint.has_value()){
-        // Just pick the first one from the array
-        assert(!opt_raw_endpoint.value().formats_raw.empty());
-        const auto format=opt_raw_endpoint.value().formats_raw.at(0);
-        openhd::log::get_default()->debug("Selecting {} as
-    default",format.debug()); ret.streamed_video_format.width=format.width;
-        ret.streamed_video_format.height=format.height;
-        ret.streamed_video_format.framerate=format.fps;
-        return ret;
-      }
-      openhd::log::get_default()->warn("Cannot find valid default resolution for
-    USB camera");
-    }*/
     return ret;
   }
 };

@@ -18,10 +18,6 @@ static constexpr int DEFAULT_BITRATE_KBITS = 8000;
 // "stuttering" in case frames are lost.
 static constexpr int DEFAULT_KEYFRAME_INTERVAL = 5;
 
-static constexpr int DEFAULT_RECORDING_KBITS = 10000;
-static constexpr int DEFAULT_RECORDING_QP = 26;
-static constexpr RateControlMode DEFAULT_RC_MODE = RateControlMode::RC_CBR;
-
 // Minimum amount of free space required to enable air video recording.
 // Also, If the free space becomes less than that, air recording (if running)
 // should be stopped. This feature is r.n already implemented for all cameras
@@ -38,14 +34,6 @@ static constexpr int OPENHD_FLIP_NONE=0;
 static constexpr int OPENHD_FLIP_HORIZONTAL=1;
 static constexpr int OPENHD_FLIP_VERTICAL=2;
 static constexpr int OPENHD_FLIP_VERTICAL_AND_HORIZONTAL=3;
-
-// Return true if the bitrate is considered sane, false otherwise
-static bool check_bitrate_sane(const int bitrateKBits) {
-  if (bitrateKBits <= 100 || bitrateKBits > (1000 * 1000 * 50)) {
-    return false;
-  }
-  return true;
-}
 
 // User-selectable camera options
 // These values are settings that can change dynamically at run time
@@ -120,24 +108,14 @@ struct CameraSettings {
   // -----------------------------------------------------------------------------------------------------------------------
   // IQ (Image quality) settings begin. Values prefixed with openhd_ are values where openhd defines the range,
   // and each camera that implements the given functionality needs to use this range (re-mapping is possible,
-  // for example openhd_brightness is re-mapped for libcamera and gst-rpicamsrc.
+  // for example openhd_brightness is re-mapped for libcamera, which takes a float
   // Values prefixed with a vendor-specific string (for example lc_ ) are values that cannot be generified and therefore
   // need to be different for each camera.
-  // R.n only for rpi camera, see
-  // https://gstreamer.freedesktop.org/documentation/rpicamsrc/index.html?gi-language=c
-  int awb_mode = 1;       // default 1 (auto)
-  int exposure_mode = 1;  // default 1 (auto)
   // default 100, range [0,200]
   int openhd_brightness = OPENHD_BRIGHTNESS_DEFAULT;
   int openhd_saturation = OPENHD_SATURATION_DEFAULT;
   int openhd_contrast = OPENHD_CONTRAST_DEFAULT;
   int openhd_sharpness= OPENHD_SHARPNESS_DEFAULT;
-  // ISO value to use (0 = Auto)
-  // Integer. Range: 0 - 3200 Default: 0
-  int rpi_rpicamsrc_iso = 0;
-  // Camera exposure metering mode to use
-  // Default 0 (average)
-  int rpi_rpicamsrc_metering_mode = 0;
   // libcamera params
   int rpi_libcamera_ev_value = RPI_LIBCAMERA_DEFAULT_EV;
   int rpi_libcamera_denoise_index = 0;

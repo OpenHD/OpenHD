@@ -203,22 +203,6 @@ static std::string createRpicamsrcStream(
   if(requires_vflip(settings)){
     ss << "vflip=1 ";
   }
-  if (openhd::validate_rpi_awb_mode(settings.awb_mode)) {
-    ss << "awb-mode=" << settings.awb_mode << " ";
-  }
-  if (openhd::validate_rpi_exp_mode(settings.exposure_mode)) {
-    ss << "exposure-mode=" << settings.exposure_mode << " ";
-  }
-  if (openhd::validate_openhd_brightness(settings.openhd_brightness) && settings.openhd_brightness !=OPENHD_BRIGHTNESS_DEFAULT) {
-    ss << "brightness=" << settings.openhd_brightness << " ";
-  }
-  if (openhd::validate_rpi_rpicamsrc_iso(settings.rpi_rpicamsrc_iso)) {
-    ss << "iso=" << settings.rpi_rpicamsrc_iso << " ";
-  }
-  if (openhd::validate_rpi_rpicamsrc_metering_mode(
-          settings.rpi_rpicamsrc_metering_mode)) {
-    ss << "metering-mode=" << settings.rpi_rpicamsrc_metering_mode << " ";
-  }
   // Note: ROI (Region of interest) on the rpi does not tell the encoder to
   // allocate more bandwidth at a specific area, but rather zooms in on a
   // specific area (which is not really of use to use)

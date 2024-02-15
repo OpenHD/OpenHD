@@ -52,13 +52,6 @@ bool validate_bitrate_mbits(int bitrate_mbits);
 
 bool validate_camera_rotation(int value);
 
-static bool validate_rpi_awb_mode(int value) {
-  return value >= 0 && value <= 9;
-}
-static bool validate_rpi_exp_mode(int value) {
-  return value >= 0 && value <= 12;
-}
-
 static bool validate_openhd_brightness(int value){
   return value >=0 && value <=200;
 }
@@ -72,10 +65,6 @@ static bool validate_openhd_sharpness(int value){
   return value >=0 && value <=200;
 }
 
-static bool validate_rpi_rpicamsrc_iso(int value) {
-  return value >= 0 && value <= 3200;
-}
-
 // from gst-rpicamsrc: keyframe-interval   : Interval (in frames) between I
 // frames. -1 = automatic, 0 = single-keyframe
 bool validate_rpi_keyframe_interval(int value);
@@ -83,15 +72,6 @@ bool validate_rpi_keyframe_interval(int value);
 // see gst-rpicamsrc documentation
 bool validate_rpi_intra_refresh_type(int value);
 
-// see gst-rpicamsrc documentation
-static bool validate_rpi_rpicamsrc_metering_mode(int value) {
-  return value >= 0 && value <= 3;
-}
-
-// see libcamera documentation
-static bool validate_rpi_libcamera_sharpness_as_int(int value) { return true; }
-static bool validate_rpi_libcamera_contrast_as_int(int value) { return true; }
-static bool validate_rpi_libcamera_saturation_as_int(int value) { return true; }
 static bool validate_rpi_libcamera_ev_value(int value) {
   return value >= -10 && value <= 10;
 }
