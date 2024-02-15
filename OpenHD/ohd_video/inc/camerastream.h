@@ -41,8 +41,7 @@ class CameraStream {
    * @param i_transmit abstract interface where encoded video data is forwarded
    * to (was UDP port previously)
    */
-  CameraStream(OHDPlatform platform,
-               std::shared_ptr<CameraHolder> camera_holder,
+  CameraStream(std::shared_ptr<CameraHolder> camera_holder,
                openhd::ON_ENCODE_FRAME_CB out_cb);
   CameraStream(const CameraStream&) = delete;
   CameraStream(const CameraStream&&) = delete;
@@ -75,7 +74,6 @@ class CameraStream {
   static constexpr auto CAM_STATUS_RESTARTING = 2;
 
  protected:
-  const OHDPlatform m_platform;
   openhd::ON_ENCODE_FRAME_CB m_output_cb;
 };
 

@@ -18,11 +18,10 @@
 #include "rtp_eof_helper.h"
 #include "x20_image_quality_helper.h"
 
-GStreamerStream::GStreamerStream(OHDPlatform platform,
-                                 std::shared_ptr<CameraHolder> camera_holder,
+GStreamerStream::GStreamerStream(std::shared_ptr<CameraHolder> camera_holder,
                                  openhd::ON_ENCODE_FRAME_CB out_cb)
     //: CameraStream(platform, camera_holder, video_udp_port) {
-    : CameraStream(platform, std::move(camera_holder), std::move(out_cb)) {
+    : CameraStream(std::move(camera_holder), std::move(out_cb)) {
   m_console = openhd::log::create_or_get(
       fmt::format("cam{}", m_camera_holder->get_camera().index));
   assert(m_console);

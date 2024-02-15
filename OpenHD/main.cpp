@@ -236,7 +236,7 @@ int main(int argc, char *argv[]) {
     std::unique_ptr<OHDVideoAir> ohd_video_air = nullptr;
     if (profile->is_air) {
       auto cameras = OHDVideoAir::discover_cameras(platform);
-      ohd_video_air = std::make_unique<OHDVideoAir>(platform,cameras,ohdInterface->get_link_handle());
+      ohd_video_air = std::make_unique<OHDVideoAir>(cameras,ohdInterface->get_link_handle());
       // First add camera specific settings (primary & secondary camera)
       auto settings_components= ohd_video_air->get_all_camera_settings();
       ohdTelemetry->add_settings_camera_component(0,settings_components[0]);

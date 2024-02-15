@@ -11,9 +11,9 @@
 #include "openhd_config.h"
 #include "openhd_reboot_util.h"
 
-OHDVideoAir::OHDVideoAir(OHDPlatform platform1, std::vector<XCamera> cameras,
+OHDVideoAir::OHDVideoAir(std::vector<XCamera> cameras,
                          std::shared_ptr<OHDLink> link)
-    : m_platform(platform1), m_link_handle(std::move(link)) {
+    : m_link_handle(std::move(link)) {
   m_console = openhd::log::create_or_get("v_air");
   assert(m_console);
   assert(!cameras.empty());
@@ -83,7 +83,7 @@ void OHDVideoAir::configure(
   // But this might change in the future
   m_console->debug("GStreamerStream for Camera index:{}", camera.index);
   auto stream =
-      std::make_shared<GStreamerStream>(m_platform, camera_holder, frame_cb);
+      std::make_shared<GStreamerStream>(camera_holder, frame_cb);
   stream->start_looping();
   m_camera_streams.push_back(stream);
 }
@@ -341,9 +341,11 @@ bool OHDVideoAir::x_set_camera_type(bool primary, int cam_type) {
     }
   }
   m_generic_settings->persist(false);
-  openhd::TerminateHelper::instance().terminate = true;
   if(reboot_required){
-    openhd::reboot::systemctl_reboot();
+    openhd::reboot::handle_power_command_async(std::chrono::seconds(1), false);
+  }else{
+    // Restarting openhd is enough
+    openhd::TerminateHelper::instance().terminate = true;
   }
   return true;
 }
