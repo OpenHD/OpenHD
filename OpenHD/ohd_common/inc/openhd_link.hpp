@@ -10,6 +10,7 @@
 
 #include "openhd_profile.h"
 #include "openhd_video_frame.h"
+#include "openhd_spdlog.h"
 
 /**
  * OHDLink refers to "the link" that transmits data from the air unit to the ground unit and vice versa.

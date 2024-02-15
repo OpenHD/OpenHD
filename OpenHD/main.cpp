@@ -200,13 +200,13 @@ int main(int argc, char *argv[]) {
     // Profile no longer depends on n discovered cameras,
     // But if we are air, we have at least one camera, sw if no camera was found
     const auto profile=DProfile::discover(options.run_as_air);
-    write_profile_manifest(*profile);
+    write_profile_manifest(profile);
 
     // we need to start QOpenHD when we are running as ground, or stop / disable it when we are running as air.
     // can be disabled for development purposes.
     // On x20, we do not have qopenhd installed (we run as air only) so we can skip this step
     if(!openhd::load_config().GEN_NO_QOPENHD_AUTOSTART && !OHDPlatform::instance().is_allwinner()){
-      if(!profile->is_air){
+      if(!profile.is_air){
         OHDUtil::run_command("systemctl",{"start","qopenhd"});
       }else{
         OHDUtil::run_command("systemctl",{"stop","qopenhd"});
@@ -219,22 +219,22 @@ int main(int argc, char *argv[]) {
 
     // We start ohd_telemetry as early as possible, since even without a link (transmission) it still picks up local
     // log message(s) and forwards them to any ground station clients (e.g. QOpenHD)
-    auto ohdTelemetry = std::make_shared<OHDTelemetry>(platform,* profile);
+    auto ohdTelemetry = std::make_shared<OHDTelemetry>(platform,profile);
 
     // Then start ohdInterface, which discovers detected wifi cards and more.
-    auto ohdInterface = std::make_shared<OHDInterface>(platform,*profile);
+    auto ohdInterface = std::make_shared<OHDInterface>(platform,profile);
 
     // Telemetry allows changing all settings (even from other modules)
     ohdTelemetry->add_settings_generic(ohdInterface->get_all_settings());
 
     // either one is active, depending on air or ground
     std::unique_ptr<OHDVideoGround> ohd_video_ground = nullptr;
-    if(profile->is_ground()){
+    if(profile.is_ground()){
       ohd_video_ground = std::make_unique<OHDVideoGround>(ohdInterface->get_link_handle());
     }
 #ifdef ENABLE_AIR
     std::unique_ptr<OHDVideoAir> ohd_video_air = nullptr;
-    if (profile->is_air) {
+    if (profile.is_air) {
       auto cameras = OHDVideoAir::discover_cameras(platform);
       ohd_video_air = std::make_unique<OHDVideoAir>(cameras,ohdInterface->get_link_handle());
       // First add camera specific settings (primary & secondary camera)

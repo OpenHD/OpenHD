@@ -4,7 +4,6 @@
 
 #include "openhd_profile.h"
 
-#include <fstream>
 #include <sstream>
 
 #include "openhd_settings_directories.hpp"
@@ -18,11 +17,9 @@ void write_profile_manifest(const OHDProfile& ohdProfile) {
   OHDFilesystemUtil::write_file(PROFILE_MANIFEST_FILENAME,ss.str());
 }
 
-std::shared_ptr<OHDProfile> DProfile::discover(bool is_air) {
+OHDProfile DProfile::discover(bool is_air) {
   openhd::log::get_default()->debug("Profile:[{}]",is_air ? "AIR" : "GND");
   // We read the unit id from the persistent storage, later write it to the tmp storage json
   const auto unit_id = openhd::getOrCreateUnitId();
-  // We are air pi if there is at least one camera
-  auto ret=std::make_shared<OHDProfile>(is_air,unit_id);
-  return ret;
+  return OHDProfile(is_air,unit_id);
 }

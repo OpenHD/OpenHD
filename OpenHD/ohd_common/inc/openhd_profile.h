@@ -2,8 +2,7 @@
 #define OPENHD_PROFILE_H
 
 #include <string>
-
-#include "openhd_spdlog.h"
+#include <sstream>
 
 /**
  * The profile is created on startup and then doesn't change during run time.
@@ -25,7 +24,9 @@ class OHDProfile {
     return !is_air;
   }
   [[nodiscard]] std::string to_string()const{
-    return fmt::format("OHDProfile[{},{}]",(is_air ? "Air":"Ground"),unit_id);
+    std::stringstream ss;
+    ss<<"OHDProfile["<<(is_air ? "Air":"Ground")<<","<<unit_id<<"]";
+    return ss.str();
   }
 };
 
@@ -34,7 +35,7 @@ void write_profile_manifest(const OHDProfile &ohdProfile);
 
 namespace DProfile{
 
-std::shared_ptr<OHDProfile>  discover(bool is_air);
+OHDProfile discover(bool is_air);
 
 }
 #endif
