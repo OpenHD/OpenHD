@@ -22,30 +22,28 @@
 
 // dependency could be easily removed again
 
-
-static uint8_t extract_nal_unit_type(uint8_t value,bool is_h265){
+static uint8_t extract_nal_unit_type(uint8_t value, bool is_h265) {
   if (is_h265) {
     return (value & 0x7E) >> 1;
   }
   return value & 0x1f;
 }
-static std::string x_get_nal_unit_type_as_string(int value,bool is_h265){
-  if(value<0)return "{<0}";
-  const uint8_t extracted = extract_nal_unit_type(value,is_h265);
+static std::string x_get_nal_unit_type_as_string(int value, bool is_h265) {
+  if (value < 0) return "{<0}";
+  const uint8_t extracted = extract_nal_unit_type(value, is_h265);
   if (is_h265) {
     return NALUnitType::H265::unit_type_to_string(extracted);
   }
   return NALUnitType::H264::unit_type_to_string(extracted);
 }
-static bool is_idr_frame(int value,bool is_h265){
-  if(value<=0)return false;
-  const uint8_t extracted = extract_nal_unit_type(value,is_h265);
-  if(is_h265){
-    return extracted==NALUnitType::H265::NAL_UNIT_CODED_SLICE_IDR_N_LP;
+static bool is_idr_frame(int value, bool is_h265) {
+  if (value <= 0) return false;
+  const uint8_t extracted = extract_nal_unit_type(value, is_h265);
+  if (is_h265) {
+    return extracted == NALUnitType::H265::NAL_UNIT_CODED_SLICE_IDR_N_LP;
   }
-  return extracted==NALUnitType::H264::NAL_UNIT_TYPE_CODED_SLICE_IDR;
+  return extracted == NALUnitType::H264::NAL_UNIT_TYPE_CODED_SLICE_IDR;
 }
-
 
 /**
  * NOTE: NALU only takes a c-style data pointer - it does not do any memory
@@ -174,7 +172,9 @@ class NALU {
     }
     return (get_nal_unit_type() == NALUnitType::H264::NAL_UNIT_TYPE_DPS);
   }
-  bool is_config()const { return isSPS() || isPPS() || (IS_H265_PACKET && isVPS()); }
+  bool is_config() const {
+    return isSPS() || isPPS() || (IS_H265_PACKET && isVPS());
+  }
   // keyframe / IDR frame
   bool is_keyframe() const {
     const auto nut = get_nal_unit_type();

@@ -41,9 +41,9 @@ struct fu_header_h265_t {
 static_assert(sizeof(fu_header_h265_t) == 1);
 }  // namespace H265
 
-openhd::rtp_eof_helper::RTPFragmentInfo openhd::rtp_eof_helper::h264_more_info(const uint8_t *payload,
-                                                                               const std::size_t payloadSize) {
-  RTPFragmentInfo ret{ false, false,-1};
+openhd::rtp_eof_helper::RTPFragmentInfo openhd::rtp_eof_helper::h264_more_info(
+    const uint8_t *payload, const std::size_t payloadSize) {
+  RTPFragmentInfo ret{false, false, -1};
   if (payloadSize < RTP_HEADER_SIZE + sizeof(H264::nalu_header_t)) {
     std::cerr << "Got packet that cannot be rtp h264\n";
     return ret;
@@ -63,16 +63,16 @@ openhd::rtp_eof_helper::RTPFragmentInfo openhd::rtp_eof_helper::h264_more_info(c
     if (fuHeader.e) {
       // std::cout<<"Got end of fragmented NALU\n";
       //  end of fu-a
-      ret.is_fu_end= true;
+      ret.is_fu_end = true;
       return ret;
-    } else if(fuHeader.s) {
+    } else if (fuHeader.s) {
       // std::cout<<"Got start of fragmented NALU\n";
-      ret.is_fu_start= true;
-      const uint8_t h264_nal_header = (uint8_t)(fuHeader.type & 0x1f)
-                                      | (naluHeader.nri << 5)
-                                      | (naluHeader.f << 7);
-      ret.nal_unit_type=h264_nal_header;
-    } else{
+      ret.is_fu_start = true;
+      const uint8_t h264_nal_header = (uint8_t)(fuHeader.type & 0x1f) |
+                                      (naluHeader.nri << 5) |
+                                      (naluHeader.f << 7);
+      ret.nal_unit_type = h264_nal_header;
+    } else {
       // std::cout<<"Got middle of fragmented NALU\n";
       return ret;
     }
@@ -89,9 +89,9 @@ openhd::rtp_eof_helper::RTPFragmentInfo openhd::rtp_eof_helper::h264_more_info(c
   return ret;
 }
 
-openhd::rtp_eof_helper::RTPFragmentInfo openhd::rtp_eof_helper::h265_more_info(const uint8_t *payload,
-                                                                               const std::size_t payloadSize) {
-  RTPFragmentInfo ret{ false, false,-1};
+openhd::rtp_eof_helper::RTPFragmentInfo openhd::rtp_eof_helper::h265_more_info(
+    const uint8_t *payload, const std::size_t payloadSize) {
+  RTPFragmentInfo ret{false, false, -1};
   if (payloadSize < RTP_HEADER_SIZE + sizeof(H265::nal_unit_header_h265_t)) {
     std::cerr << "Got packet that cannot be rtp h265\n";
     return ret;
@@ -110,13 +110,13 @@ openhd::rtp_eof_helper::RTPFragmentInfo openhd::rtp_eof_helper::h265_more_info(c
     if (fuHeader.e) {
       // std::cout<<"Got end of fragmented NALU\n";
       //  end of fu-a
-      ret.is_fu_end= true;
+      ret.is_fu_end = true;
       return ret;
-    } else if(fuHeader.s) {
+    } else if (fuHeader.s) {
       // std::cout<<"Got start of fragmented NALU\n";
-      ret.is_fu_start= true;
+      ret.is_fu_start = true;
       return ret;
-    }else {
+    } else {
       // std::cout<<"Got start or middle of fragmented NALU\n";
       return ret;
     }

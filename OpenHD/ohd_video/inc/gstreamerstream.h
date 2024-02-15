@@ -35,8 +35,7 @@ class GStreamerStream : public CameraStream {
  private:
   // Creates a valid gstreamer pipeline for the given camera,
   // including the source and encoder, not including appsink
-  std::string create_source_encode_pipeline(
-      const CameraHolder& cam_holder);
+  std::string create_source_encode_pipeline(const CameraHolder& cam_holder);
   void setup();
   // Set gst state to PLAYING
   void start();
@@ -74,6 +73,7 @@ class GStreamerStream : public CameraStream {
   std::atomic_bool m_request_restart = false;
   std::atomic_bool m_keep_looping = false;
   std::unique_ptr<std::thread> m_loop_thread = nullptr;
+
  private:
   // The stuff here is to pull the data out of the gstreamer pipeline, such that
   // we can forward it to the WB link
@@ -81,14 +81,15 @@ class GStreamerStream : public CameraStream {
                                  uint64_t dts);
   void on_new_rtp_fragmented_frame();
   std::vector<std::shared_ptr<std::vector<uint8_t>>> m_frame_fragments;
-  bool m_last_fu_s_idr= false;
+  bool m_last_fu_s_idr = false;
   bool dirty_use_raw = false;
   void on_gst_nalu_buffer(const uint8_t* data, int data_len);
   void on_new_nalu(const uint8_t* data, int data_len);
   void on_new_nalu_frame(const uint8_t* data, int data_len);
   void forward_video_frame(std::shared_ptr<std::vector<uint8_t>> frame);
   CodecConfigFinder m_config_finder;
-  std::chrono::steady_clock::time_point m_last_log_streaming_disabled=std::chrono::steady_clock::now();
+  std::chrono::steady_clock::time_point m_last_log_streaming_disabled =
+      std::chrono::steady_clock::now();
 };
 
 #endif

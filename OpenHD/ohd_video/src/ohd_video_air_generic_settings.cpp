@@ -24,17 +24,20 @@ std::string AirCameraGenericSettingsHolder::imp_serialize(
 }
 
 // The image writer writes the cam type to here
-static constexpr auto IMAGE_WRITER_CAM_FILENAME="/boot/openhd/camera1.txt";
+static constexpr auto IMAGE_WRITER_CAM_FILENAME = "/boot/openhd/camera1.txt";
 
-static int rpi_get_default_primary_cam_type(){
+static int rpi_get_default_primary_cam_type() {
   // The image writer writes the cam type to
-  const auto opt_content=OHDFilesystemUtil::opt_read_file(IMAGE_WRITER_CAM_FILENAME);
-  if(opt_content.has_value()){
-    openhd::log::get_default()->debug("Using[{}] from image writer",opt_content.value());
-    const auto opt_value_as_int=OHDUtil::string_to_int(opt_content.value());
-    if(opt_value_as_int.has_value()){
-      const int primary_cam_type=opt_value_as_int.value();
-      openhd::log::get_default()->debug("Got from image writer: {}", x_cam_type_to_string(primary_cam_type));
+  const auto opt_content =
+      OHDFilesystemUtil::opt_read_file(IMAGE_WRITER_CAM_FILENAME);
+  if (opt_content.has_value()) {
+    openhd::log::get_default()->debug("Using[{}] from image writer",
+                                      opt_content.value());
+    const auto opt_value_as_int = OHDUtil::string_to_int(opt_content.value());
+    if (opt_value_as_int.has_value()) {
+      const int primary_cam_type = opt_value_as_int.value();
+      openhd::log::get_default()->debug("Got from image writer: {}",
+                                        x_cam_type_to_string(primary_cam_type));
       return primary_cam_type;
     }
   }
@@ -48,13 +51,14 @@ AirCameraGenericSettings AirCameraGenericSettingsHolder::create_default()
   ret.primary_camera_type = X_CAM_TYPE_DUMMY_SW;
   ret.secondary_camera_type = X_CAM_TYPE_DISABLED;
   if (OHDPlatform::instance().is_rpi()) {
-    ret.primary_camera_type=rpi_get_default_primary_cam_type();
+    ret.primary_camera_type = rpi_get_default_primary_cam_type();
   } else if (OHDPlatform::instance().is_allwinner()) {
     ret.primary_camera_type = X_CAM_TYPE_X20_RUNCAM_NANO;
   } else if (OHDPlatform::instance().is_rock()) {
     ret.primary_camera_type = X_CAM_TYPE_ROCK_HDMI_IN;
-  }else if(OHDPlatform::instance().platform_type==X_PLATFORM_TYPE_OPENIPC_SIGMASTAR_UNDEFINED){
-    ret.primary_camera_type=X_CAM_TYPE_OPENIPC_SOMETHING;
+  } else if (OHDPlatform::instance().platform_type ==
+             X_PLATFORM_TYPE_OPENIPC_SIGMASTAR_UNDEFINED) {
+    ret.primary_camera_type = X_CAM_TYPE_OPENIPC_SOMETHING;
   }
   return ret;
 }

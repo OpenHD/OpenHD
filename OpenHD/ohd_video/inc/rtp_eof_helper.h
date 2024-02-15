@@ -12,7 +12,7 @@ namespace openhd::rtp_eof_helper {
 // rather than adding a dependency on gstreamer (for example), write the bit of
 // code that determines the end of a NALU inside a h264 / h265 RTP packet
 
-struct RTPFragmentInfo{
+struct RTPFragmentInfo {
   bool is_fu_start;
   bool is_fu_end;
   // ONLY set if this is a fu_start frame !

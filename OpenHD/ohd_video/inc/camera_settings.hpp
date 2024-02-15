@@ -25,15 +25,15 @@ static constexpr int DEFAULT_KEYFRAME_INTERVAL = 5;
 static constexpr auto MINIMUM_AMOUNT_FREE_SPACE_FOR_AIR_RECORDING_MB = 300;
 static constexpr int RPI_LIBCAMERA_DEFAULT_EV = 0;
 
-static constexpr int OPENHD_BRIGHTNESS_DEFAULT=100;
-static constexpr int OPENHD_SATURATION_DEFAULT=100;
-static constexpr int OPENHD_CONTRAST_DEFAULT=100;
-static constexpr int OPENHD_SHARPNESS_DEFAULT=100;
+static constexpr int OPENHD_BRIGHTNESS_DEFAULT = 100;
+static constexpr int OPENHD_SATURATION_DEFAULT = 100;
+static constexpr int OPENHD_CONTRAST_DEFAULT = 100;
+static constexpr int OPENHD_SHARPNESS_DEFAULT = 100;
 
-static constexpr int OPENHD_FLIP_NONE=0;
-static constexpr int OPENHD_FLIP_HORIZONTAL=1;
-static constexpr int OPENHD_FLIP_VERTICAL=2;
-static constexpr int OPENHD_FLIP_VERTICAL_AND_HORIZONTAL=3;
+static constexpr int OPENHD_FLIP_NONE = 0;
+static constexpr int OPENHD_FLIP_HORIZONTAL = 1;
+static constexpr int OPENHD_FLIP_VERTICAL = 2;
+static constexpr int OPENHD_FLIP_VERTICAL_AND_HORIZONTAL = 3;
 
 // User-selectable camera options
 // These values are settings that can change dynamically at run time
@@ -91,8 +91,9 @@ struct CameraSettings {
   // camera rotation, only supported on rpicamsrc at the moment
   // 0 nothing, 90° to the right, 180° to the right, 270° to the right
   int camera_rotation_degree = 0;
-  // horizontal / vertical flip, r.n only supported on rpicamsrc, libcamera, (x20 ?)
-  int openhd_flip=OPENHD_FLIP_NONE;
+  // horizontal / vertical flip, r.n only supported on rpicamsrc, libcamera,
+  // (x20 ?)
+  int openhd_flip = OPENHD_FLIP_NONE;
 
   // Depending on the cam type, openhd uses hw-accelerated encoding whenever
   // possible. However, in some cases (e.g. when using a USB camera that outputs
@@ -106,16 +107,17 @@ struct CameraSettings {
   bool enable_ultra_secure_encryption = false;
 
   // -----------------------------------------------------------------------------------------------------------------------
-  // IQ (Image quality) settings begin. Values prefixed with openhd_ are values where openhd defines the range,
-  // and each camera that implements the given functionality needs to use this range (re-mapping is possible,
-  // for example openhd_brightness is re-mapped for libcamera, which takes a float
-  // Values prefixed with a vendor-specific string (for example lc_ ) are values that cannot be generified and therefore
-  // need to be different for each camera.
+  // IQ (Image quality) settings begin. Values prefixed with openhd_ are values
+  // where openhd defines the range, and each camera that implements the given
+  // functionality needs to use this range (re-mapping is possible, for example
+  // openhd_brightness is re-mapped for libcamera, which takes a float Values
+  // prefixed with a vendor-specific string (for example lc_ ) are values that
+  // cannot be generified and therefore need to be different for each camera.
   // default 100, range [0,200]
   int openhd_brightness = OPENHD_BRIGHTNESS_DEFAULT;
   int openhd_saturation = OPENHD_SATURATION_DEFAULT;
   int openhd_contrast = OPENHD_CONTRAST_DEFAULT;
-  int openhd_sharpness= OPENHD_SHARPNESS_DEFAULT;
+  int openhd_sharpness = OPENHD_SHARPNESS_DEFAULT;
   // libcamera params
   int rpi_libcamera_ev_value = RPI_LIBCAMERA_DEFAULT_EV;
   int rpi_libcamera_denoise_index = 0;
@@ -130,20 +132,23 @@ struct CameraSettings {
   int infiray_custom_control_zoom_absolute_colorpalete = 34817;
 };
 
-
-static bool requires_hflip(const CameraSettings& settings){
-  if(settings.openhd_flip==OPENHD_FLIP_HORIZONTAL || settings.openhd_flip==OPENHD_FLIP_VERTICAL_AND_HORIZONTAL)return true;
+static bool requires_hflip(const CameraSettings& settings) {
+  if (settings.openhd_flip == OPENHD_FLIP_HORIZONTAL ||
+      settings.openhd_flip == OPENHD_FLIP_VERTICAL_AND_HORIZONTAL)
+    return true;
   return false;
 }
-static bool requires_vflip(const CameraSettings& settings){
-  if(settings.openhd_flip==OPENHD_FLIP_VERTICAL || settings.openhd_flip==OPENHD_FLIP_VERTICAL_AND_HORIZONTAL)return true;
+static bool requires_vflip(const CameraSettings& settings) {
+  if (settings.openhd_flip == OPENHD_FLIP_VERTICAL ||
+      settings.openhd_flip == OPENHD_FLIP_VERTICAL_AND_HORIZONTAL)
+    return true;
   return false;
 }
 // TODO - some platforms (only) flip, some platforms rotate the full range
-static int get_rotation_degree_0_90_180_270(const CameraSettings& settings){
-  if(settings.openhd_flip==OPENHD_FLIP_NONE)return 0;
-  if(settings.openhd_flip==OPENHD_FLIP_HORIZONTAL)return 180;
-  if(settings.openhd_flip==OPENHD_FLIP_VERTICAL_AND_HORIZONTAL)return 180;
+static int get_rotation_degree_0_90_180_270(const CameraSettings& settings) {
+  if (settings.openhd_flip == OPENHD_FLIP_NONE) return 0;
+  if (settings.openhd_flip == OPENHD_FLIP_HORIZONTAL) return 180;
+  if (settings.openhd_flip == OPENHD_FLIP_VERTICAL_AND_HORIZONTAL) return 180;
   return 0;
 }
 

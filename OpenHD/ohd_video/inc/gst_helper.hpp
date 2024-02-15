@@ -11,10 +11,10 @@
 #include <string>
 
 #include "camera_settings.hpp"
+#include "libcamera_iq_helper.h"
 #include "openhd_bitrate_conversions.hpp"
 #include "openhd_platform.h"
 #include "openhd_spdlog.h"
-#include "libcamera_iq_helper.h"
 
 // #define EXPERIMENTAL_USE_OPENH264_ENCODER
 
@@ -197,10 +197,10 @@ static std::string createRpicamsrcStream(
   if (openhd::validate_camera_rotation(settings.camera_rotation_degree)) {
     ss << "rotation=" << settings.camera_rotation_degree << " ";
   }
-  if(requires_hflip(settings)){
+  if (requires_hflip(settings)) {
     ss << "hflip=1 ";
   }
-  if(requires_vflip(settings)){
+  if (requires_vflip(settings)) {
     ss << "vflip=1 ";
   }
   // Note: ROI (Region of interest) on the rpi does not tell the encoder to
@@ -367,32 +367,33 @@ static std::string createLibcamerasrcStream(const CameraSettings& settings) {
                           // one libcamera at a time. rpi cannot do more than
                           // that anyway.
   // NOTE: those options require openhd/arducam lbcamera !!
-  // We make sure not to write them out explicitly when default(s) are still in use
-  const auto rotation_degree=libcamera::get_rotation_degree(settings);
-  if(rotation_degree.has_value()){
+  // We make sure not to write them out explicitly when default(s) are still in
+  // use
+  const auto rotation_degree = libcamera::get_rotation_degree(settings);
+  if (rotation_degree.has_value()) {
     ss << "rotation=" << rotation_degree.value() << " ";
   }
-  if(requires_hflip(settings)){
+  if (requires_hflip(settings)) {
     ss << "hflip=1 ";
   }
-  if(requires_vflip(settings)){
+  if (requires_vflip(settings)) {
     ss << "vflip=1 ";
   }
-  const auto brightness=libcamera::get_brightness(settings);
-  if(brightness.has_value()){
+  const auto brightness = libcamera::get_brightness(settings);
+  if (brightness.has_value()) {
     ss << fmt::format("brightness={} ", brightness.value());
   }
-  const auto sharpness=libcamera::get_sharpness(settings);
-  if(sharpness.has_value()){
-    ss << fmt::format("sharpness={} ",sharpness.value());
+  const auto sharpness = libcamera::get_sharpness(settings);
+  if (sharpness.has_value()) {
+    ss << fmt::format("sharpness={} ", sharpness.value());
   }
-  const auto saturation=libcamera::get_saturation(settings);
-  if(saturation.has_value()){
-    ss << fmt::format("saturation={} ",saturation.value());
+  const auto saturation = libcamera::get_saturation(settings);
+  if (saturation.has_value()) {
+    ss << fmt::format("saturation={} ", saturation.value());
   }
-  const auto contrast=libcamera::get_contrast(settings);
-  if(contrast.has_value()){
-    ss << fmt::format("contrast={} ",contrast.value());
+  const auto contrast = libcamera::get_contrast(settings);
+  if (contrast.has_value()) {
+    ss << fmt::format("contrast={} ", contrast.value());
   }
   if (openhd::validate_rpi_libcamera_ev_value(
           settings.rpi_libcamera_ev_value) &&
@@ -505,8 +506,8 @@ static std::string createRockchipEncoderPipeline(
                            settings.h26x_bitrate_kbits)) {
     ss << " level=42";
   }
-  const int rotation= get_rotation_degree_0_90_180_270(settings);
-  ss<<" rotation="<<rotation;
+  const int rotation = get_rotation_degree_0_90_180_270(settings);
+  ss << " rotation=" << rotation;
   ss << " ! ";
   return ss.str();
 }
@@ -778,9 +779,9 @@ static std::string create_dummy_filesrc_stream(const OHDPlatform& platform,
     ss << createSwEncoder(settings);
   } else {
     if (platform.is_rpi()) {
-      if(settings.streamed_video_format.videoCodec==VideoCodec::H264){
+      if (settings.streamed_video_format.videoCodec == VideoCodec::H264) {
         ss << create_rpi_v4l2_h264_encoder(settings);
-      }else{
+      } else {
         ss << createSwEncoder(settings);
       }
     } else if (platform.is_rock()) {

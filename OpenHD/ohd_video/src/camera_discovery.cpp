@@ -2,7 +2,7 @@
 
 #include <fcntl.h>
 
-#ifdef  ENABLE_USB_CAMERAS
+#ifdef ENABLE_USB_CAMERAS
 #include <libv4l2.h>
 #include <linux/videodev2.h>
 #endif

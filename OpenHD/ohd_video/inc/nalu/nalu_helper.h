@@ -51,5 +51,4 @@ static std::shared_ptr<std::vector<uint8_t>> get_h264_nalu_start_code() {
                                                 EXAMPLE_START_CODE.end());
 }
 
-
 #endif  // OPENHD_NALU_HELPER_H

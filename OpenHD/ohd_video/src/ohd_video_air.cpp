@@ -82,8 +82,7 @@ void OHDVideoAir::configure(
   // R.N we use gstreamer for pretty much everything
   // But this might change in the future
   m_console->debug("GStreamerStream for Camera index:{}", camera.index);
-  auto stream =
-      std::make_shared<GStreamerStream>(camera_holder, frame_cb);
+  auto stream = std::make_shared<GStreamerStream>(camera_holder, frame_cb);
   stream->start_looping();
   m_camera_streams.push_back(stream);
 }
@@ -330,20 +329,25 @@ bool OHDVideoAir::x_set_camera_type(bool primary, int cam_type) {
     m_generic_settings->unsafe_get_settings().secondary_camera_type = cam_type;
     openhd::LinkActionHandler::instance().set_cam_info_type(1, cam_type);
   }
-  bool reboot_required=false;
-  if(primary){
-    if(OHDPlatform::instance().is_rpi() && is_rpi_csi_camera(cam_type) ||
-        OHDPlatform::instance().is_rock() && is_rock_csi_camera(cam_type) ){
-      openhd::log::get_default()->warn("Calling image cam helper for cam type {}({})",cam_type, x_cam_type_to_string(cam_type));
-      auto res=OHDUtil::run_command_out(fmt::format("bash /usr/local/bin/ohd_camera_setup.sh {}",cam_type),{});
-      openhd::log::get_default()->debug("script returned:[{}]",res.value_or("ERROR"));
-      reboot_required=true;
+  bool reboot_required = false;
+  if (primary) {
+    if (OHDPlatform::instance().is_rpi() && is_rpi_csi_camera(cam_type) ||
+        OHDPlatform::instance().is_rock() && is_rock_csi_camera(cam_type)) {
+      openhd::log::get_default()->warn(
+          "Calling image cam helper for cam type {}({})", cam_type,
+          x_cam_type_to_string(cam_type));
+      auto res = OHDUtil::run_command_out(
+          fmt::format("bash /usr/local/bin/ohd_camera_setup.sh {}", cam_type),
+          {});
+      openhd::log::get_default()->debug("script returned:[{}]",
+                                        res.value_or("ERROR"));
+      reboot_required = true;
     }
   }
   m_generic_settings->persist(false);
-  if(reboot_required){
+  if (reboot_required) {
     openhd::reboot::handle_power_command_async(std::chrono::seconds(1), false);
-  }else{
+  } else {
     // Restarting openhd is enough
     openhd::TerminateHelper::instance().terminate = true;
   }

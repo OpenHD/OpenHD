@@ -69,8 +69,8 @@ void GStreamerStream::terminate_looping() {
 std::string GStreamerStream::create_source_encode_pipeline(
     const CameraHolder& cam_holder) {
   const auto& camera = cam_holder.get_camera();
-  CameraSettings setting=cam_holder.get_settings();
-  if(OHDPlatform::instance().is_allwinner()){
+  CameraSettings setting = cam_holder.get_settings();
+  if (OHDPlatform::instance().is_allwinner()) {
     openhd::x20::apply_x20_runcam_iq_settings(setting);
   }
   std::stringstream pipeline;
@@ -334,10 +334,11 @@ void GStreamerStream::stream_once() {
   // The user can disable streaming for a camera, in which case a restart is
   // requested and after that we land here (and do nothing)
   if (!m_camera_holder->get_settings().enable_streaming) {
-    const auto elapsed_log=std::chrono::steady_clock::now()-m_last_log_streaming_disabled;
-    if(elapsed_log>std::chrono::seconds(5)){
+    const auto elapsed_log =
+        std::chrono::steady_clock::now() - m_last_log_streaming_disabled;
+    if (elapsed_log > std::chrono::seconds(5)) {
       m_console->debug("streaming disabled");
-      m_last_log_streaming_disabled=std::chrono::steady_clock::now();
+      m_last_log_streaming_disabled = std::chrono::steady_clock::now();
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     return;
@@ -358,7 +359,7 @@ void GStreamerStream::stream_once() {
     m_console->warn("Not checking gst state after calling play (bugged)");
     succesfully_streaming= true;
   }*/
-  succesfully_streaming= true;
+  succesfully_streaming = true;
   if (!succesfully_streaming) {
     m_console->warn("Cannot start streaming. Valid resolution ?",
                     m_camera_holder->get_camera().index);
@@ -393,7 +394,7 @@ void GStreamerStream::stream_once() {
       std::chrono::steady_clock::now();
   m_frame_fragments.resize(0);
   // As soon as we get the first frame, we change the status to streaming
-  bool has_first_frame=false;
+  bool has_first_frame = false;
   while (true) {
     // Quickly terminate if openhd wants to terminate
     if (!m_keep_looping) break;
@@ -445,8 +446,8 @@ void GStreamerStream::stream_once() {
     GstSample* sample = gst_app_sink_try_pull_sample(
         GST_APP_SINK(m_app_sink_element), timeout_ns);
     if (sample) {
-      if(!has_first_frame){
-        has_first_frame= true;
+      if (!has_first_frame) {
+        has_first_frame = true;
         openhd::LinkActionHandler::instance().set_cam_info_status(
             m_camera_holder->get_camera().index, CAM_STATUS_STREAMING);
       }
@@ -490,24 +491,27 @@ void GStreamerStream::on_new_rtp_frame_fragment(
   const auto curr_video_codec =
       m_camera_holder->get_settings().streamed_video_format.videoCodec;
   openhd::rtp_eof_helper::RTPFragmentInfo info{};
-  const bool is_h265=curr_video_codec==VideoCodec::H265;
-  if(is_h265){
-    info= openhd::rtp_eof_helper::h265_more_info(fragment->data(),fragment->size());
-  }else{
-    info= openhd::rtp_eof_helper::h264_more_info(fragment->data(),fragment->size());
+  const bool is_h265 = curr_video_codec == VideoCodec::H265;
+  if (is_h265) {
+    info = openhd::rtp_eof_helper::h265_more_info(fragment->data(),
+                                                  fragment->size());
+  } else {
+    info = openhd::rtp_eof_helper::h264_more_info(fragment->data(),
+                                                  fragment->size());
   }
-  if(info.is_fu_start){
-    if(is_idr_frame(info.nal_unit_type,is_h265)){
-      m_last_fu_s_idr= true;
-    }else{
-      m_last_fu_s_idr= false;
+  if (info.is_fu_start) {
+    if (is_idr_frame(info.nal_unit_type, is_h265)) {
+      m_last_fu_s_idr = true;
+    } else {
+      m_last_fu_s_idr = false;
     }
   }
-  //m_console->debug("Fragment {} start:{} end:{} type:{}",m_frame_fragments.size(),
-  //                 OHDUtil::yes_or_no(info.is_fu_start),
-  //                 OHDUtil::yes_or_no(info.is_fu_end),
-  //                 x_get_nal_unit_type_as_string(info.nal_unit_type,is_h265));
-  bool is_last_fragment_of_frame=info.is_fu_end;
+  // m_console->debug("Fragment {} start:{} end:{}
+  // type:{}",m_frame_fragments.size(),
+  //                  OHDUtil::yes_or_no(info.is_fu_start),
+  //                  OHDUtil::yes_or_no(info.is_fu_end),
+  //                  x_get_nal_unit_type_as_string(info.nal_unit_type,is_h265));
+  bool is_last_fragment_of_frame = info.is_fu_end;
   if (m_frame_fragments.size() > 500) {
     // Most likely something wrong with the "find end of frame" workaround
     m_console->debug("No end of frame found after 1000 fragments");
@@ -516,7 +520,7 @@ void GStreamerStream::on_new_rtp_frame_fragment(
   if (is_last_fragment_of_frame) {
     on_new_rtp_fragmented_frame();
     m_frame_fragments.resize(0);
-    m_last_fu_s_idr= false;
+    m_last_fu_s_idr = false;
   }
 }
 
@@ -524,17 +528,18 @@ void GStreamerStream::on_new_rtp_fragmented_frame() {
   // m_console->debug("Got frame with {} fragments",rtp_fragments.size());
   if (m_output_cb) {
     const auto stream_index = m_camera_holder->get_camera().index;
-    const bool enable_ultra_secure_encryption=m_camera_holder->get_settings().enable_ultra_secure_encryption;
-    const bool is_intra_enabled=m_camera_holder->get_settings().h26x_intra_refresh_type!=-1;
-    const bool is_intra_frame= m_last_fu_s_idr;
-    auto frame = openhd::FragmentedVideoFrame{
-        m_frame_fragments, std::chrono::steady_clock::now(),
-        enable_ultra_secure_encryption,
-        nullptr,
-        is_intra_enabled,
-        is_intra_frame
-    };
-    //m_console->debug("{}",frame.to_string());
+    const bool enable_ultra_secure_encryption =
+        m_camera_holder->get_settings().enable_ultra_secure_encryption;
+    const bool is_intra_enabled =
+        m_camera_holder->get_settings().h26x_intra_refresh_type != -1;
+    const bool is_intra_frame = m_last_fu_s_idr;
+    auto frame = openhd::FragmentedVideoFrame{m_frame_fragments,
+                                              std::chrono::steady_clock::now(),
+                                              enable_ultra_secure_encryption,
+                                              nullptr,
+                                              is_intra_enabled,
+                                              is_intra_frame};
+    // m_console->debug("{}",frame.to_string());
     m_output_cb(stream_index, frame);
   } else {
     m_console->debug("No output cb");

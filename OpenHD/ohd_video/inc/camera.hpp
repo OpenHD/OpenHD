@@ -5,11 +5,11 @@
 #ifndef OPENHD_CAMERA_HPP
 #define OPENHD_CAMERA_HPP
 
+#include <optional>
 #include <regex>
 #include <sstream>
 #include <string>
 #include <vector>
-#include <optional>
 
 /**
  * NOTE: This file is copied into QOpenHD to populate the UI.
@@ -77,7 +77,7 @@ static constexpr int X_CAM_TYPE_ROCK_HDMI_IN = 80;
 static constexpr int X_CAM_TYPE_ROCK_IMX219 = 81;
 //
 // OpenIPC specific starts here
-static constexpr int X_CAM_TYPE_OPENIPC_SOMETHING=90;
+static constexpr int X_CAM_TYPE_OPENIPC_SOMETHING = 90;
 //
 
 // ... rest is reserved for future use
@@ -156,9 +156,9 @@ struct ResolutionFramerate {
   int width_px;
   int height_px;
   int fps;
-  std::string as_string()const{
+  std::string as_string() const {
     std::stringstream ss;
-    ss<<width_px<<"x"<<height_px<<"@"<<fps;
+    ss << width_px << "x" << height_px << "@" << fps;
     return ss.str();
   }
 };
@@ -206,8 +206,8 @@ struct XCamera {
       // also easy, 720p60 only (for now)
       return {ResolutionFramerate{1280, 720, 60}};
     } else if (camera_type == X_CAM_TYPE_USB_INFIRAY) {
-      return {ResolutionFramerate{384,292,25}};
-    } else if(camera_type==X_CAM_TYPE_USB_GENERIC){
+      return {ResolutionFramerate{384, 292, 25}};
+    } else if (camera_type == X_CAM_TYPE_USB_GENERIC) {
       // Return what's most likely going to work
       return {ResolutionFramerate{640, 480, 30}};
     } else if (requires_rpi_libcamera_pipeline()) {
@@ -223,17 +223,17 @@ struct XCamera {
       ret.push_back(ResolutionFramerate{1920, 1080, 25});
       ret.push_back(ResolutionFramerate{1280, 720, 60});
       return ret;
-    }else if(camera_type==X_CAM_TYPE_DUMMY_SW){
+    } else if (camera_type == X_CAM_TYPE_DUMMY_SW) {
       std::vector<ResolutionFramerate> ret;
-      ret.push_back(ResolutionFramerate{640,480,30});
-      ret.push_back(ResolutionFramerate{1280,720,30});
-      ret.push_back(ResolutionFramerate{1280,720,60});
+      ret.push_back(ResolutionFramerate{640, 480, 30});
+      ret.push_back(ResolutionFramerate{1280, 720, 30});
+      ret.push_back(ResolutionFramerate{1280, 720, 60});
       return ret;
-    }else if(camera_type==X_CAM_TYPE_DEVELOPMENT_FILESRC){
+    } else if (camera_type == X_CAM_TYPE_DEVELOPMENT_FILESRC) {
       std::vector<ResolutionFramerate> ret;
-      ret.push_back(ResolutionFramerate{848,480,60});
-      ret.push_back(ResolutionFramerate{1280,720,60});
-      ret.push_back(ResolutionFramerate{1920,1080,60});
+      ret.push_back(ResolutionFramerate{848, 480, 60});
+      ret.push_back(ResolutionFramerate{1280, 720, 60});
+      ret.push_back(ResolutionFramerate{1920, 1080, 60});
       return ret;
     }
     // Not mapped yet
@@ -242,8 +242,8 @@ struct XCamera {
   }
   // We default to the last supported resolution
   [[nodiscard]] ResolutionFramerate get_default_resolution_fps() const {
-    auto supported_resolutions=get_supported_resolutions();
-    return supported_resolutions.at(supported_resolutions.size()-1);
+    auto supported_resolutions = get_supported_resolutions();
+    return supported_resolutions.at(supported_resolutions.size() - 1);
   }
 };
 
@@ -252,12 +252,9 @@ static bool is_valid_primary_cam_type(int cam_type) {
   return false;
 }
 static bool is_valid_secondary_cam_type(int cam_type) {
-  if (cam_type == X_CAM_TYPE_DUMMY_SW ||
-      cam_type == X_CAM_TYPE_USB_INFIRAY ||
-      cam_type==X_CAM_TYPE_USB_GENERIC ||
-      cam_type == X_CAM_TYPE_EXTERNAL ||
-      cam_type == X_CAM_TYPE_EXTERNAL_IP ||
-      cam_type == X_CAM_TYPE_DISABLED) {
+  if (cam_type == X_CAM_TYPE_DUMMY_SW || cam_type == X_CAM_TYPE_USB_INFIRAY ||
+      cam_type == X_CAM_TYPE_USB_GENERIC || cam_type == X_CAM_TYPE_EXTERNAL ||
+      cam_type == X_CAM_TYPE_EXTERNAL_IP || cam_type == X_CAM_TYPE_DISABLED) {
     return true;
   }
   return false;
@@ -267,16 +264,17 @@ static bool is_rpi_csi_camera(int cam_type) {
   return cam_type >= 20 && cam_type <= 69;
 }
 static bool is_rock_csi_camera(int cam_type) {
-  return cam_type==X_CAM_TYPE_ROCK_IMX219;
+  return cam_type == X_CAM_TYPE_ROCK_IMX219;
 }
 
-static bool is_usb_camera(int cam_type){
-  return cam_type>=10 && cam_type<19;
+static bool is_usb_camera(int cam_type) {
+  return cam_type >= 10 && cam_type < 19;
 }
 
 // Takes a string in the from {width}x{height}@{framerate}
 // e.g. 1280x720@30
-static std::optional<ResolutionFramerate> parse_video_format(const std::string& videoFormat){
+static std::optional<ResolutionFramerate> parse_video_format(
+    const std::string& videoFormat) {
   if (videoFormat.size() <= 5) {
     return std::nullopt;
   }
@@ -298,29 +296,37 @@ static std::optional<ResolutionFramerate> parse_video_format(const std::string& 
 //
 // Used in QOpenHD UI
 //
-static std::string get_verbose_string_of_resolution(const ResolutionFramerate& resolution_framerate){
-  if(resolution_framerate.width_px==0 && resolution_framerate.height_px==0 && resolution_framerate.fps==0){
+static std::string get_verbose_string_of_resolution(
+    const ResolutionFramerate& resolution_framerate) {
+  if (resolution_framerate.width_px == 0 &&
+      resolution_framerate.height_px == 0 && resolution_framerate.fps == 0) {
     return "AUTO";
   }
   std::stringstream ss;
-  if(resolution_framerate.width_px==640 && resolution_framerate.height_px==480){
-    ss<<"VGA 4:3";
-  }else if(resolution_framerate.width_px==848 && resolution_framerate.height_px==480){
-    ss<<"VGA 16:9";
-  }else if(resolution_framerate.width_px==896 && resolution_framerate.height_px== 504){
-    ss<<"SD 16:9";
-  }else if(resolution_framerate.width_px==1280 && resolution_framerate.height_px==720){
-    ss<<"HD 16:9";
-  }else if(resolution_framerate.width_px==1920 && resolution_framerate.height_px==1080){
-    ss<<"FHD 16:9";
-  }else if(resolution_framerate.width_px==2560 && resolution_framerate.height_px==1440){
-    ss<<"2K 16:9";
-  }else{
-    ss<<resolution_framerate.width_px<<"x"<<resolution_framerate.height_px<<"\n";
+  if (resolution_framerate.width_px == 640 &&
+      resolution_framerate.height_px == 480) {
+    ss << "VGA 4:3";
+  } else if (resolution_framerate.width_px == 848 &&
+             resolution_framerate.height_px == 480) {
+    ss << "VGA 16:9";
+  } else if (resolution_framerate.width_px == 896 &&
+             resolution_framerate.height_px == 504) {
+    ss << "SD 16:9";
+  } else if (resolution_framerate.width_px == 1280 &&
+             resolution_framerate.height_px == 720) {
+    ss << "HD 16:9";
+  } else if (resolution_framerate.width_px == 1920 &&
+             resolution_framerate.height_px == 1080) {
+    ss << "FHD 16:9";
+  } else if (resolution_framerate.width_px == 2560 &&
+             resolution_framerate.height_px == 1440) {
+    ss << "2K 16:9";
+  } else {
+    ss << resolution_framerate.width_px << "x" << resolution_framerate.height_px
+       << "\n";
   }
-  ss<<"\n"<<resolution_framerate.fps<<"fps";
+  ss << "\n" << resolution_framerate.fps << "fps";
   return ss.str();
 }
-
 
 #endif  // OPENHD_CAMERA_HPP

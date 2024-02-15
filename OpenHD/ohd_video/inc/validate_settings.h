@@ -32,15 +32,15 @@ static bool validate_video_fps(int fps) {
   return fps >= 0;
 }
 
-static bool is_resolution_auto(int video_w,int video_h,int fps){
-  if(video_w==0 && video_h==0 && fps==0){
+static bool is_resolution_auto(int video_w, int video_h, int fps) {
+  if (video_w == 0 && video_h == 0 && fps == 0) {
     return true;
   }
   return false;
 }
 
 static bool validate_video_width_height_fps(int video_w, int video_h, int fps) {
-  if(is_resolution_auto(video_w,video_h,fps))return true;
+  if (is_resolution_auto(video_w, video_h, fps)) return true;
   return validate_video_with(video_w) && validate_video_height(video_h) &&
          validate_video_fps(fps);
 }
@@ -52,17 +52,17 @@ bool validate_bitrate_mbits(int bitrate_mbits);
 
 bool validate_camera_rotation(int value);
 
-static bool validate_openhd_brightness(int value){
-  return value >=0 && value <=200;
+static bool validate_openhd_brightness(int value) {
+  return value >= 0 && value <= 200;
 }
-static bool validate_openhd_saturation(int value){
-  return value >=0 && value <=200;
+static bool validate_openhd_saturation(int value) {
+  return value >= 0 && value <= 200;
 }
-static bool validate_openhd_contrast(int value){
-  return value >=0 && value <=200;
+static bool validate_openhd_contrast(int value) {
+  return value >= 0 && value <= 200;
 }
-static bool validate_openhd_sharpness(int value){
-  return value >=0 && value <=200;
+static bool validate_openhd_sharpness(int value) {
+  return value >= 0 && value <= 200;
 }
 
 // from gst-rpicamsrc: keyframe-interval   : Interval (in frames) between I
