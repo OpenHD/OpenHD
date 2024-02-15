@@ -59,9 +59,8 @@ static constexpr auto DEFAULT_WB_VIDEO_FEC_BLOCK_LENGTH =
 // doesn't help, it is better to reduce the key frame interval of your camera in
 // this case
 static constexpr auto DEFAULT_WB_VIDEO_FEC_PERCENTAGE = 20;
-// NOTE: Default depends on platform type and is therefore calculated below,
-// then overwrites this default value
-static constexpr uint32_t DEFAULT_MAX_FEC_BLK_SIZE_FOR_PLATFORM = 20;
+// -1 = use openhd recommended for this platform
+static constexpr uint32_t DEFAULT_MAX_FEC_BLK_SIZE = -1;
 // 0 means disabled (default), the rc channel used for setting the mcs index
 // otherwise
 static constexpr auto WB_MCS_INDEX_VIA_RC_CHANNEL_OFF = 0;
@@ -100,10 +99,8 @@ struct WBLinkSettings {
   // fine. If you set this value to 80% (for example), it reduces the bitrate(s)
   // recommended to the encoder by 80% for each mcs index
   int wb_video_rate_for_mcs_adjustment_percent = 100;
-  // NOTE: Default depends on platform type and is therefore calculated below,
-  // then overwrites this default value
-  uint32_t wb_max_fec_block_size_for_platform =
-      DEFAULT_MAX_FEC_BLK_SIZE_FOR_PLATFORM;
+  // NOTE: -1 means use whatever is the openhd recommendation for this platform
+  int wb_max_fec_block_size =DEFAULT_MAX_FEC_BLK_SIZE;
   // change mcs index via RC channel
   uint32_t wb_mcs_index_via_rc_channel = WB_MCS_INDEX_VIA_RC_CHANNEL_OFF;
   // wb link recommends bitrate(s) to the encoder.
@@ -126,15 +123,6 @@ static bool validate_wb_rtl8812au_tx_pwr_idx_override(int value) {
   openhd::log::get_default()->warn(
       "Invalid wb_rtl8812au_tx_pwr_idx_override {}", value);
   return false;
-}
-
-// We allow the user to overwrite defaults for his platform.
-// The FEC impl limit would be 128 - but anything above 50 is not computable on
-// any platform
-static bool valid_wb_max_fec_block_size_for_platform(
-    uint32_t wb_max_fec_block_size_for_platform) {
-  return wb_max_fec_block_size_for_platform > 0 &&
-         wb_max_fec_block_size_for_platform <= 100;
 }
 
 class WBLinkSettingsHolder : public openhd::PersistentSettings<WBLinkSettings> {

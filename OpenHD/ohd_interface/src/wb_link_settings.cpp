@@ -13,7 +13,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
     wb_tx_power_milli_watt, wb_tx_power_milli_watt_armed,
     wb_rtl8812au_tx_pwr_idx_override, wb_rtl8812au_tx_pwr_idx_override_armed,
     wb_video_fec_percentage, wb_video_rate_for_mcs_adjustment_percent,
-    wb_max_fec_block_size_for_platform, wb_mcs_index_via_rc_channel,
+    wb_max_fec_block_size, wb_mcs_index_via_rc_channel,
     enable_wb_video_variable_bitrate, wb_enable_listen_only_mode,
     wb_dev_air_set_high_retransmit_count);
 
@@ -41,11 +41,6 @@ WBLinkSettings create_default_wb_stream_settings(
   } else {
     settings.wb_frequency = DEFAULT_2GHZ_FREQUENCY;
   }
-  settings.wb_max_fec_block_size_for_platform =
-      get_fec_max_block_size_for_platform(platform.platform_type);
-  openhd::log::get_default()->debug(
-      "Default wb_max_fec_block_size_for_platform:{}",
-      settings.wb_max_fec_block_size_for_platform);
   // custom hardware only has one wifi card
   if (wifibroadcast_cards.at(0).is_rtl8812au_custom_hardware) {
     // Already a lot lol

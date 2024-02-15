@@ -219,15 +219,13 @@ class WBLink : public OHDLink {
   std::atomic<int> m_gnd_curr_rx_frequency=-1;
   // Allows temporarily closing the video input
   std::atomic_bool m_air_close_video_in=false;
-  // TODO remove me
-  std::mutex m_telemetry_tx_mutex;
+  const int m_recommended_max_fec_blk_size_for_this_platform;
  private:
   openhd::wb::ForeignPacketsHelper m_foreign_p_helper;
   openhd::wb::RCChannelHelper m_rc_channel_helper;
   openhd::wb::FrameDropsHelper m_frame_drop_helper;
   std::atomic_int m_primary_total_dropped_frames = 0;
   std::atomic_int m_secondary_total_dropped_frames = 0;
-
  private:
   const bool DIRTY_forward_gapped_fragments = false;
   const bool DIRTY_add_aud_nal = false;

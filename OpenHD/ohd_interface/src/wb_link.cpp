@@ -23,7 +23,9 @@ WBLink::WBLink(OHDProfile profile, OHDPlatform platform,
                std::vector<WiFiCard> broadcast_cards)
     : m_profile(std::move(profile)),
       m_platform(platform),
-      m_broadcast_cards(std::move(broadcast_cards)) {
+      m_broadcast_cards(std::move(broadcast_cards)),
+      m_recommended_max_fec_blk_size_for_this_platform(get_fec_max_block_size_for_platform(platform.platform_type))
+{
   m_console = openhd::log::create_or_get("wb_streams");
   assert(m_console);
   m_frame_drop_helper.set_console(m_console);
@@ -453,8 +455,7 @@ bool WBLink::set_air_enable_wb_video_variable_bitrate(int value) {
 }
 
 bool WBLink::set_air_max_fec_block_size_for_platform(int value) {
-  if (!openhd::valid_wb_max_fec_block_size_for_platform(value)) return false;
-  m_settings->unsafe_get_settings().wb_max_fec_block_size_for_platform = value;
+  m_settings->unsafe_get_settings().wb_max_fec_block_size = value;
   m_settings->persist();
   return true;
 }
@@ -611,7 +612,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
     };
     ret.push_back(Setting{
         WB_MAX_FEC_BLOCK_SIZE_FOR_PLATFORM,
-        openhd::IntSetting{(int)settings.wb_max_fec_block_size_for_platform,
+        openhd::IntSetting{(int)settings.wb_max_fec_block_size,
                            cb_wb_max_fec_block_size_for_platform}});
     auto cb_wb_video_rate_for_mcs_adjustment_percent = [this](std::string,
                                                               int value) {
@@ -1113,7 +1114,6 @@ bool WBLink::try_schedule_work_item(
 
 void WBLink::transmit_telemetry_data(TelemetryTxPacket packet) {
   assert(packet.n_injections >= 1);
-  std::lock_guard<std::mutex> guard(m_telemetry_tx_mutex);
   // m_console->debug("N injections:{}",packet.n_injections);
   const auto n_dropped=m_wb_tele_tx->enqueue_packet_dropping(packet.data,packet.n_injections);
   if(n_dropped>0){
@@ -1486,16 +1486,13 @@ void WBLink::wt_perform_air_hotspot_after_timeout() {
 }
 
 int WBLink::get_max_fec_block_size() {
-  // tx.tmp_feed_frame_fragments(fragmented_video_frame.rtp_fragments,use_fixed_fec_instead);
-  int max_block_size_for_platform =
-      m_settings->get_settings().wb_max_fec_block_size_for_platform;
-  // openhd::log::get_default()->debug("max_block_size_for_platform:{}",max_block_size_for_platform);
-  if (!openhd::valid_wb_max_fec_block_size_for_platform(
-          max_block_size_for_platform)) {
-    openhd::log::get_default()->warn("Invalid max_block_size_for_platform:{}",
-                                     max_block_size_for_platform);
-    max_block_size_for_platform =
-        openhd::DEFAULT_MAX_FEC_BLK_SIZE_FOR_PLATFORM;
+  const int tmp=m_settings->get_settings().wb_max_fec_block_size;
+  if(tmp<0){
+    return m_recommended_max_fec_blk_size_for_this_platform;
   }
-  return max_block_size_for_platform;
+  if(tmp>128){
+    m_console->warn("Invalid blk size");
+    return 20;
+  }
+  return tmp;
 }
