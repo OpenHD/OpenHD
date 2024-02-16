@@ -5,6 +5,7 @@
 #ifndef OPENHD_CAMERA_HPP
 #define OPENHD_CAMERA_HPP
 
+#include <iostream>
 #include <optional>
 #include <regex>
 #include <sstream>
@@ -51,8 +52,8 @@ static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V3_IMX708 = 32;
 static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_RPIF_HQ_IMX477 = 33;
 // .... 5 reserved for future use
 // Now to all the rpi libcamera arducam cameras
-static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_SKYMASTERHDR = 40; //imx708
-static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_SKYVISIONPRO = 41; //imx519
+static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_SKYMASTERHDR_IMX708 = 40;
+static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_SKYVISIONPRO_IMX519 = 41;
 static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX477M = 42;
 static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX462 = 43;
 static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX327 = 44;
@@ -110,9 +111,9 @@ static std::string x_cam_type_to_string(int camera_type) {
       return "RPIF_V3_IMX708";
     case X_CAM_TYPE_RPI_LIBCAMERA_RPIF_HQ_IMX477:
       return "RPIF_HQ_IMX477";
-    case X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_SKYMASTERHDR:
+    case X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_SKYMASTERHDR_IMX708:
       return "ARDUCAM_SKYMASTERHDR";
-    case X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_SKYVISIONPRO:
+    case X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_SKYVISIONPRO_IMX519:
       return "ARDUCAM_SKYVISIONPRO";
     case X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX477M:
       return "ARDUCAM_IMX477M";
@@ -200,7 +201,17 @@ struct XCamera {
   // anything he likes)
   std::vector<ResolutionFramerate> get_supported_resolutions() const {
     if (requires_rpi_veye_pipeline()) {
-      // Veye camera(s) only do 1080p30
+      // Except one, all veye camera(s) only do 1080p30 -
+      // Urghs but not via v4l2. So we only expose 1080p30
+      /*if(camera_type==X_CAM_TYPE_RPI_V4L2_VEYE_CSIMX307){
+        std::vector<ResolutionFramerate> ret;
+        ret.push_back(ResolutionFramerate{640, 480, 90});
+        ret.push_back(ResolutionFramerate{1280, 720, 50});
+        ret.push_back(ResolutionFramerate{1280, 720, 60});
+        ret.push_back(ResolutionFramerate{1920, 1080, 30});
+      }else{
+        return {ResolutionFramerate{1920, 1080, 30}};
+      }*/
       return {ResolutionFramerate{1920, 1080, 30}};
     } else if (requires_x20_cedar_pipeline()) {
       // also easy, 720p60 only (for now)
@@ -214,7 +225,6 @@ struct XCamera {
       std::vector<ResolutionFramerate> ret;
       if(camera_type==X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX462 ||
         camera_type==X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX462_LOWLIGHT_MINI){
-        // Quite a nice camera !
         ret.push_back(ResolutionFramerate{640, 480, 60});
         ret.push_back(ResolutionFramerate{896, 504, 60});
         ret.push_back(ResolutionFramerate{1280, 720, 60});
@@ -225,9 +235,33 @@ struct XCamera {
         ret.push_back(ResolutionFramerate{896, 504, 50});
         ret.push_back(ResolutionFramerate{1280, 720, 50});
         ret.push_back(ResolutionFramerate{1920, 1080, 30});
-      }else{
+      }else if(camera_type==X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V2_IMX219){
+        ret.push_back(ResolutionFramerate{640, 480, 47});
+        ret.push_back(ResolutionFramerate{896, 504, 47});
+        ret.push_back(ResolutionFramerate{1280, 720, 47});
+        ret.push_back(ResolutionFramerate{1920, 1080, 30});
+      }else if(camera_type==X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_SKYVISIONPRO_IMX519){
         ret.push_back(ResolutionFramerate{640, 480, 60});
+        ret.push_back(ResolutionFramerate{896, 504, 60});
         ret.push_back(ResolutionFramerate{1280, 720, 60});
+        ret.push_back(ResolutionFramerate{1920, 1080, 30});
+      }else if(camera_type==X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_SKYMASTERHDR_IMX708 ||
+                 camera_type==X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V3_IMX708){
+        ret.push_back(ResolutionFramerate{640, 480, 60});
+        ret.push_back(ResolutionFramerate{896, 504, 60});
+        ret.push_back(ResolutionFramerate{1280, 720, 60});
+        ret.push_back(ResolutionFramerate{1920, 1080, 30});
+      }else if(camera_type==X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX327) {
+        ret.push_back(ResolutionFramerate{640, 480, 60});
+        ret.push_back(ResolutionFramerate{896, 504, 60});
+        ret.push_back(ResolutionFramerate{1280, 720, 60});
+        ret.push_back(ResolutionFramerate{1920, 1080, 30});
+      }else if(camera_type==X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V1_OV5647){
+        ret.push_back(ResolutionFramerate{1280, 720, 30});
+        ret.push_back(ResolutionFramerate{1920, 1080, 30});
+      }
+      else{
+        std::cerr<<"Not yet mapped:"<<camera_type<<std::endl;
         ret.push_back(ResolutionFramerate{1920, 1080, 30});
       }
       return ret;
