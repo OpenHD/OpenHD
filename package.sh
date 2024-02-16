@@ -1,4 +1,3 @@
-rpi
 set -euo pipefail
 
 CUSTOM="${1}"
