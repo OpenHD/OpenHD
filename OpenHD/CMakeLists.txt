@@ -26,12 +26,12 @@ endif ()
 # See https://github.com/andrew-hardin/cmake-git-version-tracking
 # This way we can track down bug reports to a commit hash and even more
 # (OpenHD prints the stuff at startup)
-include(FetchContent)
-FetchContent_Declare(cmake_git_version_tracking
-        GIT_REPOSITORY https://github.com/andrew-hardin/cmake-git-version-tracking.git
-        GIT_TAG 904dbda1336ba4b9a1415a68d5f203f576b696bb
-        )
-FetchContent_MakeAvailable(cmake_git_version_tracking)
+#include(FetchContent)
+#FetchContent_Declare(cmake_git_version_tracking
+#        GIT_REPOSITORY https://github.com/andrew-hardin/cmake-git-version-tracking.git
+#        GIT_TAG 904dbda1336ba4b9a1415a68d5f203f576b696bb
+#        )
+#FetchContent_MakeAvailable(cmake_git_version_tracking)
 
 # https://stackoverflow.com/questions/58903269/cmake-prevent-building-test-executable-target-in-subdirectory-library-project
 # Some of these subdirectories have a couple of test executables. They can be usefully for development,

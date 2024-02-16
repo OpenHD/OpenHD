@@ -21,7 +21,7 @@
 #include "openhd_spdlog.h"
 #include "openhd_temporary_air_or_ground.h"
 // For logging the commit hash and more
-#include "git.h"
+//#include "git.h"
 #include "openhd_config.h"
 
 // |-------------------------------------------------------------------------------|
@@ -172,7 +172,7 @@ int main(int argc, char *argv[]) {
       ss<<"run_time_seconds:"<<options.run_time_seconds<<"\n";
       ss<<"hardware-config-file:["<<options.hardware_config_file.value_or("DEFAULT")<<"]\n";
       ss<<"Version number:"<<openhd::get_ohd_version_as_string()<<"\n";
-      ss<<"Git info:Branch:"<<git_Branch()<<" SHA:"<<git_CommitSHA1()<<" Dirty:"<<OHDUtil::yes_or_no(git_AnyUncommittedChanges())<<"\n";
+      //ss<<"Git info:Branch:"<<git_Branch()<<" SHA:"<<git_CommitSHA1()<<" Dirty:"<<OHDUtil::yes_or_no(git_AnyUncommittedChanges())<<"\n";
       std::cout<<ss.str()<<std::flush;
       openhd::debug_config();
       OHDInterface::print_internal_fec_optimization_method();
