@@ -212,9 +212,24 @@ struct XCamera {
       return {ResolutionFramerate{640, 480, 30}};
     } else if (requires_rpi_libcamera_pipeline()) {
       std::vector<ResolutionFramerate> ret;
-      ret.push_back(ResolutionFramerate{640, 480, 60});
-      ret.push_back(ResolutionFramerate{1280, 720, 60});
-      ret.push_back(ResolutionFramerate{1920, 1080, 30});
+      if(camera_type==X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX462 ||
+        camera_type==X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX462_LOWLIGHT_MINI){
+        // Quite a nice camera !
+        ret.push_back(ResolutionFramerate{640, 480, 60});
+        ret.push_back(ResolutionFramerate{896, 504, 60});
+        ret.push_back(ResolutionFramerate{1280, 720, 60});
+        ret.push_back(ResolutionFramerate{1920, 1080, 30});
+      }else if(camera_type==X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX477M ||
+                 camera_type==X_CAM_TYPE_RPI_LIBCAMERA_RPIF_HQ_IMX477) {
+        ret.push_back(ResolutionFramerate{640, 480, 50});
+        ret.push_back(ResolutionFramerate{896, 504, 50});
+        ret.push_back(ResolutionFramerate{1280, 720, 50});
+        ret.push_back(ResolutionFramerate{1920, 1080, 30});
+      }else{
+        ret.push_back(ResolutionFramerate{640, 480, 60});
+        ret.push_back(ResolutionFramerate{1280, 720, 60});
+        ret.push_back(ResolutionFramerate{1920, 1080, 30});
+      }
       return ret;
     } else if (camera_type == X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI) {
       std::vector<ResolutionFramerate> ret;
