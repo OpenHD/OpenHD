@@ -5,6 +5,7 @@
 #ifndef OPEN_HD_OPNHD_GLOBAL_CONSTANTS_H
 #define OPEN_HD_OPNHD_GLOBAL_CONSTANTS_H
 
+#include <sstream>
 // This file should only contain const values that are needed by more than one module.
 
 namespace openhd{
@@ -30,7 +31,27 @@ static constexpr auto VIDEO_GROUND_VIDEO_STREAM_1_UDP = 5600;
 static constexpr auto VIDEO_GROUND_VIDEO_STREAM_2_UDP = 5601;
 static_assert(VIDEO_GROUND_VIDEO_STREAM_1_UDP != VIDEO_GROUND_VIDEO_STREAM_2_UDP, "Must be different");
 
-static constexpr auto VERSION_NUMBER_STRING="2.5.3-evo-release";
+static constexpr uint8_t MAJOR_VERSION=2;
+static constexpr uint8_t MINOR_VERSION=5;
+static constexpr uint8_t PATCH_VERSION=4;
+static constexpr uint8_t RELEASE_TYPE=2;
+static std::string ohd_version_as_string(uint8_t major,uint8_t minor,uint8_t patch,uint8_t release_type){
+  std::stringstream ss;
+  ss<<(int)major<<"."<<(int)minor<<"."<<(int)patch<<"-evo";
+  if(release_type==0){
+    ss<<"-release";
+  }else if(release_type==1){
+    ss<<"-beta";
+  }else if(release_type==2){
+    ss<<"-alpha";
+  }else{
+    ss<<"-unknown";
+  }
+  return ss.str();
+}
+static std::string get_ohd_version_as_string(){
+  return ohd_version_as_string(MAJOR_VERSION,MINOR_VERSION,PATCH_VERSION,RELEASE_TYPE);
+}
 
 // This optional file contains an encryption keypair (up/down).
 // It is generated at first boot if the user specifies a pw during flash.

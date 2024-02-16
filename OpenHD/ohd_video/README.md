@@ -3,7 +3,7 @@
 The responsibilities of this module depend on weather it us used on air or ground.
 # AIR
 1) Detect connected cameras (can be manually overridden)
-2) Setup a pipeline that generates a continuous stream of encoded video data (h264,h265 or mjpeg) for a detected camera
+2) Setup a pipeline that generates a continuous stream of encoded video data (h264 or h265) for a detected camera
    This data is forwarded via a callback (previously udp port) to ohd_interface for transmission via wb
 3) Store and change camera/encoder-related settings
    Camera settings are stored in SETTINGS_BASE_PATH/video (one unique file for each camera)

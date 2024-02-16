@@ -40,24 +40,12 @@ struct SettingImpl{
   std::function<T()> get_callback= nullptr;
 };
 using IntSetting=SettingImpl<int>;
-using FloatSetting=SettingImpl<float>;
 using StringSetting=SettingImpl<std::string>;
 
 struct Setting{
   // Do not mutate me
   std::string id;
-  std::variant<IntSetting,FloatSetting,StringSetting> setting;
-};
-
-class ISettingsComponent{
- public:
-  // all the settings this component uses
-  virtual std::vector<Setting> get_all_settings()=0;
- public:
-  ISettingsComponent()=default;
-  // delete copy and move constructor
-  ISettingsComponent(const ISettingsComponent&)=delete;
-  ISettingsComponent(const ISettingsComponent&&)=delete;
+  std::variant<IntSetting,StringSetting> setting;
 };
 
 // we need to have unique setting string ids. Creating duplicates by accident is not uncommon when adding new settings, and when

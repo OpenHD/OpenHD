@@ -12,7 +12,8 @@
 
 #include <iostream>
 #include <mutex>
-#include <utility>
+
+#include "openhd_util.h"
 
 static openhd::log::MavlinkLogMessage safe_create(int level,const std::string& message){
   openhd::log::MavlinkLogMessage lmessage{};
@@ -66,7 +67,7 @@ void openhd::log::MavlinkLogMessageBuffer::enqueue_log_message(
     openhd::log::MavlinkLogMessage message) {
   std::lock_guard<std::mutex> lock(m_mutex);
   if(m_buffer.size()>10){
-    std::cerr<<"Dropping log message:"<<message.message;
+    std::cerr<<"Dropping log message:"<<message.message<<std::endl;
     return ;
   }
   m_buffer.push_back(message);
@@ -131,4 +132,8 @@ openhd::log::STATUS_LEVEL openhd::log::level_spdlog_to_mavlink(const spdlog::lev
       break;
   }
   return STATUS_LEVEL::DEBUG;
+}
+
+void openhd::log::log_to_kernel(const std::string& message) {
+  OHDUtil::run_command(fmt::format("echo \"{}\" > /dev/kmsg",message),{}, false);
 }

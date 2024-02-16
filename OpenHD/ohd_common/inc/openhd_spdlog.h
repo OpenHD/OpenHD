@@ -11,8 +11,9 @@
 
 //#include <spdlog/fwd.h>
 //#include <spdlog/fmt/fmt.h>
-#include <spdlog/common.h>
+//#include <spdlog/common.h>
 #include <spdlog/spdlog.h>
+//# define FMT_STRING(s) s
 
 namespace openhd::log{
 
@@ -67,6 +68,9 @@ enum class STATUS_LEVEL {
 };
 
 STATUS_LEVEL level_spdlog_to_mavlink(const spdlog::level::level_enum& level);
+
+// Please use sparingly.
+void log_to_kernel(const std::string& message);
 }
 
 

@@ -9,8 +9,7 @@ int main(int argc, char *argv[]) {
 
   OHDUtil::terminate_if_not_root();
 
-  auto ext_devices_manager=std::make_shared<openhd::ExternalDeviceManager>();
-  auto listener=std::make_unique<EthernetListener>(ext_devices_manager);
+  auto listener=std::make_unique<EthernetListener>();
 
   OHDUtil::keep_alive_until_sigterm();
 

@@ -68,7 +68,7 @@ static std::string getOrCreateUnitId() {
   auto unit_id_opt=OHDFilesystemUtil::opt_read_file(get_unit_id_file_path());
   if(unit_id_opt.has_value()){
     std::string unit_id=unit_id_opt.value();
-    openhd::log::get_default()->debug("Read unit id:{}",unit_id);
+    //openhd::log::get_default()->debug("Read unit id:{}",unit_id);
     return unit_id;
   }
   // No unit id exists yet - create new one
@@ -91,11 +91,6 @@ static void clean_all_settings(){
   generateSettingsDirectoryIfNonExists();
 }
 
-static void clean_all_interface_settings(){
-  openhd::log::get_default()->debug("clean_all_interface_settings()");
-  OHDFilesystemUtil::safe_delete_directory(get_interface_settings_directory());
-  generateSettingsDirectoryIfNonExists();
-}
 
 // Helper for development - we catch 2 things with the following pattern:
 // 1) When openhd is started - check if the file exists, in which case either a develoer started openhd twice

@@ -20,10 +20,6 @@ void systemctl_power(bool shutdownOnly);
 // This delay usually exists to give a mavlink acknowledging response time to be sent to the ground
 void handle_power_command_async(std::chrono::milliseconds delay, bool shutdownOnly);
 
-
-// really filthy - terminate OpenHD and let the service restart it
-void dirty_terminate_openhd_and_let_service_restart();
-
 // TODO
 // dirty
 // OpenHD is written under the assumption that once discovered hardware works and does not disconnect /

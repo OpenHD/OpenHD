@@ -152,6 +152,8 @@ std::string bytes_as_string(const uint8_t* data,int data_len);
 
 // maps [0,100] to [-1.0,1.0] with 50% == 0.0
 float map_int_percentage_to_minus1_to_1(int percentage);
+// maps [0,200] to [-1.0,1.0] with 100% = 0.0
+float map_int_percentage_0_200_to_minus1_to_1(int percentage);
 
 int8_t calculate_progress_perc(int progress,int total_count);
 

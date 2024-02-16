@@ -38,7 +38,8 @@ static bool is_valid_mcs_index(uint32_t mcs_index) {
 }
 
 // Internally, OpenHD uses milli watt (mW)
-// No wifi card will ever do 30W, but some cards increase their tx power a bit more when you set a higher value (I think)
+// No wifi card will ever do 30W, but some cards increase their tx power a bit
+// more when you set a higher value (I think)
 static bool is_valid_tx_power_milli_watt(int tx_power_mw) {
   return tx_power_mw >= 10 && tx_power_mw <= 30 * 1000;
 }
@@ -50,11 +51,11 @@ static bool is_valid_fec_block_length(int block_length) {
 // max 100% fec (2x the amount of data), this is already too much
 // 21.10: Using more than 2x for FEC can be usefully for testing
 static bool is_valid_fec_percentage(int fec_perc) {
- bool valid= fec_perc > 0 && fec_perc <= 400;
- if(!valid){
-     openhd::log::get_default()->warn("Invalid fec percentage:{}",fec_perc);
- }
- return valid;
+  bool valid = fec_perc > 0 && fec_perc <= 400;
+  if (!valid) {
+    openhd::log::get_default()->warn("Invalid fec percentage:{}", fec_perc);
+  }
+  return valid;
 }
 
 // https://www.rapidtables.com/convert/power/dBm_to_mW.html
@@ -84,6 +85,6 @@ static uint32_t milli_watt_to_mBm(uint32_t milli_watt) {
   return std::lround(milli_dbm);
 }
 
-}
+}  // namespace openhd
 
-#endif //OPENHD_OPENHD_OHD_INTERFACE_INC_VALIDATE_SETTINGS_HELPER_H_
+#endif  // OPENHD_OPENHD_OHD_INTERFACE_INC_VALIDATE_SETTINGS_HELPER_H_

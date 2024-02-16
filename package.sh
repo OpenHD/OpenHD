@@ -1,5 +1,4 @@
-#!/bin/bash
-
+rpi
 set -euo pipefail
 
 CUSTOM="${1}"
@@ -17,23 +16,17 @@ create_package_directory() {
     echo "________"
     echo "building for raspberry"
     echo "________"
-    mkdir -p "${PKGDIR}/boot/openhd/rpi_camera_configs"
-    cp -r rpi_camera_configs/* "${PKGDIR}/boot/openhd/rpi_camera_configs/" || exit 1
   elif [[ "${OS}" == "debian" ]] && [[ "${PACKAGE_ARCH}" == "arm64" ]]; then
-    mkdir -p "${PKGDIR}/boot/openhd/rock5_camera_configs"
-    cp -r rock5_camera_configs/* "${PKGDIR}/boot/openhd/rock5_camera_configs/" || exit 1
+    echo "building for rock"
   fi
   # We do not copy the openhd service for x86, since there we have launcher on the desktop
   # (Otherwise, we always copy it)
   if [[ "${PACKAGE_ARCH}" != "x86_64" ]]; then
     cp systemd/openhd.service "${PKGDIR}/etc/systemd/system/openhd.service" || exit 1
   fi
-  # always - copy the hardware.config file, the custom unmanaged camera service and the .sh file for it
+  # always - copy the hardware.config file
   mkdir -p "${PKGDIR}/boot/openhd/"
   cp OpenHD/ohd_common/config/hardware.config "${PKGDIR}/boot/openhd/hardware.config" || exit 1
-  mkdir -p "${PKGDIR}/boot/openhd/scripts/"
-  cp scripts/custom_unmanaged_camera.sh ${PKGDIR}/boot/openhd/scripts/ || exit 1
-  cp systemd/custom_unmanaged_camera.service "${PKGDIR}/etc/systemd/system/custom_unmanaged_camera.service" || exit 1
 }
 
 build_package() {

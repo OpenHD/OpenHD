@@ -3,86 +3,55 @@
 
 #include <string>
 
-#include "openhd_spdlog.h"
+// Some things conditionally depend on the platform we are running on
 
-/**
- * Util to discover and then store the platform we are running on.
- */
+// When this one shows up a bit more work has to be done to run openhd on the platform (probably) ;)
+static constexpr int X_PLATFORM_TYPE_UNKNOWN=0;
+// Generic X86
+static constexpr int X_PLATFORM_TYPE_X86=1;
+// Numbers 10..20 are reserved for rpi
+// Right now we are only interested if it is an RPI of the
+// generation RPI 4 / RPI CM4 or the generation before -
+// NOTE: RPI 5 is currently not supported due to the complete lack of suitable HW acceleration
+static constexpr int X_PLATFORM_TYPE_RPI_OLD=10;
+static constexpr int X_PLATFORM_TYPE_RPI_4=11;
+static constexpr int X_PLATFORM_TYPE_RPI_CM4=12;
+static constexpr int X_PLATFORM_TYPE_RPI_5=12;
 
-enum class PlatformType {
-  Unknown,
-  PC,
-  RaspberryPi,
-  Jetson,
-  Allwinner,
-  iMX6,
-  Rockchip,
-  Zynq,
-};
-std::string platform_type_to_string(PlatformType platform_type);
+// Numbers 20..30 are reserved for rockchip
+static constexpr int X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W=20; // Zero 3 W
+static constexpr int X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5=21; // ROCK 5
+static constexpr int X_PLATFORM_TYPE_ROCKCHIP_RV1126_UNDEFINED=22; // FUTRE
 
-enum class BoardType {
-  Unknown,
-  GenericPC,
-  RaspberryPiZero,
-  RaspberryPiZeroW,
-  RaspberryPiZero2W,
-  RaspberryPi2B,
-  RaspberryPi3A,
-  RaspberryPi3APlus,
-  RaspberryPi3B,
-  RaspberryPi3BPlus,
-  RaspberryPiCM,
-  RaspberryPiCM3,
-  RaspberryPiCM3Plus,
-  RaspberryPiCM4,
-  RaspberryPi4B,
-  JetsonNano,
-  JetsonTX1,
-  JetsonTX2,
-  JetsonNX,
-  JetsonAGX,
-  Allwinner,
-  PynqZ1,
-  PynqZ2,
-  X3DRSolo,
-  RK3588,
-  RV1109,
-  RV1126
-};
-std::string board_type_to_string(BoardType board_type);
+// Numbers 30..35 are reserved for allwinner
+static constexpr int X_PLATFORM_TYPE_ALWINNER_X20=30;
+
+// @Buldo is working on openipc / sigmastar, 36..40
+static constexpr int X_PLATFORM_TYPE_OPENIPC_SIGMASTAR_UNDEFINED=36;
+
+
+std::string x_platform_type_to_string(int platform_type);
+
+// Depends on single threaded CPU performance & weather NEON is available
+// Rough estimate
+int get_fec_max_block_size_for_platform(int platform_type);
 
 // All these members must not change during run time once they have been discovered !
 struct OHDPlatform {
  public:
-  explicit OHDPlatform(PlatformType platform_type = PlatformType::Unknown,BoardType board_type = BoardType::Unknown):
-	  platform_type(platform_type),board_type(board_type){}
-  // The platform we are running on, for example rpi, jetson
-  const PlatformType platform_type;
-  // The board type we are running on, for example rpi 3B+
-  const BoardType board_type;
-  [[nodiscard]] std::string to_string()const{
-    return fmt::format("[{}:{}]",platform_type_to_string(platform_type),board_type_to_string(board_type));
-  }
+  explicit OHDPlatform(const int platform_type):
+	  platform_type(platform_type){}
+  const int platform_type;
+  [[nodiscard]] std::string to_string()const;
+  static const OHDPlatform& instance();
+  bool is_rpi()const;
+  bool is_rpi_weak()const;
+  bool is_rock()const;
+  bool is_rpi_or_x86()const;
+  bool is_allwinner()const;
 };
 
 // We need to differentiate between rpi 4 and other pi's to use the right fec params.
-static bool platform_rpi_is_high_performance(const OHDPlatform& platform){
-  assert(platform.platform_type==PlatformType::RaspberryPi);
-  const auto rpi_board_type=platform.board_type;
-  if(rpi_board_type==BoardType::RaspberryPi4B || rpi_board_type==BoardType::RaspberryPiCM4){
-    return true;
-  }
-  return false;
-}
-
-void write_platform_manifest(const OHDPlatform &ohdPlatform);
-
-namespace DPlatform{
-
-std::shared_ptr<OHDPlatform> discover();
-
-}
-
+bool platform_rpi_is_high_performance(const OHDPlatform& platform);
 
 #endif

@@ -10,6 +10,7 @@
 
 #include "openhd_profile.h"
 #include "openhd_video_frame.h"
+#include "openhd_spdlog.h"
 
 /**
  * OHDLink refers to "the link" that transmits data from the air unit to the ground unit and vice versa.
@@ -105,10 +106,10 @@ class DummyDebugLink: public OHDLink{
   // transmit video data via wifibradcast
   void transmit_video_data(int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame) override{
     int64_t total_bytes=0;
-    for(const auto& fragment: fragmented_video_frame.frame_fragments){
+    for(const auto& fragment: fragmented_video_frame.rtp_fragments){
       total_bytes+=fragment->size();
     }
-    m_console_video->debug("Got Frame. Fragments:{} total: {}Bytes",fragmented_video_frame.frame_fragments.size(),
+    m_console_video->debug("Got Frame. Fragments:{} total: {}Bytes",fragmented_video_frame.rtp_fragments.size(),
                           total_bytes);
     if(m_opt_frame_cb){
       m_opt_frame_cb(stream_index,fragmented_video_frame);

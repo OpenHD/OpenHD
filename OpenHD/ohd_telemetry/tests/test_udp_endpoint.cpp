@@ -3,7 +3,7 @@
 // For testing, run QOpenHD and look at the console logs
 //
 
-#include <endpoints/UDPEndpoint2.h>
+#include <endpoints/UDPEndpoint.h>
 
 #include <iostream>
 
@@ -18,7 +18,7 @@
 
 int main() {
   std::cout << "UdpEndpointTest::start" << std::endl;
-  UDPEndpoint2 udpEndpoint("UdpEndpoint", OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN);
+  UDPEndpoint udpEndpoint("UdpEndpoint", OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN);
   auto cb=[](const std::vector<MavlinkMessage> messages){
     for(const auto& msg:messages){
       debugMavlinkMessage(msg.m, "Udp");

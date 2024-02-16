@@ -188,3 +188,4 @@ OpenHD logo was designed by link:https://kurtzgraphics.com/[KURTZ]
 
 This is free software and comes with no warranty, as stated in parts 11 and 12 of the GPLv2 license.
 The creators and contributors of the software are not responsible for how it is used.
+

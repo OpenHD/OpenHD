@@ -5,24 +5,22 @@
 #ifndef OPENHD_OPENHD_OHD_TELEMETRY_SRC_MAV_PARAM_SENDERWRAPPER_H_
 #define OPENHD_OPENHD_OHD_TELEMETRY_SRC_MAV_PARAM_SENDERWRAPPER_H_
 
-#include "sender.h"
 #include "../routing/MavlinkComponent.hpp"
+#include "sender.h"
 
-namespace mavsdk{
+namespace mavsdk {
 
-class SenderWrapper:public Sender{
+class SenderWrapper : public Sender {
  public:
-  explicit SenderWrapper(MavlinkComponent& comp):_mavlink_component(comp){
-
-  }
+  explicit SenderWrapper(MavlinkComponent& comp) : _mavlink_component(comp) {}
   MavlinkComponent& _mavlink_component;
 
-  bool send_message(mavlink_message_t& message) override{
+  bool send_message(mavlink_message_t& message) override {
     MavlinkMessage msg{message};
     messages.push_back(msg);
     return true;
   }
-  [[nodiscard]] uint8_t get_own_system_id() const override{
+  [[nodiscard]] uint8_t get_own_system_id() const override {
     return _mavlink_component.m_sys_id;
   }
   [[nodiscard]] uint8_t get_own_component_id() const override {
@@ -40,6 +38,6 @@ class SenderWrapper:public Sender{
   std::vector<MavlinkMessage> messages;
 };
 
-}
+}  // namespace mavsdk
 
 #endif  // OPENHD_OPENHD_OHD_TELEMETRY_SRC_MAV_PARAM_SENDERWRAPPER_H_

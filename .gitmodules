@@ -1,13 +1,13 @@
-[submodule "OpenHD/lib/mavlink-headers"]
-	path = OpenHD/lib/mavlink-headers
-	url = https://github.com/OpenHD/mavlink-headers.git
 [submodule "OpenHD/ohd_common/lib/json"]
 	path = OpenHD/ohd_common/lib/json
 	url = https://github.com/nlohmann/json
 [submodule "OpenHD/ohd_common/lib/spdlog"]
 	path = OpenHD/ohd_common/lib/spdlog
 	url = https://github.com/gabime/spdlog.git
-[submodule "OpenHD/lib/wifibroadcast"]
-	path = OpenHD/lib/wifibroadcast
-	url = https://github.com/OpenHD/wifibroadcast
-	branch = openhd-release
+[submodule "OpenHD/ohd_telemetry/lib/mavlink-headers"]
+	path = OpenHD/ohd_telemetry/lib/mavlink-headers
+	url = https://github.com/OpenHD/mavlink-headers.git
+[submodule "OpenHD/ohd_interface/lib/wifibroadcast"]
+	path = OpenHD/ohd_interface/lib/wifibroadcast
+	url = https://github.com/OpenHD/wifibroadcast.git
+	branch = consti-dev

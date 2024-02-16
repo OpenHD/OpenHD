@@ -18,17 +18,19 @@ struct Config{
   bool WIFI_ENABLE_AUTODETECT= true;
   std::vector<std::string> WIFI_WB_LINK_CARDS{};
   std::string WIFI_WIFI_HOTSPOT_CARD;
-  // CAMERAS
-  bool CAMERA_ENABLE_AUTODETECT = true;
-  int CAMERA_N_CAMERAS;
-  std::string CAMERA_CAMERA0_TYPE;
-  std::string CAMERA_CAMERA1_TYPE;
+  bool WIFI_MONITOR_CARD_EMULATE= false;
+  bool WIFI_FORCE_NO_LINK_BUT_HOTSPOT = false;
+  bool WIFI_LOCAL_NETWORK_ENABLE= false;
+  std::string WIFI_LOCAL_NETWORK_SSID;
+  std::string WIFI_LOCAL_NETWORK_PASSWORD;
   // NETWORKING
   std::string NW_ETHERNET_CARD=RPI_ETHERNET_ONLY;
   std::vector<std::string> NW_MANUAL_FORWARDING_IPS;
   bool NW_FORWARD_TO_LOCALHOST_58XX=false;
   // GENERAL
   bool GEN_ENABLE_LAST_KNOWN_POSITION= false;
+  int GEN_RF_METRICS_LEVEL = 0;
+  bool GEN_NO_QOPENHD_AUTOSTART = false;
 };
 // Otherwise, default location is used
 void set_config_file(const std::string& config_file_path);

@@ -1,216 +1,332 @@
 //
-// Created by consti10 on 17.11.22.
+// Created by consti10 on 12.01.24.
 //
 
-#ifndef OPENHD_OPENHD_OHD_VIDEO_INC_DISCOVERED_CAMERA_H_
-#define OPENHD_OPENHD_OHD_VIDEO_INC_DISCOVERED_CAMERA_H_
+#ifndef OPENHD_CAMERA_HPP
+#define OPENHD_CAMERA_HPP
 
-#include "camera_enums.hpp"
-#include "openhd_util_filesystem.h"
-
-
-// Information about a discovered camera and its capabilities.
-// NOTE: This does not include any (persistent) settings ! Immutable data (e.g. the discovered camera
-// and its capabilities) is seperated from the camera settings (see camera_settings.hpp)
+#include <optional>
+#include <regex>
+#include <sstream>
+#include <string>
+#include <vector>
 
 /**
- * NOTE:
- * * Even though there is a move towards properly exposing CSI camera(s) via v4l2, this is error prone and
-* goes down a rabbit hole quite quickly.
-* Aka the proper v4l2 way would be to have each CSI camera exposing it's capabilities, and then also the encoder
-* exposing its capabilities. However, there is just no way to do this platform independently - in short, this
-* approach is too complex. Period.
-*
-* This is why we separate camera(s) in different categories and then have (for the most part) the specific gstreamer pipeline(s) for those
-* cameras. We only use v4l2 to discover and reason about formats/framerate(s) for "USB Cameras" (aka UVC cameras).
-* For USB camera(s), we then seperate by endpoints - since they often provide both an already encoded "pixel format" (aka h264) but also
-* raw format(s).
+ * NOTE: This file is copied into QOpenHD to populate the UI.
  */
 
-// NOTE: CameraEndpoint is only used for USB cameras and more that use the V4l2 interface. For anything else
-// (E.g. CSI Camera(s)) this separation is of no use, since generally there is a streaming pipeline for the different
-// formats each and we use the info which platform we are running on / which camera is connected to figure out
-// supported formats.
-struct CameraEndpointV4l2 {
-  std::string v4l2_device_node;
-  std::string bus;
-  std::vector<EndpointFormat> formats_h264;
-  std::vector<EndpointFormat> formats_h265;
-  std::vector<EndpointFormat> formats_mjpeg;
-  std::vector<EndpointFormat> formats_raw;
-  bool supports_h264()const{
-    return !formats_h264.empty();
+// For development, always 'works' since fully emulated in SW.
+static constexpr int X_CAM_TYPE_DUMMY_SW = 0;  // Dummy sw picture
+// Manually feed camera data (encoded,rtp) to openhd. Bitrate control and more
+// is not working in this mode, making it only valid for development and in
+// extreme cases valid for users that want to use a specific ip camera.
+static constexpr int X_CAM_TYPE_EXTERNAL = 2;
+// For openhd, this is exactly the same as X_CAM_TYPE_EXTERNAL - only file
+// start_ip_cam.txt is created Such that the ip cam service can start forwarding
+// data to openhd core.
+static constexpr int X_CAM_TYPE_EXTERNAL_IP = 3;
+// For development, camera that reads input from a file, and then re-encodes it
+// using the platform encoder
+static constexpr int X_CAM_TYPE_DEVELOPMENT_FILESRC = 4;
+// ... reserved for development / custom cameras
+
+// OpenHD supports any usb camera outputting raw video (with sw encoding).
+// H264 usb cameras are not supported, since in general, they do not support
+// changing bitrate/ encoding parameters.
+static constexpr int X_CAM_TYPE_USB_GENERIC = 10;
+static constexpr int X_CAM_TYPE_USB_INFIRAY = 11;
+// ... reserved for future (Thermal) USB cameras
+
+//
+// RPI Specific starts here
+//
+// As of now, we have mmal only for the geekworm hdmi to csi adapter
+static constexpr int X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI = 20;
+// ... 9 reserved for future use
+// ...
+// RPIF stands for RPI Foundation (aka original rpi foundation cameras)
+static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V1_OV5647 = 30;
+static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V2_IMX219 = 31;
+static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V3_IMX708 = 32;
+static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_RPIF_HQ_IMX477 = 33;
+// .... 5 reserved for future use
+// Now to all the rpi libcamera arducam cameras
+static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_SKYMASTERHDR = 40;
+static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_SKYVISIONPRO = 41;
+static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX477M = 42;
+static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX462 = 43;
+static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX327 = 44;
+static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX290 = 45;
+static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX462_LOWLIGHT_MINI = 46;
+// ... 13 reserved for future use
+static constexpr int X_CAM_TYPE_RPI_V4L2_VEYE_2MP = 60;
+static constexpr int X_CAM_TYPE_RPI_V4L2_VEYE_CSIMX307 = 61;
+static constexpr int X_CAM_TYPE_RPI_V4L2_VEYE_CSSC132 = 62;
+static constexpr int X_CAM_TYPE_RPI_V4L2_VEYE_MVCAM = 63;
+// ... 6 reserved for future use
+//
+// X20 Specific starts here
+//
+// Right now we only have one camera, but more (might) follow.
+static constexpr int X_CAM_TYPE_X20_RUNCAM_NANO = 70;
+// ... 9 reserved for future use
+//
+// ROCK Specific starts here
+//
+static constexpr int X_CAM_TYPE_ROCK_HDMI_IN = 80;
+static constexpr int X_CAM_TYPE_ROCK_IMX219 = 81;
+//
+// OpenIPC specific starts here
+static constexpr int X_CAM_TYPE_OPENIPC_SOMETHING = 90;
+//
+
+// ... rest is reserved for future use
+// no camera, only exists to have a default value for secondary camera (which is
+// disabled by default). NOTE: The primary camera cannot be disabled !
+static constexpr int X_CAM_TYPE_DISABLED = 255;  // Max for uint8_t
+
+static std::string x_cam_type_to_string(int camera_type) {
+  switch (camera_type) {
+    case X_CAM_TYPE_DUMMY_SW:
+      return "DUMMY";
+    case X_CAM_TYPE_EXTERNAL:
+      return "EXTERNAL";
+    case X_CAM_TYPE_EXTERNAL_IP:
+      return "EXTERNAL_IP";
+    case X_CAM_TYPE_DEVELOPMENT_FILESRC:
+      return "DEV_FILESRC";
+    case X_CAM_TYPE_USB_GENERIC:
+      return "USB";
+    case X_CAM_TYPE_USB_INFIRAY:
+      return "INFIRAY";
+    // All the rpi stuff begin
+    case X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI:
+      return "MMAL_HDMI";
+    case X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V1_OV5647:
+      return "RPIF_V1_OV5647";
+    case X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V2_IMX219:
+      return "RPIF_V2_IMX219";
+    case X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V3_IMX708:
+      return "RPIF_V3_IMX708";
+    case X_CAM_TYPE_RPI_LIBCAMERA_RPIF_HQ_IMX477:
+      return "RPIF_HQ_IMX477";
+    case X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_SKYMASTERHDR:
+      return "ARDUCAM_SKYMASTERHDR";
+    case X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_SKYVISIONPRO:
+      return "ARDUCAM_SKYVISIONPRO";
+    case X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX477M:
+      return "ARDUCAM_IMX477M";
+    case X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX462:
+      return "ARDUCAM_IMX462";
+    case X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX327:
+      return "ARDUCAM_IMX327";
+    case X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX290:
+      return "ARDUCAM_IMX290";
+    case X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX462_LOWLIGHT_MINI:
+      return "ARDUCAM_IMX462_LOWLIGHT_MINI";
+    case X_CAM_TYPE_RPI_V4L2_VEYE_2MP:
+      return "VEYE_2MP";
+    case X_CAM_TYPE_RPI_V4L2_VEYE_CSIMX307:
+      return "VEYE_IMX307";
+    case X_CAM_TYPE_RPI_V4L2_VEYE_CSSC132:
+      return "VEYE_CSSC132";
+    case X_CAM_TYPE_RPI_V4L2_VEYE_MVCAM:
+      return "VEYE_MVCAM";
+    // All the x20 begin
+    case X_CAM_TYPE_X20_RUNCAM_NANO:
+      return "X20_RUNCAM_NANO";
+    // All the rock begin
+    case X_CAM_TYPE_ROCK_HDMI_IN:
+      return "ROCK_HDMI_IN";
+    case X_CAM_TYPE_ROCK_IMX219:
+      return "ROCK_IMX219";
+    case X_CAM_TYPE_DISABLED:
+      return "DISABLED";
+    case X_CAM_TYPE_OPENIPC_SOMETHING:
+      return "OPENIPC_X";
+    default:
+      break;
   }
-  bool supports_h265()const{
-    return !formats_h265.empty();
-  }
-  bool supports_mjpeg()const{
-    return !formats_mjpeg.empty();
-  }
-  bool supports_raw()const{
-    return !formats_raw.empty();
-  }
-  bool supports_anything()const{
-    return supports_h264() || supports_h265() || supports_mjpeg() || supports_raw();
+  std::stringstream ss;
+  ss << "UNKNOWN (" << camera_type << ")";
+  return ss.str();
+};
+
+struct ResolutionFramerate {
+  int width_px;
+  int height_px;
+  int fps;
+  std::string as_string() const {
+    std::stringstream ss;
+    ss << width_px << "x" << height_px << "@" << fps;
+    return ss.str();
   }
 };
 
-/**
- * Note: A camera might output multiple pixel formats / already encoded video formats (and they might even show up as multiple v4l2 device node(s)
- * But discovery should only create one "Camera" instance per connected camera (for example, a USB camera is one Camera even though
- * it might support h264 and raw output, or a CSI camera is one camera even though it might support raw bayer on one node, and a then a ISP
- * processed format (e.g. YUV) on another node).
- */
-struct Camera {
-  CameraType type = CameraType::UNKNOWN;
-  //These are not mandatory, but quite usefully for keeping track of camera(s).
-  std::string name = "unknown";
-  std::string vendor = "unknown";
-  std::string sensor_name="unknown";
-  // for USB this is the bus number, for CSI it's the connector number
-  std::string bus;
-  // Unique index of this camera, should start at 0. The index number depends on
-  // the order the cameras were picked up during the discovery step.
-  int index = 0;
-  // this is only for camera tye RPI_CSI_MMAL - differentiate between CSI camera and the HDMI to CSI adapter
-  // (since the second one needs workarounds)
-  bool rpi_csi_mmal_is_csi_to_hdmi=false;
-  // All the endpoints (aka supported video resolution, framerate and pixel format
-  // NOTE: R.n we only use this for V4l2 UVC camera(s) aka usb cameras, since for the CSI camera(s)
-  // we have no resolution / framerate checking (it is just too complicated to both take the CSI camera caps,
-  // and the platform encode cap(s) into account).
-  std::vector<CameraEndpointV4l2> v4l2_endpoints;
-  /**
-   * For logging, create a verbose string that gives developers enough info
-   * such that they can figure out what exactly this camera is.
-   */
-  [[nodiscard]] std::string to_long_string() const {
-    return fmt::format("{}:{}:{}:{}:{}:{}", camera_type_to_string(type),name,vendor,sensor_name,bus,index);
+struct XCamera {
+  int camera_type = X_CAM_TYPE_DUMMY_SW;
+  // 0 for primary camera, 1 for secondary camera
+  int index;
+  // Only valid if camera is of type USB
+  // For CSI camera(s) we in general 'know' from platform and cam type how to
+  // tell the pipeline which cam/source to use.
+  std::string usb_v4l2_device_node;
+  bool requires_rpi_mmal_pipeline() const {
+    return camera_type == X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI;
   }
-  [[nodiscard]] std::string to_short_string() const {
-    return fmt::format("{}:{}:{}", camera_type_to_string(type),name,index);
+  bool requires_rpi_libcamera_pipeline() const {
+    return camera_type >= 30 && camera_type < 60;
   }
-  // There are 2 types of bitrate control, the more the camera supports the better:
-  // 1) Changing the bitrate with a complete restart of the streaming pipeline (not ideal, but better than nothing)
-  // 2) Changing the bitrate at run time without a complete restart of the streaming pipeline
-  [[nodiscard]] bool supports_bitrate_with_restart()const{
-    if(type==CameraType::DUMMY_SW || type == CameraType::RPI_CSI_MMAL || type==CameraType::RPI_CSI_LIBCAMERA || type==CameraType::RPI_CSI_VEYE_V4l2
-        // NOTE ! USB Camera(s) - generally only supported if we use sw encode with the camera, but we do not know here what is being done
-        || type==CameraType::UVC ){
-      return true;
+  bool requires_rpi_veye_pipeline() const {
+    return camera_type >= 60 && camera_type < 70;
+  }
+  bool requires_x20_cedar_pipeline() const {
+    return camera_type >= 70 && camera_type < 80;
+  }
+  bool requires_rockchip_mpp_pipeline() const {
+    return camera_type >= 80 && camera_type < 90;
+  }
+  std::string cam_type_as_verbose_string() const {
+    return x_cam_type_to_string(camera_type);
+  }
+  bool is_camera_type_usb_infiray() const {
+    return camera_type == X_CAM_TYPE_USB_INFIRAY;
+  };
+  // Returns a list of known supported resolution(s).
+  // They should be ordered in ascending resolution / framerate
+  // Must always return at least one resolution
+  // Might not return all resolutions a camera supports per HW
+  // (In qopenhd, we have the experiment checkbox, where the user can enter
+  // anything he likes)
+  std::vector<ResolutionFramerate> get_supported_resolutions() const {
+    if (requires_rpi_veye_pipeline()) {
+      // Veye camera(s) only do 1080p30
+      return {ResolutionFramerate{1920, 1080, 30}};
+    } else if (requires_x20_cedar_pipeline()) {
+      // also easy, 720p60 only (for now)
+      return {ResolutionFramerate{1280, 720, 60}};
+    } else if (camera_type == X_CAM_TYPE_USB_INFIRAY) {
+      return {ResolutionFramerate{384, 292, 25}};
+    } else if (camera_type == X_CAM_TYPE_USB_GENERIC) {
+      // Return what's most likely going to work
+      return {ResolutionFramerate{640, 480, 30}};
+    } else if (requires_rpi_libcamera_pipeline()) {
+      std::vector<ResolutionFramerate> ret;
+      ret.push_back(ResolutionFramerate{640, 480, 60});
+      ret.push_back(ResolutionFramerate{1280, 720, 60});
+      ret.push_back(ResolutionFramerate{1920, 1080, 30});
+      return ret;
+    } else if (camera_type == X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI) {
+      std::vector<ResolutionFramerate> ret;
+      // 720p60 is the most commonly used / works in a lot of scenarios
+      ret.push_back(ResolutionFramerate{1280, 720, 30});
+      ret.push_back(ResolutionFramerate{1920, 1080, 25});
+      ret.push_back(ResolutionFramerate{1280, 720, 60});
+      return ret;
+    } else if (camera_type == X_CAM_TYPE_DUMMY_SW) {
+      std::vector<ResolutionFramerate> ret;
+      ret.push_back(ResolutionFramerate{640, 480, 30});
+      ret.push_back(ResolutionFramerate{1280, 720, 30});
+      ret.push_back(ResolutionFramerate{1280, 720, 60});
+      return ret;
+    } else if (camera_type == X_CAM_TYPE_DEVELOPMENT_FILESRC) {
+      std::vector<ResolutionFramerate> ret;
+      ret.push_back(ResolutionFramerate{848, 480, 60});
+      ret.push_back(ResolutionFramerate{1280, 720, 60});
+      ret.push_back(ResolutionFramerate{1920, 1080, 60});
+      return ret;
     }
-    return false;
+    // Not mapped yet
+    // return something that might work or might not work
+    return {ResolutionFramerate{640, 480, 30}};
   }
-  [[nodiscard]] bool supports_bitrate_without_restart()const{
-    if(type==CameraType::DUMMY_SW || type==CameraType::RPI_CSI_MMAL)return true;
-    return false;
-  }
-  // supported by pretty much any camera type (not supporting bitrate control is only the case for these exotic cases)
-  [[nodiscard]] bool supports_bitrate()const{
-    const bool not_supported= type==CameraType::CUSTOM_UNMANAGED_CAMERA || type==CameraType::IP;
-    return !not_supported;
-  }
-  // also, pretty much a must have unless using ip camera
-  [[nodiscard]] bool supports_changing_format()const{
-    const bool not_supported= type==CameraType::CUSTOM_UNMANAGED_CAMERA || type==CameraType::IP || type==CameraType::RPI_CSI_VEYE_V4l2;
-    return !not_supported;
-  }
-  [[nodiscard]] bool supports_keyframe_interval()const{
-    const bool not_supported= type==CameraType::CUSTOM_UNMANAGED_CAMERA || type==CameraType::IP;
-    return !not_supported;
-  }
-  [[nodiscard]] bool supports_rotation()const{
-    return type==CameraType::RPI_CSI_MMAL || type==CameraType::RPI_CSI_LIBCAMERA; // requires openhd libcamera
-  }
-  [[nodiscard]] bool supports_hflip_vflip()const{
-    return type==CameraType::RPI_CSI_MMAL || type==CameraType::RPI_CSI_LIBCAMERA; // requires openhd libcamera
-  }
-  [[nodiscard]] bool supports_awb()const{
-    return type==CameraType::RPI_CSI_MMAL;
-  }
-  [[nodiscard]] bool supports_exp()const{
-    return type==CameraType::RPI_CSI_MMAL;
-  }
-  bool supports_brightness()const{
-    return type==CameraType::RPI_CSI_MMAL || type==CameraType::RPI_CSI_LIBCAMERA; // requires openhd libcamera
-  }
-  bool supports_sharpness()const{
-    return type==CameraType::RPI_CSI_MMAL || type==CameraType::RPI_CSI_LIBCAMERA; // requires openhd libcamera
-  }
-  bool supports_iso()const{
-    return type==CameraType::RPI_CSI_MMAL;
-  }
-  bool supports_rpi_rpicamsrc_metering_mode()const{
-    return type==CameraType::RPI_CSI_MMAL;
-  }
-  bool supports_force_sw_encode()const{
-      return type==CameraType::UVC || type==CameraType::RPI_CSI_MMAL || type==CameraType::RPI_CSI_LIBCAMERA;
-  }
-  // This "hash" needs to be deterministic and unique - otherwise, incompatible settings from
-  // a previous camera might be used
-  std::string get_unique_settings_filename()const{
-    auto safe_name=name;
-    // TODO find a better solution
-    if(type==CameraType::RPI_CSI_LIBCAMERA){
-      safe_name=sensor_name;
-    }
-    return fmt::format("{}_{}_{}.json",index, camera_type_to_string(type),safe_name);
+  // We default to the last supported resolution
+  [[nodiscard]] ResolutionFramerate get_default_resolution_fps() const {
+    auto supported_resolutions = get_supported_resolutions();
+    return supported_resolutions.at(supported_resolutions.size() - 1);
   }
 };
 
-static Camera createDummyCamera(int index=0) {
-  Camera camera;
-  camera.name = fmt::format("DummyCamera{}",index);
-  camera.index = index;
-  camera.vendor = "dummy";
-  camera.type = CameraType::DUMMY_SW;
-  return camera;
+static bool is_valid_primary_cam_type(int cam_type) {
+  if (cam_type >= 0 && cam_type < X_CAM_TYPE_DISABLED) return true;
+  return false;
+}
+static bool is_valid_secondary_cam_type(int cam_type) {
+  if (cam_type == X_CAM_TYPE_DUMMY_SW || cam_type == X_CAM_TYPE_USB_INFIRAY ||
+      cam_type == X_CAM_TYPE_USB_GENERIC || cam_type == X_CAM_TYPE_EXTERNAL ||
+      cam_type == X_CAM_TYPE_EXTERNAL_IP || cam_type == X_CAM_TYPE_DISABLED) {
+    return true;
+  }
+  return false;
 }
 
-static Camera createCustomUnmanagedCamera(int index=0){
-  Camera camera;
-  camera.name = fmt::format("CustomUnmanagedCamera{}",index);
-  camera.index = index;
-  camera.vendor = "unknown";
-  camera.type = CameraType::CUSTOM_UNMANAGED_CAMERA;
-  return camera;
+static bool is_rpi_csi_camera(int cam_type) {
+  return cam_type >= 20 && cam_type <= 69;
+}
+static bool is_rock_csi_camera(int cam_type) {
+  return cam_type == X_CAM_TYPE_ROCK_IMX219;
 }
 
-static Camera createCustomIpCamera(){
-  Camera camera;
-  camera.name = "CustomIpCamera";
-  camera.index = 0;
-  camera.vendor = "unknown";
-  camera.type = CameraType::IP;
-  return camera;
+static bool is_usb_camera(int cam_type) {
+  return cam_type >= 10 && cam_type < 19;
 }
 
-// Returns the first endpoint found that can output the given video codec (aka non-raw)
-static std::optional<CameraEndpointV4l2> get_endpoint_supporting_codec(const std::vector<CameraEndpointV4l2>& endpoints,const VideoCodec codec){
-  for (const auto &endpoint: endpoints) {
-    if ( codec == VideoCodec::H264 && endpoint.supports_h264()) {
-      return endpoint;
-    }
-    if ( codec == VideoCodec::H265 && endpoint.supports_h265()) {
-      return endpoint;
-    }
-    if ( codec == VideoCodec::MJPEG && endpoint.supports_mjpeg()) {
-      return endpoint;
+// Takes a string in the from {width}x{height}@{framerate}
+// e.g. 1280x720@30
+static std::optional<ResolutionFramerate> parse_video_format(
+    const std::string& videoFormat) {
+  if (videoFormat.size() <= 5) {
+    return std::nullopt;
+  }
+  ResolutionFramerate tmp_video_format{0, 0, 0};
+  const std::regex reg{R"((\d*)x(\d*)\@(\d*))"};
+  std::smatch result;
+  if (std::regex_search(videoFormat, result, reg)) {
+    if (result.size() == 4) {
+      // openhd::log::get_default()->debug("result[0]=["+result[0].str()+"]");
+      tmp_video_format.width_px = atoi(result[1].str().c_str());
+      tmp_video_format.height_px = atoi(result[2].str().c_str());
+      tmp_video_format.fps = atoi(result[3].str().c_str());
+      return tmp_video_format;
     }
   }
   return std::nullopt;
 }
 
-// Returns the first endpoint found that can output any "RAW" format, we do not differentiate between RAW format(s) since we can
-// always convert it via gstreamer. Note - raw in this context means already processed by ISP, aka RGB, YUV, ... - not BAYER or something
-// completely unusable
-static std::optional<CameraEndpointV4l2> get_endpoint_supporting_raw(const std::vector<CameraEndpointV4l2>& endpoints){
-  for (const auto &endpoint: endpoints) {
-    if(endpoint.supports_raw()){
-      return endpoint;
-    }
+//
+// Used in QOpenHD UI
+//
+static std::string get_verbose_string_of_resolution(
+    const ResolutionFramerate& resolution_framerate) {
+  if (resolution_framerate.width_px == 0 &&
+      resolution_framerate.height_px == 0 && resolution_framerate.fps == 0) {
+    return "AUTO";
   }
-  return std::nullopt;
+  std::stringstream ss;
+  if (resolution_framerate.width_px == 640 &&
+      resolution_framerate.height_px == 480) {
+    ss << "VGA 4:3";
+  } else if (resolution_framerate.width_px == 848 &&
+             resolution_framerate.height_px == 480) {
+    ss << "VGA 16:9";
+  } else if (resolution_framerate.width_px == 896 &&
+             resolution_framerate.height_px == 504) {
+    ss << "SD 16:9";
+  } else if (resolution_framerate.width_px == 1280 &&
+             resolution_framerate.height_px == 720) {
+    ss << "HD 16:9";
+  } else if (resolution_framerate.width_px == 1920 &&
+             resolution_framerate.height_px == 1080) {
+    ss << "FHD 16:9";
+  } else if (resolution_framerate.width_px == 2560 &&
+             resolution_framerate.height_px == 1440) {
+    ss << "2K 16:9";
+  } else {
+    ss << resolution_framerate.width_px << "x" << resolution_framerate.height_px
+       << "\n";
+  }
+  ss << "\n" << resolution_framerate.fps << "fps";
+  return ss.str();
 }
 
-#endif  // OPENHD_OPENHD_OHD_VIDEO_INC_DISCOVERED_CAMERA_H_
+#endif  // OPENHD_CAMERA_HPP

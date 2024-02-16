@@ -31,8 +31,8 @@ SET(sources
     "src/endpoints/MEndpoint.h"
     "src/endpoints/SerialEndpoint.cpp"
     "src/endpoints/SerialEndpoint.h"
-    "src/endpoints/UDPEndpoint2.cpp"
-    "src/endpoints/UDPEndpoint2.h"
+    "src/endpoints/UDPEndpoint.cpp"
+    "src/endpoints/UDPEndpoint.h"
     "src/endpoints/WBEndpoint.cpp"
     "src/endpoints/WBEndpoint.h"
 
@@ -121,7 +121,7 @@ add_library(mavlink INTERFACE)
 # from https://mavlink.io/en/mavgen_c/
 #You can supress the warnings in CMake using
 target_compile_options(mavlink INTERFACE -Wno-address-of-packed-member -Wno-cast-align)
-target_include_directories(mavlink INTERFACE ../lib/mavlink-headers/mavlink/v2.0)
+target_include_directories(mavlink INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/lib/mavlink-headers/mavlink/v2.0)
 target_link_libraries(OHDTelemetryLib PUBLIC mavlink)
 
 # All the test files for development

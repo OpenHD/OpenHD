@@ -17,4 +17,7 @@ cmake-build-debug
 cmake-build-debug-event-trace
 cmake-build-debug-trace
 cmake-build-release
+cmake-build-debug-coverage
 build_release
+build_air_disabled
+build_usb_cam_disabled
