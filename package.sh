@@ -1,4 +1,4 @@
-set -euo pipefail
+# set -euo pipefail
 
 CUSTOM="${1}"
 PACKAGE_ARCH="${2}"
