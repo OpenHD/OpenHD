@@ -15,8 +15,7 @@
 #include "usb_thermal_cam_helper.h"
 
 // Holds the immutable (camera) and mutable (camera_settings) information about
-// a camera Camera Holder is used to differentiate between 1) immutable
-// information (camera) and 2) mutable camera settings. Changes in the camera
+// a camera. Changes in the camera
 // settings are propagated through this class.
 class CameraHolder :
     // persistence via JSON

@@ -158,6 +158,7 @@ class WBLink : public OHDLink {
   // and passive mode is enabled by the user
   void re_enable_injection_unless_user_passive_mode_enabled();
   int get_max_fec_block_size();
+
  private:
   const OHDProfile m_profile;
   const OHDPlatform m_platform;
@@ -216,16 +217,18 @@ class WBLink : public OHDLink {
   std::unique_ptr<ManagementGround> m_management_gnd = nullptr;
   // We start on 40Mhz, and go down to 20Mhz if possible
   std::atomic<int> m_gnd_curr_rx_channel_width = 40;
-  std::atomic<int> m_gnd_curr_rx_frequency=-1;
+  std::atomic<int> m_gnd_curr_rx_frequency = -1;
   // Allows temporarily closing the video input
-  std::atomic_bool m_air_close_video_in=false;
+  std::atomic_bool m_air_close_video_in = false;
   const int m_recommended_max_fec_blk_size_for_this_platform;
+
  private:
   openhd::wb::ForeignPacketsHelper m_foreign_p_helper;
   openhd::wb::RCChannelHelper m_rc_channel_helper;
   openhd::wb::FrameDropsHelper m_frame_drop_helper;
   std::atomic_int m_primary_total_dropped_frames = 0;
   std::atomic_int m_secondary_total_dropped_frames = 0;
+
  private:
   const bool DIRTY_forward_gapped_fragments = false;
   const bool DIRTY_add_aud_nal = false;
