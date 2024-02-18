@@ -770,7 +770,7 @@ void WBLink::loop_do_work() {
       apply_txpower();
     }
     wt_perform_mcs_via_rc_channel_if_enabled();
-    wt_perform_channel_width_management();
+    wt_gnd_perform_channel_management();
     // air_perform_reset_frequency();
     wt_perform_rate_adjustment();
     // After we've applied the rate, we update the tx header mcs index if
@@ -1432,10 +1432,11 @@ void WBLink::update_arming_state(bool armed) {
   m_request_apply_tx_power = true;
 }
 
-void WBLink::wt_perform_channel_width_management() {
+void WBLink::wt_gnd_perform_channel_management() {
   if (m_profile.is_ground()) {
     // Ground: Listen on the channel width the air reports (always works due to
     // management always on 20Mhz) And switch "up" to 40Mhz if needed
+    // AND react to (announced) frequency changes (right now without any recovery protocol)
     const int air_reported_channel_width =
         m_management_gnd->m_air_reported_curr_channel_width;
     const int air_reported_frequency =
