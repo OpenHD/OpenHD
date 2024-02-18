@@ -639,6 +639,18 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
           Setting{openhd::WB_MCS_INDEX_VIA_RC_CHANNEL,
                   openhd::IntSetting{(int)settings.wb_mcs_index_via_rc_channel,
                                      cb_mcs_via_rc_channel}});
+      auto cb_bw_via_rc_channel = [this](std::string, int value) {
+        if (value < 0 || value > 18){
+          return false;
+        }
+        m_settings->unsafe_get_settings().wb_bw_via_rc_channel = value;
+        m_settings->persist();
+        return true;
+      };
+      ret.push_back(
+          Setting{openhd::WB_BW_VIA_RC_CHANNEL,
+                  openhd::IntSetting{(int)settings.wb_bw_via_rc_channel,
+                                     cb_bw_via_rc_channel}});
     }
     auto cb_dev_air_set_high_retransmit_count = [this](std::string, int value) {
       return set_dev_air_set_high_retransmit_count(value);
@@ -770,6 +782,7 @@ void WBLink::loop_do_work() {
       apply_txpower();
     }
     wt_perform_mcs_via_rc_channel_if_enabled();
+    //wt_perform_bw_via_rc_channel_if_enabled();
     wt_gnd_perform_channel_management();
     // air_perform_reset_frequency();
     wt_perform_rate_adjustment();
@@ -782,6 +795,11 @@ void WBLink::loop_do_work() {
       m_tx_header_1->update_mcs_index(mcs_index);
       m_tx_header_2->update_mcs_index(mcs_index);
     }
+    tmp_true=true;
+    /*if (m_request_apply_air_bw.compare_exchange_strong(tmp_true,
+                                                              false)) {
+      apply_frequency_and_channel_width_from_settings();
+    }*/
     // update statistics in regular intervals
     wt_update_statistics();
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -1402,7 +1420,7 @@ void WBLink::wt_perform_mcs_via_rc_channel_if_enabled() {
     return;
   }
   const auto& settings = m_settings->get_settings();
-  if (settings.wb_mcs_index_via_rc_channel ==
+  if (settings.wb_mcs_index_via_rc_channel <=
       openhd::WB_MCS_INDEX_VIA_RC_CHANNEL_OFF) {
     // disabled
     return;
@@ -1421,6 +1439,23 @@ void WBLink::wt_perform_mcs_via_rc_channel_if_enabled() {
     m_settings->unsafe_get_settings().wb_air_mcs_index = mcs_from_rc;
     m_settings->persist();
     m_request_apply_air_mcs_index = true;
+  }
+}
+
+void WBLink::wt_perform_bw_via_rc_channel_if_enabled() {
+  if (!m_profile.is_air) {
+    return;
+  }
+  const auto& settings = m_settings->get_settings();
+  const auto opt_rc_bw=m_rc_channel_helper.get_bw_from_rc_channel(settings.wb_bw_via_rc_channel);
+  if(!opt_rc_bw.has_value()) return;
+  const auto rc_bw=opt_rc_bw.value();
+  if(settings.wb_air_tx_channel_width!=rc_bw){
+    m_console->debug("RC CHANNEL - changing BW from {} to {} ",
+                     settings.wb_air_tx_channel_width, rc_bw);
+    m_settings->unsafe_get_settings().wb_air_tx_channel_width=rc_bw;
+    m_settings->persist();
+    m_request_apply_air_bw=true;
   }
 }
 

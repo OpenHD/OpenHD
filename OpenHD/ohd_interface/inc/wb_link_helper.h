@@ -154,7 +154,8 @@ class RCChannelHelper {
    */
   std::optional<int> get_mcs_from_rc_channel(
       int channel_index, std::shared_ptr<spdlog::logger>& m_console);
-
+  // returns either a valid channel width (20 /40) or std::nullopt
+  std::optional<uint8_t> get_bw_from_rc_channel(int channel_index);
  private:
   std::optional<std::array<int, 18>> m_rc_channels;
   std::mutex m_rc_channels_mutex;
