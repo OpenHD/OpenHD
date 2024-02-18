@@ -371,8 +371,7 @@ static std::string get_verbose_string_of_resolution(
              resolution_framerate.height_px == 1440) {
     ss << "2K 16:9";
   } else {
-    ss << resolution_framerate.width_px << "x" << resolution_framerate.height_px
-       << "\n";
+    ss << resolution_framerate.width_px << "x" << resolution_framerate.height_px;
   }
   ss << "\n" << resolution_framerate.fps << "fps";
   return ss.str();

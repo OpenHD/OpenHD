@@ -80,7 +80,8 @@ std::string GStreamerStream::create_source_encode_pipeline(
   } else if (camera.requires_rpi_libcamera_pipeline()) {
     pipeline << OHDGstHelper::createLibcamerasrcStream(setting);
   } else if (camera.requires_rpi_veye_pipeline()) {
-    auto bus = "/dev/video11";
+    // veye  IMX462 needs video0. I think the others too ...
+    auto bus = "/dev/video0";
     pipeline << OHDGstHelper::create_veye_vl2_stream(setting, bus);
   } else if (camera.requires_rockchip_mpp_pipeline()) {
     if (camera.camera_type == X_CAM_TYPE_ROCK_HDMI_IN) {
