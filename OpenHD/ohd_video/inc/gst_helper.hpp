@@ -561,7 +561,7 @@ static std::string createAllwinnerEncoderPipeline(
   std::stringstream ss;
   assert(settings.streamed_video_format.videoCodec == VideoCodec::H264);
   ss << "sunxisrc name=sunxisrc bitrate=" << settings.h26x_bitrate_kbits
-     << " keyint=" << settings.h26x_keyframe_interval << " !  video/x-h264 ! ";
+     << " keyint=" << settings.h26x_keyframe_interval << " !  h264parse ! video/x-h264,stream-format=byte-stream,alignment=au  ! ";
   return ss.str();
 }
 
