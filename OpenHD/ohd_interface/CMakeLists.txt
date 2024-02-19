@@ -52,7 +52,6 @@ target_link_libraries(OHDInterfaceLib PUBLIC OHDCommonLib)
 
 
 target_include_directories(OHDInterfaceLib PUBLIC inc/)
-target_include_directories(OHDInterfaceLib PUBLIC lib/include)
 target_link_libraries(OHDInterfaceLib PUBLIC ${WB_TARGET_LINK_LIBRARIES})
 #target_include_directories(OHDInterfaceLib PUBLIC ${WB_INCLUDE_DIRECTORES})
 
