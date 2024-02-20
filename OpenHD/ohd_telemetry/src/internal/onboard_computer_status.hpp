@@ -25,12 +25,14 @@ namespace openhd::onboard {
 // Return the CPU/SOC temperature of the system or 0 if not available
 // Unit: Degree ?
 static int readTemperature() {
-  auto temp_file_opt=OHDFilesystemUtil::opt_read_file("/sys/class/hwmon/hwmon0/temp1_input", false);
-  if(!temp_file_opt.has_value()) {
-      temp_file_opt=OHDFilesystemUtil::opt_read_file("/sys/class/thermal/thermal_zone0/temp", false);
-      if(!temp_file_opt.has_value()) {
-        return 0;
-      }
+  auto temp_file_opt = OHDFilesystemUtil::opt_read_file(
+      "/sys/class/hwmon/hwmon0/temp1_input", false);
+  if (!temp_file_opt.has_value()) {
+    temp_file_opt = OHDFilesystemUtil::opt_read_file(
+        "/sys/class/thermal/thermal_zone0/temp", false);
+    if (!temp_file_opt.has_value()) {
+      return 0;
+    }
   }
   auto temp = OHDUtil::string_to_int(temp_file_opt.value());
   if (!temp.has_value()) return 0;
