@@ -42,4 +42,5 @@ if [ "$?" -eq "0" ]; then
   echo "Everything formatted correctly"
 else
   echo "There are formatting errors ! Please fix first."
+  exit 1
 fi
