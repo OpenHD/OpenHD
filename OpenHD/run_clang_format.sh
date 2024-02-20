@@ -30,7 +30,7 @@ append_all_sources_headers "$THIS_DIR/ohd_telemetry/src"
 append_all_sources_headers "$THIS_DIR/ohd_video/inc"
 append_all_sources_headers "$THIS_DIR/ohd_video/src"
 
-echo -e "Files found to format = \n\"\"\"\n$FILE_LIST\n\"\"\""
+echo "Files found to format = \n\"\"\"\n$FILE_LIST\n\"\"\""
 
 # Format each file.
 # - NB: do NOT put quotes around `$FILE_LIST` below or else the `clang-format` command will
