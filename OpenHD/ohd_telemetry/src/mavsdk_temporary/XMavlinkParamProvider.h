@@ -9,7 +9,7 @@
 #include <optional>
 #include <utility>
 
-#include "openhd_settings_imp.hpp"
+#include "openhd_settings_imp.h"
 #include "routing/MavlinkComponent.hpp"
 
 // mavsdk

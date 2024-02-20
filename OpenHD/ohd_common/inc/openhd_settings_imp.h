@@ -5,11 +5,8 @@
 #ifndef OPENHD_OPENHD_OHD_COMMON_MAVLINK_SETTINGS_ISETTINGSCOMPONENT_H_
 #define OPENHD_OPENHD_OHD_COMMON_MAVLINK_SETTINGS_ISETTINGSCOMPONENT_H_
 
-#include <cassert>
 #include <functional>
-#include <map>
 #include <string>
-#include <utility>
 #include <variant>
 #include <vector>
 
@@ -50,86 +47,31 @@ struct Setting{
 
 // we need to have unique setting string ids. Creating duplicates by accident is not uncommon when adding new settings, and when
 // this function is used properly we can catch those mistakes at run time.
-static void validate_provided_ids(const std::vector<Setting>& settings){
-  std::map<std::string,void*> test;
-  for(const auto& setting:settings){
-	assert(setting.id.length()<=16);
-	assert(test.find(setting.id)==test.end());
-	test[setting.id]=nullptr;
-  }
-}
+void validate_provided_ids(const std::vector<Setting>& settings);
 
 static bool validate_yes_or_no(int value){
   return value==0 || value==1;
 }
 
 // Helper for creating read-only params- they can be usefully for debugging
-static Setting create_read_only_int(const std::string& id,int value){
-  auto cb=[](const std::string&,int){
-    return false;
-  };
-  return Setting{id, openhd::IntSetting{value, cb}};
-}
+Setting create_read_only_int(const std::string& id,int value);
 
 // Creates a read - only parameter - we repurpose the mavlink param set for reliably showing more info to
 // the user / developer. Can be quite nice for debugging.
 // Since the n of characters are limited, this might cut away parts of value
-static Setting create_read_only_string(const std::string& id,std::string value){
-  if(value.length()>15){
-     value.resize(15);
-  }
-  auto cb=[](const std::string&,const std::string&){
-    return false;
-  };
-  return Setting{id, openhd::StringSetting {value, cb}};
-}
+Setting create_read_only_string(const std::string& id,std::string value);
+
+// Helper function - adds a new int param that has an ID, an initial value,
+// and a cb that is called when the value shall be changed by mavlink
+void append_int_param(std::vector<Setting>& ret,const std::string& ID,int value,
+                             const std::function<bool(int requested_value)>& cb);
 
 namespace testing {
-// For testing
-static std::vector<Setting> create_dummy_camera_settings() {
-  std::vector<openhd::Setting> ret = {
-	  openhd::Setting{"VIDEO_WIDTH", openhd::IntSetting{640, nullptr}},
-	  openhd::Setting{"VIDEO_HEIGHT", openhd::IntSetting{480, nullptr}},
-	  openhd::Setting{"VIDEO_FPS", openhd::IntSetting{30, nullptr}},
-	  openhd::Setting{"VIDEO_CODEC", openhd::IntSetting{0, nullptr}},
-	  openhd::Setting{"V_BITRATE_MBITS", openhd::IntSetting{10, nullptr}},
-  };
-  return ret;
-}
-static std::vector<Setting> create_dummy_ground_settings() {
-  std::vector<openhd::Setting> ret = {
-	  openhd::Setting{"GROUND_X", openhd::IntSetting{10, nullptr}},
-	  openhd::Setting{"GROUND_Y", openhd::IntSetting{1, nullptr}},
-	  /*openhd::Setting{"SOME_INT",0},
-	  openhd::Setting{"SOME_FLOAT",0.0f},
-	  openhd::Setting{"SOME_STRING",std::string("hello")}*/
-  };
-  return ret;
-}
-
-// takes a reference because openhd::Setting has no move/copy
-static void append_dummy_int_and_string(std::vector<Setting>& ret){
-  for(int i=0;i<5;i++){
-	auto tmp=openhd::IntSetting{i};
-	const std::string id="TEST_INT_"+std::to_string(i);
-	ret.push_back(Setting{id,tmp});
-  }
-  for(int i=0;i<2;i++){
-	const std::string value="val"+std::to_string(i);
-	auto tmp=openhd::StringSetting{value};
-	const std::string id="TEST_STRING_"+std::to_string(i);
-	ret.push_back(Setting{id,tmp});
-  }
-}
+std::vector<Setting> create_dummy_camera_settings();
+std::vector<Setting> create_dummy_ground_settings();
 // A size of 0 creates issues with the param server, but it is possible we don't have any params if
 // none were addable during run time due
-static void append_dummy_if_empty(std::vector<Setting>& ret){
-  if(ret.empty()){
-    auto tmp=openhd::IntSetting{0};
-    const std::string id="DUMMY";
-    ret.push_back(Setting{id,tmp});
-  }
-}
+void append_dummy_if_empty(std::vector<Setting>& ret);
 }
 
 }

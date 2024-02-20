@@ -6,8 +6,8 @@
 #define OPENHD_OPENHD_OHD_INTERFACE_INC_ETHERNET_HOTSPOT_H_
 
 #include <openhd_external_device.h>
+#include <openhd_settings_imp.h>
 
-#include <openhd_settings_imp.hpp>
 #include <string>
 #include <thread>
 

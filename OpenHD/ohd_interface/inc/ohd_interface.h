@@ -17,7 +17,7 @@
 #include "openhd_link.hpp"
 #include "openhd_platform.h"
 #include "openhd_profile.h"
-#include "openhd_settings_imp.hpp"
+#include "openhd_settings_imp.h"
 #include "openhd_spdlog.h"
 #include "usb_tether_listener.h"
 #include "wifi_hotspot.h"

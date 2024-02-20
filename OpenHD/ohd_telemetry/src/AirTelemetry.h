@@ -11,7 +11,7 @@
 #include "internal/OHDMainComponent.h"
 #include "openhd_link_statistics.hpp"
 #include "openhd_platform.h"
-#include "openhd_settings_imp.hpp"
+#include "openhd_settings_imp.h"
 #include "routing/MavlinkSystem.hpp"
 //
 #include "AirTelemetrySettings.h"

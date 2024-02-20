@@ -5,7 +5,6 @@
 
 #include <utility>
 
-#include "../../ohd_video/inc/nalu/nalu_helper.h"
 #include "openhd_bitrate_conversions.hpp"
 #include "openhd_config.h"
 #include "openhd_global_constants.hpp"
@@ -565,6 +564,8 @@ void WBLink::apply_txpower() {
   m_console->debug("Changing tx power took {}", MyTimeHelper::R(delta));
 }
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "performance-unnecessary-value-param"
 std::vector<openhd::Setting> WBLink::get_all_settings() {
   using namespace openhd;
   std::vector<openhd::Setting> ret{};
@@ -758,6 +759,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
   openhd::validate_provided_ids(ret);
   return ret;
 }
+#pragma clang diagnostic pop
 
 void WBLink::loop_do_work() {
   while (m_work_thread_run) {

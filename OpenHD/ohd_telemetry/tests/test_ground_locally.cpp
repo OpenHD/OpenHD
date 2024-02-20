@@ -1,6 +1,7 @@
 //
 // For testing, run the ground code such that it can communicate with QOpenHD, but there is no air unit.
 //
+#include <csignal>
 #include <iostream>
 #include <memory>
 #include <thread>
@@ -8,9 +9,7 @@
 #include "../src/OHDTelemetry.h"
 #include "openhd_platform.h"
 #include "openhd_profile.h"
-#include "openhd_settings_imp.hpp"
-
-#include <csignal>
+#include "openhd_settings_imp.h"
 
 int main() {
   std::cout<< "start\n";
