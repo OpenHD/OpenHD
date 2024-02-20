@@ -6,8 +6,10 @@
 
 #include <iostream>
 #include <map>
-#include <utility>
 #include <cassert>
+#include <sstream>
+
+#include "openhd_spdlog.h"
 
 std::vector<openhd::Setting> openhd::testing::create_dummy_camera_settings() {
   std::vector<openhd::Setting> ret = {
@@ -80,4 +82,22 @@ void openhd::validate_provided_ids(const std::vector<Setting>& settings) {
     assert(test.find(setting.id)==test.end());
     test[setting.id]=nullptr;
   }
+}
+
+std::function<bool(std::string id, int requested_value)>
+openhd::create_log_only_cb_int() {
+  auto cb=[](std::string id, int value){
+    openhd::log::get_default()->debug("MAVLINK wants to change {} to {}",id,value);
+    return true;
+  };
+  return cb;
+}
+
+std::function<bool(std::string id, std::string requested_value)>
+openhd::create_log_only_cb_string() {
+  auto cb=[](std::string id,std::string value){
+    openhd::log::get_default()->debug("MAVLINK wants to change {} to {}",id,value);
+    return true;
+  };
+  return cb;
 }

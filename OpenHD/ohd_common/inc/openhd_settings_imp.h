@@ -10,34 +10,36 @@
 #include <variant>
 #include <vector>
 
-#include "openhd_spdlog.h"
-
 namespace openhd{
 
-// These extra settings implementations exist to avoid a direct dependency on mavlink on any modules that are configurable.
-// They are using templates to be type safe, e.g. we let the c++ compiler make sure for us the following cannot happen (example):
-// A module creates an int settings, but the callback is called with a float or similar. Or in other words:
-// If you have an (int, float, string) setting you do not need to perform any type checking in the callback.
-template<class T>
-struct SettingImpl{
-  // The value which the ground station (e.g. the user) can modify via mavlink after passing the implemented sanity checks
-  // (e.g. the value that is changed by the mavlink parameter provider when OpenHD returned true in the change_callback).
-  T value;
-  // This callback is called every time the user wants to change the parameter (T value) from value x to value y (via mavlink)
-  // return true to accept the value, otherwise return false.
-  // We have a default implementation that just prints the change request and always returns true, mostly for debugging / testing.
-  // But in general, all OpenHD modules that are configurable overwrite this callback with their own proper implementation.
-  std::function<bool(std::string id,T requested_value)> change_callback=[](std::string id,T requested_value){
-	openhd::log::get_default()->debug("Requested change {} to {}",id,requested_value);
-	return true;
-  };
-  // Quite dirty - all the params in openhd are changed by the user via mavlink only -
-  // Except channel frequency and channel width during the channel scan feature.
-  // Workaround for this rare case - don't ask ;)
-  std::function<T()> get_callback= nullptr;
+// Util - we have a default impl. that 'does nothing' but prints a message
+std::function<bool(std::string id,int requested_value)> create_log_only_cb_int();
+std::function<bool(std::string id,std::string requested_value)> create_log_only_cb_string();
+
+// int / string setting general layout:
+// value:
+// The value which the ground station (e.g. the user) can modify via mavlink after passing the implemented sanity checks
+// (e.g. the value that is changed by the mavlink parameter provider when OpenHD returned true in the change_callback).
+// change_callback:
+// This callback is called every time the user wants to change the parameter (T value) from value x to value y (via mavlink)
+// return true to accept the value, otherwise return false.
+// We have a default implementation that just prints the change request and always returns true, mostly for debugging / testing.
+// But in general, all OpenHD modules that are configurable overwrite this callback with their own proper implementation.
+// get_callback:
+// Quite dirty - all the params in openhd are changed by the user via mavlink only -
+// Except channel frequency and channel width during the channel scan feature.
+// Workaround for this rare case - don't ask ;)
+
+struct IntSetting{
+  int value;
+  std::function<bool(std::string id,int requested_value)> change_callback=create_log_only_cb_int();
+  std::function<int()> get_callback= nullptr;
 };
-using IntSetting=SettingImpl<int>;
-using StringSetting=SettingImpl<std::string>;
+struct StringSetting{
+  std::string value;
+  std::function<bool(std::string id,std::string requested_value)> change_callback=create_log_only_cb_string();
+  std::function<std::string()> get_callback= nullptr;
+};
 
 struct Setting{
   // Do not mutate me
