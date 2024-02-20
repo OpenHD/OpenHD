@@ -7,29 +7,32 @@
 
 #include <atomic>
 #include <thread>
-namespace openhd{
+namespace openhd {
 
 /**
  * OpenHD uses 2 leds (green and red) for displaying 'stuff' to the user.
- * Weather those leds exists or not depends on the HW - here we abstract that away.
+ * Weather those leds exists or not depends on the HW - here we abstract that
+ * away.
  */
-class LEDManager{
+class LEDManager {
  public:
   static LEDManager& instance();
-  static constexpr int STATUS_OFF=0;
-  static constexpr auto STATUS_ON=1;
+  static constexpr int STATUS_OFF = 0;
+  static constexpr auto STATUS_ON = 1;
   void set_red_led_status(int status);
   void set_green_led_status(int status);
+
  private:
   explicit LEDManager();
   ~LEDManager();
   void loop();
+
  private:
-  //bool m_run= true;
-  //std::unique_ptr<std::thread> m_manage_thread;
+  // bool m_run= true;
+  // std::unique_ptr<std::thread> m_manage_thread;
 };
 
-}
+}  // namespace openhd
 
 class openhd_led {};
 

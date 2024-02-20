@@ -16,7 +16,7 @@
 #include "openhd_link_statistics.hpp"
 #include "openhd_platform.h"
 #include "openhd_profile.h"
-#include "openhd_settings_imp.hpp"
+#include "openhd_settings_imp.h"
 #include "openhd_spdlog.h"
 #include "wb_link_helper.h"
 #include "wb_link_manager.h"
@@ -122,10 +122,11 @@ class WBLink : public OHDLink {
   void wt_update_statistics();
   // Do rate adjustments, does nothing if variable bitrate is disabled
   void wt_perform_rate_adjustment();
-  void wt_perform_channel_width_management();
+  void wt_gnd_perform_channel_management();
   // this is special, mcs index can not only be changed via mavlink param, but
   // also via RC channel (if enabled)
   void wt_perform_mcs_via_rc_channel_if_enabled();
+  void wt_perform_bw_via_rc_channel_if_enabled();
   // Time out to go from wifibroadcast mode to wifi hotspot mode
   void wt_perform_air_hotspot_after_timeout();
   // Returns true if the work item queue is currently empty and the item has
@@ -203,6 +204,7 @@ class WBLink : public OHDLink {
   bool m_is_armed = false;
   std::atomic_bool m_request_apply_tx_power = false;
   std::atomic_bool m_request_apply_air_mcs_index = false;
+  std::atomic_bool m_request_apply_air_bw = false;
   std::chrono::steady_clock::time_point m_last_log_bind_phrase_mismatch =
       std::chrono::steady_clock::now();
   // We store tx power for easy access in stats

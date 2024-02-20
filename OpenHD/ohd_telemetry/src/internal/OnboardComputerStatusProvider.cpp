@@ -17,13 +17,13 @@ constexpr uint8_t BUS_ADC = ADC_12BIT;
 constexpr uint8_t SHUNT_ADC = ADC_12BIT;
 // INA219 stuff
 
-
-static int read_cpu_current_frequency_linux_mhz(){
-  static constexpr auto FILEPATH="/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq";
-  auto content=OHDFilesystemUtil::opt_read_file(FILEPATH);
-  if(!content.has_value())return -1;
-  auto value=OHDUtil::string_to_int(content.value());
-  if(!value.has_value())return -1;
+static int read_cpu_current_frequency_linux_mhz() {
+  static constexpr auto FILEPATH =
+      "/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq";
+  auto content = OHDFilesystemUtil::opt_read_file(FILEPATH);
+  if (!content.has_value()) return -1;
+  auto value = OHDUtil::string_to_int(content.value());
+  if (!value.has_value()) return -1;
   return value.value() / 1000;
 }
 
@@ -94,7 +94,8 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
     int curr_ina219_voltage = 0;
     int curr_ina219_current = 0;
     const int curr_space_left = OHDFilesystemUtil::get_remaining_space_in_mb();
-    const auto ohd_platform=static_cast<uint8_t>(OHDPlatform::instance().platform_type);
+    const auto ohd_platform =
+        static_cast<uint8_t>(OHDPlatform::instance().platform_type);
     const auto curr_ram_usage =
         openhd::onboard::calculate_memory_usage_percent();
     ina219_log_warning_once();
@@ -122,7 +123,8 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
     } else {
       const auto cpu_temp = (int8_t)openhd::onboard::readTemperature();
       curr_temperature_core = cpu_temp;
-      if(m_platform.is_rock() || m_platform.platform_type==X_PLATFORM_TYPE_X86){
+      if (m_platform.is_rock() ||
+          m_platform.platform_type == X_PLATFORM_TYPE_X86) {
         curr_clock_cpu = read_cpu_current_frequency_linux_mhz();
       }
     }
@@ -141,7 +143,8 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       m_curr_onboard_computer_status.storage_usage[2] = curr_ina219_voltage;
       m_curr_onboard_computer_status.storage_usage[3] = curr_ina219_current;
       // openhd status message
-      m_curr_onboard_computer_status.link_type[0] = ohd_platform;  // ohd_platform;
+      m_curr_onboard_computer_status.link_type[0] =
+          ohd_platform;                                 // ohd_platform;
       m_curr_onboard_computer_status.link_type[1] = 0;  // ohd_wifi;
       m_curr_onboard_computer_status.link_type[2] = 0;  // ohd_cam;
       m_curr_onboard_computer_status.link_type[3] = 0;  // ohd_ident;

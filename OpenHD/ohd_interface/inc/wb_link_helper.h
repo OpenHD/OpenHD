@@ -154,6 +154,8 @@ class RCChannelHelper {
    */
   std::optional<int> get_mcs_from_rc_channel(
       int channel_index, std::shared_ptr<spdlog::logger>& m_console);
+  // returns either a valid channel width (20 /40) or std::nullopt
+  std::optional<uint8_t> get_bw_from_rc_channel(int channel_index);
 
  private:
   std::optional<std::array<int, 18>> m_rc_channels;
@@ -164,8 +166,8 @@ class FrameDropsHelper {
  public:
   // Thread-safe, aka can be called from the thread injecting frame(s) in
   // reference to the wb_link worker thread
-  void notify_dropped_frame(int n_dropped=1) {
-    m_frame_drop_counter+=n_dropped;
+  void notify_dropped_frame(int n_dropped = 1) {
+    m_frame_drop_counter += n_dropped;
   }
   // Thread-safe as long as it is called from the thread performing management
   bool needs_bitrate_reduction() {

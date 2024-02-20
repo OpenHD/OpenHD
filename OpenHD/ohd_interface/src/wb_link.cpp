@@ -5,7 +5,6 @@
 
 #include <utility>
 
-#include "../../ohd_video/inc/nalu/nalu_helper.h"
 #include "openhd_bitrate_conversions.hpp"
 #include "openhd_config.h"
 #include "openhd_global_constants.hpp"
@@ -24,8 +23,8 @@ WBLink::WBLink(OHDProfile profile, OHDPlatform platform,
     : m_profile(std::move(profile)),
       m_platform(platform),
       m_broadcast_cards(std::move(broadcast_cards)),
-      m_recommended_max_fec_blk_size_for_this_platform(get_fec_max_block_size_for_platform(platform.platform_type))
-{
+      m_recommended_max_fec_blk_size_for_this_platform(
+          get_fec_max_block_size_for_platform(platform.platform_type)) {
   m_console = openhd::log::create_or_get("wb_streams");
   assert(m_console);
   m_frame_drop_helper.set_console(m_console);
@@ -239,7 +238,8 @@ WBLink::WBLink(OHDProfile profile, OHDPlatform platform,
     m_management_gnd = std::make_unique<ManagementGround>(m_wb_txrx);
     m_management_gnd->m_tx_header = m_tx_header_1;
     m_management_gnd->start();
-    m_gnd_curr_rx_frequency=static_cast<int>(m_settings->unsafe_get_settings().wb_frequency);
+    m_gnd_curr_rx_frequency =
+        static_cast<int>(m_settings->unsafe_get_settings().wb_frequency);
   } else {
     m_management_air = std::make_unique<ManagementAir>(
         m_wb_txrx, m_settings->get_settings().wb_frequency,
@@ -306,7 +306,7 @@ WBLink::~WBLink() {
   m_wb_tele_tx.reset();
   m_wb_video_tx_list.resize(0);
   m_wb_video_rx_list.resize(0);
-  m_wb_txrx= nullptr;
+  m_wb_txrx = nullptr;
   wifi::commandhelper::cleanup_openhd_driver_overrides();
   m_console->debug("WBLink::~WBLink() end");
 }
@@ -325,11 +325,12 @@ bool WBLink::request_set_frequency(int frequency) {
         m_settings->persist();
         if (m_profile.is_air) {
           // temporarily disable video streaming to free up BW
-          m_air_close_video_in=true;
+          m_air_close_video_in = true;
           m_management_air->set_frequency(frequency);
-          // We need to delay the change to make sure at least one management packet goes through ..
+          // We need to delay the change to make sure at least one management
+          // packet goes through ..
           std::this_thread::sleep_for(std::chrono::seconds(2));
-          m_air_close_video_in= false;
+          m_air_close_video_in = false;
         }
         apply_frequency_and_channel_width_from_settings();
         m_rate_adjustment_frequency_changed = true;
@@ -349,18 +350,18 @@ bool WBLink::request_set_air_tx_channel_width(int channel_width) {
       fmt::format("SET_CHWIDTH:{}", channel_width),
       [this, channel_width]() {
         // temporarily disable video streaming to free up BW
-        m_air_close_video_in=true;
+        m_air_close_video_in = true;
         m_settings->unsafe_get_settings().wb_air_tx_channel_width =
             channel_width;
         m_settings->persist();
         m_management_air->set_channel_width(channel_width);
-        //On ASUS, we have to reduce the TX power when on 40Mhz
+        // On ASUS, we have to reduce the TX power when on 40Mhz
         apply_txpower();
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         // Ground will automatically apply the right channel width once first
         // (broadcast) management frame is received.
         apply_frequency_and_channel_width_from_settings();
-        m_air_close_video_in= false;
+        m_air_close_video_in = false;
       },
       std::chrono::steady_clock::now());
   return try_schedule_work_item(work_item);
@@ -551,11 +552,11 @@ void WBLink::apply_txpower() {
     m_console->debug("Using power mw special for armed");
     pwr_mw = settings.wb_tx_power_milli_watt_armed;
   }
-  if(m_profile.is_air){
-    if(m_broadcast_cards.at(0).type == WiFiCardType::OPENHD_RTL_88X2AU &&
-        pwr_index >50 && settings.wb_air_tx_channel_width==40){
+  if (m_profile.is_air) {
+    if (m_broadcast_cards.at(0).type == WiFiCardType::OPENHD_RTL_88X2AU &&
+        pwr_index > 50 && settings.wb_air_tx_channel_width == 40) {
       m_console->debug("Reducing TX power due to 40Mhz");
-      pwr_index=50;
+      pwr_index = 50;
     }
   }
   openhd::wb::set_tx_power_for_all_cards(pwr_mw, pwr_index, m_broadcast_cards);
@@ -565,6 +566,8 @@ void WBLink::apply_txpower() {
   m_console->debug("Changing tx power took {}", MyTimeHelper::R(delta));
 }
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "performance-unnecessary-value-param"
 std::vector<openhd::Setting> WBLink::get_all_settings() {
   using namespace openhd;
   std::vector<openhd::Setting> ret{};
@@ -610,10 +613,10 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
                                                         int value) {
       return set_air_max_fec_block_size_for_platform(value);
     };
-    ret.push_back(Setting{
-        WB_MAX_FEC_BLOCK_SIZE_FOR_PLATFORM,
-        openhd::IntSetting{(int)settings.wb_max_fec_block_size,
-                           cb_wb_max_fec_block_size_for_platform}});
+    ret.push_back(
+        Setting{WB_MAX_FEC_BLOCK_SIZE_FOR_PLATFORM,
+                openhd::IntSetting{(int)settings.wb_max_fec_block_size,
+                                   cb_wb_max_fec_block_size_for_platform}});
     auto cb_wb_video_rate_for_mcs_adjustment_percent = [this](std::string,
                                                               int value) {
       return set_air_wb_video_rate_for_mcs_adjustment_percent(value);
@@ -639,6 +642,18 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
           Setting{openhd::WB_MCS_INDEX_VIA_RC_CHANNEL,
                   openhd::IntSetting{(int)settings.wb_mcs_index_via_rc_channel,
                                      cb_mcs_via_rc_channel}});
+      auto cb_bw_via_rc_channel = [this](std::string, int value) {
+        if (value < 0 || value > 18) {
+          return false;
+        }
+        m_settings->unsafe_get_settings().wb_bw_via_rc_channel = value;
+        m_settings->persist();
+        return true;
+      };
+      ret.push_back(
+          Setting{openhd::WB_BW_VIA_RC_CHANNEL,
+                  openhd::IntSetting{(int)settings.wb_bw_via_rc_channel,
+                                     cb_bw_via_rc_channel}});
     }
     auto cb_dev_air_set_high_retransmit_count = [this](std::string, int value) {
       return set_dev_air_set_high_retransmit_count(value);
@@ -746,6 +761,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
   openhd::validate_provided_ids(ret);
   return ret;
 }
+#pragma clang diagnostic pop
 
 void WBLink::loop_do_work() {
   while (m_work_thread_run) {
@@ -770,7 +786,8 @@ void WBLink::loop_do_work() {
       apply_txpower();
     }
     wt_perform_mcs_via_rc_channel_if_enabled();
-    wt_perform_channel_width_management();
+    // wt_perform_bw_via_rc_channel_if_enabled();
+    wt_gnd_perform_channel_management();
     // air_perform_reset_frequency();
     wt_perform_rate_adjustment();
     // After we've applied the rate, we update the tx header mcs index if
@@ -782,6 +799,11 @@ void WBLink::loop_do_work() {
       m_tx_header_1->update_mcs_index(mcs_index);
       m_tx_header_2->update_mcs_index(mcs_index);
     }
+    tmp_true = true;
+    /*if (m_request_apply_air_bw.compare_exchange_strong(tmp_true,
+                                                              false)) {
+      apply_frequency_and_channel_width_from_settings();
+    }*/
     // update statistics in regular intervals
     wt_update_statistics();
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -1048,8 +1070,8 @@ void WBLink::wt_perform_rate_adjustment() {
     // we drop frames during this period, we do not count it as errors that need
     // bitrate reduction.
     m_frame_drop_helper.delay_for(std::chrono::seconds(5));
-    m_primary_total_dropped_frames=0;
-    m_secondary_total_dropped_frames=0;
+    m_primary_total_dropped_frames = 0;
+    m_secondary_total_dropped_frames = 0;
     return;
   }
   // const bool
@@ -1115,9 +1137,10 @@ bool WBLink::try_schedule_work_item(
 void WBLink::transmit_telemetry_data(TelemetryTxPacket packet) {
   assert(packet.n_injections >= 1);
   // m_console->debug("N injections:{}",packet.n_injections);
-  const auto n_dropped=m_wb_tele_tx->enqueue_packet_dropping(packet.data,packet.n_injections);
-  if(n_dropped>0){
-    m_console->debug("Telemetry queue jam, dropped {}",n_dropped);
+  const auto n_dropped =
+      m_wb_tele_tx->enqueue_packet_dropping(packet.data, packet.n_injections);
+  if (n_dropped > 0) {
+    m_console->debug("Telemetry queue jam, dropped {}", n_dropped);
   }
 }
 
@@ -1125,11 +1148,11 @@ void WBLink::transmit_video_data(
     int stream_index,
     const openhd::FragmentedVideoFrame& fragmented_video_frame) {
   assert(m_profile.is_air);
-  if(stream_index<0 || stream_index > m_wb_video_tx_list.size()){
+  if (stream_index < 0 || stream_index > m_wb_video_tx_list.size()) {
     m_console->debug("Invalid camera stream_index {}", stream_index);
     return;
   }
-  if(m_air_close_video_in.load(std::memory_order::memory_order_relaxed)){
+  if (m_air_close_video_in.load(std::memory_order::memory_order_relaxed)) {
     m_console->debug("Video TX temporarily disabled");
     return;
   }
@@ -1138,46 +1161,49 @@ void WBLink::transmit_video_data(
   tx.set_encryption(fragmented_video_frame.enable_ultra_secure_encryption);
   const int max_fec_block_size = get_max_fec_block_size();
   const int fec_perc = m_settings->get_settings().wb_video_fec_percentage;
-  int n_dropped_frames=0;
+  int n_dropped_frames = 0;
   if (fragmented_video_frame.dirty_frame != nullptr) {
     // non rtp
     const auto res = tx.try_enqueue_frame(fragmented_video_frame.dirty_frame,
                                           max_fec_block_size, fec_perc,
                                           fragmented_video_frame.creation_time);
-    if(!res){
+    if (!res) {
       // We dropped this frame
-      n_dropped_frames=1;
+      n_dropped_frames = 1;
     }
   } else {
-    // Pushes out previous enqueued frames if there is not enough space in the queue
-    const bool use_dropping_enqueue =fragmented_video_frame.is_intra_stream || fragmented_video_frame.is_idr_frame;
+    // Pushes out previous enqueued frames if there is not enough space in the
+    // queue
+    const bool use_dropping_enqueue = fragmented_video_frame.is_intra_stream ||
+                                      fragmented_video_frame.is_idr_frame;
 
-    if(use_dropping_enqueue){
-      const auto count_removed=tx.enqueue_block_dropping(fragmented_video_frame.rtp_fragments,
-                                                           max_fec_block_size, fec_perc,
-                                                           fragmented_video_frame.creation_time);
-      if(count_removed!=0){
-        openhd::log::get_default()->debug("Cleared {} frames to make space for frame {}",
-                                          count_removed,fragmented_video_frame.to_string());
-        n_dropped_frames=count_removed;
+    if (use_dropping_enqueue) {
+      const auto count_removed = tx.enqueue_block_dropping(
+          fragmented_video_frame.rtp_fragments, max_fec_block_size, fec_perc,
+          fragmented_video_frame.creation_time);
+      if (count_removed != 0) {
+        openhd::log::get_default()->debug(
+            "Cleared {} frames to make space for frame {}", count_removed,
+            fragmented_video_frame.to_string());
+        n_dropped_frames = count_removed;
       }
-    }else{
-      const auto res=tx.try_enqueue_block(fragmented_video_frame.rtp_fragments,
-                                            max_fec_block_size, fec_perc,
-                                            fragmented_video_frame.creation_time);
-      if(!res){
-        n_dropped_frames=1;
+    } else {
+      const auto res = tx.try_enqueue_block(
+          fragmented_video_frame.rtp_fragments, max_fec_block_size, fec_perc,
+          fragmented_video_frame.creation_time);
+      if (!res) {
+        n_dropped_frames = 1;
         m_console->debug("TX enqueue video frame failed, queue size:{}",
                          tx.get_tx_queue_available_size_approximate());
       }
     }
   }
-  if (n_dropped_frames!=0) {
+  if (n_dropped_frames != 0) {
     m_frame_drop_helper.notify_dropped_frame(n_dropped_frames);
     if (stream_index == 0) {
-      m_primary_total_dropped_frames+=n_dropped_frames;
+      m_primary_total_dropped_frames += n_dropped_frames;
     } else {
-      m_secondary_total_dropped_frames+=n_dropped_frames;
+      m_secondary_total_dropped_frames += n_dropped_frames;
     }
   }
 }
@@ -1402,7 +1428,7 @@ void WBLink::wt_perform_mcs_via_rc_channel_if_enabled() {
     return;
   }
   const auto& settings = m_settings->get_settings();
-  if (settings.wb_mcs_index_via_rc_channel ==
+  if (settings.wb_mcs_index_via_rc_channel <=
       openhd::WB_MCS_INDEX_VIA_RC_CHANNEL_OFF) {
     // disabled
     return;
@@ -1424,6 +1450,24 @@ void WBLink::wt_perform_mcs_via_rc_channel_if_enabled() {
   }
 }
 
+void WBLink::wt_perform_bw_via_rc_channel_if_enabled() {
+  if (!m_profile.is_air) {
+    return;
+  }
+  const auto& settings = m_settings->get_settings();
+  const auto opt_rc_bw =
+      m_rc_channel_helper.get_bw_from_rc_channel(settings.wb_bw_via_rc_channel);
+  if (!opt_rc_bw.has_value()) return;
+  const auto rc_bw = opt_rc_bw.value();
+  if (settings.wb_air_tx_channel_width != rc_bw) {
+    m_console->debug("RC CHANNEL - changing BW from {} to {} ",
+                     settings.wb_air_tx_channel_width, rc_bw);
+    m_settings->unsafe_get_settings().wb_air_tx_channel_width = rc_bw;
+    m_settings->persist();
+    m_request_apply_air_bw = true;
+  }
+}
+
 void WBLink::update_arming_state(bool armed) {
   m_console->debug("update arming state, armed: {}", armed);
   // We just update the internal armed / disarmed state and then call
@@ -1432,26 +1476,30 @@ void WBLink::update_arming_state(bool armed) {
   m_request_apply_tx_power = true;
 }
 
-void WBLink::wt_perform_channel_width_management() {
+void WBLink::wt_gnd_perform_channel_management() {
   if (m_profile.is_ground()) {
     // Ground: Listen on the channel width the air reports (always works due to
     // management always on 20Mhz) And switch "up" to 40Mhz if needed
+    // AND react to (announced) frequency changes (right now without any
+    // recovery protocol)
     const int air_reported_channel_width =
         m_management_gnd->m_air_reported_curr_channel_width;
     const int air_reported_frequency =
         m_management_gnd->m_air_reported_curr_frequency;
-    if((air_reported_channel_width==20 || air_reported_channel_width==40)
-        && air_reported_frequency>100){
-      if(m_gnd_curr_rx_channel_width!=air_reported_channel_width ||
-          m_gnd_curr_rx_frequency!=air_reported_frequency){
+    if ((air_reported_channel_width == 20 ||
+         air_reported_channel_width == 40) &&
+        air_reported_frequency > 100) {
+      if (m_gnd_curr_rx_channel_width != air_reported_channel_width ||
+          m_gnd_curr_rx_frequency != air_reported_frequency) {
         m_console->debug("GND changing from {}:{} to {}:{}",
                          m_gnd_curr_rx_frequency, m_gnd_curr_rx_channel_width,
-                         air_reported_frequency,air_reported_channel_width);
-        m_gnd_curr_rx_frequency=air_reported_frequency;
-        m_gnd_curr_rx_channel_width=air_reported_channel_width;
-        m_settings->unsafe_get_settings().wb_frequency=air_reported_frequency;
+                         air_reported_frequency, air_reported_channel_width);
+        m_gnd_curr_rx_frequency = air_reported_frequency;
+        m_gnd_curr_rx_channel_width = air_reported_channel_width;
+        m_settings->unsafe_get_settings().wb_frequency = air_reported_frequency;
         m_settings->persist(false);
-        apply_frequency_and_channel_width(air_reported_frequency,air_reported_channel_width,20);
+        apply_frequency_and_channel_width(air_reported_frequency,
+                                          air_reported_channel_width, 20);
       }
     }
     /*if (air_reported_channel_width > 0 &&
@@ -1486,11 +1534,11 @@ void WBLink::wt_perform_air_hotspot_after_timeout() {
 }
 
 int WBLink::get_max_fec_block_size() {
-  const int tmp=m_settings->get_settings().wb_max_fec_block_size;
-  if(tmp<0){
+  const int tmp = m_settings->get_settings().wb_max_fec_block_size;
+  if (tmp < 0) {
     return m_recommended_max_fec_blk_size_for_this_platform;
   }
-  if(tmp>128){
+  if (tmp > 128) {
     m_console->warn("Invalid blk size");
     return 20;
   }

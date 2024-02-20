@@ -28,9 +28,9 @@ enum class WiFiCardType {
   UNKNOWN
 };
 
-static constexpr uint8_t WIFI_CARD_SUB_TYPE_UNKNOWN=0;
-static constexpr uint8_t WIFI_CARD_SUB_TYPE_RTL8812AU_ASUS=1;
-static constexpr uint8_t WIFI_CARD_SUB_TYPE_RTL8812AU_X20=1;
+static constexpr uint8_t WIFI_CARD_SUB_TYPE_UNKNOWN = 0;
+static constexpr uint8_t WIFI_CARD_SUB_TYPE_RTL8812AU_ASUS = 1;
+static constexpr uint8_t WIFI_CARD_SUB_TYPE_RTL8812AU_X20 = 1;
 
 static std::string wifi_card_type_to_string(const WiFiCardType& card_type) {
   switch (card_type) {
@@ -63,18 +63,17 @@ static int wifi_card_type_to_int(const WiFiCardType& card_type) {
   return static_cast<int>(card_type);
 }
 
-static std::string wifi_card_sub_type_as_string(uint8_t sub_type){
-  if(sub_type==WIFI_CARD_SUB_TYPE_UNKNOWN){
+static std::string wifi_card_sub_type_as_string(uint8_t sub_type) {
+  if (sub_type == WIFI_CARD_SUB_TYPE_UNKNOWN) {
     return "UNKNOWN";
   }
-  if(sub_type==WIFI_CARD_SUB_TYPE_RTL8812AU_ASUS){
+  if (sub_type == WIFI_CARD_SUB_TYPE_RTL8812AU_ASUS) {
     return "ASUS";
-  }else if(sub_type==WIFI_CARD_SUB_TYPE_RTL8812AU_X20){
+  } else if (sub_type == WIFI_CARD_SUB_TYPE_RTL8812AU_X20) {
     return "X20";
   }
   return "ERROR";
 }
-
 
 struct WiFiCard {
   // These 3 are all (slightly different) identifiers of a card on linux.

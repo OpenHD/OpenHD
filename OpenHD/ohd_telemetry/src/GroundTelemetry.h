@@ -15,7 +15,7 @@
 #include "openhd_action_handler.h"
 #include "openhd_external_device.h"
 #include "openhd_link.hpp"
-#include "openhd_settings_imp.hpp"
+#include "openhd_settings_imp.h"
 #include "openhd_spdlog.h"
 
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND

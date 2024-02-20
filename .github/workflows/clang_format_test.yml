@@ -1,0 +1,24 @@
+# Run clang-tidy
+name: Clang-tidy
+
+on:
+  push:
+
+jobs:
+
+  validate_codestyle_clang_format:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+          
+      - name: Install Dependencies
+        run: |
+          sudo apt install clang-format
+          
+      - name: Validate
+        run: |
+          cd OpenHD
+          ./run_clang_format.sh

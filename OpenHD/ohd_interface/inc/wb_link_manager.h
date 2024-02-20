@@ -35,10 +35,12 @@ class ManagementAir {
   // at which the management frames are sent
   void set_frequency(int frequency);
   void set_channel_width(uint8_t bw);
+
  public:
   std::atomic<uint32_t> m_curr_frequency_mhz;
   std::atomic<uint8_t> m_curr_channel_width_mhz;
   int get_last_received_packet_ts_ms();
+
  private:
   void loop();
   void on_new_management_packet(const uint8_t *data, int data_len);

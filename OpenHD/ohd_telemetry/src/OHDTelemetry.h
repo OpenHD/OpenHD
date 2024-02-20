@@ -15,7 +15,7 @@
 #include "openhd_link_statistics.hpp"
 #include "openhd_platform.h"
 #include "openhd_profile.h"
-#include "openhd_settings_imp.hpp"
+#include "openhd_settings_imp.h"
 
 // Forward declare them to speed up compilation time.
 class AirTelemetry;

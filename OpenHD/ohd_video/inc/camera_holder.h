@@ -10,7 +10,7 @@
 #include "openhd_action_handler.h"
 #include "openhd_bitrate_conversions.hpp"
 #include "openhd_settings_directories.hpp"
-#include "openhd_settings_imp.hpp"
+#include "openhd_settings_imp.h"
 #include "openhd_settings_persistent.h"
 #include "usb_thermal_cam_helper.h"
 

@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 
-#include "openhd_settings_imp.hpp"
+#include "openhd_settings_imp.h"
 #include "wifi_card.h"
 
 /**

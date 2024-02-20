@@ -214,9 +214,9 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
     setup_uart();
     return true;
   };
-  auto c_fc_battery_n_cells=[this](std::string, int value) {
-    if(value<0)return false;
-    m_air_settings->unsafe_get_settings().fc_battery_n_cells=value;
+  auto c_fc_battery_n_cells = [this](std::string, int value) {
+    if (value < 0) return false;
+    m_air_settings->unsafe_get_settings().fc_battery_n_cells = value;
     m_air_settings->persist(false);
     return true;
   };

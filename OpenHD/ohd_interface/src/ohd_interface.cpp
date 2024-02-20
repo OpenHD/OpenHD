@@ -170,9 +170,6 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings() {
    wifi_card_type_to_string(m_opt_hotspot_card.value().type));
      ret.emplace_back(setting);
    }*/
-  if (!m_profile.is_air) {
-    // openhd::testing::append_dummy_int_and_string(ret);
-  }
   openhd::validate_provided_ids(ret);
   return ret;
 }

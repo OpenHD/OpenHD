@@ -21,6 +21,12 @@ if (ENABLE_USB_CAMERAS)
         add_definitions(-DENABLE_USB_CAMERAS)
 endif ()
 
+# https://ortogonal.github.io/cmake-clang-tidy/
+#set(CMAKE_CXX_CLANG_TIDY
+#        clang-tidy;
+#        -header-filter=.;
+#        -checks=*;)
+
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
 # See https://github.com/andrew-hardin/cmake-git-version-tracking
