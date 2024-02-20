@@ -13,8 +13,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
     wb_tx_power_milli_watt, wb_tx_power_milli_watt_armed,
     wb_rtl8812au_tx_pwr_idx_override, wb_rtl8812au_tx_pwr_idx_override_armed,
     wb_video_fec_percentage, wb_video_rate_for_mcs_adjustment_percent,
-    wb_max_fec_block_size,
-    wb_mcs_index_via_rc_channel,wb_bw_via_rc_channel,
+    wb_max_fec_block_size, wb_mcs_index_via_rc_channel, wb_bw_via_rc_channel,
     enable_wb_video_variable_bitrate, wb_enable_listen_only_mode,
     wb_dev_air_set_high_retransmit_count);
 

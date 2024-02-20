@@ -204,7 +204,7 @@ class WBLink : public OHDLink {
   bool m_is_armed = false;
   std::atomic_bool m_request_apply_tx_power = false;
   std::atomic_bool m_request_apply_air_mcs_index = false;
-  std::atomic_bool m_request_apply_air_bw=false;
+  std::atomic_bool m_request_apply_air_bw = false;
   std::chrono::steady_clock::time_point m_last_log_bind_phrase_mismatch =
       std::chrono::steady_clock::now();
   // We store tx power for easy access in stats

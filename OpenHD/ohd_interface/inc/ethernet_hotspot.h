@@ -7,10 +7,11 @@
 
 #include <openhd_external_device.h>
 #include <openhd_settings_imp.h>
-#include "openhd_spdlog.h"
 
 #include <string>
 #include <thread>
+
+#include "openhd_spdlog.h"
 
 /**
  * This class exists to expose the following (quite specific, but proven to be

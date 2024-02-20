@@ -66,7 +66,7 @@ std::vector<std::string> UDPEndpoint::get_all_curr_dest_ips() {
 }
 
 //// Now this is weird, but somehow we get a lot of junk from QGroundControll on
-///android ??!!
+/// android ??!!
 //      // QGroundControll defaults to 255
 //      // QOpenHD defaults to 225;
 //      const bool is_from_ground_controll=msg.m.sysid==255 || msg.m.sysid==225;

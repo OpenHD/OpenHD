@@ -170,9 +170,10 @@ static uint32_t get_max_rate_possible_5G_kbits(const WiFiCard& card,
 static uint32_t get_max_rate_possible_2G_kbits(const WiFiCard& card,
                                                uint16_t mcs_index,
                                                bool is_40Mhz) {
-  const auto rate_5G= get_max_rate_possible_5G_kbits(card,mcs_index,is_40Mhz);
+  const auto rate_5G =
+      get_max_rate_possible_5G_kbits(card, mcs_index, is_40Mhz);
   // 2.4G is (always) quite crowded, so use less bitrate
-  return rate_5G*100/80;
+  return rate_5G * 100 / 80;
 }
 
 static uint32_t get_max_rate_possible(const WiFiCard& card,

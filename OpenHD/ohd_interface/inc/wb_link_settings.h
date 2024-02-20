@@ -101,11 +101,11 @@ struct WBLinkSettings {
   // recommended to the encoder by 80% for each mcs index
   int wb_video_rate_for_mcs_adjustment_percent = 100;
   // NOTE: -1 means use whatever is the openhd recommendation for this platform
-  int wb_max_fec_block_size =DEFAULT_MAX_FEC_BLK_SIZE;
+  int wb_max_fec_block_size = DEFAULT_MAX_FEC_BLK_SIZE;
   // change mcs index via RC channel
   uint32_t wb_mcs_index_via_rc_channel = WB_MCS_INDEX_VIA_RC_CHANNEL_OFF;
   // change bw via RC channel
-  int wb_bw_via_rc_channel=WB_BW_VIA_RC_CHANNEL_OFF;
+  int wb_bw_via_rc_channel = WB_BW_VIA_RC_CHANNEL_OFF;
   // wb link recommends bitrate(s) to the encoder.
   bool enable_wb_video_variable_bitrate = true;
   // !!!!

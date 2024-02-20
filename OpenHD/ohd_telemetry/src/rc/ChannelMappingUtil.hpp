@@ -6,8 +6,8 @@
 #define OPENHD_CHANNELMAPPINGUTIL_H
 
 #include <array>
-#include <string>
 #include <optional>
+#include <string>
 
 #include "openhd_spdlog.h"
 #include "openhd_util.h"

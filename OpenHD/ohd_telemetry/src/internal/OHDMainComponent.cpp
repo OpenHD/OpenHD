@@ -198,9 +198,9 @@ std::vector<MavlinkMessage> OHDMainComponent::generateLogMessages() {
 
 MavlinkMessage OHDMainComponent::generate_ohd_version() const {
   MavlinkMessage msg;
-  mavlink_msg_openhd_version_message_pack(m_sys_id, m_comp_id, &msg.m,
-                                          openhd::MAJOR_VERSION,openhd::MINOR_VERSION,
-                                          openhd::PATCH_VERSION,openhd::RELEASE_TYPE,0);
+  mavlink_msg_openhd_version_message_pack(
+      m_sys_id, m_comp_id, &msg.m, openhd::MAJOR_VERSION, openhd::MINOR_VERSION,
+      openhd::PATCH_VERSION, openhd::RELEASE_TYPE, 0);
   return msg;
 }
 

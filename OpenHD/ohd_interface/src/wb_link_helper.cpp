@@ -248,7 +248,7 @@ bool openhd::wb::validate_frequency_change(
     m_console->warn("Not sanity checking frequency");
     return true;
   }
-  if(new_frequency==2484 && current_channel_width==40){
+  if (new_frequency == 2484 && current_channel_width == 40) {
     m_console->warn("40Mhz not supported on 2484Mhz");
     return false;
   }
@@ -382,8 +382,9 @@ void openhd::wb::RCChannelHelper::set_rc_channels(
   m_rc_channels = rc_channels;
 }
 
-std::optional<uint8_t> openhd::wb::RCChannelHelper::get_bw_from_rc_channel(int channel_index) {
-  if(channel_index<0 || channel_index>=18)return std::nullopt;
+std::optional<uint8_t> openhd::wb::RCChannelHelper::get_bw_from_rc_channel(
+    int channel_index) {
+  if (channel_index < 0 || channel_index >= 18) return std::nullopt;
   const auto rc_channels_opt = get_fc_reported_rc_channels();
   if (!rc_channels_opt.has_value()) {
     // No data from the FC yet, do nothing
@@ -400,6 +401,6 @@ std::optional<uint8_t> openhd::wb::RCChannelHelper::get_bw_from_rc_channel(int c
     // most likely invalid data, discard
     return std::nullopt;
   }
-  if(bw_channel_value_pwm>1500)return 40;
+  if (bw_channel_value_pwm > 1500) return 40;
   return 20;
 }

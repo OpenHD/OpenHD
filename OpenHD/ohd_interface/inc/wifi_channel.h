@@ -140,14 +140,14 @@ static std::vector<WifiChannel> get_channels_5G() {
       WifiChannel{5320, 64, WifiSpace::G5_8, true, true, true, false},
       // These channel(s) are not valid Wi-Fi channels in all countries
       // below only on 20Mhz allowed in some)
-      WifiChannel{5340, 68, WifiSpace::G5_8, true, false,false, false},
-      WifiChannel{5360, 72, WifiSpace::G5_8, true, false, false,false},
-      WifiChannel{5380, 76, WifiSpace::G5_8, true, false, false,false},
-      WifiChannel{5400, 80, WifiSpace::G5_8, true, false, false,false},
-      WifiChannel{5420, 84, WifiSpace::G5_8, true, false, false,false},
-      WifiChannel{5440, 88, WifiSpace::G5_8, true, false, false,false},
-      WifiChannel{5460, 92, WifiSpace::G5_8, true, false, false,false},
-      WifiChannel{5480, 96, WifiSpace::G5_8, true, false, false,false},
+      WifiChannel{5340, 68, WifiSpace::G5_8, true, false, false, false},
+      WifiChannel{5360, 72, WifiSpace::G5_8, true, false, false, false},
+      WifiChannel{5380, 76, WifiSpace::G5_8, true, false, false, false},
+      WifiChannel{5400, 80, WifiSpace::G5_8, true, false, false, false},
+      WifiChannel{5420, 84, WifiSpace::G5_8, true, false, false, false},
+      WifiChannel{5440, 88, WifiSpace::G5_8, true, false, false, false},
+      WifiChannel{5460, 92, WifiSpace::G5_8, true, false, false, false},
+      WifiChannel{5480, 96, WifiSpace::G5_8, true, false, false, false},
       // part often disabled end
       WifiChannel{5500, 100, WifiSpace::G5_8, true, true, true, true},
       WifiChannel{5520, 104, WifiSpace::G5_8, true, true, true, false},
