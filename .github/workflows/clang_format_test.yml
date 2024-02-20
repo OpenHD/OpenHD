@@ -21,4 +21,4 @@ jobs:
       - name: Validate
         run: |
           cd OpenHD
-          run_clang_format.sh
+          ./run_clang_format.sh
