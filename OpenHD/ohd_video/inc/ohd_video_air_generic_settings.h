@@ -8,7 +8,6 @@
 // NOTE: These are not the camera-specific settings, but rather settings
 // regarding the management of how those camera(s) should be used
 
-#include "camera.hpp"
 #include "openhd_settings_directories.h"
 #include "openhd_settings_persistent.h"
 
