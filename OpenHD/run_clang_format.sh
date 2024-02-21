@@ -32,15 +32,22 @@ append_all_sources_headers "$THIS_DIR/ohd_video/src"
 
 echo "Files found to format = \n\"\"\"\n$FILE_LIST\n\"\"\""
 
-# Format each file.
-# - NB: do NOT put quotes around `$FILE_LIST` below or else the `clang-format` command will
-#   mistakenly see the entire blob of newline-separated file names as a SINGLE file name instead
-#   of as a new-line separated list of *many* file names!
-clang-format --dry-run --Werror --verbose -i --style=file $FILE_LIST
+# Checks for clang-format issues and returns error if they exist
+function check_warning(){
+  clang-format --dry-run --Werror --verbose -i --style=file $FILE_LIST
 
-if [ "$?" -eq "0" ]; then
-  echo "Everything formatted correctly"
-else
-  echo "There are formatting errors ! Please fix first."
-  exit 1
-fi
+  if [ "$?" -eq "0" ]; then
+    echo "Everything formatted correctly"
+  else
+    echo "There are formatting errors ! Please fix first."
+    exit 1
+  fi
+}
+
+# fixes any issues (re-formats everything)
+function fix_warnings() {
+    clang-format --verbose -i --style=file $FILE_LIST
+}
+
+#fix_warnings
+check_warning
