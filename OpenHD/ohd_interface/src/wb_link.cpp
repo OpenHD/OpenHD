@@ -1208,6 +1208,11 @@ void WBLink::transmit_video_data(
   }
 }
 
+void WBLink::transmit_audio_data(
+    std::shared_ptr<openhd::AudioPacket> audio_packet) {
+  // Do nothing for now
+}
+
 void WBLink::reset_all_rx_stats() {
   m_wb_txrx->rx_reset_stats();
   for (auto& rx : m_wb_video_rx_list) {

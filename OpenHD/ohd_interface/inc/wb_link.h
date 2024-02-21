@@ -142,6 +142,7 @@ class WBLink : public OHDLink {
   void transmit_video_data(
       int stream_index,
       const openhd::FragmentedVideoFrame& fragmented_video_frame) override;
+  void transmit_audio_data(std::shared_ptr<openhd::AudioPacket> audio_packet)override;
   // How often per second we broadcast the session key -
   // we send the session key ~2 times per second
   static constexpr std::chrono::milliseconds SESSION_KEY_PACKETS_INTERVAL =
