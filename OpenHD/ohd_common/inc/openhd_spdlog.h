@@ -79,6 +79,12 @@ STATUS_LEVEL level_spdlog_to_mavlink(const spdlog::level::level_enum& level);
 
 // Please use sparingly.
 void log_to_kernel(const std::string& message);
+
+// Extra logging method to log without pulling in spdlog / fmt
+void debug_log(const std::string& message);
+void info_log(const std::string& message);
+void warning_log(const std::string& message);
+
 }  // namespace openhd::log
 
 #endif  // OPENHD_OPENHD_OHD_COMMON_OPENHD_SPDLOG_HPP_

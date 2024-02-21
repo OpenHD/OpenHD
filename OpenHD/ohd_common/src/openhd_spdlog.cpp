@@ -143,3 +143,13 @@ void openhd::log::log_to_kernel(const std::string& message) {
   OHDUtil::run_command(fmt::format("echo \"{}\" > /dev/kmsg", message), {},
                        false);
 }
+
+void openhd::log::debug_log(const std::string& message) {
+  openhd::log::get_default()->debug(message);
+}
+void openhd::log::info_log(const std::string& message) {
+  openhd::log::get_default()->info(message);
+}
+void openhd::log::warning_log(const std::string& message) {
+  openhd::log::get_default()->warn(message);
+}
