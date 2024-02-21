@@ -81,8 +81,6 @@ source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
 # target
 #----------------------------------------------------------------------------------------------------------------------
 
-include(CMakePackageConfigHelpers)
-
 target_sources(OHDCommonLib PRIVATE ${sources})
 
 target_include_directories(OHDCommonLib
