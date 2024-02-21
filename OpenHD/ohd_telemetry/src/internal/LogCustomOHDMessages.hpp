@@ -36,7 +36,7 @@ static void logOpenHDMessages(const std::vector<MavlinkMessage> &msges) {
       logOnboardComputerStatus(decoded);
     } else {
       std::stringstream ss;
-      ss<<"unknown ohd msg with msgid:"<<(int)msg.m.msgid;
+      ss << "unknown ohd msg with msgid:" << (int)msg.m.msgid;
       openhd::log::debug_log(ss.str());
     }
   }
