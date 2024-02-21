@@ -4,7 +4,6 @@
 #include "camera_holder.h"
 
 #include "include_json.hpp"
-
 #include "openhd_spdlog_include.h"
 
 NLOHMANN_JSON_SERIALIZE_ENUM(VideoCodec, {
