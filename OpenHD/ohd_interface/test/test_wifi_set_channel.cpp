@@ -4,30 +4,30 @@
 
 #include "openhd_util.h"
 #include "wifi_command_helper.h"
-//#include "wifi_command_helper2.h"
-#include "wifi_card_discovery.h"
-
-#include <vector>
+// #include "wifi_command_helper2.h"
 #include <utility>
+#include <vector>
+
+#include "wifi_card_discovery.h"
 
 //
 #include <linux/wireless.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
-
 #include <unistd.h>
 
-
-static bool test_set_wifi_channel(const std::string& device_name,int channel_number,int width){
-  auto console=openhd::log::get_default();
-  console->debug("test_set_wifi_channel {} {}",device_name,channel_number);
+static bool test_set_wifi_channel(const std::string& device_name,
+                                  int channel_number, int width) {
+  auto console = openhd::log::get_default();
+  console->debug("test_set_wifi_channel {} {}", device_name, channel_number);
   int sockfd;
-  struct iwreq wrq{};
+  struct iwreq wrq {};
 
   // Open socket
   sockfd = socket(AF_INET, SOCK_DGRAM, 0);
   if (sockfd < 0) {
-    openhd::log::get_default()->warn("test_set_wifi_channel - cannot create socket");
+    openhd::log::get_default()->warn(
+        "test_set_wifi_channel - cannot create socket");
     return false;
   }
 
@@ -36,7 +36,7 @@ static bool test_set_wifi_channel(const std::string& device_name,int channel_num
 
   // Set channel
   wrq.u.freq.m = channel_number;
-  wrq.u.freq.e=0;
+  wrq.u.freq.e = 0;
   wrq.u.freq.flags = IW_FREQ_FIXED;
 
   // Send IOCTL to set channel
@@ -63,22 +63,23 @@ static bool test_set_wifi_channel(const std::string& device_name,int channel_num
   // Close socket
   close(sockfd);
 
-  openhd::log::get_default()->debug("Channel set to {}",channel_number);
+  openhd::log::get_default()->debug("Channel set to {}", channel_number);
   return true;
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   OHDUtil::terminate_if_not_root();
 
-  std::string card_name="wlx244bfeb71c05";
-  int channel_num=177;
+  std::string card_name = "wlx244bfeb71c05";
+  int channel_num = 177;
 
-  if(argc<3){
-    openhd::log::get_default()->warn("Usage [wifi card] [channel number], using defaults");
-  }else{
+  if (argc < 3) {
+    openhd::log::get_default()->warn(
+        "Usage [wifi card] [channel number], using defaults");
+  } else {
     card_name = argv[1];
     channel_num = atoi(argv[2]);
   }
-  test_set_wifi_channel(card_name,channel_num,20);
+  test_set_wifi_channel(card_name, channel_num, 20);
   return 0;
 }

@@ -6,14 +6,13 @@
 #include "openhd_util.h"
 
 int main(int argc, char *argv[]) {
-
   OHDUtil::terminate_if_not_root();
 
-  auto listener=std::make_unique<EthernetListener>();
+  auto listener = std::make_unique<EthernetListener>();
 
   OHDUtil::keep_alive_until_sigterm();
 
-  listener= nullptr;
+  listener = nullptr;
 
   return 0;
 }
