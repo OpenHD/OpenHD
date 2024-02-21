@@ -52,5 +52,5 @@ function fix_warnings() {
     clang-format --verbose -i --style=file $FILE_LIST
 }
 
-fix_warnings
-#check_warning
+#fix_warnings
+check_warning
