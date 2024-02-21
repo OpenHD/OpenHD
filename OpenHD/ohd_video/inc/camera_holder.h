@@ -5,6 +5,8 @@
 #ifndef OPENHD_OPENHD_OHD_VIDEO_INC_CAMERA_HOLDER_H_
 #define OPENHD_OPENHD_OHD_VIDEO_INC_CAMERA_HOLDER_H_
 
+#include <sstream>
+
 #include "camera.hpp"
 #include "camera_settings.hpp"
 #include "openhd_action_handler.h"
@@ -199,8 +201,9 @@ class CameraHolder :
 
  private:
   [[nodiscard]] std::string get_unique_filename() const override {
-    return fmt::format("{}_{}.json", m_camera.cam_type_as_verbose_string(),
-                       m_camera.index);
+    std::stringstream ss;
+    ss << m_camera.cam_type_as_verbose_string() << "_" << m_camera.index;
+    return ss.str();
   }
   std::optional<CameraSettings> impl_deserialize(
       const std::string& file_as_string) const override;
