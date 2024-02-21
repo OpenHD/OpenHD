@@ -5,11 +5,13 @@
 #ifndef OPENHD_OPENHD_OHD_VIDEO_INC_CAMERA_HOLDER_H_
 #define OPENHD_OPENHD_OHD_VIDEO_INC_CAMERA_HOLDER_H_
 
+#include <sstream>
+
 #include "camera.hpp"
 #include "camera_settings.hpp"
 #include "openhd_action_handler.h"
 #include "openhd_bitrate_conversions.hpp"
-#include "openhd_settings_directories.hpp"
+#include "openhd_settings_directories.h"
 #include "openhd_settings_imp.h"
 #include "openhd_settings_persistent.h"
 #include "usb_thermal_cam_helper.h"
@@ -67,26 +69,7 @@ class CameraHolder :
     persist();
     return true;
   }
-  bool set_air_recording(int recording_enable) {
-    if (OHDFilesystemUtil::get_remaining_space_in_mb() <
-        MINIMUM_AMOUNT_FREE_SPACE_FOR_AIR_RECORDING_MB) {
-      openhd::log::get_default()->warn("Not enough free space available");
-      return false;
-    }
-    if (get_settings().air_recording == AIR_RECORDING_AUTO_ARM_DISARM &&
-        (recording_enable == AIR_RECORDING_ON ||
-         recording_enable == AIR_RECORDING_OFF)) {
-      openhd::log::get_default()->warn("Auto record on arm disabled");
-    }
-    if (recording_enable == AIR_RECORDING_OFF ||
-        recording_enable == AIR_RECORDING_ON ||
-        recording_enable == AIR_RECORDING_AUTO_ARM_DISARM) {
-      unsafe_get_settings().air_recording = recording_enable;
-      persist();
-      return true;
-    }
-    return false;
-  }
+  bool set_air_recording(int recording_enable);
   bool set_camera_rotation(int value) {
     if (!openhd::validate_camera_rotation(value)) {
       return false;
@@ -218,8 +201,9 @@ class CameraHolder :
 
  private:
   [[nodiscard]] std::string get_unique_filename() const override {
-    return fmt::format("{}_{}.json", m_camera.cam_type_as_verbose_string(),
-                       m_camera.index);
+    std::stringstream ss;
+    ss << m_camera.cam_type_as_verbose_string() << "_" << m_camera.index;
+    return ss.str();
   }
   std::optional<CameraSettings> impl_deserialize(
       const std::string& file_as_string) const override;

@@ -8,6 +8,7 @@
 #include <regex>
 
 #include "openhd_spdlog.h"
+#include "openhd_spdlog_include.h"
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"
 

@@ -5,11 +5,12 @@
 #ifndef OPENHD_OPENHD_OHD_COMMON_OPENHD_SETTINGS_PERSISTENT_HPP_
 #define OPENHD_OPENHD_OHD_COMMON_OPENHD_SETTINGS_PERSISTENT_HPP_
 
+#include <cassert>
 #include <fstream>
+#include <functional>
 #include <utility>
 
 #include "openhd_spdlog.h"
-#include "openhd_util.h"
 #include "openhd_util_filesystem.h"
 
 /**
@@ -67,8 +68,8 @@ class PersistentSettings {
   }
   // Persist then new settings, then call the callback to propagate the change
   void update_settings(const T& new_settings) {
-    openhd::log::get_default()->debug("Got new settings in[{}]",
-                                      get_unique_filename());
+    openhd::log::debug_log("Got new settings in [" + get_unique_filename() +
+                           "]");
     _settings = std::make_unique<T>(new_settings);
     PersistentSettings::persist_settings();
     if (_settings_changed_callback) {
@@ -92,11 +93,10 @@ class PersistentSettings {
     const auto last_settings_opt = read_last_settings();
     if (last_settings_opt.has_value()) {
       _settings = std::make_unique<T>(last_settings_opt.value());
-      openhd::log::get_default()->info("Using settings in [{}]",
-                                       get_file_path());
+      openhd::log::info_log("Using settings in [" + get_file_path() + "]");
     } else {
-      openhd::log::get_default()->info("Creating default settings in [{}]",
-                                       get_file_path());
+      openhd::log::info_log("Creating default settings in [" + get_file_path() +
+                            "]");
       // create default settings and persist them for the next reboot
       _settings = std::make_unique<T>(create_default());
       persist_settings();

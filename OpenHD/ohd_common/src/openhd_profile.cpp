@@ -6,7 +6,10 @@
 
 #include <sstream>
 
-#include "openhd_settings_directories.hpp"
+#include "openhd_settings_directories.h"
+#include "openhd_spdlog.h"
+#include "openhd_spdlog_include.h"
+#include "openhd_util_filesystem.h"
 
 static constexpr auto PROFILE_MANIFEST_FILENAME = "/tmp/profile_manifest.txt";
 

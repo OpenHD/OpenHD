@@ -7,6 +7,7 @@
 
 #include <vector>
 
+#include "openhd_spdlog_include.h"
 #include "wifi_channel.h"
 
 // Helper for validating user-selectable settings
@@ -53,7 +54,7 @@ static bool is_valid_fec_block_length(int block_length) {
 static bool is_valid_fec_percentage(int fec_perc) {
   bool valid = fec_perc > 0 && fec_perc <= 400;
   if (!valid) {
-    openhd::log::get_default()->warn("Invalid fec percentage:{}", fec_perc);
+    openhd::log::warning_log("Invalid fec percentage");
   }
   return valid;
 }

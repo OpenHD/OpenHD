@@ -3,12 +3,10 @@
 //
 #include "openhd_spdlog.h"
 
-//
 #include <spdlog/common.h>
-#include <spdlog/spdlog.h>
-//
 #include <spdlog/sinks/base_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/spdlog.h>
 
 #include <iostream>
 #include <mutex>
@@ -144,4 +142,14 @@ openhd::log::STATUS_LEVEL openhd::log::level_spdlog_to_mavlink(
 void openhd::log::log_to_kernel(const std::string& message) {
   OHDUtil::run_command(fmt::format("echo \"{}\" > /dev/kmsg", message), {},
                        false);
+}
+
+void openhd::log::debug_log(const std::string& message) {
+  openhd::log::get_default()->debug(message);
+}
+void openhd::log::info_log(const std::string& message) {
+  openhd::log::get_default()->info(message);
+}
+void openhd::log::warning_log(const std::string& message) {
+  openhd::log::get_default()->warn(message);
 }

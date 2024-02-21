@@ -10,6 +10,7 @@
 
 #include "openhd_profile.h"
 #include "openhd_spdlog.h"
+#include "openhd_spdlog_include.h"
 #include "openhd_video_frame.h"
 
 /**
@@ -107,6 +108,13 @@ class OHDLink {
  private:
   std::shared_ptr<ON_TELE_DATA_CB> m_tele_data_cb;
   std::shared_ptr<ON_VIDEO_DATA_CB> m_video_data_cb;
+
+ public:
+  typedef std::function<void(const uint8_t* data, int data_len)>
+      ON_AUDIO_DATA_RX_CB;
+  std::shared_ptr<ON_AUDIO_DATA_RX_CB> m_audio_data_rx_cb;
+  virtual void transmit_audio_data(
+      std::shared_ptr<openhd::AudioPacket> audio_packet) = 0;
 };
 
 class DummyDebugLink : public OHDLink {
@@ -115,6 +123,7 @@ class DummyDebugLink : public OHDLink {
   explicit DummyDebugLink() {
     m_console_tele = openhd::log::create_or_get("tele");
     m_console_video = openhd::log::create_or_get("video");
+    m_console_audio = openhd::log::create_or_get("audio");
   }
   void transmit_telemetry_data(TelemetryTxPacket packet) override {
     m_console_tele->debug("Got {} telemetry fragments", packet.data->size());
@@ -135,10 +144,15 @@ class DummyDebugLink : public OHDLink {
       m_opt_frame_cb(stream_index, fragmented_video_frame);
     }
   }
+  void transmit_audio_data(
+      std::shared_ptr<openhd::AudioPacket> audio_packet) override {
+    m_console_audio->debug("Got audio data {}", audio_packet->data->size());
+  }
 
  private:
   std::shared_ptr<spdlog::logger> m_console_video;
   std::shared_ptr<spdlog::logger> m_console_tele;
+  std::shared_ptr<spdlog::logger> m_console_audio;
 };
 
 #endif  // OPENHD_OPENHD_OHD_COMMON_OHD_LINK_HPP_

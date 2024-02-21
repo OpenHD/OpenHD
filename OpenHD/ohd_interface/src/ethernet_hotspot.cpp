@@ -10,6 +10,7 @@
 #include <utility>
 
 #include "ethernet_helper.hpp"
+#include "openhd_spdlog_include.h"
 
 static constexpr auto OHD_ETHERNET_HOTSPOT_CONNECTION_NAME = "ohd_eth_hotspot";
 

@@ -72,14 +72,14 @@ set(sources
     src/openhd_led.cpp
     src/openhd_buttons.cpp
     src/openhd_settings_imp.cpp
+    src/openhd_settings_directories.cpp
+    src/openhd_settings_persistent.cpp
     )
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
 
 #----------------------------------------------------------------------------------------------------------------------
 # target
 #----------------------------------------------------------------------------------------------------------------------
-
-include(CMakePackageConfigHelpers)
 
 target_sources(OHDCommonLib PRIVATE ${sources})
 

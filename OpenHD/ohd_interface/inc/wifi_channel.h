@@ -236,8 +236,6 @@ static std::optional<openhd::WifiChannel> channel_from_frequency(
 static WifiSpace get_space_from_frequency(uint32_t frequency) {
   auto channel = channel_from_frequency(frequency);
   if (!channel.has_value()) {
-    openhd::log::get_default()->warn("Invalid frequency {}, assuming 5G",
-                                     frequency);
     return WifiSpace::G5_8;
   }
   return channel.value().space;

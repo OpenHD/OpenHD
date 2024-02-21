@@ -12,6 +12,7 @@
 #include "OnboardComputerStatusProvider.h"
 #include "openhd_config.h"
 #include "openhd_reboot_util.h"
+#include "openhd_spdlog_include.h"
 
 OHDMainComponent::OHDMainComponent(OHDPlatform platform1, uint8_t parent_sys_id,
                                    bool runsOnAir)

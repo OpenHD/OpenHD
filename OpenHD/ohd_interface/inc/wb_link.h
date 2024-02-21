@@ -7,10 +7,10 @@
 #include <utility>
 #include <vector>
 
-#include "../lib/wifibroadcast/wifibroadcast/WBStreamRx.h"
-#include "../lib/wifibroadcast/wifibroadcast/WBStreamTx.h"
-#include "../lib/wifibroadcast/wifibroadcast/WBTxRx.h"
-#include "../lib/wifibroadcast/wifibroadcast/encryption/EncryptionFsUtils.h"
+#include "../lib/wifibroadcast/wifibroadcast/src/WBStreamRx.h"
+#include "../lib/wifibroadcast/wifibroadcast/src/WBStreamTx.h"
+#include "../lib/wifibroadcast/wifibroadcast/src/WBTxRx.h"
+#include "../lib/wifibroadcast/wifibroadcast/src/encryption/EncryptionFsUtils.h"
 #include "openhd_action_handler.h"
 #include "openhd_link.hpp"
 #include "openhd_link_statistics.hpp"
@@ -142,6 +142,8 @@ class WBLink : public OHDLink {
   void transmit_video_data(
       int stream_index,
       const openhd::FragmentedVideoFrame& fragmented_video_frame) override;
+  void transmit_audio_data(
+      std::shared_ptr<openhd::AudioPacket> audio_packet) override;
   // How often per second we broadcast the session key -
   // we send the session key ~2 times per second
   static constexpr std::chrono::milliseconds SESSION_KEY_PACKETS_INTERVAL =

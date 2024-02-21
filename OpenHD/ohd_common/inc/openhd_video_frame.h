@@ -49,5 +49,11 @@ typedef std::function<void(int stream_index, const openhd::FragmentedVideoFrame&
                                                  fragmented_video_frame)>
     ON_ENCODE_FRAME_CB;
 
+struct AudioPacket {
+  std::shared_ptr<std::vector<uint8_t>> data;
+};
+typedef std::function<void(const openhd::AudioPacket& audio_packet)>
+    ON_AUDIO_TX_DATA_PACKET;
+
 }  // namespace openhd
 #endif  // OPENHD_OPENHD_OHD_COMMON_OPENHD_VIDEO_FRAME_H_

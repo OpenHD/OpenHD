@@ -5,6 +5,8 @@
 
 #include "include_json.hpp"
 #include "openhd_platform.h"
+#include "openhd_spdlog_include.h"
+#include "openhd_util.h"
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
     AirCameraGenericSettings, switch_primary_and_secondary,

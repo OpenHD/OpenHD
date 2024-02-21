@@ -14,6 +14,7 @@
 #include <map>
 #include <utility>
 
+#include "openhd_spdlog_include.h"
 #include "openhd_util_filesystem.h"
 
 static std::string GET_ERROR() { return {strerror(errno)}; }

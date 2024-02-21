@@ -125,28 +125,28 @@ target_include_directories(mavlink INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/lib/mav
 target_link_libraries(OHDTelemetryLib PUBLIC mavlink)
 
 # All the test files for development
-add_executable(test_serial_endpoint tests/test_serial_endpoint.cpp)
+add_executable(test_serial_endpoint test/test_serial_endpoint.cpp)
 target_link_libraries(test_serial_endpoint OHDTelemetryLib)
 
-add_executable(test_udp_endpoint tests/test_udp_endpoint.cpp)
+add_executable(test_udp_endpoint test/test_udp_endpoint.cpp)
 target_link_libraries(test_udp_endpoint OHDTelemetryLib)
 
-add_executable(test_tcp_server_endpoint tests/test_tcp_server_endpoint.cpp)
+add_executable(test_tcp_server_endpoint test/test_tcp_server_endpoint.cpp)
 target_link_libraries(test_tcp_server_endpoint OHDTelemetryLib)
 
-add_executable(test_ground_locally tests/test_ground_locally.cpp)
+add_executable(test_ground_locally test/test_ground_locally.cpp)
 target_link_libraries(test_ground_locally OHDTelemetryLib)
 
-add_executable(test_air_locally tests/test_air_locally.cpp)
+add_executable(test_air_locally test/test_air_locally.cpp)
 target_link_libraries(test_air_locally OHDTelemetryLib)
 
-add_executable(test_ground_and_air_locally tests/test_ground_and_air_locally.cpp)
+add_executable(test_ground_and_air_locally test/test_ground_and_air_locally.cpp)
 target_link_libraries(test_ground_and_air_locally OHDTelemetryLib)
 
-add_executable(test_onboard_computer_status_read_stuff tests/test_onboard_computer_status_read_stuff.cpp)
+add_executable(test_onboard_computer_status_read_stuff test/test_onboard_computer_status_read_stuff.cpp)
 target_link_libraries(test_onboard_computer_status_read_stuff OHDTelemetryLib)
 
-add_executable(test_joystick_reader tests/test_joystick_reader.cpp)
+add_executable(test_joystick_reader test/test_joystick_reader.cpp)
 target_link_libraries(test_joystick_reader OHDTelemetryLib)
 
 ####

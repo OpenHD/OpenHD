@@ -25,7 +25,7 @@ static void logOnboardComputerStatus(
   ss << "MAVLINK_MSG_ID_ONBOARD_COMPUTER_STATUS: cpu_usage:"
      << (int)decoded.cpu_cores[0]
      << " temp:" << (int)decoded.temperature_core[0];
-  openhd::log::get_default()->debug(ss.str());
+  openhd::log::debug_log(ss.str());
 }
 
 static void logOpenHDMessages(const std::vector<MavlinkMessage> &msges) {
@@ -35,8 +35,9 @@ static void logOpenHDMessages(const std::vector<MavlinkMessage> &msges) {
       mavlink_msg_onboard_computer_status_decode(&msg.m, &decoded);
       logOnboardComputerStatus(decoded);
     } else {
-      openhd::log::get_default()->debug("unknown ohd msg with msgid:{}",
-                                        msg.m.msgid);
+      std::stringstream ss;
+      ss << "unknown ohd msg with msgid:" << (int)msg.m.msgid;
+      openhd::log::debug_log(ss.str());
     }
   }
 }

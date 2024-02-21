@@ -10,6 +10,7 @@
 #include <string>
 
 #include "openhd_spdlog.h"
+#include "openhd_spdlog_include.h"
 #include "openhd_util.h"
 
 // Util methods for simple channel mapping, where each channel's input can be

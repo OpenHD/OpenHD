@@ -2,12 +2,7 @@
 #ifndef OPENHD_SETTINGS_H
 #define OPENHD_SETTINGS_H
 
-#include <cassert>
 #include <string>
-#include <utility>
-
-#include "openhd_spdlog.h"
-#include "openhd_util_filesystem.h"
 
 namespace openhd {
 
@@ -45,15 +40,7 @@ static std::string get_video_settings_directory() {
  * If the directory does not exist yet,
  * generate the directory where all persistent settings of OpenHD are stored.
  */
-static void generateSettingsDirectoryIfNonExists() {
-  if (!OHDFilesystemUtil::exists(SETTINGS_BASE_PATH)) {
-    OHDFilesystemUtil::create_directories(SETTINGS_BASE_PATH);
-  }
-  assert(OHDFilesystemUtil::exists(SETTINGS_BASE_PATH));
-  OHDFilesystemUtil::create_directories(get_interface_settings_directory());
-  OHDFilesystemUtil::create_directories(get_telemetry_settings_directory());
-  OHDFilesystemUtil::create_directories(get_video_settings_directory());
-}
+void generateSettingsDirectoryIfNonExists();
 
 // fucking boost, random bugged on allwinner. This is a temporary solution
 static std::string create_unit_it_temporary() { return "01234566789"; }
@@ -65,33 +52,12 @@ static std::string create_unit_it_temporary() { return "01234566789"; }
  * and return the unit id.
  * @return the unit id, it doesn't change during reboots of the same system.
  */
-static std::string getOrCreateUnitId() {
-  generateSettingsDirectoryIfNonExists();
-  auto unit_id_opt = OHDFilesystemUtil::opt_read_file(get_unit_id_file_path());
-  if (unit_id_opt.has_value()) {
-    std::string unit_id = unit_id_opt.value();
-    // openhd::log::get_default()->debug("Read unit id:{}",unit_id);
-    return unit_id;
-  }
-  // No unit id exists yet - create new one
-  // generate new unit id
-  // See https://www.boost.org/doc/libs/1_62_0/libs/uuid/uuid.html
-  // const boost::uuids::uuid _uuid = boost::uuids::random_generator()();
-  // unit_id = to_string(_uuid);
-  std::string unit_id = create_unit_it_temporary();
-  OHDFilesystemUtil::write_file(get_unit_id_file_path(), unit_id);
-  openhd::log::get_default()->info("Created new unit id:{}", unit_id);
-  return unit_id;
-}
+std::string getOrCreateUnitId();
 
 // Clean up the directory where OpenHD persistent settings are stored
 // Which in turn means that all modules that follow the "create default settings
 // when no settings are found by (HW)-id" will create full new default settings.
-static void clean_all_settings() {
-  openhd::log::get_default()->debug("clean_all_settings()");
-  OHDFilesystemUtil::safe_delete_directory(SETTINGS_BASE_PATH);
-  generateSettingsDirectoryIfNonExists();
-}
+void clean_all_settings();
 
 // Helper for development - we catch 2 things with the following pattern:
 // 1) When openhd is started - check if the file exists, in which case either a
@@ -103,20 +69,9 @@ static std::string get_openhd_is_running_filename() {
   return "/tmp/openhd_is_running.txt";
 }
 
-static void check_currently_running_file_and_write() {
-  if (OHDFilesystemUtil::exists(get_openhd_is_running_filename())) {
-    openhd::log::get_default()->warn(
-        "OpenHD is either still running in another process or did not "
-        "terminate properly last time");
-  }
-  OHDFilesystemUtil::write_file(get_openhd_is_running_filename(), "dummy");
-}
+void check_currently_running_file_and_write();
 
-static void remove_currently_running_file() {
-  openhd::log::get_default()->debug(
-      "OpenHD terminating,removing is running file");
-  OHDFilesystemUtil::remove_if_existing(get_openhd_is_running_filename());
-}
+void remove_currently_running_file();
 
 }  // namespace openhd
 

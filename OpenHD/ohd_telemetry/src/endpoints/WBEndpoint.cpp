@@ -6,6 +6,8 @@
 
 #include <utility>
 
+#include "openhd_spdlog_include.h"
+
 WBEndpoint::WBEndpoint(std::shared_ptr<OHDLink> link, std::string TAG)
     : MEndpoint(std::move(TAG)), m_link_handle(std::move(link)) {
   // assert(m_tx_rx_handle);

@@ -1152,7 +1152,7 @@ void WBLink::transmit_video_data(
     m_console->debug("Invalid camera stream_index {}", stream_index);
     return;
   }
-  if (m_air_close_video_in.load(std::memory_order::memory_order_relaxed)) {
+  if (m_air_close_video_in.load(std::memory_order_relaxed)) {
     m_console->debug("Video TX temporarily disabled");
     return;
   }
@@ -1206,6 +1206,11 @@ void WBLink::transmit_video_data(
       m_secondary_total_dropped_frames += n_dropped_frames;
     }
   }
+}
+
+void WBLink::transmit_audio_data(
+    std::shared_ptr<openhd::AudioPacket> audio_packet) {
+  // Do nothing for now
 }
 
 void WBLink::reset_all_rx_stats() {

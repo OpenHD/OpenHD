@@ -11,6 +11,7 @@
 #include <string>
 
 #include "openhd_spdlog.h"
+#include "openhd_spdlog_include.h"
 
 namespace mavsdk {
 class YLogger {

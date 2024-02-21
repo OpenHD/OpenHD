@@ -64,7 +64,9 @@ static std::string create_unused_recording_filename(const std::string& suffix) {
   // we also make sure that we always use ascending numbers, even if the user
   // deletes a video
   const int track_index = get_recording_index_track_count();
-  return fmt::format("{}recording_{}{}", RECORDINGS_PATH, track_index, suffix);
+  std::stringstream ss;
+  ss << RECORDINGS_PATH << "recording_" << track_index << suffix;
+  return ss.str();
   /*for(int i=0;i<10000;i++){
     // Suffix might be either .
     std::stringstream filename;

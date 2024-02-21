@@ -6,14 +6,13 @@
 #include "usb_tether_listener.h"
 
 int main(int argc, char *argv[]) {
-
   OHDUtil::terminate_if_not_root();
 
-  auto usb_tether_listener=std::make_unique<USBTetherListener>();
+  auto usb_tether_listener = std::make_unique<USBTetherListener>();
 
   OHDUtil::keep_alive_until_sigterm();
 
-  usb_tether_listener= nullptr;
+  usb_tether_listener = nullptr;
 
   return 0;
 }

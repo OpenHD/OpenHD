@@ -6,9 +6,11 @@
 
 #include <arpa/inet.h>
 
+#include <cassert>
 #include <utility>
 
 #include "openhd_spdlog.h"
+#include "openhd_spdlog_include.h"
 
 USBTetherListener::USBTetherListener() {
   m_console = openhd::log::create_or_get("usb_listener");

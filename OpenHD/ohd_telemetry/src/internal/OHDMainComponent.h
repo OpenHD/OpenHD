@@ -5,6 +5,7 @@
 #ifndef XMAVLINKSERVICE_INTERNALTELEMETRY_H
 #define XMAVLINKSERVICE_INTERNALTELEMETRY_H
 
+#include <atomic>
 #include <map>
 #include <mutex>
 #include <optional>

@@ -6,6 +6,7 @@
 
 #include "onboard_computer_status.hpp"
 #include "onboard_computer_status_rpi.hpp"
+#include "openhd_spdlog_include.h"
 #include "openhd_util_filesystem.h"
 
 // INA219 stuff

@@ -7,6 +7,7 @@
 #include <utility>
 
 #include "ethernet_helper.hpp"
+#include "openhd_spdlog_include.h"
 #include "openhd_util.h"
 
 EthernetListener::EthernetListener(std::string device)

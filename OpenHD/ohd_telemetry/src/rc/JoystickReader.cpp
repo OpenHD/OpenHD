@@ -7,8 +7,11 @@
 #include <SDL2/SDL.h>
 #include <unistd.h>
 
+#include <cassert>
 #include <iostream>
 #include <sstream>
+
+#include "openhd_spdlog_include.h"
 
 static constexpr auto JOYSTICK_N = 0;
 /*static constexpr auto JOY_DEV="/sys/class/input/js0";

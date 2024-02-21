@@ -4,6 +4,7 @@
 #include "camera_holder.h"
 
 #include "include_json.hpp"
+#include "openhd_spdlog_include.h"
 
 NLOHMANN_JSON_SERIALIZE_ENUM(VideoCodec, {
                                              {VideoCodec::H264, "h264"},
@@ -250,4 +251,25 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
             cb_infiray}});
   }
   return ret;
+}
+
+bool CameraHolder::set_air_recording(int recording_enable) {
+  if (OHDFilesystemUtil::get_remaining_space_in_mb() <
+      MINIMUM_AMOUNT_FREE_SPACE_FOR_AIR_RECORDING_MB) {
+    openhd::log::get_default()->warn("Not enough free space available");
+    return false;
+  }
+  if (get_settings().air_recording == AIR_RECORDING_AUTO_ARM_DISARM &&
+      (recording_enable == AIR_RECORDING_ON ||
+       recording_enable == AIR_RECORDING_OFF)) {
+    openhd::log::get_default()->warn("Auto record on arm disabled");
+  }
+  if (recording_enable == AIR_RECORDING_OFF ||
+      recording_enable == AIR_RECORDING_ON ||
+      recording_enable == AIR_RECORDING_AUTO_ARM_DISARM) {
+    unsafe_get_settings().air_recording = recording_enable;
+    persist();
+    return true;
+  }
+  return false;
 }
