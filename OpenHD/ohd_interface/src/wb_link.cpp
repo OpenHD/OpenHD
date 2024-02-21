@@ -143,7 +143,7 @@ WBLink::WBLink(OHDProfile profile, OHDPlatform platform,
         m_profile.is_air ? openhd::TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT
                          : openhd::TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT;
     auto cb_rx = [this](const uint8_t* data, int data_len) {
-      m_last_received_packet_ts_ms = OHDUtil::steady_clock_time_epoch_ms();
+      m_last_received_packet_ts_ms = openhd::util::steady_clock_time_epoch_ms();
       auto shared =
           std::make_shared<std::vector<uint8_t>>(data, data + data_len);
       on_receive_telemetry_data(shared);
@@ -858,11 +858,11 @@ void WBLink::wt_update_statistics() {
       air_video.curr_dropped_frames = tx_dropped_frames;
       const auto curr_tx_fec_stats = wb_tx.get_latest_fec_stats();
       air_fec.curr_fec_encode_time_avg_us =
-          OHDUtil::get_micros(curr_tx_fec_stats.curr_fec_encode_time.avg);
+          openhd::util::get_micros(curr_tx_fec_stats.curr_fec_encode_time.avg);
       air_fec.curr_fec_encode_time_min_us =
-          OHDUtil::get_micros(curr_tx_fec_stats.curr_fec_encode_time.min);
+          openhd::util::get_micros(curr_tx_fec_stats.curr_fec_encode_time.min);
       air_fec.curr_fec_encode_time_max_us =
-          OHDUtil::get_micros(curr_tx_fec_stats.curr_fec_encode_time.max);
+          openhd::util::get_micros(curr_tx_fec_stats.curr_fec_encode_time.max);
       air_fec.curr_fec_block_size_min =
           curr_tx_fec_stats.curr_fec_block_length.min;
       air_fec.curr_fec_block_size_max =
@@ -898,11 +898,11 @@ void WBLink::wt_update_statistics() {
       ground_video.count_blocks_lost = fec_stats.count_blocks_lost;
       ground_video.count_blocks_total = fec_stats.count_blocks_total;
       gnd_fec.curr_fec_decode_time_avg_us =
-          OHDUtil::get_micros(fec_stats.curr_fec_decode_time.avg);
+          openhd::util::get_micros(fec_stats.curr_fec_decode_time.avg);
       gnd_fec.curr_fec_decode_time_min_us =
-          OHDUtil::get_micros(fec_stats.curr_fec_decode_time.min);
+          openhd::util::get_micros(fec_stats.curr_fec_decode_time.min);
       gnd_fec.curr_fec_decode_time_max_us =
-          OHDUtil::get_micros(fec_stats.curr_fec_decode_time.max);
+          openhd::util::get_micros(fec_stats.curr_fec_decode_time.max);
       // TODO otimization: Only send stats for an active link
       stats.stats_wb_video_ground.push_back(ground_video);
       if (i == 0) stats.gnd_fec_performance = gnd_fec;
@@ -943,7 +943,7 @@ void WBLink::wt_update_statistics() {
   const int last_received_packet_ts = std::max(
       m_last_received_packet_ts_ms.load(), tmp_last_management_packet_ts);
   const auto elapsed_since_last_rx_packet_ms =
-      OHDUtil::steady_clock_time_epoch_ms() - last_received_packet_ts;
+      openhd::util::steady_clock_time_epoch_ms() - last_received_packet_ts;
   const bool curr_rx_last_packet_status_good =
       elapsed_since_last_rx_packet_ms <= 5 * 1000;
   const auto bitfield = openhd::link_statistics::MonitorModeLinkBitfield{

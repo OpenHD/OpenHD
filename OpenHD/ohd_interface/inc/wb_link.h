@@ -18,6 +18,7 @@
 #include "openhd_profile.h"
 #include "openhd_settings_imp.h"
 #include "openhd_spdlog.h"
+#include "openhd_util_time.h"
 #include "wb_link_helper.h"
 #include "wb_link_manager.h"
 #include "wb_link_settings.h"
@@ -213,7 +214,7 @@ class WBLink : public OHDLink {
   std::atomic<int> m_curr_tx_power_idx = 0;
   std::atomic<int> m_curr_tx_power_mw = 0;
   std::atomic<int> m_last_received_packet_ts_ms =
-      OHDUtil::steady_clock_time_epoch_ms();
+      openhd::util::steady_clock_time_epoch_ms();
   std::chrono::steady_clock::time_point m_reset_frequency_time_point =
       std::chrono::steady_clock::now();
   // 40Mhz / 20Mhz link management

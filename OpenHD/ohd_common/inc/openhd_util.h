@@ -1,7 +1,6 @@
 #ifndef OPENHD_UTIL_H
 #define OPENHD_UTIL_H
 
-#include <chrono>
 #include <optional>
 #include <string>
 #include <vector>
@@ -170,17 +169,6 @@ float map_int_percentage_to_minus1_to_1(int percentage);
 float map_int_percentage_0_200_to_minus1_to_1(int percentage);
 
 int8_t calculate_progress_perc(int progress, int total_count);
-
-int steady_clock_time_epoch_ms();
-
-// R stands for readable. Convert a std::chrono::duration into a readable
-// format. Readable format is somewhat arbitrary, in this case readable means
-// that for example 1second has 'ms' resolution since for values that big ns
-// resolution probably isn't needed
-std::string time_readable(const std::chrono::steady_clock::duration& dur);
-std::string time_readable_ns(uint64_t nanoseconds);
-
-uint32_t get_micros(std::chrono::nanoseconds ns);
 
 std::string int_as_string(int number);
 

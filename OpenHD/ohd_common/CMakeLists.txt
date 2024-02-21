@@ -74,6 +74,7 @@ set(sources
     src/openhd_settings_imp.cpp
     src/openhd_settings_directories.cpp
     src/openhd_settings_persistent.cpp
+    src/openhd_util_time.cpp
     )
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
 

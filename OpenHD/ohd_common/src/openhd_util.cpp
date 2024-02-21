@@ -316,49 +316,6 @@ bool OHDUtil::get_nth_bit(long number, int position) {
   return bit_status;
 }
 
-int OHDUtil::steady_clock_time_epoch_ms() {
-  const auto now = std::chrono::steady_clock::now();
-  const std::chrono::milliseconds now_ms =
-      std::chrono::duration_cast<std::chrono::milliseconds>(
-          now.time_since_epoch());
-  return now_ms.count();
-}
-
-std::string OHDUtil::time_readable(
-    const std::chrono::steady_clock::duration& dur) {
-  const auto durAbsolute = std::chrono::abs(dur);
-  if (durAbsolute >= std::chrono::seconds(1)) {
-    // More than one second, print as decimal with ms resolution.
-    const auto ms =
-        std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
-    return std::to_string(static_cast<float>(ms) / 1000.0f) + "s";
-  }
-  if (durAbsolute >= std::chrono::milliseconds(1)) {
-    // More than one millisecond, print as decimal with us resolution
-    const auto us =
-        std::chrono::duration_cast<std::chrono::microseconds>(dur).count();
-    return std::to_string(static_cast<float>(us) / 1000.0f) + "ms";
-  }
-  if (durAbsolute >= std::chrono::microseconds(1)) {
-    // More than one microsecond, print as decimal with ns resolution
-    const auto ns =
-        std::chrono::duration_cast<std::chrono::nanoseconds>(dur).count();
-    return std::to_string(static_cast<float>(ns) / 1000.0f) + "us";
-  }
-  const auto ns =
-      std::chrono::duration_cast<std::chrono::nanoseconds>(dur).count();
-  return std::to_string(ns) + "ns";
-}
-
-std::string OHDUtil::time_readable_ns(uint64_t nanoseconds) {
-  return time_readable(std::chrono::nanoseconds(nanoseconds));
-}
-
-uint32_t OHDUtil::get_micros(std::chrono::nanoseconds ns) {
-  return static_cast<uint32_t>(
-      std::chrono::duration_cast<std::chrono::microseconds>(ns).count());
-}
-
 void OHDUtil::ltrim(std::string& s) {
   s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
             return !std::isspace(ch);
