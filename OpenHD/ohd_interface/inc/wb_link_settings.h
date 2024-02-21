@@ -9,7 +9,7 @@
 
 #include "openhd_platform.h"
 #include "openhd_profile.h"
-#include "openhd_settings_directories.hpp"
+#include "openhd_settings_directories.h"
 #include "openhd_settings_persistent.h"
 #include "wifi_card.h"
 

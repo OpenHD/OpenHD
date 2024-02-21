@@ -7,6 +7,7 @@
 #include <regex>
 
 #include "openhd_spdlog.h"
+#include "openhd_spdlog_include.h"
 
 bool openhd::validate_bitrate_mbits(int bitrate_mbits) {
   const bool ret = bitrate_mbits >= 1 && bitrate_mbits <= 50;

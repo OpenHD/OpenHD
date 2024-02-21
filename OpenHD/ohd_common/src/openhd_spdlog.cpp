@@ -3,12 +3,10 @@
 //
 #include "openhd_spdlog.h"
 
-//
 #include <spdlog/common.h>
-#include <spdlog/spdlog.h>
-//
 #include <spdlog/sinks/base_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/spdlog.h>
 
 #include <iostream>
 #include <mutex>

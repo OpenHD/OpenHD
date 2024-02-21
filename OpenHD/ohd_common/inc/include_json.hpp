@@ -8,13 +8,11 @@
 // NOTE: Please use this one everywhere instead of including the json.hpp
 // directly, since we want to eventually switch to using json as a library
 #include <nlohmann/json.hpp>
-
 // #include <nlohmann/json_fwd.hpp>
 
 #include <iostream>
 #include <optional>
 #include <sstream>
-// #include "openhd_splog.h"
 
 template <class T>
 static std::optional<T> openhd_json_parse(const std::string& content) {

@@ -7,7 +7,7 @@
 
 #include <map>
 
-#include "openhd_settings_directories.hpp"
+#include "openhd_settings_directories.h"
 #include "openhd_settings_persistent.h"
 
 namespace openhd::telemetry::rpi {

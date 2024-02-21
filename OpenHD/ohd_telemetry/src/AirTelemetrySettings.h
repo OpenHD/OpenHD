@@ -8,7 +8,7 @@
 #include <map>
 
 #include "openhd_platform.h"
-#include "openhd_settings_directories.hpp"
+#include "openhd_settings_directories.h"
 #include "openhd_settings_persistent.h"
 
 // Settings for telemetry, only valid on an air pi (since only on the air pi we

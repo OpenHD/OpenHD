@@ -7,6 +7,7 @@
 
 #include <vector>
 
+#include "openhd_spdlog_include.h"
 #include "wifi_channel.h"
 
 // Helper for validating user-selectable settings

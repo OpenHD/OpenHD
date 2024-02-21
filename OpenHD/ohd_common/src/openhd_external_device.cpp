@@ -5,7 +5,7 @@
 #include "openhd_external_device.h"
 
 #include "openhd_config.h"
-#include "openhd_settings_directories.hpp"
+#include "openhd_settings_directories.h"
 #include "openhd_spdlog.h"
 #include "openhd_util.h"
 

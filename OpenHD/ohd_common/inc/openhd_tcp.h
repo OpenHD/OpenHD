@@ -72,12 +72,6 @@ class TCPServer {
   };
   std::mutex m_clients_list_mutex;
   std::deque<std::shared_ptr<ConnectedClient>> m_clients_list;
-  template <typename... Args>
-  void debug_if(spdlog::format_string_t<Args...> fmt, Args&&... args) {
-    if (m_debug) {
-      m_console->debug(std::forward<Args>(args)...);
-    }
-  }
 };
 }  // namespace openhd
 

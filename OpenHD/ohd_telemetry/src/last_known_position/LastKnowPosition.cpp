@@ -7,6 +7,7 @@
 #include <iomanip>
 
 #include "openhd_spdlog.h"
+#include "openhd_spdlog_include.h"
 #include "openhd_util_filesystem.h"
 
 static constexpr auto LAST_KNOWN_POSITION_DIRECTORY =

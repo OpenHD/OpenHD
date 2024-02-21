@@ -5,10 +5,13 @@
 #ifndef OPENHD_OPENHD_OHD_COMMON_OPENHD_SETTINGS_PERSISTENT_HPP_
 #define OPENHD_OPENHD_OHD_COMMON_OPENHD_SETTINGS_PERSISTENT_HPP_
 
+#include <cassert>
 #include <fstream>
+#include <functional>
 #include <utility>
 
 #include "openhd_spdlog.h"
+#include "openhd_spdlog_include.h"
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"
 

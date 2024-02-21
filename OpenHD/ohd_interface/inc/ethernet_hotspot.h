@@ -8,6 +8,7 @@
 #include <openhd_external_device.h>
 #include <openhd_settings_imp.h>
 
+#include <atomic>
 #include <string>
 #include <thread>
 

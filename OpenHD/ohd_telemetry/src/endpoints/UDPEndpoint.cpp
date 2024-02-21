@@ -4,7 +4,10 @@
 
 #include "UDPEndpoint.h"
 
+#include <cassert>
 #include <utility>
+
+#include "openhd_spdlog_include.h"
 
 UDPEndpoint::UDPEndpoint(const std::string& TAG, int senderPort,
                          int receiverPort, std::string senderIp,

@@ -10,11 +10,15 @@
 // logging for a specific module (e.g. ohd_video: set log level to debug / info)
 // when debugging ohd_video.
 
-// #include <spdlog/fwd.h>
+#include <spdlog/fwd.h>
 // #include <spdlog/fmt/fmt.h>
 // #include <spdlog/common.h>
-#include <spdlog/spdlog.h>
+// #include <spdlog/spdlog.h>
 // # define FMT_STRING(s) s
+
+#include <memory>
+#include <mutex>
+#include <vector>
 
 namespace openhd::log {
 

@@ -4,6 +4,8 @@
 
 #include "MEndpoint.h"
 
+#include "openhd_spdlog_include.h"
+
 // WARNING BE CAREFULL TO REMOVE ON RELEASE
 // #define OHD_TELEMETRY_TESTING_ENABLE_PACKET_LOSS
 

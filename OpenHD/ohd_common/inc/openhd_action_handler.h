@@ -5,9 +5,11 @@
 #ifndef OPENHD_OPENHD_OHD_COMMON_OPENHD_ACTION_HANDLER_HPP_
 #define OPENHD_OPENHD_OHD_COMMON_OPENHD_ACTION_HANDLER_HPP_
 
+#include <atomic>
 #include <functional>
 #include <map>
 #include <mutex>
+#include <sstream>
 #include <utility>
 
 #include "openhd_link_statistics.hpp"
@@ -91,8 +93,11 @@ class LinkActionHandler {
       ACTION_REQUEST_BITRATE_CHANGE;
   static std::string link_bitrate_info_to_string(
       const LinkBitrateInformation& lb) {
-    return fmt::format("[recommended_encoder_bitrate:{}kBit/s}",
-                       lb.recommended_encoder_bitrate_kbits);
+    std::stringstream ss;
+    ss << "[recommended_encoder_bitrate:";
+    ss << lb.recommended_encoder_bitrate_kbits;
+    ss << "kBit/s]";
+    return ss.str();
   }
   // used by ohd_video
   void action_request_bitrate_change_register(

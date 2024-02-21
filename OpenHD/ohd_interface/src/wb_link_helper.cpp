@@ -7,6 +7,7 @@
 #include "wb_link_rate_helper.hpp"
 #include "wifi_command_helper.h"
 // #include "wifi_command_helper2.h"
+#include "openhd_spdlog_include.h"
 
 bool openhd::wb::disable_all_frequency_checks() {
   static constexpr auto FIlE_DISABLE_ALL_FREQUENCY_CHECKS =

@@ -3,7 +3,7 @@
 //
 
 #include "openhd_tcp.h"
-
+#include "openhd_spdlog_include.h"
 
 class TestServer:public openhd::TCPServer{
  public:

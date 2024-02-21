@@ -5,6 +5,7 @@
 #include "usb_thermal_cam_helper.h"
 
 #include "openhd_spdlog.h"
+#include "openhd_spdlog_include.h"
 #include "openhd_util.h"
 #include "openhd_util_async.h"
 
