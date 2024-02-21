@@ -9,7 +9,7 @@ endif()
 #----------------------------------------------------------------------------------------------------------------------
 # general settings and options
 #----------------------------------------------------------------------------------------------------------------------
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Spams build due to nlohmann::json
 add_compile_options(-Wno-psabi)
