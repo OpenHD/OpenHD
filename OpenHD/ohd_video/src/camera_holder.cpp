@@ -5,6 +5,8 @@
 
 #include "include_json.hpp"
 
+#include "openhd_spdlog_include.h"
+
 NLOHMANN_JSON_SERIALIZE_ENUM(VideoCodec, {
                                              {VideoCodec::H264, "h264"},
                                              {VideoCodec::H265, "h265"},

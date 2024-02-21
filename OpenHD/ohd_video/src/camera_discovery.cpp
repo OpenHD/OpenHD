@@ -18,10 +18,10 @@
 
 #include "camera.hpp"
 // #include "libcamera_detect.hpp"
-#include "openhd_util.h"
-#include "openhd_util_filesystem.h"
 #include "openhd_spdlog.h"
 #include "openhd_spdlog_include.h"
+#include "openhd_util.h"
+#include "openhd_util_filesystem.h"
 
 // annoying linux platform specifics
 #ifndef V4L2_PIX_FMT_H265

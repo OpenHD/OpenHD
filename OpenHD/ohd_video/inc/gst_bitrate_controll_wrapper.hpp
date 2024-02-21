@@ -10,6 +10,7 @@
 #include <optional>
 
 #include "openhd_spdlog.h"
+#include "openhd_spdlog_include.h"
 
 // #define EXPERIMENTAL_USE_OPENH264_ENCODER
 
