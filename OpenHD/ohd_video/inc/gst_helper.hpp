@@ -15,6 +15,7 @@
 #include "openhd_bitrate_conversions.hpp"
 #include "openhd_platform.h"
 #include "openhd_spdlog.h"
+#include "openhd_spdlog_include.h"
 
 // #define EXPERIMENTAL_USE_OPENH264_ENCODER
 
