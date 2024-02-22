@@ -30,7 +30,7 @@ struct FragmentedVideoFrame {
   bool enable_ultra_secure_encryption = false;
   std::shared_ptr<std::vector<uint8_t>> dirty_frame =
       nullptr;  // replaces fragments
-  // Set to true if the stream is an intra frame
+  // Set to true if the stream is an intra stream
   bool is_intra_stream = false;
   // Set to true if this frame is an IDR frame and therefore we can safely drop
   // previous frame(s) without having complete corruption

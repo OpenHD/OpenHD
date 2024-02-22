@@ -208,7 +208,7 @@ WBLink::WBLink(OHDProfile profile, OHDPlatform platform,
       auto secondary =
           std::make_unique<WBStreamRx>(m_wb_txrx, options_video_rx);
       secondary->set_callback(cb2);
-      if (DIRTY_add_aud_nal || true) {
+      if (DIRTY_add_aud_nal) {
         auto block_cb = [this](uint64_t block_idx, int n_fragments_total,
                                int n_fragments_forwarded) {
           static int64_t last_block = 0;
@@ -555,7 +555,7 @@ void WBLink::apply_txpower() {
   if (m_profile.is_air) {
     if (m_broadcast_cards.at(0).type == WiFiCardType::OPENHD_RTL_88X2AU &&
         pwr_index > 50 && settings.wb_air_tx_channel_width == 40) {
-      m_console->debug("Reducing TX power due to 40Mhz");
+      m_console->debug("Reducing TX power  to 50 tpi due to 40Mhz");
       pwr_index = 50;
     }
   }
@@ -1507,16 +1507,6 @@ void WBLink::wt_gnd_perform_channel_management() {
                                           air_reported_channel_width, 20);
       }
     }
-    /*if (air_reported_channel_width > 0 &&
-        m_gnd_curr_rx_channel_width != air_reported_channel_width) {
-      const auto& curr_settings = m_settings->get_settings();
-      m_console->debug("GND changing LISTEN bandwidth from {} to {}",
-                       m_gnd_curr_rx_channel_width, air_reported_channel_width);
-      m_gnd_curr_rx_channel_width = air_reported_channel_width;
-      const int frequency = curr_settings.wb_frequency;
-      const int rx_channel_width = m_gnd_curr_rx_channel_width;
-      apply_frequency_and_channel_width(frequency, rx_channel_width, 20);
-    }*/
   }
 }
 

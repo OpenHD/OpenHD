@@ -181,6 +181,9 @@ class WBLink : public OHDLink {
   // instances.
   std::vector<std::unique_ptr<WBStreamTx>> m_wb_video_tx_list;
   std::vector<std::unique_ptr<WBStreamRx>> m_wb_video_rx_list;
+  // For audio or custom data
+  std::unique_ptr<WBStreamTx> m_wb_audio_tx;
+  std::unique_ptr<WBStreamRx> m_wb_audio_rx;
   // We have one worker thread for asynchronously performing operation(s) like
   // changing the frequency but also recalculating statistics that are then
   // forwarded to openhd_telemetry for broadcast
