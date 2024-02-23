@@ -29,7 +29,7 @@ jobs:
 
       - name: clone OpenHD
         run: |
-          git clone https://github.com/OpenHD/OpenHD --recursive
+          git clone -b ${{ github.ref_name }} https://github.com/OpenHD/OpenHD --recursive
           cd OpenHD  
 
       - name: Install Dependencies
