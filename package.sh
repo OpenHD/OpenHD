@@ -3,6 +3,8 @@ CUSTOM="${1}"
 PACKAGE_ARCH="${2}"
 OS="${3}"
 
+echo $PACKAGE_ARCH
+
 PKGDIR="/tmp/openhd-installdir"
 VERSION="2.5.2-beta-$(date '+%Y%m%d%H%M')-$(git rev-parse --short HEAD)"
 
@@ -16,7 +18,7 @@ create_package_directory() {
 
   # We do not copy the openhd service for x86, since there we have launcher on the desktop
   # (Otherwise, we always copy it)
-  if [[ "${PACKAGE_ARCH}" != "x86_64" ]]; then
+  if [[ $PACKAGE_ARCH != "x86_64" ]]; then
   echo "we're not on x86"
     cp systemd/openhd.service /tmp/openhd-installdir/etc/systemd/system/openhd.service || exit 1
   fi
