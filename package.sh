@@ -7,11 +7,12 @@ PKGDIR="/tmp/openhd-installdir"
 VERSION="2.5.2-beta-$(date '+%Y%m%d%H%M')-$(git rev-parse --short HEAD)"
 
 create_package_directory() {
-  rm -rf "${PKGDIR}"
-  mkdir -p "${PKGDIR}"/usr/local/bin
-  mkdir -p "${PKGDIR}"/tmp
-  mkdir -p "${PKGDIR}"/settings
-  mkdit -p "${PKGDIR}"/etc/systemd/system
+  rm -rf /tmp/openhd-installdir
+  mkdir -p /tmp/openhd-installdir/usr/local/bin
+  mkdir -p /tmp/openhd-installdir/tmp
+  #Nobody should create a topdir for such things like settings, but for now it'll stay
+  mkdir -p /tmp/openhd-installdir/settings
+  mkdit -p /tmp/openhd-installdir/etc/systemd/system
 
   # We do not copy the openhd service for x86, since there we have launcher on the desktop
   # (Otherwise, we always copy it)
