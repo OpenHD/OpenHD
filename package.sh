@@ -12,7 +12,7 @@ create_package_directory() {
   mkdir -p /tmp/openhd-installdir/tmp
   #Nobody should create a topdir for such things like settings, but for now it'll stay
   mkdir -p /tmp/openhd-installdir/settings
-  mkdit -p /tmp/openhd-installdir/etc/systemd/system
+  mkdir -p /tmp/openhd-installdir/etc/systemd/system
 
   # We do not copy the openhd service for x86, since there we have launcher on the desktop
   # (Otherwise, we always copy it)
