@@ -1,9 +1,8 @@
+#!/bin/bash
 
 CUSTOM="${1}"
 PACKAGE_ARCH="${2}"
 OS="${3}"
-
-echo $PACKAGE_ARCH
 
 PKGDIR="/tmp/openhd-installdir"
 VERSION="2.5.2-beta-$(date '+%Y%m%d%H%M')-$(git rev-parse --short HEAD)"
@@ -18,8 +17,8 @@ create_package_directory() {
 
   # We do not copy the openhd service for x86, since there we have launcher on the desktop
   # (Otherwise, we always copy it)
-  if [[ $PACKAGE_ARCH != "x86_64" ]]; then
-  echo "we're not on x86"
+  if [[ "${PACKAGE_ARCH}" != "x86_64" ]]; then
+    echo "we're not on x86"
     cp systemd/openhd.service /tmp/openhd-installdir/etc/systemd/system/openhd.service || exit 1
   fi
   # always - copy the hardware.config file
@@ -28,37 +27,38 @@ create_package_directory() {
 }
 
 build_package() {
-  
+
   if [[ "${PACKAGE_ARCH}" == "armhf" ]]; then
-      if [[ "${CUSTOM}" == "standard" ]]; then
+    if [[ "${CUSTOM}" == "standard" ]]; then
       PACKAGE_NAME="openhd"
       PACKAGES="-d libcamera-openhd -d gst-openhd-plugins -d iw -d nmap -d aircrack-ng -d i2c-tools -d libv4l-dev -d libusb-1.0-0 -d libpcap-dev -d libnl-3-dev -d libnl-genl-3-dev -d libsdl2-2.0-0 -d libsodium-dev -d gstreamer1.0-plugins-base -d gstreamer1.0-plugins-good -d gstreamer1.0-plugins-bad -d gstreamer1.0-plugins-ugly -d gstreamer1.0-libav -d gstreamer1.0-tools -d gstreamer1.0-alsa -d gstreamer1.0-pulseaudio"
       PLATFORM_CONFIGS=""
-      else
+    else
       PACKAGE_NAME="openhd-x20"
       PACKAGES="-d iw -d i2c-tools -d libv4l-dev -d libusb-1.0-0 -d libpcap-dev -d libnl-3-dev -d libnl-genl-3-dev -d libsdl2-2.0-0 -d libsodium-dev -d gstreamer1.0-plugins-base -d gstreamer1.0-plugins-good -d gstreamer1.0-plugins-bad -d gstreamer1.0-tools"
       PLATFORM_CONFIGS=""
-      fi
+    fi
   else
     PACKAGE_NAME="openhd"
     PACKAGES="-d iw -d nmap -d aircrack-ng -d i2c-tools -d libv4l-dev -d libusb-1.0-0 -d libpcap-dev -d libnl-3-dev -d libnl-genl-3-dev -d libsdl2-2.0-0 -d libsodium-dev -d gstreamer1.0-plugins-base -d gstreamer1.0-plugins-good -d gstreamer1.0-plugins-bad -d gstreamer1.0-plugins-ugly -d gstreamer1.0-libav -d gstreamer1.0-tools -d gstreamer1.0-alsa -d gstreamer1.0-pulseaudio"
     PLATFORM_CONFIGS=""
   fi
-  
+
   rm "${PACKAGE_NAME}_${VERSION}_${PACKAGE_ARCH}.deb" > /dev/null 2>&1 || true
-  
+
   cmake OpenHD/
   make -j4
   cp openhd ${PKGDIR}/usr/local/bin/openhd
 
+  # Assuming fpm is installed and properly configured
   fpm -a "${PACKAGE_ARCH}" -s dir -t deb -n "${PACKAGE_NAME}" -v "${VERSION}" -C "${PKGDIR}" \
     ${PLATFORM_CONFIGS} \
     -p "${PACKAGE_NAME}_${VERSION}_${PACKAGE_ARCH}.deb" \
     --after-install after-install.sh \
     --before-install before-install.sh \
-    ${PACKAGES} 
+    ${PACKAGES}
 }
 
-  #Main Build
-  create_package_directory
-  build_package
+#Main Build
+create_package_directory
+build_package
