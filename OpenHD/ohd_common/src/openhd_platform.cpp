@@ -17,12 +17,18 @@ static constexpr auto JETSON_BOARDID_PATH = "/proc/device-tree/nvidia,boardids";
 static constexpr auto DEVICE_TREE_COMPATIBLE_PATH =
     "/proc/device-tree/compatible";
 static constexpr auto ALLWINNER_BOARDID_PATH = "/dev/cedar_dev";
+static constexpr auto SIGMASTAR_BOARDID_PATH = "/dev/mstar_ive0";
 
 static int internal_discover_platform() {
   // These are the 'easy ones'
   if (OHDFilesystemUtil::exists(ALLWINNER_BOARDID_PATH)) {
     return X_PLATFORM_TYPE_ALWINNER_X20;
   }
+
+  if (OHDFilesystemUtil::exists(SIGMASTAR_BOARDID_PATH)) {
+    return X_PLATFORM_TYPE_OPENIPC_SIGMASTAR_UNDEFINED;
+  }
+
   if (OHDFilesystemUtil::exists(DEVICE_TREE_COMPATIBLE_PATH)) {
     std::string compatible_content =
         OHDFilesystemUtil::read_file(DEVICE_TREE_COMPATIBLE_PATH);

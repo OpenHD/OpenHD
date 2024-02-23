@@ -60,7 +60,7 @@ AirCameraGenericSettings AirCameraGenericSettingsHolder::create_default()
     ret.primary_camera_type = X_CAM_TYPE_ROCK_HDMI_IN;
   } else if (OHDPlatform::instance().platform_type ==
              X_PLATFORM_TYPE_OPENIPC_SIGMASTAR_UNDEFINED) {
-    ret.primary_camera_type = X_CAM_TYPE_OPENIPC_SOMETHING;
+    ret.primary_camera_type = X_CAM_TYPE_EXTERNAL;
   }
   return ret;
 }
