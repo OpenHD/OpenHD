@@ -30,7 +30,7 @@ append_all_sources_headers "$THIS_DIR/ohd_interface/src"
 append_all_sources_headers "$THIS_DIR/ohd_interface/test"
 
 append_all_sources_headers "$THIS_DIR/ohd_telemetry/src"
-append_all_sources_headers "$THIS_DIR/ohd_telemetry/tests"
+append_all_sources_headers "$THIS_DIR/ohd_telemetry/test"
 
 append_all_sources_headers "$THIS_DIR/ohd_video/inc"
 append_all_sources_headers "$THIS_DIR/ohd_video/src"
