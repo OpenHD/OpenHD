@@ -20,6 +20,7 @@ OHDVideoAir::OHDVideoAir(std::vector<XCamera> cameras,
   m_console->debug("OHDVideo::OHDVideo()");
   m_primary_video_forwarder = std::make_unique<openhd::UDPMultiForwarder>();
   m_secondary_video_forwarder = std::make_unique<openhd::UDPMultiForwarder>();
+  m_audio_forwarder = std::make_unique<openhd::UDPMultiForwarder>();
   if (cameras.size() > MAX_N_CAMERAS) {
     m_console->warn("More than {} cameras, dropping cameras", MAX_N_CAMERAS);
     cameras.resize(MAX_N_CAMERAS);
@@ -191,11 +192,13 @@ void OHDVideoAir::start_stop_forwarding_external_device(
   if (connected) {
     m_primary_video_forwarder->addForwarder(client_addr, 5600);
     m_secondary_video_forwarder->addForwarder(client_addr, 5601);
+    m_audio_forwarder->addForwarder(client_addr, 5610);
     m_has_localhost_forwarding_enabled = true;
   } else {
     m_has_localhost_forwarding_enabled = false;
     m_primary_video_forwarder->removeForwarder(client_addr, 5600);
     m_secondary_video_forwarder->removeForwarder(client_addr, 5601);
+    m_audio_forwarder->removeForwarder(client_addr, 5610);
   }
 }
 
@@ -227,6 +230,16 @@ void OHDVideoAir::on_video_data(
         forwarder->forwardPacketViaUDP(fragment->data(), fragment->size());
       }
     }
+  }
+}
+
+void OHDVideoAir::on_audio_data(const openhd::AudioPacket& audio_packet) {
+  if (m_link_handle) {
+    m_link_handle->transmit_audio_data(audio_packet);
+  }
+  if (m_has_localhost_forwarding_enabled) {
+    m_audio_forwarder->forwardPacketViaUDP(audio_packet.data->data(),
+                                           audio_packet.data->size());
   }
 }
 

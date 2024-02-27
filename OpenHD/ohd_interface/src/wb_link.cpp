@@ -196,6 +196,9 @@ WBLink::WBLink(OHDProfile profile, OHDPlatform platform,
       auto cb2 = [this](const uint8_t* data, int data_len) {
         on_receive_video_data(1, data, data_len);
       };
+      auto cb_audio = [this](const uint8_t* data, int data_len) {
+        on_receive_audio_data(data, data_len);
+      };
       WBStreamRx::Options options_video_rx{};
       // options_video_rx.enable_fec_debug_log=true;
       options_video_rx.enable_fec = true;
@@ -1208,8 +1211,7 @@ void WBLink::transmit_video_data(
   }
 }
 
-void WBLink::transmit_audio_data(
-    std::shared_ptr<openhd::AudioPacket> audio_packet) {
+void WBLink::transmit_audio_data(const openhd::AudioPacket& audio_packet) {
   // Do nothing for now
 }
 

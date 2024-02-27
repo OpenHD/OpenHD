@@ -14,6 +14,7 @@ OHDVideoGround::OHDVideoGround(std::shared_ptr<OHDLink> link_handle)
   m_console = openhd::log::create_or_get("v_gnd");
   m_primary_video_forwarder = std::make_unique<openhd::UDPMultiForwarder>();
   m_secondary_video_forwarder = std::make_unique<openhd::UDPMultiForwarder>();
+  m_audio_forwarder = std::make_unique<openhd::UDPMultiForwarder>();
   // We always forward video to localhost::5600 (primary) and 5601 (secondary)
   // for the default Ground control application (e.g. QOpenHD) to pick up
   addForwarder("127.0.0.1");
@@ -29,6 +30,10 @@ OHDVideoGround::OHDVideoGround(std::shared_ptr<OHDLink> link_handle)
         [this](int stream_index, const uint8_t* data, int data_len) {
           on_video_data(stream_index, data, data_len);
         });
+    m_link_handle->m_audio_data_rx_cb = [this](const uint8_t* data,
+                                               int data_len) {
+      on_audio_data(data, data_len);
+    };
   } else {
     m_console->warn("No link handle, no video forwarding");
   }
@@ -51,6 +56,7 @@ OHDVideoGround::~OHDVideoGround() {
 void OHDVideoGround::addForwarder(const std::string& client_addr) {
   m_primary_video_forwarder->addForwarder(client_addr, 5600);
   m_secondary_video_forwarder->addForwarder(client_addr, 5601);
+  m_audio_forwarder->addForwarder(client_addr, 5610);
 }
 
 void OHDVideoGround::removeForwarder(const std::string& client_addr) {
@@ -94,4 +100,8 @@ void OHDVideoGround::start_stop_forwarding_external_device(
   } else {
     removeForwarder(external_device.external_device_ip);
   }
+}
+
+void OHDVideoGround::on_audio_data(const uint8_t* data, int data_len) {
+  m_audio_forwarder->forwardPacketViaUDP(data, data_len);
 }
