@@ -11,6 +11,7 @@
 #include "openhd_platform.h"
 #include "openhd_profile.h"
 #include "openhd_util.h"
+#include "openhd_bitrate.h"
 
 //
 // Can be used to test / validate a camera implementation.
@@ -23,9 +24,10 @@ int main(int argc, char* argv[]) {
   const auto platform = OHDPlatform::instance();
 
   auto cameras = OHDVideoAir::discover_cameras(platform);
+  openhd::BitrateDebugger bitrate_debugger{"Bitrate", true};
 
   auto forwarder = openhd::UDPForwarder("127.0.0.1", 5600);
-  auto cb = [&forwarder](
+  auto cb = [&forwarder,&bitrate_debugger](
                 int stream_index,
                 const openhd::FragmentedVideoFrame& fragmented_video_frame) {
     int total_size = 0;
@@ -42,7 +44,8 @@ int main(int argc, char* argv[]) {
         total_size += fragment->size();
       }
     }
-    openhd::log::get_default()->debug("total size:{}", total_size);
+    //openhd::log::get_default()->debug("total size:{}", total_size);
+    bitrate_debugger.on_packet(total_size);
   };
   auto debug_link = std::make_shared<DummyDebugLink>();
   debug_link->m_opt_frame_cb = cb;

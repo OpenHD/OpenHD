@@ -77,7 +77,7 @@ static bool change_bitrate(const GstBitrateControlElement& ctrl_el,
                            int bitrate_kbits) {
   const auto bitrate = ctrl_el.takes_kbit
                            ? bitrate_kbits
-                           : kbits_to_bits_per_second(bitrate_kbits);
+                           : openhd::kbits_to_bits_per_second(bitrate_kbits);
   g_object_set(ctrl_el.encoder, ctrl_el.property_name.c_str(), bitrate, NULL);
   gint actual_bits_per_second = -1;
   g_object_get(ctrl_el.encoder, ctrl_el.property_name.c_str(),

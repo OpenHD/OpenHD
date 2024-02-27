@@ -50,12 +50,22 @@ void GstAudioStream::loop_infinite() {
   }
 }
 
+// 2.0 pipeline tx:
+// gst-launch-1.0 alsasrc device=plughw:1,0 name=mic provide-clock=true
+// do-timestamp=true buffer-time=20000 ! alawenc ! rtppcmapay max-ptime=20000000
+// ! udpsink host=127.0.0.1 port=5051 |
+//
+// pipeline rx:
+// gst-launch-1.0 udpsrc port=5051 caps="application/x-rtp, media=(string)audio,
+// clock-rate=(int)8000, encoding-name=(string)PCMA" ! rtppcmadepay !
+// audio/x-alaw, rate=8000, channels=1 ! alawdec ! alsasink device=hw:0
 static std::string create_pipeline() {
   std::stringstream ss;
-  ss << "autoaudiosrc ! ";
+  /*ss << "autoaudiosrc ! ";
   ss << "audioconvert ! ";
-  // audio/x-raw-int,channels=1,depth=16,width=16,rate=44100 !
-  ss << "rtpL16pay ! ";
+  ss << "rtpL16pay ! ";*/
+  ss << "autoaudiosrc ! ";
+  ss << "alawenc ! rtppcmapay max-ptime=20000000 ! ";
   ss << OHDGstHelper::createOutputAppSink();
   return ss.str();
 }
@@ -115,7 +125,7 @@ void GstAudioStream::stream_once() {
 
 void GstAudioStream::on_audio_packet(
     std::shared_ptr<std::vector<uint8_t>> packet) {
-  m_console->debug("Got audio packet {}", packet->size());
+  // m_console->debug("Got audio packet {}", packet->size());
   if (m_cb) {
     openhd::AudioPacket audioPacket;
     audioPacket.data = packet;

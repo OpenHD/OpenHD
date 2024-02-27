@@ -19,15 +19,14 @@ static_assert(TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT !=
                   TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT,
               "Must be different");
 
-// Where any service/thread can send log messages to, both on air and ground pi.
-// Picked up by telemetry service.
-static constexpr auto LOCAL_LOG_MESSAGES_UDP_PORT = 50001;
-
 // Video is unidirectional from air to ground
 static constexpr auto VIDEO_PRIMARY_RADIO_PORT = 10;
 static constexpr auto VIDEO_SECONDARY_RADIO_PORT = 11;
 static_assert(VIDEO_PRIMARY_RADIO_PORT != VIDEO_SECONDARY_RADIO_PORT,
               "Must be different");
+
+// Audio is unidirectional from air to ground
+static constexpr auto AUDIO_WIFIBROADCAST_PORT = 20;
 
 // Where the video stream transmitted via wifibroadcast is made available to
 // QOpenHD to be picked up.

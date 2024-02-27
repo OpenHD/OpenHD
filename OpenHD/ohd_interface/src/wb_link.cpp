@@ -5,7 +5,7 @@
 
 #include <utility>
 
-#include "openhd_bitrate_conversions.hpp"
+#include "openhd_bitrate.h"
 #include "openhd_config.h"
 #include "openhd_global_constants.hpp"
 #include "openhd_platform.h"
@@ -188,6 +188,12 @@ WBLink::WBLink(OHDProfile profile, OHDPlatform platform,
       secondary->set_encryption(false);
       m_wb_video_tx_list.push_back(std::move(primary));
       m_wb_video_tx_list.push_back(std::move(secondary));
+      WBStreamTx::Options options_audio_tx{};
+      options_audio_tx.enable_fec = false;
+      options_audio_tx.radio_port = openhd::AUDIO_WIFIBROADCAST_PORT;
+      options_audio_tx.packet_data_queue_size = 16;
+      m_wb_audio_tx = std::make_unique<WBStreamTx>(m_wb_txrx, options_audio_tx,
+                                                   m_tx_header_1);
     } else {
       // we receive video
       auto cb1 = [this](const uint8_t* data, int data_len) {
@@ -233,6 +239,13 @@ WBLink::WBLink(OHDProfile profile, OHDPlatform platform,
       }
       m_wb_video_rx_list.push_back(std::move(primary));
       m_wb_video_rx_list.push_back(std::move(secondary));
+      WBStreamRx::Options options_audio_rx{};
+      options_audio_rx.radio_port = openhd::AUDIO_WIFIBROADCAST_PORT;
+      options_audio_rx.enable_fec = false;
+      options_audio_rx.enable_threading = true;
+      options_audio_rx.packet_queue_size = 16;
+      m_wb_audio_rx = std::make_unique<WBStreamRx>(m_wb_txrx, options_audio_rx);
+      m_wb_audio_rx->set_callback(cb_audio);
     }
   }
   apply_frequency_and_channel_width_from_settings();
@@ -1061,8 +1074,9 @@ void WBLink::wt_perform_rate_adjustment() {
     m_console->debug(
         "MCS:{} ch_width:{} Calculated max_rate:{}, max_video_rate:{}",
         settings.wb_air_mcs_index, settings.wb_air_tx_channel_width,
-        kbits_per_second_to_string(max_rate_for_current_wifi_config),
-        kbits_per_second_to_string(max_video_rate_for_current_wifi_fec_config));
+        openhd::kbits_per_second_to_string(max_rate_for_current_wifi_config),
+        openhd::kbits_per_second_to_string(
+            max_video_rate_for_current_wifi_fec_config));
     m_max_video_rate_for_current_wifi_fec_config =
         max_video_rate_for_current_wifi_fec_config;
     m_recommended_video_bitrate_kbits =
@@ -1091,7 +1105,7 @@ void WBLink::wt_perform_rate_adjustment() {
     static constexpr auto MIN_BITRATE_KBITS = 1000 * 2;
     if (m_recommended_video_bitrate_kbits < MIN_BITRATE_KBITS) {
       m_console->warn("Reached minimum bitrate {}",
-                      kbits_per_second_to_string(MIN_BITRATE_KBITS));
+                      openhd::kbits_per_second_to_string(MIN_BITRATE_KBITS));
       m_recommended_video_bitrate_kbits = MIN_BITRATE_KBITS;
       m_curr_n_rate_adjustments--;
     }
@@ -1212,7 +1226,9 @@ void WBLink::transmit_video_data(
 }
 
 void WBLink::transmit_audio_data(const openhd::AudioPacket& audio_packet) {
-  // Do nothing for now
+  if (m_wb_audio_tx) {
+    m_wb_audio_tx->try_enqueue_packet(audio_packet.data);
+  }
 }
 
 void WBLink::reset_all_rx_stats() {
