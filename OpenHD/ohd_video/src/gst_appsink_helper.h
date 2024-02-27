@@ -16,11 +16,13 @@ static std::shared_ptr<std::vector<uint8_t>> gst_copy_buffer(
   assert(buffer);
   const auto buff_size = gst_buffer_get_size(buffer);
   // openhd::log::get_default()->debug("Got buffer size {}", buff_size);
-  auto ret = std::make_shared<std::vector<uint8_t>>(buff_size);
+  // auto ret = std::make_shared<std::vector<uint8_t>>(buff_size);
   GstMapInfo map;
   gst_buffer_map(buffer, &map, GST_MAP_READ);
   assert(map.size == buff_size);
-  std::memcpy(ret->data(), map.data, buff_size);
+  // std::memcpy(ret->data(), map.data, buff_size);
+  auto ret =
+      std::make_shared<std::vector<uint8_t>>(map.data, map.data + buff_size);
   gst_buffer_unmap(buffer, &map);
   return ret;
 }
@@ -35,7 +37,7 @@ static void gst_debug_buffer(GstBuffer* buffer) {
 }
 
 // From https://github.com/mshabunin/gstreamer-example/blob/master/main.cpp
-void gst_debug_sample(GstSample* sample) {
+static void gst_debug_sample(GstSample* sample) {
   assert(sample);
   std::stringstream ss;
   const GstSegment* seg = gst_sample_get_segment(sample);
