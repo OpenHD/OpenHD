@@ -294,12 +294,13 @@ class LinkActionHandler {
 class TerminateHelper {
  public:
   static TerminateHelper& instance();
-  void terminate_after(std::string tag,std::chrono::milliseconds delay);
+  void terminate_after(std::string tag, std::chrono::milliseconds delay);
   bool should_terminate();
   std::string terminate_reason();
+
  private:
   std::atomic_bool m_should_terminate = false;
-  std::atomic<int64_t> m_terminate_tp=0;
+  std::atomic<int64_t> m_terminate_tp = 0;
   std::string m_terminate_reason;
 };
 

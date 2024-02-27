@@ -11,7 +11,7 @@
 #include "openhd_settings_directories.h"
 #include "openhd_settings_persistent.h"
 
-static int OPENHD_AUDIO_DISABLE=0;
+static int OPENHD_AUDIO_DISABLE = 0;
 
 struct AirCameraGenericSettings {
   // Make primary camera secondary camera and other way around (aka if they are
@@ -26,7 +26,7 @@ struct AirCameraGenericSettings {
   int secondary_camera_type = 0;
   // Audio can be enabled, in which case gstreamer hopefully picks up the right
   // audio source via autoaudiosrc
-  int enable_audio=OPENHD_AUDIO_DISABLE;
+  int enable_audio = OPENHD_AUDIO_DISABLE;
 };
 
 static bool is_valid_dualcam_primary_video_allocated_bandwidth(

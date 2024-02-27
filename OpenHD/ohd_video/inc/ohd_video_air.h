@@ -61,6 +61,7 @@ class OHDVideoAir {
   std::shared_ptr<OHDLink> m_link_handle;
   // r.n only for multi camera support
   std::unique_ptr<AirCameraGenericSettingsHolder> m_generic_settings;
+
  private:
   // Add a CameraStream for a discovered camera.
   void configure(const std::shared_ptr<CameraHolder>& camera);

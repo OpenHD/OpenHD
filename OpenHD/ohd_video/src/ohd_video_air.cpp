@@ -6,11 +6,11 @@
 #include <utility>
 
 #include "camera_discovery.h"
+#include "gstaudiostream.h"
 #include "gstreamerstream.h"
 #include "nalu/fragment_helper.h"
 #include "openhd_config.h"
 #include "openhd_reboot_util.h"
-#include "gstaudiostream.h"
 
 OHDVideoAir::OHDVideoAir(std::vector<XCamera> cameras,
                          std::shared_ptr<OHDLink> link)
@@ -47,8 +47,8 @@ OHDVideoAir::OHDVideoAir(std::vector<XCamera> cameras,
   for (auto& camera : camera_holders) {
     configure(camera);
   }
-  if(m_generic_settings->get_settings().enable_audio!=OPENHD_AUDIO_DISABLE){
-    m_audio_stream=std::make_unique<GstAudioStream>();
+  if (m_generic_settings->get_settings().enable_audio != OPENHD_AUDIO_DISABLE) {
+    m_audio_stream = std::make_unique<GstAudioStream>();
   }
   openhd::LinkActionHandler::instance().action_request_bitrate_change_register(
       [this](openhd::LinkActionHandler::LinkBitrateInformation lb) {
@@ -162,15 +162,15 @@ std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
   }
   {
     auto cb_audio = [this](std::string, int value) {
-      m_generic_settings->unsafe_get_settings().enable_audio=value;
+      m_generic_settings->unsafe_get_settings().enable_audio = value;
       m_generic_settings->persist();
-      openhd::TerminateHelper::instance().terminate_after("Audio",std::chrono::seconds(1));
+      openhd::TerminateHelper::instance().terminate_after(
+          "Audio", std::chrono::seconds(1));
       return true;
     };
     ret.push_back(openhd::Setting{
         "AUDIO_ENABLE",
-        openhd::IntSetting{m_generic_settings->get_settings()
-                               .enable_audio,
+        openhd::IntSetting{m_generic_settings->get_settings().enable_audio,
                            cb_audio}});
   }
   return ret;
@@ -379,7 +379,8 @@ bool OHDVideoAir::x_set_camera_type(bool primary, int cam_type) {
     openhd::reboot::handle_power_command_async(std::chrono::seconds(1), false);
   } else {
     // Restarting openhd is enough
-    openhd::TerminateHelper::instance().terminate_after("CameraType",std::chrono::seconds(1));
+    openhd::TerminateHelper::instance().terminate_after(
+        "CameraType", std::chrono::seconds(1));
   }
   return true;
 }

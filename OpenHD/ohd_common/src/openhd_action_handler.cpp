@@ -81,16 +81,16 @@ openhd::TerminateHelper &openhd::TerminateHelper::instance() {
 
 void openhd::TerminateHelper::terminate_after(std::string tag,
                                               std::chrono::milliseconds delay) {
-  m_terminate_reason=tag;
-  int64_t tp=openhd::util::steady_clock_time_epoch_ms()+delay.count();
-  m_terminate_tp=tp;
-  m_should_terminate=true;
+  m_terminate_reason = tag;
+  int64_t tp = openhd::util::steady_clock_time_epoch_ms() + delay.count();
+  m_terminate_tp = tp;
+  m_should_terminate = true;
 }
 
 bool openhd::TerminateHelper::should_terminate() {
-  if(!m_should_terminate)return false;
-  int64_t tp=m_terminate_tp;
-  if(openhd::util::steady_clock_time_epoch_ms()>=tp){
+  if (!m_should_terminate) return false;
+  int64_t tp = m_terminate_tp;
+  if (openhd::util::steady_clock_time_epoch_ms() >= tp) {
     return true;
   }
   return false;

@@ -95,24 +95,10 @@ void GstAudioStream::stream_once() {
   while (true) {
     // Quickly terminate if openhd wants to terminate
     if (!m_keep_looping) break;
-    // try get a new frame fragment from gst
-    GstSample* sample = gst_app_sink_try_pull_sample(
-        GST_APP_SINK(m_app_sink_element), timeout_ns);
-    if (sample) {
-      GstBuffer* buffer = gst_sample_get_buffer(sample);
-      // tmp declaration for give sample back early optimization
-      std::shared_ptr<std::vector<uint8_t>> fragment_data = nullptr;
-      if (buffer && gst_buffer_get_size(buffer) > 0) {
-        fragment_data = openhd::gst_copy_buffer(buffer);
-      }
-      // Optimization: Give the buffer back to gstreamer as soon as possible.
-      // After copying the data from the sample, unref it first, then forward
-      // the data via cb
-      gst_sample_unref(sample);
-      sample = nullptr;
-      if (fragment_data) {
-        on_audio_packet(fragment_data);
-      }
+    auto buffer_x = openhd::gst_app_sink_try_pull_sample_and_copy(
+        m_app_sink_element, timeout_ns);
+    if (buffer_x.has_value()) {
+      on_audio_packet(buffer_x->buffer);
     }
   }
   // cleanup
