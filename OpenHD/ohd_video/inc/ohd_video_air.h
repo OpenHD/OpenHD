@@ -15,6 +15,7 @@
 #include "openhd_spdlog.h"
 #include "openhd_udp.h"
 
+class GstAudioStream;
 /**
  * Main entry point for OpenHD video streaming for discovered cameras on the air
  * unit. NOTE: Camera(s) and camera settings are local on the air unit, the
@@ -55,11 +56,11 @@ class OHDVideoAir {
  private:
   // All the created camera streams
   std::vector<std::shared_ptr<CameraStream>> m_camera_streams;
+  std::shared_ptr<GstAudioStream> m_audio_stream;
   std::shared_ptr<spdlog::logger> m_console;
   std::shared_ptr<OHDLink> m_link_handle;
   // r.n only for multi camera support
   std::unique_ptr<AirCameraGenericSettingsHolder> m_generic_settings;
-
  private:
   // Add a CameraStream for a discovered camera.
   void configure(const std::shared_ptr<CameraHolder>& camera);

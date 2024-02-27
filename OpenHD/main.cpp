@@ -311,8 +311,9 @@ int main(int argc, char *argv[]) {
           break;
         }
       }
-      if (openhd::TerminateHelper::instance().terminate) {
-        m_console->debug("Terminating requested somewhere");
+      if (openhd::TerminateHelper::instance().should_terminate()) {
+        m_console->debug("Terminating,reason:{}",
+                         openhd::TerminateHelper::instance().terminate_reason());
         break;
       }
     }
