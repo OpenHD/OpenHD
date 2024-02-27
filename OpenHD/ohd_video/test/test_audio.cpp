@@ -1,13 +1,12 @@
 
 
-#include <chrono>
 #include <iostream>
 #include <thread>
 
 #include "gstaudiostream.h"
+#include "openhd_bitrate.h"
 #include "openhd_udp.h"
 #include "openhd_util.h"
-#include "openhd_bitrate.h"
 
 //
 // Can be used to test / validate a camera implementation.
@@ -19,11 +18,12 @@ int main(int argc, char* argv[]) {
   OHDUtil::terminate_if_not_root();
   openhd::BitrateDebugger bitrate_debugger{"Bitrate", true};
   auto forwarder = openhd::UDPForwarder("127.0.0.1", 5610);
-  auto cb = [&forwarder,&bitrate_debugger](const openhd::AudioPacket& audioPacket) {
+  auto cb = [&forwarder,
+             &bitrate_debugger](const openhd::AudioPacket& audioPacket) {
     forwarder.forwardPacketViaUDP(audioPacket.data->data(),
                                   audioPacket.data->size());
-    //openhd::log::get_default()->debug("total size:{}",
-    //                                  audioPacket.data->size());
+    // openhd::log::get_default()->debug("total size:{}",
+    //                                   audioPacket.data->size());
     bitrate_debugger.on_packet(audioPacket.data->size());
   };
   auto audiostream = std::make_unique<GstAudioStream>();

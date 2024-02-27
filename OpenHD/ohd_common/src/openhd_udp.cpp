@@ -87,8 +87,8 @@ void openhd::UDPMultiForwarder::forwardPacketViaUDP(
   }
 }
 
-const std::list<std::unique_ptr<openhd::UDPForwarder>>
-    &openhd::UDPMultiForwarder::getForwarders() const {
+const std::list<std::unique_ptr<openhd::UDPForwarder>> &
+openhd::UDPMultiForwarder::getForwarders() const {
   return udpForwarders;
 }
 
