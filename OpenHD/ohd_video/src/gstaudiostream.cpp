@@ -16,6 +16,8 @@ GstAudioStream::GstAudioStream() {
   m_console = openhd::log::create_or_get("audio");
 }
 
+GstAudioStream::~GstAudioStream() { stop_looping(); }
+
 void GstAudioStream::set_link_cb(openhd::ON_AUDIO_TX_DATA_PACKET cb) {
   m_cb = std::move(cb);
 }

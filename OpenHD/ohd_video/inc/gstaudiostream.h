@@ -17,6 +17,7 @@
 class GstAudioStream {
  public:
   explicit GstAudioStream();
+  ~GstAudioStream();
   void set_link_cb(openhd::ON_AUDIO_TX_DATA_PACKET cb);
   void start_looping();
   void stop_looping();
