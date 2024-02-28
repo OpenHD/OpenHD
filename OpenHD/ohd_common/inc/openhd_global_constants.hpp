@@ -25,8 +25,12 @@ static constexpr auto VIDEO_SECONDARY_RADIO_PORT = 11;
 static_assert(VIDEO_PRIMARY_RADIO_PORT != VIDEO_SECONDARY_RADIO_PORT,
               "Must be different");
 
+// management - air to ground and ground to air
+static constexpr auto MANAGEMENT_RADIO_PORT_AIR_TX = 20;
+static constexpr auto MANAGEMENT_RADIO_PORT_GND_TX = 21;
+
 // Audio is unidirectional from air to ground
-static constexpr auto AUDIO_WIFIBROADCAST_PORT = 20;
+static constexpr auto AUDIO_WIFIBROADCAST_PORT = 30;
 
 // Where the video stream transmitted via wifibroadcast is made available to
 // QOpenHD to be picked up.

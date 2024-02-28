@@ -7,12 +7,10 @@
 #include <cstring>
 #include <sstream>
 
+#include "openhd_global_constants.hpp"
 #include "openhd_spdlog.h"
 #include "openhd_util.h"
 #include "openhd_util_time.h"
-
-static constexpr auto MANAGEMENT_RADIO_PORT_AIR_TX = 20;
-static constexpr auto MANAGEMENT_RADIO_PORT_GND_TX = 21;
 
 static constexpr uint8_t MNGMNT_PACKET_ID_CHANNEL_WIDTH = 0;
 static constexpr uint8_t MNGMNT_PACKET_ID_SENSITVITY_STATUS = 1;
@@ -59,7 +57,7 @@ ManagementAir::ManagementAir(std::shared_ptr<WBTxRx> wb_tx_rx,
     this->on_new_management_packet(data, data_len);
   };
   auto mgmt_handler = std::make_shared<WBTxRx::StreamRxHandler>(
-      MANAGEMENT_RADIO_PORT_GND_TX, cb_packet, nullptr);
+      openhd::MANAGEMENT_RADIO_PORT_GND_TX, cb_packet, nullptr);
   m_wb_txrx->rx_register_stream_handler(mgmt_handler);
 }
 
@@ -82,7 +80,7 @@ void ManagementAir::start() {
 }
 
 ManagementAir::~ManagementAir() {
-  m_wb_txrx->rx_unregister_stream_handler(MANAGEMENT_RADIO_PORT_GND_TX);
+  m_wb_txrx->rx_unregister_stream_handler(openhd::MANAGEMENT_RADIO_PORT_GND_TX);
   m_tx_thread_run = false;
   m_tx_thread->join();
   m_tx_thread = nullptr;
@@ -110,7 +108,7 @@ void ManagementAir::loop() {
                                               m_curr_channel_width_mhz.load()};
     auto data = pack_management_frame(managementFrame);
     auto radiotap_header = m_tx_header->thread_safe_get();
-    m_wb_txrx->tx_inject_packet(MANAGEMENT_RADIO_PORT_AIR_TX, data.data(),
+    m_wb_txrx->tx_inject_packet(openhd::MANAGEMENT_RADIO_PORT_AIR_TX, data.data(),
                                 data.size(), radiotap_header, true);
     std::this_thread::sleep_for(management_frame_interval);
     // std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -137,12 +135,12 @@ ManagementGround::ManagementGround(std::shared_ptr<WBTxRx> wb_tx_rx)
     this->on_new_management_packet(data, data_len);
   };
   auto mgmt_handler = std::make_shared<WBTxRx::StreamRxHandler>(
-      MANAGEMENT_RADIO_PORT_AIR_TX, cb_packet, nullptr);
+      openhd::MANAGEMENT_RADIO_PORT_AIR_TX, cb_packet, nullptr);
   m_wb_txrx->rx_register_stream_handler(mgmt_handler);
 }
 
 ManagementGround::~ManagementGround() {
-  m_wb_txrx->rx_unregister_stream_handler(MANAGEMENT_RADIO_PORT_AIR_TX);
+  m_wb_txrx->rx_unregister_stream_handler(openhd::MANAGEMENT_RADIO_PORT_AIR_TX);
   m_tx_thread_run = false;
   m_tx_thread->join();
   m_tx_thread = nullptr;
@@ -173,7 +171,7 @@ void ManagementGround::loop() {
     auto tmp = DataManagementSensitivityStatus{0, 0};
     auto data = pack_management_frame(tmp);
     auto radiotap_header = m_tx_header->thread_safe_get();
-    m_wb_txrx->tx_inject_packet(MANAGEMENT_RADIO_PORT_GND_TX, data.data(),
+    m_wb_txrx->tx_inject_packet(openhd::MANAGEMENT_RADIO_PORT_GND_TX, data.data(),
                                 data.size(), radiotap_header, true);
     // m_console->debug("Sent sensitivity management frame");
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
