@@ -108,8 +108,9 @@ void ManagementAir::loop() {
                                               m_curr_channel_width_mhz.load()};
     auto data = pack_management_frame(managementFrame);
     auto radiotap_header = m_tx_header->thread_safe_get();
-    m_wb_txrx->tx_inject_packet(openhd::MANAGEMENT_RADIO_PORT_AIR_TX, data.data(),
-                                data.size(), radiotap_header, true);
+    m_wb_txrx->tx_inject_packet(openhd::MANAGEMENT_RADIO_PORT_AIR_TX,
+                                data.data(), data.size(), radiotap_header,
+                                true);
     std::this_thread::sleep_for(management_frame_interval);
     // std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
@@ -171,8 +172,9 @@ void ManagementGround::loop() {
     auto tmp = DataManagementSensitivityStatus{0, 0};
     auto data = pack_management_frame(tmp);
     auto radiotap_header = m_tx_header->thread_safe_get();
-    m_wb_txrx->tx_inject_packet(openhd::MANAGEMENT_RADIO_PORT_GND_TX, data.data(),
-                                data.size(), radiotap_header, true);
+    m_wb_txrx->tx_inject_packet(openhd::MANAGEMENT_RADIO_PORT_GND_TX,
+                                data.data(), data.size(), radiotap_header,
+                                true);
     // m_console->debug("Sent sensitivity management frame");
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
