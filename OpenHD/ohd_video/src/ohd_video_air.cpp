@@ -49,6 +49,11 @@ OHDVideoAir::OHDVideoAir(std::vector<XCamera> cameras,
   }
   if (m_generic_settings->get_settings().enable_audio != OPENHD_AUDIO_DISABLE) {
     m_audio_stream = std::make_unique<GstAudioStream>();
+    auto audio_cb = [this](const openhd::AudioPacket& audioPacket) {
+      on_audio_data(audioPacket);
+    };
+    m_audio_stream->set_link_cb(audio_cb);
+    m_audio_stream->start_looping();
   }
   openhd::LinkActionHandler::instance().action_request_bitrate_change_register(
       [this](openhd::LinkActionHandler::LinkBitrateInformation lb) {
@@ -74,6 +79,8 @@ OHDVideoAir::~OHDVideoAir() {
       nullptr);
   // Stop all the camera stream(s)
   m_camera_streams.resize(0);
+  // stop audio if running
+  m_audio_stream = nullptr;
 }
 
 void OHDVideoAir::configure(

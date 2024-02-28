@@ -89,7 +89,7 @@ void GstAudioStream::stream_once() {
                    openhd::gst_state_change_return_to_string(ret));
   const uint64_t timeout_ns =
       std::chrono::duration_cast<std::chrono::nanoseconds>(
-          std::chrono::milliseconds(40))
+          std::chrono::milliseconds(100))
           .count();
   // Streaming
   while (true) {

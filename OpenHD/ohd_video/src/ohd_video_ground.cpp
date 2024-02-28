@@ -50,7 +50,7 @@ OHDVideoGround::OHDVideoGround(std::shared_ptr<OHDLink> link_handle)
 OHDVideoGround::~OHDVideoGround() {
   if (m_link_handle) {
     m_link_handle->register_on_receive_video_data_cb(nullptr);
-    m_link_handle->m_audio_data_rx_cb= nullptr;
+    m_link_handle->m_audio_data_rx_cb = nullptr;
   }
 }
 
