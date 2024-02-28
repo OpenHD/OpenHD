@@ -36,6 +36,7 @@ class OHDVideoGround {
   std::shared_ptr<OHDLink> m_link_handle;
   std::unique_ptr<openhd::UDPMultiForwarder> m_primary_video_forwarder;
   std::unique_ptr<openhd::UDPMultiForwarder> m_secondary_video_forwarder;
+  std::unique_ptr<openhd::UDPMultiForwarder> m_audio_forwarder;
   /**
    * Forward video to all device(s) consuming video.
    * Called by the ohd link handle (aka only wb right now)
@@ -43,6 +44,11 @@ class OHDVideoGround {
    * @param data and @param data_len: r.n always a full rtp frame fragment
    */
   void on_video_data(int stream_index, const uint8_t* data, int data_len);
+
+  /**
+   * Forward audio. We only have up to 1 audio stream
+   */
+  void on_audio_data(const uint8_t* data, int data_len);
 
  private:
   void start_stop_forwarding_external_device(

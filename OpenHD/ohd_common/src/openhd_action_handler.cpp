@@ -4,6 +4,8 @@
 
 #include "openhd_action_handler.h"
 
+#include "openhd_util_time.h"
+
 openhd::ArmingStateHelper &openhd::ArmingStateHelper::instance() {
   static openhd::ArmingStateHelper instance;
   return instance;
@@ -32,7 +34,13 @@ void openhd::ArmingStateHelper::update_arming_state_if_changed(bool armed) {
                    OHDUtil::yes_or_no(armed));
   for (auto &element : m_cbs) {
     // m_console->debug("Calling {},begin",element.first);
+    const auto start = std::chrono::steady_clock::now();
     element.second(armed);
+    const auto elapsed = std::chrono::steady_clock::now() - start;
+    if (elapsed > std::chrono::seconds(1)) {
+      m_console->info("arming state cb took too long {}",
+                      openhd::util::verbose_timespan(elapsed));
+    }
     // m_console->debug("Calling {},end",element.first);
   }
   m_console->debug("Done calling listeners.");
@@ -69,4 +77,25 @@ openhd::LinkActionHandler &openhd::LinkActionHandler::instance() {
 openhd::TerminateHelper &openhd::TerminateHelper::instance() {
   static TerminateHelper instance;
   return instance;
+}
+
+void openhd::TerminateHelper::terminate_after(std::string tag,
+                                              std::chrono::milliseconds delay) {
+  m_terminate_reason = tag;
+  int64_t tp = openhd::util::steady_clock_time_epoch_ms() + delay.count();
+  m_terminate_tp = tp;
+  m_should_terminate = true;
+}
+
+bool openhd::TerminateHelper::should_terminate() {
+  if (!m_should_terminate) return false;
+  int64_t tp = m_terminate_tp;
+  if (openhd::util::steady_clock_time_epoch_ms() >= tp) {
+    return true;
+  }
+  return false;
+}
+
+std::string openhd::TerminateHelper::terminate_reason() {
+  return m_terminate_reason;
 }

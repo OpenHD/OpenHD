@@ -112,9 +112,13 @@ class OHDLink {
  public:
   typedef std::function<void(const uint8_t* data, int data_len)>
       ON_AUDIO_DATA_RX_CB;
-  std::shared_ptr<ON_AUDIO_DATA_RX_CB> m_audio_data_rx_cb;
-  virtual void transmit_audio_data(
-      std::shared_ptr<openhd::AudioPacket> audio_packet) = 0;
+  ON_AUDIO_DATA_RX_CB m_audio_data_rx_cb = nullptr;
+  virtual void transmit_audio_data(const openhd::AudioPacket& audio_packet) = 0;
+  void on_receive_audio_data(const uint8_t* data, int data_len) {
+    if (m_audio_data_rx_cb) {
+      m_audio_data_rx_cb(data, data_len);
+    }
+  }
 };
 
 class DummyDebugLink : public OHDLink {
@@ -144,9 +148,8 @@ class DummyDebugLink : public OHDLink {
       m_opt_frame_cb(stream_index, fragmented_video_frame);
     }
   }
-  void transmit_audio_data(
-      std::shared_ptr<openhd::AudioPacket> audio_packet) override {
-    m_console_audio->debug("Got audio data {}", audio_packet->data->size());
+  void transmit_audio_data(const openhd::AudioPacket& audio_packet) override {
+    m_console_audio->debug("Got audio data {}", audio_packet.data->size());
   }
 
  private:

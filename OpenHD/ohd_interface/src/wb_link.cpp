@@ -5,7 +5,7 @@
 
 #include <utility>
 
-#include "openhd_bitrate_conversions.hpp"
+#include "openhd_bitrate.h"
 #include "openhd_config.h"
 #include "openhd_global_constants.hpp"
 #include "openhd_platform.h"
@@ -143,7 +143,7 @@ WBLink::WBLink(OHDProfile profile, OHDPlatform platform,
         m_profile.is_air ? openhd::TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT
                          : openhd::TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT;
     auto cb_rx = [this](const uint8_t* data, int data_len) {
-      m_last_received_packet_ts_ms = OHDUtil::steady_clock_time_epoch_ms();
+      m_last_received_packet_ts_ms = openhd::util::steady_clock_time_epoch_ms();
       auto shared =
           std::make_shared<std::vector<uint8_t>>(data, data + data_len);
       on_receive_telemetry_data(shared);
@@ -188,6 +188,12 @@ WBLink::WBLink(OHDProfile profile, OHDPlatform platform,
       secondary->set_encryption(false);
       m_wb_video_tx_list.push_back(std::move(primary));
       m_wb_video_tx_list.push_back(std::move(secondary));
+      WBStreamTx::Options options_audio_tx{};
+      options_audio_tx.enable_fec = false;
+      options_audio_tx.radio_port = openhd::AUDIO_WIFIBROADCAST_PORT;
+      options_audio_tx.packet_data_queue_size = 16;
+      m_wb_audio_tx = std::make_unique<WBStreamTx>(m_wb_txrx, options_audio_tx,
+                                                   m_tx_header_1);
     } else {
       // we receive video
       auto cb1 = [this](const uint8_t* data, int data_len) {
@@ -195,6 +201,9 @@ WBLink::WBLink(OHDProfile profile, OHDPlatform platform,
       };
       auto cb2 = [this](const uint8_t* data, int data_len) {
         on_receive_video_data(1, data, data_len);
+      };
+      auto cb_audio = [this](const uint8_t* data, int data_len) {
+        on_receive_audio_data(data, data_len);
       };
       WBStreamRx::Options options_video_rx{};
       // options_video_rx.enable_fec_debug_log=true;
@@ -208,7 +217,7 @@ WBLink::WBLink(OHDProfile profile, OHDPlatform platform,
       auto secondary =
           std::make_unique<WBStreamRx>(m_wb_txrx, options_video_rx);
       secondary->set_callback(cb2);
-      if (DIRTY_add_aud_nal || true) {
+      if (DIRTY_add_aud_nal) {
         auto block_cb = [this](uint64_t block_idx, int n_fragments_total,
                                int n_fragments_forwarded) {
           static int64_t last_block = 0;
@@ -230,6 +239,13 @@ WBLink::WBLink(OHDProfile profile, OHDPlatform platform,
       }
       m_wb_video_rx_list.push_back(std::move(primary));
       m_wb_video_rx_list.push_back(std::move(secondary));
+      WBStreamRx::Options options_audio_rx{};
+      options_audio_rx.radio_port = openhd::AUDIO_WIFIBROADCAST_PORT;
+      options_audio_rx.enable_fec = false;
+      options_audio_rx.enable_threading = true;
+      options_audio_rx.packet_queue_size = 16;
+      m_wb_audio_rx = std::make_unique<WBStreamRx>(m_wb_txrx, options_audio_rx);
+      m_wb_audio_rx->set_callback(cb_audio);
     }
   }
   apply_frequency_and_channel_width_from_settings();
@@ -306,6 +322,8 @@ WBLink::~WBLink() {
   m_wb_tele_tx.reset();
   m_wb_video_tx_list.resize(0);
   m_wb_video_rx_list.resize(0);
+  m_wb_audio_tx.reset();
+  m_wb_audio_rx.reset();
   m_wb_txrx = nullptr;
   wifi::commandhelper::cleanup_openhd_driver_overrides();
   m_console->debug("WBLink::~WBLink() end");
@@ -555,7 +573,7 @@ void WBLink::apply_txpower() {
   if (m_profile.is_air) {
     if (m_broadcast_cards.at(0).type == WiFiCardType::OPENHD_RTL_88X2AU &&
         pwr_index > 50 && settings.wb_air_tx_channel_width == 40) {
-      m_console->debug("Reducing TX power due to 40Mhz");
+      m_console->debug("Reducing TX power  to 50 tpi due to 40Mhz");
       pwr_index = 50;
     }
   }
@@ -858,11 +876,11 @@ void WBLink::wt_update_statistics() {
       air_video.curr_dropped_frames = tx_dropped_frames;
       const auto curr_tx_fec_stats = wb_tx.get_latest_fec_stats();
       air_fec.curr_fec_encode_time_avg_us =
-          OHDUtil::get_micros(curr_tx_fec_stats.curr_fec_encode_time.avg);
+          openhd::util::get_micros(curr_tx_fec_stats.curr_fec_encode_time.avg);
       air_fec.curr_fec_encode_time_min_us =
-          OHDUtil::get_micros(curr_tx_fec_stats.curr_fec_encode_time.min);
+          openhd::util::get_micros(curr_tx_fec_stats.curr_fec_encode_time.min);
       air_fec.curr_fec_encode_time_max_us =
-          OHDUtil::get_micros(curr_tx_fec_stats.curr_fec_encode_time.max);
+          openhd::util::get_micros(curr_tx_fec_stats.curr_fec_encode_time.max);
       air_fec.curr_fec_block_size_min =
           curr_tx_fec_stats.curr_fec_block_length.min;
       air_fec.curr_fec_block_size_max =
@@ -898,11 +916,11 @@ void WBLink::wt_update_statistics() {
       ground_video.count_blocks_lost = fec_stats.count_blocks_lost;
       ground_video.count_blocks_total = fec_stats.count_blocks_total;
       gnd_fec.curr_fec_decode_time_avg_us =
-          OHDUtil::get_micros(fec_stats.curr_fec_decode_time.avg);
+          openhd::util::get_micros(fec_stats.curr_fec_decode_time.avg);
       gnd_fec.curr_fec_decode_time_min_us =
-          OHDUtil::get_micros(fec_stats.curr_fec_decode_time.min);
+          openhd::util::get_micros(fec_stats.curr_fec_decode_time.min);
       gnd_fec.curr_fec_decode_time_max_us =
-          OHDUtil::get_micros(fec_stats.curr_fec_decode_time.max);
+          openhd::util::get_micros(fec_stats.curr_fec_decode_time.max);
       // TODO otimization: Only send stats for an active link
       stats.stats_wb_video_ground.push_back(ground_video);
       if (i == 0) stats.gnd_fec_performance = gnd_fec;
@@ -943,7 +961,7 @@ void WBLink::wt_update_statistics() {
   const int last_received_packet_ts = std::max(
       m_last_received_packet_ts_ms.load(), tmp_last_management_packet_ts);
   const auto elapsed_since_last_rx_packet_ms =
-      OHDUtil::steady_clock_time_epoch_ms() - last_received_packet_ts;
+      openhd::util::steady_clock_time_epoch_ms() - last_received_packet_ts;
   const bool curr_rx_last_packet_status_good =
       elapsed_since_last_rx_packet_ms <= 5 * 1000;
   const auto bitfield = openhd::link_statistics::MonitorModeLinkBitfield{
@@ -1058,8 +1076,9 @@ void WBLink::wt_perform_rate_adjustment() {
     m_console->debug(
         "MCS:{} ch_width:{} Calculated max_rate:{}, max_video_rate:{}",
         settings.wb_air_mcs_index, settings.wb_air_tx_channel_width,
-        kbits_per_second_to_string(max_rate_for_current_wifi_config),
-        kbits_per_second_to_string(max_video_rate_for_current_wifi_fec_config));
+        openhd::kbits_per_second_to_string(max_rate_for_current_wifi_config),
+        openhd::kbits_per_second_to_string(
+            max_video_rate_for_current_wifi_fec_config));
     m_max_video_rate_for_current_wifi_fec_config =
         max_video_rate_for_current_wifi_fec_config;
     m_recommended_video_bitrate_kbits =
@@ -1088,7 +1107,7 @@ void WBLink::wt_perform_rate_adjustment() {
     static constexpr auto MIN_BITRATE_KBITS = 1000 * 2;
     if (m_recommended_video_bitrate_kbits < MIN_BITRATE_KBITS) {
       m_console->warn("Reached minimum bitrate {}",
-                      kbits_per_second_to_string(MIN_BITRATE_KBITS));
+                      openhd::kbits_per_second_to_string(MIN_BITRATE_KBITS));
       m_recommended_video_bitrate_kbits = MIN_BITRATE_KBITS;
       m_curr_n_rate_adjustments--;
     }
@@ -1208,9 +1227,10 @@ void WBLink::transmit_video_data(
   }
 }
 
-void WBLink::transmit_audio_data(
-    std::shared_ptr<openhd::AudioPacket> audio_packet) {
-  // Do nothing for now
+void WBLink::transmit_audio_data(const openhd::AudioPacket& audio_packet) {
+  if (m_wb_audio_tx) {
+    m_wb_audio_tx->try_enqueue_packet(audio_packet.data);
+  }
 }
 
 void WBLink::reset_all_rx_stats() {
@@ -1507,16 +1527,6 @@ void WBLink::wt_gnd_perform_channel_management() {
                                           air_reported_channel_width, 20);
       }
     }
-    /*if (air_reported_channel_width > 0 &&
-        m_gnd_curr_rx_channel_width != air_reported_channel_width) {
-      const auto& curr_settings = m_settings->get_settings();
-      m_console->debug("GND changing LISTEN bandwidth from {} to {}",
-                       m_gnd_curr_rx_channel_width, air_reported_channel_width);
-      m_gnd_curr_rx_channel_width = air_reported_channel_width;
-      const int frequency = curr_settings.wb_frequency;
-      const int rx_channel_width = m_gnd_curr_rx_channel_width;
-      apply_frequency_and_channel_width(frequency, rx_channel_width, 20);
-    }*/
   }
 }
 

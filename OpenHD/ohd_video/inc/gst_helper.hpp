@@ -12,10 +12,11 @@
 
 #include "camera_settings.hpp"
 #include "libcamera_iq_helper.h"
-#include "openhd_bitrate_conversions.hpp"
+#include "openhd_bitrate.h"
 #include "openhd_platform.h"
 #include "openhd_spdlog.h"
 #include "openhd_spdlog_include.h"
+#include "openhd_util_filesystem.h"
 
 // #define EXPERIMENTAL_USE_OPENH264_ENCODER
 
@@ -42,7 +43,7 @@ static std::string createCiscoH264SwEncoder(const CameraSettings& settings) {
   return fmt::format(
       "openh264enc name=swencoder complexity=low bitrate={} num-slices=4 "
       "slice-mode=1 rate-control=bitrate gop-size={} !",
-      kbits_to_bits_per_second(settings.h26x_bitrate_kbits),
+      openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits),
       // settings.h26x_num_slices,
       settings.h26x_keyframe_interval);
 }
@@ -167,7 +168,7 @@ static std::string createRpicamsrcStream(
   std::stringstream ss;
   // other than the other ones, rpicamsrc takes bit/s instead of kbit/s
   int bitrateBitsPerSecond =
-      kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
+      openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
   if (hdmi_to_csi_workaround_half_bitrate) {
     openhd::log::get_default()->debug(
         "applying hack - reduce bitrate by 2 to get actual correct bitrate");
@@ -341,7 +342,7 @@ static std::string create_rpi_v4l2_h264_encoder(
   // BUG RPI FOUNDATION: video_bitrate_mode=1 makes encoder non functional
   // rpi v4l2 encoder takes bit/s instead of kbit/s
   const int bitrateBitsPerSecond =
-      kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
+      openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
   std::string bitrate_str;
   bitrate_str = fmt::format(",video_bitrate={}", bitrateBitsPerSecond);
   std::stringstream ret;
@@ -489,7 +490,7 @@ static std::string create_veye_vl2_stream(const CameraSettings& settings,
 static std::string createRockchipEncoderPipeline(
     const CameraSettings& settings) {
   std::stringstream ss;
-  const int bps = kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
+  const int bps = openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
   if (settings.streamed_video_format.videoCodec == VideoCodec::H264) {
     ss << "mpph264enc ";
   } else {

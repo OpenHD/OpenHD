@@ -6,6 +6,7 @@
 #include <utility>
 
 #include "camera_discovery.h"
+#include "gstaudiostream.h"
 #include "gstreamerstream.h"
 #include "nalu/fragment_helper.h"
 #include "openhd_config.h"
@@ -20,6 +21,7 @@ OHDVideoAir::OHDVideoAir(std::vector<XCamera> cameras,
   m_console->debug("OHDVideo::OHDVideo()");
   m_primary_video_forwarder = std::make_unique<openhd::UDPMultiForwarder>();
   m_secondary_video_forwarder = std::make_unique<openhd::UDPMultiForwarder>();
+  m_audio_forwarder = std::make_unique<openhd::UDPMultiForwarder>();
   if (cameras.size() > MAX_N_CAMERAS) {
     m_console->warn("More than {} cameras, dropping cameras", MAX_N_CAMERAS);
     cameras.resize(MAX_N_CAMERAS);
@@ -45,6 +47,14 @@ OHDVideoAir::OHDVideoAir(std::vector<XCamera> cameras,
   for (auto& camera : camera_holders) {
     configure(camera);
   }
+  if (m_generic_settings->get_settings().enable_audio != OPENHD_AUDIO_DISABLE) {
+    m_audio_stream = std::make_unique<GstAudioStream>();
+    auto audio_cb = [this](const openhd::AudioPacket& audioPacket) {
+      on_audio_data(audioPacket);
+    };
+    m_audio_stream->set_link_cb(audio_cb);
+    m_audio_stream->start_looping();
+  }
   openhd::LinkActionHandler::instance().action_request_bitrate_change_register(
       [this](openhd::LinkActionHandler::LinkBitrateInformation lb) {
         this->handle_change_bitrate_request(lb);
@@ -69,6 +79,8 @@ OHDVideoAir::~OHDVideoAir() {
       nullptr);
   // Stop all the camera stream(s)
   m_camera_streams.resize(0);
+  // stop audio if running
+  m_audio_stream = nullptr;
 }
 
 void OHDVideoAir::configure(
@@ -155,6 +167,19 @@ std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
                                .dualcam_primary_video_allocated_bandwidth_perc,
                            cb}});
   }
+  {
+    auto cb_audio = [this](std::string, int value) {
+      m_generic_settings->unsafe_get_settings().enable_audio = value;
+      m_generic_settings->persist();
+      openhd::TerminateHelper::instance().terminate_after(
+          "Audio", std::chrono::seconds(1));
+      return true;
+    };
+    ret.push_back(openhd::Setting{
+        "AUDIO_ENABLE",
+        openhd::IntSetting{m_generic_settings->get_settings().enable_audio,
+                           cb_audio}});
+  }
   return ret;
 }
 
@@ -191,11 +216,13 @@ void OHDVideoAir::start_stop_forwarding_external_device(
   if (connected) {
     m_primary_video_forwarder->addForwarder(client_addr, 5600);
     m_secondary_video_forwarder->addForwarder(client_addr, 5601);
+    m_audio_forwarder->addForwarder(client_addr, 5610);
     m_has_localhost_forwarding_enabled = true;
   } else {
     m_has_localhost_forwarding_enabled = false;
     m_primary_video_forwarder->removeForwarder(client_addr, 5600);
     m_secondary_video_forwarder->removeForwarder(client_addr, 5601);
+    m_audio_forwarder->removeForwarder(client_addr, 5610);
   }
 }
 
@@ -227,6 +254,16 @@ void OHDVideoAir::on_video_data(
         forwarder->forwardPacketViaUDP(fragment->data(), fragment->size());
       }
     }
+  }
+}
+
+void OHDVideoAir::on_audio_data(const openhd::AudioPacket& audio_packet) {
+  if (m_link_handle) {
+    m_link_handle->transmit_audio_data(audio_packet);
+  }
+  if (m_has_localhost_forwarding_enabled) {
+    m_audio_forwarder->forwardPacketViaUDP(audio_packet.data->data(),
+                                           audio_packet.data->size());
   }
 }
 
@@ -349,7 +386,8 @@ bool OHDVideoAir::x_set_camera_type(bool primary, int cam_type) {
     openhd::reboot::handle_power_command_async(std::chrono::seconds(1), false);
   } else {
     // Restarting openhd is enough
-    openhd::TerminateHelper::instance().terminate = true;
+    openhd::TerminateHelper::instance().terminate_after(
+        "CameraType", std::chrono::seconds(1));
   }
   return true;
 }

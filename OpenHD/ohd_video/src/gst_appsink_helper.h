@@ -5,7 +5,10 @@
 #ifndef OPENHD_OPENHD_OHD_VIDEO_SRC_GST_APPSINK_HELPER_H_
 #define OPENHD_OPENHD_OHD_VIDEO_SRC_GST_APPSINK_HELPER_H_
 
+#include <gst/app/gstappsink.h>
 #include <gst/gst.h>
+
+#include <optional>
 
 #include "openhd_spdlog.h"
 
@@ -16,13 +19,37 @@ static std::shared_ptr<std::vector<uint8_t>> gst_copy_buffer(
   assert(buffer);
   const auto buff_size = gst_buffer_get_size(buffer);
   // openhd::log::get_default()->debug("Got buffer size {}", buff_size);
-  auto ret = std::make_shared<std::vector<uint8_t>>(buff_size);
+  // auto ret = std::make_shared<std::vector<uint8_t>>(buff_size);
   GstMapInfo map;
   gst_buffer_map(buffer, &map, GST_MAP_READ);
   assert(map.size == buff_size);
-  std::memcpy(ret->data(), map.data, buff_size);
+  // std::memcpy(ret->data(), map.data, buff_size);
+  auto ret =
+      std::make_shared<std::vector<uint8_t>>(map.data, map.data + buff_size);
   gst_buffer_unmap(buffer, &map);
   return ret;
+}
+
+struct GstBufferX {
+  std::shared_ptr<std::vector<uint8_t>> buffer;
+  uint64_t buffer_dts = 0;
+};
+static std::optional<GstBufferX> gst_app_sink_try_pull_sample_and_copy(
+    GstElement* app_sink, uint64_t timeout_ns) {
+  GstSample* sample =
+      gst_app_sink_try_pull_sample(GST_APP_SINK(app_sink), timeout_ns);
+  if (!sample) return std::nullopt;
+  GstBuffer* buffer = gst_sample_get_buffer(sample);
+  // tmp declaration for give sample back early optimization
+  std::shared_ptr<std::vector<uint8_t>> fragment_data = nullptr;
+  uint64_t buffer_dts = 0;
+  if (buffer && gst_buffer_get_size(buffer) > 0) {
+    fragment_data = openhd::gst_copy_buffer(buffer);
+    buffer_dts = buffer->dts;
+  }
+  gst_sample_unref(sample);
+  if (!fragment_data) return std::nullopt;
+  return GstBufferX{fragment_data, buffer_dts};
 }
 
 static void gst_debug_buffer(GstBuffer* buffer) {
@@ -35,7 +62,7 @@ static void gst_debug_buffer(GstBuffer* buffer) {
 }
 
 // From https://github.com/mshabunin/gstreamer-example/blob/master/main.cpp
-void gst_debug_sample(GstSample* sample) {
+static void gst_debug_sample(GstSample* sample) {
   assert(sample);
   std::stringstream ss;
   const GstSegment* seg = gst_sample_get_segment(sample);

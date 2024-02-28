@@ -10,6 +10,7 @@
 #include "mavsdk_temporary/XMavlinkParamProvider.h"
 #include "openhd_temporary_air_or_ground.h"
 #include "openhd_util.h"
+#include "openhd_util_time.h"
 
 AirTelemetry::AirTelemetry(OHDPlatform platform)
     : m_platform(platform), MavlinkSystem(OHD_SYS_ID_AIR) {
@@ -143,7 +144,7 @@ void AirTelemetry::loop_infinite(bool& terminate,
       m_console->debug(
           "Warning AirTelemetry cannot keep up with the wanted loop interval. "
           "Took {}",
-          OHDUtil::time_readable(loopDelta));
+          openhd::util::time_readable(loopDelta));
     } else {
       const auto sleepTime = loop_intervall - loopDelta;
       // send out in X second intervals

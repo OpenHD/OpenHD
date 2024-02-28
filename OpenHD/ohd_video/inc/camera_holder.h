@@ -10,7 +10,7 @@
 #include "camera.hpp"
 #include "camera_settings.hpp"
 #include "openhd_action_handler.h"
-#include "openhd_bitrate_conversions.hpp"
+#include "openhd_bitrate.h"
 #include "openhd_settings_directories.h"
 #include "openhd_settings_imp.h"
 #include "openhd_settings_persistent.h"
@@ -65,7 +65,7 @@ class CameraHolder :
       return false;
     }
     unsafe_get_settings().h26x_bitrate_kbits =
-        mbits_to_kbits_per_second(bitrate_mbits);
+        openhd::mbits_to_kbits_per_second(bitrate_mbits);
     persist();
     return true;
   }

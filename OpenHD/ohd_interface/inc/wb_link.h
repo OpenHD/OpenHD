@@ -18,6 +18,7 @@
 #include "openhd_profile.h"
 #include "openhd_settings_imp.h"
 #include "openhd_spdlog.h"
+#include "openhd_util_time.h"
 #include "wb_link_helper.h"
 #include "wb_link_manager.h"
 #include "wb_link_settings.h"
@@ -142,8 +143,7 @@ class WBLink : public OHDLink {
   void transmit_video_data(
       int stream_index,
       const openhd::FragmentedVideoFrame& fragmented_video_frame) override;
-  void transmit_audio_data(
-      std::shared_ptr<openhd::AudioPacket> audio_packet) override;
+  void transmit_audio_data(const openhd::AudioPacket& audio_packet) override;
   // How often per second we broadcast the session key -
   // we send the session key ~2 times per second
   static constexpr std::chrono::milliseconds SESSION_KEY_PACKETS_INTERVAL =
@@ -180,6 +180,9 @@ class WBLink : public OHDLink {
   // instances.
   std::vector<std::unique_ptr<WBStreamTx>> m_wb_video_tx_list;
   std::vector<std::unique_ptr<WBStreamRx>> m_wb_video_rx_list;
+  // For audio or custom data
+  std::unique_ptr<WBStreamTx> m_wb_audio_tx;
+  std::unique_ptr<WBStreamRx> m_wb_audio_rx;
   // We have one worker thread for asynchronously performing operation(s) like
   // changing the frequency but also recalculating statistics that are then
   // forwarded to openhd_telemetry for broadcast
@@ -213,7 +216,7 @@ class WBLink : public OHDLink {
   std::atomic<int> m_curr_tx_power_idx = 0;
   std::atomic<int> m_curr_tx_power_mw = 0;
   std::atomic<int> m_last_received_packet_ts_ms =
-      OHDUtil::steady_clock_time_epoch_ms();
+      openhd::util::steady_clock_time_epoch_ms();
   std::chrono::steady_clock::time_point m_reset_frequency_time_point =
       std::chrono::steady_clock::now();
   // 40Mhz / 20Mhz link management

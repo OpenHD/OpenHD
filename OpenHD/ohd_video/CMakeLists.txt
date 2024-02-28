@@ -41,6 +41,7 @@ if(ENABLE_AIR)
             src/ohd_video_air_generic_settings.cpp
             src/validate_settings.cpp
             src/usb_thermal_cam_helper.cpp
+            src/gstaudiostream.cpp
     )
 
     pkg_search_module(GST REQUIRED
@@ -77,7 +78,7 @@ if (ENABLE_AIR AND ENABLE_USB_CAMERAS)
     # https://stackoverflow.com/questions/64078308/how-to-write-a-cmake-file-which-successfully-links-gstreamer-basic-tutorial-5
     pkg_search_module(gstreamer-sdp REQUIRED IMPORTED_TARGET gstreamer-sdp-1.0>=1.4)
     pkg_search_module(gstreamer-video REQUIRED IMPORTED_TARGET gstreamer-video-1.0>=1.4)
-    target_link_libraries(OHDVideoLib PRIVATE
+    target_link_libraries(OHDVideoLib PUBLIC
             PkgConfig::gstreamer-sdp
             PkgConfig::gstreamer-video)
     # FUCKING GSTREAMER !! end
@@ -111,3 +112,5 @@ target_link_libraries(OHDVideoLib PUBLIC Threads::Threads)
 # Executables for testing manually, note that some might need to run after discovery
 add_executable(test_video test/test_video.cpp)
 target_link_libraries(test_video OHDVideoLib)
+add_executable(test_audio test/test_audio.cpp)
+target_link_libraries(test_audio OHDVideoLib)

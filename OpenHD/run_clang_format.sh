@@ -1,10 +1,12 @@
 #!/bin/bash
 
 # OpenHD clang-format checking.
+# Performed steps:
 # Step1: Generate list of all .cpp / .h / .hpp files of this project
 #        (excluding subdirectories)
 # Step 2: Run clang-format
-
+# Arguments: run with 'f' to fix things (otherwise, default, only check and report
+# error if clang-format finds any issues
 
 function append_all_sources_headers() {
     # We use .h, .cpp and .hpp in OpenHD
@@ -28,7 +30,7 @@ append_all_sources_headers "$THIS_DIR/ohd_interface/src"
 append_all_sources_headers "$THIS_DIR/ohd_interface/test"
 
 append_all_sources_headers "$THIS_DIR/ohd_telemetry/src"
-append_all_sources_headers "$THIS_DIR/ohd_telemetry/tests"
+append_all_sources_headers "$THIS_DIR/ohd_telemetry/test"
 
 append_all_sources_headers "$THIS_DIR/ohd_video/inc"
 append_all_sources_headers "$THIS_DIR/ohd_video/src"
@@ -52,5 +54,10 @@ function fix_warnings() {
     clang-format --verbose -i --style=file $FILE_LIST
 }
 
-#fix_warnings
-check_warning
+if [ "$1" == "f" ]; then
+   echo "Fixing warnings"
+   fix_warnings
+else
+  echo "Checking warnings"
+  check_warning
+fi
