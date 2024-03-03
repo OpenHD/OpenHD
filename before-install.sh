@@ -5,7 +5,7 @@ mv /boot/openhd/scripts/custom_unmanaged_camera.sh /boot/openhd/scripts/custom_u
 # NOTE: Updating overwrites the .config file and also the service file
 rm -rf /boot/openhd/hardware.config
 
-if [ "$(uname -m)" != "x86_64" ]; then
+if [ "$(uname -m)" == "x86_64" ]; then
 
     whiptail --title "OpenHD" --yesno "You are about to install OpenHD to your Computer. Please be aware that we do not allow military usage! Do you want to continue ?" 10 50
 
