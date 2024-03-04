@@ -21,7 +21,6 @@ fi
 if [ "$(uname -m)" == "x86_64" ]; then
     if ! uname -a | grep -q "azure"; then
 
-
         whiptail --title "OpenHD" --yesno "You are about to install OpenHD to your Computer. Do you want to install the required drivers or do you want to do that manually later?" 10 50
 
         if [ $? -eq 0 ]; then
@@ -47,5 +46,8 @@ if [ "$(uname -m)" == "x86_64" ]; then
         else
             whiptail --title "OpenHD Installation" --msgbox "No Drivers installed, please make sure to manually do that before running OpenHD!" 10 50
         fi
+        echo "copying shortcuts"
+        sudo chmod a+x /usr/share/applications/*.desktop
+        for homedir in /home/*; do sudo cp /usr/share/applications/*.desktop "$homedir"/Desktop/; done
     fi
 fi

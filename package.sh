@@ -20,6 +20,10 @@ create_package_directory() {
   if [[ "${PACKAGE_ARCH}" != "x86_64" ]]; then
     echo "we're not on x86"
     cp systemd/openhd.service /tmp/openhd-installdir/etc/systemd/system/openhd.service || exit 1
+    mkdir -p /tmp/openhd-installdir/usr/share/applications/
+    cp shortcuts/* /tmp/openhd-installdir/usr/share/applications/
+    mkdir -p /tmp/openhd-installdir/usr/local/share/openhd_misc/
+    cp shortcuts/OpenHD.ico /tmp/openhd-installdir/usr/local/share/openhd_misc/
   fi
   # always - copy the hardware.config file
   mkdir -p "${PKGDIR}/boot/openhd/"
@@ -40,7 +44,7 @@ build_package() {
     fi
   elif [[ "${PACKAGE_ARCH}" == "x86_64" ]]; then
     PACKAGE_NAME="openhd"
-    PACKAGES="-d qopenhd -d git -d iw -d nmap -d aircrack-ng -d i2c-tools -d libv4l-dev -d libusb-1.0-0 -d libpcap-dev -d libnl-3-dev -d libnl-genl-3-dev -d libsdl2-2.0-0 -d libsodium-dev -d gstreamer1.0-plugins-base -d gstreamer1.0-plugins-good -d gstreamer1.0-plugins-bad -d gstreamer1.0-plugins-ugly -d gstreamer1.0-libav -d gstreamer1.0-tools -d gstreamer1.0-alsa -d gstreamer1.0-pulseaudio"
+    PACKAGES="-d dkms -d qopenhd -d git -d iw -d nmap -d aircrack-ng -d i2c-tools -d libv4l-dev -d libusb-1.0-0 -d libpcap-dev -d libnl-3-dev -d libnl-genl-3-dev -d libsdl2-2.0-0 -d libsodium-dev -d gstreamer1.0-plugins-base -d gstreamer1.0-plugins-good -d gstreamer1.0-plugins-bad -d gstreamer1.0-plugins-ugly -d gstreamer1.0-libav -d gstreamer1.0-tools -d gstreamer1.0-alsa -d gstreamer1.0-pulseaudio"
     PLATFORM_CONFIGS=""
   else
     PACKAGE_NAME="openhd"
