@@ -48,8 +48,10 @@ if [ "$(uname -m)" == "x86_64" ]; then
             whiptail --title "OpenHD Installation" --msgbox "No Drivers installed, please make sure to manually do that before running OpenHD!" 10 50
         fi
         echo "copying shortcuts"
-        sudo chmod a+x /usr/share/applications/*.desktop
-        for homedir in /home/*; do sudo cp /usr/share/applications/*.desktop "$homedir"/Desktop/; done
+        sudo chmod a+x /usr/share/applications/OpenHD*.desktop
+        sudo chmod a+x /usr/share/applications/QOpenHD*.desktop
+        for homedir in /home/*; do sudo cp /usr/share/applications/OpenHD*.desktop "$homedir"/Desktop/; done
+        for homedir in /home/*; do sudo cp /usr/share/applications/QOpenHD*.desktop "$homedir"/Desktop/; done
         chmod +777 /etc/profile.d/desktop-truster.sh
         chmod a+x /etc/profile.d/desktop-truster.sh
     fi
