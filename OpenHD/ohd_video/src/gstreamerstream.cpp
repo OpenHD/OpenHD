@@ -75,9 +75,9 @@ std::string GStreamerStream::create_source_encode_pipeline(
   }
   std::stringstream pipeline;
   if (camera.requires_rpi_mmal_pipeline()) {
-    if(true){
-      pipeline << OHDGstHelper::create_rpi_hdmi_mmal_stream(setting);
-    }else{
+    if (OHDFilesystemUtil::exists("/boot/openhd/hdmi_v4l2.txt")) {
+      pipeline << OHDGstHelper::create_rpi_hdmi_v4l2_stream(setting);
+    } else {
       pipeline << OHDGstHelper::createRpicamsrcStream(
           -1, setting, cam_holder.requires_half_bitrate_workaround());
     }
