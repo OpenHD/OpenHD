@@ -19,7 +19,7 @@ if [ "$(uname -m)" == "x86_64" ]; then
                 sudo dkms remove -m rtl88x2bu -v 5.13.1 --all
             fi
         else
-            exit 0
+            exit 1
         fi
     fi
 fi
