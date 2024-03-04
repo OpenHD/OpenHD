@@ -75,8 +75,12 @@ std::string GStreamerStream::create_source_encode_pipeline(
   }
   std::stringstream pipeline;
   if (camera.requires_rpi_mmal_pipeline()) {
-    pipeline << OHDGstHelper::createRpicamsrcStream(
-        -1, setting, cam_holder.requires_half_bitrate_workaround());
+    if(true){
+      pipeline << OHDGstHelper::create_rpi_hdmi_mmal_stream(setting);
+    }else{
+      pipeline << OHDGstHelper::createRpicamsrcStream(
+          -1, setting, cam_holder.requires_half_bitrate_workaround());
+    }
   } else if (camera.requires_rpi_libcamera_pipeline()) {
     pipeline << OHDGstHelper::createLibcamerasrcStream(setting);
   } else if (camera.requires_rpi_veye_pipeline()) {
