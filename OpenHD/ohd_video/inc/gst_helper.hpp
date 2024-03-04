@@ -365,7 +365,8 @@ static std::string create_rpi_v4l2_h264_encoder(
  */
 static std::string create_rpi_hdmi_v4l2_stream(const CameraSettings& settings) {
   std::stringstream ss;
-  ss << "v4l2src ! ";
+  // io-mode=5 ==  GST_V4L2_IO_DMABUF_IMPORT
+  ss << "v4l2src io-mode=5 ! ";
   ss << "video/x-raw,framerate=30/1,format=UYVY ! ";
   ss << create_rpi_v4l2_h264_encoder(settings);
   return ss.str();

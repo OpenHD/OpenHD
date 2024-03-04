@@ -6,12 +6,17 @@
 #define OPENHD_RPI_HDMI_TO_CSI_V4L2_HELPER_H
 
 #include "openhd_spdlog.h"
+#include "openhd_util.h"
 
 namespace openhd::rpi::hdmi {
 
 static void initialize_resolution(const int width, const int height, int fps) {
   openhd::log::get_default()->debug("rpi hdmi initialize_resolution {} {} {}",
                                     width, height, fps);
+  // https://forums.raspberrypi.com/viewtopic.php?f=38&t=281972
+  // to select the currently detected timings
+  // v4l2-ctl --set-dv-bt-timings query
+  OHDUtil::run_command("v4l2-ctl --set-dv-bt-timings query",{});
 }
 
 }  // namespace openhd::rpi::hdmi
