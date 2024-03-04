@@ -63,10 +63,14 @@ void GstAudioStream::loop_infinite() {
 // audio/x-alaw, rate=8000, channels=1 ! alawdec ! alsasink device=hw:0
 static std::string create_pipeline() {
   std::stringstream ss;
+  if(OHDFilesystemUtil::exists("/boot/openhd/test_audio.txt")){
+    ss << "audiotestsrc ! ";
+  }else{
+    ss << "autoaudiosrc ! ";
+  }
   /*ss << "autoaudiosrc ! ";
   ss << "audioconvert ! ";
   ss << "rtpL16pay ! ";*/
-  ss << "autoaudiosrc ! ";
   ss << "alawenc ! rtppcmapay max-ptime=20000000 ! ";
   ss << OHDGstHelper::createOutputAppSink();
   return ss.str();
