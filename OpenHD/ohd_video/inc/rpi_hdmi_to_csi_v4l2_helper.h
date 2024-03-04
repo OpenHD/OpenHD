@@ -9,9 +9,10 @@
 
 namespace openhd::rpi::hdmi {
 
-static void initialize_resolution(const int width, const int height,int fps){
-  openhd::log::get_default()->debug("rpi hdmi initialize_resolution {} {} {}",width,height,fps);
+static void initialize_resolution(const int width, const int height, int fps) {
+  openhd::log::get_default()->debug("rpi hdmi initialize_resolution {} {} {}",
+                                    width, height, fps);
 }
 
-}
+}  // namespace openhd::rpi::hdmi
 #endif  // OPENHD_RPI_HDMI_TO_CSI_V4L2_HELPER_H
