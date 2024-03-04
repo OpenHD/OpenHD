@@ -63,9 +63,9 @@ void GstAudioStream::loop_infinite() {
 // audio/x-alaw, rate=8000, channels=1 ! alawdec ! alsasink device=hw:0
 static std::string create_pipeline() {
   std::stringstream ss;
-  if(OHDFilesystemUtil::exists("/boot/openhd/test_audio.txt")){
+  if (OHDFilesystemUtil::exists("/boot/openhd/test_audio.txt")) {
     ss << "audiotestsrc ! ";
-  }else{
+  } else {
     ss << "autoaudiosrc ! ";
   }
   /*ss << "autoaudiosrc ! ";
