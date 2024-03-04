@@ -16,7 +16,7 @@ static void initialize_resolution(const int width, const int height, int fps) {
   // https://forums.raspberrypi.com/viewtopic.php?f=38&t=281972
   // to select the currently detected timings
   // v4l2-ctl --set-dv-bt-timings query
-  OHDUtil::run_command("v4l2-ctl --set-dv-bt-timings query",{});
+  OHDUtil::run_command("v4l2-ctl --set-dv-bt-timings query", {});
 }
 
 }  // namespace openhd::rpi::hdmi
