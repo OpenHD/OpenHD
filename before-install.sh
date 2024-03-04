@@ -6,12 +6,13 @@ mv /boot/openhd/scripts/custom_unmanaged_camera.sh /boot/openhd/scripts/custom_u
 rm -rf /boot/openhd/hardware.config
 
 if [ "$(uname -m)" == "x86_64" ]; then
+    if ! uname -a | grep -q "azure"; then
+        whiptail --title "OpenHD" --yesno "You are about to install OpenHD to your Computer. Please be aware that we do not allow military usage! Do you want to continue ?" 10 50
 
-    whiptail --title "OpenHD" --yesno "You are about to install OpenHD to your Computer. Please be aware that we do not allow military usage! Do you want to continue ?" 10 50
-
-    if [ $? -eq 0 ]; then
-        echo "Installing OpenHD..."
-    else
-        exit 0
+        if [ $? -eq 0 ]; then
+            echo "Installing OpenHD..."
+        else
+            exit 0
+        fi
     fi
 fi

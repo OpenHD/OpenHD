@@ -19,7 +19,8 @@ if [[ "$?" -ne 0 ]]; then
 fi
 
 if [ "$(uname -m)" == "x86_64" ]; then
-    if [ ! -d "/usr/local/share/openhd/official" ]; then
+    if ! uname -a | grep -q "azure"; then
+
 
         whiptail --title "OpenHD" --yesno "You are about to install OpenHD to your Computer. Do you want to install the required drivers or do you want to do that manually later?" 10 50
 
