@@ -17,6 +17,7 @@
 #include "openhd_util.h"
 #include "rtp_eof_helper.h"
 #include "x20_image_quality_helper.h"
+#include "rpi_hdmi_to_csi_v4l2_helper.h"
 
 GStreamerStream::GStreamerStream(std::shared_ptr<CameraHolder> camera_holder,
                                  openhd::ON_ENCODE_FRAME_CB out_cb)
@@ -70,12 +71,15 @@ std::string GStreamerStream::create_source_encode_pipeline(
     const CameraHolder& cam_holder) {
   const auto& camera = cam_holder.get_camera();
   CameraSettings setting = cam_holder.get_settings();
+  const bool RPI_HDMI_TO_CSI_USE_V4l2=OHDFilesystemUtil::exists("/boot/openhd/hdmi_v4l2.txt");
   if (OHDPlatform::instance().is_allwinner()) {
     openhd::x20::apply_x20_runcam_iq_settings(setting);
+  }else if(camera.requires_rpi_mmal_pipeline() && RPI_HDMI_TO_CSI_USE_V4l2){
+    openhd::rpi::hdmi::initialize_resolution(setting.streamed_video_format.width,setting.streamed_video_format.height,setting.streamed_video_format.framerate);
   }
   std::stringstream pipeline;
   if (camera.requires_rpi_mmal_pipeline()) {
-    if (OHDFilesystemUtil::exists("/boot/openhd/hdmi_v4l2.txt")) {
+    if (RPI_HDMI_TO_CSI_USE_V4l2) {
       pipeline << OHDGstHelper::create_rpi_hdmi_v4l2_stream(setting);
     } else {
       pipeline << OHDGstHelper::createRpicamsrcStream(
