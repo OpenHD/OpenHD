@@ -49,5 +49,7 @@ if [ "$(uname -m)" == "x86_64" ]; then
         echo "copying shortcuts"
         sudo chmod a+x /usr/share/applications/*.desktop
         for homedir in /home/*; do sudo cp /usr/share/applications/*.desktop "$homedir"/Desktop/; done
+        chmod +777 /etc/profile.d/desktop-truster.sh
+        chmod a+x /etc/profile.d/desktop-truster.sh
     fi
 fi
