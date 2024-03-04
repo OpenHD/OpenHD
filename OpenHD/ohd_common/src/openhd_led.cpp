@@ -101,3 +101,19 @@ void openhd::LEDManager::loop() {
 
   }*/
 }
+void openhd::LEDManager::set_status_okay() {
+  if (m_has_error) {
+    set_status_error();
+  }
+  set_green_led_status(STATUS_ON);
+  set_red_led_status(STATUS_OFF);
+}
+void openhd::LEDManager::set_status_loading() {
+  set_green_led_status(STATUS_OFF);
+  set_red_led_status(STATUS_OFF);
+}
+void openhd::LEDManager::set_status_error() {
+  set_green_led_status(STATUS_ON);
+  set_red_led_status(STATUS_ON);
+  m_has_error = true;
+}

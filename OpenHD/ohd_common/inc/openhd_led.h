@@ -22,6 +22,14 @@ class LEDManager {
   void set_red_led_status(int status);
   void set_green_led_status(int status);
 
+ public:
+  // OpenHD is running and healthy
+  void set_status_okay();
+  // OpenHD is starting
+  void set_status_loading();
+  // OpenHD encountered an error
+  void set_status_error();
+
  private:
   explicit LEDManager();
   ~LEDManager();
@@ -30,6 +38,7 @@ class LEDManager {
  private:
   // bool m_run= true;
   // std::unique_ptr<std::thread> m_manage_thread;
+  bool m_has_error = false;
 };
 
 }  // namespace openhd
