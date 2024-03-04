@@ -24,6 +24,9 @@ create_package_directory() {
     cp shortcuts/* /tmp/openhd-installdir/usr/share/applications/
     mkdir -p /tmp/openhd-installdir/usr/local/share/openhd_misc/
     cp shortcuts/OpenHD.ico /tmp/openhd-installdir/usr/local/share/openhd_misc/
+    mkdit -p /tmp/openhd-installdir/etc/profile.d/
+    cp desktop-truster.sh /tmp/openhd-installdir/etc/profile.d/
+    sudo chmod +777 /tmp/openhd-installdir/etc/profile.d/desktop-truster.sh
   fi
   # always - copy the hardware.config file
   mkdir -p "${PKGDIR}/boot/openhd/"
