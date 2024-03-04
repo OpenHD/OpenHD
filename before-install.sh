@@ -14,7 +14,9 @@ if [ "$(uname -m)" == "x86_64" ]; then
             if [ $? -eq 0 ]; then
                 echo "Removing old drivers"
                 sudo dkms uninstall -m rtl8812au -v 5.2.20.2 --all
+                sudo dkms remove -m rtl8812au -v 5.2.20.2 --all
                 sudo dkms uninstall -m rtl88x2bu -v 5.13.1 --all
+                sudo dkms remove -m rtl88x2bu -v 5.13.1 --all
             fi
         else
             exit 0
