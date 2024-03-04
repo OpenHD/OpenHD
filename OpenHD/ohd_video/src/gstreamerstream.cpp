@@ -100,8 +100,10 @@ std::string GStreamerStream::create_source_encode_pipeline(
   } else if (camera.requires_x20_cedar_pipeline()) {
     pipeline << OHDGstHelper::createAllwinnerStream(setting);
   } else if (is_usb_camera(camera.camera_type)) {
+    const auto v4l2_device_name =
+        get_v4l2_device_name_string(camera.usb_v4l2_device_number);
     pipeline << OHDGstHelper::createV4l2SrcRawAndSwEncodeStream(
-        camera.usb_v4l2_device_node, setting);
+        v4l2_device_name, setting);
   } else if (camera.camera_type == X_CAM_TYPE_DUMMY_SW) {
     pipeline << OHDGstHelper::createDummyStreamX(OHDPlatform::instance(),
                                                  setting);

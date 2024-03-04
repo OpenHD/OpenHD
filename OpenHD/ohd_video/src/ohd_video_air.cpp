@@ -274,14 +274,14 @@ void OHDVideoAir::update_arming_state(bool armed) {
 }
 
 #ifdef ENABLE_USB_CAMERAS
-static std::vector<std::string> x_discover_usb_cameras(
-    const OHDPlatform& platform, int num_usb_cameras) {
+static std::vector<int> x_discover_usb_cameras(const OHDPlatform& platform,
+                                               int num_usb_cameras) {
   auto console = openhd::log::get_default();
   const auto discovery_begin = std::chrono::steady_clock::now();
   console->debug("Waiting for usb camera(s)");
   std::vector<DCameras::DiscoveredUSBCamera> usb_cameras;
   while (true) {
-    usb_cameras = DCameras::detect_usb_cameras(platform, console,false);
+    usb_cameras = DCameras::detect_usb_cameras(platform, console, false);
     if (usb_cameras.size() >= num_usb_cameras) {
       break;
     }
@@ -292,17 +292,17 @@ static std::vector<std::string> x_discover_usb_cameras(
     }
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
-  std::vector<std::string> bus_names;
+  std::vector<int> ret;
   for (int i = 0; i < num_usb_cameras; i++) {
     if (i < usb_cameras.size()) {
-      bus_names.push_back(usb_cameras[i].device_name);
+      ret.push_back(usb_cameras[i].v4l2_device_number);
     } else {
       // We didn't find the usb cam - guess it
-      const std::string guess_bus_name = i == 0 ? "/dev/video0" : "/dev/video1";
-      bus_names.push_back(guess_bus_name);
+      const int guess_bus_name = i == 0 ? 0 : 1;
+      ret.push_back(guess_bus_name);
     }
   }
-  return bus_names;
+  return ret;
 }
 
 static int get_num_usb_cameras(const int primary_camera_type,
@@ -326,7 +326,7 @@ std::vector<XCamera> OHDVideoAir::discover_cameras(
 
   const int num_active_cameras =
       global_settings.secondary_camera_type == X_CAM_TYPE_DISABLED ? 1 : 2;
-  std::vector<std::string> usb_cam_bus_names;
+  std::vector<int> usb_cam_bus_names;
 #ifdef ENABLE_USB_CAMERAS
   const int num_usb_cameras =
       get_num_usb_cameras(global_settings.primary_camera_type,
@@ -346,7 +346,7 @@ std::vector<XCamera> OHDVideoAir::discover_cameras(
           XCamera{cam_type, i, usb_cam_bus_names[usb_cameras_offset]});
       usb_cameras_offset++;
     } else {
-      ret.push_back(XCamera{cam_type, i, ""});
+      ret.push_back(XCamera{cam_type, i, 0});
     }
   }
   return ret;

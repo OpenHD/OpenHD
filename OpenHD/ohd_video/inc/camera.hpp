@@ -171,7 +171,7 @@ struct XCamera {
   // Only valid if camera is of type USB
   // For CSI camera(s) we in general 'know' from platform and cam type how to
   // tell the pipeline which cam/source to use.
-  std::string usb_v4l2_device_node;
+  int usb_v4l2_device_number;
   bool requires_rpi_mmal_pipeline() const {
     return camera_type == X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI;
   }
@@ -377,6 +377,12 @@ static std::string get_verbose_string_of_resolution(
        << resolution_framerate.height_px;
   }
   ss << "\n" << resolution_framerate.fps << "fps";
+  return ss.str();
+}
+
+static std::string get_v4l2_device_name_string(int value) {
+  std::stringstream ss;
+  ss << "/dev/video" << value;
   return ss.str();
 }
 
