@@ -38,6 +38,7 @@ if [ "$(uname -m)" == "x86_64" ]; then
             cd /usr/src/rtl88x2bu-5.13.1
             sed -i 's/PACKAGE_VERSION="@PKGVER@"/PACKAGE_VERSION="5.13.1"/g' /usr/src/rtl88x2bu-5.13.1/dkms.conf
             dkms add -m rtl88x2bu -v 5.13.1 || { echo "Failed to install RTL8812BU"; exit 1; }
+            dkms autoinstall
             echo "RTL8812BU installed successfully."  
             else
                 whiptail --title "OpenHD Installation" --msgbox "Installation aborted. Stopped Installation." 10 50
