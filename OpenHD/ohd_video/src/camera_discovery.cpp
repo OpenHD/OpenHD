@@ -373,13 +373,17 @@ static std::optional<XValidEndpoint> probe_v4l2_device(
 }  // namespace openhd::v4l2
 
 std::vector<DCameras::DiscoveredUSBCamera> DCameras::detect_usb_cameras(
-    const OHDPlatform &platform, std::shared_ptr<spdlog::logger> &m_console) {
+    const OHDPlatform &platform, std::shared_ptr<spdlog::logger> &m_console,bool debug){
   if (platform.is_rpi_or_x86()) {
     DThermalCamerasHelper::enableFlirIfFound();
     DThermalCamerasHelper::enableSeekIfFound();
   }
   std::vector<DCameras::DiscoveredUSBCamera> ret;
   const auto devices = openhd::v4l2::findV4l2VideoDevices();
+  if(debug){
+      m_console->debug("Found {} v4l2 devices",devices.size());
+      for(auto& device:devices)m_console->debug("Device:{}",device);
+  }
   for (const auto &device : devices) {
     const auto probed_opt =
         openhd::v4l2::probe_v4l2_device(platform, m_console, device);
@@ -389,7 +393,10 @@ std::vector<DCameras::DiscoveredUSBCamera> DCameras::detect_usb_cameras(
     const auto &probed = probed_opt.value();
     const std::string bus((char *)probed.caps.bus_info);
     const std::string driver((char *)probed.caps.driver);
-    if (probed.formats.formats_raw.size() > 0) {
+    if(debug){
+        m_console->debug("V4l2 info {} {} {}",device,bus,probed.formats.formats_raw.size());
+    }
+    if (!probed.formats.formats_raw.empty()) {
       // (RAW) format usb camera candidate
       bool found = false;
       for (auto &tmp : ret) {
@@ -402,6 +409,11 @@ std::vector<DCameras::DiscoveredUSBCamera> DCameras::detect_usb_cameras(
             DCameras::DiscoveredUSBCamera{.bus = bus, .device_name = device});
       }
     }
+  }
+  if(debug){
+      for(const auto& usb_cam:ret){
+          m_console->debug("Found USB cam [{}]-[{}]",usb_cam.bus,usb_cam.device_name);
+      }
   }
   return ret;
 }

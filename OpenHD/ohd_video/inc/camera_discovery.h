@@ -22,7 +22,7 @@ class DCameras {
     std::string device_name;
   };
   static std::vector<DiscoveredUSBCamera> detect_usb_cameras(
-      const OHDPlatform& platform, std::shared_ptr<spdlog::logger>& m_console);
+      const OHDPlatform& platform, std::shared_ptr<spdlog::logger>& m_console,bool debug=false);
 
   // NOTE: IP cameras cannot be auto detected !
 };

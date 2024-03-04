@@ -281,7 +281,7 @@ static std::vector<std::string> x_discover_usb_cameras(
   console->debug("Waiting for usb camera(s)");
   std::vector<DCameras::DiscoveredUSBCamera> usb_cameras;
   while (true) {
-    usb_cameras = DCameras::detect_usb_cameras(platform, console);
+    usb_cameras = DCameras::detect_usb_cameras(platform, console,false);
     if (usb_cameras.size() >= num_usb_cameras) {
       break;
     }
