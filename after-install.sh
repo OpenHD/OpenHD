@@ -21,7 +21,7 @@ fi
 if [ "$(uname -m)" == "x86_64" ]; then
     if ! uname -a | grep -q "azure"; then
 
-        whiptail --title "OpenHD" --yesno "You are about to install OpenHD to your Computer. Do you want to install the required drivers or do you want to do that manually later?" 10 50
+        whiptail --title "OpenHD" --yesno "You are about to install OpenHD to your Computer. Do you want to install the required drivers ?" 10 50
 
         if [ $? -eq 0 ]; then
             echo "Installing drivers..."
