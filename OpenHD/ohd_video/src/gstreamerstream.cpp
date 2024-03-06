@@ -348,6 +348,9 @@ void GStreamerStream::stream_once() {
   openhd::LinkActionHandler::instance().set_cam_info_status(
       m_camera_holder->get_camera().index, CAM_STATUS_RESTARTING);
   setup();
+  if (OHDPlatform::instance().is_allwinner()) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+  }
   start();
   // Check if we were able to successfully start the pipeline. If - for example
   // - the camera doesn't exist or the resolution set is not supported by the
