@@ -202,7 +202,8 @@ class CameraHolder :
  private:
   [[nodiscard]] std::string get_unique_filename() const override {
     std::stringstream ss;
-    ss << m_camera.cam_type_as_verbose_string() << "_" << m_camera.index;
+    ss << m_camera.cam_type_as_verbose_string() << "_" << m_camera.index
+       << ".json";
     return ss.str();
   }
   std::optional<CameraSettings> impl_deserialize(

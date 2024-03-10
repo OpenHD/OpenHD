@@ -15,6 +15,7 @@
 #include "nalu/fragment_helper.h"
 #include "nalu/nalu_helper.h"
 #include "openhd_util.h"
+#include "rpi_hdmi_to_csi_v4l2_helper.h"
 #include "rtp_eof_helper.h"
 #include "x20_image_quality_helper.h"
 
@@ -70,13 +71,24 @@ std::string GStreamerStream::create_source_encode_pipeline(
     const CameraHolder& cam_holder) {
   const auto& camera = cam_holder.get_camera();
   CameraSettings setting = cam_holder.get_settings();
+  const bool RPI_HDMI_TO_CSI_USE_V4l2 =
+      OHDFilesystemUtil::exists("/boot/openhd/hdmi_v4l2.txt");
   if (OHDPlatform::instance().is_allwinner()) {
     openhd::x20::apply_x20_runcam_iq_settings(setting);
+  } else if (camera.requires_rpi_mmal_pipeline() && RPI_HDMI_TO_CSI_USE_V4l2) {
+    openhd::rpi::hdmi::initialize_resolution(
+        setting.streamed_video_format.width,
+        setting.streamed_video_format.height,
+        setting.streamed_video_format.framerate);
   }
   std::stringstream pipeline;
   if (camera.requires_rpi_mmal_pipeline()) {
-    pipeline << OHDGstHelper::createRpicamsrcStream(
-        -1, setting, cam_holder.requires_half_bitrate_workaround());
+    if (RPI_HDMI_TO_CSI_USE_V4l2) {
+      pipeline << OHDGstHelper::create_rpi_hdmi_v4l2_stream(setting);
+    } else {
+      pipeline << OHDGstHelper::createRpicamsrcStream(
+          -1, setting, cam_holder.requires_half_bitrate_workaround());
+    }
   } else if (camera.requires_rpi_libcamera_pipeline()) {
     pipeline << OHDGstHelper::createLibcamerasrcStream(setting);
   } else if (camera.requires_rpi_veye_pipeline()) {
@@ -100,8 +112,10 @@ std::string GStreamerStream::create_source_encode_pipeline(
   } else if (camera.requires_x20_cedar_pipeline()) {
     pipeline << OHDGstHelper::createAllwinnerStream(setting);
   } else if (is_usb_camera(camera.camera_type)) {
+    const auto v4l2_device_name =
+        get_v4l2_device_name_string(camera.usb_v4l2_device_number);
     pipeline << OHDGstHelper::createV4l2SrcRawAndSwEncodeStream(
-        camera.usb_v4l2_device_node, setting);
+        v4l2_device_name, setting);
   } else if (camera.camera_type == X_CAM_TYPE_DUMMY_SW) {
     pipeline << OHDGstHelper::createDummyStreamX(OHDPlatform::instance(),
                                                  setting);

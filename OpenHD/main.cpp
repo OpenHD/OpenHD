@@ -209,6 +209,7 @@ int main(int argc, char *argv[]) {
 
   // First discover the platform -
   const auto platform = OHDPlatform::instance();
+  openhd::LEDManager::instance().set_status_loading();
 
   // Create and link all the OpenHD modules.
   try {
@@ -280,10 +281,7 @@ int main(int argc, char *argv[]) {
     // now telemetry can send / receive data via wifibroadcast
     ohdTelemetry->set_link_handle(ohdInterface->get_link_handle());
     m_console->info("All OpenHD modules running");
-    openhd::LEDManager::instance().set_green_led_status(
-        openhd::LEDManager::STATUS_ON);
-    openhd::LEDManager::instance().set_red_led_status(
-        openhd::LEDManager::STATUS_OFF);
+    openhd::LEDManager::instance().set_status_okay();
     openhd::log::log_to_kernel("All OpenHD modules running");
 
     // run forever, everything has its own threads. Note that the only way to

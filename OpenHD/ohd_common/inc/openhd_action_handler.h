@@ -300,7 +300,7 @@ class TerminateHelper {
 
  private:
   std::atomic_bool m_should_terminate = false;
-  std::atomic<int64_t> m_terminate_tp = 0;
+  int64_t m_terminate_tp = 0;
   std::string m_terminate_reason;
 };
 

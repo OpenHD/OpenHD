@@ -10,17 +10,19 @@
 #include "openhd_util.h"
 
 int main(int argc, char *argv[]) {
-  openhd::LEDManager::instance().set_red_led_status(
-      openhd::LEDManager::STATUS_OFF);
-  openhd::LEDManager::instance().set_green_led_status(
-      openhd::LEDManager::STATUS_OFF);
+  while (true) {
+    std::cout << "Set LEDs off" << std::endl;
+    openhd::LEDManager::instance().set_red_led_status(
+        openhd::LEDManager::STATUS_OFF);
+    openhd::LEDManager::instance().set_green_led_status(
+        openhd::LEDManager::STATUS_OFF);
+    std::this_thread::sleep_for(std::chrono::seconds(3));
+    std::cout << "Set LEDs ON" << std::endl;
+    openhd::LEDManager::instance().set_red_led_status(
+        openhd::LEDManager::STATUS_ON);
+    openhd::LEDManager::instance().set_green_led_status(
+        openhd::LEDManager::STATUS_ON);
 
-  std::this_thread::sleep_for(std::chrono::seconds(10));
-
-  openhd::LEDManager::instance().set_red_led_status(
-      openhd::LEDManager::STATUS_ON);
-  openhd::LEDManager::instance().set_green_led_status(
-      openhd::LEDManager::STATUS_ON);
-
-  std::this_thread::sleep_for(std::chrono::seconds(10));
+    std::this_thread::sleep_for(std::chrono::seconds(3));
+  }
 }

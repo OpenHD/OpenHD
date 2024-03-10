@@ -360,6 +360,19 @@ static std::string create_rpi_v4l2_h264_encoder(
   return ret.str();
 }
 
+/**
+ * hdmi to csi via (newer) v4l2 driver. Needs matching config.txt. Has issues !
+ */
+static std::string create_rpi_hdmi_v4l2_stream(const CameraSettings& settings) {
+  std::stringstream ss;
+  // io-mode=5 ==  GST_V4L2_IO_DMABUF_IMPORT
+  // ss << "v4l2src io-mode=5 ! ";
+  ss << "v4l2src  io-mode=dmabuf ! ";
+  ss << "video/x-raw,framerate=30/1,format=UYVY ! ";
+  ss << create_rpi_v4l2_h264_encoder(settings);
+  return ss.str();
+}
+
 static std::string createLibcamerasrcStream(const CameraSettings& settings) {
   using namespace openhd;
   assert(settings.streamed_video_format.isValid());

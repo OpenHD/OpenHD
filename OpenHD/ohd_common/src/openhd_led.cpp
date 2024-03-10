@@ -58,28 +58,42 @@ static void green_led_on_off_delayed(const std::chrono::milliseconds &delay1,
 
 }  // namespace openhd::rpi
 
+namespace openhd::zero3w {
+
+static void toggle_red_led(const bool on) {
+  static constexpr auto filename = "/sys/class/leds/mmc0::/brightness";
+  const auto content = on ? "1" : "0";
+  OHDFilesystemUtil::write_file(filename, content);
+}
+
+static void toggle_green_led(const bool on) {
+  static constexpr auto filename = "/sys/class/leds/board-led/brightness";
+  const auto content = on ? "1" : "0";
+  OHDFilesystemUtil::write_file(filename, content);
+}
+
+}  // namespace openhd::zero3w
+
 openhd::LEDManager &openhd::LEDManager::instance() {
   static LEDManager instance{};
   return instance;
 }
 
 void openhd::LEDManager::set_red_led_status(int status) {
+  const bool on = status != STATUS_ON;
   if (OHDPlatform::instance().is_rpi()) {
-    if (status == STATUS_OFF) {
-      openhd::rpi::toggle_red_led(false);
-    } else if (status == STATUS_ON) {
-      openhd::rpi::toggle_red_led(true);
-    }
+    openhd::rpi::toggle_red_led(on);
+  } else if (OHDPlatform::instance().is_rock()) {
+    openhd::zero3w::toggle_red_led(on);
   }
 }
 
 void openhd::LEDManager::set_green_led_status(int status) {
+  const bool on = status != STATUS_ON;
   if (OHDPlatform::instance().is_rpi()) {
-    if (status == STATUS_OFF) {
-      openhd::rpi::toggle_green_led(false);
-    } else if (status == STATUS_ON) {
-      openhd::rpi::toggle_green_led(true);
-    }
+    openhd::rpi::toggle_green_led(on);
+  } else if (OHDPlatform::instance().is_rock()) {
+    openhd::zero3w::toggle_green_led(on);
   }
 }
 
@@ -100,4 +114,20 @@ void openhd::LEDManager::loop() {
   /*while (m_run){
 
   }*/
+}
+void openhd::LEDManager::set_status_okay() {
+  if (m_has_error) {
+    set_status_error();
+  }
+  set_green_led_status(STATUS_ON);
+  set_red_led_status(STATUS_OFF);
+}
+void openhd::LEDManager::set_status_loading() {
+  set_green_led_status(STATUS_OFF);
+  set_red_led_status(STATUS_OFF);
+}
+void openhd::LEDManager::set_status_error() {
+  set_green_led_status(STATUS_ON);
+  set_red_led_status(STATUS_ON);
+  m_has_error = true;
 }

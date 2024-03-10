@@ -12,7 +12,8 @@ option(ENABLE_AIR "Enable air support" ON)
 option(ENABLE_USB_CAMERAS "USB cameras support" ON)
 find_package(PkgConfig REQUIRED)
 
-add_library(OHDVideoLib STATIC) # initialized below
+add_library(OHDVideoLib STATIC
+        inc/rpi_hdmi_to_csi_v4l2_helper.h) # initialized below
 add_library(OHDVideoLib::OHDVideoLib ALIAS OHDVideoLib)
 
 # Only needed when building this submodule manually

@@ -38,6 +38,7 @@ OHDInterface::OHDInterface(OHDPlatform platform1, OHDProfile profile1)
         "Cannot start ohd_interface, no wifi card for monitor mode");
     const std::string message_for_user = "No WiFi card found, please reboot";
     m_console->warn(message_for_user);
+    openhd::LEDManager::instance().set_status_error();
     // TODO reason what to do. We do not support dynamically adding wifi cards
     // at run time, so somehow we need to signal to the user that something is
     // completely wrong. However, as an Ground pi, we can still run QOpenHD and
