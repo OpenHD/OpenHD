@@ -60,7 +60,7 @@ build_package() {
 
   cmake OpenHD/
   make -j4
-  cp openhd ${PKGDIR}/usr/local/bin/openhd
+  cp openhd ${PKGDIR}/usr/local/bin/openhd || exit 1
 
   # Assuming fpm is installed and properly configured
   fpm -a "${PACKAGE_ARCH}" -s dir -t deb -n "${PACKAGE_NAME}" -v "${VERSION}" -C "${PKGDIR}" \
