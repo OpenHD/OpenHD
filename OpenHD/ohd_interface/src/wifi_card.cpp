@@ -18,6 +18,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
                       {WiFiCardType::RALINK, "RALINK"},
                       {WiFiCardType::INTEL, "INTEL"},
                       {WiFiCardType::BROADCOM, "BROADCOM"}
+                      {WiFiCardType::AIC, "AIC"}
                       //{WiFiCardType::, ""},
                   });
 

@@ -39,8 +39,8 @@ static WiFiCardType driver_to_wifi_card_type(const std::string& driver_name) {
   if (OHDUtil::contains_after_uppercase(driver_name, "bcmsdh_sdmmc")) {
     return WiFiCardType::BROADCOM;
   }
-  if (OHDUtil::contains_after_uppercase(driver_name, "aic8800_fdrv")) {
-    return WiFiCardType::BROADCOM;
+  if (OHDUtil::contains_after_uppercase(driver_name, "aicwf_sdio")) {
+    return WiFiCardType::AIC;
   }
   if (OHDUtil::contains_after_uppercase(driver_name, "88xxau")) {
     return WiFiCardType::RTL_88X2AU;
@@ -219,7 +219,7 @@ std::optional<WiFiCard> DWifiCards::process_card(
                                     card.supports_monitor_mode,card.is_openhd_supported);*/
 
   // temporary,hacky, only hotspot on rpi integrated wifi
-  if (card.type == WiFiCardType::BROADCOM) {
+  if (card.type == WiFiCardType::BROADCOM) || (card.type == WiFiCardType::AIC) {
     card.supports_hotspot = true;
   }
   return card;
