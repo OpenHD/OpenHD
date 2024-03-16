@@ -17,7 +17,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
                       {WiFiCardType::MT_7921u, "MT_7921U"},
                       {WiFiCardType::RALINK, "RALINK"},
                       {WiFiCardType::INTEL, "INTEL"},
-                      {WiFiCardType::BROADCOM, "BROADCOM"}
+                      {WiFiCardType::BROADCOM, "BROADCOM"},
                       {WiFiCardType::AIC, "AIC"}
                       //{WiFiCardType::, ""},
                   });
