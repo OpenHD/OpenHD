@@ -219,7 +219,7 @@ std::optional<WiFiCard> DWifiCards::process_card(
                                     card.supports_monitor_mode,card.is_openhd_supported);*/
 
   // temporary,hacky, only hotspot on rpi integrated wifi
-  if (card.type == WiFiCardType::BROADCOM) || (card.type == WiFiCardType::AIC) {
+  if (card.type == WiFiCardType::BROADCOM || card.type == WiFiCardType::AIC) {
     card.supports_hotspot = true;
   }
   return card;
