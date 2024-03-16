@@ -6,7 +6,6 @@ on:
       - "2.5-evo"
       - "dev-release"
       - "release"
-      - "debug"
 
 jobs:
   build:
