@@ -25,6 +25,7 @@ enum class WiFiCardType {
   BROADCOM,
   OPENHD_RTL_8852BU,  // testing phase
   OPENHD_EMULATED,
+  AIC,
   UNKNOWN
 };
 
@@ -54,6 +55,8 @@ static std::string wifi_card_type_to_string(const WiFiCardType& card_type) {
       return "INTEL";
     case WiFiCardType::BROADCOM:
       return "BROADCOM";
+    case WiFiCardType::AIC:
+      return "AIC";
     case WiFiCardType::UNKNOWN:
     default:
       return "UNKNOWN";
