@@ -19,7 +19,11 @@ create_package_directory() {
   # (Otherwise, we always copy it)
   if [[ "${PACKAGE_ARCH}" != "x86_64" ]]; then
     echo "we're not on x86"
-    cp systemd/openhd.service /tmp/openhd-installdir/etc/systemd/system/openhd.service || exit 1
+      if [[ "${CUSTOM}" == "standard" ]]; then
+      cp systemd/openhd.service /tmp/openhd-installdir/etc/systemd/system/openhd.service || exit 1
+      else
+      cp systemd/openhd-x20.service /tmp/openhd-installdir/etc/systemd/system/openhd.service || exit 1
+      fi
     else
       mkdir -p /tmp/openhd-installdir/usr/share/applications/
       cp shortcuts/* /tmp/openhd-installdir/usr/share/applications/

@@ -1,0 +1,18 @@
+#
+# This Service starts (and re-starts in case of crash) the openhd main executable on openhd images,
+# such that it always runs in the background.
+#
+
+[Unit]
+Description=OpenHD
+After=NetworkManager.service
+
+[Service]
+User=root
+ExecStart=/usr/local/bin/x20/OpenHD_X20
+Restart=always
+RestartSec=3
+
+
+[Install]
+WantedBy=multi-user.target
