@@ -52,6 +52,23 @@ void GstAudioStream::loop_infinite() {
   }
 }
 
+// Quite dirty, but hey ...
+static std::string rpi_detect_alsasrc_device() {
+  static constexpr auto DEFAULT_ALSASRC_DEVICE = "hw:2,0";
+  const auto opt_arecord_list_output = OHDUtil::run_command_out("arecord -l");
+  if (!opt_arecord_list_output.has_value()) {
+    return DEFAULT_ALSASRC_DEVICE;
+  }
+  const auto& arecord_list_output = opt_arecord_list_output.value();
+  if (OHDUtil::contains(arecord_list_output, "card 3: ")) {
+    return "hw:3,0";  // Probably KMS
+  }
+  if (OHDUtil::contains(arecord_list_output, "card 2: ")) {
+    return "hw:2,0";  // Probably FKMS
+  }
+  return DEFAULT_ALSASRC_DEVICE;
+}
+
 // 2.0 pipeline tx:
 // gst-launch-1.0 alsasrc device=plughw:1,0 name=mic provide-clock=true
 // do-timestamp=true buffer-time=20000 ! alawenc ! rtppcmapay max-ptime=20000000
@@ -63,10 +80,24 @@ void GstAudioStream::loop_infinite() {
 // audio/x-alaw, rate=8000, channels=1 ! alawdec ! alsasink device=hw:0
 static std::string create_pipeline() {
   std::stringstream ss;
+  auto opt_manual_audio_source =
+      OHDFilesystemUtil::opt_read_file("/boot/openhd/audio_source.txt");
+  // audiotestsrc always works, but obviously is not a mic ;)
   if (OHDFilesystemUtil::exists("/boot/openhd/test_audio.txt")) {
-    ss << "audiotestsrc ! ";
+    ss << "audiotestsrc"
+       << " ! ";
+  } else if (opt_manual_audio_source.has_value()) {
+    // File, for development
+    ss << opt_manual_audio_source.value() << " ! ";
   } else {
-    ss << "autoaudiosrc ! ";
+    if (OHDPlatform::instance().is_rpi()) {
+      // RPI is weird. autoaudiosrc doesn't work, and
+      // the device(s) depend on fkms / kms or are in general weird.
+      ss << "alsasrc device=" << rpi_detect_alsasrc_device() << " ! ";
+    } else {
+      ss << "autoaudiosrc"
+         << " ! ";
+    }
   }
   /*ss << "autoaudiosrc ! ";
   ss << "audioconvert ! ";
