@@ -66,7 +66,12 @@ static std::string create_pipeline() {
   if (OHDFilesystemUtil::exists("/boot/openhd/test_audio.txt")) {
     ss << "audiotestsrc ! ";
   } else {
-    ss << "autoaudiosrc ! ";
+    if(OHDPlatform::instance().is_rpi()){
+      // No idea why rpi needs this ...
+      ss << "alsasrc device=hw:1,0 ! ";
+    }else{
+      ss << "autoaudiosrc ! ";
+    }
   }
   /*ss << "autoaudiosrc ! ";
   ss << "audioconvert ! ";
