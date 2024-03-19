@@ -211,6 +211,14 @@ void OHDInterface::generate_keys_from_pw_if_exists_and_delete() {
       OHDFilesystemUtil::remove_if_existing(openhd::SECURITY_KEYPAIR_FILENAME);
     }
   }
+  // If no keypair file exists (It was not created from the password.txt file)
+  // we create the txrx.key once (from the default password) such that the boot
+  // up time is sped up on successive boot(s)
+  if (!OHDFilesystemUtil::exists(openhd::SECURITY_KEYPAIR_FILENAME)) {
+    console->debug("Creating txrx.key from default pw (once)");
+    auto keys = wb::generate_keypair_from_bind_phrase(wb::DEFAULT_BIND_PHRASE);
+    wb::write_keypair_to_file(keys, openhd::SECURITY_KEYPAIR_FILENAME);
+  }
 }
 
 void OHDInterface::update_wifi_hotspot_enable() {
