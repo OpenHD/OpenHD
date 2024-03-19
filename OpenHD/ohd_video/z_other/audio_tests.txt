@@ -1,0 +1,38 @@
+RPI 4
+FKMS:
+root@openhd:/home/openhd# aplay -l
+** List of PLAYBACK Hardware Devices **
+card 0: b1 [bcm2835 HDMI 1], device 0: bcm2835 HDMI 1 [bcm2835 HDMI 1]
+  Subdevices: 4/4
+  Subdevice #0: subdevice #0
+  Subdevice #1: subdevice #1
+  Subdevice #2: subdevice #2
+  Subdevice #3: subdevice #3
+card 0: b1 [bcm2835 HDMI 1], device 1: bcm2835 HDMI 1 [bcm2835 HDMI 1]
+  Subdevices: 1/1
+  Subdevice #0: subdevice #0
+card 1: Headphones [bcm2835 Headphones], device 0: bcm2835 Headphones [bcm2835 Headphones]
+  Subdevices: 4/4
+  Subdevice #0: subdevice #0
+  Subdevice #1: subdevice #1
+  Subdevice #2: subdevice #2
+  Subdevice #3: subdevice #3
+  KMS:
+  root@openhd:/home/openhd/OpenHD/OpenHD/build_debug# aplay -l
+  ** List of PLAYBACK Hardware Devices **
+  card 0: Headphones [bcm2835 Headphones], device 0: bcm2835 Headphones [bcm2835 Headphones]
+    Subdevices: 8/8
+    Subdevice #0: subdevice #0
+    Subdevice #1: subdevice #1
+    Subdevice #2: subdevice #2
+    Subdevice #3: subdevice #3
+    Subdevice #4: subdevice #4
+    Subdevice #5: subdevice #5
+    Subdevice #6: subdevice #6
+    Subdevice #7: subdevice #7
+  card 1: vc4hdmi0 [vc4-hdmi-0], device 0: MAI PCM i2s-hifi-0 [MAI PCM i2s-hifi-0]
+    Subdevices: 1/1
+    Subdevice #0: subdevice #0
+  card 2: vc4hdmi1 [vc4-hdmi-1], device 0: MAI PCM i2s-hifi-0 [MAI PCM i2s-hifi-0]
+    Subdevices: 1/1
+    Subdevice #0: subdevice #0
