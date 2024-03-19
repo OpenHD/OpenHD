@@ -68,7 +68,7 @@ static std::string create_pipeline() {
   } else {
     if(OHDPlatform::instance().is_rpi()){
       // No idea why rpi needs this ...
-      ss << "alsasrc device=hw:0 ! ";
+      ss << "alsasrc device=hw:3,0 ! ";
     }else{
       ss << "autoaudiosrc ! ";
     }
