@@ -78,7 +78,7 @@ void OHDVideoGround::on_video_data(int stream_index, const uint8_t* data,
 }
 
 static bool ip_is_host_self(const std::string& ip) {
-  if(OHDUtil::str_equal(ip,"127.0.0.1")){
+  if (OHDUtil::str_equal(ip, "127.0.0.1")) {
     // always self
     return true;
   }
