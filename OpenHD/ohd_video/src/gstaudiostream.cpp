@@ -63,12 +63,21 @@ void GstAudioStream::loop_infinite() {
 // audio/x-alaw, rate=8000, channels=1 ! alawdec ! alsasink device=hw:0
 static std::string create_pipeline() {
   std::stringstream ss;
+  // audiotestsrc always works, but obviously is not a mic ;)
   if (OHDFilesystemUtil::exists("/boot/openhd/test_audio.txt")) {
     ss << "audiotestsrc ! ";
   } else {
     if(OHDPlatform::instance().is_rpi()){
-      // No idea why rpi needs this ...
-      ss << "alsasrc device=hw:3,0 ! ";
+      // RPi is weird. autoaudiosrc doesn't work, and
+      // my microsoft camera with microphone comes up as card 3, device 0
+      // File allows specifying the source (if needed)
+      auto opt_audiosrc_file=OHDFilesystemUtil::opt_read_file("/boot/openhd/audio_source.txt");
+      if(opt_audiosrc_file.has_value()){
+        ss << opt_audiosrc_file.value()<<" ! ";
+      }else{
+        // Most likely to be correct ...
+        ss << "alsasrc device=hw:3,0 ! ";
+      }
     }else{
       ss << "autoaudiosrc ! ";
     }
