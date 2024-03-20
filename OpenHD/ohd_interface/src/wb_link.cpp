@@ -48,6 +48,7 @@ WBLink::WBLink(OHDProfile profile, OHDPlatform platform,
   txrx_options.debug_rssi = 0;
   txrx_options.debug_multi_rx_packets_variance = false;
   txrx_options.tx_without_pcap = true;
+  txrx_options.set_tx_sock_qdisc_bypass = true;
   txrx_options.enable_auto_switch_tx_card = false;  // TODO remove me
   txrx_options.max_sane_injection_time = std::chrono::milliseconds(1);
   txrx_options.rx_radiotap_debug_level =
