@@ -161,6 +161,8 @@ class WBLink : public OHDLink {
   // and passive mode is enabled by the user
   void re_enable_injection_unless_user_passive_mode_enabled();
   int get_max_fec_block_size();
+  // Called when the wifi card (really really likely) disconneccted
+  void on_wifi_card_fatal_error();
 
  private:
   const OHDProfile m_profile;

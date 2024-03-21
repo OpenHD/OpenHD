@@ -130,6 +130,9 @@ WBLink::WBLink(OHDProfile profile, OHDPlatform platform,
   }
   m_wb_txrx =
       std::make_shared<WBTxRx>(tmp_wifi_cards, txrx_options, m_tx_header_2);
+  m_wb_txrx->m_fatal_error_cb=[this](int error){
+    on_wifi_card_fatal_error();
+  };
   auto dummy = m_wb_txrx->get_dummy_link();
   if (dummy) {
     dummy->set_drop_mode(DIRTY_emulate_drop_mode);
@@ -1559,4 +1562,9 @@ int WBLink::get_max_fec_block_size() {
     return 20;
   }
   return tmp;
+}
+
+void WBLink::on_wifi_card_fatal_error() {
+  m_console->error("on_wifi_card_fatal_error");
+  openhd::TerminateHelper::instance().terminate_after("CARD DISCONNECT",std::chrono::milliseconds(1));
 }
