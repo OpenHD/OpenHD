@@ -81,7 +81,7 @@ static std::string rpi_detect_alsasrc_device() {
 static std::string create_pipeline() {
   std::stringstream ss;
   auto opt_manual_audio_source =
-      OHDFilesystemUtil::opt_read_file("/boot/openhd/audio_source.txt");
+      OHDFilesystemUtil::opt_read_file("/boot/openhd/audio_source.txt", false);
   // audiotestsrc always works, but obviously is not a mic ;)
   if (OHDFilesystemUtil::exists("/boot/openhd/test_audio.txt")) {
     ss << "audiotestsrc"
@@ -128,10 +128,18 @@ void GstAudioStream::stream_once() {
       std::chrono::duration_cast<std::chrono::nanoseconds>(
           std::chrono::milliseconds(100))
           .count();
+  std::chrono::steady_clock::time_point m_last_audio_packet =
+      std::chrono::steady_clock::now();
   // Streaming
   while (true) {
     // Quickly terminate if openhd wants to terminate
     if (!m_keep_looping) break;
+    // Restart in case no data comes in
+    if (std::chrono::steady_clock::now() - m_last_audio_packet >
+        std::chrono::seconds(5)) {
+      m_console->warn("Restarting audio due to no data for >5 seconds");
+      break;
+    }
     auto buffer_x = openhd::gst_app_sink_try_pull_sample_and_copy(
         m_app_sink_element, timeout_ns);
     if (buffer_x.has_value()) {
