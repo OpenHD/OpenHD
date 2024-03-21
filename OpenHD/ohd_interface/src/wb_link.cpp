@@ -1565,6 +1565,13 @@ int WBLink::get_max_fec_block_size() {
 }
 
 void WBLink::on_wifi_card_fatal_error() {
+  if(m_wifi_card_error_has_been_handled) return;
   m_console->error("on_wifi_card_fatal_error");
-  openhd::TerminateHelper::instance().terminate_after("CARD DISCONNECT",std::chrono::milliseconds(1));
+  // Terminate if we are air or if we are ground and have only one wifibroadcast card connected.
+  // If we are ground and have more than one wifibroadcast card, don't terminate, since the other card can still be used
+  if(m_profile.is_air || (m_profile.is_ground() && m_broadcast_cards.size()<2)){
+    m_console->error("Terminating - disconnected card");
+    openhd::TerminateHelper::instance().terminate_after("CARD DISCONNECT",std::chrono::milliseconds(1));
+  }
+  m_wifi_card_error_has_been_handled= true;
 }
