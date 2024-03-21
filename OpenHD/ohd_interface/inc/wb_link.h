@@ -230,7 +230,7 @@ class WBLink : public OHDLink {
   // Allows temporarily closing the video input
   std::atomic_bool m_air_close_video_in = false;
   const int m_recommended_max_fec_blk_size_for_this_platform;
-  bool m_wifi_card_error_has_been_handled= false;
+  bool m_wifi_card_error_has_been_handled = false;
 
  private:
   openhd::wb::ForeignPacketsHelper m_foreign_p_helper;
