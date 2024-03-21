@@ -102,7 +102,7 @@ static std::string create_pipeline() {
   /*ss << "autoaudiosrc ! ";
   ss << "audioconvert ! ";
   ss << "rtpL16pay ! ";*/
-  ss << "audioconvert ! "; // Might or might not be needed ...
+  ss << "audioconvert ! ";  // Might or might not be needed ...
   ss << "alawenc ! rtppcmapay max-ptime=20000000 ! ";
   ss << OHDGstHelper::createOutputAppSink();
   return ss.str();
@@ -145,7 +145,7 @@ void GstAudioStream::stream_once() {
         m_app_sink_element, timeout_ns);
     if (buffer_x.has_value()) {
       on_audio_packet(buffer_x->buffer);
-      m_last_audio_packet=std::chrono::steady_clock::now();
+      m_last_audio_packet = std::chrono::steady_clock::now();
     }
   }
   // cleanup
