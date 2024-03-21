@@ -145,6 +145,7 @@ void GstAudioStream::stream_once() {
         m_app_sink_element, timeout_ns);
     if (buffer_x.has_value()) {
       on_audio_packet(buffer_x->buffer);
+      m_last_audio_packet=std::chrono::steady_clock::now();
     }
   }
   // cleanup
