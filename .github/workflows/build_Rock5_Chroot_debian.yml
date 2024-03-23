@@ -38,7 +38,7 @@ jobs:
           mkdir -p /opt/ChrootCompilationTest/additionalFiles
           git clone https://github.com/OpenHD/OpenHD -b ${{ github.ref_name }} /opt/ChrootCompilationTest/additionalFiles/ --recursive
           echo $CLOUDSMITH_API_KEY > /opt/ChrootCompilationTest/additionalFiles/cloudsmith_api_key.txt
-          echo "false" > /opt/ChrootCompilationTest/additionalFiles/custom.txt
+          echo "standard" > /opt/ChrootCompilationTest/additionalFiles/custom.txt
           echo "arm64" > /opt/ChrootCompilationTest/additionalFiles/arch.txt
           echo "debian" > /opt/ChrootCompilationTest/additionalFiles/distro.txt
           echo "bullseye" > /opt/ChrootCompilationTest/additionalFiles/flavor.txt
