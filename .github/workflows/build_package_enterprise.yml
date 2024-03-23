@@ -14,12 +14,13 @@ jobs:
     #runs-on: ubuntu-18.04
     runs-on: ubuntu-22.04
     container:
-      image: nvcr.io/nvidia/jetpack-linux-aarch64-crosscompile-x86:5.1.3
+      image: docker://ubuntu:lunar
     env:
       CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
     steps:
       - name: test
         run: |
+          docker pull nvcr.io/nvidia/jetpack-linux-aarch64-crosscompile-x86:5.1.3
           echo "DT=$(date +'%Y-%m-%d_%H%M')" >> $GITHUB_ENV
           echo "BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV
           apt update
