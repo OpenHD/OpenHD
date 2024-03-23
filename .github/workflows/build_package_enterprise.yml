@@ -20,6 +20,7 @@ jobs:
     steps:
       - name: test
         run: |
+          sudo apt install -y curl
           curl -fsSL https://get.docker.com -o get-docker.sh
           sudo sh get-docker.sh
           docker pull nvcr.io/nvidia/jetpack-linux-aarch64-crosscompile-x86:5.1.3
