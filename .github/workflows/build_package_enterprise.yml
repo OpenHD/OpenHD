@@ -14,7 +14,7 @@ jobs:
     #runs-on: ubuntu-18.04
     runs-on: ubuntu-22.04
     container:
-      image: nvcr.io/nvidia/jetpack-linux-aarch64-crosscompile-x86:5.1
+      image: docker://virgilix:nvidia-tegra
     env:
       CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
     steps:
