@@ -42,7 +42,7 @@ jobs:
       - name: Build with make
         run: |
           cd OpenHD
-          ./package.sh standard x86_64 ubuntu lunar
+          ./package.sh standard x86_64 ubuntu noble
           ls -a
           echo ${{ github.ref }}
 
