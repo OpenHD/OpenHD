@@ -45,10 +45,11 @@ jobs:
             temurin-17-jdk \
             temurin-11-jdk \
             gcc-* \
-            temurin-8-jdk \
+            temurin-* \
             g++-* \
-            gfortran-13 \
+            gfortran-* \
             cpp-* \
+            libclang* \
             openjdk-11-jre-headless
           sudo apt-get autoremove -y
           sudo apt-get clean
