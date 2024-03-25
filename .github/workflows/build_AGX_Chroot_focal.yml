@@ -26,33 +26,33 @@ jobs:
           overprovision-lvm: 'true'
       - name: remove even more
         run: |
-        sudo apt-get purge -y \
-          '^llvm-.*' \
-          'php.*' \
-          '^mongodb-.*' \
-          '^mysql-.*' \
-          azure-cli \
-          google-chrome-stable \
-          firefox \
-          powershell \
-          microsoft-edge-stable \
-          mono-devel \
-          google-cloud-cli \
-          dotnet-sdk-8.0 \
-          dotnet-sdk-7.0 \
-          temurin-21-jdk \
-          dotnet-sdk-6.0 \
-          temurin-17-jdk \
-          temurin-11-jdk \
-          gcc-13 \
-          temurin-8-jdk \
-          g++-13 \
-          gfortran-13 \
-          cpp-13 \
-          openjdk-11-jre-headless
-        sudo df -h
-        sudo apt-get autoremove -y
-        sudo apt-get clean
+          sudo apt-get purge -y \
+            '^llvm-.*' \
+            'php.*' \
+            '^mongodb-.*' \
+            '^mysql-.*' \
+            azure-cli \
+            google-chrome-stable \
+            firefox \
+            powershell \
+            microsoft-edge-stable \
+            mono-devel \
+            google-cloud-cli \
+            dotnet-sdk-8.0 \
+            dotnet-sdk-7.0 \
+            temurin-21-jdk \
+            dotnet-sdk-6.0 \
+            temurin-17-jdk \
+            temurin-11-jdk \
+            gcc-13 \
+            temurin-8-jdk \
+            g++-13 \
+            gfortran-13 \
+            cpp-13 \
+            openjdk-11-jre-headless
+          sudo df -h
+          sudo apt-get autoremove -y
+          sudo apt-get clean
         
       - name: test
         run: |
