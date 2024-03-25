@@ -55,7 +55,8 @@ jobs:
           sudo apt-get clean
           sudo df -h
           dpkg-query -Wf '${Installed-Size}\t${Package}\n' | sort -nr | awk '{printf "%.2f MB \t %s\n", $1/(1024), $2}'
-        
+          find / -type f -exec du -h {} + 2>/dev/null | sort -rh | head -n 50
+
       - name: test
         run: |
           echo "DT=$(date +'%Y-%m-%d_%H%M')" >> $GITHUB_ENV
