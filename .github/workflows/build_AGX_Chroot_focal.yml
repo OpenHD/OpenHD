@@ -44,7 +44,7 @@ jobs:
             dotnet-sdk-6.0 \
             temurin-17-jdk \
             temurin-11-jdk \
-            gcc-* \
+            gcc-13 \
             temurin-* \
             g++-* \
             gfortran-* \
