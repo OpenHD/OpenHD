@@ -19,6 +19,7 @@ echo ${ARCH}
 
 if [[ "${DISTRO}" == "focal" ]]; then
     ./install_build_dep.sh rock5
+    apt install -y libv4l-dev
     echo "agx"
 elif [[ "${ARCH}" == "arm64" ]]; then
     ./install_build_dep.sh rock5
