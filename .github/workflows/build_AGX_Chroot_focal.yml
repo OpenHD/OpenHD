@@ -18,7 +18,7 @@ jobs:
       - name: Maximize build space
         uses: easimon/maximize-build-space@master
         with:
-          root-reserve-mb: 5
+          root-reserve-mb: 0
           swap-size-mb: 10
           remove-dotnet: 'true'
           remove-android: 'true'
@@ -53,6 +53,7 @@ jobs:
           sudo df -h
           sudo apt-get autoremove -y
           sudo apt-get clean
+          dpkg-query -Wf '${Installed-Size}\t${Package}\n' | sort -nr | awk '{printf "%.2f MB \t %s\n", $1/(1024), $2}'
         
       - name: test
         run: |
