@@ -20,7 +20,7 @@ echo ${ARCH}
 if [[ "${DISTRO}" == "focal" ]]; then
     ./install_build_dep.sh rock5
     echo "agx"
-if [[ "${ARCH}" == "arm64" ]]; then
+elif [[ "${ARCH}" == "arm64" ]]; then
     ./install_build_dep.sh rock5
     echo "rock5"
 fi
