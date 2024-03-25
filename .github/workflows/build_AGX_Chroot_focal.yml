@@ -44,11 +44,11 @@ jobs:
             dotnet-sdk-6.0 \
             temurin-17-jdk \
             temurin-11-jdk \
-            gcc-13 \
+            gcc-* \
             temurin-8-jdk \
-            g++-13 \
+            g++-* \
             gfortran-13 \
-            cpp-13 \
+            cpp-* \
             openjdk-11-jre-headless
           sudo df -h
           sudo apt-get autoremove -y
