@@ -61,12 +61,15 @@ static std::string rpi_detect_alsasrc_device() {
   }
   const auto& arecord_list_output = opt_arecord_list_output.value();
   if (OHDUtil::contains(arecord_list_output, "card 3: ")) {
+    openhd::log::get_default()->debug("Found audio card 3");
     return "hw:3,0";  // Probably KMS
   }
   if (OHDUtil::contains(arecord_list_output, "card 2: ")) {
+    openhd::log::get_default()->debug("Found audio card 2");
     return "hw:2,0";  // Probably FKMS
   }
   if (OHDUtil::contains(arecord_list_output, "card 1:")) {
+    openhd::log::get_default()->debug("Found audio card 1");
     return "hw:1,0";
   }
   return DEFAULT_ALSASRC_DEVICE;
