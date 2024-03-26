@@ -67,24 +67,6 @@ static std::vector<uint32_t> supported_frequencies(const int phy_index,
   return supported_frequencies;
 }
 
-bool DWifiCards::is_openhd_supported(const WiFiCardType& type) {
-  bool supports = false;
-  switch (type) {
-    case WiFiCardType::OPENHD_RTL_8852BU:
-      supports = true;
-      break;
-    case WiFiCardType::OPENHD_RTL_88X2BU:
-      supports = true;
-      break;
-    case WiFiCardType::OPENHD_RTL_88X2AU:
-      supports = true;
-      break;
-    default:
-      break;
-  }
-  return supports;
-}
-
 std::optional<WiFiCard> DWifiCards::fill_linux_wifi_card_identifiers(
     const std::string& interface_name) {
   // get the driver name for this card
@@ -139,7 +121,11 @@ std::optional<WiFiCard> DWifiCards::fill_linux_wifi_card_identifiers(
   if (card.type == WiFiCardType::OPENHD_RTL_88X2AU) {
     const bool custom_hardware =
         OHDFilesystemUtil::exists("/boot/openhd/hardware_vtx_v20.txt");
-    card.is_rtl8812au_custom_hardware = custom_hardware;
+    if (custom_hardware) {
+      card.sub_type = WIFI_CARD_SUB_TYPE_RTL8812AU_X20;
+    } else {
+      card.sub_type = WIFI_CARD_SUB_TYPE_UNKNOWN;
+    }
   }
   // Here we are done with the unique identifiers
   assert(!card.device_name.empty());
@@ -209,9 +195,9 @@ std::optional<WiFiCard> DWifiCards::process_card(
   // Note that this does not necessarily mean this info is right/complete
   // a card might report a specific channel but then since monitor mode is so
   // hack not support the channel in monitor mode
-  card.supports_monitor_mode =
+  /*card.supports_monitor_mode =
       wifi::commandhelper::iw_supports_monitor_mode(card.phy80211_index);
-  card.is_openhd_supported = is_openhd_supported(card.type);
+  card.is_openhd_supported = is_openhd_supported(card.type);*/
   /*openhd::log::get_default()->debug("Card {} reports driver:{}
      supports_2GHz:{} supports_5GHz:{} supports_monitor_mode:{}
      openhd_supported:{}",
@@ -219,33 +205,21 @@ std::optional<WiFiCard> DWifiCards::process_card(
                                     card.supports_monitor_mode,card.is_openhd_supported);*/
 
   // temporary,hacky, only hotspot on rpi integrated wifi
-  if (card.type == WiFiCardType::BROADCOM || card.type == WiFiCardType::AIC) {
+  /*if (card.type == WiFiCardType::BROADCOM || card.type == WiFiCardType::AIC) {
     card.supports_hotspot = true;
-  }
+  }*/
   return card;
 }
 
-int DWifiCards::n_cards_openhd_supported(const std::vector<WiFiCard>& cards) {
+int DWifiCards::n_cards_openhd_wifibroadcast_supported(
+    const std::vector<WiFiCard>& cards) {
   int ret = 0;
   for (const auto& card : cards) {
-    if (card.is_openhd_supported) {
+    if (card.supports_openhd_wifibroadcast()) {
       ret++;
     }
   }
   return ret;
-}
-
-bool DWifiCards::any_wifi_card_openhd_supported(
-    const std::vector<WiFiCard>& cards) {
-  return n_cards_openhd_supported(cards) >= 1;
-}
-
-bool DWifiCards::any_wifi_card_supporting_monitor_mode(
-    const std::vector<WiFiCard>& cards) {
-  for (const auto& card : cards) {
-    if (card.supports_monitor_mode) return true;
-  }
-  return false;
 }
 
 // OpenHD optimization: If there are multiple RX card(s), try and show them
@@ -287,28 +261,21 @@ DWifiCards::ProcessedWifiCards DWifiCards::process_and_evaluate_cards(
   // the system based on their capabilities.
   std::vector<WiFiCard> monitor_mode_cards{};
   std::optional<WiFiCard> hotspot_card = std::nullopt;
-  // Default simple approach: if a card is supported by openhd, use it for
-  // openhd / monitor mode otherwise, use it for hotspot
-  for (const auto& card : discovered_cards) {
-    if (card.is_openhd_supported) {
-      monitor_mode_cards.push_back(card);
-    } else {
-      if (card.supports_hotspot && hotspot_card == std::nullopt) {
-        hotspot_card = card;
-      }
+  const int n_openhd_wifibroadcast_supported_cards =
+      n_cards_openhd_wifibroadcast_supported(discovered_cards);
+  if (n_openhd_wifibroadcast_supported_cards <= 0) {
+    // no monitor mode cards - use any other card(s) for hotspot
+    if (!discovered_cards.empty()) {
+      hotspot_card = discovered_cards.at(0);
     }
-  }
-  if (monitor_mode_cards.empty()) {
-    // try if we can find a card that at least does monitor mode -  there is no
-    // way to query injection support
-    for (const auto& card : discovered_cards) {
-      if (card.supports_monitor_mode) {
-        openhd::log::get_default()->warn(
-            "Using openhd unsupported but passive monitor mode card {}/{}",
-            card.device_name, "TODO");
+  } else {
+    for (auto& card : discovered_cards) {
+      if (card.supports_openhd_wifibroadcast()) {
         monitor_mode_cards.push_back(card);
-        hotspot_card = std::nullopt;
-        break;
+      } else {
+        if (hotspot_card == std::nullopt) {
+          hotspot_card = card;
+        }
       }
     }
   }
@@ -347,9 +314,7 @@ DWifiCards::ProcessedWifiCards DWifiCards::find_cards_from_manual_file(
 WiFiCard DWifiCards::create_card_monitor_emulate() {
   WiFiCard ret{};
   ret.type = WiFiCardType::OPENHD_EMULATED;
-  ret.supports_monitor_mode = true;
   ret.driver_name = "dummy";
-  ret.is_openhd_supported = true;
   ret.supported_frequencies_2G = openhd::get_all_channel_frequencies(
       openhd::get_channels_2G_legal_at_least_one_country());
   ret.supported_frequencies_5G = openhd::get_all_channel_frequencies(
@@ -370,9 +335,8 @@ void DWifiCards::main_discover_an_process_wifi_cards(
     if (config.WIFI_FORCE_NO_LINK_BUT_HOTSPOT) {
       auto connected_cards = DWifiCards::discover_connected_wifi_cards();
       for (auto& connected_card : connected_cards) {
-        if (connected_card.is_openhd_supported) {
+        if (m_opt_hotspot_card == std::nullopt) {
           m_opt_hotspot_card = connected_card;
-          break;
         }
       }
     }
@@ -404,7 +368,7 @@ void DWifiCards::main_discover_an_process_wifi_cards(
   const auto begin = std::chrono::steady_clock::now();
   while (true) {
     const auto n_openhd_supported_cards =
-        DWifiCards::n_cards_openhd_supported(connected_cards);
+        DWifiCards::n_cards_openhd_wifibroadcast_supported(connected_cards);
     // On the air unit, we stop the discovery as soon as we have one wb capable
     // card
     if (m_profile.is_air && n_openhd_supported_cards >= 1) {
@@ -427,23 +391,14 @@ void DWifiCards::main_discover_an_process_wifi_cards(
     }
     std::this_thread::sleep_for(std::chrono::seconds(1));
     connected_cards = DWifiCards::discover_connected_wifi_cards();
-    // after 10 seconds, we are happy with a card that only does monitor mode,
-    // aka is not known for injection, or no card at all
+    // after 10 seconds, we stop - if we didn't find a openhd wifibroadcast
+    // supported card, we are not functional
     if (elapsed > std::chrono::seconds(10)) {
-      // We only found 1 fully wb capable card
-      if (DWifiCards::any_wifi_card_openhd_supported(connected_cards)) {
-        m_console->warn("Using {} OpenHD supported cards",
-                        DWifiCards::n_cards_openhd_supported(connected_cards));
-        break;
+      if (DWifiCards::n_cards_openhd_wifibroadcast_supported(connected_cards) <=
+          0) {
+        m_console->warn("No openhd wifibroadcast card found");
+        m_console->warn("Link not functional");
       }
-      if (DWifiCards::any_wifi_card_supporting_monitor_mode(connected_cards)) {
-        // we only found a not fully wb capable card, but better than nothing
-        m_console->warn("Using card without injection capabilities");
-        break;
-      }
-      // continue with reduced functionality (e.g. only wifi hotspot if hotspot
-      // card exists, and no wb functionality)
-      m_console->warn("NO WB CARD FOUND !!!!");
       break;
     }
   }
