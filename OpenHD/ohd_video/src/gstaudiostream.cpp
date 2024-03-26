@@ -66,6 +66,9 @@ static std::string rpi_detect_alsasrc_device() {
   if (OHDUtil::contains(arecord_list_output, "card 2: ")) {
     return "hw:2,0";  // Probably FKMS
   }
+  if(OHDUtil::contains(arecord_list_output,"card 1:")){
+      return "hw:1,0";
+  }
   return DEFAULT_ALSASRC_DEVICE;
 }
 
