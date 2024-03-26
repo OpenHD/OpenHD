@@ -61,10 +61,16 @@ static std::string rpi_detect_alsasrc_device() {
   }
   const auto& arecord_list_output = opt_arecord_list_output.value();
   if (OHDUtil::contains(arecord_list_output, "card 3: ")) {
+    openhd::log::get_default()->debug("Found audio card 3");
     return "hw:3,0";  // Probably KMS
   }
   if (OHDUtil::contains(arecord_list_output, "card 2: ")) {
+    openhd::log::get_default()->debug("Found audio card 2");
     return "hw:2,0";  // Probably FKMS
+  }
+  if (OHDUtil::contains(arecord_list_output, "card 1:")) {
+    openhd::log::get_default()->debug("Found audio card 1");
+    return "hw:1,0";
   }
   return DEFAULT_ALSASRC_DEVICE;
 }
@@ -102,8 +108,12 @@ static std::string create_pipeline() {
   /*ss << "autoaudiosrc ! ";
   ss << "audioconvert ! ";
   ss << "rtpL16pay ! ";*/
-  ss << "audioresample ! ";
-  ss << "audioconvert ! ";  // Might or might not be needed ...
+  ss << "queue ! ";
+  // audioconvert might or might not be needed ...
+  // alawenc needs S16LE
+  ss << "audioconvert ! ";
+  ss << "audio/x-raw,format=S16LE ! ";
+  ss << "audioresample ! ";  // Might or might not be needed ...
   ss << "alawenc ! rtppcmapay max-ptime=20000000 ! ";
   ss << OHDGstHelper::createOutputAppSink();
   return ss.str();

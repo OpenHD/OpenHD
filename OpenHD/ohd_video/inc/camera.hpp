@@ -35,7 +35,10 @@ static constexpr int X_CAM_TYPE_DEVELOPMENT_FILESRC = 4;
 // H264 usb cameras are not supported, since in general, they do not support
 // changing bitrate/ encoding parameters.
 static constexpr int X_CAM_TYPE_USB_GENERIC = 10;
+// 384x292@25 cam
 static constexpr int X_CAM_TYPE_USB_INFIRAY = 11;
+// 256x192@25 but only 0x0@0 works (urghs)
+static constexpr int X_CAM_TYPE_USB_INFIRAY_T2 = 12;
 // ... reserved for future (Thermal) USB cameras
 
 //
@@ -100,6 +103,8 @@ static std::string x_cam_type_to_string(int camera_type) {
       return "USB";
     case X_CAM_TYPE_USB_INFIRAY:
       return "INFIRAY";
+    case X_CAM_TYPE_USB_INFIRAY_T2:
+      return "INFIRAY_T2";
     // All the rpi stuff begin
     case X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI:
       return "MMAL_HDMI";
@@ -191,7 +196,8 @@ struct XCamera {
     return x_cam_type_to_string(camera_type);
   }
   bool is_camera_type_usb_infiray() const {
-    return camera_type == X_CAM_TYPE_USB_INFIRAY;
+    return camera_type == X_CAM_TYPE_USB_INFIRAY ||
+           camera_type == X_CAM_TYPE_USB_INFIRAY_T2;
   };
   // Returns a list of known supported resolution(s).
   // They should be ordered in ascending resolution / framerate
@@ -215,9 +221,17 @@ struct XCamera {
       return {ResolutionFramerate{1280, 720, 60}};
     } else if (camera_type == X_CAM_TYPE_USB_INFIRAY) {
       return {ResolutionFramerate{384, 292, 25}};
+    } else if (camera_type == X_CAM_TYPE_USB_INFIRAY_T2) {
+      // return {ResolutionFramerate{256,192,25}}; for whatever reason doesn't
+      // work ...
+      return {ResolutionFramerate{0, 0, 0}};
     } else if (camera_type == X_CAM_TYPE_USB_GENERIC) {
-      // Return what's most likely going to work
-      return {ResolutionFramerate{640, 480, 30}};
+      std::vector<ResolutionFramerate> ret;
+      // most likely working resolution
+      ret.push_back(ResolutionFramerate{640, 480, 30});
+      // auto is also a good choice on usb
+      ret.push_back(ResolutionFramerate{0, 0, 0});
+      return ret;
     } else if (requires_rpi_libcamera_pipeline()) {
       std::vector<ResolutionFramerate> ret;
       if (camera_type == X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX462 ||
@@ -295,19 +309,6 @@ struct XCamera {
   }
 };
 
-static bool is_valid_primary_cam_type(int cam_type) {
-  if (cam_type >= 0 && cam_type < X_CAM_TYPE_DISABLED) return true;
-  return false;
-}
-static bool is_valid_secondary_cam_type(int cam_type) {
-  if (cam_type == X_CAM_TYPE_DUMMY_SW || cam_type == X_CAM_TYPE_USB_INFIRAY ||
-      cam_type == X_CAM_TYPE_USB_GENERIC || cam_type == X_CAM_TYPE_EXTERNAL ||
-      cam_type == X_CAM_TYPE_EXTERNAL_IP || cam_type == X_CAM_TYPE_DISABLED) {
-    return true;
-  }
-  return false;
-}
-
 static bool is_rpi_csi_camera(int cam_type) {
   return cam_type >= 20 && cam_type <= 69;
 }
@@ -319,10 +320,25 @@ static bool is_usb_camera(int cam_type) {
   return cam_type >= 10 && cam_type < 19;
 }
 
+static bool is_valid_primary_cam_type(int cam_type) {
+  if (cam_type >= 0 && cam_type < X_CAM_TYPE_DISABLED) return true;
+  return false;
+}
+static bool is_valid_secondary_cam_type(int cam_type) {
+  if (is_usb_camera(cam_type)) return true;
+  if (cam_type == X_CAM_TYPE_DUMMY_SW || cam_type == X_CAM_TYPE_EXTERNAL ||
+      cam_type == X_CAM_TYPE_EXTERNAL_IP || cam_type == X_CAM_TYPE_DISABLED) {
+    return true;
+  }
+  return false;
+}
 // Takes a string in the from {width}x{height}@{framerate}
 // e.g. 1280x720@30
 static std::optional<ResolutionFramerate> parse_video_format(
     const std::string& videoFormat) {
+  // 0x0@0 is a valid resolution (omit resolution / fps in the pipeline)
+  if (videoFormat == "0x0@0") return ResolutionFramerate{0, 0, 0};
+  // Otherwise, we need at least 6 characters (0x0@0 is 5 characters)
   if (videoFormat.size() <= 5) {
     return std::nullopt;
   }
