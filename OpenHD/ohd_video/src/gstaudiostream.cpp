@@ -105,10 +105,11 @@ static std::string create_pipeline() {
   /*ss << "autoaudiosrc ! ";
   ss << "audioconvert ! ";
   ss << "rtpL16pay ! ";*/
-    // Might or might not be needed ...
-    // alawenc needs S16LE
+  ss << "queue ! ";
+  // audioconvert might or might not be needed ...
+  // alawenc needs S16LE
   ss << "audioconvert ! ";
-  ss << "audio/x-raw,format=S16LE ";
+  ss << "audio/x-raw,format=S16LE ! ";
   ss << "audioresample ! "; // Might or might not be needed ...
   ss << "alawenc ! rtppcmapay max-ptime=20000000 ! ";
   ss << OHDGstHelper::createOutputAppSink();
