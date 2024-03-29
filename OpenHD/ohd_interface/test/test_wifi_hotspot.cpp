@@ -15,7 +15,6 @@ int main(int argc, char *argv[]) {
   // wifiCard.mac="24:4b:fe:b7:1c:05";
   wifiCard.device_name = "wlan0";
   wifiCard.mac = "e4:5f:01:b0:55:92";
-  wifiCard.supports_hotspot = true;
 
   OHDProfile profile{true, "none"};
   WifiHotspot wifiHotspot{profile, wifiCard, openhd::WifiSpace::G2_4};
