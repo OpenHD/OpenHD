@@ -45,7 +45,7 @@ GStreamerStream::GStreamerStream(std::shared_ptr<CameraHolder> camera_holder,
     openhd::set_infiray_custom_control_zoom_absolute_async(
         m_camera_holder->get_settings()
             .infiray_custom_control_zoom_absolute_colorpalete,
-            m_camera_holder->get_camera().usb_v4l2_device_number);
+        m_camera_holder->get_camera().usb_v4l2_device_number);
   }
   // m_gst_video_recorder=std::make_unique<GstVideoRecorder>();
   m_console->debug("GStreamerStream::GStreamerStream done");
