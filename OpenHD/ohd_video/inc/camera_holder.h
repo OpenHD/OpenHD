@@ -178,7 +178,8 @@ class CameraHolder :
     unsafe_get_settings().infiray_custom_control_zoom_absolute_colorpalete =
         value;
     persist(false);  // No restart required
-    openhd::set_infiray_custom_control_zoom_absolute_async(value,m_camera.usb_v4l2_device_number);
+    openhd::set_infiray_custom_control_zoom_absolute_async(
+        value, m_camera.usb_v4l2_device_number);
     return true;
   }
   // The CSI to HDMI adapter has an annoying bug where it actually doesn't allow

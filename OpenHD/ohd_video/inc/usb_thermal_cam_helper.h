@@ -15,7 +15,8 @@ static bool is_valid_infiray_custom_control_zoom_absolute_value(int value) {
 
 // Apply the setting and hope it works ...
 // Most of the time the device number is /dev/video0
-void set_infiray_custom_control_zoom_absolute_async(int value,int v4l2_device_number);
+void set_infiray_custom_control_zoom_absolute_async(int value,
+                                                    int v4l2_device_number);
 
 }  // namespace openhd
 
