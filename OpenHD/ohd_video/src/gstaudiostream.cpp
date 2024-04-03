@@ -84,12 +84,13 @@ static std::string rpi_detect_alsasrc_device() {
 // gst-launch-1.0 udpsrc port=5051 caps="application/x-rtp, media=(string)audio,
 // clock-rate=(int)8000, encoding-name=(string)PCMA" ! rtppcmadepay !
 // audio/x-alaw, rate=8000, channels=1 ! alawdec ! alsasink device=hw:0
-static std::string create_pipeline() {
+std::string GstAudioStream::create_pipeline() {
   std::stringstream ss;
   auto opt_manual_audio_source =
       OHDFilesystemUtil::opt_read_file("/boot/openhd/audio_source.txt", false);
   // audiotestsrc always works, but obviously is not a mic ;)
-  if (OHDFilesystemUtil::exists("/boot/openhd/test_audio.txt")) {
+  if (OHDFilesystemUtil::exists("/boot/openhd/test_audio.txt") ||
+      openhd_enable_audio_test) {
     ss << "audiotestsrc"
        << " ! ";
   } else if (opt_manual_audio_source.has_value()) {
