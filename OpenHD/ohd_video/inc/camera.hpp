@@ -81,6 +81,8 @@ static constexpr int X_CAM_TYPE_X20_RUNCAM_NANO = 70;
 //
 static constexpr int X_CAM_TYPE_ROCK_HDMI_IN = 80;
 static constexpr int X_CAM_TYPE_ROCK_IMX219 = 81;
+static constexpr int X_CAM_TYPE_ROCK_RK3566_PLACEHOLDER1 = 82;
+static constexpr int X_CAM_TYPE_ROCK_RK3566_PLACEHOLDER2 = 83;
 //
 // OpenIPC specific starts here
 static constexpr int X_CAM_TYPE_OPENIPC_SOMETHING = 90;
@@ -305,6 +307,13 @@ struct XCamera {
       ret.push_back(ResolutionFramerate{848, 480, 30});
       ret.push_back(ResolutionFramerate{1280, 720, 30});
       ret.push_back(ResolutionFramerate{1920, 1080, 30});
+      return ret;
+    } else if (camera_type == X_CAM_TYPE_ROCK_HDMI_IN) {
+      // Standard hdmi in resolutions for now
+      std::vector<ResolutionFramerate> ret;
+      ret.push_back(ResolutionFramerate{1280, 720, 60});
+      ret.push_back(ResolutionFramerate{1920, 1080, 60});
+      return ret;
     }
     // Not mapped yet
     // return something that might work or might not work
@@ -432,8 +441,13 @@ static std::vector<ManufacturerForPlatform> get_camera_choices_for_platform(
   // Secondary can only be used with USB and / or the debug cameras. CSI is not
   // usable for secondary.
   if (is_secondary) {
-    return std::vector<ManufacturerForPlatform>{MANUFACTURER_USB,
-                                                MANUFACTURER_DEBUG};
+    // Not really a manufacturer, but ui looks okay with this
+    std::vector<CameraNameAndType> disable_camera{
+        CameraNameAndType{"DISABLE", X_CAM_TYPE_DISABLED},
+    };
+    ManufacturerForPlatform MANUFACTURER_DISABLE{"DISABLE", disable_camera};
+    return std::vector<ManufacturerForPlatform>{
+        MANUFACTURER_DISABLE, MANUFACTURER_USB, MANUFACTURER_DEBUG};
   }
   if (platform_type == X_PLATFORM_TYPE_RPI_OLD ||
       platform_type == X_PLATFORM_TYPE_RPI_4 ||
@@ -459,7 +473,7 @@ static std::vector<ManufacturerForPlatform> get_camera_choices_for_platform(
         CameraNameAndType{"HQ IMX477", 33},
     };
     std::vector<CameraNameAndType> hdmi_to_csi_cameras{
-        CameraNameAndType{"HDMI to CSI", 20}};
+        CameraNameAndType{"GENERIC HDMI to CSI", 20}};
     return std::vector<ManufacturerForPlatform>{
         ManufacturerForPlatform{"ARDUCAM", arducam_cameras},
         ManufacturerForPlatform{"VEYE", veye_cameras},
@@ -476,6 +490,8 @@ static std::vector<ManufacturerForPlatform> get_camera_choices_for_platform(
   } else if (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W) {
     std::vector<CameraNameAndType> arducam_cameras{
         CameraNameAndType{"IMX219", X_CAM_TYPE_ROCK_IMX219},
+        CameraNameAndType{"PLACEHOLDER1", X_CAM_TYPE_ROCK_RK3566_PLACEHOLDER1},
+        CameraNameAndType{"PLACEHOLDER2", X_CAM_TYPE_ROCK_RK3566_PLACEHOLDER2},
     };
     return std::vector<ManufacturerForPlatform>{
         ManufacturerForPlatform{"ARDUCAM", arducam_cameras}};
