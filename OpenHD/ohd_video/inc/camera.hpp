@@ -420,6 +420,12 @@ static std::string get_v4l2_device_name_string(int value) {
   return ss.str();
 }
 
+/**
+ * On platforms with many cameras (e.g. rpi) we need a differentiation by
+ * manufacturer to make a nice UI - otherwise, the choices are overwhelming.
+ * Manufacturer is not really the right name for all categories that result
+ * here, but it is 'okay' for the UI in qopenhd.
+ */
 struct CameraNameAndType {
   std::string name;
   int type;
@@ -428,6 +434,13 @@ struct ManufacturerForPlatform {
   std::string manufacturer_name;
   std::vector<CameraNameAndType> cameras;
 };
+/**
+ * Return: a list of categories for this platform.
+ * Each category has a list of valid camera types (for this platform).
+ * @param platform_type unique platform type
+ * @param is_secondary selection is different for secondary cam,most notably, we
+ * only support usb, develop and a 'disabled' type.
+ */
 static std::vector<ManufacturerForPlatform> get_camera_choices_for_platform(
     int platform_type, bool is_secondary) {
   std::vector<CameraNameAndType> usb_cameras{
@@ -498,13 +511,15 @@ static std::vector<ManufacturerForPlatform> get_camera_choices_for_platform(
         CameraNameAndType{"PLACEHOLDER2", X_CAM_TYPE_ROCK_RK3566_PLACEHOLDER2},
     };
     return std::vector<ManufacturerForPlatform>{
-        ManufacturerForPlatform{"ARDUCAM", arducam_cameras}};
+        ManufacturerForPlatform{"ARDUCAM", arducam_cameras}, MANUFACTURER_USB,
+        MANUFACTURER_DEBUG};
   } else if (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5) {
     std::vector<CameraNameAndType> hdmi_cameras{
         CameraNameAndType{"HDMI IN", X_CAM_TYPE_ROCK_HDMI_IN},
     };
     return std::vector<ManufacturerForPlatform>{
-        ManufacturerForPlatform{"HDMI IN", hdmi_cameras}};
+        ManufacturerForPlatform{"HDMI IN", hdmi_cameras}, MANUFACTURER_USB,
+        MANUFACTURER_DEBUG};
   } else if (platform_type == X_PLATFORM_TYPE_X86) {
     return std::vector<ManufacturerForPlatform>{MANUFACTURER_USB,
                                                 MANUFACTURER_DEBUG};
