@@ -150,6 +150,10 @@ static std::string x_cam_type_to_string(int camera_type) {
       return "ROCK_HDMI_IN";
     case X_CAM_TYPE_ROCK_IMX219:
       return "ROCK_IMX219";
+    case X_CAM_TYPE_ROCK_RK3566_PLACEHOLDER1:
+      return "ROCK_PLACEHOLDER1";
+    case X_CAM_TYPE_ROCK_RK3566_PLACEHOLDER2:
+      return "ROCK_PLACEHOLDER2";
     case X_CAM_TYPE_DISABLED:
       return "DISABLED";
     case X_CAM_TYPE_OPENIPC_SOMETHING:
