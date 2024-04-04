@@ -407,95 +407,89 @@ static std::string get_v4l2_device_name_string(int value) {
   return ss.str();
 }
 
-
-struct CameraNameAndType{
-    std::string name;
-    int type;
+struct CameraNameAndType {
+  std::string name;
+  int type;
 };
-struct ManufacturerForPlatform{
-    std::string manufacturer_name;
-    std::vector<CameraNameAndType> cameras;
+struct ManufacturerForPlatform {
+  std::string manufacturer_name;
+  std::vector<CameraNameAndType> cameras;
 };
-static std::vector<ManufacturerForPlatform> get_cameras_for_platform(int platform_type){
-    auto platform=OHDPlatform(platform_type);
-
-    std::vector<CameraNameAndType> usb_cameras{
-            CameraNameAndType{"INFIRAY USB",X_CAM_TYPE_USB_INFIRAY},
-            CameraNameAndType{"INFIRAY USB T2",X_CAM_TYPE_USB_INFIRAY_T2},
-            CameraNameAndType{"EXP USB GENERIC",X_CAM_TYPE_USB_GENERIC}
+static std::vector<ManufacturerForPlatform> get_camera_choices_for_platform(
+    int platform_type, bool is_secondary) {
+  std::vector<CameraNameAndType> usb_cameras{
+      CameraNameAndType{"INFIRAY USB", X_CAM_TYPE_USB_INFIRAY},
+      CameraNameAndType{"INFIRAY USB T2", X_CAM_TYPE_USB_INFIRAY_T2},
+      CameraNameAndType{"EXP USB GENERIC", X_CAM_TYPE_USB_GENERIC}};
+  ManufacturerForPlatform MANUFACTURER_USB{"USB", usb_cameras};
+  std::vector<CameraNameAndType> debug_cameras{
+      CameraNameAndType{"Dummy (debug)", 0},
+      CameraNameAndType{"External (DEV)", 2},
+      // CameraNameAndType{"External IP (DEV)",3},
+      CameraNameAndType{"DEV Filecamera", 4},
+  };
+  ManufacturerForPlatform MANUFACTURER_DEBUG{"DEV/DEBUG", debug_cameras};
+  // Secondary can only be used with USB and / or the debug cameras. CSI is not
+  // usable for secondary.
+  if (is_secondary) {
+    return std::vector<ManufacturerForPlatform>{MANUFACTURER_USB,
+                                                MANUFACTURER_DEBUG};
+  }
+  if (platform_type == X_PLATFORM_TYPE_RPI_OLD ||
+      platform_type == X_PLATFORM_TYPE_RPI_4 ||
+      platform_type == X_PLATFORM_TYPE_RPI_CM4) {
+    std::vector<CameraNameAndType> arducam_cameras{
+        CameraNameAndType{"SKYMASTERHDR", 40},
+        CameraNameAndType{"SKYVISIONPRO", 41},
+        CameraNameAndType{"IMX477m", 42},
+        CameraNameAndType{"IMX462", 43},
+        CameraNameAndType{"IMX327", 44},
+        CameraNameAndType{"IMX290", 45},
+        CameraNameAndType{"IMX462_LOWLIGHT_MINI", 46}};
+    std::vector<CameraNameAndType> veye_cameras{
+        CameraNameAndType{"2MP", 60},
+        CameraNameAndType{"CSIMX307", 61},
+        CameraNameAndType{"CSSC132", 62},
+        CameraNameAndType{"MVCAM", 63},
     };
-    ManufacturerForPlatform MANUFACTURER_USB{"USB",usb_cameras};
-    std::vector<CameraNameAndType> debug_cameras{
-            CameraNameAndType{"Dummy (debug)",0},
-            CameraNameAndType{"External (DEV)",2},
-            //CameraNameAndType{"External IP (DEV)",3},
-            CameraNameAndType{"DEV Filecamera", 4},
+    std::vector<CameraNameAndType> rpif_cameras{
+        CameraNameAndType{"V1 OV5647", 30},
+        CameraNameAndType{"V2 IMX219", 31},
+        CameraNameAndType{"V3 IMX708", 32},
+        CameraNameAndType{"HQ IMX477", 33},
     };
-    ManufacturerForPlatform MANUFACTURER_DEBUG{"DEV/DEBUG",debug_cameras};
-    if(platform.is_rpi()){
-        std::vector<CameraNameAndType> arducam_cameras{
-                CameraNameAndType{"SKYMASTERHDR",40},
-                CameraNameAndType{"SKYVISIONPRO",41},
-                CameraNameAndType{"IMX477m",42},
-                CameraNameAndType{"IMX462",43},
-                CameraNameAndType{"IMX327",44},
-                CameraNameAndType{"IMX290",45},
-                CameraNameAndType{"IMX462_LOWLIGHT_MINI",46}
-        };
-        std::vector<CameraNameAndType> veye_cameras{
-                CameraNameAndType{"2MP", 60},
-                CameraNameAndType{"CSIMX307", 61},
-                CameraNameAndType{"CSSC132", 62},
-                CameraNameAndType{"MVCAM", 63},
-        };
-        std::vector<CameraNameAndType> rpif_cameras{
-                CameraNameAndType{ "V1 OV5647",30},
-                CameraNameAndType{"V2 IMX219", 31},
-                CameraNameAndType{ "V3 IMX708",32},
-                CameraNameAndType{"HQ IMX477", 33},
-        };
-        std::vector<CameraNameAndType> hdmi_to_csi_cameras{
-                CameraNameAndType{"HDMI to CSI",20}
-        };
-        return std::vector<ManufacturerForPlatform>{
-            ManufacturerForPlatform{"ARDUCAM",arducam_cameras},
-            ManufacturerForPlatform{"VEYE",veye_cameras},
-            ManufacturerForPlatform{"RPI FOUNDATION",rpif_cameras},
-            ManufacturerForPlatform{"HDMI TO CSI",hdmi_to_csi_cameras},
-            MANUFACTURER_USB,
-            MANUFACTURER_DEBUG
-        };
-    }else if(platform_type==X_PLATFORM_TYPE_ALWINNER_X20){
-        std::vector<CameraNameAndType> runcam_cameras{
-                CameraNameAndType{"RUNCAM NANO", X_CAM_TYPE_X20_RUNCAM_NANO},
-        };
-        return std::vector<ManufacturerForPlatform>{
-                ManufacturerForPlatform{ "RUNCAM",runcam_cameras}
-        };
-    }else if(platform_type==X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W){
-        std::vector<CameraNameAndType> arducam_cameras{
-                CameraNameAndType{"IMX219", X_CAM_TYPE_ROCK_IMX219},
-        };
-        return std::vector<ManufacturerForPlatform>{
-                ManufacturerForPlatform{"ARDUCAM",arducam_cameras}
-        };
-    }else if(platform_type==X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5){
-        std::vector<CameraNameAndType> hdmi_cameras{
-                CameraNameAndType{"HDMI IN", X_CAM_TYPE_ROCK_HDMI_IN},
-        };
-        return std::vector<ManufacturerForPlatform>{
-                ManufacturerForPlatform{"HDMI IN",hdmi_cameras}
-        };
-    }else if(platform_type==X_PLATFORM_TYPE_X86){
-        return std::vector<ManufacturerForPlatform>{
-                MANUFACTURER_USB,
-                MANUFACTURER_DEBUG
-        };
-    }
+    std::vector<CameraNameAndType> hdmi_to_csi_cameras{
+        CameraNameAndType{"HDMI to CSI", 20}};
     return std::vector<ManufacturerForPlatform>{
-        MANUFACTURER_DEBUG
+        ManufacturerForPlatform{"ARDUCAM", arducam_cameras},
+        ManufacturerForPlatform{"VEYE", veye_cameras},
+        ManufacturerForPlatform{"RPI FOUNDATION", rpif_cameras},
+        ManufacturerForPlatform{"HDMI TO CSI", hdmi_to_csi_cameras},
+        MANUFACTURER_USB,
+        MANUFACTURER_DEBUG};
+  } else if (platform_type == X_PLATFORM_TYPE_ALWINNER_X20) {
+    std::vector<CameraNameAndType> runcam_cameras{
+        CameraNameAndType{"RUNCAM NANO", X_CAM_TYPE_X20_RUNCAM_NANO},
     };
+    return std::vector<ManufacturerForPlatform>{
+        ManufacturerForPlatform{"RUNCAM", runcam_cameras}};
+  } else if (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W) {
+    std::vector<CameraNameAndType> arducam_cameras{
+        CameraNameAndType{"IMX219", X_CAM_TYPE_ROCK_IMX219},
+    };
+    return std::vector<ManufacturerForPlatform>{
+        ManufacturerForPlatform{"ARDUCAM", arducam_cameras}};
+  } else if (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5) {
+    std::vector<CameraNameAndType> hdmi_cameras{
+        CameraNameAndType{"HDMI IN", X_CAM_TYPE_ROCK_HDMI_IN},
+    };
+    return std::vector<ManufacturerForPlatform>{
+        ManufacturerForPlatform{"HDMI IN", hdmi_cameras}};
+  } else if (platform_type == X_PLATFORM_TYPE_X86) {
+    return std::vector<ManufacturerForPlatform>{MANUFACTURER_USB,
+                                                MANUFACTURER_DEBUG};
+  }
+  return std::vector<ManufacturerForPlatform>{MANUFACTURER_DEBUG};
 }
-
 
 #endif  // OPENHD_CAMERA_HPP
