@@ -80,7 +80,7 @@ static constexpr int X_CAM_TYPE_X20_RUNCAM_NANO = 70;
 // ROCK Specific starts here
 //
 static constexpr int X_CAM_TYPE_ROCK_HDMI_IN = 80;
-static constexpr int X_CAM_TYPE_ROCK_IMX219 = 81;
+static constexpr int X_CAM_TYPE_ROCK_RK3566_IMX219 = 81;
 static constexpr int X_CAM_TYPE_ROCK_RK3566_PLACEHOLDER1 = 82;
 static constexpr int X_CAM_TYPE_ROCK_RK3566_PLACEHOLDER2 = 83;
 //
@@ -148,7 +148,7 @@ static std::string x_cam_type_to_string(int camera_type) {
     // All the rock begin
     case X_CAM_TYPE_ROCK_HDMI_IN:
       return "ROCK_HDMI_IN";
-    case X_CAM_TYPE_ROCK_IMX219:
+    case X_CAM_TYPE_ROCK_RK3566_IMX219:
       return "ROCK_IMX219";
     case X_CAM_TYPE_ROCK_RK3566_PLACEHOLDER1:
       return "ROCK_PLACEHOLDER1";
@@ -305,7 +305,7 @@ struct XCamera {
       ret.push_back(ResolutionFramerate{1280, 720, 60});
       ret.push_back(ResolutionFramerate{1920, 1080, 60});
       return ret;
-    } else if (camera_type == X_CAM_TYPE_ROCK_IMX219) {
+    } else if (camera_type == X_CAM_TYPE_ROCK_RK3566_IMX219) {
       std::vector<ResolutionFramerate> ret;
       ret.push_back(ResolutionFramerate{640, 480, 30});
       ret.push_back(ResolutionFramerate{848, 480, 30});
@@ -334,7 +334,9 @@ static bool is_rpi_csi_camera(int cam_type) {
   return cam_type >= 20 && cam_type <= 69;
 }
 static bool is_rock_csi_camera(int cam_type) {
-  return cam_type == X_CAM_TYPE_ROCK_IMX219;
+  return cam_type == X_CAM_TYPE_ROCK_RK3566_IMX219 ||
+         cam_type == X_CAM_TYPE_ROCK_RK3566_PLACEHOLDER1 ||
+         cam_type == X_CAM_TYPE_ROCK_RK3566_PLACEHOLDER2;
 }
 
 static bool is_usb_camera(int cam_type) {
@@ -506,7 +508,7 @@ static std::vector<ManufacturerForPlatform> get_camera_choices_for_platform(
         ManufacturerForPlatform{"RUNCAM", runcam_cameras}};
   } else if (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W) {
     std::vector<CameraNameAndType> arducam_cameras{
-        CameraNameAndType{"IMX219", X_CAM_TYPE_ROCK_IMX219},
+        CameraNameAndType{"IMX219", X_CAM_TYPE_ROCK_RK3566_IMX219},
         CameraNameAndType{"PLACEHOLDER1", X_CAM_TYPE_ROCK_RK3566_PLACEHOLDER1},
         CameraNameAndType{"PLACEHOLDER2", X_CAM_TYPE_ROCK_RK3566_PLACEHOLDER2},
     };
