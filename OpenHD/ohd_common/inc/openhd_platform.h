@@ -30,8 +30,11 @@ static constexpr int X_PLATFORM_TYPE_ROCKCHIP_RV1126_UNDEFINED = 22;  // FUTRE
 // Numbers 30..35 are reserved for allwinner
 static constexpr int X_PLATFORM_TYPE_ALWINNER_X20 = 30;
 
-// @Buldo is working on openipc / sigmastar, 36..40
+// @Buldo is working on openipc / sigmastar, 36..39
 static constexpr int X_PLATFORM_TYPE_OPENIPC_SIGMASTAR_UNDEFINED = 36;
+
+// Numbers 40..50 are reserved for NVIDIA
+static constexpr int X_PLATFORM_TYPE_NVIDIA_ORIN = 40;
 
 std::string x_platform_type_to_string(int platform_type);
 
