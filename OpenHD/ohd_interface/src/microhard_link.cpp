@@ -67,3 +67,12 @@ void MicrohardLink::transmit_audio_data(
     const openhd::AudioPacket &audio_packet) {
   // not impl
 }
+
+std::vector<openhd::Setting> MicrohardLink::get_all_settings() {
+  using namespace openhd;
+  std::vector<openhd::Setting> ret{};
+  auto change_dummy = openhd::IntSetting{
+      (int)0, [this](std::string, int value) { return true; }};
+  ret.push_back(Setting{"MICROHARD_DUMMY0", change_dummy});
+  return ret;
+}
