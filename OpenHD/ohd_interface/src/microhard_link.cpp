@@ -10,7 +10,7 @@ static constexpr auto MICROHARD_AIR_IP = "192.168.168.11";
 static constexpr auto MICROHARD_GND_IP = "192.168.168.12";
 // We send data over those port(s)
 static constexpr int MICROHARD_UDP_PORT_VIDEO_AIR_TX = 5910;
-static constexpr int MICROHARD_UDP_PORT_TELEMETRY_AIR_TX = 5910;
+static constexpr int MICROHARD_UDP_PORT_TELEMETRY_AIR_TX = 5920;
 
 MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
   if (m_profile.is_air) {
