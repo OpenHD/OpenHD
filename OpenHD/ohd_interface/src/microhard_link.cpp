@@ -4,6 +4,8 @@
 
 #include "microhard_link.h"
 
+#include <arpa/inet.h>
+
 // Master -
 static constexpr auto MICROHARD_AIR_IP = "192.168.168.11";
 // CLient
@@ -17,7 +19,34 @@ static constexpr auto DEVICE_IP_AIR = "192.168.168.148";
 static constexpr int MICROHARD_UDP_PORT_VIDEO_AIR_TX = 5910;
 static constexpr int MICROHARD_UDP_PORT_TELEMETRY_AIR_TX = 5920;
 
+static bool check_ip_alive(const std::string &ip, int port = 80) {
+  int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+  struct sockaddr_in addr = {AF_INET, htons(80), inet_addr(ip.c_str())};
+  if (connect(sockfd, (struct sockaddr *)&addr, sizeof(addr)) != 0) {
+    close(sockfd);
+    return false;
+  }
+  close(sockfd);
+  return true;
+}
+
+static void wait_for_microhard_module(bool air) {
+  while (true) {
+    const auto microhard_device_ip = air ? MICROHARD_AIR_IP : MICROHARD_GND_IP;
+    auto available = check_ip_alive(microhard_device_ip);
+    if (available) {
+      openhd::log::get_default()->debug("Microhard module found");
+      break;
+    }
+    openhd::log::get_default()->debug("Waiting for microhard module");
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+  }
+}
+
 MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
+  // Wait for the module to become available
+  wait_for_microhard_module(m_profile.is_air);
+
   if (m_profile.is_air) {
     // We send video
     m_video_tx = std::make_unique<openhd::UDPForwarder>(
