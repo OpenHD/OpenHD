@@ -320,7 +320,7 @@ struct XCamera {
       ret.push_back(ResolutionFramerate{1280, 720, 60});
       ret.push_back(ResolutionFramerate{1920, 1080, 60});
       return ret;
-    } else if (camera_type==X_CAM_TYPE_NVIDIA_ORIN_IMX577){
+    } else if (camera_type == X_CAM_TYPE_NVIDIA_ORIN_IMX577) {
       std::vector<ResolutionFramerate> ret;
       ret.push_back(ResolutionFramerate{1280, 720, 60});
       ret.push_back(ResolutionFramerate{1920, 1080, 60});
