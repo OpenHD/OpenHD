@@ -9,8 +9,8 @@ static constexpr auto MICROHARD_AIR_IP = "192.168.168.11";
 // CLient
 static constexpr auto MICROHARD_GND_IP = "192.168.168.12";
 // The assigned IPs
-static constexpr auto DEVICE_IP_AIR="192.168.168.122";
-static constexpr auto DEVICE_IP_GND="192.168.168.148";
+static constexpr auto DEVICE_IP_GND="192.168.168.122";
+static constexpr auto DEVICE_IP_AIR="192.168.168.148";
 
 
 // We send data over those port(s)
