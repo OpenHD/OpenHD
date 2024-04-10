@@ -200,7 +200,7 @@ std::shared_ptr<OHDLink> OHDInterface::get_link_handle() {
   if (m_wb_link) {
     return m_wb_link;
   }
-  if(m_microhard_link){
+  if (m_microhard_link) {
     return m_microhard_link;
   }
   return nullptr;

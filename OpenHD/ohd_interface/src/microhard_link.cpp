@@ -9,9 +9,9 @@ static constexpr auto MICROHARD_AIR_IP = "192.168.168.11";
 // CLient
 static constexpr auto MICROHARD_GND_IP = "192.168.168.12";
 // The assigned IPs
-static constexpr auto DEVICE_IP_GND="192.168.168.122";
-static constexpr auto DEVICE_IP_AIR="192.168.168.148";
-
+// NOTE: They have to be set correctly !
+static constexpr auto DEVICE_IP_GND = "192.168.168.122";
+static constexpr auto DEVICE_IP_AIR = "192.168.168.148";
 
 // We send data over those port(s)
 static constexpr int MICROHARD_UDP_PORT_VIDEO_AIR_TX = 5910;
@@ -53,10 +53,9 @@ MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
 }
 
 void MicrohardLink::transmit_telemetry_data(OHDLink::TelemetryTxPacket packet) {
-  //const auto destination_ip =
-  //    m_profile.is_air ? MICROHARD_GND_IP : MICROHARD_AIR_IP;
-  const auto destination_ip =
-      m_profile.is_air ? DEVICE_IP_GND : DEVICE_IP_AIR;
+  // const auto destination_ip =
+  //     m_profile.is_air ? MICROHARD_GND_IP : MICROHARD_AIR_IP;
+  const auto destination_ip = m_profile.is_air ? DEVICE_IP_GND : DEVICE_IP_AIR;
   m_telemetry_tx_rx->forwardPacketViaUDP(
       destination_ip, MICROHARD_UDP_PORT_TELEMETRY_AIR_TX, packet.data->data(),
       packet.data->size());
