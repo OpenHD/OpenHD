@@ -119,7 +119,7 @@ void openhd::UDPReceiver::loopUntilError() {
       // this can also come from the shutdown, in which case it is not an error.
       // But this way we break out of the loop.
       if (receiving) {
-        get_console()->warn("Got message length of: {}", message_length);
+        //get_console()->warn("Got message length of: {}", message_length);
       }
     }
   }

@@ -8,6 +8,11 @@
 static constexpr auto MICROHARD_AIR_IP = "192.168.168.11";
 // CLient
 static constexpr auto MICROHARD_GND_IP = "192.168.168.12";
+// The assigned IPs
+static constexpr auto DEVICE_IP_AIR="192.168.168.122";
+static constexpr auto DEVICE_IP_GND="192.168.168.122";
+
+
 // We send data over those port(s)
 static constexpr int MICROHARD_UDP_PORT_VIDEO_AIR_TX = 5910;
 static constexpr int MICROHARD_UDP_PORT_TELEMETRY_AIR_TX = 5920;
@@ -16,7 +21,7 @@ MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
   if (m_profile.is_air) {
     // We send video
     m_video_tx = std::make_unique<openhd::UDPForwarder>(
-        MICROHARD_GND_IP, MICROHARD_UDP_PORT_VIDEO_AIR_TX);
+        DEVICE_IP_GND, MICROHARD_UDP_PORT_VIDEO_AIR_TX);
     // We send and receive telemetry
     auto cb_telemetry_rx = [this](const uint8_t *data,
                                   const std::size_t data_len) {
@@ -25,7 +30,7 @@ MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
       on_receive_telemetry_data(shared);
     };
     m_telemetry_tx_rx = std::make_unique<openhd::UDPReceiver>(
-        MICROHARD_GND_IP, MICROHARD_UDP_PORT_TELEMETRY_AIR_TX, cb_telemetry_rx);
+        "127.0.0.1", MICROHARD_UDP_PORT_TELEMETRY_AIR_TX, cb_telemetry_rx);
     m_telemetry_tx_rx->runInBackground();
   } else {
     auto cb_video_rx = [this](const uint8_t *payload,
@@ -33,7 +38,7 @@ MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
       on_receive_video_data(0, payload, payloadSize);
     };
     m_video_rx = std::make_unique<openhd::UDPReceiver>(
-        MICROHARD_AIR_IP, MICROHARD_UDP_PORT_VIDEO_AIR_TX, cb_video_rx);
+        "127.0.0.1", MICROHARD_UDP_PORT_VIDEO_AIR_TX, cb_video_rx);
     auto cb_telemetry_rx = [this](const uint8_t *data,
                                   const std::size_t data_len) {
       auto shared =
@@ -41,14 +46,16 @@ MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
       on_receive_telemetry_data(shared);
     };
     m_telemetry_tx_rx = std::make_unique<openhd::UDPReceiver>(
-        MICROHARD_AIR_IP, MICROHARD_UDP_PORT_TELEMETRY_AIR_TX, cb_telemetry_rx);
+        "127.0.0.1", MICROHARD_UDP_PORT_TELEMETRY_AIR_TX, cb_telemetry_rx);
     m_telemetry_tx_rx->runInBackground();
   }
 }
 
 void MicrohardLink::transmit_telemetry_data(OHDLink::TelemetryTxPacket packet) {
+  //const auto destination_ip =
+  //    m_profile.is_air ? MICROHARD_GND_IP : MICROHARD_AIR_IP;
   const auto destination_ip =
-      m_profile.is_air ? MICROHARD_GND_IP : MICROHARD_AIR_IP;
+      m_profile.is_air ? DEVICE_IP_GND : DEVICE_IP_AIR;
   m_telemetry_tx_rx->forwardPacketViaUDP(
       destination_ip, MICROHARD_UDP_PORT_TELEMETRY_AIR_TX, packet.data->data(),
       packet.data->size());
