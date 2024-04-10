@@ -26,6 +26,7 @@ MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
     };
     m_telemetry_tx_rx = std::make_unique<openhd::UDPReceiver>(
         MICROHARD_GND_IP, MICROHARD_UDP_PORT_TELEMETRY_AIR_TX, cb_telemetry_rx);
+    m_telemetry_tx_rx->runInBackground();
   } else {
     auto cb_video_rx = [this](const uint8_t *payload,
                               const std::size_t payloadSize) {
@@ -40,7 +41,8 @@ MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
       on_receive_telemetry_data(shared);
     };
     m_telemetry_tx_rx = std::make_unique<openhd::UDPReceiver>(
-        MICROHARD_AIR_IP, 5910, cb_telemetry_rx);
+        MICROHARD_AIR_IP, MICROHARD_UDP_PORT_TELEMETRY_AIR_TX, cb_telemetry_rx);
+    m_telemetry_tx_rx->runInBackground();
   }
 }
 
