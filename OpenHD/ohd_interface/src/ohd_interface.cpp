@@ -9,6 +9,7 @@
 
 #include <utility>
 
+#include "microhard_link.h"
 #include "openhd_config.h"
 #include "openhd_global_constants.hpp"
 #include "openhd_util_filesystem.h"
@@ -21,6 +22,10 @@ OHDInterface::OHDInterface(OHDPlatform platform1, OHDProfile profile1)
   m_monitor_mode_cards = {};
   m_opt_hotspot_card = std::nullopt;
   const auto config = openhd::load_config();
+  if (config.DEV_ENABLE_MICROHARD) {
+    m_microhard_link = std::make_shared<MicrohardLink>(m_profile);
+    return;
+  }
   DWifiCards::main_discover_an_process_wifi_cards(
       config, m_profile, m_platform, m_console, m_monitor_mode_cards,
       m_opt_hotspot_card);
@@ -104,6 +109,14 @@ OHDInterface::OHDInterface(OHDPlatform platform1, OHDProfile profile1)
                                                             cb);
   }
   m_console->debug("OHDInterface::created");
+}
+
+OHDInterface::~OHDInterface() {
+  // Terminate the link first
+  m_wb_link = nullptr;
+  // Then give the card(s) back to the system (no monitor mode)
+  // give the monitor mode cards back to network manager
+  openhd::wb::giveback_cards_monitor_mode(m_monitor_mode_cards, m_console);
 }
 
 std::vector<openhd::Setting> OHDInterface::get_all_settings() {
@@ -243,12 +256,4 @@ void OHDInterface::update_wifi_hotspot_enable() {
       enable_wifi_hotspot ? 2 : 1;
   openhd::LinkActionHandler::instance().m_wifi_hotspot_frequency =
       m_wifi_hotspot->get_frequency();
-}
-
-OHDInterface::~OHDInterface() {
-  // Terminate the link first
-  m_wb_link = nullptr;
-  // Then give the card(s) back to the system (no monitor mode)
-  // give the monitor mode cards back to network manager
-  openhd::wb::giveback_cards_monitor_mode(m_monitor_mode_cards, m_console);
 }

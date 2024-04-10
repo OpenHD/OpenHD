@@ -23,6 +23,7 @@
 #include "wifi_hotspot.h"
 
 class WBLink;
+class MicrohardLink;
 /**
  * Takes care of everything networking related, like wifibroadcast, usb /
  * tethering / WiFi-hotspot usw. In openhd, there is an instance of this class
@@ -64,6 +65,7 @@ class OHDInterface {
   const OHDPlatform m_platform;
   std::shared_ptr<spdlog::logger> m_console;
   std::shared_ptr<WBLink> m_wb_link;
+  std::shared_ptr<MicrohardLink> m_microhard_link;
   std::unique_ptr<USBTetherListener> m_usb_tether_listener;
   std::unique_ptr<EthernetListener> m_ethernet_listener;
   std::unique_ptr<EthernetHotspot> m_ethernet_hotspot;

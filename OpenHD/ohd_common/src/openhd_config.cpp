@@ -58,6 +58,8 @@ static openhd::Config load_or_default() {
     ret.GEN_RF_METRICS_LEVEL = r.Get<int>("generic", "GEN_RF_METRICS_LEVEL");
     ret.GEN_NO_QOPENHD_AUTOSTART =
         r.Get<bool>("generic", "GEN_NO_QOPENHD_AUTOSTART");
+    //
+    ret.DEV_ENABLE_MICROHARD = r.Get<bool>("dev", "DEV_ENABLE_MICROHARD");
     return ret;
   } catch (std::exception& exception) {
     get_logger()->error("Ill-formatted config file {}",
