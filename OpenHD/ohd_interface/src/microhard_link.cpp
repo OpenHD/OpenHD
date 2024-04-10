@@ -39,6 +39,7 @@ MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
     };
     m_video_rx = std::make_unique<openhd::UDPReceiver>(
         DEVICE_IP_GND, MICROHARD_UDP_PORT_VIDEO_AIR_TX, cb_video_rx);
+    m_video_rx->runInBackground();
     auto cb_telemetry_rx = [this](const uint8_t *data,
                                   const std::size_t data_len) {
       auto shared =
