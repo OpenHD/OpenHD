@@ -32,6 +32,8 @@ struct Config {
   bool GEN_ENABLE_LAST_KNOWN_POSITION = false;
   int GEN_RF_METRICS_LEVEL = 0;
   bool GEN_NO_QOPENHD_AUTOSTART = false;
+  // EXTRA
+  bool DEV_ENABLE_MICROHARD = false;
 };
 // Otherwise, default location is used
 void set_config_file(const std::string& config_file_path);

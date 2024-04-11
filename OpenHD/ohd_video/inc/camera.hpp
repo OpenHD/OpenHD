@@ -87,7 +87,9 @@ static constexpr int X_CAM_TYPE_ROCK_RK3566_PLACEHOLDER2 = 83;
 // OpenIPC specific starts here
 static constexpr int X_CAM_TYPE_OPENIPC_SOMETHING = 90;
 //
-
+//
+// NVIDIA ORIN specific starts here
+static constexpr int X_CAM_TYPE_NVIDIA_ORIN_IMX577 = 100;
 // ... rest is reserved for future use
 // no camera, only exists to have a default value for secondary camera (which is
 // disabled by default). NOTE: The primary camera cannot be disabled !
@@ -318,6 +320,11 @@ struct XCamera {
       ret.push_back(ResolutionFramerate{1280, 720, 60});
       ret.push_back(ResolutionFramerate{1920, 1080, 60});
       return ret;
+    } else if (camera_type == X_CAM_TYPE_NVIDIA_ORIN_IMX577) {
+      std::vector<ResolutionFramerate> ret;
+      ret.push_back(ResolutionFramerate{1280, 720, 60});
+      ret.push_back(ResolutionFramerate{1920, 1080, 60});
+      return ret;
     }
     // Not mapped yet
     // return something that might work or might not work
@@ -525,6 +532,13 @@ static std::vector<ManufacturerForPlatform> get_camera_choices_for_platform(
   } else if (platform_type == X_PLATFORM_TYPE_X86) {
     return std::vector<ManufacturerForPlatform>{MANUFACTURER_USB,
                                                 MANUFACTURER_DEBUG};
+  } else if (platform_type == X_PLATFORM_TYPE_NVIDIA_ORIN) {
+    std::vector<CameraNameAndType> nvidia_csi_cameras{
+        CameraNameAndType{"IMX577", X_CAM_TYPE_NVIDIA_ORIN_IMX577},
+    };
+    return std::vector<ManufacturerForPlatform>{
+        ManufacturerForPlatform{"NVIDIA CSI", nvidia_csi_cameras},
+        MANUFACTURER_USB, MANUFACTURER_DEBUG};
   }
   return std::vector<ManufacturerForPlatform>{MANUFACTURER_DEBUG};
 }

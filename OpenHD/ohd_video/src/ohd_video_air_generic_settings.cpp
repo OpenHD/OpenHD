@@ -65,6 +65,9 @@ AirCameraGenericSettings AirCameraGenericSettingsHolder::create_default()
   } else if (OHDPlatform::instance().platform_type ==
              X_PLATFORM_TYPE_OPENIPC_SIGMASTAR_UNDEFINED) {
     ret.primary_camera_type = X_CAM_TYPE_EXTERNAL;
+  } else if (OHDPlatform::instance().platform_type ==
+             X_PLATFORM_TYPE_NVIDIA_ORIN) {
+    ret.primary_camera_type = X_CAM_TYPE_NVIDIA_ORIN_IMX577;
   }
   return ret;
 }
