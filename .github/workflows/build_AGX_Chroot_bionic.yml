@@ -55,6 +55,7 @@ jobs:
           cd /opt
           cd OpenHD
           chown -R root:root ../OpenHD
+          sed -i '12i\#include <sys/socket.h>' OpenHD/ohd_interface/lib/wifibroadcast/wifibroadcast/src/pcap_helper.hpp
           sudo ./package.sh standard arm64 ubuntu bionic
 
     - name: Upload to Github
