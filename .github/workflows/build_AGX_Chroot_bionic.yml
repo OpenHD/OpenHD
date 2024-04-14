@@ -43,6 +43,10 @@ jobs:
           curl -1sLf 'https://dl.cloudsmith.io/public/openhd/enterprise/setup.deb.sh' | sudo -E bash
           apt upgrade -y
           apt install -y cmake ruby-ohd
+          sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+          sudo apt-get update
+          sudo apt-get install gcc-13 g++-13
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 60 --slave /usr/bin/g++ g++ /usr/bin/g++-13
           mkdir -p /usr/local/share/openhd/
           touch /usr/local/share/openhd/joyconfig.txt
           sudo ./install_build_dep.sh rock5
