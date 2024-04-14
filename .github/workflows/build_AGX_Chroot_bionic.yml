@@ -41,6 +41,7 @@ jobs:
           cd /opt/OpenHD
           rm /etc/apt/sources.list.d/nvidia-l4t-apt-source.list
           apt update
+          apt install curl -y
           curl -1sLf 'https://dl.cloudsmith.io/public/openhd/enterprise/setup.deb.sh' | sudo -E bash
           apt upgrade -y
           apt install -y cmake ruby-ohd
