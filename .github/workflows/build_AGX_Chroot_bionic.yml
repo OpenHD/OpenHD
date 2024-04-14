@@ -47,7 +47,7 @@ jobs:
           apt install -y cmake ruby-ohd
           sudo add-apt-repository ppa:ubuntu-toolchain-r/test
           sudo apt-get update
-          sudo apt-get install gcc-11 g++-11
+          sudo apt-get install gcc-11 g++-11 -y
           sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 60 --slave /usr/bin/g++ g++ /usr/bin/g++-11
           mkdir -p /usr/local/share/openhd/
           touch /usr/local/share/openhd/joyconfig.txt
