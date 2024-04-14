@@ -12,6 +12,8 @@
 #include <string>
 #include <vector>
 
+#include "openhd_platform.h"
+
 /**
  * NOTE: This file is copied into QOpenHD to populate the UI.
  */
@@ -35,7 +37,10 @@ static constexpr int X_CAM_TYPE_DEVELOPMENT_FILESRC = 4;
 // H264 usb cameras are not supported, since in general, they do not support
 // changing bitrate/ encoding parameters.
 static constexpr int X_CAM_TYPE_USB_GENERIC = 10;
+// 384x292@25 cam
 static constexpr int X_CAM_TYPE_USB_INFIRAY = 11;
+// 256x192@25 but only 0x0@0 works (urghs)
+static constexpr int X_CAM_TYPE_USB_INFIRAY_T2 = 12;
 // ... reserved for future (Thermal) USB cameras
 
 //
@@ -75,12 +80,16 @@ static constexpr int X_CAM_TYPE_X20_RUNCAM_NANO = 70;
 // ROCK Specific starts here
 //
 static constexpr int X_CAM_TYPE_ROCK_HDMI_IN = 80;
-static constexpr int X_CAM_TYPE_ROCK_IMX219 = 81;
+static constexpr int X_CAM_TYPE_ROCK_RK3566_IMX219 = 81;
+static constexpr int X_CAM_TYPE_ROCK_RK3566_PLACEHOLDER1 = 82;
+static constexpr int X_CAM_TYPE_ROCK_RK3566_PLACEHOLDER2 = 83;
 //
 // OpenIPC specific starts here
 static constexpr int X_CAM_TYPE_OPENIPC_SOMETHING = 90;
 //
-
+//
+// NVIDIA ORIN specific starts here
+static constexpr int X_CAM_TYPE_NVIDIA_ORIN_IMX577 = 100;
 // ... rest is reserved for future use
 // no camera, only exists to have a default value for secondary camera (which is
 // disabled by default). NOTE: The primary camera cannot be disabled !
@@ -100,6 +109,8 @@ static std::string x_cam_type_to_string(int camera_type) {
       return "USB";
     case X_CAM_TYPE_USB_INFIRAY:
       return "INFIRAY";
+    case X_CAM_TYPE_USB_INFIRAY_T2:
+      return "INFIRAY_T2";
     // All the rpi stuff begin
     case X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI:
       return "MMAL_HDMI";
@@ -139,8 +150,12 @@ static std::string x_cam_type_to_string(int camera_type) {
     // All the rock begin
     case X_CAM_TYPE_ROCK_HDMI_IN:
       return "ROCK_HDMI_IN";
-    case X_CAM_TYPE_ROCK_IMX219:
+    case X_CAM_TYPE_ROCK_RK3566_IMX219:
       return "ROCK_IMX219";
+    case X_CAM_TYPE_ROCK_RK3566_PLACEHOLDER1:
+      return "ROCK_PLACEHOLDER1";
+    case X_CAM_TYPE_ROCK_RK3566_PLACEHOLDER2:
+      return "ROCK_PLACEHOLDER2";
     case X_CAM_TYPE_DISABLED:
       return "DISABLED";
     case X_CAM_TYPE_OPENIPC_SOMETHING:
@@ -191,7 +206,8 @@ struct XCamera {
     return x_cam_type_to_string(camera_type);
   }
   bool is_camera_type_usb_infiray() const {
-    return camera_type == X_CAM_TYPE_USB_INFIRAY;
+    return camera_type == X_CAM_TYPE_USB_INFIRAY ||
+           camera_type == X_CAM_TYPE_USB_INFIRAY_T2;
   };
   // Returns a list of known supported resolution(s).
   // They should be ordered in ascending resolution / framerate
@@ -215,9 +231,17 @@ struct XCamera {
       return {ResolutionFramerate{1280, 720, 60}};
     } else if (camera_type == X_CAM_TYPE_USB_INFIRAY) {
       return {ResolutionFramerate{384, 292, 25}};
+    } else if (camera_type == X_CAM_TYPE_USB_INFIRAY_T2) {
+      // return {ResolutionFramerate{256,192,25}}; for whatever reason doesn't
+      // work ...
+      return {ResolutionFramerate{0, 0, 0}};
     } else if (camera_type == X_CAM_TYPE_USB_GENERIC) {
-      // Return what's most likely going to work
-      return {ResolutionFramerate{640, 480, 30}};
+      std::vector<ResolutionFramerate> ret;
+      // most likely working resolution
+      ret.push_back(ResolutionFramerate{640, 480, 30});
+      // auto is also a good choice on usb
+      ret.push_back(ResolutionFramerate{0, 0, 0});
+      return ret;
     } else if (requires_rpi_libcamera_pipeline()) {
       std::vector<ResolutionFramerate> ret;
       if (camera_type == X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX462 ||
@@ -283,6 +307,24 @@ struct XCamera {
       ret.push_back(ResolutionFramerate{1280, 720, 60});
       ret.push_back(ResolutionFramerate{1920, 1080, 60});
       return ret;
+    } else if (camera_type == X_CAM_TYPE_ROCK_RK3566_IMX219) {
+      std::vector<ResolutionFramerate> ret;
+      ret.push_back(ResolutionFramerate{640, 480, 30});
+      ret.push_back(ResolutionFramerate{848, 480, 30});
+      ret.push_back(ResolutionFramerate{1280, 720, 30});
+      ret.push_back(ResolutionFramerate{1920, 1080, 30});
+      return ret;
+    } else if (camera_type == X_CAM_TYPE_ROCK_HDMI_IN) {
+      // Standard hdmi in resolutions for now
+      std::vector<ResolutionFramerate> ret;
+      ret.push_back(ResolutionFramerate{1280, 720, 60});
+      ret.push_back(ResolutionFramerate{1920, 1080, 60});
+      return ret;
+    } else if (camera_type == X_CAM_TYPE_NVIDIA_ORIN_IMX577) {
+      std::vector<ResolutionFramerate> ret;
+      ret.push_back(ResolutionFramerate{1280, 720, 60});
+      ret.push_back(ResolutionFramerate{1920, 1080, 60});
+      return ret;
     }
     // Not mapped yet
     // return something that might work or might not work
@@ -295,34 +337,38 @@ struct XCamera {
   }
 };
 
-static bool is_valid_primary_cam_type(int cam_type) {
-  if (cam_type >= 0 && cam_type < X_CAM_TYPE_DISABLED) return true;
-  return false;
-}
-static bool is_valid_secondary_cam_type(int cam_type) {
-  if (cam_type == X_CAM_TYPE_DUMMY_SW || cam_type == X_CAM_TYPE_USB_INFIRAY ||
-      cam_type == X_CAM_TYPE_USB_GENERIC || cam_type == X_CAM_TYPE_EXTERNAL ||
-      cam_type == X_CAM_TYPE_EXTERNAL_IP || cam_type == X_CAM_TYPE_DISABLED) {
-    return true;
-  }
-  return false;
-}
-
 static bool is_rpi_csi_camera(int cam_type) {
   return cam_type >= 20 && cam_type <= 69;
 }
 static bool is_rock_csi_camera(int cam_type) {
-  return cam_type == X_CAM_TYPE_ROCK_IMX219;
+  return cam_type == X_CAM_TYPE_ROCK_RK3566_IMX219 ||
+         cam_type == X_CAM_TYPE_ROCK_RK3566_PLACEHOLDER1 ||
+         cam_type == X_CAM_TYPE_ROCK_RK3566_PLACEHOLDER2;
 }
 
 static bool is_usb_camera(int cam_type) {
   return cam_type >= 10 && cam_type < 19;
 }
 
+static bool is_valid_primary_cam_type(int cam_type) {
+  if (cam_type >= 0 && cam_type < X_CAM_TYPE_DISABLED) return true;
+  return false;
+}
+static bool is_valid_secondary_cam_type(int cam_type) {
+  if (is_usb_camera(cam_type)) return true;
+  if (cam_type == X_CAM_TYPE_DUMMY_SW || cam_type == X_CAM_TYPE_EXTERNAL ||
+      cam_type == X_CAM_TYPE_EXTERNAL_IP || cam_type == X_CAM_TYPE_DISABLED) {
+    return true;
+  }
+  return false;
+}
 // Takes a string in the from {width}x{height}@{framerate}
 // e.g. 1280x720@30
 static std::optional<ResolutionFramerate> parse_video_format(
     const std::string& videoFormat) {
+  // 0x0@0 is a valid resolution (omit resolution / fps in the pipeline)
+  if (videoFormat == "0x0@0") return ResolutionFramerate{0, 0, 0};
+  // Otherwise, we need at least 6 characters (0x0@0 is 5 characters)
   if (videoFormat.size() <= 5) {
     return std::nullopt;
   }
@@ -381,6 +427,120 @@ static std::string get_v4l2_device_name_string(int value) {
   std::stringstream ss;
   ss << "/dev/video" << value;
   return ss.str();
+}
+
+/**
+ * On platforms with many cameras (e.g. rpi) we need a differentiation by
+ * manufacturer to make a nice UI - otherwise, the choices are overwhelming.
+ * Manufacturer is not really the right name for all categories that result
+ * here, but it is 'okay' for the UI in qopenhd.
+ */
+struct CameraNameAndType {
+  std::string name;
+  int type;
+};
+struct ManufacturerForPlatform {
+  std::string manufacturer_name;
+  std::vector<CameraNameAndType> cameras;
+};
+/**
+ * Return: a list of categories for this platform.
+ * Each category has a list of valid camera types (for this platform).
+ * @param platform_type unique platform type
+ * @param is_secondary selection is different for secondary cam,most notably, we
+ * only support usb, develop and a 'disabled' type.
+ */
+static std::vector<ManufacturerForPlatform> get_camera_choices_for_platform(
+    int platform_type, bool is_secondary) {
+  std::vector<CameraNameAndType> usb_cameras{
+      CameraNameAndType{"INFIRAY USB", X_CAM_TYPE_USB_INFIRAY},
+      CameraNameAndType{"INFIRAY USB T2", X_CAM_TYPE_USB_INFIRAY_T2},
+      CameraNameAndType{"EXP USB GENERIC", X_CAM_TYPE_USB_GENERIC}};
+  ManufacturerForPlatform MANUFACTURER_USB{"USB", usb_cameras};
+  std::vector<CameraNameAndType> debug_cameras{
+      CameraNameAndType{"Dummy (debug)", 0},
+      CameraNameAndType{"External (DEV)", 2},
+      // CameraNameAndType{"External IP (DEV)",3},
+      CameraNameAndType{"DEV Filecamera", 4},
+  };
+  ManufacturerForPlatform MANUFACTURER_DEBUG{"DEV/DEBUG", debug_cameras};
+  // Secondary can only be used with USB and / or the debug cameras. CSI is not
+  // usable for secondary.
+  if (is_secondary) {
+    // Not really a manufacturer, but ui looks okay with this
+    std::vector<CameraNameAndType> disable_camera{
+        CameraNameAndType{"DISABLE", X_CAM_TYPE_DISABLED},
+    };
+    ManufacturerForPlatform MANUFACTURER_DISABLE{"DISABLE", disable_camera};
+    return std::vector<ManufacturerForPlatform>{
+        MANUFACTURER_DISABLE, MANUFACTURER_USB, MANUFACTURER_DEBUG};
+  }
+  if (platform_type == X_PLATFORM_TYPE_RPI_OLD ||
+      platform_type == X_PLATFORM_TYPE_RPI_4 ||
+      platform_type == X_PLATFORM_TYPE_RPI_CM4) {
+    std::vector<CameraNameAndType> arducam_cameras{
+        CameraNameAndType{"SKYMASTERHDR", 40},
+        CameraNameAndType{"SKYVISIONPRO", 41},
+        CameraNameAndType{"IMX477m", 42},
+        CameraNameAndType{"IMX462", 43},
+        CameraNameAndType{"IMX327", 44},
+        CameraNameAndType{"IMX290", 45},
+        CameraNameAndType{"IMX462_LOWLIGHT_MINI", 46}};
+    std::vector<CameraNameAndType> veye_cameras{
+        CameraNameAndType{"2MP", 60},
+        CameraNameAndType{"CSIMX307", 61},
+        CameraNameAndType{"CSSC132", 62},
+        CameraNameAndType{"MVCAM", 63},
+    };
+    std::vector<CameraNameAndType> rpif_cameras{
+        CameraNameAndType{"V1 OV5647", 30},
+        CameraNameAndType{"V2 IMX219", 31},
+        CameraNameAndType{"V3 IMX708", 32},
+        CameraNameAndType{"HQ IMX477", 33},
+    };
+    std::vector<CameraNameAndType> hdmi_to_csi_cameras{
+        CameraNameAndType{"GENERIC HDMI to CSI", 20}};
+    return std::vector<ManufacturerForPlatform>{
+        ManufacturerForPlatform{"ARDUCAM", arducam_cameras},
+        ManufacturerForPlatform{"VEYE", veye_cameras},
+        ManufacturerForPlatform{"RPI FOUNDATION", rpif_cameras},
+        ManufacturerForPlatform{"HDMI TO CSI", hdmi_to_csi_cameras},
+        MANUFACTURER_USB,
+        MANUFACTURER_DEBUG};
+  } else if (platform_type == X_PLATFORM_TYPE_ALWINNER_X20) {
+    std::vector<CameraNameAndType> runcam_cameras{
+        CameraNameAndType{"RUNCAM NANO", X_CAM_TYPE_X20_RUNCAM_NANO},
+    };
+    return std::vector<ManufacturerForPlatform>{
+        ManufacturerForPlatform{"RUNCAM", runcam_cameras}};
+  } else if (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W) {
+    std::vector<CameraNameAndType> arducam_cameras{
+        CameraNameAndType{"IMX219", X_CAM_TYPE_ROCK_RK3566_IMX219},
+        CameraNameAndType{"PLACEHOLDER1", X_CAM_TYPE_ROCK_RK3566_PLACEHOLDER1},
+        CameraNameAndType{"PLACEHOLDER2", X_CAM_TYPE_ROCK_RK3566_PLACEHOLDER2},
+    };
+    return std::vector<ManufacturerForPlatform>{
+        ManufacturerForPlatform{"ARDUCAM", arducam_cameras}, MANUFACTURER_USB,
+        MANUFACTURER_DEBUG};
+  } else if (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5) {
+    std::vector<CameraNameAndType> hdmi_cameras{
+        CameraNameAndType{"HDMI IN", X_CAM_TYPE_ROCK_HDMI_IN},
+    };
+    return std::vector<ManufacturerForPlatform>{
+        ManufacturerForPlatform{"HDMI IN", hdmi_cameras}, MANUFACTURER_USB,
+        MANUFACTURER_DEBUG};
+  } else if (platform_type == X_PLATFORM_TYPE_X86) {
+    return std::vector<ManufacturerForPlatform>{MANUFACTURER_USB,
+                                                MANUFACTURER_DEBUG};
+  } else if (platform_type == X_PLATFORM_TYPE_NVIDIA_ORIN) {
+    std::vector<CameraNameAndType> nvidia_csi_cameras{
+        CameraNameAndType{"IMX577", X_CAM_TYPE_NVIDIA_ORIN_IMX577},
+    };
+    return std::vector<ManufacturerForPlatform>{
+        ManufacturerForPlatform{"NVIDIA CSI", nvidia_csi_cameras},
+        MANUFACTURER_USB, MANUFACTURER_DEBUG};
+  }
+  return std::vector<ManufacturerForPlatform>{MANUFACTURER_DEBUG};
 }
 
 #endif  // OPENHD_CAMERA_HPP

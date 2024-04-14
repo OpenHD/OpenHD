@@ -650,7 +650,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
                     cb_wb_video_rate_for_mcs_adjustment_percent}});
     // changing the mcs index via rc channel only makes sense on air,
     // and is only possible if the card supports it
-    if (m_broadcast_cards.at(0).is_openhd_supported) {
+    if (m_broadcast_cards.at(0).supports_openhd_wifibroadcast()) {
       auto cb_mcs_via_rc_channel = [this](std::string, int value) {
         if (value < 0 || value > 18)
           return false;  // 0 is disabled, valid rc channel number otherwise

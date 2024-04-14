@@ -53,6 +53,11 @@ OHDVideoAir::OHDVideoAir(std::vector<XCamera> cameras,
       on_audio_data(audioPacket);
     };
     m_audio_stream->set_link_cb(audio_cb);
+    if (m_generic_settings->get_settings().enable_audio == OPENHD_AUDIO_TEST) {
+      m_audio_stream->openhd_enable_audio_test = true;
+    } else {
+      m_audio_stream->openhd_enable_audio_test = false;
+    }
     m_audio_stream->start_looping();
   }
   openhd::LinkActionHandler::instance().action_request_bitrate_change_register(

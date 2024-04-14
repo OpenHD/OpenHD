@@ -770,7 +770,13 @@ static std::string create_dummy_filesrc_stream(const OHDPlatform& platform,
   std::stringstream ss;
   // ss<<"multifilesrc location="<<filename<<" loop=true ! ";
   ss << "filesrc location=" << path_filename << " ! ";
-  ss << "decodebin ! ";
+  if (OHDPlatform::instance().platform_type == X_PLATFORM_TYPE_X86) {
+    // decodebin sometimes doesn't work for whatever reason
+    // ss << "x264dec ! ";
+    ss << "decodebin force-sw-decoders=true ! ";
+  } else {
+    ss << "decodebin ! ";
+  }
   ss << fmt::format("videorate max-rate={} ! ",
                     settings.streamed_video_format.framerate);
   ss << "queue ! ";

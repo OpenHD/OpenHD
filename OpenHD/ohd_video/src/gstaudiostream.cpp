@@ -61,10 +61,16 @@ static std::string rpi_detect_alsasrc_device() {
   }
   const auto& arecord_list_output = opt_arecord_list_output.value();
   if (OHDUtil::contains(arecord_list_output, "card 3: ")) {
+    openhd::log::get_default()->debug("Found audio card 3");
     return "hw:3,0";  // Probably KMS
   }
   if (OHDUtil::contains(arecord_list_output, "card 2: ")) {
+    openhd::log::get_default()->debug("Found audio card 2");
     return "hw:2,0";  // Probably FKMS
+  }
+  if (OHDUtil::contains(arecord_list_output, "card 1:")) {
+    openhd::log::get_default()->debug("Found audio card 1");
+    return "hw:1,0";
   }
   return DEFAULT_ALSASRC_DEVICE;
 }
@@ -78,12 +84,13 @@ static std::string rpi_detect_alsasrc_device() {
 // gst-launch-1.0 udpsrc port=5051 caps="application/x-rtp, media=(string)audio,
 // clock-rate=(int)8000, encoding-name=(string)PCMA" ! rtppcmadepay !
 // audio/x-alaw, rate=8000, channels=1 ! alawdec ! alsasink device=hw:0
-static std::string create_pipeline() {
+std::string GstAudioStream::create_pipeline() {
   std::stringstream ss;
   auto opt_manual_audio_source =
       OHDFilesystemUtil::opt_read_file("/boot/openhd/audio_source.txt", false);
   // audiotestsrc always works, but obviously is not a mic ;)
-  if (OHDFilesystemUtil::exists("/boot/openhd/test_audio.txt")) {
+  if (OHDFilesystemUtil::exists("/boot/openhd/test_audio.txt") ||
+      openhd_enable_audio_test) {
     ss << "audiotestsrc"
        << " ! ";
   } else if (opt_manual_audio_source.has_value()) {
@@ -102,8 +109,12 @@ static std::string create_pipeline() {
   /*ss << "autoaudiosrc ! ";
   ss << "audioconvert ! ";
   ss << "rtpL16pay ! ";*/
-  ss << "audioresample ! ";
-  ss << "audioconvert ! ";  // Might or might not be needed ...
+  ss << "queue ! ";
+  // audioconvert might or might not be needed ...
+  // alawenc needs S16LE
+  ss << "audioconvert ! ";
+  ss << "audio/x-raw,format=S16LE ! ";
+  ss << "audioresample ! ";  // Might or might not be needed ...
   ss << "alawenc ! rtppcmapay max-ptime=20000000 ! ";
   ss << OHDGstHelper::createOutputAppSink();
   return ss.str();

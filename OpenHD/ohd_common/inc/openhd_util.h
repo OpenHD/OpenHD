@@ -1,6 +1,7 @@
 #ifndef OPENHD_UTIL_H
 #define OPENHD_UTIL_H
 
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <vector>
