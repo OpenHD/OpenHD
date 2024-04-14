@@ -77,4 +77,5 @@ jobs:
         distro: "ubuntu"
         release: "bionic"
         republish: "true" # needed ONLY if version is not changing
-        file: "CMake/build/*.deb"
+        file: "OpenHD/*.deb
+
