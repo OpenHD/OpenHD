@@ -13,8 +13,8 @@
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"
 
-static constexpr auto MVIDIA_ORIN_BOARDID_PATH =
-    "/proc/device-tree/nvidia,boardids";
+static constexpr auto MVIDIA_XAVIER_BOARDID_PATH =
+    "/proc/device-tree/nvidia,dtsfilename";
 static constexpr auto DEVICE_TREE_COMPATIBLE_PATH =
     "/proc/device-tree/compatible";
 static constexpr auto ALLWINNER_BOARDID_PATH = "/dev/cedar_dev";
@@ -62,7 +62,7 @@ static int internal_discover_platform() {
     }
     return X_PLATFORM_TYPE_RPI_OLD;
   }
-  if (OHDFilesystemUtil::exists(MVIDIA_ORIN_BOARDID_PATH)) {
+  if (OHDFilesystemUtil::exists(MVIDIA_XAVIER_BOARDID_PATH)) {
     return X_PLATFORM_TYPE_NVIDIA_XAVIER;
   }
   {
