@@ -34,7 +34,7 @@ static constexpr int X_PLATFORM_TYPE_ALWINNER_X20 = 30;
 static constexpr int X_PLATFORM_TYPE_OPENIPC_SIGMASTAR_UNDEFINED = 36;
 
 // Numbers 40..50 are reserved for NVIDIA
-static constexpr int X_PLATFORM_TYPE_NVIDIA_ORIN = 40;
+static constexpr int X_PLATFORM_TYPE_NVIDIA_XAVIER = 40;
 
 std::string x_platform_type_to_string(int platform_type);
 

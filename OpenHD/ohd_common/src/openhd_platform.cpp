@@ -63,7 +63,7 @@ static int internal_discover_platform() {
     return X_PLATFORM_TYPE_RPI_OLD;
   }
   if (OHDFilesystemUtil::exists(MVIDIA_ORIN_BOARDID_PATH)) {
-    return X_PLATFORM_TYPE_NVIDIA_ORIN;
+    return X_PLATFORM_TYPE_NVIDIA_XAVIER;
   }
   {
     // X86
@@ -123,7 +123,7 @@ std::string x_platform_type_to_string(int platform_type) {
       return "X20";
     case X_PLATFORM_TYPE_OPENIPC_SIGMASTAR_UNDEFINED:
       return "OPENIPC SIGMASTAR";
-    case X_PLATFORM_TYPE_NVIDIA_ORIN:
+    case X_PLATFORM_TYPE_NVIDIA_XAVIER:
       return "NVIDIA_ORIN";
     default:
       break;
@@ -151,7 +151,7 @@ int get_fec_max_block_size_for_platform(int platform_type) {
   if (platform_type == X_PLATFORM_TYPE_ALWINNER_X20) {
     return 30;
   }
-  if (platform_type == X_PLATFORM_TYPE_NVIDIA_ORIN) {
+  if (platform_type == X_PLATFORM_TYPE_NVIDIA_XAVIER) {
     return 50;
   }
   return 20;
