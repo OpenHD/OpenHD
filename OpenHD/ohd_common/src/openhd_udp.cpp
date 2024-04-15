@@ -119,7 +119,15 @@ void openhd::UDPReceiver::loopUntilError() {
       // this can also come from the shutdown, in which case it is not an error.
       // But this way we break out of the loop.
       if (receiving) {
-        get_console()->warn("Got message length of: {}", message_length);
+        if (std::chrono::steady_clock::now() - m_last_receive_error_log >=
+            std::chrono::seconds(3)) {
+          get_console()->warn("Got message length of: {} log_skip_count:{}",
+                              message_length,
+                              m_last_receive_error_log_skip_count);
+          m_last_receive_error_log_skip_count = 0;
+        } else {
+          m_last_receive_error_log_skip_count++;
+        }
       }
     }
   }
