@@ -124,6 +124,7 @@ void openhd::UDPReceiver::loopUntilError() {
           get_console()->warn("Got message length of: {} log_skip_count:{}",
                               message_length,
                               m_last_receive_error_log_skip_count);
+          m_last_receive_error_log = std::chrono::steady_clock::now();
           m_last_receive_error_log_skip_count = 0;
         } else {
           m_last_receive_error_log_skip_count++;
