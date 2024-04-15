@@ -535,11 +535,11 @@ static std::vector<ManufacturerForPlatform> get_camera_choices_for_platform(
     return std::vector<ManufacturerForPlatform>{MANUFACTURER_USB,
                                                 MANUFACTURER_DEBUG};
   } else if (platform_type == X_PLATFORM_TYPE_NVIDIA_XAVIER) {
-    std::vector<CameraNameAndType> nvidia_csi_cameras{
+    std::vector<CameraNameAndType> nvidia_leopard_csi_cameras{
         CameraNameAndType{"IMX577", X_CAM_TYPE_NVIDIA_XAVIER_IMX577},
     };
     return std::vector<ManufacturerForPlatform>{
-        ManufacturerForPlatform{"NVIDIA CSI", nvidia_csi_cameras},
+        ManufacturerForPlatform{"LEOPARD", nvidia_leopard_csi_cameras},
         MANUFACTURER_USB, MANUFACTURER_DEBUG};
   }
   return std::vector<ManufacturerForPlatform>{MANUFACTURER_DEBUG};
