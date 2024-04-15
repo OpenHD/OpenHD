@@ -816,5 +816,84 @@ static std::string create_dummy_filesrc_stream(const OHDPlatform& platform,
   return ss.str();
 }
 
+static std::string create_nvarguscamerasrc(const CameraSettings& settings) {
+  std::stringstream ss;
+  ss << "nvarguscamerasrc do-timestamp=true ! ";
+  ss << "video/x-raw(memory:NVMM), format=NV12, ";
+  ss << "width=" << settings.streamed_video_format.width << ", ";
+  ss << "height=" << settings.streamed_video_format.height << ", ";
+  ss << "framerate=" << settings.streamed_video_format.framerate << "/1 ! ";
+  return ss.str();
+}
+// For jetson we have a nice separation between camera / ISP and encoder
+// This creates the encoding part of the gstreamer pipeline
+static std::string create_nvidia_encoder_pipeline(
+    const CameraSettings& settings) {
+  std::stringstream ss;
+  // Consti10: I would like to use the nvv4l2h264/5encoder, but r.n it looks to
+  // me as if the stream created by it cannot be decoded properly by multiple
+  // platform(s). With the omxh26Xdec equivalents, this issue does not exist.
+  // UPDATE: It is even more complicated. For h264, we need to use omx encode
+  // and nvv4 decode For h265, we need to use nvv4 encode and nvv4 decode
+  // https://developer.download.nvidia.com/embedded/L4T/r31_Release_v1.0/Docs/Accelerated_GStreamer_User_Guide.pdf?E_vSS50FKrZaJBjDtnCBmtaY8hWM1QCYlMHtXBqvZ_Jeuw0GXuLNaQwMBWUDABSnWCD-p8ABlBpBpP-kb2ADgWugbW8mgGPxUWJG_C4DWaL1yKjUVMy1AxH1RTaGOW82yFJ549mea--FBPuZUH3TT1MoEd4-sgdrZal5qr1J0McEFeFaVUc&t=eyJscyI6InJlZiIsImxzZCI6IlJFRi1kb2NzLm52aWRpYS5jb21cLyJ9
+  // jetson is also bits per second
+  const auto bitrateBitsPerSecond =
+      openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
+  if (settings.streamed_video_format.videoCodec == VideoCodec::H264) {
+    const bool use_omx_encoder = true;
+    if (use_omx_encoder) {
+      // for omx control-rate=2 means constant, in constrast to nvv4l2h264enc
+      ss << "omxh264enc control-rate=2 insert-sps-pps=true bitrate="
+         << bitrateBitsPerSecond << " ";
+      ss << "iframeinterval=" << settings.h26x_keyframe_interval << " ";
+      // this was added to test if it fixes issues when decoding jetson h264 on
+      // rpi
+      ss << "insert-vui=true ";
+      ss << "! ";
+    } else {
+      ss << "nvv4l2h264enc control-rate=1 insert-sps-pps=true bitrate="
+         << bitrateBitsPerSecond << " ";
+      ss << "iframeinterval=" << settings.h26x_keyframe_interval << " ";
+      // https://forums.developer.nvidia.com/t/high-decoding-latency-for-stream-produced-by-nvv4l2h264enc-compared-to-omxh264enc/159517
+      // https://forums.developer.nvidia.com/t/parameter-poc-type-missing-on-jetson-though-mentioned-in-the-documentation/164545
+      // NOTE: This is quite important, without it jetson nvv4l2decoder cannot
+      // properly decode (confirmed) (WTF nvidia you cannot encode your own data
+      // haha ;) ) As well as a lot of phones (confirmed) and perhaps the
+      // rpi,too (not confirmed).
+      ss << "poc-type=2 ";
+      // TODO should we make max-perf-enable on by default ?
+      ss << "maxperf-enable=true ";
+      ss << "! ";
+    }
+  } else if (settings.streamed_video_format.videoCodec == VideoCodec::H265) {
+    const bool use_omx_encoder = false;
+    if (use_omx_encoder) {
+      // for omx control-rate=2 means constant, in contrast to nvv4l2h264enc
+      ss << "omxh265enc control-rate=2 insert-sps-pps=true bitrate="
+         << bitrateBitsPerSecond << " ";
+      ss << "iframeinterval=" << settings.h26x_keyframe_interval << " ";
+      ss << "! ";
+    } else {
+      ss << "nvv4l2h265enc control-rate=1 insert-sps-pps=true bitrate="
+         << bitrateBitsPerSecond << " ";
+      // TODO what is the difference between iframeinterval and idrinterval
+      ss << "iframeinterval=" << settings.h26x_keyframe_interval << " ";
+      ss << "idrinterval=" << settings.h26x_keyframe_interval << " ";
+      ss << "maxperf-enable=true ";
+      ss << "! ";
+    }
+  } else {
+    assert(false);
+  }
+  return ss.str();
+}
+
+static std::string create_nvidia_xavier_stream(const CameraSettings& settings) {
+  std::stringstream ss;
+  ss << create_nvarguscamerasrc(settings);
+  ss << create_nvidia_encoder_pipeline(settings);
+  return ss.str();
+}
+
 }  // namespace OHDGstHelper
 #endif  // OPENHD_OHDGSTHELPER_H
