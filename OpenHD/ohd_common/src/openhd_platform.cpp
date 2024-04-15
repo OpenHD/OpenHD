@@ -124,7 +124,7 @@ std::string x_platform_type_to_string(int platform_type) {
     case X_PLATFORM_TYPE_OPENIPC_SIGMASTAR_UNDEFINED:
       return "OPENIPC SIGMASTAR";
     case X_PLATFORM_TYPE_NVIDIA_XAVIER:
-      return "NVIDIA_ORIN";
+      return "NVIDIA_XAVIER";
     default:
       break;
   }
