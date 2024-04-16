@@ -13,7 +13,7 @@ static constexpr auto MICROHARD_GND_IP = "192.168.168.12";
 // The assigned IPs
 // NOTE: They have to be set correctly !
 static constexpr auto DEVICE_IP_GND = "192.168.168.122";
-static constexpr auto DEVICE_IP_AIR = "192.168.168.148";
+static constexpr auto DEVICE_IP_AIR = "192.168.168.153";
 
 // We send data over those port(s)
 static constexpr int MICROHARD_UDP_PORT_VIDEO_AIR_TX = 5910;

@@ -13,8 +13,8 @@
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"
 
-static constexpr auto MVIDIA_ORIN_BOARDID_PATH =
-    "/proc/device-tree/nvidia,boardids";
+static constexpr auto MVIDIA_XAVIER_BOARDID_PATH =
+    "/proc/device-tree/nvidia,dtsfilename";
 static constexpr auto DEVICE_TREE_COMPATIBLE_PATH =
     "/proc/device-tree/compatible";
 static constexpr auto ALLWINNER_BOARDID_PATH = "/dev/cedar_dev";
@@ -62,8 +62,8 @@ static int internal_discover_platform() {
     }
     return X_PLATFORM_TYPE_RPI_OLD;
   }
-  if (OHDFilesystemUtil::exists(MVIDIA_ORIN_BOARDID_PATH)) {
-    return X_PLATFORM_TYPE_NVIDIA_ORIN;
+  if (OHDFilesystemUtil::exists(MVIDIA_XAVIER_BOARDID_PATH)) {
+    return X_PLATFORM_TYPE_NVIDIA_XAVIER;
   }
   {
     // X86
@@ -123,8 +123,8 @@ std::string x_platform_type_to_string(int platform_type) {
       return "X20";
     case X_PLATFORM_TYPE_OPENIPC_SIGMASTAR_UNDEFINED:
       return "OPENIPC SIGMASTAR";
-    case X_PLATFORM_TYPE_NVIDIA_ORIN:
-      return "NVIDIA_ORIN";
+    case X_PLATFORM_TYPE_NVIDIA_XAVIER:
+      return "NVIDIA_XAVIER";
     default:
       break;
   }
@@ -151,7 +151,7 @@ int get_fec_max_block_size_for_platform(int platform_type) {
   if (platform_type == X_PLATFORM_TYPE_ALWINNER_X20) {
     return 30;
   }
-  if (platform_type == X_PLATFORM_TYPE_NVIDIA_ORIN) {
+  if (platform_type == X_PLATFORM_TYPE_NVIDIA_XAVIER) {
     return 50;
   }
   return 20;
