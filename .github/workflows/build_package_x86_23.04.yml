@@ -1,4 +1,4 @@
-name: build_package_noble
+name: build_package_LUNAR
 
 on:
   push:
@@ -6,7 +6,6 @@ on:
       - "2.5-evo"
       - "dev-release"
       - "release"
-      - "24.04"
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
@@ -17,7 +16,7 @@ jobs:
     #runs-on: ubuntu-18.04
     runs-on: ubuntu-22.04
     container:
-      image: docker://ubuntu:noble
+      image: docker://ubuntu:lunar
     env:
       CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
     steps:
@@ -42,7 +41,7 @@ jobs:
       - name: Build with make
         run: |
           cd OpenHD
-          ./package.sh standard x86_64 ubuntu noble
+          ./package.sh standard x86_64 ubuntu lunar
           ls -a
           echo ${{ github.ref }}
 
@@ -65,7 +64,7 @@ jobs:
           owner: "openhd"
           repo: ${{ github.ref_name }}
           distro: "ubuntu"
-          release: "noble"
+          release: "lunar"
           republish: "true" # needed ONLY if version is not changing
           file: "OpenHD/*.deb"
         if: ${{ github.ref != 'refs/heads/2.5-evo' }}
