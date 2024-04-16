@@ -55,7 +55,8 @@ struct OHDPlatform {
   bool is_rpi_weak() const;
   bool is_rock() const;
   bool is_rpi_or_x86() const;
-  bool is_allwinner() const;
+  // alwinner
+  bool is_x20() const;
 };
 
 // We need to differentiate between rpi 4 and other pi's to use the right fec

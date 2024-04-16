@@ -31,7 +31,7 @@ enum class WiFiCardType {
 
 static constexpr uint8_t WIFI_CARD_SUB_TYPE_UNKNOWN = 0;
 static constexpr uint8_t WIFI_CARD_SUB_TYPE_RTL8812AU_ASUS = 1;
-static constexpr uint8_t WIFI_CARD_SUB_TYPE_RTL8812AU_X20 = 1;
+static constexpr uint8_t WIFI_CARD_SUB_TYPE_RTL8812AU_X20 = 2;
 
 static std::string wifi_card_type_to_string(const WiFiCardType& card_type) {
   switch (card_type) {

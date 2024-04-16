@@ -1024,6 +1024,7 @@ void WBLink::wt_update_statistics() {
             : curr_settings.wb_tx_power_milli_watt_armed;
     card_stats.curr_status = m_wb_txrx->get_card_has_disconnected(i) ? 1 : 0;
     card_stats.card_type = wifi_card_type_to_int(card.type);
+    card_stats.card_sub_type = card.sub_type;
     // m_console->debug("Signal quality {}",card_stats.signal_quality);
   }
   stats.is_air = m_profile.is_air;

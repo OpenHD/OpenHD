@@ -231,7 +231,7 @@ int main(int argc, char *argv[]) {
     // On x20, we do not have qopenhd installed (we run as air only) so we can
     // skip this step
     if (!openhd::load_config().GEN_NO_QOPENHD_AUTOSTART &&
-        !OHDPlatform::instance().is_allwinner()) {
+        !OHDPlatform::instance().is_x20()) {
       if (!profile.is_air) {
         OHDUtil::run_command("systemctl", {"start", "qopenhd"});
       } else {

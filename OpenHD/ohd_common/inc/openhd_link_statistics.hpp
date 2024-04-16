@@ -125,8 +125,10 @@ struct Xmavlink_openhd_stats_monitor_mode_wifi_card_t {
   int16_t dummy1;            /*<  for future use*/
   uint8_t card_index; /*<  Ground might have multiple card(s) for diversity.*/
   uint8_t card_type;  /*<  See openhd card_type enum*/
-  uint8_t tx_active;  /*<  On ground stations with multiple card(s), only one
-                         card is selected for TX at a time.*/
+  // extra
+  uint8_t card_sub_type;
+  uint8_t tx_active; /*<  On ground stations with multiple card(s), only one
+                        card is selected for TX at a time.*/
   int8_t rx_rssi; /*<  rx rssi in dBm of this card - depending on the hw, might
                      be the max of all antennas or different.*/
   int8_t rx_rssi_1;                  /*<  rx rssi in dBm for antenna 1*/

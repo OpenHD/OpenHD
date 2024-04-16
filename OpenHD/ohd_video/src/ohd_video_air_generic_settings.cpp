@@ -55,7 +55,7 @@ AirCameraGenericSettings AirCameraGenericSettingsHolder::create_default()
   ret.secondary_camera_type = X_CAM_TYPE_DISABLED;
   if (OHDPlatform::instance().is_rpi()) {
     ret.primary_camera_type = rpi_get_default_primary_cam_type();
-  } else if (OHDPlatform::instance().is_allwinner()) {
+  } else if (OHDPlatform::instance().is_x20()) {
     ret.primary_camera_type = X_CAM_TYPE_X20_RUNCAM_NANO;
   } else if (OHDPlatform::instance().platform_type ==
              X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W) {

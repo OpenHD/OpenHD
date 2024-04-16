@@ -74,7 +74,7 @@ std::string GStreamerStream::create_source_encode_pipeline(
   CameraSettings setting = cam_holder.get_settings();
   const bool RPI_HDMI_TO_CSI_USE_V4l2 =
       OHDFilesystemUtil::exists("/boot/openhd/hdmi_v4l2.txt");
-  if (OHDPlatform::instance().is_allwinner()) {
+  if (OHDPlatform::instance().is_x20()) {
     openhd::x20::apply_x20_runcam_iq_settings(setting);
   } else if (camera.requires_rpi_mmal_pipeline() && RPI_HDMI_TO_CSI_USE_V4l2) {
     openhd::rpi::hdmi::initialize_resolution(
@@ -365,7 +365,7 @@ void GStreamerStream::stream_once() {
   openhd::LinkActionHandler::instance().set_cam_info_status(
       m_camera_holder->get_camera().index, CAM_STATUS_RESTARTING);
   setup();
-  if (OHDPlatform::instance().is_allwinner()) {
+  if (OHDPlatform::instance().is_x20()) {
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
   }
   start();
