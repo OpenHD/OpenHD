@@ -1,4 +1,4 @@
-name: Build Jetson ONLINE
+name: Build NVIDA (AGX) online
 
 on: [push]
 
