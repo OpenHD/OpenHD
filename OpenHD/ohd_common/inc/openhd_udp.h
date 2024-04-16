@@ -108,6 +108,10 @@ class UDPReceiver {
   bool receiving = true;
   int mSocket;
   std::unique_ptr<std::thread> receiverThread = nullptr;
+  // Limit receive error log to every 3 seconds
+  std::chrono::steady_clock::time_point m_last_receive_error_log =
+      std::chrono::steady_clock::now();
+  int m_last_receive_error_log_skip_count = 0;
 };
 
 static const std::string ADDRESS_LOCALHOST = "127.0.0.1";
