@@ -177,7 +177,7 @@ void GStreamerStream::setup() {
     pipeline_content << " queue ! ";
     pipeline_content << "h264parse ! ";
     pipeline_content << "video/x-h264";
-    pipeline_content << ", stream-format=\"byte-stream\",alignment=au ! ";
+    pipeline_content << ", stream-format=\"byte-stream\",alignment=nal ! ";
     pipeline_content << OHDGstHelper::createOutputAppSink();
     /*pipeline_content << "video/x-h264,stream-format=byte-stream ! ";
     pipeline_content << OHDGstHelper::createOutputAppSink();*/

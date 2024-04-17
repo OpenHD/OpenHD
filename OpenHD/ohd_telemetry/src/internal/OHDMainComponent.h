@@ -96,6 +96,13 @@ class OHDMainComponent : public MavlinkComponent {
   // Only set / used on air, where we have a uart connection to the FC and
   // therefore can be 100% sure about the FC sys id
   std::atomic_int16_t m_air_fc_sys_id = -1;
+
+ private:
+  std::vector<MavlinkMessage> perform_time_synchronisation();
+  std::chrono::steady_clock::time_point m_last_timesync_request =
+      std::chrono::steady_clock::now();
+  int m_timesync_request_count = 0;
+  int64_t m_last_timesync_out_us = 0;
 };
 
 #endif  // XMAVLINKSERVICE_INTERNALTELEMETRY_H

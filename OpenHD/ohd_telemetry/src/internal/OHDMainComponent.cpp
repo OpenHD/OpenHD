@@ -13,6 +13,7 @@
 #include "openhd_config.h"
 #include "openhd_reboot_util.h"
 #include "openhd_spdlog_include.h"
+#include "openhd_util_time.h"
 
 OHDMainComponent::OHDMainComponent(OHDPlatform platform1, uint8_t parent_sys_id,
                                    bool runsOnAir)
@@ -230,6 +231,21 @@ std::optional<MavlinkMessage> OHDMainComponent::handle_timesync_message(
     mavlink_message_t response_message;
     mavlink_msg_timesync_encode(m_sys_id, m_comp_id, &response_message, &rsync);
     return MavlinkMessage{response_message};
+  } else if (tsync.target_system == m_sys_id &&
+             tsync.target_component == m_comp_id &&
+             msg.sysid == OHD_SYS_ID_GROUND) {
+    m_console->debug("Got timesink response");
+    if (m_last_timesync_out_us == tsync.ts1) {
+      const auto round_trip_time_us = -tsync.ts1;
+      m_console->debug(
+          "Got matching response, round trip time {}",
+          openhd::util::time_readable_ns(round_trip_time_us * 1000));
+    }
+  } else {
+    m_console->debug(
+        "Cannot handle timesync message target_system:{} target_component:{} "
+        "ts1{} tc1{}",
+        tsync.target_system, tsync.target_component, tsync.ts1, tsync.tc1);
   }
   return std::nullopt;
 }
@@ -330,6 +346,7 @@ OHDMainComponent::create_broadcast_stats_if_needed() {
       }
     }
   }
+  OHDUtil::vec_append(ret, perform_time_synchronisation());
   return ret;
 }
 
@@ -428,4 +445,28 @@ void OHDMainComponent::process_command_self(
   } else {
     m_console->debug("Unknown command {}", command.command);
   }
+}
+
+std::vector<MavlinkMessage> OHDMainComponent::perform_time_synchronisation() {
+  if (RUNS_ON_AIR) {
+    // We only ever ask the air for a timesync
+    return {};
+  }
+  const auto elapsed =
+      std::chrono::steady_clock::now() - m_last_timesync_request;
+  if (elapsed > std::chrono::milliseconds(1000)) {
+    mavlink_timesync_t timesync{};
+    timesync.target_system = OHD_SYS_ID_AIR;
+    timesync.target_component = MAV_COMP_ID_ONBOARD_COMPUTER;
+    timesync.tc1 = 0;
+    // Ardupilot seems to use us
+    m_last_timesync_out_us = get_time_microseconds();
+    timesync.ts1 = m_last_timesync_out_us;
+    MavlinkMessage msg;
+    mavlink_msg_timesync_encode(m_sys_id, m_comp_id, &msg.m, &timesync);
+    m_last_timesync_request = std::chrono::steady_clock::now();
+    m_console->debug("Sending timesync");
+    return {msg};
+  }
+  return {};
 }

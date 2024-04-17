@@ -79,11 +79,15 @@ void openhd::RTPHelper::set_out_cb(openhd::RTPHelper::OUT_CB cb) {
   m_out_cb = std::move(cb);
 }
 
-void openhd::RTPHelper::buffer_and_forward_rtp_encoded_fragment(
-    std::shared_ptr<std::vector<uint8_t>> fragment, bool is_h265) {
+openhd::RTPFragmentBuffer::RTPFragmentBuffer() {
+  m_console = openhd::log::create_or_get("RTPFragmentBuffer");
+}
+
+void openhd::RTPFragmentBuffer::buffer_and_forward(
+    std::shared_ptr<std::vector<uint8_t>> fragment, uint64_t dts) {
   m_frame_fragments.push_back(fragment);
   openhd::rtp_eof_helper::RTPFragmentInfo info{};
-  if (is_h265) {
+  if (m_is_h265) {
     info = openhd::rtp_eof_helper::h265_more_info(fragment->data(),
                                                   fragment->size());
   } else {
@@ -91,7 +95,7 @@ void openhd::RTPHelper::buffer_and_forward_rtp_encoded_fragment(
                                                   fragment->size());
   }
   if (info.is_fu_start) {
-    if (is_idr_frame(info.nal_unit_type, is_h265)) {
+    if (is_idr_frame(info.nal_unit_type, m_is_h265)) {
       m_last_fu_s_idr = true;
     } else {
       m_last_fu_s_idr = false;
@@ -110,8 +114,18 @@ void openhd::RTPHelper::buffer_and_forward_rtp_encoded_fragment(
   }
   if (is_last_fragment_of_frame) {
     on_new_rtp_fragmented_frame();
-
     m_frame_fragments.resize(0);
     m_last_fu_s_idr = false;
   }
+}
+
+void openhd::RTPFragmentBuffer::on_new_rtp_fragmented_frame() {
+  const bool is_intra_frame = m_last_fu_s_idr;
+  auto frame = openhd::FragmentedVideoFrame{m_frame_fragments,
+                                            std::chrono::steady_clock::now(),
+                                            m_enable_ultra_secure_encryption,
+                                            nullptr,
+                                            m_uses_intra_refresh,
+                                            is_intra_frame};
+  // m_console->debug("{}",frame.to_string());
 }

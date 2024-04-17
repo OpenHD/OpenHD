@@ -86,7 +86,7 @@ class GStreamerStream : public CameraStream {
   void x_on_new_rtp_fragmented_frame(
       std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments);
   bool m_last_fu_s_idr = false;
-  bool dirty_use_raw = false;
+  bool dirty_use_raw = true;
   void on_gst_nalu_buffer(const uint8_t* data, int data_len);
   void on_new_nalu(const uint8_t* data, int data_len);
   void on_new_nalu_frame(const uint8_t* data, int data_len);
