@@ -11,9 +11,23 @@
 
 namespace openhd {
 
+/**
+ * Due to legacy reasons, we have 2 cases:
+ * 1) We use gstreamer for rtp encoding - in this case, we get rtp fragments out
+ * via appsink and only need to listen for the FU-E (End bit) fragment(s) to
+ * properly forward a fragmented frame 2) We use gstreamer or something else for
+ * h264/h265 encoding, but not rtp encoding - in this case, we get (TODO: Be
+ * specific on the format) NALUs and packetize them using lib rtp. The first
+ * approach is much more reliable, but the second approach has its own
+ * advantages, too.
+ */
 class RTPHelper {
  public:
   explicit RTPHelper();
+
+  // USAGE: feed already encoded rtp fragments
+  void buffer_and_forward_rtp_encoded_fragment(
+      std::shared_ptr<std::vector<uint8_t>> fragment, bool is_h265);
 
   typedef std::function<void(
       std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments)>
@@ -32,6 +46,7 @@ class RTPHelper {
   rtp_payload_t m_handler{};
   void* encoder;
   std::shared_ptr<spdlog::logger> m_console;
+  bool m_last_fu_s_idr = false;
 
  private:
   std::vector<std::shared_ptr<std::vector<uint8_t>>> m_frame_fragments;

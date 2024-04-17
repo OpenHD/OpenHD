@@ -6,8 +6,12 @@
 
 #include <utility>
 
+#include "nalu/CodecConfigFinder.hpp"
+#include "nalu/fragment_helper.h"
+#include "nalu/nalu_helper.h"
 #include "openhd_util_time.h"
 #include "rtp-profile.h"
+#include "rtp_eof_helper.h"
 
 static void* rtp_alloc(void* /*param*/, int bytes) {
   static uint8_t buffer[2 * 1024 * 1024 + 4] = {
@@ -73,4 +77,41 @@ void openhd::RTPHelper::on_new_rtp_fragment(const uint8_t* data, int data_len,
 
 void openhd::RTPHelper::set_out_cb(openhd::RTPHelper::OUT_CB cb) {
   m_out_cb = std::move(cb);
+}
+
+void openhd::RTPHelper::buffer_and_forward_rtp_encoded_fragment(
+    std::shared_ptr<std::vector<uint8_t>> fragment, bool is_h265) {
+  m_frame_fragments.push_back(fragment);
+  openhd::rtp_eof_helper::RTPFragmentInfo info{};
+  if (is_h265) {
+    info = openhd::rtp_eof_helper::h265_more_info(fragment->data(),
+                                                  fragment->size());
+  } else {
+    info = openhd::rtp_eof_helper::h264_more_info(fragment->data(),
+                                                  fragment->size());
+  }
+  if (info.is_fu_start) {
+    if (is_idr_frame(info.nal_unit_type, is_h265)) {
+      m_last_fu_s_idr = true;
+    } else {
+      m_last_fu_s_idr = false;
+    }
+  }
+  // m_console->debug("Fragment {} start:{} end:{}
+  // type:{}",m_frame_fragments.size(),
+  //                  OHDUtil::yes_or_no(info.is_fu_start),
+  //                  OHDUtil::yes_or_no(info.is_fu_end),
+  //                  x_get_nal_unit_type_as_string(info.nal_unit_type,is_h265));
+  bool is_last_fragment_of_frame = info.is_fu_end;
+  if (m_frame_fragments.size() > 500) {
+    // Most likely something wrong with the "find end of frame" workaround
+    m_console->debug("No end of frame found after 1000 fragments");
+    is_last_fragment_of_frame = true;
+  }
+  if (is_last_fragment_of_frame) {
+    on_new_rtp_fragmented_frame();
+
+    m_frame_fragments.resize(0);
+    m_last_fu_s_idr = false;
+  }
 }
