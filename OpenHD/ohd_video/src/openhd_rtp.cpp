@@ -50,12 +50,12 @@ openhd::RTPHelper::RTPHelper() {
 }
 
 void openhd::RTPHelper::feed_nalu(const uint8_t* data, int data_len) {
-  m_console->debug("feed_nalu {}", data_len);
+  // m_console->debug("feed_nalu {}", data_len);
   int32_t timestamp = 0;
   timestamp = openhd::util::steady_clock_time_epoch_ms();
   rtp_payload_encode_input(encoder, data, data_len, timestamp);
   // all frames processed
-  m_console->debug("Done, got {} fragments", m_frame_fragments.size());
+  // m_console->debug("Done, got {} fragments", m_frame_fragments.size());
   if (m_out_cb) {
     m_out_cb(m_frame_fragments);
   }
@@ -64,8 +64,9 @@ void openhd::RTPHelper::feed_nalu(const uint8_t* data, int data_len) {
 
 void openhd::RTPHelper::on_new_rtp_fragment(const uint8_t* data, int data_len,
                                             uint32_t timestamp, int last) {
-  m_console->debug("on_new_rtp_fragment {} ts:{} last:{}", data_len, timestamp,
-                   last);
+  // m_console->debug("on_new_rtp_fragment {} ts:{} last:{}", data_len,
+  // timestamp,
+  //                  last);
   auto shared = std::make_shared<std::vector<uint8_t>>(data, data + data_len);
   m_frame_fragments.emplace_back(shared);
 }
