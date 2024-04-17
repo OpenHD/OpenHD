@@ -83,7 +83,8 @@ class GStreamerStream : public CameraStream {
   void on_new_rtp_fragmented_frame();
   std::vector<std::shared_ptr<std::vector<uint8_t>>> m_frame_fragments;
 
-  void x_on_new_rtp_fragmented_frame(std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments);
+  void x_on_new_rtp_fragmented_frame(
+      std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments);
   bool m_last_fu_s_idr = false;
   bool dirty_use_raw = true;
   void on_gst_nalu_buffer(const uint8_t* data, int data_len);
@@ -93,6 +94,7 @@ class GStreamerStream : public CameraStream {
   CodecConfigFinder m_config_finder;
   std::chrono::steady_clock::time_point m_last_log_streaming_disabled =
       std::chrono::steady_clock::now();
+
  private:
   std::shared_ptr<openhd::RTPHelper> m_rtp_helper;
 };
