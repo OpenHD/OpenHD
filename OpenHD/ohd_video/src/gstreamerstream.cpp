@@ -19,6 +19,8 @@
 #include "rtp_eof_helper.h"
 #include "x20_image_quality_helper.h"
 
+#include "openhd_rtp.h"
+
 GStreamerStream::GStreamerStream(std::shared_ptr<CameraHolder> camera_holder,
                                  openhd::ON_ENCODE_FRAME_CB out_cb)
     //: CameraStream(platform, camera_holder, video_udp_port) {
@@ -47,6 +49,11 @@ GStreamerStream::GStreamerStream(std::shared_ptr<CameraHolder> camera_holder,
             .infiray_custom_control_zoom_absolute_colorpalete,
         m_camera_holder->get_camera().usb_v4l2_device_number);
   }
+  auto lol_cb=[this](std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments){
+    x_on_new_rtp_fragmented_frame(frame_fragments);
+  };
+  m_rtp_helper=std::make_shared<openhd::RTPHelper>();
+  m_rtp_helper->set_out_cb(lol_cb);
   // m_gst_video_recorder=std::make_unique<GstVideoRecorder>();
   m_console->debug("GStreamerStream::GStreamerStream done");
 }
@@ -166,6 +173,10 @@ void GStreamerStream::setup() {
     pipeline_content <<
     OHDGstHelper::create_caps_nal(setting.streamed_video_format.videoCodec);
     pipeline_content << " queue ! ";*/
+    pipeline_content << " queue ! ";
+    pipeline_content << "h264parse ! ";
+    pipeline_content<<"video/x-h264";
+    pipeline_content<<", stream-format=\"byte-stream\",alignment=au ! ";
     pipeline_content << OHDGstHelper::createOutputAppSink();
     /*pipeline_content << "video/x-h264,stream-format=byte-stream ! ";
     pipeline_content << OHDGstHelper::createOutputAppSink();*/
@@ -567,6 +578,29 @@ void GStreamerStream::on_new_rtp_fragmented_frame() {
   }
 }
 
+void GStreamerStream::x_on_new_rtp_fragmented_frame(
+    std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments) {
+  if (m_output_cb) {
+    const auto stream_index = m_camera_holder->get_camera().index;
+    const bool enable_ultra_secure_encryption =
+        m_camera_holder->get_settings().enable_ultra_secure_encryption;
+    const bool is_intra_enabled =
+        m_camera_holder->get_settings().h26x_intra_refresh_type != -1;
+    const bool is_intra_frame = m_last_fu_s_idr;
+    auto frame = openhd::FragmentedVideoFrame{frame_fragments,
+                                              std::chrono::steady_clock::now(),
+                                              enable_ultra_secure_encryption,
+                                              nullptr,
+                                              is_intra_enabled,
+                                              is_intra_frame};
+    // m_console->debug("{}",frame.to_string());
+    m_output_cb(stream_index, frame);
+  } else {
+    m_console->debug("No output cb");
+  }
+}
+
+
 void GStreamerStream::on_gst_nalu_buffer(const uint8_t* data, int data_len) {
   // m_console->debug(OHDUtil::bytes_as_string(data,data_len));
   int offset = 0;
@@ -616,7 +650,8 @@ void GStreamerStream::on_new_nalu_frame(const uint8_t* data, int data_len) {
 
 void GStreamerStream::forward_video_frame(
     std::shared_ptr<std::vector<uint8_t>> frame) {
-  if (m_output_cb) {
+  m_rtp_helper->feed_nalu(frame->data(),frame->size());
+  /*if (m_output_cb) {
     const auto stream_index = m_camera_holder->get_camera().index;
     auto ohd_frame = openhd::FragmentedVideoFrame{
         {},
@@ -626,5 +661,5 @@ void GStreamerStream::forward_video_frame(
     m_output_cb(stream_index, ohd_frame);
   } else {
     m_console->debug("No output cb");
-  }
+  }*/
 }

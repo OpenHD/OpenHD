@@ -13,7 +13,9 @@ option(ENABLE_USB_CAMERAS "USB cameras support" ON)
 find_package(PkgConfig REQUIRED)
 
 add_library(OHDVideoLib STATIC
-        inc/rpi_hdmi_to_csi_v4l2_helper.h) # initialized below
+        inc/rpi_hdmi_to_csi_v4l2_helper.h
+        src/openhd_rtp.cpp
+        inc/openhd_rtp.h) # initialized below
 add_library(OHDVideoLib::OHDVideoLib ALIAS OHDVideoLib)
 
 # Only needed when building this submodule manually
@@ -27,6 +29,14 @@ set(sources
     src/ohd_video_ground.cpp
     #src/gst_recorder.cpp
     #src/gst_recording_demuxer.cpp
+)
+
+list(APPEND sources
+        librtp/src/rtp-h264-pack.c
+        librtp/src/rtp-h265-pack.c
+        librtp/src/rtp-packet.c
+        librtp/src/rtp-payload.c
+        librtp/src/rtp-h264-bitstream.c
 )
 
 if(ENABLE_AIR)
@@ -101,6 +111,7 @@ endif ()
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
 target_sources(OHDVideoLib PRIVATE ${sources})
 target_include_directories(OHDVideoLib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/inc)
+target_include_directories(OHDVideoLib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/librtp/inc)
 
 target_link_libraries(OHDVideoLib PUBLIC OHDCommonLib)
 
