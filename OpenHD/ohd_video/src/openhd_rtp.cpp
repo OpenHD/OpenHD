@@ -36,7 +36,7 @@ static int rtp_encode_packet(void* param, const void* packet, int bytes,
   return 0;
 }
 
-openhd::RTPHelper::RTPHelper() {
+openhd::RTPHelper::RTPHelper(bool is_h265) : m_is_h265(is_h265) {
   m_console = openhd::log::create_or_get("RTPHelp");
 
   m_handler.alloc = rtp_alloc;
@@ -45,12 +45,26 @@ openhd::RTPHelper::RTPHelper() {
 
   int payload = 96;  // WEIRD RTP_PAYLOAD_H264
   const char* encoding = "H264";
+  if (m_is_h265) {
+    encoding = "H265";
+  }
   uint16_t seq = 0;
   uint32_t ssrc = 0;
 
   encoder =
       rtp_payload_encode_create(payload, encoding, seq, ssrc, &m_handler, this);
   assert(encoder);
+}
+
+openhd::RTPHelper::~RTPHelper() { rtp_payload_encode_destroy(encoder); }
+
+void openhd::RTPHelper::feed_multiple_nalu(const uint8_t* data, int data_len) {
+  int offset = 0;
+  while (offset < data_len) {
+    int nalu_len = find_next_nal(&data[offset], data_len);
+    on_new_split_nalu(&data[offset], nalu_len);
+    offset += nalu_len;
+  }
 }
 
 void openhd::RTPHelper::feed_nalu(const uint8_t* data, int data_len) {
@@ -77,6 +91,38 @@ void openhd::RTPHelper::on_new_rtp_fragment(const uint8_t* data, int data_len,
 
 void openhd::RTPHelper::set_out_cb(openhd::RTPHelper::OUT_CB cb) {
   m_out_cb = std::move(cb);
+}
+
+void openhd::RTPHelper::on_new_split_nalu(const uint8_t* data, int data_len) {
+  NALU nalu(data, data_len);
+  // m_console->debug("Got new NAL {}
+  // {}",data_len,nalu.get_nal_unit_type_as_string()); if(nalu.is_sei())return;
+  if (m_config_finder.all_config_available(m_is_h265)) {
+    if (nalu.is_config()) {
+      if (m_config_finder.check_is_still_same_config_data(nalu)) {
+        // we can discard this NAL
+      } else {
+        m_config_finder.reset();
+        m_config_finder.save_if_config(nalu);
+      }
+    } else {
+      if (nalu.is_sei() || nalu.is_aud()) {
+        // We can discard (AUDs are written manually on the rx)
+      } else {
+        on_new_nalu_frame(data, data_len);
+      }
+    }
+  } else {
+    m_config_finder.save_if_config(nalu);
+  }
+}
+
+void openhd::RTPHelper::on_new_nalu_frame(const uint8_t* data, int data_len) {
+  if (m_config_finder.all_config_available()) {
+    auto config = m_config_finder.get_config_data(false);
+    feed_nalu(config->data(), config->size());
+  }
+  feed_nalu(data, data_len);
 }
 
 openhd::RTPFragmentBuffer::RTPFragmentBuffer() {

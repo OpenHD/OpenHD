@@ -48,13 +48,6 @@ GStreamerStream::GStreamerStream(std::shared_ptr<CameraHolder> camera_holder,
             .infiray_custom_control_zoom_absolute_colorpalete,
         m_camera_holder->get_camera().usb_v4l2_device_number);
   }
-  auto lol_cb =
-      [this](
-          std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments) {
-        x_on_new_rtp_fragmented_frame(frame_fragments);
-      };
-  m_rtp_helper = std::make_shared<openhd::RTPHelper>();
-  m_rtp_helper->set_out_cb(lol_cb);
   // m_gst_video_recorder=std::make_unique<GstVideoRecorder>();
   m_console->debug("GStreamerStream::GStreamerStream done");
 }
@@ -175,9 +168,10 @@ void GStreamerStream::setup() {
     OHDGstHelper::create_caps_nal(setting.streamed_video_format.videoCodec);
     pipeline_content << " queue ! ";*/
     pipeline_content << " queue ! ";
-    pipeline_content << "h264parse ! ";
-    pipeline_content << "video/x-h264";
-    pipeline_content << ", stream-format=\"byte-stream\",alignment=nal ! ";
+    pipeline_content << OHDGstHelper::create_parse_for_codec(
+        setting.streamed_video_format.videoCodec);
+    pipeline_content << OHDGstHelper::create_caps_nal(
+        setting.streamed_video_format.videoCodec, true);
     pipeline_content << OHDGstHelper::createOutputAppSink();
     /*pipeline_content << "video/x-h264,stream-format=byte-stream ! ";
     pipeline_content << OHDGstHelper::createOutputAppSink();*/
@@ -236,6 +230,14 @@ void GStreamerStream::setup() {
       gst_bin_get_by_name(GST_BIN(m_gst_pipeline), "out_appsink");
   assert(m_app_sink_element);
   // m_console->debug("Cam encoding format: {}",(int)cam_info.encoding_format);
+  auto lol_cb =
+      [this](
+          std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments) {
+        x_on_new_rtp_fragmented_frame(frame_fragments);
+      };
+  m_rtp_helper = std::make_shared<openhd::RTPHelper>(
+      setting.streamed_video_format.videoCodec == VideoCodec::H265);
+  m_rtp_helper->set_out_cb(lol_cb);
 }
 
 void GStreamerStream::start() {
@@ -500,7 +502,8 @@ void GStreamerStream::stream_once() {
       if (fragment_data && !fragment_data->empty()) {
         // If we got a new sample, aggregate then forward
         if (dirty_use_raw) {
-          on_gst_nalu_buffer(fragment_data->data(), fragment_data->size());
+          m_rtp_helper->feed_multiple_nalu(fragment_data->data(),
+                                           fragment_data->size());
         } else {
           on_new_rtp_frame_fragment(std::move(fragment_data), buffer_dts);
         }
@@ -599,67 +602,4 @@ void GStreamerStream::x_on_new_rtp_fragmented_frame(
   } else {
     m_console->debug("No output cb");
   }
-}
-
-void GStreamerStream::on_gst_nalu_buffer(const uint8_t* data, int data_len) {
-  // m_console->debug(OHDUtil::bytes_as_string(data,data_len));
-  int offset = 0;
-  while (offset < data_len) {
-    int nalu_len = find_next_nal(&data[offset], data_len);
-    on_new_nalu(&data[offset], nalu_len);
-    offset += nalu_len;
-  }
-}
-
-void GStreamerStream::on_new_nalu(const uint8_t* data, int data_len) {
-  // m_console->debug("Got new NAL {}",data_len);
-  const bool is_h265 = false;
-  NALU nalu(data, data_len);
-  // m_console->debug("Got new NAL {}
-  // {}",data_len,nalu.get_nal_unit_type_as_string()); if(nalu.is_sei())return;
-  if (m_config_finder.all_config_available(is_h265)) {
-    if (nalu.is_config()) {
-      if (m_config_finder.check_is_still_same_config_data(nalu)) {
-        // we can discard this NAL
-      } else {
-        m_config_finder.reset();
-        m_config_finder.save_if_config(nalu);
-      }
-    } else {
-      if (nalu.is_sei() || nalu.is_aud()) {
-        // We can discard (AUDs are written manually on the rx)
-      } else {
-        on_new_nalu_frame(data, data_len);
-      }
-    }
-  } else {
-    m_config_finder.save_if_config(nalu);
-  }
-}
-
-void GStreamerStream::on_new_nalu_frame(const uint8_t* data, int data_len) {
-  if (m_config_finder.all_config_available()) {
-    auto config = m_config_finder.get_config_data(false);
-    forward_video_frame(config);
-  }
-  auto buff = std::make_shared<std::vector<uint8_t>>(data, data + data_len);
-  forward_video_frame(buff);
-  // forward_video_frame(get_h264_aud());
-  // forward_video_frame(get_h264_nalu_start_code());
-}
-
-void GStreamerStream::forward_video_frame(
-    std::shared_ptr<std::vector<uint8_t>> frame) {
-  m_rtp_helper->feed_nalu(frame->data(), frame->size());
-  /*if (m_output_cb) {
-    const auto stream_index = m_camera_holder->get_camera().index;
-    auto ohd_frame = openhd::FragmentedVideoFrame{
-        {},
-        std::chrono::steady_clock::now(),
-        m_camera_holder->get_settings().enable_ultra_secure_encryption,
-        std::move(frame)};
-    m_output_cb(stream_index, ohd_frame);
-  } else {
-    m_console->debug("No output cb");
-  }*/
 }

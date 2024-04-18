@@ -123,6 +123,7 @@ static int rtp_payload_find(int payload, const char* encoding, struct rtp_payloa
       // H.265 video (HEVC) (RFC 7798)
       codec->encoder = rtp_h265_encode();
       //codec->decoder = rtp_h265_decode();
+      return 0;
     }
   }
   return -1;

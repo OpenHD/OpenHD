@@ -5,6 +5,7 @@
 #ifndef OPENHD_OPENHD_RTP_H
 #define OPENHD_OPENHD_RTP_H
 
+#include "nalu/CodecConfigFinder.hpp"
 #include "openhd_link.hpp"
 #include "openhd_spdlog.h"
 #include "rtp-payload-internal.h"
@@ -24,12 +25,15 @@ namespace openhd {
  */
 class RTPHelper {
  public:
-  explicit RTPHelper();
+  explicit RTPHelper(bool is_h265);
+  ~RTPHelper();
 
   typedef std::function<void(
       std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments)>
       OUT_CB;
   void set_out_cb(RTPHelper::OUT_CB cb);
+
+  void feed_multiple_nalu(const uint8_t* data, int data_len);
 
   void feed_nalu(const uint8_t* data, int data_len);
 
@@ -39,14 +43,17 @@ class RTPHelper {
                            int last);
 
  private:
+  void on_new_split_nalu(const uint8_t* data, int data_len);
+  void on_new_nalu_frame(const uint8_t* data, int data_len);
+  const bool m_is_h265;
   OUT_CB m_out_cb = nullptr;
   rtp_payload_t m_handler{};
   void* encoder;
   std::shared_ptr<spdlog::logger> m_console;
-  bool m_last_fu_s_idr = false;
 
  private:
   std::vector<std::shared_ptr<std::vector<uint8_t>>> m_frame_fragments;
+  CodecConfigFinder m_config_finder;
 };
 
 class RTPFragmentBuffer {
@@ -56,7 +63,7 @@ class RTPFragmentBuffer {
                           uint64_t dts);
 
  public:
-  bool m_enable_ultra_secure_encryption;
+  bool m_enable_ultra_secure_encryption = false;
   bool m_is_h265 = false;
   bool m_uses_intra_refresh = false;
   int m_stream_index = 0;
