@@ -118,8 +118,15 @@ void openhd::RTPHelper::on_new_split_nalu(const uint8_t* data, int data_len) {
 }
 
 void openhd::RTPHelper::on_new_nalu_frame(const uint8_t* data, int data_len) {
-  if (m_config_finder.all_config_available()) {
-    auto config = m_config_finder.get_config_data(false);
+  // Wait until we have codec config
+  if (!m_config_finder.all_config_available(m_is_h265)) {
+    return;
+  }
+  const auto elapsed_last_config =
+      std::chrono::steady_clock::now() - m_last_codec_config_send_ts;
+  if (elapsed_last_config >= std::chrono::seconds(1)) {
+    m_last_codec_config_send_ts = std::chrono::steady_clock::now();
+    auto config = m_config_finder.get_config_data(m_is_h265);
     feed_nalu(config->data(), config->size());
   }
   feed_nalu(data, data_len);

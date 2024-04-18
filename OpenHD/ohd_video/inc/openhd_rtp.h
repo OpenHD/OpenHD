@@ -33,8 +33,11 @@ class RTPHelper {
       OUT_CB;
   void set_out_cb(RTPHelper::OUT_CB cb);
 
+  // Accepts one or more than one NALUs.
+  // Needs to be aligned on NAL !
   void feed_multiple_nalu(const uint8_t* data, int data_len);
 
+  // Feeds exactly one NALU
   void feed_nalu(const uint8_t* data, int data_len);
 
  public:
@@ -50,10 +53,10 @@ class RTPHelper {
   rtp_payload_t m_handler{};
   void* encoder;
   std::shared_ptr<spdlog::logger> m_console;
-
- private:
   std::vector<std::shared_ptr<std::vector<uint8_t>>> m_frame_fragments;
   CodecConfigFinder m_config_finder;
+  std::chrono::steady_clock::time_point m_last_codec_config_send_ts =
+      std::chrono::steady_clock::now();
 };
 
 class RTPFragmentBuffer {
