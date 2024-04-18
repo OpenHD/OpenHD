@@ -220,28 +220,30 @@ MavlinkMessage OHDMainComponent::ack_command(const uint8_t source_sys_id,
 
 std::optional<MavlinkMessage> OHDMainComponent::handle_timesync_message(
     const MavlinkMessage& message) {
-  m_console->debug("Got timesync");
   const auto msg = message.m;
   assert(msg.msgid == MAVLINK_MSG_ID_TIMESYNC);
   mavlink_timesync_t tsync;
   mavlink_msg_timesync_decode(&msg, &tsync);
+  // m_console->debug(
+  //     "Got timesync message target_system:{} target_component:{} "
+  //     "ts1{} tc1{}",
+  //     tsync.target_system, tsync.target_component, tsync.ts1, tsync.tc1);
   if (tsync.tc1 == 0) {
     // request, pack response
-    mavlink_timesync_t rsync;
+    mavlink_timesync_t rsync{};
     rsync.tc1 = get_time_microseconds() * 1000;
     rsync.ts1 = tsync.ts1;
+    rsync.target_system = msg.sysid;
+    rsync.target_component = msg.compid;
     mavlink_message_t response_message;
     mavlink_msg_timesync_encode(m_sys_id, m_comp_id, &response_message, &rsync);
     return MavlinkMessage{response_message};
   } else if (tsync.target_system == m_sys_id &&
              tsync.target_component == m_comp_id &&
-             msg.sysid == OHD_SYS_ID_GROUND) {
+             msg.sysid == OHD_SYS_ID_AIR) {
     m_console->debug("Got timesink response");
     if (m_last_timesync_out_us == tsync.ts1) {
-      const auto round_trip_time_us = -tsync.ts1;
-      m_console->debug(
-          "Got matching response, round trip time {}",
-          openhd::util::time_readable_ns(round_trip_time_us * 1000));
+      handle_timesync_response_self(tsync);
     }
   } else {
     m_console->debug(
@@ -453,6 +455,7 @@ std::vector<MavlinkMessage> OHDMainComponent::perform_time_synchronisation() {
     // We only ever ask the air for a timesync
     return {};
   }
+  if (m_has_synced_time) return {};
   const auto elapsed =
       std::chrono::steady_clock::now() - m_last_timesync_request;
   if (elapsed > std::chrono::milliseconds(1000)) {
@@ -470,4 +473,28 @@ std::vector<MavlinkMessage> OHDMainComponent::perform_time_synchronisation() {
     return {msg};
   }
   return {};
+}
+
+void OHDMainComponent::handle_timesync_response_self(
+    const mavlink_timesync_t& tsync) {
+  const auto now_us = get_time_microseconds();
+  const auto round_trip_time_us = now_us - tsync.ts1;
+  const auto local_time_offset = now_us + tsync.tc1;
+  m_console->debug(
+      "handle_timesync_response_self, round trip:{}, local_time_offset:{}us",
+      openhd::util::time_readable_ns(round_trip_time_us * 1000),
+      local_time_offset);
+  if (round_trip_time_us >= 0 && round_trip_time_us < 5 * 1000) {
+    const auto local_time_offset_adjusted =
+        now_us - round_trip_time_us / 2 - tsync.tc1;
+    m_good_timesync_offset_count++;
+    m_good_timesync_offset_total += local_time_offset_adjusted;
+    if (m_good_timesync_offset_count > 10) {
+      int64_t average_offset =
+          m_good_timesync_offset_total / m_good_timesync_offset_count;
+      openhd::util::store_air_unit_time_offset_us(average_offset);
+      m_console->debug("Synced time, offset {}", average_offset);
+      m_has_synced_time = true;
+    }
+  }
 }

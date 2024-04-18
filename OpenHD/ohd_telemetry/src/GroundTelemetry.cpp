@@ -94,8 +94,8 @@ void GroundTelemetry::on_messages_air_unit(
   // so we do not need to do anything else here. tracker serial out - we are
   // only interested in message(s) coming from the FC
   // 17.April: One exception - timesync
-  for(const auto& msg:messages){
-    if(msg.m.msgid==MAVLINK_MSG_ID_TIMESYNC){
+  for (const auto& msg : messages) {
+    if (msg.m.msgid == MAVLINK_MSG_ID_TIMESYNC) {
       m_ohd_main_component->handle_timesync_message(msg);
     }
   }
@@ -207,6 +207,13 @@ void GroundTelemetry::loop_infinite(bool& terminate,
         assert(component);
         const auto messages = component->generate_mavlink_messages();
         send_messages_ground_station_clients(messages);
+        // exception: timesync
+        for (const auto& msg : messages) {
+          if (msg.m.msgid == MAVLINK_MSG_ID_TIMESYNC) {
+            m_console->debug("Sending timesync to air");
+            send_messages_air_unit({msg});
+          }
+        }
       }
     }
     const auto loopDelta = std::chrono::steady_clock::now() - loopBegin;

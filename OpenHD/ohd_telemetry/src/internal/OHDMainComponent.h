@@ -54,6 +54,7 @@ class OHDMainComponent : public MavlinkComponent {
       const std::vector<MavlinkMessage>& messages);
   std::optional<MavlinkMessage> handle_timesync_message(
       const MavlinkMessage& message);
+
  private:
   const bool RUNS_ON_AIR;
   const OHDPlatform m_platform;
@@ -94,8 +95,11 @@ class OHDMainComponent : public MavlinkComponent {
   std::vector<MavlinkMessage> perform_time_synchronisation();
   std::chrono::steady_clock::time_point m_last_timesync_request =
       std::chrono::steady_clock::now();
-  int m_timesync_request_count = 0;
   int64_t m_last_timesync_out_us = 0;
+  void handle_timesync_response_self(const mavlink_timesync_t& tsync);
+  int m_good_timesync_offset_count = 0;
+  int64_t m_good_timesync_offset_total = 0;
+  std::atomic_bool m_has_synced_time = false;
 };
 
 #endif  // XMAVLINKSERVICE_INTERNALTELEMETRY_H
