@@ -54,6 +54,7 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mavlink_messages() {
   //"HelloGround");
   const auto logs = generateLogMessages();
   OHDUtil::vec_append(ret, logs);
+  OHDUtil::vec_append(ret, perform_time_synchronisation());
   return ret;
 }
 
@@ -219,6 +220,7 @@ MavlinkMessage OHDMainComponent::ack_command(const uint8_t source_sys_id,
 
 std::optional<MavlinkMessage> OHDMainComponent::handle_timesync_message(
     const MavlinkMessage& message) {
+  m_console->debug("Got timesync");
   const auto msg = message.m;
   assert(msg.msgid == MAVLINK_MSG_ID_TIMESYNC);
   mavlink_timesync_t tsync;
@@ -346,7 +348,6 @@ OHDMainComponent::create_broadcast_stats_if_needed() {
       }
     }
   }
-  OHDUtil::vec_append(ret, perform_time_synchronisation());
   return ret;
 }
 

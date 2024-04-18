@@ -88,8 +88,7 @@ void AirTelemetry::on_messages_fc(std::vector<MavlinkMessage>& messages) {
 
 void AirTelemetry::on_messages_ground_unit(
     std::vector<MavlinkMessage>& messages) {
-  // openhd::log::get_default()->debug("on_messages_ground_unit
-  // {}",messages.size());
+  m_console->debug("on_messages_ground_unit {}",messages.size());
   //  filter out heartbeats from the openhd ground unit,we do not need to send
   //  them to the FC
   std::vector<MavlinkMessage> filtered_messages_fc;
