@@ -86,7 +86,7 @@ class GStreamerStream : public CameraStream {
   void x_on_new_rtp_fragmented_frame(
       std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments);
   bool m_last_fu_s_idr = false;
-  bool dirty_use_raw = true;
+  bool dirty_use_raw = false;
   std::chrono::steady_clock::time_point m_last_log_streaming_disabled =
       std::chrono::steady_clock::now();
 

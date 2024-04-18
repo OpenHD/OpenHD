@@ -54,7 +54,7 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mavlink_messages() {
   //"HelloGround");
   const auto logs = generateLogMessages();
   OHDUtil::vec_append(ret, logs);
-  OHDUtil::vec_append(ret, perform_time_synchronisation());
+  //OHDUtil::vec_append(ret, perform_time_synchronisation());
   return ret;
 }
 
@@ -241,7 +241,6 @@ std::optional<MavlinkMessage> OHDMainComponent::handle_timesync_message(
   } else if (tsync.target_system == m_sys_id &&
              tsync.target_component == m_comp_id &&
              msg.sysid == OHD_SYS_ID_AIR) {
-    m_console->debug("Got timesink response");
     if (m_last_timesync_out_us == tsync.ts1) {
       handle_timesync_response_self(tsync);
     }
