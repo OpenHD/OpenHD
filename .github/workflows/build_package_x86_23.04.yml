@@ -40,15 +40,12 @@ jobs:
           apt install -y python3-pip
           pip install cloudsmith-api --break-system-packages
           pip install cloudsmith-cli --break-system-packages
-          # ./install_build_dep.sh ubuntu-x86
+          ./install_build_dep.sh ubuntu-x86
 
       - name: Build with make
         run: |
           cd OpenHD
-          # ./package.sh standard x86_64 ubuntu lunar
-          ls -a
-          echo ${{ github.ref }}
-          touch opehd.deb
+          ./package.sh standard x86_64 ubuntu lunar
 
       - name: Upload to Github
         uses: 'actions/upload-artifact@v2'
