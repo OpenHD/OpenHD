@@ -37,6 +37,7 @@ jobs:
         run: |
           ls
           cd OpenHD
+          apt install -y python3-pip
           # ./install_build_dep.sh ubuntu-x86
 
       - name: Build with make
