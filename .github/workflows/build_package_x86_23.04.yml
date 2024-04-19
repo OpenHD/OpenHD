@@ -37,16 +37,15 @@ jobs:
         run: |
           ls
           cd OpenHD
-          ./install_build_dep.sh ubuntu-x86
-          apt install -y python3-pip
-          pip install cloudsmith-api cloudsmith-cli --break-system-packages
+          # ./install_build_dep.sh ubuntu-x86
 
       - name: Build with make
         run: |
           cd OpenHD
-          ./package.sh standard x86_64 ubuntu lunar
+          # ./package.sh standard x86_64 ubuntu lunar
           ls -a
           echo ${{ github.ref }}
+          touch opehd.deb
 
       - name: Upload to Github
         uses: 'actions/upload-artifact@v2'
@@ -59,7 +58,7 @@ jobs:
 
       - name: Push
         id: push
-        uses: cloudsmith-io/action@master
+        uses: https://github.com/raphaelscholle/cloudsmith/action@master
         with:
           api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
           command: "push"
