@@ -149,7 +149,7 @@ int get_fec_max_block_size_for_platform(int platform_type) {
   }
   // For now
   if (platform_type == X_PLATFORM_TYPE_ALWINNER_X20) {
-    return 30;
+    return 20;
   }
   if (platform_type == X_PLATFORM_TYPE_NVIDIA_XAVIER) {
     return 50;
