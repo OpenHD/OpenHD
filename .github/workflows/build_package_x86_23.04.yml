@@ -39,7 +39,7 @@ jobs:
           cd OpenHD
           ./install_build_dep.sh ubuntu-x86
           apt install -y python3-pip
-          apt install -y cloudsmith-api cloudsmith-cli
+          apt install -y python-cloudsmith-api python-cloudsmith-cli
 
       - name: Build with make
         run: |
