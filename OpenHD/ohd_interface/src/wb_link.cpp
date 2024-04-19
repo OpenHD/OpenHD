@@ -340,6 +340,10 @@ bool WBLink::request_set_frequency(int frequency) {
           m_broadcast_cards, m_console)) {
     return false;
   }
+  if(OHDPlatform::instance().is_x20() && frequency< 5180){
+    m_console->warn("X20 only supports 5G");
+    return false;
+  }
   auto work_item = std::make_shared<WorkItem>(
       fmt::format("SET_FREQ:{}", frequency),
       [this, frequency]() {
