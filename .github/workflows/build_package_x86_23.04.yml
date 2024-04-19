@@ -61,7 +61,7 @@ jobs:
 
       - name: Push
         id: push
-        uses: raphaelscholle/cloudsmith@master
+        uses: cloudsmith-io/action@master
         with:
           skip-install-cli: "true"
           api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
