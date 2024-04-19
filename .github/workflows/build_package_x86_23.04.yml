@@ -38,6 +38,8 @@ jobs:
           ls
           cd OpenHD
           apt install -y python3-pip
+          pip install cloudsmith-api --break-system-packages
+          pip install cloudsmith-cli --break-system-packages
           # ./install_build_dep.sh ubuntu-x86
 
       - name: Build with make
@@ -61,6 +63,7 @@ jobs:
         id: push
         uses: raphaelscholle/cloudsmith@master
         with:
+          skip-install-cli: "true"
           api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
           command: "push"
           format: "deb"
