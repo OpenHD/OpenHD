@@ -6,6 +6,7 @@ on:
       - "2.5-evo"
       - "dev-release"
       - "release"
+      - "debug"
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
@@ -37,6 +38,7 @@ jobs:
           ls
           cd OpenHD
           ./install_build_dep.sh ubuntu-x86
+          apt install -y python3-pip
 
       - name: Build with make
         run: |
