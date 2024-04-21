@@ -11,6 +11,7 @@
 #include "openhd_platform.h"
 #include "openhd_reboot_util.h"
 #include "openhd_spdlog.h"
+#include "openhd_thermal.h"
 #include "openhd_util_filesystem.h"
 #include "wb_link_helper.h"
 #include "wb_link_rate_helper.hpp"
@@ -816,6 +817,7 @@ void WBLink::loop_do_work() {
     wt_gnd_perform_channel_management();
     // air_perform_reset_frequency();
     wt_perform_rate_adjustment();
+    wt_perform_thermal_protecction();
     // After we've applied the rate, we update the tx header mcs index if
     // necessary
     tmp_true = true;
@@ -882,6 +884,10 @@ void WBLink::wt_update_statistics() {
                  : m_secondary_total_dropped_frames.load();
       // const int tx_dropped_frames = curr_tx_stats.n_dropped_frames;
       air_video.curr_dropped_frames = tx_dropped_frames;
+      air_video.dummy0 = (m_thermal_protection_video_disable_enable.load(
+                             std::memory_order_relaxed))
+                             ? 1
+                             : 0;
       const auto curr_tx_fec_stats = wb_tx.get_latest_fec_stats();
       air_fec.curr_fec_encode_time_avg_us =
           openhd::util::get_micros(curr_tx_fec_stats.curr_fec_encode_time.avg);
@@ -1182,6 +1188,11 @@ void WBLink::transmit_video_data(
   }
   if (m_air_close_video_in.load(std::memory_order_relaxed)) {
     m_console->debug("Video TX temporarily disabled");
+    return;
+  }
+  if (m_thermal_protection_video_disable_enable.load(
+          std::memory_order_relaxed)) {
+    // Thermal protection enabled, don't transmit video
     return;
   }
   // m_console->debug("Got {}",fragmented_video_frame.rtp_fragments.size());
@@ -1582,4 +1593,17 @@ void WBLink::on_wifi_card_fatal_error() {
         "CARD DISCONNECT", std::chrono::milliseconds(1));
   }
   m_wifi_card_error_has_been_handled = true;
+}
+
+void WBLink::wt_perform_thermal_protecction() {
+  if (!OHDPlatform::instance().is_x20()) {
+    // Only works on x20
+    return;
+  }
+  auto temp = openhd::x20_read_rtl8812au_thermal_sensor_degree();
+  if (temp <= 73) {
+    m_thermal_protection_video_disable_enable = false;
+  } else {
+    m_thermal_protection_video_disable_enable = true;
+  }
 }
