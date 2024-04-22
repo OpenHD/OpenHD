@@ -1603,11 +1603,11 @@ void WBLink::wt_perform_thermal_protection() {
   auto temp = openhd::x20_read_rtl8812au_thermal_sensor_degree();
   // We enable overheat protection once we reach 73 degree
   // We disable overheat protection once we are back below 70 degree
-  if(temp>=73){
-    m_thermal_protection_video_disable_enable=true;
-  }else{
-    if(m_thermal_protection_video_disable_enable && temp<=70){
-      m_thermal_protection_video_disable_enable=false;
+  if (temp >= 73) {
+    m_thermal_protection_video_disable_enable = true;
+  } else {
+    if (m_thermal_protection_video_disable_enable && temp <= 70) {
+      m_thermal_protection_video_disable_enable = false;
     }
   }
 }
