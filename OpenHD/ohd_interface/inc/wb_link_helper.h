@@ -57,7 +57,7 @@ bool set_frequency_and_channel_width_for_all_cards(
     uint32_t frequency, uint32_t channel_width,
     const std::vector<WiFiCard>& m_broadcast_cards);
 
-bool set_tx_power_for_all_cards(int tx_power_mw,
+void set_tx_power_for_all_cards(int tx_power_mw,
                                 int rtl8812au_tx_power_index_override,
                                 const std::vector<WiFiCard>& m_broadcast_cards);
 

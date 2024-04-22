@@ -210,6 +210,8 @@ bool wifi::commandhelper::iw_supports_monitor_mode(int phy_index) {
 
 static constexpr auto OPENHD_DRIVER_RTL8812AU_CHANNEL_OVERRIDE =
     "/sys/module/88XXau_ohd/parameters/openhd_override_channel";
+static constexpr auto OPENHD_DRIVER_RTL8812AU_TX_POWER_INDEX_OVERRIDE =
+    "/sys/module/88XXau_ohd/parameters/openhd_override_tx_power_index";
 static constexpr auto OPENHD_DRIVER_RTL88xxBU_CHANNEL_OVERRIDE =
     "/sys/module/88x2bu_ohd/parameters/openhd_override_channel";
 static constexpr auto OPENHD_DRIVER_RTL88xxBU_TX_POWER_MW_OVERRIDE =
@@ -280,10 +282,29 @@ bool wifi::commandhelper::openhd_driver_set_tx_power(const std::string &device,
   return true;
 }
 
+void wifi::commandhelper::openhd_driver_set_tx_power_index_override(
+    const std::string &device, uint32_t tpi) {
+  if (!OHDFilesystemUtil::exists(OPENHD_DRIVER_RTL8812AU_CHANNEL_OVERRIDE)) {
+    openhd::log::get_default()->error(
+        "YOU ARE USING THE WRONG DRIVER; TPI POWER WON'T WORK");
+    return;
+  }
+  OHDFilesystemUtil::write_file(OPENHD_DRIVER_RTL8812AU_TX_POWER_INDEX_OVERRIDE,
+                                fmt::format("{}", tpi));
+  // initiate change
+  wifi::commandhelper::iw_set_tx_power(device,
+                                       13);  // 20mW ~ 13mBm, should always work
+}
+
 void wifi::commandhelper::cleanup_openhd_driver_overrides() {
   if (OHDFilesystemUtil::exists(OPENHD_DRIVER_RTL8812AU_CHANNEL_OVERRIDE)) {
     OHDFilesystemUtil::write_file(OPENHD_DRIVER_RTL8812AU_CHANNEL_OVERRIDE,
                                   "0");
+  }
+  if (OHDFilesystemUtil::exists(
+          OPENHD_DRIVER_RTL8812AU_TX_POWER_INDEX_OVERRIDE)) {
+    OHDFilesystemUtil::write_file(
+        OPENHD_DRIVER_RTL8812AU_TX_POWER_INDEX_OVERRIDE, "0");
   }
   if (OHDFilesystemUtil::exists(OPENHD_DRIVER_RTL88xxBU_CHANNEL_OVERRIDE)) {
     OHDFilesystemUtil::write_file(OPENHD_DRIVER_RTL88xxBU_CHANNEL_OVERRIDE,

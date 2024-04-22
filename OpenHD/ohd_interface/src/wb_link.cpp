@@ -1208,11 +1208,11 @@ void WBLink::transmit_video_data(
     m_console->debug("Video TX temporarily disabled");
     return;
   }
-  if (m_thermal_protection_video_disable_enable.load(
+  /*if (m_thermal_protection_video_disable_enable.load(
           std::memory_order_relaxed)) {
     // Thermal protection enabled, don't transmit video
     return;
-  }
+  }*/
   // m_console->debug("Got {}",fragmented_video_frame.rtp_fragments.size());
   auto& tx = *m_wb_video_tx_list[stream_index];
   tx.set_encryption(fragmented_video_frame.enable_ultra_secure_encryption);

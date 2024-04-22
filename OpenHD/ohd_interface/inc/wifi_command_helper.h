@@ -108,6 +108,9 @@ bool openhd_driver_set_frequency_and_channel_width(int type,
 // RTL8812bu driver only so far
 bool openhd_driver_set_tx_power(const std::string& device,
                                 uint32_t tx_power_mBm);
+// RTL8812au driver only
+void openhd_driver_set_tx_power_index_override(const std::string& device,
+                                               uint32_t tpi);
 
 void cleanup_openhd_driver_overrides();
 
