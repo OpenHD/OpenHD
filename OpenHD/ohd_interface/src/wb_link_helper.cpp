@@ -100,8 +100,8 @@ void openhd::wb::set_tx_power_for_all_cards(
     if (card.type == WiFiCardType::OPENHD_RTL_88X2AU) {
       openhd::log::get_default()->debug("RTL8812AU tx_pwr_idx_override: {}",
                                         rtl8812au_tx_power_index_override);
-      //wifi::commandhelper::openhd_driver_set_tx_power_index_override(card.device_name,
-      //                                                               rtl8812au_tx_power_index_override);
+      // wifi::commandhelper::openhd_driver_set_tx_power_index_override(card.device_name,
+      //                                                                rtl8812au_tx_power_index_override);
       wifi::commandhelper::iw_set_tx_power(card.device_name,
                                            rtl8812au_tx_power_index_override);
     } else {
