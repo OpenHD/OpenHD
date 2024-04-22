@@ -817,7 +817,7 @@ void WBLink::loop_do_work() {
     wt_gnd_perform_channel_management();
     // air_perform_reset_frequency();
     wt_perform_rate_adjustment();
-    wt_perform_thermal_protecction();
+    wt_perform_thermal_protection();
     // After we've applied the rate, we update the tx header mcs index if
     // necessary
     tmp_true = true;
@@ -1595,15 +1595,19 @@ void WBLink::on_wifi_card_fatal_error() {
   m_wifi_card_error_has_been_handled = true;
 }
 
-void WBLink::wt_perform_thermal_protecction() {
+void WBLink::wt_perform_thermal_protection() {
   if (!OHDPlatform::instance().is_x20()) {
     // Only works on x20
     return;
   }
   auto temp = openhd::x20_read_rtl8812au_thermal_sensor_degree();
-  if (temp <= 73) {
-    m_thermal_protection_video_disable_enable = false;
-  } else {
-    m_thermal_protection_video_disable_enable = true;
+  // We enable overheat protection once we reach 73 degree
+  // We disable overheat protection once we are back below 70 degree
+  if(temp>=73){
+    m_thermal_protection_video_disable_enable=true;
+  }else{
+    if(m_thermal_protection_video_disable_enable && temp<=70){
+      m_thermal_protection_video_disable_enable=false;
+    }
   }
 }

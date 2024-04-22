@@ -131,7 +131,7 @@ class WBLink : public OHDLink {
   // Time out to go from wifibroadcast mode to wifi hotspot mode
   void wt_perform_air_hotspot_after_timeout();
   // X20 only, stop video in case of overheating
-  void wt_perform_thermal_protecction();
+  void wt_perform_thermal_protection();
   // Returns true if the work item queue is currently empty and the item has
   // been added false otherwise. In general, we only suport one item on the work
   // queue - otherwise we reject the param, since the user can just try again
