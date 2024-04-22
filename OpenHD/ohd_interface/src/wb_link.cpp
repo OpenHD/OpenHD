@@ -817,9 +817,9 @@ void WBLink::loop_do_work() {
     wt_gnd_perform_channel_management();
     // air_perform_reset_frequency();
     wt_perform_rate_adjustment();
-    wt_perform_thermal_protection();
-    // After we've applied the rate, we update the tx header mcs index if
-    // necessary
+    // wt_perform_thermal_protection();
+    //  After we've applied the rate, we update the tx header mcs index if
+    //  necessary
     tmp_true = true;
     if (m_request_apply_air_mcs_index.compare_exchange_strong(tmp_true,
                                                               false)) {
@@ -1128,6 +1128,24 @@ void WBLink::wt_perform_rate_adjustment() {
     }
     m_console->warn("TX errors, reducing video bitrate to {}",
                     m_recommended_video_bitrate_kbits);
+  }
+  // Extra x20 - thermal protection
+  if (OHDPlatform::instance().is_x20()) {
+    const auto temp = openhd::x20_read_rtl8812au_thermal_sensor_degree();
+    // We enable overheat protection once we reach 73 degree
+    // We disable overheat protection once we are back below 70 degree
+    if (temp >= 73) {
+      m_thermal_protection_video_disable_enable = true;
+    } else {
+      if (m_thermal_protection_video_disable_enable && temp <= 70) {
+        m_thermal_protection_video_disable_enable = false;
+      }
+    }
+    const int x20_rate = m_thermal_protection_video_disable_enable
+                             ? m_recommended_video_bitrate_kbits * 100 / 60
+                             : m_recommended_video_bitrate_kbits;
+    recommend_bitrate_to_encoder(x20_rate);
+    return;
   }
   recommend_bitrate_to_encoder(m_recommended_video_bitrate_kbits);
 }
