@@ -1142,7 +1142,7 @@ void WBLink::wt_perform_rate_adjustment() {
       }
     }
     const int x20_rate = m_thermal_protection_video_disable_enable
-                             ? m_recommended_video_bitrate_kbits * 100 / 60
+                             ? m_recommended_video_bitrate_kbits * 60 / 100
                              : m_recommended_video_bitrate_kbits;
     recommend_bitrate_to_encoder(x20_rate);
     return;
