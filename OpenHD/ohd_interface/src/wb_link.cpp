@@ -816,8 +816,9 @@ void WBLink::loop_do_work() {
     // wt_perform_bw_via_rc_channel_if_enabled();
     wt_gnd_perform_channel_management();
     // air_perform_reset_frequency();
+    // Perform thermal protection level calculation before rate adjustment !
+    wt_perform_update_thermal_protection();
     wt_perform_rate_adjustment();
-    // wt_perform_thermal_protection();
     //  After we've applied the rate, we update the tx header mcs index if
     //  necessary
     tmp_true = true;
@@ -1141,7 +1142,7 @@ void WBLink::wt_perform_rate_adjustment() {
         m_thermal_protection_video_disable_enable = false;
       }
     }
-    const int x20_rate = m_thermal_protection_video_disable_enable
+    const int x20_rate = m_thermal_protection_level > 0
                              ? m_recommended_video_bitrate_kbits * 60 / 100
                              : m_recommended_video_bitrate_kbits;
     recommend_bitrate_to_encoder(x20_rate);
@@ -1208,11 +1209,11 @@ void WBLink::transmit_video_data(
     m_console->debug("Video TX temporarily disabled");
     return;
   }
-  /*if (m_thermal_protection_video_disable_enable.load(
-          std::memory_order_relaxed)) {
-    // Thermal protection enabled, don't transmit video
+  if (m_thermal_protection_level.load(std::memory_order_relaxed) >=
+      THERMAL_PROTECTION_VIDEO_DISABLED) {
+    // Thermal protection disable video active, don't transmit video
     return;
-  }*/
+  }
   // m_console->debug("Got {}",fragmented_video_frame.rtp_fragments.size());
   auto& tx = *m_wb_video_tx_list[stream_index];
   tx.set_encryption(fragmented_video_frame.enable_ultra_secure_encryption);
@@ -1613,19 +1614,21 @@ void WBLink::on_wifi_card_fatal_error() {
   m_wifi_card_error_has_been_handled = true;
 }
 
-void WBLink::wt_perform_thermal_protection() {
+void WBLink::wt_perform_update_thermal_protection() {
   if (!OHDPlatform::instance().is_x20()) {
     // Only works on x20
     return;
   }
   auto temp = openhd::x20_read_rtl8812au_thermal_sensor_degree();
-  // We enable overheat protection once we reach 73 degree
-  // We disable overheat protection once we are back below 70 degree
-  if (temp >= 73) {
-    m_thermal_protection_video_disable_enable = true;
-  } else {
-    if (m_thermal_protection_video_disable_enable && temp <= 70) {
-      m_thermal_protection_video_disable_enable = false;
+  if (temp >= 75) {
+    // If we reach >=75 degree, disable video
+    m_thermal_protection_level = THERMAL_PROTECTION_VIDEO_DISABLED;
+  } else if (temp >= 71) {
+    // If we reach >=71 degree, throttle video
+    m_thermal_protection_level = THERMAL_PROTECTION_NONE;
+  } else {  // 70 degree or lower
+    if (m_thermal_protection_level != 0) {
+      m_thermal_protection_level = 0;
     }
   }
 }
