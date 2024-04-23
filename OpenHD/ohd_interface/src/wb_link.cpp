@@ -1608,15 +1608,30 @@ void WBLink::wt_perform_update_thermal_protection() {
     return;
   }
   auto temp = openhd::x20_read_rtl8812au_thermal_sensor_degree();
-  if (temp >= 75) {
-    // If we reach >=75 degree, disable video
+  if (temp <= 0) {
     m_thermal_protection_level = THERMAL_PROTECTION_VIDEO_DISABLED;
-  } else if (temp >= 71) {
-    // If we reach >=71 degree, throttle video
-    m_thermal_protection_level = THERMAL_PROTECTION_RATE_REDUCED;
-  } else {  // 70 degree or lower, no thermal protection
-    if (m_thermal_protection_level != 0) {
-      m_thermal_protection_level = 0;
+    return;
+  }
+  uint8_t new_thermal_protection_level;
+  if (temp >= 75) {  // >=75 degree, disable video
+    new_thermal_protection_level = THERMAL_PROTECTION_VIDEO_DISABLED;
+  } else if (temp >= 72) {  //  >=72 degree, throttle video
+    new_thermal_protection_level = THERMAL_PROTECTION_RATE_REDUCED;
+  } else {  // no thermal protection
+    new_thermal_protection_level = THERMAL_PROTECTION_NONE;
+  }
+  if (new_thermal_protection_level > m_thermal_protection_level) {
+    // apply immediately
+    m_thermal_protection_level = new_thermal_protection_level;
+  } else if (new_thermal_protection_level < m_thermal_protection_level) {
+    if (m_thermal_protection_level == THERMAL_PROTECTION_VIDEO_DISABLED) {
+      // When video streaming is disabled, we only re-enable it once we have
+      // cooled down significantly, to avoid quick oscillation.
+      if (temp <= 70) {
+        m_thermal_protection_level = new_thermal_protection_level;
+      }
+    } else {
+      m_thermal_protection_level = new_thermal_protection_level;
     }
   }
 }

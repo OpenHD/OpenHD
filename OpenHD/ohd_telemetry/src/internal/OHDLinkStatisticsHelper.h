@@ -104,9 +104,9 @@ static MavlinkMessage pack_vid_air(
   tmp.curr_injected_pps = stats.curr_injected_pps;
   tmp.curr_dropped_frames = stats.curr_dropped_frames;
   tmp.curr_fec_percentage = stats.curr_fec_percentage;
-  tmp.dummy0=stats.dummy0;
-  tmp.dummy1=stats.dummy1;
-  tmp.dummy2=stats.dummy2;
+  tmp.dummy0 = stats.dummy0;
+  tmp.dummy1 = stats.dummy1;
+  tmp.dummy2 = stats.dummy2;
   mavlink_msg_openhd_stats_wb_video_air_encode(system_id, component_id, &msg.m,
                                                &tmp);
   return msg;
