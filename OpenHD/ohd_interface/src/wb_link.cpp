@@ -885,10 +885,7 @@ void WBLink::wt_update_statistics() {
                  : m_secondary_total_dropped_frames.load();
       // const int tx_dropped_frames = curr_tx_stats.n_dropped_frames;
       air_video.curr_dropped_frames = tx_dropped_frames;
-      air_video.dummy0 = (m_thermal_protection_video_disable_enable.load(
-                             std::memory_order_relaxed))
-                             ? 1
-                             : 0;
+      air_video.dummy0 = (int8_t)m_thermal_protection_level.load(std::memory_order_relaxed);
       const auto curr_tx_fec_stats = wb_tx.get_latest_fec_stats();
       air_fec.curr_fec_encode_time_avg_us =
           openhd::util::get_micros(curr_tx_fec_stats.curr_fec_encode_time.avg);
@@ -1132,16 +1129,6 @@ void WBLink::wt_perform_rate_adjustment() {
   }
   // Extra x20 - thermal protection
   if (OHDPlatform::instance().is_x20()) {
-    const auto temp = openhd::x20_read_rtl8812au_thermal_sensor_degree();
-    // We enable overheat protection once we reach 73 degree
-    // We disable overheat protection once we are back below 70 degree
-    if (temp >= 73) {
-      m_thermal_protection_video_disable_enable = true;
-    } else {
-      if (m_thermal_protection_video_disable_enable && temp <= 70) {
-        m_thermal_protection_video_disable_enable = false;
-      }
-    }
     const int x20_rate = m_thermal_protection_level > 0
                              ? m_recommended_video_bitrate_kbits * 60 / 100
                              : m_recommended_video_bitrate_kbits;
@@ -1625,8 +1612,8 @@ void WBLink::wt_perform_update_thermal_protection() {
     m_thermal_protection_level = THERMAL_PROTECTION_VIDEO_DISABLED;
   } else if (temp >= 71) {
     // If we reach >=71 degree, throttle video
-    m_thermal_protection_level = THERMAL_PROTECTION_NONE;
-  } else {  // 70 degree or lower
+    m_thermal_protection_level = THERMAL_PROTECTION_RATE_REDUCED;
+  } else {  // 70 degree or lower, no thermal protection
     if (m_thermal_protection_level != 0) {
       m_thermal_protection_level = 0;
     }
