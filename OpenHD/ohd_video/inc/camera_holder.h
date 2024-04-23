@@ -70,6 +70,10 @@ class CameraHolder :
     return true;
   }
   bool set_air_recording(int recording_enable);
+  // EXTRA - sets the air recording param to disabled when we run out of space -
+  // this should be called in regular intervals
+  void check_remaining_space_air_recording(bool call_callback);
+
   bool set_camera_rotation(int value) {
     if (!openhd::validate_camera_rotation(value)) {
       return false;
