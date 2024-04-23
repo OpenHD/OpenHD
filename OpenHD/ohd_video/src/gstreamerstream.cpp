@@ -416,6 +416,10 @@ void GStreamerStream::stream_once() {
   m_frame_fragments.resize(0);
   // As soon as we get the first frame, we change the status to streaming
   bool has_first_frame = false;
+  // Every X seconds, we check if we are about to run out of space
+  std::chrono::steady_clock::time_point
+      m_last_air_recording_remaining_space_check =
+          std::chrono::steady_clock::now();
   while (true) {
     // Quickly terminate if openhd wants to terminate
     if (!m_keep_looping) break;
@@ -462,6 +466,14 @@ void GStreamerStream::stream_once() {
       // Something that requires a whole restart of the pipeline happened
       m_console->debug("Restart requested, restarting");
       break;
+    }
+    const auto elapsed_remaining_space =
+        std::chrono::steady_clock::now() -
+        m_last_air_recording_remaining_space_check;
+    if (elapsed_remaining_space > std::chrono::seconds(1)) {
+      m_camera_holder->check_remaining_space_air_recording(true);
+      m_last_air_recording_remaining_space_check =
+          std::chrono::steady_clock::now();
     }
     // try get a new frame fragment from gst
     GstSample* sample = gst_app_sink_try_pull_sample(

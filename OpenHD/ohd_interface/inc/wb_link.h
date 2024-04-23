@@ -130,8 +130,8 @@ class WBLink : public OHDLink {
   void wt_perform_bw_via_rc_channel_if_enabled();
   // Time out to go from wifibroadcast mode to wifi hotspot mode
   void wt_perform_air_hotspot_after_timeout();
-  // X20 only, stop video in case of overheating
-  void wt_perform_thermal_protection();
+  // X20 only, thermal protection
+  void wt_perform_update_thermal_protection();
   // Returns true if the work item queue is currently empty and the item has
   // been added false otherwise. In general, we only suport one item on the work
   // queue - otherwise we reject the param, since the user can just try again
@@ -233,7 +233,11 @@ class WBLink : public OHDLink {
   std::atomic_bool m_air_close_video_in = false;
   const int m_recommended_max_fec_blk_size_for_this_platform;
   bool m_wifi_card_error_has_been_handled = false;
-  std::atomic_bool m_thermal_protection_video_disable_enable = false;
+  // We have 3 thermal protection levels - as of now, only on X20
+  static constexpr uint8_t THERMAL_PROTECTION_NONE = 0;
+  static constexpr uint8_t THERMAL_PROTECTION_RATE_REDUCED = 1;
+  static constexpr uint8_t THERMAL_PROTECTION_VIDEO_DISABLED = 2;
+  std::atomic_uint8_t m_thermal_protection_level = THE;
 
  private:
   openhd::wb::ForeignPacketsHelper m_foreign_p_helper;

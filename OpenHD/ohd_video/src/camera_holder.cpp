@@ -273,3 +273,16 @@ bool CameraHolder::set_air_recording(int recording_enable) {
   }
   return false;
 }
+
+void CameraHolder::check_remaining_space_air_recording(bool call_callback) {
+  if (OHDFilesystemUtil::get_remaining_space_in_mb() >
+      MINIMUM_AMOUNT_FREE_SPACE_FOR_AIR_RECORDING_MB) {
+    return;
+  }
+  openhd::log::get_default()->warn("Not enough free space available");
+  if (get_settings().air_recording != AIR_RECORDING_OFF) {
+    openhd::log::get_default()->debug("Disabling air recording");
+    unsafe_get_settings().air_recording = AIR_RECORDING_OFF;
+    persist(call_callback);
+  }
+}
