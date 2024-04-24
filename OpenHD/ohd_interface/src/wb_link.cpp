@@ -1623,10 +1623,18 @@ void WBLink::wt_perform_update_thermal_protection() {
   if (new_thermal_protection_level > m_thermal_protection_level) {
     // apply immediately
     m_thermal_protection_level = new_thermal_protection_level;
+    m_thermal_protection_enable_tp = std::chrono::steady_clock::now();
   } else if (new_thermal_protection_level < m_thermal_protection_level) {
+    const auto elapsed_since_thermal_protection_enabled =
+        std::chrono::steady_clock::now() - m_thermal_protection_enable_tp;
+    // Every time some type of thermal protection is activated, it stays active
+    // for at least X seconds to avoid oscillating
+    if (elapsed_since_thermal_protection_enabled < std::chrono::seconds(10)) {
+      return;
+    }
     if (m_thermal_protection_level == THERMAL_PROTECTION_VIDEO_DISABLED) {
       // When video streaming is disabled, we only re-enable it once we have
-      // cooled down significantly, to avoid quick oscillation.
+      // cooled down significantly
       if (temp <= 70) {
         m_thermal_protection_level = new_thermal_protection_level;
       }

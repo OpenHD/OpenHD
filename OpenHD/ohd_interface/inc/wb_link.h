@@ -238,6 +238,8 @@ class WBLink : public OHDLink {
   static constexpr uint8_t THERMAL_PROTECTION_RATE_REDUCED = 1;
   static constexpr uint8_t THERMAL_PROTECTION_VIDEO_DISABLED = 2;
   std::atomic_uint8_t m_thermal_protection_level = 0;
+  std::chrono::steady_clock::time_point m_thermal_protection_enable_tp =
+      std::chrono::steady_clock::now();
 
  private:
   openhd::wb::ForeignPacketsHelper m_foreign_p_helper;
