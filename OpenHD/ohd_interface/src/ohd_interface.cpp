@@ -69,6 +69,10 @@ OHDInterface::OHDInterface(OHDPlatform platform1, OHDProfile profile1)
     opt_ethernet_card = config.NW_ETHERNET_CARD;
   } else if (m_profile.is_ground() && m_platform.is_rpi()) {
     opt_ethernet_card = std::string("eth0");
+  } else if (m_profile.is_ground() && m_platform.is_zero3w()) {
+    // We don't have an ethernet card, but you can connect a usb hub with
+    // ethernet
+    // TODO
   }
   if (opt_ethernet_card != std::nullopt) {
     const std::string ethernet_card = opt_ethernet_card.value();

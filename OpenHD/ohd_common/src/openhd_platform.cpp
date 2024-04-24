@@ -187,3 +187,6 @@ bool OHDPlatform::is_rpi_weak() const {
   return is_rpi() && (!(platform_type == X_PLATFORM_TYPE_RPI_4 ||
                         platform_type == X_PLATFORM_TYPE_RPI_CM4));
 }
+bool OHDPlatform::is_zero3w() const {
+  return platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W;
+}

@@ -54,6 +54,7 @@ struct OHDPlatform {
   bool is_rpi() const;
   bool is_rpi_weak() const;
   bool is_rock() const;
+  bool is_zero3w() const;
   bool is_rpi_or_x86() const;
   // alwinner
   bool is_x20() const;
