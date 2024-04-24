@@ -37,8 +37,7 @@
 // generate_mavlink_messages() and then send out in the upper level.
 class OHDMainComponent : public MavlinkComponent {
  public:
-  explicit OHDMainComponent(OHDPlatform platform, uint8_t parent_sys_id,
-                            bool runsOnAir);
+  explicit OHDMainComponent(uint8_t parent_sys_id, bool runsOnAir);
   ~OHDMainComponent();
   // override from component
   std::vector<MavlinkMessage> generate_mavlink_messages() override;
@@ -55,7 +54,6 @@ class OHDMainComponent : public MavlinkComponent {
 
  private:
   const bool RUNS_ON_AIR;
-  const OHDPlatform m_platform;
   // Interval in between heartbeats
   const std::chrono::milliseconds m_heartbeats_interval;
   std::chrono::steady_clock::time_point m_last_heartbeat =

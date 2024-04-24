@@ -118,15 +118,13 @@ std::string GStreamerStream::create_source_encode_pipeline(
     pipeline << OHDGstHelper::createV4l2SrcRawAndSwEncodeStream(
         v4l2_device_name, setting);
   } else if (camera.camera_type == X_CAM_TYPE_DUMMY_SW) {
-    pipeline << OHDGstHelper::createDummyStreamX(OHDPlatform::instance(),
-                                                 setting);
+    pipeline << OHDGstHelper::createDummyStreamX(setting);
     // pipeline<<OHDGstHelper::createDummyStreamRPI(setting);
   } else if (camera.camera_type == X_CAM_TYPE_EXTERNAL ||
              camera.camera_type == X_CAM_TYPE_EXTERNAL_IP) {
     pipeline << OHDGstHelper::create_input_custom_udp_rtp_port(setting);
   } else if (camera.camera_type == X_CAM_TYPE_DEVELOPMENT_FILESRC) {
-    pipeline << OHDGstHelper::create_dummy_filesrc_stream(
-        OHDPlatform::instance(), setting);
+    pipeline << OHDGstHelper::create_dummy_filesrc_stream(setting);
   } else if (camera.camera_type == X_CAM_TYPE_NVIDIA_XAVIER_IMX577) {
     pipeline << OHDGstHelper::create_nvidia_xavier_stream(setting);
   } else {

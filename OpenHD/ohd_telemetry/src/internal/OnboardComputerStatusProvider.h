@@ -37,8 +37,7 @@ class OnboardComputerStatusProvider {
    * a lot of CPU resources on its own
    * - disable for testing
    */
-  explicit OnboardComputerStatusProvider(OHDPlatform platform,
-                                         bool enable = true);
+  explicit OnboardComputerStatusProvider(bool enable = true);
   ~OnboardComputerStatusProvider();
   // Thread-safe, should never block for a significant amount of time
   mavlink_onboard_computer_status_t get_current_status();
@@ -53,7 +52,6 @@ class OnboardComputerStatusProvider {
       const std::optional<ExtraUartInfo>& extra_uart);
 
  private:
-  const OHDPlatform m_platform;
   const bool m_enable;
   std::mutex m_curr_onboard_computer_status_mutex;
   mavlink_onboard_computer_status_t m_curr_onboard_computer_status{};

@@ -14,10 +14,8 @@
 #include "openhd_reboot_util.h"
 #include "openhd_spdlog_include.h"
 
-OHDMainComponent::OHDMainComponent(OHDPlatform platform1, uint8_t parent_sys_id,
-                                   bool runsOnAir)
-    : m_platform(platform1),
-      RUNS_ON_AIR(runsOnAir),
+OHDMainComponent::OHDMainComponent(uint8_t parent_sys_id, bool runsOnAir)
+    : RUNS_ON_AIR(runsOnAir),
       MavlinkComponent(parent_sys_id, MAV_COMP_ID_ONBOARD_COMPUTER),
       m_heartbeats_interval(RUNS_ON_AIR ? std::chrono::milliseconds(500)
                                         : std::chrono::milliseconds(200)),
@@ -29,7 +27,7 @@ OHDMainComponent::OHDMainComponent(OHDPlatform platform1, uint8_t parent_sys_id,
   m_console = openhd::log::create_or_get("t_main_c");
   assert(m_console);
   m_onboard_computer_status_provider =
-      std::make_unique<OnboardComputerStatusProvider>(m_platform, true);
+      std::make_unique<OnboardComputerStatusProvider>(true);
   const auto config = openhd::load_config();
   if (!RUNS_ON_AIR && config.GEN_ENABLE_LAST_KNOWN_POSITION) {
     m_last_known_position = std::make_unique<LastKnowPosition>();

@@ -717,8 +717,8 @@ static std::string create_input_custom_udp_rtp_port(
 }
 
 // Dummy stream using either HW or SW encode.
-static std::string createDummyStreamX(const OHDPlatform& platform,
-                                      const CameraSettings& settings) {
+static std::string createDummyStreamX(const CameraSettings& settings) {
+  const auto platform = OHDPlatform::instance();
   std::stringstream ss;
   ss << "videotestsrc name=videotestsrc ! ";
   // h265 cannot do NV12, but I420.
@@ -746,8 +746,8 @@ static std::string createDummyStreamX(const OHDPlatform& platform,
   return ss.str();
 }
 
-static std::string create_dummy_filesrc_stream(const OHDPlatform& platform,
-                                               const CameraSettings& settings) {
+static std::string create_dummy_filesrc_stream(const CameraSettings& settings) {
+  const auto platform = OHDPlatform::instance();
   auto files = OHDFilesystemUtil::getAllEntriesFullPathInDirectory(
       "/usr/local/share/openhd/dev");
   // std::string filename="/usr/local/share/openhd/dev/test.mp4";

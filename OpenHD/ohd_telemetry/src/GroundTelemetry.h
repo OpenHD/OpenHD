@@ -28,7 +28,7 @@
  */
 class GroundTelemetry : public MavlinkSystem {
  public:
-  explicit GroundTelemetry(OHDPlatform platform);
+  explicit GroundTelemetry();
   GroundTelemetry(const GroundTelemetry&) = delete;
   GroundTelemetry(const GroundTelemetry&&) = delete;
   ~GroundTelemetry();
@@ -65,7 +65,6 @@ class GroundTelemetry : public MavlinkSystem {
   void set_link_handle(std::shared_ptr<OHDLink> link);
 
  private:
-  const OHDPlatform _platform;
   // called every time one or more messages from the air unit are received
   void on_messages_air_unit(const std::vector<MavlinkMessage>& messages);
   // send messages to the air unit, lossy
