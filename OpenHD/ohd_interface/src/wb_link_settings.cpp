@@ -49,6 +49,10 @@ WBLinkSettings create_default_wb_stream_settings(
     // Should work even on ali cards without burning them
     settings.wb_rtl8812au_tx_pwr_idx_override = 10;
   }
+  if(OHDPlatform::instance().is_x20()){
+    settings.wb_enable_stbc=true;
+    settings.wb_enable_ldpc= true;
+  }
   return settings;
 }
 }  // namespace openhd
