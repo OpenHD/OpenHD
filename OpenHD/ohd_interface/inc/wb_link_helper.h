@@ -50,7 +50,6 @@ bool validate_air_mcs_index_change(
 
 bool any_card_support_frequency(
     uint32_t frequency, const std::vector<WiFiCard>& m_broadcast_cards,
-    const OHDPlatform& platform,
     const std::shared_ptr<spdlog::logger>& m_console);
 
 bool set_frequency_and_channel_width_for_all_cards(

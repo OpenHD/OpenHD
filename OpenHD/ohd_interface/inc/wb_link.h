@@ -47,8 +47,7 @@ class WBLink : public OHDLink {
    * nullptr during testing of specific modules instead of testing a complete
    * running openhd instance)
    */
-  explicit WBLink(OHDProfile profile, OHDPlatform platform,
-                  std::vector<WiFiCard> broadcast_cards);
+  explicit WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards);
   WBLink(const WBLink&) = delete;
   WBLink(const WBLink&&) = delete;
   ~WBLink();
@@ -168,7 +167,6 @@ class WBLink : public OHDLink {
 
  private:
   const OHDProfile m_profile;
-  const OHDPlatform m_platform;
   const std::vector<WiFiCard> m_broadcast_cards;
   std::shared_ptr<spdlog::logger> m_console;
   std::unique_ptr<openhd::WBLinkSettingsHolder> m_settings;

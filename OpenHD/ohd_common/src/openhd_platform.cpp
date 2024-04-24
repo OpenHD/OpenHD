@@ -135,7 +135,8 @@ std::string x_platform_type_to_string(int platform_type) {
   ss << "ERR-UNDEFINED{" << platform_type << "}";
   return ss.str();
 }
-int get_fec_max_block_size_for_platform(int platform_type) {
+int get_fec_max_block_size_for_platform() {
+  auto platform_type = OHDPlatform::instance().platform_type;
   if (platform_type == X_PLATFORM_TYPE_RPI_4 ||
       platform_type == X_PLATFORM_TYPE_RPI_CM4) {
     return 50;

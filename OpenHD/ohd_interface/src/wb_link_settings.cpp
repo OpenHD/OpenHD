@@ -29,7 +29,6 @@ std::string WBLinkSettingsHolder::imp_serialize(
 }
 
 WBLinkSettings create_default_wb_stream_settings(
-    const OHDPlatform &platform,
     const std::vector<WiFiCard> &wifibroadcast_cards) {
   assert(!wifibroadcast_cards.empty());
   const auto &first_card = wifibroadcast_cards.at(0);

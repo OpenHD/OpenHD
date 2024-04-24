@@ -118,7 +118,6 @@ struct WBLinkSettings {
 };
 
 WBLinkSettings create_default_wb_stream_settings(
-    const OHDPlatform& platform,
     const std::vector<WiFiCard>& wifibroadcast_cards);
 
 static bool validate_wb_rtl8812au_tx_pwr_idx_override(int value) {
@@ -134,18 +133,16 @@ class WBLinkSettingsHolder : public openhd::PersistentSettings<WBLinkSettings> {
    * @param platform needed to figure out the proper default params
    * @param wifibroadcast_cards1 needed to figure out the proper default params
    */
-  explicit WBLinkSettingsHolder(OHDPlatform platform, OHDProfile profile,
+  explicit WBLinkSettingsHolder(OHDProfile profile,
                                 std::vector<WiFiCard> wifibroadcast_cards1)
       : openhd::PersistentSettings<WBLinkSettings>(
             get_interface_settings_directory()),
         m_cards(std::move(wifibroadcast_cards1)),
-        m_platform(platform),
         m_profile(std::move(profile)) {
     init();
   }
 
  public:
-  const OHDPlatform m_platform;
   const OHDProfile m_profile;
   const std::vector<WiFiCard> m_cards;
 
@@ -156,7 +153,7 @@ class WBLinkSettingsHolder : public openhd::PersistentSettings<WBLinkSettings> {
     return ss.str();
   }
   [[nodiscard]] WBLinkSettings create_default() const override {
-    return create_default_wb_stream_settings(m_platform, m_cards);
+    return create_default_wb_stream_settings(m_cards);
   }
 
  private:

@@ -19,13 +19,11 @@
 
 static constexpr auto WB_LINK_ARM_CHANGED_TX_POWER_TAG = "wb_link_tx_power";
 
-WBLink::WBLink(OHDProfile profile, OHDPlatform platform,
-               std::vector<WiFiCard> broadcast_cards)
+WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
     : m_profile(std::move(profile)),
-      m_platform(platform),
       m_broadcast_cards(std::move(broadcast_cards)),
       m_recommended_max_fec_blk_size_for_this_platform(
-          get_fec_max_block_size_for_platform(platform.platform_type)) {
+          get_fec_max_block_size_for_platform()) {
   m_console = openhd::log::create_or_get("wb_streams");
   assert(m_console);
   m_frame_drop_helper.set_console(m_console);
@@ -42,7 +40,7 @@ WBLink::WBLink(OHDProfile profile, OHDPlatform platform,
   }
   // this fetches the last settings, otherwise creates default ones
   m_settings = std::make_unique<openhd::WBLinkSettingsHolder>(
-      m_platform, m_profile, m_broadcast_cards);
+      m_profile, m_broadcast_cards);
   WBTxRx::Options txrx_options{};
   txrx_options.session_key_packet_interval = SESSION_KEY_PACKETS_INTERVAL;
   txrx_options.use_gnd_identifier = m_profile.is_ground();
@@ -1318,7 +1316,7 @@ void WBLink::perform_channel_scan(
       if (done_early) break;
       // Skip channels / frequencies the card doesn't support anyways
       if (!openhd::wb::any_card_support_frequency(
-              channel.frequency, m_broadcast_cards, m_platform, m_console)) {
+              channel.frequency, m_broadcast_cards, m_console)) {
         continue;
       }
       // set new frequency, reset the packet count, sleep, then check if any

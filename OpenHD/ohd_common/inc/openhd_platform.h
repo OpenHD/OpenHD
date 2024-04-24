@@ -40,7 +40,7 @@ std::string x_platform_type_to_string(int platform_type);
 
 // Depends on single threaded CPU performance & weather NEON is available
 // Rough estimate
-int get_fec_max_block_size_for_platform(int platform_type);
+int get_fec_max_block_size_for_platform();
 
 // All these members must not change during run time once they have been
 // discovered !

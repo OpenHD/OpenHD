@@ -38,7 +38,7 @@ class OHDInterface {
    * @param opt_action_handler r.n used to propagate rate control from wb_link
    * to ohd_video
    */
-  explicit OHDInterface(OHDPlatform platform, OHDProfile profile);
+  explicit OHDInterface(OHDProfile profile);
   OHDInterface(const OHDInterface&) = delete;
   OHDInterface(const OHDInterface&&) = delete;
   ~OHDInterface();
@@ -62,7 +62,6 @@ class OHDInterface {
 
  private:
   const OHDProfile m_profile;
-  const OHDPlatform m_platform;
   std::shared_ptr<spdlog::logger> m_console;
   std::shared_ptr<WBLink> m_wb_link;
   std::shared_ptr<MicrohardLink> m_microhard_link;

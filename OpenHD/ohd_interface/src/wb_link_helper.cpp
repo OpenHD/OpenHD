@@ -51,7 +51,6 @@ bool openhd::wb::all_cards_support_frequency_and_channel_width(
 
 bool openhd::wb::any_card_support_frequency(
     uint32_t frequency, const std::vector<WiFiCard>& m_broadcast_cards,
-    const OHDPlatform& platform,
     const std::shared_ptr<spdlog::logger>& m_console) {
   bool any_supports_frequency = false;
   for (const auto& card : m_broadcast_cards) {

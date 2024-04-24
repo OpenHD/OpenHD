@@ -250,7 +250,7 @@ int main(int argc, char *argv[]) {
     auto ohdTelemetry = std::make_shared<OHDTelemetry>(profile);
 
     // Then start ohdInterface, which discovers detected wifi cards and more.
-    auto ohdInterface = std::make_shared<OHDInterface>(platform, profile);
+    auto ohdInterface = std::make_shared<OHDInterface>( profile);
 
     // Telemetry allows changing all settings (even from other modules)
     ohdTelemetry->add_settings_generic(ohdInterface->get_all_settings());
