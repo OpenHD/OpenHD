@@ -11,8 +11,7 @@
 
 int main() {
   const auto platform = OHDPlatform::instance();
-  const auto provider =
-      std::make_unique<OnboardComputerStatusProvider>(platform);
+  const auto provider = std::make_unique<OnboardComputerStatusProvider>();
 
   static bool quit = false;
   signal(SIGTERM, [](int sig) { quit = true; });

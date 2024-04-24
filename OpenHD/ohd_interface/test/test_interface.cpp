@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
 
   const auto platform = OHDPlatform::instance();
   const OHDProfile profile{is_air, "0"};
-  OHDInterface ohdInterface(platform, profile);
+  OHDInterface ohdInterface(profile);
 
   std::cout << "OHDInterface started\n";
 
