@@ -38,7 +38,8 @@ static int internal_discover_platform() {
     if (regex_search(compatible_content, sm, r)) {
       const std::string chip = sm[1];
       if (chip == "rk3588") {
-        return X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5;
+        // TODO - rock 5 a or b ?
+        return X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B;
       } else if (chip == "rk3566") {
         return X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W;
       } else if (chip == "rv1126") {
@@ -114,8 +115,10 @@ std::string x_platform_type_to_string(int platform_type) {
     // RPI END
     case X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W:
       return "RADXA ZERO3W";
-    case X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5:
-      return "RADXA ROCK5";
+    case X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A:
+      return "RADXA ROCK5 A";
+    case X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B:
+      return "RADXA ROCK5 B";
     case X_PLATFORM_TYPE_ROCKCHIP_RV1126_UNDEFINED:
       return "RV1126 UNDEFINED";
     // ROCK END
@@ -144,7 +147,8 @@ int get_fec_max_block_size_for_platform(int platform_type) {
     return 80;
   }
   if (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W ||
-      platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5) {
+      platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A ||
+      platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B) {
     return 50;
   }
   // For now
@@ -190,3 +194,10 @@ bool OHDPlatform::is_rpi_weak() const {
 bool OHDPlatform::is_zero3w() const {
   return platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W;
 }
+bool OHDPlatform::is_rock5_a() const {
+  return platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A;
+}
+bool OHDPlatform::is_rock5_b() const {
+  return platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B;
+}
+bool OHDPlatform::is_rock5_a_b() const { return is_rock5_a() || is_rock5_b(); }

@@ -9,6 +9,7 @@
 
 #include <utility>
 
+#include "ethernet_helper.hpp"
 #include "microhard_link.h"
 #include "openhd_config.h"
 #include "openhd_global_constants.hpp"
@@ -72,7 +73,13 @@ OHDInterface::OHDInterface(OHDPlatform platform1, OHDProfile profile1)
   } else if (m_profile.is_ground() && m_platform.is_zero3w()) {
     // We don't have an ethernet card, but you can connect a usb hub with
     // ethernet
-    // TODO
+    constexpr auto ETH_CARD_NAME_GUESS = "eth0";
+    if (openhd::ethernet::check_eth_adapter_up(ETH_CARD_NAME_GUESS)) {
+      opt_ethernet_card = ETH_CARD_NAME_GUESS;
+    }
+  } else if (m_profile.is_ground() && (m_platform.is_rock5_a_b())) {
+    // We have a ethernet card connected
+    opt_ethernet_card = "eth0";
   }
   if (opt_ethernet_card != std::nullopt) {
     const std::string ethernet_card = opt_ethernet_card.value();

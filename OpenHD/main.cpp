@@ -264,7 +264,7 @@ int main(int argc, char *argv[]) {
 #ifdef ENABLE_AIR
     std::unique_ptr<OHDVideoAir> ohd_video_air = nullptr;
     if (profile.is_air) {
-      auto cameras = OHDVideoAir::discover_cameras(platform);
+      auto cameras = OHDVideoAir::discover_cameras();
       ohd_video_air = std::make_unique<OHDVideoAir>(
           cameras, ohdInterface->get_link_handle());
       // First add camera specific settings (primary & secondary camera)

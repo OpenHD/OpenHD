@@ -379,8 +379,8 @@ static std::optional<XValidEndpoint> probe_v4l2_device(
 }  // namespace openhd::v4l2
 
 std::vector<DCameras::DiscoveredUSBCamera> DCameras::detect_usb_cameras(
-    const OHDPlatform &platform, std::shared_ptr<spdlog::logger> &m_console,
-    bool debug) {
+    std::shared_ptr<spdlog::logger> &m_console, bool debug) {
+  const auto platform = OHDPlatform::instance();
   if (platform.is_rpi_or_x86()) {
     DThermalCamerasHelper::enableFlirIfFound();
     DThermalCamerasHelper::enableSeekIfFound();

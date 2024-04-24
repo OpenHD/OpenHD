@@ -40,7 +40,7 @@ class OHDVideoAir {
   ~OHDVideoAir();
   OHDVideoAir(const OHDVideoAir&) = delete;
   OHDVideoAir(const OHDVideoAir&&) = delete;
-  static std::vector<XCamera> discover_cameras(const OHDPlatform& platform);
+  static std::vector<XCamera> discover_cameras();
   /**
    * In ohd-telemetry, we create a mavlink settings component for each of the
    * camera(s),instead of using one generic settings component like for the rest

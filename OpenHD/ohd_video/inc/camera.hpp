@@ -524,7 +524,10 @@ static std::vector<ManufacturerForPlatform> get_camera_choices_for_platform(
     return std::vector<ManufacturerForPlatform>{
         ManufacturerForPlatform{"ARDUCAM", arducam_cameras}, MANUFACTURER_USB,
         MANUFACTURER_DEBUG};
-  } else if (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5) {
+  } else if (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A) {
+    return std::vector<ManufacturerForPlatform>{MANUFACTURER_USB,
+                                                MANUFACTURER_DEBUG};
+  } else if (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B) {
     std::vector<CameraNameAndType> hdmi_cameras{
         CameraNameAndType{"HDMI IN", X_CAM_TYPE_ROCK_HDMI_IN},
     };
