@@ -256,8 +256,7 @@ std::vector<WiFiCard> reorder_monitor_mode_cards(std::vector<WiFiCard> cards) {
 }
 
 DWifiCards::ProcessedWifiCards DWifiCards::process_and_evaluate_cards(
-    const std::vector<WiFiCard>& discovered_cards, const OHDPlatform& platform,
-    const OHDProfile& profile) {
+    const std::vector<WiFiCard>& discovered_cards, const OHDProfile& profile) {
   // We need to figure out what's the best usage for the card(s) connected to
   // the system based on their capabilities.
   std::vector<WiFiCard> monitor_mode_cards{};
@@ -325,9 +324,10 @@ WiFiCard DWifiCards::create_card_monitor_emulate() {
 
 void DWifiCards::main_discover_an_process_wifi_cards(
     const openhd::Config& config, const OHDProfile& m_profile,
-    const OHDPlatform& m_platform, std::shared_ptr<spdlog::logger>& m_console,
+    std::shared_ptr<spdlog::logger>& m_console,
     std::vector<WiFiCard>& m_monitor_mode_cards,
     std::optional<WiFiCard>& m_opt_hotspot_card) {
+  const auto m_platform = OHDPlatform::instance();
   m_console->debug("Waiting for wifi card(s)...");
   const bool debug = false;
   if (config.WIFI_MONITOR_CARD_EMULATE) {
@@ -404,8 +404,8 @@ void DWifiCards::main_discover_an_process_wifi_cards(
     }
   }
   // now decide what to use the card(s) for
-  const auto evaluated = DWifiCards::process_and_evaluate_cards(
-      connected_cards, m_platform, m_profile);
+  const auto evaluated =
+      DWifiCards::process_and_evaluate_cards(connected_cards, m_profile);
   m_monitor_mode_cards = evaluated.monitor_mode_cards;
   m_opt_hotspot_card = evaluated.hotspot_card;
   if (m_monitor_mode_cards.empty()) {

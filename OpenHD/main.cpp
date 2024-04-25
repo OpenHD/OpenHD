@@ -247,10 +247,10 @@ int main(int argc, char *argv[]) {
     // We start ohd_telemetry as early as possible, since even without a link
     // (transmission) it still picks up local log message(s) and forwards them
     // to any ground station clients (e.g. QOpenHD)
-    auto ohdTelemetry = std::make_shared<OHDTelemetry>(platform, profile);
+    auto ohdTelemetry = std::make_shared<OHDTelemetry>(profile);
 
     // Then start ohdInterface, which discovers detected wifi cards and more.
-    auto ohdInterface = std::make_shared<OHDInterface>(platform, profile);
+    auto ohdInterface = std::make_shared<OHDInterface>( profile);
 
     // Telemetry allows changing all settings (even from other modules)
     ohdTelemetry->add_settings_generic(ohdInterface->get_all_settings());
@@ -264,7 +264,7 @@ int main(int argc, char *argv[]) {
 #ifdef ENABLE_AIR
     std::unique_ptr<OHDVideoAir> ohd_video_air = nullptr;
     if (profile.is_air) {
-      auto cameras = OHDVideoAir::discover_cameras(platform);
+      auto cameras = OHDVideoAir::discover_cameras();
       ohd_video_air = std::make_unique<OHDVideoAir>(
           cameras, ohdInterface->get_link_handle());
       // First add camera specific settings (primary & secondary camera)

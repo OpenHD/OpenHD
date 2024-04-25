@@ -7,13 +7,11 @@
 #include "AirTelemetry.h"
 #include "GroundTelemetry.h"
 
-OHDTelemetry::OHDTelemetry(OHDPlatform platform1, OHDProfile profile1,
-                           bool enableExtendedLogging)
-    : m_platform(platform1),
-      m_profile(std::move(profile1)),
+OHDTelemetry::OHDTelemetry(OHDProfile profile1, bool enableExtendedLogging)
+    : m_profile(std::move(profile1)),
       m_enableExtendedLogging(enableExtendedLogging) {
   if (this->m_profile.is_air) {
-    m_air_telemetry = std::make_unique<AirTelemetry>(m_platform);
+    m_air_telemetry = std::make_unique<AirTelemetry>();
     assert(m_air_telemetry);
     m_loop_thread = std::make_unique<std::thread>([this] {
       assert(m_air_telemetry);
@@ -21,7 +19,7 @@ OHDTelemetry::OHDTelemetry(OHDPlatform platform1, OHDProfile profile1,
                                      this->m_enableExtendedLogging);
     });
   } else {
-    m_ground_telemetry = std::make_unique<GroundTelemetry>(m_platform);
+    m_ground_telemetry = std::make_unique<GroundTelemetry>();
     assert(m_ground_telemetry);
     m_loop_thread = std::make_unique<std::thread>([this] {
       assert(m_ground_telemetry);

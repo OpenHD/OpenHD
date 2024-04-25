@@ -23,9 +23,9 @@ static constexpr int X_PLATFORM_TYPE_RPI_5 = 12;
 // Numbers 20..30 are reserved for rockchip
 static constexpr int X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W =
     20;  // Zero 3 W
-static constexpr int X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5 =
-    21;                                                               // ROCK 5
-static constexpr int X_PLATFORM_TYPE_ROCKCHIP_RV1126_UNDEFINED = 22;  // FUTRE
+static constexpr int X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A = 21;
+static constexpr int X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B = 22;
+static constexpr int X_PLATFORM_TYPE_ROCKCHIP_RV1126_UNDEFINED = 23;  // FUTURE
 
 // Numbers 30..35 are reserved for allwinner
 static constexpr int X_PLATFORM_TYPE_ALWINNER_X20 = 30;
@@ -40,7 +40,7 @@ std::string x_platform_type_to_string(int platform_type);
 
 // Depends on single threaded CPU performance & weather NEON is available
 // Rough estimate
-int get_fec_max_block_size_for_platform(int platform_type);
+int get_fec_max_block_size_for_platform();
 
 // All these members must not change during run time once they have been
 // discovered !
@@ -52,8 +52,11 @@ struct OHDPlatform {
   [[nodiscard]] std::string to_string() const;
   static const OHDPlatform& instance();
   bool is_rpi() const;
-  bool is_rpi_weak() const;
   bool is_rock() const;
+  bool is_zero3w() const;
+  bool is_rock5_a() const;
+  bool is_rock5_b() const;
+  bool is_rock5_a_b() const;
   bool is_rpi_or_x86() const;
   // alwinner
   bool is_x20() const;

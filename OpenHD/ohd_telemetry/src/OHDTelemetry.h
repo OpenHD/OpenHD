@@ -26,8 +26,7 @@ class GroundTelemetry;
  */
 class OHDTelemetry {
  public:
-  OHDTelemetry(OHDPlatform platform1, OHDProfile profile1,
-               bool enableExtendedLogging = false);
+  OHDTelemetry(OHDProfile profile1, bool enableExtendedLogging = false);
   OHDTelemetry(const OHDTelemetry&) = delete;
   OHDTelemetry(const OHDTelemetry&&) = delete;
   ~OHDTelemetry();
@@ -67,7 +66,6 @@ class OHDTelemetry {
   // Receive threads
   std::unique_ptr<std::thread> m_loop_thread;
   bool m_loop_thread_terminate = false;
-  const OHDPlatform m_platform;
   const OHDProfile m_profile;
   const bool m_enableExtendedLogging;
 };

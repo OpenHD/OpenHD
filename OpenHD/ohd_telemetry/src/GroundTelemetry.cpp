@@ -12,8 +12,7 @@
 #include "openhd_util.h"
 #include "openhd_util_time.h"
 
-GroundTelemetry::GroundTelemetry(OHDPlatform platform)
-    : _platform(platform), MavlinkSystem(OHD_SYS_ID_GROUND) {
+GroundTelemetry::GroundTelemetry() : MavlinkSystem(OHD_SYS_ID_GROUND) {
   m_console = openhd::log::create_or_get("ground_tele");
   assert(m_console);
   m_gnd_settings =
@@ -39,8 +38,7 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform)
           on_messages_ground_station_clients(messages);
         });
   }
-  m_ohd_main_component =
-      std::make_shared<OHDMainComponent>(_platform, _sys_id, false);
+  m_ohd_main_component = std::make_shared<OHDMainComponent>(_sys_id, false);
   m_components.push_back(m_ohd_main_component);
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
   if (m_gnd_settings->get_settings().enable_rc_over_joystick) {

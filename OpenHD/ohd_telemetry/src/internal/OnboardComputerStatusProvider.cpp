@@ -28,11 +28,8 @@ static int read_cpu_current_frequency_linux_mhz() {
   return value.value() / 1000;
 }
 
-OnboardComputerStatusProvider::OnboardComputerStatusProvider(
-    OHDPlatform platform, bool enable)
-    : m_platform(platform),
-      m_enable(enable),
-      m_ina_219(SHUNT_OHMS, MAX_EXPECTED_AMPS) {
+OnboardComputerStatusProvider::OnboardComputerStatusProvider(bool enable)
+    : m_enable(enable), m_ina_219(SHUNT_OHMS, MAX_EXPECTED_AMPS) {
   ina219_log_warning_once();
   if (!m_ina_219.has_any_error) {
     m_ina_219.configure(RANGE, GAIN, BUS_ADC, SHUNT_ADC);
@@ -106,7 +103,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       curr_ina219_voltage = voltage;
       curr_ina219_current = current;
     }
-    if (m_platform.is_rpi()) {
+    if (OHDPlatform::instance().is_rpi()) {
       curr_temperature_core =
           (int8_t)openhd::onboard::rpi::read_temperature_soc_degree();
       // temporary, until we have our own message
@@ -123,9 +120,9 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       curr_rpi_undervolt = openhd::onboard::rpi::vcgencmd_get_undervolt();
     } else {
       const auto cpu_temp = (int8_t)openhd::onboard::readTemperature();
+      const auto platform = OHDPlatform::instance();
       curr_temperature_core = cpu_temp;
-      if (m_platform.is_rock() ||
-          m_platform.platform_type == X_PLATFORM_TYPE_X86) {
+      if (platform.is_rock() || platform.platform_type == X_PLATFORM_TYPE_X86) {
         curr_clock_cpu = read_cpu_current_frequency_linux_mhz();
       }
     }

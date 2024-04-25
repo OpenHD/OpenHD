@@ -74,7 +74,7 @@ static constexpr int X_CAM_TYPE_RPI_V4L2_VEYE_MVCAM = 63;
 // X20 Specific starts here
 //
 // Right now we only have one camera, but more (might) follow.
-static constexpr int X_CAM_TYPE_X20_RUNCAM_NANO = 70;
+static constexpr int X_CAM_TYPE_X20_RUNCAM_GENERIC = 70;
 // ... 9 reserved for future use
 //
 // ROCK Specific starts here
@@ -145,8 +145,8 @@ static std::string x_cam_type_to_string(int camera_type) {
     case X_CAM_TYPE_RPI_V4L2_VEYE_MVCAM:
       return "VEYE_MVCAM";
     // All the x20 begin
-    case X_CAM_TYPE_X20_RUNCAM_NANO:
-      return "X20_RUNCAM_NANO";
+    case X_CAM_TYPE_X20_RUNCAM_GENERIC:
+      return "X20_RUNCAM_GENERIC";
     // All the rock begin
     case X_CAM_TYPE_ROCK_HDMI_IN:
       return "ROCK_HDMI_IN";
@@ -511,10 +511,10 @@ static std::vector<ManufacturerForPlatform> get_camera_choices_for_platform(
         MANUFACTURER_DEBUG};
   } else if (platform_type == X_PLATFORM_TYPE_ALWINNER_X20) {
     std::vector<CameraNameAndType> runcam_cameras{
-        CameraNameAndType{"RUNCAM NANO", X_CAM_TYPE_X20_RUNCAM_NANO},
+        CameraNameAndType{"RUNCAM", X_CAM_TYPE_X20_RUNCAM_GENERIC},
     };
     return std::vector<ManufacturerForPlatform>{
-        ManufacturerForPlatform{"RUNCAM", runcam_cameras}};
+        ManufacturerForPlatform{"HDZERO", runcam_cameras}};
   } else if (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W) {
     std::vector<CameraNameAndType> arducam_cameras{
         CameraNameAndType{"IMX219", X_CAM_TYPE_ROCK_RK3566_IMX219},
@@ -524,7 +524,10 @@ static std::vector<ManufacturerForPlatform> get_camera_choices_for_platform(
     return std::vector<ManufacturerForPlatform>{
         ManufacturerForPlatform{"ARDUCAM", arducam_cameras}, MANUFACTURER_USB,
         MANUFACTURER_DEBUG};
-  } else if (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5) {
+  } else if (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A) {
+    return std::vector<ManufacturerForPlatform>{MANUFACTURER_USB,
+                                                MANUFACTURER_DEBUG};
+  } else if (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B) {
     std::vector<CameraNameAndType> hdmi_cameras{
         CameraNameAndType{"HDMI IN", X_CAM_TYPE_ROCK_HDMI_IN},
     };

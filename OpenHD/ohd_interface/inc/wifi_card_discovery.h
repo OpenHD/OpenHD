@@ -18,7 +18,7 @@ namespace DWifiCards {
 
 void main_discover_an_process_wifi_cards(
     const openhd::Config& config, const OHDProfile& m_profile,
-    const OHDPlatform& m_platform, std::shared_ptr<spdlog::logger>& m_console,
+    std::shared_ptr<spdlog::logger>& m_console,
     std::vector<WiFiCard>& m_monitor_mode_cards,
     std::optional<WiFiCard>& m_opt_hotspot_card);
 
@@ -42,8 +42,7 @@ struct ProcessedWifiCards {
 };
 
 ProcessedWifiCards process_and_evaluate_cards(
-    const std::vector<WiFiCard>& discovered_cards, const OHDPlatform& platform,
-    const OHDProfile& profile);
+    const std::vector<WiFiCard>& discovered_cards, const OHDProfile& profile);
 
 // for users who use the manual file to define their card(s)
 ProcessedWifiCards find_cards_from_manual_file(

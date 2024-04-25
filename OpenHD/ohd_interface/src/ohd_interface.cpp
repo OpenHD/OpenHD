@@ -9,14 +9,15 @@
 
 #include <utility>
 
+#include "ethernet_helper.hpp"
 #include "microhard_link.h"
 #include "openhd_config.h"
 #include "openhd_global_constants.hpp"
 #include "openhd_util_filesystem.h"
 #include "wb_link.h"
 
-OHDInterface::OHDInterface(OHDPlatform platform1, OHDProfile profile1)
-    : m_platform(platform1), m_profile(std::move(profile1)) {
+OHDInterface::OHDInterface(OHDProfile profile1)
+    : m_profile(std::move(profile1)) {
   m_console = openhd::log::create_or_get("interface");
   assert(m_console);
   m_monitor_mode_cards = {};
@@ -27,8 +28,7 @@ OHDInterface::OHDInterface(OHDPlatform platform1, OHDProfile profile1)
     return;
   }
   DWifiCards::main_discover_an_process_wifi_cards(
-      config, m_profile, m_platform, m_console, m_monitor_mode_cards,
-      m_opt_hotspot_card);
+      config, m_profile, m_console, m_monitor_mode_cards, m_opt_hotspot_card);
   m_console->debug("monitor_mode card(s):{}",
                    debug_cards(m_monitor_mode_cards));
   if (m_opt_hotspot_card.has_value()) {
@@ -51,8 +51,7 @@ OHDInterface::OHDInterface(OHDPlatform platform1, OHDProfile profile1)
   } else {
     // Set the card(s) we have into monitor mode
     openhd::wb::takeover_cards_monitor_mode(m_monitor_mode_cards, m_console);
-    m_wb_link =
-        std::make_shared<WBLink>(m_profile, m_platform, m_monitor_mode_cards);
+    m_wb_link = std::make_shared<WBLink>(m_profile, m_monitor_mode_cards);
   }
   // The USB tethering listener is always enabled on ground - it doesn't
   // interfere with anything
@@ -65,10 +64,21 @@ OHDInterface::OHDInterface(OHDPlatform platform1, OHDProfile profile1)
   // On rpi, we do that by default when on ground, on other platforms, only if
   // the user explicitly requested it.
   std::optional<std::string> opt_ethernet_card = std::nullopt;
+  const auto platform = OHDPlatform::instance();
   if (openhd::nw_ethernet_card_manual_active(config)) {
     opt_ethernet_card = config.NW_ETHERNET_CARD;
-  } else if (m_profile.is_ground() && m_platform.is_rpi()) {
+  } else if (m_profile.is_ground() && platform.is_rpi()) {
     opt_ethernet_card = std::string("eth0");
+  } else if (m_profile.is_ground() && platform.is_zero3w()) {
+    // We don't have an ethernet card, but you can connect a usb hub with
+    // ethernet
+    constexpr auto ETH_CARD_NAME_GUESS = "eth0";
+    if (openhd::ethernet::check_eth_adapter_up(ETH_CARD_NAME_GUESS)) {
+      opt_ethernet_card = ETH_CARD_NAME_GUESS;
+    }
+  } else if (m_profile.is_ground() && (platform.is_rock5_a_b())) {
+    // We have a ethernet card connected
+    opt_ethernet_card = "eth0";
   }
   if (opt_ethernet_card != std::nullopt) {
     const std::string ethernet_card = opt_ethernet_card.value();

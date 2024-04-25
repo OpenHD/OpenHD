@@ -29,7 +29,6 @@ std::string WBLinkSettingsHolder::imp_serialize(
 }
 
 WBLinkSettings create_default_wb_stream_settings(
-    const OHDPlatform &platform,
     const std::vector<WiFiCard> &wifibroadcast_cards) {
   assert(!wifibroadcast_cards.empty());
   const auto &first_card = wifibroadcast_cards.at(0);
@@ -48,6 +47,10 @@ WBLinkSettings create_default_wb_stream_settings(
   } else {
     // Should work even on ali cards without burning them
     settings.wb_rtl8812au_tx_pwr_idx_override = 10;
+  }
+  if (OHDPlatform::instance().is_x20()) {
+    settings.wb_enable_stbc = true;
+    settings.wb_enable_ldpc = true;
   }
   return settings;
 }

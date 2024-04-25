@@ -28,7 +28,7 @@
  */
 class AirTelemetry : public MavlinkSystem {
  public:
-  explicit AirTelemetry(OHDPlatform platform);
+  explicit AirTelemetry();
   AirTelemetry(const AirTelemetry&) = delete;
   AirTelemetry(const AirTelemetry&&) = delete;
   ~AirTelemetry();
@@ -83,7 +83,6 @@ class AirTelemetry : public MavlinkSystem {
   void setup_uart();
 
  private:
-  const OHDPlatform m_platform;
   std::unique_ptr<openhd::telemetry::air::SettingsHolder> m_air_settings;
   std::unique_ptr<SerialEndpointManager> m_fc_serial;
   // send/receive data via wb

@@ -23,7 +23,7 @@ int main(int argc, char* argv[]) {
   OHDUtil::terminate_if_not_root();
   const auto platform = OHDPlatform::instance();
 
-  auto cameras = OHDVideoAir::discover_cameras(platform);
+  auto cameras = OHDVideoAir::discover_cameras();
   openhd::BitrateDebugger bitrate_debugger{"Bitrate", true};
 
   auto forwarder = openhd::UDPForwarder("127.0.0.1", 5600);

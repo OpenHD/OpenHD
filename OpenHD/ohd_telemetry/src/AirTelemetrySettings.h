@@ -51,9 +51,8 @@ static constexpr auto FC_BATT_N_CELLS = "FC_BATT_N_CELLS";
 
 class SettingsHolder : public openhd::PersistentSettings<Settings> {
  public:
-  explicit SettingsHolder(OHDPlatform platform)
-      : m_platform(platform),
-        openhd::PersistentSettings<Settings>(
+  explicit SettingsHolder()
+      : openhd::PersistentSettings<Settings>(
             openhd::get_telemetry_settings_directory()) {
     init();
   }
@@ -62,13 +61,12 @@ class SettingsHolder : public openhd::PersistentSettings<Settings> {
   }
 
  private:
-  OHDPlatform m_platform;
   [[nodiscard]] std::string get_unique_filename() const override {
     return "air_settings.json";
   }
   [[nodiscard]] Settings create_default() const override {
     Settings ret{};
-    if (m_platform.is_rpi()) {
+    if (OHDPlatform::instance().is_rpi()) {
       // Enable serial to FC by default
       ret.fc_uart_connection_type = "/dev/serial0";
     }
