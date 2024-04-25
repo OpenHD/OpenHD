@@ -13,7 +13,8 @@ int main(int argc, char *argv[]) {
 
   OHDUtil::keep_alive_until_sigterm();
 
-  listener = nullptr;
+  manager->stop();
+  manager= nullptr;
 
   return 0;
 }
