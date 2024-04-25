@@ -114,7 +114,8 @@ static std::optional<std::string> find_ethernet_device_name() {
       "/sys/class/net/");
   for (auto& device : devices) {
     if (OHDUtil::startsWith(device, "enx") ||
-        OHDUtil::startsWith(device, "eth")) {
+        OHDUtil::startsWith(device, "eth") ||
+        OHDUtil::startsWith(device, "enp")) {
       return device;
     }
   }

@@ -62,7 +62,8 @@ OHDInterface::OHDInterface(OHDProfile profile1)
   // Ethernet - optional, only on ground
   if (m_profile.is_ground()) {
     m_ethernet_manager = std::make_unique<EthernetManager>();
-    m_ethernet_manager->async_initialize(m_nw_settings.get_settings().ethernet_operating_mode);
+    m_ethernet_manager->async_initialize(
+        m_nw_settings.get_settings().ethernet_operating_mode);
     // m_nw_settings.get_settings().ethernet_operating_mode
   }
   // Wi-Fi hotspot functionality if possible.
