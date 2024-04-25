@@ -16,15 +16,22 @@ static constexpr auto WIFI_HOTSPOT_AUTO = 0;
 static constexpr auto WIFI_HOTSPOT_ALWAYS_OFF = 1;
 static constexpr auto WIFI_HOTSPOT_ALWAYS_ON = 2;
 
+// OpenHD does not touch the ethernet
+static constexpr auto ETHERNET_OPERATING_MODE_UNTOUCHED = 0;
+// OpenHD configures the ethernet, such that it acts as a 'hotspot'
+// In hotspot mode, the IP of the ground station is always fixed and a unlimited
+// amount of devices can connect to it.
+static constexpr auto ETHERNET_OPERATING_MODE_HOTSPOT = 1;
+// OpenHD does not touch the ethernet, but it starts forwarding data to whoever
+// provides internet. a bit complicated :/
+static constexpr auto ETHERNET_OPERATING_MODE_EXTERNAL_DEVICE = 2;
+
 // Networking related settings, separate from wb_link
 struct NetworkingSettings {
   // Only used if a wifi hotspot card has been found
   int wifi_hotspot_mode = WIFI_HOTSPOT_AUTO;
   // Ethernet hotspot (changes networking,might require reboot)
-  bool ethernet_hotspot_enable = false;
-  // passive listening for forwarding without hotspot functionality, can be
-  // enabled / disabled at run time.
-  bool ethernet_nonhotspot_enable_auto_forwarding = false;
+  int ethernet_operating_mode = ETHERNET_OPERATING_MODE_UNTOUCHED;
 };
 
 static bool is_valid_wifi_hotspot_mode(int mode) {

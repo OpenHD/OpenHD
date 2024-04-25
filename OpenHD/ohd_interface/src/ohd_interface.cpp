@@ -9,7 +9,6 @@
 
 #include <utility>
 
-#include "ethernet_helper.hpp"
 #include "microhard_link.h"
 #include "openhd_config.h"
 #include "openhd_global_constants.hpp"
@@ -60,41 +59,11 @@ OHDInterface::OHDInterface(OHDProfile profile1)
     // interfere with anything
     m_usb_tether_listener = std::make_unique<USBTetherListener>();
   }
-  // OpenHD can (but must not) "control" ethernet via network manager.
-  // On rpi, we do that by default when on ground, on other platforms, only if
-  // the user explicitly requested it.
-  std::optional<std::string> opt_ethernet_card = std::nullopt;
-  const auto platform = OHDPlatform::instance();
-  if (openhd::nw_ethernet_card_manual_active(config)) {
-    opt_ethernet_card = config.NW_ETHERNET_CARD;
-  } else if (m_profile.is_ground() && platform.is_rpi()) {
-    opt_ethernet_card = std::string("eth0");
-  } else if (m_profile.is_ground() && platform.is_zero3w()) {
-    // We don't have an ethernet card, but you can connect a usb hub with
-    // ethernet
-    constexpr auto ETH_CARD_NAME_GUESS = "eth0";
-    if (openhd::ethernet::check_eth_adapter_up(ETH_CARD_NAME_GUESS)) {
-      opt_ethernet_card = ETH_CARD_NAME_GUESS;
-    }
-  } else if (m_profile.is_ground() && (platform.is_rock5_a_b())) {
-    // We have a ethernet card connected
-    opt_ethernet_card = "eth0";
-  }
-  if (opt_ethernet_card != std::nullopt) {
-    const std::string ethernet_card = opt_ethernet_card.value();
-    m_console->debug("OpenHD manages {}", ethernet_card);
-    // NOTE: Persistence is a bit complicated with ethernet hotspot (we write a
-    // nm connection that needs to stay there such that after a reboot, the rpi
-    // correctly the ethernet
-    m_ethernet_hotspot = std::make_unique<EthernetHotspot>(ethernet_card);
-    m_ethernet_hotspot->set_enabled(
-        m_nw_settings.get_settings().ethernet_hotspot_enable);
-    m_ethernet_listener = std::make_unique<EthernetListener>(ethernet_card);
-    m_ethernet_listener->set_enabled(
-        m_nw_settings.get_settings()
-            .ethernet_nonhotspot_enable_auto_forwarding);
-  } else {
-    m_console->debug("OpenHD does not manage ethernet");
+  // Ethernet - optional, only on ground
+  if (m_profile.is_ground()) {
+    m_ethernet_manager = std::make_unique<EthernetManager>();
+    m_ethernet_manager->async_initialize(2);
+    // m_nw_settings.get_settings().ethernet_operating_mode
   }
   // Wi-Fi hotspot functionality if possible.
   if (m_opt_hotspot_card.has_value()) {
@@ -127,6 +96,10 @@ OHDInterface::~OHDInterface() {
   // Then give the card(s) back to the system (no monitor mode)
   // give the monitor mode cards back to network manager
   openhd::wb::giveback_cards_monitor_mode(m_monitor_mode_cards, m_console);
+  if (m_ethernet_manager) {
+    m_ethernet_manager->stop();
+    m_ethernet_manager = nullptr;
+  }
 }
 
 std::vector<openhd::Setting> OHDInterface::get_all_settings() {
@@ -152,46 +125,17 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings() {
         openhd::IntSetting{m_nw_settings.get_settings().wifi_hotspot_mode,
                            cb_wifi_hotspot_mode}});
   }
-  if (m_ethernet_hotspot) {
+  if (true) {
     const auto settings = m_nw_settings.get_settings();
-    auto cb_enable = [this](std::string, int value) {
-      if (!openhd::validate_yes_or_no(value)) return false;
-      // Cannot be enabled while ethernet passive forwarding is active
-      if (m_nw_settings.unsafe_get_settings()
-              .ethernet_nonhotspot_enable_auto_forwarding) {
-        m_console->warn("Please disable ethernet passive forwarding");
-        return false;
-      }
-      m_nw_settings.unsafe_get_settings().ethernet_hotspot_enable = value;
+    auto cb_ethernet = [this](std::string, int value) {
+      m_nw_settings.unsafe_get_settings().ethernet_operating_mode = value;
       m_nw_settings.persist();
-      // to apply, might require reboot !!
-      m_ethernet_hotspot->set_enabled(value);
+      // Change requires reboot
       return true;
     };
     ret.push_back(openhd::Setting{
-        "ETH_HOTSPOT_E",
-        openhd::IntSetting{settings.ethernet_hotspot_enable, cb_enable}});
-  }
-  if (m_ethernet_listener) {
-    const auto settings = m_nw_settings.get_settings();
-    auto cb_enable = [this](std::string, int value) {
-      if (!openhd::validate_yes_or_no(value)) return false;
-      // Cannot be enabled while ethernet hotspot is active
-      if (m_nw_settings.unsafe_get_settings().ethernet_hotspot_enable) {
-        m_console->warn("Please disable ethernet hotspot");
-        return false;
-      }
-      m_nw_settings.unsafe_get_settings()
-          .ethernet_nonhotspot_enable_auto_forwarding = value;
-      m_nw_settings.persist();
-      // Doesn't need reboot
-      m_ethernet_listener->set_enabled(value);
-      return true;
-    };
-    ret.push_back(openhd::Setting{
-        "ETH_PASSIVE_F",
-        openhd::IntSetting{settings.ethernet_nonhotspot_enable_auto_forwarding,
-                           cb_enable}});
+        "ETHERNET",
+        openhd::IntSetting{settings.ethernet_operating_mode, cb_ethernet}});
   }
   /* if(m_opt_hotspot_card){
      auto setting=openhd::create_read_only_string(fmt::format("HOTSPOT_CARD"),

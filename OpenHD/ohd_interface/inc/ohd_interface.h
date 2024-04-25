@@ -8,8 +8,7 @@
 #include <memory>
 #include <utility>
 
-#include "ethernet_hotspot.h"
-#include "ethernet_listener.h"
+#include "ethernet_manager.h"
 #include "networking_settings.h"
 #include "openhd_action_handler.h"
 #include "openhd_external_device.h"
@@ -66,8 +65,7 @@ class OHDInterface {
   std::shared_ptr<WBLink> m_wb_link;
   std::shared_ptr<MicrohardLink> m_microhard_link;
   std::unique_ptr<USBTetherListener> m_usb_tether_listener;
-  std::unique_ptr<EthernetListener> m_ethernet_listener;
-  std::unique_ptr<EthernetHotspot> m_ethernet_hotspot;
+  std::unique_ptr<EthernetManager> m_ethernet_manager;
   std::unique_ptr<WifiHotspot> m_wifi_hotspot;
   std::vector<WiFiCard> m_monitor_mode_cards{};
   std::optional<WiFiCard> m_opt_hotspot_card = std::nullopt;
