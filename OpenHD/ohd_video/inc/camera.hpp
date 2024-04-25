@@ -511,7 +511,7 @@ static std::vector<ManufacturerForPlatform> get_camera_choices_for_platform(
         MANUFACTURER_DEBUG};
   } else if (platform_type == X_PLATFORM_TYPE_ALWINNER_X20) {
     std::vector<CameraNameAndType> runcam_cameras{
-        CameraNameAndType{"RUNCAM", X_CAM_TYPE_X20_RUNCAM_GENERIC},
+        CameraNameAndType{"GENERIC", X_CAM_TYPE_X20_RUNCAM_GENERIC},
     };
     return std::vector<ManufacturerForPlatform>{
         ManufacturerForPlatform{"HDZERO", runcam_cameras}};
