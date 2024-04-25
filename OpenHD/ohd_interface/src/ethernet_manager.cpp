@@ -105,10 +105,6 @@ static void create_ethernet_hotspot_connection_if_needed(
   m_console->debug("end create hotspot connection");
 }
 
-EthernetManager::EthernetManager() {
-  m_console = openhd::log::create_or_get("eth_manager");
-}
-
 static std::optional<std::string> find_ethernet_device_name() {
   auto devices = OHDFilesystemUtil::getAllEntriesFilenameOnlyInDirectory(
       "/sys/class/net/");
@@ -120,6 +116,10 @@ static std::optional<std::string> find_ethernet_device_name() {
     }
   }
   return std::nullopt;
+}
+
+EthernetManager::EthernetManager() {
+  m_console = openhd::log::create_or_get("eth_manager");
 }
 
 void EthernetManager::async_initialize(int operating_mode) {
@@ -213,7 +213,11 @@ void EthernetManager::loop_ethernet_external_device_listener(
   // check in regular intervals if the device disconnects
   while (!m_terminate) {
     std::this_thread::sleep_for(std::chrono::seconds(1));
-    // TODO
+    // check if the state is still okay
+    if (!openhd::ethernet::check_eth_adapter_up(device_name)) {
+      m_console->debug("Eth0 is up");
+      break;
+    }
   }
   openhd::ExternalDeviceManager::instance().on_new_external_device(
       external_device, false);
