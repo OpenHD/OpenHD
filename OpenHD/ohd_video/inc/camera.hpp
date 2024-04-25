@@ -74,7 +74,7 @@ static constexpr int X_CAM_TYPE_RPI_V4L2_VEYE_MVCAM = 63;
 // X20 Specific starts here
 //
 // Right now we only have one camera, but more (might) follow.
-static constexpr int X_CAM_TYPE_X20_RUNCAM_GENERIC = 70;
+static constexpr int X_CAM_TYPE_X20_HDZERO_GENERIC = 70;
 // ... 9 reserved for future use
 //
 // ROCK Specific starts here
@@ -145,8 +145,8 @@ static std::string x_cam_type_to_string(int camera_type) {
     case X_CAM_TYPE_RPI_V4L2_VEYE_MVCAM:
       return "VEYE_MVCAM";
     // All the x20 begin
-    case X_CAM_TYPE_X20_RUNCAM_GENERIC:
-      return "X20_RUNCAM_GENERIC";
+    case X_CAM_TYPE_X20_HDZERO_GENERIC:
+      return "X20_HDZERO_GENERIC";
     // All the rock begin
     case X_CAM_TYPE_ROCK_HDMI_IN:
       return "ROCK_HDMI_IN";
@@ -511,7 +511,7 @@ static std::vector<ManufacturerForPlatform> get_camera_choices_for_platform(
         MANUFACTURER_DEBUG};
   } else if (platform_type == X_PLATFORM_TYPE_ALWINNER_X20) {
     std::vector<CameraNameAndType> runcam_cameras{
-        CameraNameAndType{"GENERIC", X_CAM_TYPE_X20_RUNCAM_GENERIC},
+        CameraNameAndType{"GENERIC", X_CAM_TYPE_X20_HDZERO_GENERIC},
     };
     return std::vector<ManufacturerForPlatform>{
         ManufacturerForPlatform{"HDZERO", runcam_cameras}};
