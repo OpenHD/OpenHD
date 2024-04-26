@@ -7,8 +7,7 @@
 #include "include_json.hpp"
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(NetworkingSettings, wifi_hotspot_mode,
-                                   ethernet_hotspot_enable,
-                                   ethernet_nonhotspot_enable_auto_forwarding);
+                                   ethernet_operating_mode);
 
 std::optional<NetworkingSettings> NetworkingSettingsHolder::impl_deserialize(
     const std::string &file_as_string) const {
