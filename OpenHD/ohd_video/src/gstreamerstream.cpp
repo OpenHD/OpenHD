@@ -364,7 +364,7 @@ void GStreamerStream::stream_once() {
       m_camera_holder->get_camera().index, CAM_STATUS_RESTARTING);
   setup();
   if (OHDPlatform::instance().is_x20()) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
   }
   start();
   // Check if we were able to successfully start the pipeline. If - for example
@@ -510,6 +510,7 @@ void GStreamerStream::stream_once() {
   const auto terminate_begin = std::chrono::steady_clock::now();
   stop();
   cleanup_pipe();
+  m_frame_fragments.resize(0);
   m_console->debug("Terminating pipeline took {}ms",
                    std::chrono::duration_cast<std::chrono::milliseconds>(
                        std::chrono::steady_clock::now() - terminate_begin)
