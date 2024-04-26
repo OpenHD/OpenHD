@@ -405,7 +405,7 @@ std::optional<std::string> serial_openhd_param_to_linux_fd(
     return std::nullopt;
   }
   // Default mapping
-  if (OHDUtil::str_equal(param_name, "SERIAL 0")) {
+  if (OHDUtil::str_equal(param_name, "SERIAL_0")) {
     const auto platform = OHDPlatform::instance();
     if (platform.is_rpi()) {
       return "/dev/serial0";
