@@ -20,6 +20,7 @@ namespace openhd::telemetry::air {
 static constexpr int DEFAULT_UART_BAUDRATE = 115200;
 // We use an empty string for "serial disabled"
 static constexpr auto UART_CONNECTION_TYPE_DISABLE = "";
+
 static constexpr auto DEFAULT_UART_CONNECTION =
     UART_CONNECTION_TYPE_DISABLE;  // Default to UART disabled (FC)
 
@@ -55,9 +56,6 @@ class SettingsHolder : public openhd::PersistentSettings<Settings> {
       : openhd::PersistentSettings<Settings>(
             openhd::get_telemetry_settings_directory()) {
     init();
-  }
-  bool is_serial_enabled() {
-    return !get_settings().fc_uart_connection_type.empty();
   }
 
  private:

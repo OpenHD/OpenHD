@@ -187,10 +187,7 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
   std::vector<openhd::Setting> ret{};
   using namespace openhd::telemetry;
   auto c_fc_uart_connection_type = [this](std::string, std::string value) {
-    // We just accept anything, but log a warning
-    if (!value.empty() && !OHDFilesystemUtil::exists(value)) {
-      m_console->warn("{} is not a valid serial", value);
-    }
+    // We just accept anything
     m_air_settings->unsafe_get_settings().fc_uart_connection_type = value;
     m_air_settings->persist();
     setup_uart();
@@ -261,10 +258,11 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
 void AirTelemetry::setup_uart() {
   assert(m_air_settings);
   using namespace openhd::telemetry;
-  if (m_air_settings->is_serial_enabled()) {
+  const auto uart_linux_fd = serial_openhd_param_to_linux_fd(
+      m_air_settings->get_settings().fc_uart_connection_type);
+  if (uart_linux_fd.has_value()) {
     SerialEndpoint::HWOptions options{};
-    options.linux_filename =
-        m_air_settings->get_settings().fc_uart_connection_type;
+    options.linux_filename = uart_linux_fd.value();
     options.baud_rate = m_air_settings->get_settings().fc_uart_baudrate;
     options.flow_control = m_air_settings->get_settings().fc_uart_flow_control;
     options.enable_reading = true;

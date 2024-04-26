@@ -36,9 +36,6 @@ class SettingsHolder : public openhd::PersistentSettings<Settings> {
             openhd::get_telemetry_settings_directory()) {
     init();
   }
-  bool is_serial_enabled() {
-    return !get_settings().gnd_uart_connection_type.empty();
-  }
 
  private:
   [[nodiscard]] std::string get_unique_filename() const override {

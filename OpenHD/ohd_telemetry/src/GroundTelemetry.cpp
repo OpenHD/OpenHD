@@ -350,10 +350,11 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
 void GroundTelemetry::setup_uart() {
   assert(m_gnd_settings);
   using namespace openhd::telemetry;
-  if (m_gnd_settings->is_serial_enabled()) {
+  const auto uart_linux_fd = serial_openhd_param_to_linux_fd(
+      m_gnd_settings->get_settings().gnd_uart_connection_type);
+  if (uart_linux_fd.has_value()) {
     SerialEndpoint::HWOptions options{};
-    options.linux_filename =
-        m_gnd_settings->get_settings().gnd_uart_connection_type;
+    options.linux_filename = uart_linux_fd.value();
     options.baud_rate = m_gnd_settings->get_settings().gnd_uart_baudrate;
     options.flow_control = false;
     options.enable_reading = false;
