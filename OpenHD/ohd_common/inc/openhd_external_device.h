@@ -5,6 +5,7 @@
 #ifndef OPENHD_OPENHD_OHD_COMMON_OPENHD_EXTERNAL_DEVICE_H_
 #define OPENHD_OPENHD_OHD_COMMON_OPENHD_EXTERNAL_DEVICE_H_
 
+#include <atomic>
 #include <functional>
 #include <map>
 #include <mutex>
@@ -82,6 +83,9 @@ class ExternalDeviceManager {
   // This only exists to terminate openhd properly (which only happens in a test
   // environment)
   void remove_all();
+  // Lock-free
+  // returns the n of connected 'external devices'
+  uint8_t get_external_device_count();
 
  private:
   std::mutex m_ext_devices_lock;
@@ -89,6 +93,7 @@ class ExternalDeviceManager {
   std::vector<EXTERNAL_DEVICE_CALLBACK> m_callbacks;
   std::vector<std::string> m_manual_ips;
   bool m_remove_all_called = false;
+  std::atomic_uint8_t m_external_device_count = 0;
 };
 
 }  // namespace openhd

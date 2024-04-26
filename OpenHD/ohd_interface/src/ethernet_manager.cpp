@@ -176,7 +176,9 @@ void EthernetManager::configure(int operating_mode,
   if (operating_mode == ETHERNET_OPERATING_MODE_HOTSPOT) {
     create_ethernet_hotspot_connection_if_needed(m_console, ethernet_card);
   } else {
-    loop_ethernet_external_device_listener(ethernet_card);
+    while (!m_terminate) {
+      loop_ethernet_external_device_listener(ethernet_card);
+    }
   }
 }
 
