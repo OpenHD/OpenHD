@@ -416,7 +416,7 @@ std::optional<std::string> serial_openhd_param_to_linux_fd(
       openhd::log::get_default()->warn(
           "No default serial mapping for this platform");
       // fallback
-      return "/dev/serial0";
+      return "dev/ttyS2";
     }
   }
   // Otherwise, the user can enter any serial FD name
