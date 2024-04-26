@@ -10,7 +10,7 @@
 #include "openhd_spdlog_include.h"
 
 //
-//
+// See networking_settings for more info
 //
 class EthernetManager {
  public:

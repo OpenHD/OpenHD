@@ -510,6 +510,7 @@ void GStreamerStream::stream_once() {
   const auto terminate_begin = std::chrono::steady_clock::now();
   stop();
   cleanup_pipe();
+  m_frame_fragments.resize(0);
   m_console->debug("Terminating pipeline took {}ms",
                    std::chrono::duration_cast<std::chrono::milliseconds>(
                        std::chrono::steady_clock::now() - terminate_begin)

@@ -31,15 +31,21 @@ static int internal_discover_platform() {
   }
 
   if (OHDFilesystemUtil::exists(DEVICE_TREE_COMPATIBLE_PATH)) {
-    std::string compatible_content =
+    const std::string compatible_content =
         OHDFilesystemUtil::read_file(DEVICE_TREE_COMPATIBLE_PATH);
+    const std::string device_tree_model =
+        OHDFilesystemUtil::read_file("proc/device-tree/model");
     std::regex r("rockchip,(r[kv][0-9]+)");
     std::smatch sm;
     if (regex_search(compatible_content, sm, r)) {
       const std::string chip = sm[1];
       if (chip == "rk3588") {
-        // TODO - rock 5 a or b ?
-        return X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B;
+        if (OHDUtil::contains_after_uppercase(device_tree_model,
+                                              "Radxa ROCK 5A")) {
+          return X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A;
+        } else {
+          return X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B;
+        }
       } else if (chip == "rk3566") {
         return X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W;
       } else if (chip == "rv1126") {
