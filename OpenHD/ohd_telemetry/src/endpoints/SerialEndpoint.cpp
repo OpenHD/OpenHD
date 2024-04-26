@@ -405,15 +405,12 @@ std::optional<std::string> serial_openhd_param_to_linux_fd(
     return std::nullopt;
   }
   // Default mapping
-  if (OHDUtil::str_equal(param_name, "SERIAL_0")) {
+  if (OHDUtil::str_equal(param_name, "SERIAL_0") ||
+      OHDUtil::str_equal(param_name, "SERIAL 0")) {
     const auto platform = OHDPlatform::instance();
     if (platform.is_rpi()) {
       return "/dev/serial0";
-    } else if (platform.is_zero3w()) {
-      return "/dev/serial0";
-    } else if (platform.is_rock5_a_b()) {
-      return "/dev/serial0";
-    } else if (platform.is_x20()) {
+    } else if (platform.is_x20() || platform.is_rock()) {
       return "dev/ttyS2";
     } else {
       openhd::log::get_default()->warn(
