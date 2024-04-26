@@ -64,10 +64,8 @@ class SettingsHolder : public openhd::PersistentSettings<Settings> {
   }
   [[nodiscard]] Settings create_default() const override {
     Settings ret{};
-    if (OHDPlatform::instance().is_rpi()) {
-      // Enable serial to FC by default
-      ret.fc_uart_connection_type = "/dev/serial0";
-    }
+    // Default telemetry serial (for this platform)
+    ret.fc_uart_connection_type="SERIAL 0";
     return ret;
   }
   std::optional<Settings> impl_deserialize(
