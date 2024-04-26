@@ -254,8 +254,9 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
 }
 
 bool CameraHolder::set_air_recording(int recording_enable) {
-  if (OHDFilesystemUtil::get_remaining_space_in_mb() <
-      MINIMUM_AMOUNT_FREE_SPACE_FOR_AIR_RECORDING_MB) {
+  if (recording_enable != AIR_RECORDING_OFF &&
+      OHDFilesystemUtil::get_remaining_space_in_mb() <
+          MINIMUM_AMOUNT_FREE_SPACE_FOR_AIR_RECORDING_MB) {
     openhd::log::get_default()->warn("Not enough free space available");
     return false;
   }
