@@ -53,6 +53,7 @@ void openhd::ExternalDeviceManager::on_new_external_device(
     // log such that the message is shown in QOpenHD
     openhd::log::log_via_mavlink(5, "External device connected");
     m_curr_ext_devices[id] = external_device;
+    m_external_device_count++;
     for (auto& cb : m_callbacks) {
       cb(external_device, true);
     }
@@ -66,6 +67,7 @@ void openhd::ExternalDeviceManager::on_new_external_device(
     openhd::log::get_default()->warn("External device disconnected");
     // existing external device disconnected
     m_curr_ext_devices.erase(id);
+    m_external_device_count--;
     for (auto& cb : m_callbacks) {
       cb(external_device, false);
     }
@@ -94,8 +96,13 @@ void openhd::ExternalDeviceManager::remove_all() {
     }
   }
   m_curr_ext_devices.clear();
+  m_external_device_count = 0;
   m_remove_all_called = true;
   console->debug("removing all devices - end");
+}
+
+uint8_t openhd::ExternalDeviceManager::get_external_device_count() {
+  return m_external_device_count;
 }
 
 std::string openhd::ExternalDevice::to_string() const {

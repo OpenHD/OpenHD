@@ -7,6 +7,7 @@
 
 #include "../mav_include.h"
 #include "openhd_action_handler.h"
+#include "openhd_external_device.h"
 #include "openhd_link_statistics.hpp"
 
 namespace openhd::LinkStatisticsHelper {
@@ -259,7 +260,8 @@ static MavlinkMessage generate_sys_status1(
   tmp.wifi_hotspot_state = action_handler.m_wifi_hotspot_state;
   tmp.wifi_hotspot_frequency = action_handler.m_wifi_hotspot_frequency;
   tmp.ethernet_hotspot_state = action_handler.m_ethernet_hotspot_state;
-  tmp.external_devices_count = action_handler.m_external_devices_count;
+  tmp.external_devices_count =
+      openhd::ExternalDeviceManager::instance().get_external_device_count();
   mavlink_msg_openhd_sys_status1_encode(system_id, component_id, &msg.m, &tmp);
   return msg;
 }

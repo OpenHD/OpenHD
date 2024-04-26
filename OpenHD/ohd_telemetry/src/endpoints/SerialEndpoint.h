@@ -129,4 +129,11 @@ class SerialEndpointManager {
       openhd::log::create_or_get("ser_manager");
 };
 
+// Serial is a string param, where empty and some name(s) have special meaning
+// (They map to specific serial FD name)
+// Here we return std::null-opt if serial is disabled ("")
+// otherwise, a (most likely) valid serial fd path
+std::optional<std::string> serial_openhd_param_to_linux_fd(
+    const std::string& param_name);
+
 #endif  // OPENHD_OPENHD_OHD_TELEMETRY_SRC_ENDPOINTS_SERIALENDPOINT_H_

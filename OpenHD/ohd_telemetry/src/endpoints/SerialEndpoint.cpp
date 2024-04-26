@@ -14,7 +14,9 @@
 #include <map>
 #include <utility>
 
+#include "openhd_platform.h"
 #include "openhd_spdlog_include.h"
+#include "openhd_util.h"
 #include "openhd_util_filesystem.h"
 
 static std::string GET_ERROR() { return {strerror(errno)}; }
@@ -394,4 +396,29 @@ void SerialEndpointManager::configure(const SerialEndpoint::HWOptions& options,
   }
   m_serial_endpoint = std::make_unique<SerialEndpoint>(tag, options);
   m_serial_endpoint->registerCallback(std::move(cb));
+}
+
+std::optional<std::string> serial_openhd_param_to_linux_fd(
+    const std::string& param_name) {
+  if (param_name.empty()) {
+    // "" means disabled
+    return std::nullopt;
+  }
+  // Default mapping
+  if (OHDUtil::str_equal(param_name, "SERIAL_0") ||
+      OHDUtil::str_equal(param_name, "SERIAL 0")) {
+    const auto platform = OHDPlatform::instance();
+    if (platform.is_rpi()) {
+      return "/dev/serial0";
+    } else if (platform.is_x20() || platform.is_rock()) {
+      return "dev/ttyS2";
+    } else {
+      openhd::log::get_default()->warn(
+          "No default serial mapping for this platform");
+      // fallback
+      return "dev/ttyS2";
+    }
+  }
+  // Otherwise, the user can enter any serial FD name
+  return param_name;
 }
