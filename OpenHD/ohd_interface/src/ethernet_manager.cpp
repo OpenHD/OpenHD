@@ -124,6 +124,7 @@ EthernetManager::EthernetManager() {
 
 void EthernetManager::async_initialize(int operating_mode) {
   auto runnable = [this, operating_mode]() { loop(operating_mode); };
+  m_terminate = false;
   m_thread = std::make_shared<std::thread>(runnable);
 }
 
@@ -153,6 +154,7 @@ void EthernetManager::loop(int operating_mode) {
         opt_ethernet_card = card;
         break;
       }
+      std::this_thread::sleep_for(std::chrono::seconds(1));
     }
   }
   if (opt_ethernet_card) {
@@ -217,7 +219,7 @@ void EthernetManager::loop_ethernet_external_device_listener(
     std::this_thread::sleep_for(std::chrono::seconds(1));
     // check if the state is still okay
     if (!openhd::ethernet::check_eth_adapter_up(device_name)) {
-      m_console->debug("Eth0 is up");
+      m_console->debug("Eth0 is not up anymore,removing ext device");
       break;
     }
   }
