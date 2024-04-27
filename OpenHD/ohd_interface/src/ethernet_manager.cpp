@@ -218,7 +218,7 @@ void EthernetManager::loop_ethernet_external_device_listener(
     std::this_thread::sleep_for(std::chrono::seconds(1));
     // check if the state is still okay
     if (!openhd::ethernet::check_eth_adapter_up(device_name)) {
-      m_console->debug("Eth0 is up");
+      m_console->debug("Eth0 is not up anymore,removing ext device");
       break;
     }
   }
