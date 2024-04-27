@@ -1605,6 +1605,10 @@ void WBLink::wt_perform_update_thermal_protection() {
     // Only works on x20
     return;
   }
+  if (OHDFilesystemUtil::exists("/boot/openhd/disable_thermal_limits.txt")) {
+    m_thermal_protection_level = THERMAL_PROTECTION_NONE;
+    return;
+  }
   auto temp = openhd::x20_read_rtl8812au_thermal_sensor_degree();
   if (temp <= 0) {
     m_thermal_protection_level = THERMAL_PROTECTION_NONE;
