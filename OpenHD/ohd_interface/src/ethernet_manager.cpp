@@ -124,6 +124,7 @@ EthernetManager::EthernetManager() {
 
 void EthernetManager::async_initialize(int operating_mode) {
   auto runnable = [this, operating_mode]() { loop(operating_mode); };
+  m_terminate = false;
   m_thread = std::make_shared<std::thread>(runnable);
 }
 
