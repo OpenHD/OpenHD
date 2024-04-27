@@ -1607,13 +1607,17 @@ void WBLink::wt_perform_update_thermal_protection() {
   }
   auto temp = openhd::x20_read_rtl8812au_thermal_sensor_degree();
   if (temp <= 0) {
-    m_thermal_protection_level = THERMAL_PROTECTION_VIDEO_DISABLED;
+    m_thermal_protection_level = THERMAL_PROTECTION_NONE;
     return;
   }
+  static auto THERMAL_LIMIT_VIDEO_REDUCED = 75;
+  static auto THERMAL_LIMIT_VIDEO_OFF = 79;
   uint8_t new_thermal_protection_level;
-  if (temp >= 75) {  // >=75 degree, disable video
+  if (temp >= THERMAL_LIMIT_VIDEO_OFF) {
+    // >=X degree, disable video
     new_thermal_protection_level = THERMAL_PROTECTION_VIDEO_DISABLED;
-  } else if (temp >= 72) {  //  >=72 degree, throttle video
+  } else if (temp >= THERMAL_LIMIT_VIDEO_REDUCED) {
+    //  >=X degree, throttle video
     new_thermal_protection_level = THERMAL_PROTECTION_RATE_REDUCED;
   } else {  // no thermal protection
     new_thermal_protection_level = THERMAL_PROTECTION_NONE;
