@@ -300,8 +300,11 @@ void GStreamerStream::handle_change_bitrate_request(
   //  We do some safety checks first - the link might recommend too much / too
   //  little
   auto bitrate_for_encoder_kbits = lb.recommended_encoder_bitrate_kbits;
-  // No encoder I've seen can do <2MBit/s, at least the ones we use
-  static constexpr auto MIN_BITRATE_KBITS = 2 * 1000;
+  static auto MIN_BITRATE_KBITS = 1 * 1000;
+  // RPi cannot do less than 2MBit/s
+  if (OHDPlatform::instance().is_rpi()) {
+    MIN_BITRATE_KBITS = 2 * 1000;
+  }
   if (bitrate_for_encoder_kbits < MIN_BITRATE_KBITS) {
     // m_console->debug("Cam cannot do <{}",
     // kbits_per_second_to_string(MIN_BITRATE_KBITS));
