@@ -153,6 +153,7 @@ void EthernetManager::loop(int operating_mode) {
         opt_ethernet_card = card;
         break;
       }
+      std::this_thread::sleep_for(std::chrono::seconds(1));
     }
   }
   if (opt_ethernet_card) {
