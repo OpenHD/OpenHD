@@ -650,8 +650,16 @@ static std::string create_queue_and_parse(const VideoCodec videoCodec) {
   return ss.str();
 }
 
-static std::string create_caps_nal(const VideoCodec& videoCodec) {
-  return "video/x-h264,stream-format=byte-stream,alignment=nal ! ";
+static std::string create_caps_nal(const VideoCodec& videoCodec,
+                                   bool alignment_nal) {
+  if (videoCodec == VideoCodec::H264) {
+    if (alignment_nal) {
+      return "video/x-h264,stream-format=byte-stream,alignment=nal ! ";
+    } else {
+      return "video/x-h264,stream-format=byte-stream,alignment=au ! ";
+    }
+  }
+  return "video/x-h265, stream-format=\"byte-stream\" ! ";
 }
 
 /**
