@@ -110,37 +110,35 @@ void OHDVideoAir::configure(
 std::array<std::vector<openhd::Setting>, 2>
 OHDVideoAir::get_all_camera_settings() {
   std::array<std::vector<openhd::Setting>, 2> ret{};
-  if (!OHDPlatform::instance().is_x20()) {
-    // On all platforms other than X20 the user (needs) to select the camera
-    // type.
-    for (int i = 0; i < 2; i++) {
-      // Changing the cam type is special - it requires a restart of openhd
-      // (often also an OS reboot)
-      auto cb1 = [this](std::string, int value) {
-        return x_set_camera_type(true, value);
-      };
-      auto cb2 = [this](std::string, int value) {
-        return x_set_camera_type(false, value);
-      };
-      if (i == 0) {
-        ret[0].push_back(openhd::Setting{
-            "CAMERA_TYPE",
-            openhd::IntSetting{
-                m_generic_settings->get_settings().primary_camera_type, cb1}});
-      } else {
-        ret[1].push_back(openhd::Setting{
-            "CAMERA_TYPE",
-            openhd::IntSetting{
-                m_generic_settings->get_settings().secondary_camera_type,
-                cb2}});
-      }
-      // Then add the generic camera settings (there might be none)
-      if (i < m_camera_streams.size()) {
-        auto settings =
-            m_camera_streams[i]->m_camera_holder->get_all_settings();
-        for (auto& setting : settings) {
-          ret[i].push_back(setting);
-        }
+  // On all platforms other than X20 the user (needs) to select the camera
+  // type. On X20, we expose the param, but only for read-only / debugging
+  for (int i = 0; i < 2; i++) {
+    // Changing the cam type is special - it requires a restart of openhd
+    // (often also an OS reboot)
+    auto cb1 = [this](std::string, int value) {
+      if (OHDPlatform::instance().is_x20()) return false;
+      return x_set_camera_type(true, value);
+    };
+    auto cb2 = [this](std::string, int value) {
+      if (OHDPlatform::instance().is_x20()) return false;
+      return x_set_camera_type(false, value);
+    };
+    if (i == 0) {
+      ret[0].push_back(openhd::Setting{
+          "CAMERA_TYPE",
+          openhd::IntSetting{
+              m_generic_settings->get_settings().primary_camera_type, cb1}});
+    } else {
+      ret[1].push_back(openhd::Setting{
+          "CAMERA_TYPE",
+          openhd::IntSetting{
+              m_generic_settings->get_settings().secondary_camera_type, cb2}});
+    }
+    // Then add the generic camera settings (there might be none)
+    if (i < m_camera_streams.size()) {
+      auto settings = m_camera_streams[i]->m_camera_holder->get_all_settings();
+      for (auto& setting : settings) {
+        ret[i].push_back(setting);
       }
     }
   }
