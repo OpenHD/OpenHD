@@ -667,7 +667,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
           Setting{openhd::WB_MCS_INDEX_VIA_RC_CHANNEL,
                   openhd::IntSetting{(int)settings.wb_mcs_index_via_rc_channel,
                                      cb_mcs_via_rc_channel}});
-      auto cb_bw_via_rc_channel = [this](std::string, int value) {
+      /*auto cb_bw_via_rc_channel = [this](std::string, int value) {
         if (value < 0 || value > 18) {
           return false;
         }
@@ -678,7 +678,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
       ret.push_back(
           Setting{openhd::WB_BW_VIA_RC_CHANNEL,
                   openhd::IntSetting{(int)settings.wb_bw_via_rc_channel,
-                                     cb_bw_via_rc_channel}});
+                                     cb_bw_via_rc_channel}});*/
     }
     auto cb_dev_air_set_high_retransmit_count = [this](std::string, int value) {
       return set_dev_air_set_high_retransmit_count(value);
