@@ -65,7 +65,7 @@ class SettingsHolder : public openhd::PersistentSettings<Settings> {
   [[nodiscard]] Settings create_default() const override {
     Settings ret{};
     // Default telemetry serial (for this platform)
-    ret.fc_uart_connection_type = "OHD_TELEMETRY_0";
+    ret.fc_uart_connection_type = "DEFAULT";
     return ret;
   }
   std::optional<Settings> impl_deserialize(
