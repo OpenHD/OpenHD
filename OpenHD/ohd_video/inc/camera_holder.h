@@ -220,6 +220,10 @@ class CameraHolder :
     ret.streamed_video_format.width = default_resolution.width_px;
     ret.streamed_video_format.height = default_resolution.height_px;
     ret.streamed_video_format.framerate = default_resolution.fps;
+    if (OHDPlatform::instance().is_x20()) {
+      // Better choice for the x20
+      ret.h26x_keyframe_interval = 8;
+    }
     return ret;
   }
 };
