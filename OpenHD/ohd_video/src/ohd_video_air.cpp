@@ -27,6 +27,9 @@ OHDVideoAir::OHDVideoAir(std::vector<XCamera> cameras,
     cameras.resize(MAX_N_CAMERAS);
   }
   m_generic_settings = std::make_unique<AirCameraGenericSettingsHolder>();
+  if (OHDPlatform::instance().is_x20()) {
+    m_generic_settings->x20_only_discover_and_save_camera_type();
+  }
   if (m_generic_settings->get_settings().switch_primary_and_secondary &&
       cameras.size() == 2) {
     // swap cam 1 and cam 2 (primary and secondary) - aka if they are detected

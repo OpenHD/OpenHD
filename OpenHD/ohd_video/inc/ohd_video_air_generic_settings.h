@@ -44,6 +44,7 @@ class AirCameraGenericSettingsHolder
             openhd::get_video_settings_directory()) {
     init();
   }
+  void x20_only_discover_and_save_camera_type();
 
  private:
   [[nodiscard]] std::string get_unique_filename() const override {
