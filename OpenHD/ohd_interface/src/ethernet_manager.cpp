@@ -142,8 +142,9 @@ void EthernetManager::loop(int operating_mode) {
     opt_ethernet_card = config.NW_ETHERNET_CARD;
   } else if (platform.is_rpi()) {
     opt_ethernet_card = std::string("eth0");
-  } else if (platform.is_rock5_a_b()) {
-    // We have a ethernet card connected
+  } else if (platform.is_rock5_b()) {
+    opt_ethernet_card = "enP4p65s0";
+  } else if (platform.is_rock5_a()) {
     opt_ethernet_card = "eth0";
   }
   if (opt_ethernet_card == std::nullopt) {
