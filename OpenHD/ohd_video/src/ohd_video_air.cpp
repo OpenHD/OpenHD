@@ -27,6 +27,9 @@ OHDVideoAir::OHDVideoAir(std::vector<XCamera> cameras,
     cameras.resize(MAX_N_CAMERAS);
   }
   m_generic_settings = std::make_unique<AirCameraGenericSettingsHolder>();
+  if (OHDPlatform::instance().is_x20()) {
+    m_generic_settings->x20_only_discover_and_save_camera_type();
+  }
   if (m_generic_settings->get_settings().switch_primary_and_secondary &&
       cameras.size() == 2) {
     // swap cam 1 and cam 2 (primary and secondary) - aka if they are detected
@@ -107,13 +110,17 @@ void OHDVideoAir::configure(
 std::array<std::vector<openhd::Setting>, 2>
 OHDVideoAir::get_all_camera_settings() {
   std::array<std::vector<openhd::Setting>, 2> ret{};
+  // On all platforms other than X20 the user (needs) to select the camera
+  // type. On X20, we expose the param, but only for read-only / debugging
   for (int i = 0; i < 2; i++) {
-    // Changing the cam type is special - it requires a restart of openhd (often
-    // also an OS reboot)
+    // Changing the cam type is special - it requires a restart of openhd
+    // (often also an OS reboot)
     auto cb1 = [this](std::string, int value) {
+      if (OHDPlatform::instance().is_x20()) return false;
       return x_set_camera_type(true, value);
     };
     auto cb2 = [this](std::string, int value) {
+      if (OHDPlatform::instance().is_x20()) return false;
       return x_set_camera_type(false, value);
     };
     if (i == 0) {

@@ -72,3 +72,13 @@ AirCameraGenericSettings AirCameraGenericSettingsHolder::create_default()
   }
   return ret;
 }
+
+void AirCameraGenericSettingsHolder::x20_only_discover_and_save_camera_type() {
+  // On the X20, every time openhd is started, we (newly) detect the camera
+  // type. This is in contrast to pretty much any other platform (where we do
+  // not have camera auto detection and therefore rely on the user setting the
+  // camera)
+  unsafe_get_settings().primary_camera_type = openhd::x20::detect_camera_type();
+  unsafe_get_settings().secondary_camera_type = X_CAM_TYPE_DISABLED;
+  persist(false);
+}
