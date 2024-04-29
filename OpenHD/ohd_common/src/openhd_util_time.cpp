@@ -70,3 +70,31 @@ uint32_t openhd::util::get_micros(std::chrono::nanoseconds ns) {
   return static_cast<uint32_t>(
       std::chrono::duration_cast<std::chrono::microseconds>(ns).count());
 }
+
+// Until we have std::atomic<uint64_t>
+class ThreadSafeINT64_t {
+ public:
+  int64_t load() {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    return value;
+  }
+  void store(int64_t v) {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    value = v;
+  }
+
+ private:
+  std::mutex m_mutex;
+  int64_t value = 0;
+};
+static ThreadSafeINT64_t& get_air_ts() {
+  static ThreadSafeINT64_t holder;
+  return holder;
+}
+
+void openhd::util::store_air_unit_time_offset_us(int64_t offset_us) {
+  get_air_ts().store(offset_us);
+}
+int64_t openhd::util::get_air_unit_time_offset_us() {
+  return get_air_ts().load();
+}

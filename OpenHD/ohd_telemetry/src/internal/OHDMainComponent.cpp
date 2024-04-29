@@ -13,6 +13,7 @@
 #include "openhd_config.h"
 #include "openhd_reboot_util.h"
 #include "openhd_spdlog_include.h"
+#include "openhd_util_time.h"
 
 OHDMainComponent::OHDMainComponent(uint8_t parent_sys_id, bool runsOnAir)
     : RUNS_ON_AIR(runsOnAir),
@@ -51,6 +52,7 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mavlink_messages() {
   //"HelloGround");
   const auto logs = generateLogMessages();
   OHDUtil::vec_append(ret, logs);
+  // OHDUtil::vec_append(ret, perform_time_synchronisation());
   return ret;
 }
 
@@ -220,14 +222,31 @@ std::optional<MavlinkMessage> OHDMainComponent::handle_timesync_message(
   assert(msg.msgid == MAVLINK_MSG_ID_TIMESYNC);
   mavlink_timesync_t tsync;
   mavlink_msg_timesync_decode(&msg, &tsync);
+  // m_console->debug(
+  //     "Got timesync message target_system:{} target_component:{} "
+  //     "ts1{} tc1{}",
+  //     tsync.target_system, tsync.target_component, tsync.ts1, tsync.tc1);
   if (tsync.tc1 == 0) {
     // request, pack response
-    mavlink_timesync_t rsync;
+    mavlink_timesync_t rsync{};
     rsync.tc1 = get_time_microseconds() * 1000;
     rsync.ts1 = tsync.ts1;
+    rsync.target_system = msg.sysid;
+    rsync.target_component = msg.compid;
     mavlink_message_t response_message;
     mavlink_msg_timesync_encode(m_sys_id, m_comp_id, &response_message, &rsync);
     return MavlinkMessage{response_message};
+  } else if (tsync.target_system == m_sys_id &&
+             tsync.target_component == m_comp_id &&
+             msg.sysid == OHD_SYS_ID_AIR) {
+    if (m_last_timesync_out_us == tsync.ts1) {
+      handle_timesync_response_self(tsync);
+    }
+  } else {
+    m_console->debug(
+        "Cannot handle timesync message target_system:{} target_component:{} "
+        "ts1{} tc1{}",
+        tsync.target_system, tsync.target_component, tsync.ts1, tsync.tc1);
   }
   return std::nullopt;
 }
@@ -425,5 +444,54 @@ void OHDMainComponent::process_command_self(
     }
   } else {
     m_console->debug("Unknown command {}", command.command);
+  }
+}
+
+std::vector<MavlinkMessage> OHDMainComponent::perform_time_synchronisation() {
+  if (RUNS_ON_AIR) {
+    // We only ever ask the air for a timesync
+    return {};
+  }
+  if (m_has_synced_time) return {};
+  const auto elapsed =
+      std::chrono::steady_clock::now() - m_last_timesync_request;
+  if (elapsed > std::chrono::milliseconds(1000)) {
+    mavlink_timesync_t timesync{};
+    timesync.target_system = OHD_SYS_ID_AIR;
+    timesync.target_component = MAV_COMP_ID_ONBOARD_COMPUTER;
+    timesync.tc1 = 0;
+    // Ardupilot seems to use us
+    m_last_timesync_out_us = get_time_microseconds();
+    timesync.ts1 = m_last_timesync_out_us;
+    MavlinkMessage msg;
+    mavlink_msg_timesync_encode(m_sys_id, m_comp_id, &msg.m, &timesync);
+    m_last_timesync_request = std::chrono::steady_clock::now();
+    m_console->debug("Sending timesync");
+    return {msg};
+  }
+  return {};
+}
+
+void OHDMainComponent::handle_timesync_response_self(
+    const mavlink_timesync_t& tsync) {
+  const auto now_us = get_time_microseconds();
+  const auto round_trip_time_us = now_us - tsync.ts1;
+  const auto local_time_offset = now_us + tsync.tc1;
+  m_console->debug(
+      "handle_timesync_response_self, round trip:{}, local_time_offset:{}us",
+      openhd::util::time_readable_ns(round_trip_time_us * 1000),
+      local_time_offset);
+  if (round_trip_time_us >= 0 && round_trip_time_us < 5 * 1000) {
+    const auto local_time_offset_adjusted =
+        now_us - round_trip_time_us / 2 - tsync.tc1;
+    m_good_timesync_offset_count++;
+    m_good_timesync_offset_total += local_time_offset_adjusted;
+    if (m_good_timesync_offset_count > 10) {
+      int64_t average_offset =
+          m_good_timesync_offset_total / m_good_timesync_offset_count;
+      openhd::util::store_air_unit_time_offset_us(average_offset);
+      m_console->debug("Synced time, offset {}", average_offset);
+      m_has_synced_time = true;
+    }
   }
 }

@@ -16,6 +16,7 @@
 #include "openhd_spdlog.h"
 // #include "gst_recorder.h"
 #include "nalu/CodecConfigFinder.hpp"
+#include "openhd_rtp.h"
 
 // Implementation of OHD CameraStream for pretty much everything, using
 // gstreamer.
@@ -81,15 +82,16 @@ class GStreamerStream : public CameraStream {
                                  uint64_t dts);
   void on_new_rtp_fragmented_frame();
   std::vector<std::shared_ptr<std::vector<uint8_t>>> m_frame_fragments;
+
+  void x_on_new_rtp_fragmented_frame(
+      std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments);
   bool m_last_fu_s_idr = false;
   bool dirty_use_raw = false;
-  void on_gst_nalu_buffer(const uint8_t* data, int data_len);
-  void on_new_nalu(const uint8_t* data, int data_len);
-  void on_new_nalu_frame(const uint8_t* data, int data_len);
-  void forward_video_frame(std::shared_ptr<std::vector<uint8_t>> frame);
-  CodecConfigFinder m_config_finder;
   std::chrono::steady_clock::time_point m_last_log_streaming_disabled =
       std::chrono::steady_clock::now();
+
+ private:
+  std::shared_ptr<openhd::RTPHelper> m_rtp_helper;
 };
 
 #endif

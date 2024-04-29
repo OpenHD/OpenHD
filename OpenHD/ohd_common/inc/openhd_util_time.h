@@ -24,6 +24,9 @@ std::string time_readable_ns(uint64_t nanoseconds);
 
 uint32_t get_micros(std::chrono::nanoseconds ns);
 
+void store_air_unit_time_offset_us(int64_t offset_us);
+int64_t get_air_unit_time_offset_us();
+
 }  // namespace openhd::util
 
 #endif  // OPENHD_OPENHD_UTIL_TIME_H

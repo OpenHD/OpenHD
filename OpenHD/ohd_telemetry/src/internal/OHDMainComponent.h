@@ -51,6 +51,8 @@ class OHDMainComponent : public MavlinkComponent {
   // Some features rely on (RC) channel switches, like changing the mcs index
   void check_fc_messages_for_actions(
       const std::vector<MavlinkMessage>& messages);
+  std::optional<MavlinkMessage> handle_timesync_message(
+      const MavlinkMessage& message);
 
  private:
   const bool RUNS_ON_AIR;
@@ -73,14 +75,6 @@ class OHDMainComponent : public MavlinkComponent {
   std::chrono::steady_clock::time_point m_last_wb_stats =
       std::chrono::steady_clock::now();
   std::vector<MavlinkMessage> create_broadcast_stats_if_needed();
-  // by the sys id QGroundControl knows if this message is telemetry data from
-  // the air pi or ground pi. just for convenience, the RUNS_ON_AIR variable
-  // determines the sys id.
-  // const uint8_t mSysId;
-  // const uint8_t mCompId=0;
-  // similar to ping
-  [[nodiscard]] std::optional<MavlinkMessage> handle_timesync_message(
-      const MavlinkMessage& message);
   [[nodiscard]] std::vector<MavlinkMessage> generate_mav_wb_stats();
   [[nodiscard]] MavlinkMessage generate_ohd_version() const;
   // pack all the buffered log messages
@@ -94,6 +88,16 @@ class OHDMainComponent : public MavlinkComponent {
   // Only set / used on air, where we have a uart connection to the FC and
   // therefore can be 100% sure about the FC sys id
   std::atomic_int16_t m_air_fc_sys_id = -1;
+
+ private:
+  std::vector<MavlinkMessage> perform_time_synchronisation();
+  std::chrono::steady_clock::time_point m_last_timesync_request =
+      std::chrono::steady_clock::now();
+  int64_t m_last_timesync_out_us = 0;
+  void handle_timesync_response_self(const mavlink_timesync_t& tsync);
+  int m_good_timesync_offset_count = 0;
+  int64_t m_good_timesync_offset_total = 0;
+  std::atomic_bool m_has_synced_time = false;
 };
 
 #endif  // XMAVLINKSERVICE_INTERNALTELEMETRY_H
