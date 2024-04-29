@@ -126,7 +126,7 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings() {
         openhd::IntSetting{m_nw_settings.get_settings().wifi_hotspot_mode,
                            cb_wifi_hotspot_mode}});
   }
-  if (true) {
+  if (m_profile.is_ground()) {
     const auto settings = m_nw_settings.get_settings();
     auto cb_ethernet = [this](std::string, int value) {
       m_nw_settings.unsafe_get_settings().ethernet_operating_mode = value;
