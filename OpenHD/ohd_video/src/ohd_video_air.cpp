@@ -172,7 +172,7 @@ std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
                                .dualcam_primary_video_allocated_bandwidth_perc,
                            cb}});
   }
-  {
+  if (!OHDPlatform::instance().is_x20()) {
     auto cb_audio = [this](std::string, int value) {
       m_generic_settings->unsafe_get_settings().enable_audio = value;
       m_generic_settings->persist();
