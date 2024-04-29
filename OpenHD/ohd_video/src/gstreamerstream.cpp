@@ -17,7 +17,7 @@
 #include "openhd_util.h"
 #include "rpi_hdmi_to_csi_v4l2_helper.h"
 #include "rtp_eof_helper.h"
-#include "x20_image_quality_helper.h"
+#include "x20_cam_helper.h"
 
 GStreamerStream::GStreamerStream(std::shared_ptr<CameraHolder> camera_holder,
                                  openhd::ON_ENCODE_FRAME_CB out_cb)

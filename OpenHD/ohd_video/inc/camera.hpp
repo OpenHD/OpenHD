@@ -74,7 +74,13 @@ static constexpr int X_CAM_TYPE_RPI_V4L2_VEYE_MVCAM = 63;
 // X20 Specific starts here
 //
 // Right now we only have one camera, but more (might) follow.
+// Generic - camera(s) that don't support any IQ params or changing settings.
+// For example the Foxeer cameras, or old runcam cameras
 static constexpr int X_CAM_TYPE_X20_HDZERO_GENERIC = 70;
+static constexpr int X_CAM_TYPE_X20_HDZERO_RUNCAM_V1 = 71;
+static constexpr int X_CAM_TYPE_X20_HDZERO_RUNCAM_V2 = 72;
+static constexpr int X_CAM_TYPE_X20_HDZERO_RUNCAM_V3 = 73;
+static constexpr int X_CAM_TYPE_X20_HDZERO_RUNCAM_NANO_90 = 74;
 // ... 9 reserved for future use
 //
 // ROCK Specific starts here
@@ -147,6 +153,14 @@ static std::string x_cam_type_to_string(int camera_type) {
     // All the x20 begin
     case X_CAM_TYPE_X20_HDZERO_GENERIC:
       return "X20_HDZERO_GENERIC";
+    case X_CAM_TYPE_X20_HDZERO_RUNCAM_V1:
+      return "X20_HDZERO_RUNCAM_V1";
+    case X_CAM_TYPE_X20_HDZERO_RUNCAM_V2:
+      return "X20_HDZERO_RUNCAM_V2";
+    case X_CAM_TYPE_X20_HDZERO_RUNCAM_V3:
+      return "X20_HDZERO_RUNCAM_V3";
+    case X_CAM_TYPE_X20_HDZERO_RUNCAM_NANO_90:
+      return "X20_HDZERO_RUNCAM_NANO";
     // All the rock begin
     case X_CAM_TYPE_ROCK_HDMI_IN:
       return "ROCK_HDMI_IN";
@@ -200,6 +214,10 @@ struct XCamera {
   }
   bool requires_x20_cedar_pipeline() const {
     return camera_type >= 70 && camera_type < 80;
+  }
+  bool x20_supports_basic_iq_params() const {
+    return requires_x20_cedar_pipeline() &&
+           camera_type != X_CAM_TYPE_X20_HDZERO_GENERIC;
   }
   bool requires_rockchip_mpp_pipeline() const {
     return camera_type >= 80 && camera_type < 90;
@@ -510,11 +528,22 @@ static std::vector<ManufacturerForPlatform> get_camera_choices_for_platform(
         MANUFACTURER_USB,
         MANUFACTURER_DEBUG};
   } else if (platform_type == X_PLATFORM_TYPE_ALWINNER_X20) {
-    std::vector<CameraNameAndType> runcam_cameras{
+    // On the X20, we have auto detection of the camera type,
+    // But we still populate the UI like for platforms where the user has to
+    // select the cam type.
+    std::vector<CameraNameAndType> generic_cameras{
         CameraNameAndType{"GENERIC", X_CAM_TYPE_X20_HDZERO_GENERIC},
     };
+    std::vector<CameraNameAndType> runcam_cameras{
+        CameraNameAndType{"RUNCAM V1", X_CAM_TYPE_X20_HDZERO_RUNCAM_V1},
+        CameraNameAndType{"RUNCAM V2", X_CAM_TYPE_X20_HDZERO_RUNCAM_V2},
+        CameraNameAndType{"RUNCAM V3", X_CAM_TYPE_X20_HDZERO_RUNCAM_V3},
+        CameraNameAndType{"RUNCAM NANO 90",
+                          X_CAM_TYPE_X20_HDZERO_RUNCAM_NANO_90},
+    };
     return std::vector<ManufacturerForPlatform>{
-        ManufacturerForPlatform{"HDZERO", runcam_cameras}};
+        ManufacturerForPlatform{"HDZERO", generic_cameras},
+        ManufacturerForPlatform{"RUNCAM", runcam_cameras}};
   } else if (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W) {
     std::vector<CameraNameAndType> arducam_cameras{
         CameraNameAndType{"IMX219", X_CAM_TYPE_ROCK_RK3566_IMX219},

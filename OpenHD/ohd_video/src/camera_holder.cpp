@@ -39,7 +39,7 @@ std::string CameraHolder::imp_serialize(const CameraSettings &data) const {
 
 std::vector<openhd::Setting> CameraHolder::get_all_settings() {
   std::vector<openhd::Setting> ret;
-  if (true) {
+  if (!OHDPlatform::instance().is_x20()) {
     auto c_width_height_framerate = [this](std::string, std::string value) {
       auto tmp_opt = parse_video_format(value);
       if (tmp_opt.has_value()) {
@@ -58,7 +58,7 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
         "RESOLUTION_FPS",
         openhd::StringSetting{format_string, c_width_height_framerate}});
   }
-  if (true) {
+  if (!OHDPlatform::instance().is_x20()) {
     auto c_codec = [this](std::string, int value) {
       return set_video_codec(value);
     };
@@ -82,7 +82,7 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
   const bool supports_rotation_vflip_hflip =
       m_camera.requires_rpi_libcamera_pipeline() ||
       m_camera.requires_rpi_mmal_pipeline() ||
-      m_camera.requires_x20_cedar_pipeline() ||
+      m_camera.x20_supports_basic_iq_params() ||
       m_camera.requires_rockchip_mpp_pipeline() ||
       m_camera.camera_type == X_CAM_TYPE_DEVELOPMENT_FILESRC;
   if (supports_rotation_vflip_hflip) {
@@ -118,7 +118,7 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
   // if(m_camera.sensor_name!="unknown"){
   //   ret.emplace_back(openhd::create_read_only_string("V_CAM_SENSOR",m_camera.sensor_name));
   // }
-  if (true) {
+  if (!OHDPlatform::instance().is_x20()) {
     auto cb = [this](std::string, int value) {
       if (!openhd::validate_yes_or_no(value)) return false;
       unsafe_get_settings().force_sw_encode = value;
@@ -168,7 +168,7 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
   }
   // right now only supported by libcamera and (partially) x20
   const bool SUPPORTS_OPENHD_IQ = m_camera.requires_rpi_libcamera_pipeline() ||
-                                  m_camera.requires_x20_cedar_pipeline();
+                                  m_camera.x20_supports_basic_iq_params();
   if (SUPPORTS_OPENHD_IQ) {
     auto cb_sharpness = [this](std::string, int value) {
       return set_openhd_sharpness(value);
