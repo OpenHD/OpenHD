@@ -52,7 +52,7 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mavlink_messages() {
   //"HelloGround");
   const auto logs = generateLogMessages();
   OHDUtil::vec_append(ret, logs);
-  //OHDUtil::vec_append(ret, perform_time_synchronisation());
+  // OHDUtil::vec_append(ret, perform_time_synchronisation());
   return ret;
 }
 
