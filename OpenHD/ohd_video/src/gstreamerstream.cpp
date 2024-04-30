@@ -169,10 +169,10 @@ void GStreamerStream::setup() {
     OHDGstHelper::create_caps_nal(setting.streamed_video_format.videoCodec);
     pipeline_content << " queue ! ";*/
     pipeline_content << " queue ! ";
-    pipeline_content << OHDGstHelper::create_parse_for_codec(
+    /*pipeline_content << OHDGstHelper::create_parse_for_codec(
         setting.streamed_video_format.videoCodec);
     pipeline_content << OHDGstHelper::create_caps_nal(
-        setting.streamed_video_format.videoCodec, true);
+        setting.streamed_video_format.videoCodec, true);*/
     pipeline_content << OHDGstHelper::createOutputAppSink();
     /*pipeline_content << "video/x-h264,stream-format=byte-stream ! ";
     pipeline_content << OHDGstHelper::createOutputAppSink();*/
