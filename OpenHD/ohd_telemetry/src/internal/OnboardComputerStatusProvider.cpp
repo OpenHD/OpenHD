@@ -150,7 +150,9 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       const auto platform = OHDPlatform::instance();
       curr_temperature_core = cpu_temp;
       if (platform.is_rock() || platform.platform_type == X_PLATFORM_TYPE_X86) {
+        if (OHDFilesystemUtil::exists("/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq")) {
         curr_clock_cpu = read_cpu_current_frequency_linux_mhz();
+        }
       }
     }
     {
