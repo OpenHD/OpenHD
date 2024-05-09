@@ -38,7 +38,7 @@ static int read_battery_percentage_linux() {
 }
 static int read_battery_charging_linux() {
   static constexpr auto FILEPATH =
-      "/sys/class/power_supply/BAT1/state";
+      "/sys/class/power_supply/BAT1/status";
   auto content = OHDFilesystemUtil::opt_read_file(FILEPATH);
   if (!content.has_value()) return -1;
   std::string state = content.value();
@@ -111,8 +111,8 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
     int curr_clock_core = 0;
     int curr_clock_v3d = 0;
     bool curr_rpi_undervolt = false;
-    int curr_ina219_voltage = 0;
-    int curr_ina219_current = 0;
+    int curr_ina219_voltage = 2;
+    int curr_ina219_current = 133;
     const int curr_space_left = OHDFilesystemUtil::get_remaining_space_in_mb();
     const auto ohd_platform =
         static_cast<uint8_t>(OHDPlatform::instance().platform_type);
@@ -125,7 +125,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       curr_ina219_voltage = voltage;
       curr_ina219_current = current;
     }
-    else if (OHDFilesystemUtil::exists("/sys/class/power_supply/BAT1/state")) {
+    else if (OHDFilesystemUtil::exists("/sys/class/power_supply/BAT1/capacity")) {
     curr_ina219_voltage = read_battery_percentage_linux();
     curr_ina219_current = read_battery_charging_linux();
     openhd::log::get_default()->warn("Laptop power monitoring");
