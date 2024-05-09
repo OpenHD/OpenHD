@@ -7,7 +7,6 @@ on:
       - "dev-release"
       - "release"
       - "24.04"
-      - "add-laptop-battery"
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)

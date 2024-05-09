@@ -130,6 +130,10 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
     curr_ina219_current = read_battery_charging_linux();
     openhd::log::get_default()->warn("Laptop power monitoring");
     }
+    else {
+    openhd::log::get_default()->warn("No Power Monitoring!");
+    openhd::log::get_default()->warn(curr_ina219_voltage);
+    }
 
     if (OHDPlatform::instance().is_rpi()) {
       curr_temperature_core =
