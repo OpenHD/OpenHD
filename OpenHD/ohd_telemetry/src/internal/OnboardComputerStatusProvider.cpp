@@ -128,10 +128,6 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
     else if (OHDFilesystemUtil::exists("/sys/class/power_supply/BAT1/capacity")) {
     curr_ina219_voltage = read_battery_percentage_linux();
     curr_ina219_current = read_battery_charging_linux();
-    openhd::log::get_default()->warn(read_battery_percentage_linux());
-    openhd::log::get_default()->warn(curr_ina219_voltage);
-    openhd::log::get_default()->warn(read_battery_charging_linux());
-    openhd::log::get_default()->warn(curr_ina219_current);
     }
 
     if (OHDPlatform::instance().is_rpi()) {
