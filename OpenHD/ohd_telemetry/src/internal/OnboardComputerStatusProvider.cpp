@@ -44,9 +44,9 @@ static int read_battery_charging_linux() {
   std::string state = content.value();
   int result = -1;
   if (state == "Charging\n") {
-    result = 1337;
+    result = 254;
   } else if (state == "Discharging\n") {
-    result = 1338;
+    result = 251;
   }
   return result;
 }
@@ -129,7 +129,9 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
     curr_ina219_voltage = read_battery_percentage_linux();
     curr_ina219_current = read_battery_charging_linux();
     openhd::log::get_default()->warn(read_battery_percentage_linux());
+    openhd::log::get_default()->warn(curr_ina219_voltage());
     openhd::log::get_default()->warn(read_battery_charging_linux());
+    openhd::log::get_default()->warn(curr_ina219_current());
     }
 
     if (OHDPlatform::instance().is_rpi()) {
