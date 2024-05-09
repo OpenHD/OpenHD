@@ -125,10 +125,11 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       curr_ina219_voltage = voltage;
       curr_ina219_current = current;
     }
-    else{
-      curr_ina219_voltage = read_battery_percentage_linux();
-      curr_ina219_current = read_battery_charging_linux();
+    else if (OHDFilesystemUtil::exists("/sys/class/power_supply/BAT1/state")) {
+    curr_ina219_voltage = read_battery_percentage_linux();
+    curr_ina219_current = read_battery_charging_linux();
     }
+
     if (OHDPlatform::instance().is_rpi()) {
       curr_temperature_core =
           (int8_t)openhd::onboard::rpi::read_temperature_soc_degree();
