@@ -44,9 +44,9 @@ static int read_battery_charging_linux() {
   std::string state = content.value();
   int result = -1;
   if (state == "Charging\n") {
-    result = 254;
+    result = 1337;
   } else if (state == "Discharging\n") {
-    result = 251;
+    result = 1338;
   }
   return result;
 }
@@ -127,7 +127,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
     }
     else if (OHDFilesystemUtil::exists("/sys/class/power_supply/BAT1/capacity")) {
     curr_ina219_voltage = read_battery_percentage_linux();
-    curr_ina219_current = read_battery_charging_linux()*100;
+    curr_ina219_current = read_battery_charging_linux();
     }
 
     if (OHDPlatform::instance().is_rpi()) {
