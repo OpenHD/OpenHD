@@ -27,7 +27,29 @@ static int read_cpu_current_frequency_linux_mhz() {
   if (!value.has_value()) return -1;
   return value.value() / 1000;
 }
-
+static int read_battery_percentage_linux() {
+  static constexpr auto FILEPATH =
+      "/sys/class/power_supply/BAT1/capacity";
+  auto content = OHDFilesystemUtil::opt_read_file(FILEPATH);
+  if (!content.has_value()) return -1;
+  auto value = OHDUtil::string_to_int(content.value());
+  if (!value.has_value()) return -1;
+  return value.value();
+}
+static int read_battery_charging_linux() {
+  static constexpr auto FILEPATH =
+      "/sys/class/power_supply/BAT1/state";
+  auto content = OHDFilesystemUtil::opt_read_file(FILEPATH);
+  if (!content.has_value()) return -1;
+  std::string state = content.value();
+  int result = -1;
+  if (state == "Charging\n") {
+    result = 1337;
+  } else if (state == "Discharging\n") {
+    result = 1338;
+  }
+  return result;
+}
 OnboardComputerStatusProvider::OnboardComputerStatusProvider(bool enable)
     : m_enable(enable), m_ina_219(SHUNT_OHMS, MAX_EXPECTED_AMPS) {
   ina219_log_warning_once();
@@ -102,6 +124,10 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       float current = roundf(m_ina_219.current() * 1000) / 1000;
       curr_ina219_voltage = voltage;
       curr_ina219_current = current;
+    }
+    else{
+      curr_ina219_voltage = read_battery_percentage_linux();
+      curr_ina219_current = read_battery_charging_linux();
     }
     if (OHDPlatform::instance().is_rpi()) {
       curr_temperature_core =
