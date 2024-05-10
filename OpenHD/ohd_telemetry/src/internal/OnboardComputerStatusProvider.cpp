@@ -28,8 +28,17 @@ static int read_cpu_current_frequency_linux_mhz() {
   return value.value() / 1000;
 }
 static int read_battery_percentage_linux() {
-  static constexpr auto FILEPATH =
-      "/sys/class/power_supply/BAT1/capacity";
+    if (OHDFilesystemUtil::exists("/sys/class/power_supply/BAT1/capacity")) {
+      static constexpr auto FILEPATH =
+        "/sys/class/power_supply/BAT1/capacity";
+    }
+    else if (OHDFilesystemUtil::exists("/sys/class/power_supply/BAT0/capacity")) {
+      static constexpr auto FILEPATH =
+        "/sys/class/power_supply/BAT0/capacity";
+    }
+    else {
+    return -1;
+    }
   auto content = OHDFilesystemUtil::opt_read_file(FILEPATH);
   if (!content.has_value()) return -1;
   auto value = OHDUtil::string_to_int(content.value());
