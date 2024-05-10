@@ -31,19 +31,21 @@ static int read_battery_percentage_linux() {
     if (OHDFilesystemUtil::exists("/sys/class/power_supply/BAT1/capacity")) {
       static constexpr auto FILEPATH =
         "/sys/class/power_supply/BAT1/capacity";
+          auto content = OHDFilesystemUtil::opt_read_file(FILEPATH);
+          if (!content.has_value()) return -1;
+          auto value = OHDUtil::string_to_int(content.value());
+          if (!value.has_value()) return -1;
+          return value.value();
     }
     else if (OHDFilesystemUtil::exists("/sys/class/power_supply/BAT0/capacity")) {
       static constexpr auto FILEPATH =
         "/sys/class/power_supply/BAT0/capacity";
+          auto content = OHDFilesystemUtil::opt_read_file(FILEPATH);
+          if (!content.has_value()) return -1;
+          auto value = OHDUtil::string_to_int(content.value());
+          if (!value.has_value()) return -1;
+          return value.value();
     }
-    else {
-    return -1;
-    }
-  auto content = OHDFilesystemUtil::opt_read_file(FILEPATH);
-  if (!content.has_value()) return -1;
-  auto value = OHDUtil::string_to_int(content.value());
-  if (!value.has_value()) return -1;
-  return value.value();
 }
 static int read_battery_charging_linux() {
   static constexpr auto FILEPATH =
