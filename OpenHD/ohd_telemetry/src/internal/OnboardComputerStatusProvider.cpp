@@ -28,8 +28,14 @@ static int read_cpu_current_frequency_linux_mhz() {
   return value.value() / 1000;
 }
 static int read_battery_percentage_linux() {
-  static constexpr auto FILEPATH =
-      "/sys/class/power_supply/BAT1/capacity";
+    if (OHDFilesystemUtil::exists("/sys/class/power_supply/BAT1/capacity")) {
+      static constexpr auto FILEPATH =
+        "/sys/class/power_supply/BAT1/capacity";
+    }
+    else if (OHDFilesystemUtil::exists("/sys/class/power_supply/BAT0/capacity")) {
+      static constexpr auto FILEPATH =
+        "/sys/class/power_supply/BAT0/capacity";
+    }
   auto content = OHDFilesystemUtil::opt_read_file(FILEPATH);
   if (!content.has_value()) return -1;
   auto value = OHDUtil::string_to_int(content.value());
@@ -37,8 +43,14 @@ static int read_battery_percentage_linux() {
   return value.value();
 }
 static int read_battery_charging_linux() {
-  static constexpr auto FILEPATH =
+  if (OHDFilesystemUtil::exists("/sys/class/power_supply/BAT1/status")) {
+    static constexpr auto FILEPATH =
       "/sys/class/power_supply/BAT1/status";
+  }
+  else if (OHDFilesystemUtil::exists("/sys/class/power_supply/BAT0/status")) {
+    static constexpr auto FILEPATH =
+      "/sys/class/power_supply/BAT0/status";
+  }
   auto content = OHDFilesystemUtil::opt_read_file(FILEPATH);
   if (!content.has_value()) return -1;
   std::string state = content.value();
@@ -125,7 +137,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       curr_ina219_voltage = voltage;
       curr_ina219_current = current;
     }
-    else if (OHDFilesystemUtil::exists("/sys/class/power_supply/BAT1/capacity")) {
+    else if (OHDFilesystemUtil::exists("/sys/class/power_supply/BAT1/capacity") || OHDFilesystemUtil::exists("/sys/class/power_supply/BAT0/capacity")) {
     curr_ina219_voltage = read_battery_percentage_linux();
     curr_ina219_current = read_battery_charging_linux();
     }
