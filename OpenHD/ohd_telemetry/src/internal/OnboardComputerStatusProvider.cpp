@@ -27,7 +27,29 @@ static int read_cpu_current_frequency_linux_mhz() {
   if (!value.has_value()) return -1;
   return value.value() / 1000;
 }
-
+static int read_battery_percentage_linux() {
+  static constexpr auto FILEPATH =
+      "/sys/class/power_supply/BAT1/capacity";
+  auto content = OHDFilesystemUtil::opt_read_file(FILEPATH);
+  if (!content.has_value()) return -1;
+  auto value = OHDUtil::string_to_int(content.value());
+  if (!value.has_value()) return -1;
+  return value.value();
+}
+static int read_battery_charging_linux() {
+  static constexpr auto FILEPATH =
+      "/sys/class/power_supply/BAT1/status";
+  auto content = OHDFilesystemUtil::opt_read_file(FILEPATH);
+  if (!content.has_value()) return -1;
+  std::string state = content.value();
+  int result = -1;
+  if (state == "Charging\n") {
+    result = 1337;
+  } else if (state == "Discharging\n") {
+    result = 1338;
+  }
+  return result;
+}
 OnboardComputerStatusProvider::OnboardComputerStatusProvider(bool enable)
     : m_enable(enable), m_ina_219(SHUNT_OHMS, MAX_EXPECTED_AMPS) {
   ina219_log_warning_once();
@@ -89,8 +111,8 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
     int curr_clock_core = 0;
     int curr_clock_v3d = 0;
     bool curr_rpi_undervolt = false;
-    int curr_ina219_voltage = 0;
-    int curr_ina219_current = 0;
+    int curr_ina219_voltage = 2;
+    int curr_ina219_current = 133;
     const int curr_space_left = OHDFilesystemUtil::get_remaining_space_in_mb();
     const auto ohd_platform =
         static_cast<uint8_t>(OHDPlatform::instance().platform_type);
@@ -103,6 +125,11 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       curr_ina219_voltage = voltage;
       curr_ina219_current = current;
     }
+    else if (OHDFilesystemUtil::exists("/sys/class/power_supply/BAT1/capacity")) {
+    curr_ina219_voltage = read_battery_percentage_linux();
+    curr_ina219_current = read_battery_charging_linux();
+    }
+
     if (OHDPlatform::instance().is_rpi()) {
       curr_temperature_core =
           (int8_t)openhd::onboard::rpi::read_temperature_soc_degree();
@@ -123,7 +150,9 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       const auto platform = OHDPlatform::instance();
       curr_temperature_core = cpu_temp;
       if (platform.is_rock() || platform.platform_type == X_PLATFORM_TYPE_X86) {
+        if (OHDFilesystemUtil::exists("/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq")) {
         curr_clock_cpu = read_cpu_current_frequency_linux_mhz();
+        }
       }
     }
     {
