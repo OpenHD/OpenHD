@@ -28,20 +28,28 @@ static int read_cpu_current_frequency_linux_mhz() {
   return value.value() / 1000;
 }
 static int read_battery_percentage_linux() {
-    const std::string filepaths[] = {
-        "/sys/class/power_supply/BAT1/capacity",
-        "/sys/class/power_supply/BAT0/capacity"
-    };
-    for (const auto& filepath : filepaths) {
-        if (OHDFilesystemUtil::exists(filepath)) {
-            auto content = OHDFilesystemUtil::opt_read_file(filepath);
-            if (!content.has_value()) return -2; // File read error
-            auto value = OHDUtil::string_to_int(content.value());
-            if (!value.has_value()) return -3; // Conversion error
-            return value.value();
-        }
+    if (OHDFilesystemUtil::exists("/sys/class/power_supply/BAT1/capacity")) {
+      static constexpr auto FILEPATH =
+        "/sys/class/power_supply/BAT1/capacity";
+          auto content = OHDFilesystemUtil::opt_read_file(FILEPATH);
+          if (!content.has_value()) return -1;
+          auto value = OHDUtil::string_to_int(content.value());
+          if (!value.has_value()) return -1;
+          return value.value();
     }
-    return -1;
+    else if (OHDFilesystemUtil::exists("/sys/class/power_supply/BAT0/capacity")) {
+      static constexpr auto FILEPATH =
+        "/sys/class/power_supply/BAT0/capacity";
+          auto content = OHDFilesystemUtil::opt_read_file(FILEPATH);
+          if (!content.has_value()) return -1;
+          auto value = OHDUtil::string_to_int(content.value());
+          if (!value.has_value()) return -1;
+          return value.value();
+    }
+    else{
+      return -1;
+    }
+
 }
 static int read_battery_charging_linux() {
   static constexpr auto FILEPATH =
