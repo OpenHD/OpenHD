@@ -64,20 +64,6 @@ static int read_battery_charging_linux() {
     }
     return -1; // No battery status file found
 }
-static int read_battery_charging_linux() {
-  static constexpr auto FILEPATH =
-      "/sys/class/power_supply/BAT1/status";
-  auto content = OHDFilesystemUtil::opt_read_file(FILEPATH);
-  if (!content.has_value()) return -1;
-  std::string state = content.value();
-  int result = -1;
-  if (state == "Charging\n") {
-    result = 1337;
-  } else if (state == "Discharging\n") {
-    result = 1338;
-  }
-  return result;
-}
 OnboardComputerStatusProvider::OnboardComputerStatusProvider(bool enable)
     : m_enable(enable), m_ina_219(SHUNT_OHMS, MAX_EXPECTED_AMPS) {
   ina219_log_warning_once();
