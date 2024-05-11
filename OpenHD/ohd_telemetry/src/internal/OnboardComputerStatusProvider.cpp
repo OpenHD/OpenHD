@@ -63,6 +63,7 @@ static int read_battery_charging_linux() {
         }
     }
     return -1; // No battery status file found
+
 }
 OnboardComputerStatusProvider::OnboardComputerStatusProvider(bool enable)
     : m_enable(enable), m_ina_219(SHUNT_OHMS, MAX_EXPECTED_AMPS) {
@@ -139,7 +140,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       curr_ina219_voltage = voltage;
       curr_ina219_current = current;
     }
-    else if (OHDFilesystemUtil::exists("/sys/class/power_supply/BAT1/capacity")) {
+    else if (OHDFilesystemUtil::exists("/sys/class/power_supply/BAT1/capacity") || OHDFilesystemUtil::exists("/sys/class/power_supply/BAT0/capacity")) {
     curr_ina219_voltage = read_battery_percentage_linux();
     curr_ina219_current = read_battery_charging_linux();
     }
