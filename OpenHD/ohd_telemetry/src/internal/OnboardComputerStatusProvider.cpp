@@ -44,6 +44,27 @@ static int read_battery_percentage_linux() {
     return -1;
 }
 static int read_battery_charging_linux() {
+    const std::string filepaths[] = {
+        "/sys/class/power_supply/BAT1/status",
+        "/sys/class/power_supply/BAT0/status"
+    };
+    for (const auto& filepath : filepaths) {
+        if (OHDFilesystemUtil::exists(filepath)) {
+            auto content = OHDFilesystemUtil::opt_read_file(filepath);
+            if (!content.has_value()) return -2; // File read error
+            std::string state = content.value();
+            int result = -1; // Default value
+            if (state == "Charging\n") {
+                result = 1337;
+            } else if (state == "Discharging\n") {
+                result = 1338;
+            }
+            return result; // Returning the charging state
+        }
+    }
+    return -1; // No battery status file found
+}
+static int read_battery_charging_linux() {
   static constexpr auto FILEPATH =
       "/sys/class/power_supply/BAT1/status";
   auto content = OHDFilesystemUtil::opt_read_file(FILEPATH);
