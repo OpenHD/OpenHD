@@ -28,39 +28,42 @@ static int read_cpu_current_frequency_linux_mhz() {
   return value.value() / 1000;
 }
 static int read_battery_percentage_linux() {
-    if (OHDFilesystemUtil::exists("/sys/class/power_supply/BAT1/capacity")) {
-      static constexpr auto FILEPATH =
-        "/sys/class/power_supply/BAT1/capacity";
+    const std::string filepaths[] = {
+        "/sys/class/power_supply/BAT1/capacity",
+        "/sys/class/power_supply/BAT0/capacity"
+    };
+    for (const auto& filepath : filepaths) {
+        if (OHDFilesystemUtil::exists(filepath)) {
+            auto content = OHDFilesystemUtil::opt_read_file(filepath);
+            if (!content.has_value()) return -2; // File read error
+            auto value = OHDUtil::string_to_int(content.value());
+            if (!value.has_value()) return -3; // Conversion error
+            return value.value();
+        }
     }
-    else if (OHDFilesystemUtil::exists("/sys/class/power_supply/BAT0/capacity")) {
-      static constexpr auto FILEPATH =
-        "/sys/class/power_supply/BAT0/capacity";
-    }
-  auto content = OHDFilesystemUtil::opt_read_file(FILEPATH);
-  if (!content.has_value()) return -1;
-  auto value = OHDUtil::string_to_int(content.value());
-  if (!value.has_value()) return -1;
-  return value.value();
+    return -1;
 }
 static int read_battery_charging_linux() {
-  if (OHDFilesystemUtil::exists("/sys/class/power_supply/BAT1/status")) {
-    static constexpr auto FILEPATH =
-      "/sys/class/power_supply/BAT1/status";
-  }
-  else if (OHDFilesystemUtil::exists("/sys/class/power_supply/BAT0/status")) {
-    static constexpr auto FILEPATH =
-      "/sys/class/power_supply/BAT0/status";
-  }
-  auto content = OHDFilesystemUtil::opt_read_file(FILEPATH);
-  if (!content.has_value()) return -1;
-  std::string state = content.value();
-  int result = -1;
-  if (state == "Charging\n") {
-    result = 1337;
-  } else if (state == "Discharging\n") {
-    result = 1338;
-  }
-  return result;
+    const std::string filepaths[] = {
+        "/sys/class/power_supply/BAT1/status",
+        "/sys/class/power_supply/BAT0/status"
+    };
+    for (const auto& filepath : filepaths) {
+        if (OHDFilesystemUtil::exists(filepath)) {
+            auto content = OHDFilesystemUtil::opt_read_file(filepath);
+            if (!content.has_value()) return -2; // File read error
+            std::string state = content.value();
+            int result = -1; // Default value
+            if (state == "Charging\n") {
+                result = 1337;
+            } else if (state == "Discharging\n") {
+                result = 1338;
+            }
+            return result; // Returning the charging state
+        }
+    }
+    return -1; // No battery status file found
+
 }
 OnboardComputerStatusProvider::OnboardComputerStatusProvider(bool enable)
     : m_enable(enable), m_ina_219(SHUNT_OHMS, MAX_EXPECTED_AMPS) {
