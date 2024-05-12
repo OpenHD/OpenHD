@@ -21,7 +21,7 @@ static constexpr int X_PLATFORM_TYPE_RPI_CM4 = 12;
 static constexpr int X_PLATFORM_TYPE_RPI_5 = 12;
 
 // Numbers 20..30 are reserved for rockchip
-static constexpr int X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W =
+static constexpr int X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA =
     20;  // Zero 3 W
 static constexpr int X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A = 21;
 static constexpr int X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B = 22;

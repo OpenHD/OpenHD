@@ -129,9 +129,9 @@ std::string x_platform_type_to_string(int platform_type) {
     case X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3:
       return "RADXA CM3";
     case X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A:
-      return "RADXA ROCK5 A";
+      return "RADXA RK3588S";
     case X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B:
-      return "RADXA ROCK5 B";
+      return "RADXA RK3588";
     case X_PLATFORM_TYPE_ROCKCHIP_RV1126_UNDEFINED:
       return "RV1126 UNDEFINED";
     // ROCK END
@@ -203,7 +203,7 @@ bool OHDPlatform::is_x20() const {
   return platform_type == X_PLATFORM_TYPE_ALWINNER_X20;
 }
 bool OHDPlatform::is_zero3w() const {
-  return platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W;
+  return platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA;
 }
 bool OHDPlatform::is_radxa_cm3() const {
   return platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3;
