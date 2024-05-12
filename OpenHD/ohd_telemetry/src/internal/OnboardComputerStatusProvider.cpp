@@ -139,6 +139,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       float current = roundf(m_ina_219.current() * 1000) / 1000;
       curr_ina219_voltage = voltage;
       curr_ina219_current = current;
+      openhd::log::get_default()->warn(curr_ina219_voltage);
     }
     else if (OHDFilesystemUtil::exists("/sys/class/power_supply/BAT1/capacity") || OHDFilesystemUtil::exists("/sys/class/power_supply/BAT0/capacity")) {
     curr_ina219_voltage = read_battery_percentage_linux();
