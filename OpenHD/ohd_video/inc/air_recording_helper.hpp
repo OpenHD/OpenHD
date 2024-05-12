@@ -31,22 +31,26 @@ static std::string get_localtime_string() {
   return ss.str();
 }
 
-static int
-get_recording_index_track_count() {  // File to keep track of recording numbers
-  const std::string recording_track_filename =
-      std::string(RECORDINGS_PATH) + "track_count.txt";
-  int track_count = 1;
-  const auto opt_content =
-      OHDFilesystemUtil::opt_read_file(recording_track_filename);
-  if (opt_content.has_value()) {
-    const auto last_track_count = OHDUtil::string_to_int(opt_content.value());
-    if (last_track_count.has_value()) {
-      track_count = last_track_count.value() + 1;
+static std::string format_track_count(int count) {
+    std::ostringstream oss;
+    oss << std::setw(4) << std::setfill('0') << count; // Format count with leading zeros to make it 4 digits
+    return oss.str();
+}
+
+static int get_recording_index_track_count() {
+    const std::string recording_track_filename = std::string(RECORDINGS_PATH) + "track_count.txt";
+    int track_count = 1;
+    const auto opt_content = OHDFilesystemUtil::opt_read_file(recording_track_filename);
+    
+    if (opt_content.has_value()) {
+        const auto last_track_count = OHDUtil::string_to_int(opt_content.value());
+        if (last_track_count.has_value()) {
+            track_count = last_track_count.value() + 1;
+        }
     }
-  }
-  OHDFilesystemUtil::write_file(recording_track_filename,
-                                OHDUtil::int_as_string(track_count));
-  return track_count;
+    
+    OHDFilesystemUtil::write_file(recording_track_filename, format_track_count(track_count));
+    return track_count;
 }
 
 /**
