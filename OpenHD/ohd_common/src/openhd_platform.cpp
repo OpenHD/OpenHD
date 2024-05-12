@@ -34,7 +34,7 @@ static int internal_discover_platform() {
     const std::string compatible_content =
         OHDFilesystemUtil::read_file(DEVICE_TREE_COMPATIBLE_PATH);
     const std::string device_tree_model =
-        OHDFilesystemUtil::read_file("proc/device-tree/model");
+        OHDFilesystemUtil::read_file("/proc/device-tree/model");
     std::regex r("rockchip,(r[kv][0-9]+)");
     std::smatch sm;
     if (regex_search(compatible_content, sm, r)) {
