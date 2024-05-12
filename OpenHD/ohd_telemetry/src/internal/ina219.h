@@ -44,6 +44,7 @@
 #define ADC_128SAMP 15  // 128 samples at 12-bit, conversion time 68.10ms.
 
 #define __ADDRESS 0x40
+#define __PORT 2
 
 #define __REG_CONFIG 0x00
 #define __REG_SHUNTVOLTAGE 0x01
