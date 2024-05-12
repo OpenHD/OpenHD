@@ -30,21 +30,27 @@ INA219::INA219(float shunt_resistance, float max_expected_amps,
 INA219::~INA219() { close(_file_descriptor); }
 
 void INA219::init_i2c(uint8_t address) {
-   if (OHDPlatform::instance().platform_type ==
-        X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W) {
-    filename = "/dev/i2c-1";
-        }
-  else{
-    filename = "/dev/i2c-2";
-  }
-  if ((_file_descriptor = open(filename, O_RDWR)) < 0) {
-    perror("Failed to open the i2c bus");
-    has_any_error = true;
-  }
-  if (ioctl(_file_descriptor, I2C_SLAVE, address) < 0) {
-    perror("Failed to acquire bus access and/or talk to slave device: ");
-    has_any_error = true;
-  }
+    const char* filename;
+    
+    if (OHDPlatform::instance().platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W) {
+        filename = "/dev/i2c-1";
+    } else {
+        filename = "/dev/i2c-2";
+    }
+    
+    if ((_file_descriptor = open(filename, O_RDWR)) < 0) {
+        perror("Failed to open the i2c bus");
+        has_any_error = true;
+        return;
+    }
+
+    if (ioctl(_file_descriptor, I2C_SLAVE, address) < 0) {
+        perror("Failed to acquire bus access and/or talk to slave device: ");
+        has_any_error = true;
+        close(_file_descriptor);
+        return;
+    }
+    has_any_error = false;
 }
 
 uint16_t INA219::read_register(uint8_t register_address) {
