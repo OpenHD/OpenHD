@@ -27,22 +27,25 @@ static void command_shutdown() { OHDUtil::run_command("shutdown", {}, true); }
 
 void openhd::reboot::systemctl_power(bool shutdownOnly) {
   if (shutdownOnly) {
-    // Zero3w seems to be bugged
-    if (OHDPlatform::instance().platform_type ==
-        X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA) {
+    // Some Images don't allow soft restarts or reboots when a netork is connected
+    if ((OHDPlatform::instance().platform_type ==
+        X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W) || (OHDPlatform::instance().platform_type ==
+        X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3))  {
       command_shutdown();
     } else {
       systemctl_shutdown();
     }
   } else {
-    if (OHDPlatform::instance().platform_type ==
-        X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA) {
+    if ((OHDPlatform::instance().platform_type ==
+        X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W) || (OHDPlatform::instance().platform_type ==
+        X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3)) {
       command_reboot();
     } else {
       systemctl_reboot();
     }
   }
 }
+
 
 void openhd::reboot::handle_power_command_async(std::chrono::milliseconds delay,
                                                 bool shutdownOnly) {
