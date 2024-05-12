@@ -33,7 +33,13 @@ void INA219::init_i2c(uint8_t address) {
     const char* filename;
     
     if (OHDPlatform::instance().platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W) {
+        filename = "/dev/i2c-3";
+    } else if (OHDPlatform::instance().platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3) {
         filename = "/dev/i2c-2";
+    } else if (OHDPlatform::instance().platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B) {
+        filename = "/dev/i2c-7";
+    } else if (OHDPlatform::instance().platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B) {
+        filename = "/dev/i2c-8";
     } else {
         filename = "/dev/i2c-1";
     }
