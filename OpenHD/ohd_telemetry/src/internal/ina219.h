@@ -44,7 +44,6 @@
 #define ADC_128SAMP 15  // 128 samples at 12-bit, conversion time 68.10ms.
 
 #define __ADDRESS 0x40
-#define __PORT 2
 
 #define __REG_CONFIG 0x00
 #define __REG_SHUNTVOLTAGE 0x01
@@ -138,6 +137,7 @@ class INA219 {
  private:
   int _file_descriptor;
   float _shunt_ohms;
+  int _port;
   float _max_expected_amps;
   float _min_device_current_lsb;
   int _voltage_range;

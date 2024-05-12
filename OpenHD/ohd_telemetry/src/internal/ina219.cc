@@ -29,7 +29,7 @@ INA219::~INA219() { close(_file_descriptor); }
 
 void INA219::init_i2c(uint8_t address) {
   char filename[15];
-  sprintf(filename, "/dev/i2c-%d", __PORT);
+  sprintf(filename, "/dev/i2c-%d", _port);
   if ((_file_descriptor = open(filename, O_RDWR)) < 0) {
     perror("Failed to open the i2c bus");
     has_any_error = true;
