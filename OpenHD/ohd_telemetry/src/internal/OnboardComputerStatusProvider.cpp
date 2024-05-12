@@ -11,7 +11,6 @@
 
 // INA219 stuff
 constexpr float SHUNT_OHMS = 0.1f;
-constexpr uint8_t PORT = 2;
 constexpr float MAX_EXPECTED_AMPS = 3.2f;
 constexpr uint16_t RANGE = RANGE_32V;
 constexpr uint8_t GAIN = GAIN_8_320MV;
@@ -140,7 +139,6 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       float current = roundf(m_ina_219.current() * 1000) / 1000;
       curr_ina219_voltage = voltage;
       curr_ina219_current = current;
-      openhd::log::get_default()->warn(curr_ina219_voltage);
     }
     else if (OHDFilesystemUtil::exists("/sys/class/power_supply/BAT1/capacity") || OHDFilesystemUtil::exists("/sys/class/power_supply/BAT0/capacity")) {
     curr_ina219_voltage = read_battery_percentage_linux();
