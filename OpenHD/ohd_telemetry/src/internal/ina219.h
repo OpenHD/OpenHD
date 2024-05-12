@@ -137,6 +137,7 @@ class INA219 {
  private:
   int _file_descriptor;
   float _shunt_ohms;
+  int _port;
   float _max_expected_amps;
   float _min_device_current_lsb;
   int _voltage_range;
