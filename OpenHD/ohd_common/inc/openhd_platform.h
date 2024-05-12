@@ -56,6 +56,7 @@ struct OHDPlatform {
   bool is_rpi() const;
   bool is_rock() const;
   bool is_zero3w() const;
+  bool is_radxa_cm3() const;
   bool is_rock5_a() const;
   bool is_rock5_b() const;
   bool is_rock5_a_b() const;
