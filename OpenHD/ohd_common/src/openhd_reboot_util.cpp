@@ -29,14 +29,16 @@ void openhd::reboot::systemctl_power(bool shutdownOnly) {
   if (shutdownOnly) {
     // Zero3w seems to be bugged
     if (OHDPlatform::instance().platform_type ==
-        X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W) {
+        X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W) || (OHDPlatform::instance().platform_type ==
+        X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3)  {
       command_shutdown();
     } else {
       systemctl_shutdown();
     }
   } else {
     if (OHDPlatform::instance().platform_type ==
-        X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W) {
+        X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W) || (OHDPlatform::instance().platform_type ==
+        X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3) {
       command_reboot();
     } else {
       systemctl_reboot();
