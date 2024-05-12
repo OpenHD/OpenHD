@@ -48,7 +48,7 @@ static int internal_discover_platform() {
         }
       } else if (chip == "rk3566") {
         if (OHDUtil::contains_after_uppercase(device_tree_model,
-                                              "Radxa CM3")) {
+                                              "Radxa CM3 RPI CM4 IO")) {
           return X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3;
         } else {
         return X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W;
