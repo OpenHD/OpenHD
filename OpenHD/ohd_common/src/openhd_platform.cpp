@@ -120,11 +120,11 @@ std::string x_platform_type_to_string(int platform_type) {
       return "RPI 5";
     // RPI END
     case X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA:
-      return "RADXA ZERO3W";
+      return "RADXA RK3566";
     case X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A:
-      return "RADXA ROCK5 A";
+      return "RADXA RK3588S";
     case X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B:
-      return "RADXA ROCK5 B";
+      return "RADXA RK3588";
     case X_PLATFORM_TYPE_ROCKCHIP_RV1126_UNDEFINED:
       return "RV1126 UNDEFINED";
     // ROCK END
