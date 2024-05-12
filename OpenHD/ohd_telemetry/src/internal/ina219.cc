@@ -5,6 +5,8 @@
 #include <math.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#include "openhd_platform.h"
+
 
 #include <bitset>
 
@@ -28,8 +30,13 @@ INA219::INA219(float shunt_resistance, float max_expected_amps,
 INA219::~INA219() { close(_file_descriptor); }
 
 void INA219::init_i2c(uint8_t address) {
-  char filename[15];
-  sprintf(filename, "/dev/i2c-%d", _port);
+   if (OHDPlatform::instance().platform_type ==
+        X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W) {
+    filename = "/dev/i2c-1";
+        }
+  else{
+    filename = "/dev/i2c-2";
+  }
   if ((_file_descriptor = open(filename, O_RDWR)) < 0) {
     perror("Failed to open the i2c bus");
     has_any_error = true;
