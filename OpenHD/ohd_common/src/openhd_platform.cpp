@@ -203,7 +203,7 @@ bool OHDPlatform::is_x20() const {
   return platform_type == X_PLATFORM_TYPE_ALWINNER_X20;
 }
 bool OHDPlatform::is_zero3w() const {
-  return platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA;
+  return platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W;
 }
 bool OHDPlatform::is_radxa_cm3() const {
   return platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3;
