@@ -32,7 +32,7 @@ INA219::~INA219() { close(_file_descriptor); }
 void INA219::init_i2c(uint8_t address) {
     const char* filename;
     
-    if (OHDPlatform::instance().platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA) {
+    if (OHDPlatform::instance().platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W) {
         filename = "/dev/i2c-2";
     } else {
         filename = "/dev/i2c-1";

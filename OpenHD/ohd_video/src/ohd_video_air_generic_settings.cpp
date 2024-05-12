@@ -59,7 +59,7 @@ AirCameraGenericSettings AirCameraGenericSettingsHolder::create_default()
   } else if (OHDPlatform::instance().is_x20()) {
     ret.primary_camera_type = openhd::x20::detect_camera_type();
   } else if (OHDPlatform::instance().platform_type ==
-             X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA) {
+             X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W) {
     ret.primary_camera_type = X_CAM_TYPE_ROCK_RK3566_IMX219;
   } else if (OHDPlatform::instance().is_rock()) {
     ret.primary_camera_type = X_CAM_TYPE_ROCK_HDMI_IN;

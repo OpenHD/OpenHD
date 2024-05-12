@@ -544,7 +544,7 @@ static std::vector<ManufacturerForPlatform> get_camera_choices_for_platform(
     return std::vector<ManufacturerForPlatform>{
         ManufacturerForPlatform{"HDZERO", generic_cameras},
         ManufacturerForPlatform{"RUNCAM", runcam_cameras}};
-  } else if (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA) {
+  } else if (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W) {
     std::vector<CameraNameAndType> arducam_cameras{
         CameraNameAndType{"IMX219", X_CAM_TYPE_ROCK_RK3566_IMX219},
         CameraNameAndType{"PLACEHOLDER1", X_CAM_TYPE_ROCK_RK3566_PLACEHOLDER1},

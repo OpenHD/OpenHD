@@ -108,7 +108,7 @@ std::string GStreamerStream::create_source_encode_pipeline(
       // RK3566 has camera on /dev/video0, RK3588 has it on /dev/video11
       const int v4l2_filenumber =
           OHDPlatform::instance().platform_type ==
-                  X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA
+                  X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W
               ? 0
               : 11;
       pipeline << OHDGstHelper::createRockchipCSIStream(v4l2_filenumber,
