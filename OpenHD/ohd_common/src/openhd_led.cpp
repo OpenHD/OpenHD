@@ -74,6 +74,22 @@ static void toggle_green_led(const bool on) {
 
 }  // namespace openhd::zero3w
 
+namespace openhd::radxacm3 {
+
+static void toggle_red_led(const bool on) {
+  static constexpr auto filename = "/sys/class/leds/pwr-led-red/brightness";
+  const auto content = on ? "1" : "0";
+  OHDFilesystemUtil::write_file(filename, content);
+}
+
+static void toggle_green_led(const bool on) {
+  static constexpr auto filename = "/sys/class/leds/pi-led-green/brightness";
+  const auto content = on ? "1" : "0";
+  OHDFilesystemUtil::write_file(filename, content);
+}
+
+}  // namespace openhd::radxacm3
+
 openhd::LEDManager &openhd::LEDManager::instance() {
   static LEDManager instance{};
   return instance;
@@ -83,8 +99,10 @@ void openhd::LEDManager::set_red_led_status(int status) {
   const bool on = status != STATUS_ON;
   if (OHDPlatform::instance().is_rpi()) {
     openhd::rpi::toggle_red_led(on);
-  } else if (OHDPlatform::instance().is_rock()) {
+  } else if (OHDPlatform::instance().is_zero3w()) {
     openhd::zero3w::toggle_red_led(on);
+  } else if (OHDPlatform::instance().is_radxa_cm3()) {
+    openhd::radxacm3::toggle_red_led(on);
   }
 }
 
@@ -92,8 +110,10 @@ void openhd::LEDManager::set_green_led_status(int status) {
   const bool on = status != STATUS_ON;
   if (OHDPlatform::instance().is_rpi()) {
     openhd::rpi::toggle_green_led(on);
-  } else if (OHDPlatform::instance().is_rock()) {
+  } else if (OHDPlatform::instance().is_zero3w()) {
     openhd::zero3w::toggle_green_led(on);
+  } else if (OHDPlatform::instance().is_radxa_cm3()) {
+    openhd::radxacm3::toggle_green_led(on);
   }
 }
 
