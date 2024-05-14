@@ -35,3 +35,4 @@ git describe --exact-match HEAD >/dev/null 2>&1
 echo "Pushing the package to OpenHD 2.5 repository"
 ls -a
 cloudsmith push deb --api-key "$API_KEY" openhd/${REPO}/${DISTRO}/${FLAVOR} *.deb || exit 1
+cp *.deb /out 
