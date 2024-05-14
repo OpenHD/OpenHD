@@ -49,14 +49,14 @@ jobs:
           sudo bash install_dep.sh
           sudo bash build.sh rock5-debian $API_KEY debian bullseye
     
-    - name: debug
-      run:
-        ls -a
-        cp out/* .
+      - name: debug
+        run:
+          ls -a
+          cp out/* .
 
-    - name: Upload to Github
-      uses: 'actions/upload-artifact@v2'
-      with:
-        name: "OpenHD"
-        path: |
-          *.deb
+      - name: Upload to Github
+        uses: 'actions/upload-artifact@v2'
+        with:
+          name: "OpenHD"
+          path: |
+            *.deb
