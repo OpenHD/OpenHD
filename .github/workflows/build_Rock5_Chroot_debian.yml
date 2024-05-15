@@ -48,6 +48,7 @@ jobs:
           cd /opt/OpenHD-ChrootCompiler/
           sudo apt update
           sudo bash install_dep.sh
+          ls -a images/
           sudo bash build.sh rock5b $API_KEY debian bullseye
     
       - name: debug
