@@ -47,13 +47,14 @@ jobs:
 
           cd /opt/OpenHD-ChrootCompiler/
           sudo apt update
-          mount
-          lsblk
           sudo bash install_dep.sh
           sudo bash build.sh rock5b $API_KEY debian bullseye
     
       - name: debug
         run:
+          ls -a
+          ls /out
+          ls /opt
           ls -a /opt/OpenHD-ChrootCompiler/
           cp /opt/OpenHD-ChrootCompiler/*.deb .
 

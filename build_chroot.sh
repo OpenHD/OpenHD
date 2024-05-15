@@ -2,7 +2,7 @@
 # This file is the install instruction for the CHROOT build
 # We're using cloudsmith-cli to upload the file in CHROOT
 
-sudo apt install -y python3-pip tree git
+sudo apt install -y python3-pip git
 sudo pip3 install --upgrade cloudsmith-cli
 ls -a
 API_KEY=$(cat cloudsmith_api_key.txt)
@@ -28,12 +28,3 @@ echo ${ARCH}
 sudo apt install -f ruby-dev
 sudo gem install fpm
 sudo ./package.sh ${CUSTOM} ${ARCH} ${DISTRO} ${FLAVOR} || exit 1
-tree
-mkdir -p /opt/out/
-cp -v *.dep /opt/out/
-cp -v *.dep /out
-echo "copied deb file"
-echo "push to cloudsmith"
-git describe --exact-match HEAD >/dev/null 2>&1
-echo "Pushing the package to OpenHD 2.5 repository"
-cloudsmith push deb --api-key "$API_KEY" openhd/${REPO}/${DISTRO}/${FLAVOR} *.deb || exit 1
