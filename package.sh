@@ -9,29 +9,29 @@ VERSION="2.5.4-beta-$(date '+%Y%m%d%H%M')-$(git rev-parse --short HEAD)"
 
 create_package_directory() {
   rm -rf /tmp/openhd-installdir
-  mkdir -p /tmp/openhd-installdir/usr/local/bin
-  mkdir -p /tmp/openhd-installdir/tmp
+  mkdir -p ${PKGDIR}usr/local/bin
+  mkdir -p ${PKGDIR}tmp
   #Nobody should create a topdir for such things like settings, but for now it'll stay
-  mkdir -p /tmp/openhd-installdir/settings
-  mkdir -p /tmp/openhd-installdir/etc/systemd/system
+  mkdir -p ${PKGDIR}settings
+  mkdir -p ${PKGDIR}etc/systemd/system
 
   # We do not copy the openhd service for x86, since there we have launcher on the desktop
   # (Otherwise, we always copy it)
   if [[ "${PACKAGE_ARCH}" != "x86_64" ]]; then
     echo "we're not on x86"
       if [[ "${CUSTOM}" == "standard" ]]; then
-      cp systemd/openhd.service /tmp/openhd-installdir/etc/systemd/system/openhd.service || exit 1
+      cp systemd/openhd.service ${PKGDIR}etc/systemd/system/openhd.service || exit 1
       else
-      cp systemd/openhd-x20.service /tmp/openhd-installdir/etc/systemd/system/openhd.service || exit 1
+      cp systemd/openhd-x20.service ${PKGDIR}etc/systemd/system/openhd.service || exit 1
       fi
     else
-      mkdir -p /tmp/openhd-installdir/usr/share/applications/
-      cp shortcuts/* /tmp/openhd-installdir/usr/share/applications/
-      mkdir -p /tmp/openhd-installdir/usr/local/share/openhd_misc/
-      cp shortcuts/OpenHD.ico /tmp/openhd-installdir/usr/local/share/openhd_misc/
-      mkdir -p /tmp/openhd-installdir/etc/profile.d/
-      cp desktop-truster.sh /tmp/openhd-installdir/etc/profile.d/
-      sudo chmod +777 /tmp/openhd-installdir/etc/profile.d/desktop-truster.sh
+      mkdir -p ${PKGDIR}usr/share/applications/
+      cp shortcuts/* ${PKGDIR}usr/share/applications/
+      mkdir -p ${PKGDIR}usr/local/share/openhd_misc/
+      cp shortcuts/OpenHD.ico ${PKGDIR}usr/local/share/openhd_misc/
+      mkdir -p ${PKGDIR}etc/profile.d/
+      cp desktop-truster.sh ${PKGDIR}etc/profile.d/
+      sudo chmod +777 ${PKGDIR}etc/profile.d/desktop-truster.sh
   fi
   # always - copy the hardware.config file
   mkdir -p "${PKGDIR}/boot/openhd/"
@@ -63,6 +63,7 @@ build_package() {
   touch openhd
   #cmake OpenHD/
   #make -j4
+  mkdir -p ${PKGDIR}/usr/local/bin/openhd
   cp openhd ${PKGDIR}/usr/local/bin/openhd || exit 1
   echo "$PWD"
   ls -a  
