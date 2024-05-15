@@ -37,9 +37,6 @@ create_package_directory() {
   mkdir -p "${PKGDIR}/boot/openhd/"
   cp OpenHD/ohd_common/config/hardware.config "${PKGDIR}/boot/openhd/hardware.config" || exit 1
 }
-cd /host
-ls -a
-
 build_package() {
 
   if [[ "${PACKAGE_ARCH}" == "armhf" ]]; then
@@ -67,6 +64,9 @@ build_package() {
   cmake OpenHD/
   make -j4
   cp openhd ${PKGDIR}/usr/local/bin/openhd || exit 1
+  
+  cd /host
+  ls -a
 
   # Assuming fpm is installed and properly configured
   fpm -a "${PACKAGE_ARCH}" -s dir -t deb -n "${PACKAGE_NAME}" -v "${VERSION}" -C "${PKGDIR}" \
