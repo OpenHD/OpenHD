@@ -35,7 +35,7 @@ jobs:
           submodules: recursive
       - name: Building OpenHD in CHROOT
         run: |
-          git clone -b x20 https://github.com/OpenHD/OpenHD-ChrootCompiler /opt/OpenHD-ChrootCompiler
+          git clone https://github.com/OpenHD/OpenHD-ChrootCompiler /opt/OpenHD-ChrootCompiler
           mkdir -p /opt/OpenHD-ChrootCompiler/additionalFiles
           git clone https://github.com/OpenHD/OpenHD -b ${{ github.ref_name }} /opt/OpenHD-ChrootCompiler/additionalFiles/ --recursive
           echo $CLOUDSMITH_API_KEY > /opt/OpenHD-ChrootCompiler/additionalFiles/cloudsmith_api_key.txt
