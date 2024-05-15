@@ -27,6 +27,7 @@ elif [[ "${ARCH}" == "arm64" ]]; then
 fi
 
 sudo ./package.sh ${CUSTOM} ${ARCH} ${DISTRO} ${FLAVOR} || exit 1
+tree
 mkdir -p /opt/out/
 cp -v *.dep /opt/out/
 cp -v *.dep /out

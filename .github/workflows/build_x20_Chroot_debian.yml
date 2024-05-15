@@ -52,7 +52,7 @@ jobs:
       
       - name: debug
         run:
-          ls -a
+          ls -a ../
           cp out/* .
 
       - name: Upload to Github
