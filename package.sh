@@ -60,7 +60,7 @@ build_package() {
   fi
 
   rm "${PACKAGE_NAME}_${VERSION}_${PACKAGE_ARCH}.deb" > /dev/null 2>&1 || true
-
+  touch openhd
   #cmake OpenHD/
   #make -j4
   cp openhd ${PKGDIR}/usr/local/bin/openhd || exit 1
