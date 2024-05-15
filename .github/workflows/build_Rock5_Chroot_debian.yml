@@ -50,9 +50,14 @@ jobs:
           sudo bash install_dep.sh
           sudo bash build.sh rock5b $API_KEY debian bullseye
     
+      - name: debug
+        run:
+          ls -a /opt/OpenHD-ChrootCompiler/*
+          cp /opt/OpenHD-ChrootCompiler/*.deb .
+
       - name: Upload to Github
         uses: 'actions/upload-artifact@v2'
         with:
           name: "OpenHD"
           path: |
-            /opt/OpenHD-ChrootCompiler/out/*.deb
+            *.deb
