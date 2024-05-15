@@ -66,6 +66,8 @@ build_package() {
   make -j4
   cp openhd ${PKGDIR}/usr/local/bin/openhd || exit 1
 
+  ls -a
+  echo "PWD"
   # Assuming fpm is installed and properly configured
   fpm -a "${PACKAGE_ARCH}" -s dir -t deb -n "${PACKAGE_NAME}" -v "${VERSION}" -C "${PKGDIR}" \
     ${PLATFORM_CONFIGS} \
@@ -74,6 +76,7 @@ build_package() {
     --before-install before-install.sh \
     ${PACKAGES}
 }
+ls -a
 
 #Main Build
 create_package_directory
