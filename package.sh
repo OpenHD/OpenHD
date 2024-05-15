@@ -75,7 +75,7 @@ build_package() {
     --before-install before-install.sh \
     ${PACKAGES}
   ls -a
-  cp *.deb ${PKGDIR}
+  cp *.deb /out/
 }
 #Main Build
 create_package_directory
