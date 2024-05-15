@@ -52,7 +52,6 @@ jobs:
       
       - name: debug
         run:
-          ls -a /opt/OpenHD-ChrootCompiler/*
           cp /opt/OpenHD-ChrootCompiler/*.deb .
 
       - name: Upload to Github
