@@ -25,7 +25,8 @@ echo ${ARCH}
 #     ./install_build_dep.sh rock5
 #     echo "rock5"
 # fi
-
+sudo apt install -f ruby-dev
+sudo gem install fpm
 sudo ./package.sh ${CUSTOM} ${ARCH} ${DISTRO} ${FLAVOR} || exit 1
 tree
 mkdir -p /opt/out/
