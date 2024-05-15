@@ -2,7 +2,7 @@
 # This file is the install instruction for the CHROOT build
 # We're using cloudsmith-cli to upload the file in CHROOT
 
-sudo apt install -y python3-pip tree
+sudo apt install -y python3-pip tree git
 sudo pip3 install --upgrade cloudsmith-cli
 ls -a
 API_KEY=$(cat cloudsmith_api_key.txt)
