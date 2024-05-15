@@ -46,7 +46,8 @@ jobs:
           echo "${{ github.ref_name }}" > /opt/OpenHD-ChrootCompiler/additionalFiles/repo.txt
 
           cd /opt/OpenHD-ChrootCompiler/
-          sudo apt update
+          sudo apt update && apt install -y tree
+          tree
           sudo bash install_dep.sh
           sudo bash build.sh rock5b $API_KEY debian bullseye
     
