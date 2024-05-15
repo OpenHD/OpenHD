@@ -65,7 +65,8 @@ build_package() {
   make -j4
   cp openhd ${PKGDIR}/usr/local/bin/openhd || exit 1
   
-  cd /host
+  cd /host/opt
+  tree /host/opt
   ls -a
 
   # Assuming fpm is installed and properly configured
