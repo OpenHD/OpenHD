@@ -4,7 +4,7 @@ CUSTOM="${1}"
 PACKAGE_ARCH="${2}"
 OS="${3}"
 
-PKGDIR="/tmp/openhd-installdir"
+PKGDIR="/out/openhd-installdir"
 VERSION="2.5.4-beta-$(date '+%Y%m%d%H%M')-$(git rev-parse --short HEAD)"
 
 create_package_directory() {
@@ -61,21 +61,19 @@ build_package() {
 
   rm "${PACKAGE_NAME}_${VERSION}_${PACKAGE_ARCH}.deb" > /dev/null 2>&1 || true
 
-  cmake OpenHD/
-  make -j4
+  #cmake OpenHD/
+  #make -j4
   cp openhd ${PKGDIR}/usr/local/bin/openhd || exit 1
-  
-  cd /host/opt
-  tree /host/opt
-  ls -a
-
-  # Assuming fpm is installed and properly configured
+  echo "$PWD"
+  ls -a  
+   # Assuming fpm is installed and properly configured
   fpm -a "${PACKAGE_ARCH}" -s dir -t deb -n "${PACKAGE_NAME}" -v "${VERSION}" -C "${PKGDIR}" \
     ${PLATFORM_CONFIGS} \
     -p "${PACKAGE_NAME}_${VERSION}_${PACKAGE_ARCH}.deb" \
     --after-install after-install.sh \
     --before-install before-install.sh \
     ${PACKAGES}
+  ls -a
 }
 #Main Build
 create_package_directory
