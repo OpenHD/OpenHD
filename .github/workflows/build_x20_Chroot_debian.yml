@@ -52,6 +52,7 @@ jobs:
       
       - name: debug
         run:
+          echo "$PWD"
           cp /opt/OpenHD-ChrootCompiler/*.deb .
 
       - name: Upload to Github
