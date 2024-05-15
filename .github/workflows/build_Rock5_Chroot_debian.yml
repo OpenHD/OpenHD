@@ -47,7 +47,6 @@ jobs:
 
           cd /opt/OpenHD-ChrootCompiler/
           sudo apt update && sudo apt install -y tree
-          tree
           sudo bash install_dep.sh
           sudo bash build.sh rock5b $API_KEY debian bullseye
     
