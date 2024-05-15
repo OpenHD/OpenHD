@@ -4,7 +4,7 @@ CUSTOM="${1}"
 PACKAGE_ARCH="${2}"
 OS="${3}"
 
-PKGDIR="/out/openhd-installdir"
+PKGDIR="/out/openhd-installdir/"
 VERSION="2.5.4-beta-$(date '+%Y%m%d%H%M')-$(git rev-parse --short HEAD)"
 
 create_package_directory() {
@@ -75,6 +75,7 @@ build_package() {
     --before-install before-install.sh \
     ${PACKAGES}
   ls -a
+  cp *.deb ${PKGDIR}
 }
 #Main Build
 create_package_directory
