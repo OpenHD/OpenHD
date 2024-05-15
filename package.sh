@@ -60,11 +60,13 @@ build_package() {
   fi
 
   rm "${PACKAGE_NAME}_${VERSION}_${PACKAGE_ARCH}.deb" > /dev/null 2>&1 || true
-  cmake OpenHD/
-  make -j4
+  touch openhd
+  #cmake OpenHD/
+  #make -j4
   mkdir -p ${PKGDIR}/usr/local/bin/openhd
   cp openhd ${PKGDIR}/usr/local/bin/openhd || exit 1
-
+  echo "$PWD"
+  ls -a  
    # Assuming fpm is installed and properly configured
   fpm -a "${PACKAGE_ARCH}" -s dir -t deb -n "${PACKAGE_NAME}" -v "${VERSION}" -C "${PKGDIR}" \
     ${PLATFORM_CONFIGS} \
