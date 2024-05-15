@@ -5,7 +5,7 @@ PACKAGE_ARCH="${2}"
 OS="${3}"
 
 PKGDIR="/tmp/openhd-installdir"
-VERSION="2.5.2-beta-$(date '+%Y%m%d%H%M')-$(git rev-parse --short HEAD)"
+VERSION="2.5.4-beta-$(date '+%Y%m%d%H%M')-$(git rev-parse --short HEAD)"
 
 create_package_directory() {
   rm -rf /tmp/openhd-installdir
@@ -37,6 +37,8 @@ create_package_directory() {
   mkdir -p "${PKGDIR}/boot/openhd/"
   cp OpenHD/ohd_common/config/hardware.config "${PKGDIR}/boot/openhd/hardware.config" || exit 1
 }
+cd /host
+ls -a
 
 build_package() {
 
@@ -66,8 +68,6 @@ build_package() {
   make -j4
   cp openhd ${PKGDIR}/usr/local/bin/openhd || exit 1
 
-  ls -a
-  echo "PWD"
   # Assuming fpm is installed and properly configured
   fpm -a "${PACKAGE_ARCH}" -s dir -t deb -n "${PACKAGE_NAME}" -v "${VERSION}" -C "${PKGDIR}" \
     ${PLATFORM_CONFIGS} \
@@ -76,8 +76,6 @@ build_package() {
     --before-install before-install.sh \
     ${PACKAGES}
 }
-ls -a
-
 #Main Build
 create_package_directory
 build_package
