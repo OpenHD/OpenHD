@@ -6,6 +6,7 @@ on:
       - "2.5-evo"
       - "dev-release"
       - "release"
+      - "usenewbuilder"
 
 jobs:
   build:
@@ -47,7 +48,7 @@ jobs:
           cd /opt/OpenHD-ChrootCompiler/
           sudo apt update
           sudo bash install_dep.sh
-          sudo bash build.sh rock5-debian $API_KEY debian bullseye
+          sudo bash build.sh rock5b $API_KEY debian bullseye
     
       - name: debug
         run:

@@ -26,7 +26,8 @@ elif [[ "${ARCH}" == "arm64" ]]; then
     echo "rock5"
 fi
 
-sudo ./package.sh ${CUSTOM} ${ARCH} ${DISTRO} ${FLAVOR} || exit 1
+#sudo ./package.sh ${CUSTOM} ${ARCH} ${DISTRO} ${FLAVOR} || exit 1
+touch help.deb
 mkdir -p /opt/out/
 cp -v *.dep /opt/out/
 echo "copied deb file"
@@ -34,5 +35,6 @@ echo "push to cloudsmith"
 git describe --exact-match HEAD >/dev/null 2>&1
 echo "Pushing the package to OpenHD 2.5 repository"
 ls -a
-cloudsmith push deb --api-key "$API_KEY" openhd/${REPO}/${DISTRO}/${FLAVOR} *.deb || exit 1
 cp *.deb /out 
+ls -a /
+cloudsmith push deb --api-key "$API_KEY" openhd/${REPO}/${DISTRO}/${FLAVOR} *.deb || exit 1
