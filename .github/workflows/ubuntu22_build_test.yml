@@ -17,6 +17,10 @@ name: ubuntu22_build_test
 
 on:
   push:
+    branches-ignore:
+      - release
+      - dev-release
+      - 2.5-evo
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)

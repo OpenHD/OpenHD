@@ -56,6 +56,7 @@ jobs:
 
       - name: Push
         id: push
+        if: github.ref_name == 'release' || github.ref_name == 'dev-release'
         uses: cloudsmith-io/action@master
         with:
           api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
@@ -67,4 +68,3 @@ jobs:
           release: "jammy"
           republish: "true" # needed ONLY if version is not changing
           file: "*.deb"
-        if: ${{ github.ref != 'refs/heads/2.5-evo' }}

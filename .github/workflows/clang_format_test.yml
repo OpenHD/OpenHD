@@ -3,6 +3,10 @@ name: Clang-tidy
 
 on:
   push:
+    branches-ignore:
+      - release
+      - dev-release
+      - 2.5-evo
 
 jobs:
 
