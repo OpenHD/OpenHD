@@ -52,8 +52,7 @@ jobs:
       
       - name: debug
         run:
-          echo "$PWD"
-          cp /opt/OpenHD-ChrootCompiler/*.deb .
+          cp -r /opt/OpenHD-ChrootCompiler/out/* .
 
       - name: Upload to Github
         uses: 'actions/upload-artifact@v2'

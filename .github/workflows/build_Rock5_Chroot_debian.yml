@@ -52,7 +52,7 @@ jobs:
     
       - name: debug
         run:
-          cp /opt/OpenHD-ChrootCompiler/out/* .
+          cp -r /opt/OpenHD-ChrootCompiler/out/* .
 
       - name: Upload to Github
         uses: 'actions/upload-artifact@v2'
