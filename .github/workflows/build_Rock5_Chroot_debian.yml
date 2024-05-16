@@ -55,8 +55,23 @@ jobs:
           cp -r /opt/OpenHD-ChrootCompiler/out/* .
 
       - name: Upload to Github
-        uses: 'actions/upload-artifact@v2'
+        uses: 'actions/upload-artifact@v4'
         with:
           name: "OpenHD"
           path: |
             *.deb
+
+      - name: Push
+        id: push
+        uses: cloudsmith-io/action@master
+        with:
+          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
+          command: "push"
+          format: "deb"
+          owner: "openhd"
+          repo: ${{ github.ref_name }}
+          distro: "debian"
+          release: "bullseye"
+          republish: "true" # needed ONLY if version is not changing
+          file: "*.deb"
+        if: ${{ github.ref != 'refs/heads/2.5-evo' }}
