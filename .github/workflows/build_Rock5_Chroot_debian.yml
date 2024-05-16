@@ -6,6 +6,7 @@ on:
       - "2.5-evo"
       - "dev-release"
       - "release"
+      - "usenewbuilder"
 
 jobs:
   build:
@@ -47,16 +48,31 @@ jobs:
           cd /opt/OpenHD-ChrootCompiler/
           sudo apt update
           sudo bash install_dep.sh
-          sudo bash build.sh rock5-debian $API_KEY debian bullseye
+          sudo bash build.sh rock5b $API_KEY debian bullseye
     
       - name: debug
         run:
-          ls -a
-          cp out/* .
+          cp -r /opt/OpenHD-ChrootCompiler/out/* .
 
       - name: Upload to Github
-        uses: 'actions/upload-artifact@v2'
+        uses: 'actions/upload-artifact@v4'
         with:
           name: "OpenHD"
           path: |
             *.deb
+
+      - name: Push
+        id: push
+        if: github.ref_name == 'release' || github.ref_name == 'dev-release'
+        uses: cloudsmith-io/action@master
+        with:
+          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
+          command: "push"
+          format: "deb"
+          owner: "openhd"
+          repo: ${{ github.ref_name }}
+          distro: "debian"
+          release: "bullseye"
+          republish: "true" # needed ONLY if version is not changing
+          file: "*.deb"
+

@@ -1,6 +1,12 @@
 name: Build NVIDA (AGX) online
 
-on: [push]
+on:
+  push:
+   branches:
+      - "2.5-evo"
+      - "dev-release"
+      - "release"
+      - "debug"
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
