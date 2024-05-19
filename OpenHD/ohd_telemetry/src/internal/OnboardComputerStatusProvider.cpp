@@ -28,42 +28,37 @@ static int read_cpu_current_frequency_linux_mhz() {
   return value.value() / 1000;
 }
 static int read_battery_percentage_linux() {
-    const std::string filepaths[] = {
-        "/sys/class/power_supply/BAT1/capacity",
-        "/sys/class/power_supply/BAT0/capacity"
-    };
-    for (const auto& filepath : filepaths) {
-        if (OHDFilesystemUtil::exists(filepath)) {
-            auto content = OHDFilesystemUtil::opt_read_file(filepath);
-            if (!content.has_value()) return -2; // File read error
-            auto value = OHDUtil::string_to_int(content.value());
-            if (!value.has_value()) return -3; // Conversion error
-            return value.value();
-        }
+  const std::string filepaths[] = {"/sys/class/power_supply/BAT1/capacity",
+                                   "/sys/class/power_supply/BAT0/capacity"};
+  for (const auto& filepath : filepaths) {
+    if (OHDFilesystemUtil::exists(filepath)) {
+      auto content = OHDFilesystemUtil::opt_read_file(filepath);
+      if (!content.has_value()) return -2;  // File read error
+      auto value = OHDUtil::string_to_int(content.value());
+      if (!value.has_value()) return -3;  // Conversion error
+      return value.value();
     }
-    return -1;
+  }
+  return -1;
 }
 static int read_battery_charging_linux() {
-    const std::string filepaths[] = {
-        "/sys/class/power_supply/BAT1/status",
-        "/sys/class/power_supply/BAT0/status"
-    };
-    for (const auto& filepath : filepaths) {
-        if (OHDFilesystemUtil::exists(filepath)) {
-            auto content = OHDFilesystemUtil::opt_read_file(filepath);
-            if (!content.has_value()) return -2; // File read error
-            std::string state = content.value();
-            int result = -1; // Default value
-            if (state == "Charging\n") {
-                result = 1337;
-            } else if (state == "Discharging\n") {
-                result = 1338;
-            }
-            return result; // Returning the charging state
-        }
+  const std::string filepaths[] = {"/sys/class/power_supply/BAT1/status",
+                                   "/sys/class/power_supply/BAT0/status"};
+  for (const auto& filepath : filepaths) {
+    if (OHDFilesystemUtil::exists(filepath)) {
+      auto content = OHDFilesystemUtil::opt_read_file(filepath);
+      if (!content.has_value()) return -2;  // File read error
+      std::string state = content.value();
+      int result = -1;  // Default value
+      if (state == "Charging\n") {
+        result = 1337;
+      } else if (state == "Discharging\n") {
+        result = 1338;
+      }
+      return result;  // Returning the charging state
     }
-    return -1; // No battery status file found
-
+  }
+  return -1;  // No battery status file found
 }
 OnboardComputerStatusProvider::OnboardComputerStatusProvider(bool enable)
     : m_enable(enable), m_ina_219(SHUNT_OHMS, MAX_EXPECTED_AMPS) {
@@ -139,10 +134,12 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       float current = roundf(m_ina_219.current() * 1000) / 1000;
       curr_ina219_voltage = voltage;
       curr_ina219_current = current;
-    }
-    else if (OHDFilesystemUtil::exists("/sys/class/power_supply/BAT1/capacity") || OHDFilesystemUtil::exists("/sys/class/power_supply/BAT0/capacity")) {
-    curr_ina219_voltage = read_battery_percentage_linux();
-    curr_ina219_current = read_battery_charging_linux();
+    } else if (OHDFilesystemUtil::exists(
+                   "/sys/class/power_supply/BAT1/capacity") ||
+               OHDFilesystemUtil::exists(
+                   "/sys/class/power_supply/BAT0/capacity")) {
+      curr_ina219_voltage = read_battery_percentage_linux();
+      curr_ina219_current = read_battery_charging_linux();
     }
 
     if (OHDPlatform::instance().is_rpi()) {
@@ -165,8 +162,9 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       const auto platform = OHDPlatform::instance();
       curr_temperature_core = cpu_temp;
       if (platform.is_rock() || platform.platform_type == X_PLATFORM_TYPE_X86) {
-        if (OHDFilesystemUtil::exists("/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq")) {
-        curr_clock_cpu = read_cpu_current_frequency_linux_mhz();
+        if (OHDFilesystemUtil::exists(
+                "/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq")) {
+          curr_clock_cpu = read_cpu_current_frequency_linux_mhz();
         }
       }
     }
