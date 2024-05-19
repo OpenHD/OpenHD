@@ -51,7 +51,7 @@ static int internal_discover_platform() {
                                               "Radxa CM3 RPI CM4 IO")) {
           return X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3;
         } else {
-        return X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W;
+          return X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W;
         }
       } else if (chip == "rv1126") {
         return X_PLATFORM_TYPE_ROCKCHIP_RV1126_UNDEFINED;
