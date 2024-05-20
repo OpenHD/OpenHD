@@ -6,7 +6,7 @@ on:
       - "2.5-evo"
       - "dev-release"
       - "release"
-      - "24.04"
+      - "noble"
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
@@ -23,8 +23,6 @@ jobs:
         run: |
           echo "DT=$(date +'%Y-%m-%d_%H%M')" >> $GITHUB_ENV
           echo "BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV
-          apt update
-          apt install -y git sudo
 
       - name: clone OpenHD
         run: |
@@ -35,15 +33,15 @@ jobs:
         run: |
           ls
           cd OpenHD
-          ./install_build_dep.sh ubuntu-x86
+          sudo ./install_build_dep.sh ubuntu-x86
 
       - name: Build with make
         run: |
           cd OpenHD
-          apt install -y python3-pip
+          sudo apt install -y python3-pip
           pip install cloudsmith-api --break-system-packages
           pip install cloudsmith-cli --break-system-packages
-          ./package.sh standard x86_64 ubuntu noble
+          sudo ./package.sh standard x86_64 ubuntu noble
 
       - name: Upload to Github
         uses: 'actions/upload-artifact@v2'
