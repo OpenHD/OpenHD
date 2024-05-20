@@ -33,7 +33,7 @@ jobs:
         run: |
           ls
           cd OpenHD
-          ./install_build_dep.sh ubuntu-x86
+          sudo ./install_build_dep.sh ubuntu-x86
 
       - name: Build with make
         run: |
