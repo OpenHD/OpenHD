@@ -49,7 +49,7 @@ static std::string ohd_version_as_string(uint8_t major, uint8_t minor,
   std::stringstream ss;
   ss << (int)major << "." << (int)minor << "." << (int)patch << "-evo";
   if (release_type == 0) {
-    ss << "-release";
+    ss << "";
   } else if (release_type == 1) {
     ss << "-beta";
   } else if (release_type == 2) {
