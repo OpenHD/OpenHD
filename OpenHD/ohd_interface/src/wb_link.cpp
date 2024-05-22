@@ -1003,6 +1003,7 @@ void WBLink::wt_update_statistics() {
     auto rf_rx_stats = m_wb_txrx->get_rx_rf_stats_for_card(i);
     if (m_broadcast_cards[i].type == WiFiCardType::OPENHD_RTL_88X2AU ||
         m_broadcast_cards[i].type == WiFiCardType::OPENHD_RTL_88X2BU ||
+        m_broadcast_cards[i].type == WiFiCardType::OPENHD_RTL_88X2CU ||
         m_broadcast_cards[i].type == WiFiCardType::OPENHD_RTL_8852BU) {
       // Value per adapter is shit, use the max of antenna(s) instead
       rf_rx_stats.adapter.rssi_dbm = std::max(rf_rx_stats.antenna1.rssi_dbm,
