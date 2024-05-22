@@ -41,19 +41,19 @@ static_assert(VIDEO_GROUND_VIDEO_STREAM_1_UDP !=
               "Must be different");
 
 static constexpr uint8_t MAJOR_VERSION = 2;
-static constexpr uint8_t MINOR_VERSION = 5;
-static constexpr uint8_t PATCH_VERSION = 4;
+static constexpr uint8_t MINOR_VERSION = 6;
+static constexpr uint8_t PATCH_VERSION = 0;
 static constexpr uint8_t RELEASE_TYPE = 0;
 static std::string ohd_version_as_string(uint8_t major, uint8_t minor,
                                          uint8_t patch, uint8_t release_type) {
   std::stringstream ss;
   ss << (int)major << "." << (int)minor << "." << (int)patch << "-evo";
   if (release_type == 0) {
-    ss << "-release";
+    // This is a 'proper' release
   } else if (release_type == 1) {
-    ss << "-beta";
+    ss << "-beta";  // testers only
   } else if (release_type == 2) {
-    ss << "-alpha";
+    ss << "-alpha";  // internal only
   } else {
     ss << "-unknown";
   }
