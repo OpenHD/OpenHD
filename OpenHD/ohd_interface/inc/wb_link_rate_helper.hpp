@@ -160,6 +160,7 @@ static uint32_t get_max_rate_possible_5G_kbits(const WiFiCard& card,
                                                bool is_40Mhz) {
   if (card.type == WiFiCardType::OPENHD_RTL_88X2AU ||
       card.type == WiFiCardType::OPENHD_RTL_88X2BU ||
+      card.type == WiFiCardType::OPENHD_RTL_88X2CU ||
       card.type == WiFiCardType::OPENHD_RTL_8852BU ||
       card.type == WiFiCardType::OPENHD_EMULATED) {
     return rtl8812au_get_max_rate_5G_kbits(mcs_index, is_40Mhz);

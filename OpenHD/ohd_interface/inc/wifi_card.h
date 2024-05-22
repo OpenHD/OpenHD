@@ -15,6 +15,7 @@
 enum class WiFiCardType {
   OPENHD_RTL_88X2AU,  // Supported
   OPENHD_RTL_88X2BU,  // Supported
+  OPENHD_RTL_88X2CU,  // Supported
   // These are all unsupported, but might / might not work
   RTL_88X2AU,  // right card, but wrong driver
   RTL_88X2BU,  // right card, but wrong driver
@@ -39,6 +40,8 @@ static std::string wifi_card_type_to_string(const WiFiCardType& card_type) {
       return "OPENHD_RTL_88X2AU";
     case WiFiCardType::OPENHD_RTL_88X2BU:
       return "OPENHD_RTL_88X2BU";
+    case WiFiCardType::OPENHD_RTL_88X2CU:
+      return "OPENHD_RTL_88X2CU";
     case WiFiCardType::OPENHD_RTL_8852BU:
       return "OPENHD_RTL_8852BU";
     case WiFiCardType::RTL_88X2AU:
@@ -122,11 +125,12 @@ struct WiFiCard {
   };
 };
 
-// Only RTL8812au / BU support changing the MCS index
+// Only RTL8812au / BU / CU support changing the MCS index
 static bool wifi_card_supports_variable_mcs(const WiFiCard& wifi_card) {
   if (wifi_card.type == WiFiCardType::OPENHD_EMULATED) return true;
   if (wifi_card.type == WiFiCardType::OPENHD_RTL_88X2AU) return true;
   if (wifi_card.type == WiFiCardType::OPENHD_RTL_88X2BU) return true;
+  if (wifi_card.type == WiFiCardType::OPENHD_RTL_88X2CU) return true;
   if (wifi_card.type == WiFiCardType::OPENHD_RTL_8852BU) return true;
   return false;
 }
@@ -136,6 +140,7 @@ static bool wifi_card_supports_40Mhz_channel_width_injection(
   if (wifi_card.type == WiFiCardType::OPENHD_EMULATED) return true;
   if (wifi_card.type == WiFiCardType::OPENHD_RTL_88X2AU) return true;
   if (wifi_card.type == WiFiCardType::OPENHD_RTL_88X2BU) return true;
+  if (wifi_card.type == WiFiCardType::OPENHD_RTL_88X2CU) return true;
   if (wifi_card.type == WiFiCardType::OPENHD_RTL_8852BU) return true;
   return false;
 }
