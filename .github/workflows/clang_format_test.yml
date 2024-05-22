@@ -5,6 +5,7 @@ on:
   push:
     branches-ignore:
       - release
+      - dev-release
 
 jobs:
 
