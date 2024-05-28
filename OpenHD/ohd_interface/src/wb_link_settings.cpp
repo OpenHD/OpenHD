@@ -43,7 +43,7 @@ WBLinkSettings create_default_wb_stream_settings(
   // custom hardware only has one wifi card
   if (wifibroadcast_cards.at(0).is_openhd_rtl8812au_x20()) {
     // Already a lot lol
-    settings.wb_rtl8812au_tx_pwr_idx_override = 1;
+    settings.wb_rtl8812au_tx_pwr_idx_override = 10;
   } else {
     // Should work even on ali cards without burning them
     settings.wb_rtl8812au_tx_pwr_idx_override = 10;
