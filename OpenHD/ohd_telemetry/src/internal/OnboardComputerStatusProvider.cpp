@@ -42,6 +42,7 @@ static int read_battery_percentage_linux() {
   return -1;
 }
 static int read_battery_charging_linux() {
+  openhd::log::get_default()->warn("Power monitoring x86");
   const std::string filepaths[] = {"/sys/class/power_supply/BAT1/status",
                                    "/sys/class/power_supply/BAT0/status"};
   for (const auto& filepath : filepaths) {
@@ -52,6 +53,7 @@ static int read_battery_charging_linux() {
       int result = -1;  // Default value
       if (state == "Charging\n") {
         result = 1337;
+      openhd::log::get_default()->warn("Charging");
       } else if (state == "Discharging\n") {
         result = 1338;
       } else {
@@ -143,6 +145,10 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       curr_ina219_voltage = read_battery_percentage_linux();
       curr_ina219_current = read_battery_charging_linux();
     } else {
+      curr_ina219_voltage = -1;
+      curr_ina219_current = -1;
+    }
+    else{
       curr_ina219_voltage = -1;
       curr_ina219_current = -1;
     }
