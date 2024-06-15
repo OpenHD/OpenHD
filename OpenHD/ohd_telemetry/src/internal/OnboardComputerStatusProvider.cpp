@@ -52,14 +52,14 @@ static int read_battery_charging_linux() {
           if (!content.has_value()) return -2;  // File read error
           std::string state = content.value();
           int result = -1;  // Default value
-           if (state == "Charging\n") {
-               result = 1337;
+          if (state == "Charging\n") {
+          result = 1337;
           } else if (state == "Discharging\n") {
-               result = 1338;
+          result = 1338;
           } else {
-              result = -1;
+          result = -1;
           }
-            return result;  // Returning the charging state
+          return result;  // Returning the charging state
         }
     }
     return -1;  // No battery status file found
