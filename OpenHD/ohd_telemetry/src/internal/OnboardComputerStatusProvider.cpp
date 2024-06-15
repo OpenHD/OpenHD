@@ -142,6 +142,10 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       curr_ina219_voltage = read_battery_percentage_linux();
       curr_ina219_current = read_battery_charging_linux();
     }
+    else{
+      curr_ina219_voltage = -1;
+      curr_ina219_current = -1;
+    }
 
     if (OHDPlatform::instance().is_rpi()) {
       curr_temperature_core =
