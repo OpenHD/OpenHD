@@ -56,11 +56,8 @@ static int read_battery_charging_linux() {
       openhd::log::get_default()->warn("Charging");
       } else if (state == "Discharging\n") {
         result = 1338;
-      openhd::log::get_default()->warn("DISCharging");
-      }
-      else {
-        result= -1;
-      openhd::log::get_default()->warn("Error");
+      } else {
+        result = -1;
       }
       return result;  // Returning the charging state
     }
@@ -147,6 +144,9 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
                    "/sys/class/power_supply/BAT0/capacity")) {
       curr_ina219_voltage = read_battery_percentage_linux();
       curr_ina219_current = read_battery_charging_linux();
+    } else {
+      curr_ina219_voltage = -1;
+      curr_ina219_current = -1;
     }
     else{
       curr_ina219_voltage = -1;
