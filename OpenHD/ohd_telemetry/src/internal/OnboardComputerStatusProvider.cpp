@@ -148,10 +148,6 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       curr_ina219_voltage = -1;
       curr_ina219_current = -1;
     }
-    else{
-      curr_ina219_voltage = -1;
-      curr_ina219_current = -1;
-    }
 
     if (OHDPlatform::instance().is_rpi()) {
       curr_temperature_core =
