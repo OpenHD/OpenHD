@@ -42,7 +42,6 @@ static int read_battery_percentage_linux() {
   return -1;
 }
 static int read_battery_charging_linux() {
-  openhd::log::get_default()->warn("Power monitoring x86");
   const std::string filepaths[] = {"/sys/class/power_supply/BAT1/status",
                                    "/sys/class/power_supply/BAT0/status"};
   for (const auto& filepath : filepaths) {
@@ -53,7 +52,6 @@ static int read_battery_charging_linux() {
       int result = -1;  // Default value
       if (state == "Charging\n") {
         result = 1337;
-        openhd::log::get_default()->warn("Charging");
       } else if (state == "Discharging\n") {
         result = 1338;
       } else {
@@ -222,7 +220,7 @@ OnboardComputerStatusProvider::get_current_status_as_mavlink_message(
 
 void OnboardComputerStatusProvider::ina219_log_warning_once() {
   if (m_ina_219.has_any_error && !m_ina219_warning_logged) {
-    openhd::log::get_default()->warn("INA219 failed - no power monitoring");
+    openhd::log::get_default()->warn("No INA219 detected!");
     m_ina219_warning_logged = true;
   }
 }
