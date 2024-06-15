@@ -42,9 +42,9 @@ static int read_battery_percentage_linux() {
   return -1;
 }
 static int read_battery_charging_linux() {
+  openhd::log::get_default()->warn("Power monitoring x86");
   const std::string filepaths[] = {"/sys/class/power_supply/BAT1/status",
                                    "/sys/class/power_supply/BAT0/status"};
-  openhd::log::get_default()->warn("Power monitoring x86");
   for (const auto& filepath : filepaths) {
     if (OHDFilesystemUtil::exists(filepath)) {
       auto content = OHDFilesystemUtil::opt_read_file(filepath);
@@ -53,8 +53,14 @@ static int read_battery_charging_linux() {
       int result = -1;  // Default value
       if (state == "Charging\n") {
         result = 1337;
+      openhd::log::get_default()->warn("Charging");
       } else if (state == "Discharging\n") {
         result = 1338;
+      openhd::log::get_default()->warn("DISCharging");
+      }
+      else {
+        result= -1;
+      openhd::log::get_default()->warn("Error");
       }
       return result;  // Returning the charging state
     }
