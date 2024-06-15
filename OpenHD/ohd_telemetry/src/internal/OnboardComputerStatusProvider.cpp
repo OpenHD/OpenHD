@@ -44,6 +44,7 @@ static int read_battery_percentage_linux() {
 static int read_battery_charging_linux() {
   const std::string filepaths[] = {"/sys/class/power_supply/BAT1/status",
                                    "/sys/class/power_supply/BAT0/status"};
+  openhd::log::get_default()->warn("Power monitoring x86");
   for (const auto& filepath : filepaths) {
     if (OHDFilesystemUtil::exists(filepath)) {
       auto content = OHDFilesystemUtil::opt_read_file(filepath);
