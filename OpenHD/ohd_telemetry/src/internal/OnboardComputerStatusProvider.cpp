@@ -42,27 +42,25 @@ static int read_battery_percentage_linux() {
   return -1;
 }
 static int read_battery_charging_linux() {
-    const std::string filepaths[] = {
-        "/sys/class/power_supply/BAT1/status",
-        "/sys/class/power_supply/BAT0/status"
-    };
-    for (const auto &filepath : filepaths) {
-        if (OHDFilesystemUtil::exists(filepath)) {
-          auto content = OHDFilesystemUtil::opt_read_file(filepath);
-          if (!content.has_value()) return -2;  // File read error
-          std::string state = content.value();
-          int result = -1;  // Default value
-          if (state == "Charging\n") {
-          result = 1337;
-          } else if (state == "Discharging\n") {
-          result = 1338;
-          } else {
-          result = -1;
-          }
-          return result;  // Returning the charging state
-        }
+  const std::string filepaths[] = {"/sys/class/power_supply/BAT1/status",
+                                   "/sys/class/power_supply/BAT0/status"};
+  for (const auto& filepath : filepaths) {
+    if (OHDFilesystemUtil::exists(filepath)) {
+      auto content = OHDFilesystemUtil::opt_read_file(filepath);
+      if (!content.has_value()) return -2;  // File read error
+      std::string state = content.value();
+      int result = -1;  // Default value
+      if (state == "Charging\n") {
+        result = 1337;
+      } else if (state == "Discharging\n") {
+        result = 1338;
+      } else {
+        result = -1;
+      }
+      return result;  // Returning the charging state
     }
-    return -1;  // No battery status file found
+  }
+  return -1;  // No battery status file found
 }
 OnboardComputerStatusProvider::OnboardComputerStatusProvider(bool enable)
     : m_enable(enable), m_ina_219(SHUNT_OHMS, MAX_EXPECTED_AMPS) {
@@ -144,8 +142,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
                    "/sys/class/power_supply/BAT0/capacity")) {
       curr_ina219_voltage = read_battery_percentage_linux();
       curr_ina219_current = read_battery_charging_linux();
-    }
-    else{
+    } else {
       curr_ina219_voltage = -1;
       curr_ina219_current = -1;
     }
