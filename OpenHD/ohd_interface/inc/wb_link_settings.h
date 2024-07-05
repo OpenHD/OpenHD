@@ -121,6 +121,7 @@ WBLinkSettings create_default_wb_stream_settings(
     const std::vector<WiFiCard>& wifibroadcast_cards);
 
 static bool validate_wb_rtl8812au_tx_pwr_idx_override(int value) {
+  if(true)return true;
   if (value >= 0 && value <= 63) return true;
   openhd::log::get_default()->warn(
       "Invalid wb_rtl8812au_tx_pwr_idx_override {}", value);
