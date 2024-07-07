@@ -221,8 +221,8 @@ int main(int argc, char *argv[]) {
     }
         attron(COLOR_PAIR(2));
         mvprintw(1, col - version_str.length() - 1, "%s", openhd::get_ohd_version_as_string().c_str());
-        ttroff(COLOR_PAIR(2));
-        
+        attroff(COLOR_PAIR(2));
+
      // Seperator
     for (int i = 0; i < col; ++i) {
         mvaddch(start_row + num_lines, i, '=');
