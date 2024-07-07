@@ -212,7 +212,7 @@ int main(int argc, char *argv[]) {
     } else {
         mvprintw(1,1,"LISTENING -- GROUND UNIT");
     }
-    mvprintw(1,1,(openhd::get_ohd_version_as_string()));
+    mvprintw(1, 25, "%s", openhd::get_ohd_version_as_string().c_str());
 
      // Seperator
     for (int i = 0; i < col; ++i) {
