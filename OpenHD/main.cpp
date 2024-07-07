@@ -177,7 +177,7 @@ int main(int argc, char *argv[]) {
     curs_set(0);
     start_color();
     // Define color pairs
-    init_pair(1, COLOR_CYAN, COLOR_BLACK);   // Cyan on Black
+    init_pair(1, COLOR_RED, COLOR_BLACK);   // Cyan on Black
     init_pair(2, COLOR_YELLOW, COLOR_BLACK); // Yellow on Black
     
     int row, col;
@@ -219,8 +219,10 @@ int main(int argc, char *argv[]) {
         mvprintw(1,1,"LISTENING -- GROUND UNIT");
         attroff(COLOR_PAIR(1));
     }
-    mvprintw(1, col - version_str.length() - 1, "%s", openhd::get_ohd_version_as_string().c_str());
-
+        attron(COLOR_PAIR(2));
+        mvprintw(1, col - version_str.length() - 1, "%s", openhd::get_ohd_version_as_string().c_str());
+        ttroff(COLOR_PAIR(2));
+        
      // Seperator
     for (int i = 0; i < col; ++i) {
         mvaddch(start_row + num_lines, i, '=');
