@@ -199,21 +199,20 @@ int main(int argc, char *argv[]) {
         };
 
   int num_lines = sizeof(text) / sizeof(text[0]);
-    int start_row = (top_half_rows - num_lines - 1 - 3) / 2; // Adjust for the table and some spacing
+    int start_row = (top_half_rows - num_lines - 1 - 3) / 2;
     for (int i = 0; i < num_lines; ++i) {
         int len = strlen(text[i]);
         int start_col = (col - len) / 2;
         mvprintw(start_row + i, start_col, "%s", text[i]);
     }
 
-    // Determine the center position for the broadcast string
     std::string air_status = OHDUtil::yes_or_no(options.run_as_air);
-    std::string broadcast;
     if (air_status == "Y") {
         mvprintw(1,1,"BROADCASTING -- AIR UNIT");
     } else {
         mvprintw(1,1,"LISTENING -- GROUND UNIT");
     }
+    mvprintw(1,1,(openhd::get_ohd_version_as_string()));
 
      // Seperator
     for (int i = 0; i < col; ++i) {
