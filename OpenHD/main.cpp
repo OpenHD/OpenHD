@@ -206,25 +206,25 @@ int main(int argc, char *argv[]) {
         mvprintw(start_row + i, start_col, "%s", text[i]);
     }
 
-     // Seperator
-    for (int i = 0; i < col; ++i) {
-        mvaddch(start_row + num_lines, i, '=');
+    // Determine the center position for the broadcast string
+    std::string air_status = OHDUtil::yes_or_no(options.run_as_air);
+    std::string broadcast;
+    if (air_status == "Y") {
+        broadcast = "BROADCASTING (AIR UNIT)";
+    } else {
+        broadcast = "LISTENING (GROUND UNIT)";
     }
-
-      // Determine the center position for the broadcast string
-  std::string air_status = OHDUtil::yes_or_no(options.run_as_air);
-  std::string broadcast;
-  if (air_status == "Y") {
-      broadcast = "BROADCASTING (AIR UNIT)";
-  } else {
-      broadcast = "LISTENING (GROUND UNIT)";
-  }
 
   int broadcast_len = broadcast.length();
   int broadcast_start_col = (col - broadcast_len) / 2;
 
   // Print the broadcast string centered under the separator
   mvprintw(start_row + num_lines + 2, broadcast_start_col, "%s", broadcast.c_str());
+
+     // Seperator
+    for (int i = 0; i < col; ++i) {
+        mvaddch(start_row + num_lines, i, '=');
+    }
 
     // Add a table with three rows and three columns
     const char *table[3][3] = {
@@ -437,7 +437,7 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
   openhd::remove_currently_running_file();
-  //refresh();
+  refresh();
 
     int ch;
     // Wait for the Esc key before exiting
