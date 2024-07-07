@@ -211,8 +211,9 @@ int main(int argc, char *argv[]) {
         mvaddch(start_row + num_lines, i, '=');
     }
 
-    printw(OHDUtil::yes_or_no(options.run_as_air));
-
+    std::string air_status = OHDUtil::yes_or_no(options.run_as_air);
+    printw("%s", air_status.c_str());
+    
     // Add a table with three rows and three columns
     const char *table[3][3] = {
         {"Column 1", "Column 2", "Column 3"},
