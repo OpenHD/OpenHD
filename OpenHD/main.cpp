@@ -184,7 +184,6 @@ int main(int argc, char *argv[]) {
     getmaxyx(stdscr, row, col);
     int top_half_rows = row / 2;
 
-
     const char *text[] = {
             
             "  #######  ########  ######## ##    ## ##     ## ######## ",
@@ -206,13 +205,16 @@ int main(int argc, char *argv[]) {
         mvprintw(start_row + i, start_col, "%s", text[i]);
     }
 
+    // Get Variables to display in the UI
     std::string air_status = OHDUtil::yes_or_no(options.run_as_air);
+    std::string version_str = openhd::get_ohd_version_as_string();
+
     if (air_status == "Y") {
         mvprintw(1,1,"BROADCASTING -- AIR UNIT");
     } else {
         mvprintw(1,1,"LISTENING -- GROUND UNIT");
     }
-    mvprintw(1, 25, "%s", openhd::get_ohd_version_as_string().c_str());
+    mvprintw(1, col - version_str.length() - 1, "%s", openhd::get_ohd_version_as_string().c_str());
 
      // Seperator
     for (int i = 0; i < col; ++i) {
