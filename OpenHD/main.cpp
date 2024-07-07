@@ -211,9 +211,21 @@ int main(int argc, char *argv[]) {
         mvaddch(start_row + num_lines, i, '=');
     }
 
-    std::string air_status = OHDUtil::yes_or_no(options.run_as_air);
-    printw("%s", air_status.c_str());
-    
+      // Determine the center position for the broadcast string
+  std::string air_status = OHDUtil::yes_or_no(options.run_as_air);
+  std::string broadcast;
+  if (air_status == "Y") {
+      broadcast = "BROADCASTING (AIR UNIT)";
+  } else {
+      broadcast = "LISTENING (GROUND UNIT)";
+  }
+
+  int broadcast_len = broadcast.length();
+  int broadcast_start_col = (col - broadcast_len) / 2;
+
+  // Print the broadcast string centered under the separator
+  mvprintw(start_row + num_lines + 2, broadcast_start_col, "%s", broadcast.c_str());
+
     // Add a table with three rows and three columns
     const char *table[3][3] = {
         {"Column 1", "Column 2", "Column 3"},
