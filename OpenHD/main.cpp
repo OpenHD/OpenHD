@@ -168,7 +168,43 @@ int main(int argc, char *argv[]) {
   // Wi-Fi cards for example (And there are also many other places where we just
   // need to be root).
   OHDUtil::terminate_if_not_root();
+  // Show OpenHD status screen
+  initscr();
+  noecho();
+  curs_set(0);
+  getmaxyx(stdscr, row, col);
+    const char *text[] = {
+            
+            "  #######  ########  ######## ##    ## ##     ## ######## ",
+            " ##     ## ##     ## ##       ###   ## ##     ## ##     ##",
+            " ##     ## ##     ## ##       ####  ## ##     ## ##     ##",
+            " ##     ## ########  ######   ## ## ## ######### ##     ##",
+            " ##     ## ##        ##       ##  #### ##     ## ##     ##",
+            " ##     ## ##        ##       ##   ### ##     ## ##     ##",
+            "  #######  ##        ######## ##    ## ##     ## ######## ",                                                                                                      
+            "",
+            ""                                                                            
+        };
+  int num_lines = sizeof(text) / sizeof(text[0]);
+    int start_row = (row - num_lines) / 10;
+    for (int i = 0; i < num_lines; ++i) {
+        int len = strlen(text[i]);
+        int start_col = (col - len) / 2;
+        mvprintw(start_row + i, start_col, "%s", text[i]);
+    }
 
+     // Seperator
+    for (int i = 0; i < col; ++i) {
+        mvaddch(start_row + num_lines, i, '=');
+    }
+    refresh();
+    int ch;
+    // Wait for the Esc key before exiting
+    while ((ch = getch()) != 27) {
+        // Do nothing, just loop until Esc is pressed
+    }
+    // End ncurses mode
+    endwin();
   // Create the folder structure for the (per-module-specific) settings if
   // needed
   openhd::generateSettingsDirectoryIfNonExists();
