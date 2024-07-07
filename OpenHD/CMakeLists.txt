@@ -6,6 +6,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 #SET(CMAKE_CXX_FLAGS "-pg")
 
+# Find the ncurses package
+find_package(Curses REQUIRED)
+include_directories(${CURSES_INCLUDE_DIR})
+
 # Allows to explicitly disable air support - removes a few dependencies
 option(ENABLE_AIR "Enable air support" ON)
 message("Air support enabled: ${ENABLE_AIR}")

@@ -4,6 +4,7 @@
 
 #include <OHDTelemetry.h>
 #include <getopt.h>
+#include <ncurses.h>
 #include <ohd_interface.h>
 #ifdef ENABLE_AIR
 #include <ohd_video_air.h>
