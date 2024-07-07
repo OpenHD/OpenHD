@@ -172,12 +172,13 @@ int main(int argc, char *argv[]) {
 
   // Show OpenHD status screen
 
-  // Initialize the ncurses screen
     initscr();
-    // Do not display characters as they are typed
     noecho();
-    // Hide the cursor
     curs_set(0);
+    start_color();
+    // Define color pairs
+    init_pair(1, COLOR_CYAN, COLOR_BLACK);   // Cyan on Black
+    init_pair(2, COLOR_YELLOW, COLOR_BLACK); // Yellow on Black
     
     int row, col;
     // Get the number of rows and columns in the terminal
@@ -210,9 +211,13 @@ int main(int argc, char *argv[]) {
     std::string version_str = openhd::get_ohd_version_as_string();
 
     if (air_status == "Y") {
+        attron(COLOR_PAIR(1));
         mvprintw(1,1,"BROADCASTING -- AIR UNIT");
+        attroff(COLOR_PAIR(1));
     } else {
+        attron(COLOR_PAIR(1));
         mvprintw(1,1,"LISTENING -- GROUND UNIT");
+        attroff(COLOR_PAIR(1));
     }
     mvprintw(1, col - version_str.length() - 1, "%s", openhd::get_ohd_version_as_string().c_str());
 
