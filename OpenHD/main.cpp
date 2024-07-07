@@ -208,7 +208,7 @@ int main(int argc, char *argv[]) {
         mvaddch(start_row + num_lines, i, '=');
     }
 
-    std::string result = OHDUtil::yes_or_no(runAsAir);
+    std::string result = OHDUtil::yes_or_no(options.run_as_air);
       
       if (result == "yes") {
           std::cout << "BROADCASTING" << std::endl;
