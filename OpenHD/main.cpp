@@ -210,9 +210,9 @@ int main(int argc, char *argv[]) {
     std::string air_status = OHDUtil::yes_or_no(options.run_as_air);
     std::string broadcast;
     if (air_status == "Y") {
-        mvprintw("BROADCASTING -- AIR UNIT");
+        mvprintw(30,30,"BROADCASTING -- AIR UNIT");
     } else {
-        mvprintw("LISTENING -- GROUND UNIT");
+        mvprintw(30,30,"LISTENING -- GROUND UNIT");
     }
 
      // Seperator
