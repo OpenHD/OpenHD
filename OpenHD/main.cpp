@@ -208,15 +208,13 @@ int main(int argc, char *argv[]) {
         mvaddch(start_row + num_lines, i, '=');
     }
 
-    std::string result = OHDUtil::yes_or_no(options.run_as_air);
-    if (result == "yes") {
-    printw("BROADCASTING");
-    else {
-    // Add your else statement here
-    // For example, printing something else or performing another action
-    printw("LISTENING");
-    }
-
+    std::string result = OHDUtil::yes_or_no(runAsAir);
+      
+      if (result == "yes") {
+          std::cout << "BROADCASTING" << std::endl;
+      } else {
+          std::cout << "LISTENING" << std::endl;
+      }
     // Add a table with three rows and three columns
     const char *table[3][3] = {
         {"Column 1", "Column 2", "Column 3"},
