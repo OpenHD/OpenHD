@@ -164,6 +164,12 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
 }
 
 int main(int argc, char *argv[]) {
+  // Initialize ncurses
+  initscr();
+  // Output "Hello World" in the middle
+  mvprintw(LINES / 2, (COLS - strlen("Hello World")) / 2, "Hello World");
+  refresh();  // Refresh the screen to display changes
+
   // OpenHD needs to be run as root, otherwise we cannot access/ modify the
   // Wi-Fi cards for example (And there are also many other places where we just
   // need to be root).
@@ -357,5 +363,6 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
   openhd::remove_currently_running_file();
+  endwin();
   return 0;
 }
