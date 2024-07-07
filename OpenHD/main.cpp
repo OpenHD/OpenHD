@@ -168,6 +168,8 @@ int main(int argc, char *argv[]) {
   // Wi-Fi cards for example (And there are also many other places where we just
   // need to be root).
   OHDUtil::terminate_if_not_root();
+  const OHDRunOptions options = parse_run_parameters(argc, argv);
+
   // Show OpenHD status screen
 
   // Initialize the ncurses screen
@@ -244,7 +246,6 @@ int main(int argc, char *argv[]) {
 
   // Parse the program arguments, also uses the "yes if file exists" pattern for
   // some params
-  const OHDRunOptions options = parse_run_parameters(argc, argv);
   if (options.hardware_config_file.has_value()) {
     openhd::set_config_file(options.hardware_config_file.value());
   }
