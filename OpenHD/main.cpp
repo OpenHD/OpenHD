@@ -268,9 +268,9 @@ int main(int argc, char *argv[]) {
   }
   // This is the console we use inside main, in general different openhd
   // modules/classes have their own loggers with different tags
-  // std::shared_ptr<spdlog::logger> m_console =
-  //     openhd::log::create_or_get("main");
-  // assert(m_console);
+  std::shared_ptr<spdlog::logger> m_console =
+      // openhd::log::create_or_get("main");
+  assert(m_console);
 
   // not guaranteed, but better than nothing, check if openhd is already running
   // (kinda) and print warning if yes.
