@@ -237,13 +237,6 @@ int main(int argc, char *argv[]) {
 
     refresh();
     move(top_half_rows, 0);
-    refresh();
-
-    int ch;
-    // Wait for the Esc key before exiting
-    while ((ch = getch()) != 27) {
-        // Do nothing, just loop until Esc is pressed
-    }
   // Create the folder structure for the (per-module-specific) settings if
   // needed
   openhd::generateSettingsDirectoryIfNonExists();
@@ -432,6 +425,13 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
   openhd::remove_currently_running_file();
+  refresh();
+
+    int ch;
+    // Wait for the Esc key before exiting
+    while ((ch = getch()) != 27) {
+        // Do nothing, just loop until Esc is pressed
+    }
   endwin();
   return 0;
 }
