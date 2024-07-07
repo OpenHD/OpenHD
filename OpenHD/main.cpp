@@ -168,49 +168,7 @@ int main(int argc, char *argv[]) {
   // Wi-Fi cards for example (And there are also many other places where we just
   // need to be root).
   OHDUtil::terminate_if_not_root();
-  // Show OpenHD status screen
-  // Initialize the ncurses screen
-    initscr();
-    // Do not display characters as they are typed
-    noecho();
-    // Hide the cursor
-    curs_set(0);
-    
-    int row, col;
-    // Get the number of rows and columns in the terminal
-    getmaxyx(stdscr, row, col);
-    const char *text[] = {
-            
-            "  #######  ########  ######## ##    ## ##     ## ######## ",
-            " ##     ## ##     ## ##       ###   ## ##     ## ##     ##",
-            " ##     ## ##     ## ##       ####  ## ##     ## ##     ##",
-            " ##     ## ########  ######   ## ## ## ######### ##     ##",
-            " ##     ## ##        ##       ##  #### ##     ## ##     ##",
-            " ##     ## ##        ##       ##   ### ##     ## ##     ##",
-            "  #######  ##        ######## ##    ## ##     ## ######## ",                                                                                                      
-            "",
-            ""                                                                            
-        };
-  int num_lines = sizeof(text) / sizeof(text[0]);
-    int start_row = (row - num_lines) / 10;
-    for (int i = 0; i < num_lines; ++i) {
-        int len = strlen(text[i]);
-        int start_col = (col - len) / 2;
-        mvprintw(start_row + i, start_col, "%s", text[i]);
-    }
 
-     // Seperator
-    for (int i = 0; i < col; ++i) {
-        mvaddch(start_row + num_lines, i, '=');
-    }
-    refresh();
-    int ch;
-    // Wait for the Esc key before exiting
-    while ((ch = getch()) != 27) {
-        // Do nothing, just loop until Esc is pressed
-    }
-    // End ncurses mode
-    endwin();
   // Create the folder structure for the (per-module-specific) settings if
   // needed
   openhd::generateSettingsDirectoryIfNonExists();
@@ -225,20 +183,20 @@ int main(int argc, char *argv[]) {
     openhd::set_config_file(options.hardware_config_file.value());
   }
   {  // Print all the arguments the OHD main executable is started with
-    // std::stringstream ss;
-    // ss << "OpenHD START with \n";
-    // ss << "air:" << OHDUtil::yes_or_no(options.run_as_air) << "\n";
-    // ss << "reset_all_settings:"
-    //    << OHDUtil::yes_or_no(options.reset_all_settings) << "\n";
-    // ss << "run_time_seconds:" << options.run_time_seconds << "\n";
-    // ss << "hardware-config-file:["
-    //    << options.hardware_config_file.value_or("DEFAULT") << "]\n";
-    // ss << "Version number:" << openhd::get_ohd_version_as_string() << "\n";
-    // // ss<<"Git info:Branch:"<<git_Branch()<<" SHA:"<<git_CommitSHA1()<<"
-    // // Dirty:"<<OHDUtil::yes_or_no(git_AnyUncommittedChanges())<<"\n";
-    // std::cout << ss.str() << std::flush;
-    // openhd::debug_config();
-    // OHDInterface::print_internal_fec_optimization_method();
+    std::stringstream ss;
+    ss << "OpenHD START with \n";
+    ss << "air:" << OHDUtil::yes_or_no(options.run_as_air) << "\n";
+    ss << "reset_all_settings:"
+       << OHDUtil::yes_or_no(options.reset_all_settings) << "\n";
+    ss << "run_time_seconds:" << options.run_time_seconds << "\n";
+    ss << "hardware-config-file:["
+       << options.hardware_config_file.value_or("DEFAULT") << "]\n";
+    ss << "Version number:" << openhd::get_ohd_version_as_string() << "\n";
+    // ss<<"Git info:Branch:"<<git_Branch()<<" SHA:"<<git_CommitSHA1()<<"
+    // Dirty:"<<OHDUtil::yes_or_no(git_AnyUncommittedChanges())<<"\n";
+    std::cout << ss.str() << std::flush;
+    openhd::debug_config();
+    OHDInterface::print_internal_fec_optimization_method();
   }
   // This is the console we use inside main, in general different openhd
   // modules/classes have their own loggers with different tags
