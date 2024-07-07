@@ -437,7 +437,7 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
   openhd::remove_currently_running_file();
-  refresh();
+  //refresh();
 
     int ch;
     // Wait for the Esc key before exiting
