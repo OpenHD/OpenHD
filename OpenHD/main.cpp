@@ -197,6 +197,7 @@ int main(int argc, char *argv[]) {
             "",
             ""                                                                            
         };
+
   int num_lines = sizeof(text) / sizeof(text[0]);
     int start_row = (top_half_rows - num_lines - 1 - 3) / 2; // Adjust for the table and some spacing
     for (int i = 0; i < num_lines; ++i) {
@@ -210,8 +211,7 @@ int main(int argc, char *argv[]) {
         mvaddch(start_row + num_lines, i, '=');
     }
 
-    printw("hello world");
-    std::string air_status = "air: " + OHDUtil::yes_or_no(options.run_as_air);
+    printw(OHDUtil::yes_or_no(options.run_as_air));
 
     // Add a table with three rows and three columns
     const char *table[3][3] = {
