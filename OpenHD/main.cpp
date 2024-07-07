@@ -183,20 +183,20 @@ int main(int argc, char *argv[]) {
     openhd::set_config_file(options.hardware_config_file.value());
   }
   {  // Print all the arguments the OHD main executable is started with
-    std::stringstream ss;
-    ss << "OpenHD START with \n";
-    ss << "air:" << OHDUtil::yes_or_no(options.run_as_air) << "\n";
-    ss << "reset_all_settings:"
-       << OHDUtil::yes_or_no(options.reset_all_settings) << "\n";
-    ss << "run_time_seconds:" << options.run_time_seconds << "\n";
-    ss << "hardware-config-file:["
-       << options.hardware_config_file.value_or("DEFAULT") << "]\n";
-    ss << "Version number:" << openhd::get_ohd_version_as_string() << "\n";
-    // ss<<"Git info:Branch:"<<git_Branch()<<" SHA:"<<git_CommitSHA1()<<"
-    // Dirty:"<<OHDUtil::yes_or_no(git_AnyUncommittedChanges())<<"\n";
-    std::cout << ss.str() << std::flush;
-    openhd::debug_config();
-    OHDInterface::print_internal_fec_optimization_method();
+    // std::stringstream ss;
+    // ss << "OpenHD START with \n";
+    // ss << "air:" << OHDUtil::yes_or_no(options.run_as_air) << "\n";
+    // ss << "reset_all_settings:"
+    //    << OHDUtil::yes_or_no(options.reset_all_settings) << "\n";
+    // ss << "run_time_seconds:" << options.run_time_seconds << "\n";
+    // ss << "hardware-config-file:["
+    //    << options.hardware_config_file.value_or("DEFAULT") << "]\n";
+    // ss << "Version number:" << openhd::get_ohd_version_as_string() << "\n";
+    // // ss<<"Git info:Branch:"<<git_Branch()<<" SHA:"<<git_CommitSHA1()<<"
+    // // Dirty:"<<OHDUtil::yes_or_no(git_AnyUncommittedChanges())<<"\n";
+    // std::cout << ss.str() << std::flush;
+    // openhd::debug_config();
+    // OHDInterface::print_internal_fec_optimization_method();
   }
   // This is the console we use inside main, in general different openhd
   // modules/classes have their own loggers with different tags
