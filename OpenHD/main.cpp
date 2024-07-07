@@ -208,9 +208,13 @@ int main(int argc, char *argv[]) {
         mvaddch(start_row + num_lines, i, '=');
     }
 
-    std::string result = OHDUtil::yes_or_no(true); // Replace with your actual call
+    std::string result = OHDUtil::yes_or_no(options.run_as_air) 
     if (result == "yes") {
-        printw("BROADCASTING");
+    printw("BROADCASTING");
+    else {
+    // Add your else statement here
+    // For example, printing something else or performing another action
+    printw("LISTENING");
     }
 
     // Add a table with three rows and three columns
@@ -269,7 +273,7 @@ int main(int argc, char *argv[]) {
   // This is the console we use inside main, in general different openhd
   // modules/classes have their own loggers with different tags
   std::shared_ptr<spdlog::logger> m_console =
-      // openhd::log::create_or_get("main");
+      openhd::log::create_or_get("main");
   assert(m_console);
 
   // not guaranteed, but better than nothing, check if openhd is already running
