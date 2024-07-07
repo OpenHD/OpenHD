@@ -169,11 +169,16 @@ int main(int argc, char *argv[]) {
   // need to be root).
   OHDUtil::terminate_if_not_root();
   // Show OpenHD status screen
-  initscr();
-  noecho();
-  curs_set(0);
-  int row, col;
-  getmaxyx(stdscr, row, col);
+  // Initialize the ncurses screen
+    initscr();
+    // Do not display characters as they are typed
+    noecho();
+    // Hide the cursor
+    curs_set(0);
+    
+    int row, col;
+    // Get the number of rows and columns in the terminal
+    getmaxyx(stdscr, row, col);
     const char *text[] = {
             
             "  #######  ########  ######## ##    ## ##     ## ######## ",
