@@ -169,6 +169,7 @@ int main(int argc, char *argv[]) {
   // need to be root).
   OHDUtil::terminate_if_not_root();
   // Show OpenHD status screen
+
   // Initialize the ncurses screen
     initscr();
     // Do not display characters as they are typed
@@ -179,6 +180,9 @@ int main(int argc, char *argv[]) {
     int row, col;
     // Get the number of rows and columns in the terminal
     getmaxyx(stdscr, row, col);
+    int top_half_rows = row / 2;
+
+
     const char *text[] = {
             
             "  #######  ########  ######## ##    ## ##     ## ######## ",
@@ -192,7 +196,7 @@ int main(int argc, char *argv[]) {
             ""                                                                            
         };
   int num_lines = sizeof(text) / sizeof(text[0]);
-    int start_row = (row - num_lines) / 10;
+    int start_row = (top_half_rows - num_lines - 1 - 3) / 2; // Adjust for the table and some spacing
     for (int i = 0; i < num_lines; ++i) {
         int len = strlen(text[i]);
         int start_col = (col - len) / 2;
@@ -232,6 +236,9 @@ int main(int argc, char *argv[]) {
     }
 
     refresh();
+    move(top_half_rows, 0);
+    refresh();
+
     int ch;
     // Wait for the Esc key before exiting
     while ((ch = getch()) != 27) {
