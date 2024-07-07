@@ -8,7 +8,11 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # Find the ncurses package
 find_package(Curses REQUIRED)
-include_directories(${CURSES_INCLUDE_DIR})
+# Link ncurses library
+target_link_libraries(openhd PRIVATE ${CURSES_LIBRARIES})
+
+# Include ncurses headers
+target_include_directories(openhd PRIVATE ${CURSES_INCLUDE_DIRS})
 
 # Allows to explicitly disable air support - removes a few dependencies
 option(ENABLE_AIR "Enable air support" ON)
