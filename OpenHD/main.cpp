@@ -172,6 +172,7 @@ int main(int argc, char *argv[]) {
   initscr();
   noecho();
   curs_set(0);
+  int row, col;
   getmaxyx(stdscr, row, col);
     const char *text[] = {
             
