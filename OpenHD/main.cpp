@@ -169,7 +169,6 @@ int main(int argc, char *argv[]) {
   // need to be root).
   OHDUtil::terminate_if_not_root();
   const OHDRunOptions options = parse_run_parameters(argc, argv);
-  const auto platform = OHDPlatform::instance();
   
   // Create the folder structure for the (per-module-specific) settings if
   // needed
@@ -274,7 +273,7 @@ int main(int argc, char *argv[]) {
     mvprintw(start_row + num_lines + 2, 1, "Status: Booting as %s", platform);
     
     refresh();
-    
+
   // Create and link all the OpenHD modules.
   try {
     // This results in fresh default values for all modules (e.g. interface,
