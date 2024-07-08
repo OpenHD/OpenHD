@@ -234,6 +234,10 @@ int main(int argc, char *argv[]) {
 
     mvprintw(20,1,"openhd_type");
 
+    for (int i = 0; i < col; ++i) {
+        mvaddch(start_row + num_lines, i, '=');
+    }
+
     refresh();
   // Create the folder structure for the (per-module-specific) settings if
   // needed
