@@ -210,7 +210,7 @@ int main(int argc, char *argv[]) {
 
   // First discover the platform -
   const auto platform = OHDPlatform::instance();
-      std::cout << "Platform name: " << platform.name << std::endl;
+      std::cout << "Platform name: " << platform << std::endl;
   openhd::LEDManager::instance().set_status_loading();
 
 // Show OpenHD status screen
