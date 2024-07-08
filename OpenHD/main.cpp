@@ -14,6 +14,7 @@
 #include <csignal>
 #include <iostream>
 #include <memory>
+#include <string>
 
 #include "openhd_buttons.h"
 #include "openhd_global_constants.hpp"
