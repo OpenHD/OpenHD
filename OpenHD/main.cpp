@@ -230,6 +230,14 @@ int main(int argc, char *argv[]) {
         mvaddch(start_row + num_lines, i, '=');
     }
 
+    // Draw a red separator line below the table
+    attron(COLOR_PAIR(4)); // Activate the red color pair
+    for (int i = 0; i < col; ++i) {
+        mvaddch(table_start_row - 1, i, '=');
+    }
+    attroff(COLOR_PAIR(4)); // Deactivate the red color pair
+
+
     // Add a table with three rows and three columns
     const char *table[3][3] = {
         {"Column 1", "Column 2", "Column 3"},
@@ -251,12 +259,6 @@ int main(int argc, char *argv[]) {
             current_col += strlen(table[i][j]) + 2; // Move to next column position
         }
     };
-
-    // Seperator
-    for (int i = 0; i < col; ++i) {
-        mvaddch(start_row + num_lines, i, '=');
-    }
-    
 
     refresh();
     move(top_half_rows, 0);
