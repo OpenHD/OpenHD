@@ -210,7 +210,7 @@ int main(int argc, char *argv[]) {
     // Get Variables to display in the UI
     std::string air_status = OHDUtil::yes_or_no(options.run_as_air);
     std::string version_str = openhd::get_ohd_version_as_string();
-    const char* openhd_type;
+    std::string openhd_type;
 
     if (air_status == "Y") {
         attron(COLOR_PAIR(1));
