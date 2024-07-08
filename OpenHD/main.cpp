@@ -200,7 +200,7 @@ int main(int argc, char *argv[]) {
         };
 
   int num_lines = sizeof(text) / sizeof(text[0]);
-    int start_row = (top_half_rows - num_lines - 1 - 3) / 2;
+    int start_row = (row - num_lines) / 10;
     for (int i = 0; i < num_lines; ++i) {
         int len = strlen(text[i]);
         int start_col = (col - len) / 2;
