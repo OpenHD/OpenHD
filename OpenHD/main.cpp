@@ -169,7 +169,7 @@ int main(int argc, char *argv[]) {
   // need to be root).
   OHDUtil::terminate_if_not_root();
   const OHDRunOptions options = parse_run_parameters(argc, argv);
-
+  const auto platform = OHDPlatform::instance();
   // Show OpenHD status screen
 
     initscr();
