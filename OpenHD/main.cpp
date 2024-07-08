@@ -209,7 +209,8 @@ int main(int argc, char *argv[]) {
   openhd::check_currently_running_file_and_write();
 
   // First discover the platform -
-  //const auto platform = OHDPlatform::instance();
+  const auto platform = OHDPlatform::instance();
+      std::cout << "Platform name: " << platform.name << std::endl;
   openhd::LEDManager::instance().set_status_loading();
 
 // Show OpenHD status screen
