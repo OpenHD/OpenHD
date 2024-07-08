@@ -210,7 +210,7 @@ int main(int argc, char *argv[]) {
     // Get Variables to display in the UI
     std::string air_status = OHDUtil::yes_or_no(options.run_as_air);
     std::string version_str = openhd::get_ohd_version_as_string();
-    std::string openhd_type;
+    const char* openhd_type;
 
     if (air_status == "Y") {
         attron(COLOR_PAIR(1));
@@ -232,11 +232,9 @@ int main(int argc, char *argv[]) {
         mvaddch(start_row + num_lines, i, '=');
     }
 
-    // Convert some Varibles to const char
-    const char* openhd_type_cstr = openhd_type.c_str();
     // Add a table with three rows and three columns
     const char *table[3][3] = {
-        {"Status", openhd_type_cstr, "Column 3"},
+        {"Status", openhd_type, "Column 3"},
         {"Row 1, Col 1", "Row 1, Col 2", "Row 1, Col 3"},
         {"Row 2, Col 1", "Row 2, Col 2", "Row 2, Col 3"}
     };
