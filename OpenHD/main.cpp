@@ -210,16 +210,13 @@ int main(int argc, char *argv[]) {
     // Get Variables to display in the UI
     std::string air_status = OHDUtil::yes_or_no(options.run_as_air);
     std::string version_str = openhd::get_ohd_version_as_string();
-    std::string openhd_type;
 
     if (air_status == "Y") {
         attron(COLOR_PAIR(1));
-        openhd_type=="Air Unit";
         mvprintw(1,1,"BROADCASTING -- AIR UNIT");
         attroff(COLOR_PAIR(1));
     } else {
         attron(COLOR_PAIR(1));
-        openhd_type=="Ground Unit";
         mvprintw(1,1,"LISTENING -- GROUND UNIT");
         attroff(COLOR_PAIR(1));
     }
@@ -232,7 +229,7 @@ int main(int argc, char *argv[]) {
         mvaddch(start_row + num_lines, i, '=');
     }
 
-    mvprintw(start_row + num_lines + 2, 1, "Status: Booting as %s", openhd_type);
+    mvprintw(start_row + num_lines + 2, 1, "/n");
 
     refresh();
   // Create the folder structure for the (per-module-specific) settings if
