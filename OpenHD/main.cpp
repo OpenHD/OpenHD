@@ -210,13 +210,16 @@ int main(int argc, char *argv[]) {
     // Get Variables to display in the UI
     std::string air_status = OHDUtil::yes_or_no(options.run_as_air);
     std::string version_str = openhd::get_ohd_version_as_string();
+    std::string openhd_type;
 
     if (air_status == "Y") {
         attron(COLOR_PAIR(1));
+        openhd_type=="Air Unit"
         mvprintw(1,1,"BROADCASTING -- AIR UNIT");
         attroff(COLOR_PAIR(1));
     } else {
         attron(COLOR_PAIR(1));
+        openhd_type=="Ground Unit"
         mvprintw(1,1,"LISTENING -- GROUND UNIT");
         attroff(COLOR_PAIR(1));
     }
@@ -231,7 +234,7 @@ int main(int argc, char *argv[]) {
 
     // Add a table with three rows and three columns
     const char *table[3][3] = {
-        {"Column 1", "Column 2", "Column 3"},
+        {"Status", "Column 2", "Column 3"},
         {"Row 1, Col 1", "Row 1, Col 2", "Row 1, Col 3"},
         {"Row 2, Col 1", "Row 2, Col 2", "Row 2, Col 3"}
     };
@@ -250,15 +253,6 @@ int main(int argc, char *argv[]) {
             current_col += strlen(table[i][j]) + 2; // Move to next column position
         }
     };
-
-    // Draw separator line
-    attron(COLOR_PAIR(4)); // Activate red color pair
-    for (int i = 0; i < col; ++i) {
-        mvaddch(25, i, '='); // Draw separator line
-    }
-    attroff(COLOR_PAIR(4)); // Deactivate red color pair
-
-
     refresh();
   // Create the folder structure for the (per-module-specific) settings if
   // needed
