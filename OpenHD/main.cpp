@@ -168,6 +168,7 @@ int main(int argc, char *argv[]) {
   // Wi-Fi cards for example (And there are also many other places where we just
   // need to be root).
   OHDUtil::terminate_if_not_root();
+  openhd::LEDManager::instance().set_status_loading();
   const OHDRunOptions options = parse_run_parameters(argc, argv);
   const auto platform = OHDPlatform::instance();
   // Show OpenHD status screen
@@ -268,10 +269,6 @@ int main(int argc, char *argv[]) {
   // not guaranteed, but better than nothing, check if openhd is already running
   // (kinda) and print warning if yes.
   openhd::check_currently_running_file_and_write();
-
-  // First discover the platform -
-  const auto platform = OHDPlatform::instance();
-  openhd::LEDManager::instance().set_status_loading();
 
   // Create and link all the OpenHD modules.
   try {
