@@ -250,10 +250,13 @@ int main(int argc, char *argv[]) {
             mvprintw(table_start_row + i, current_col, "%s", table[i][j]);
             current_col += strlen(table[i][j]) + 2; // Move to next column position
         }
-    }
+    };
+
+    // Seperator
     for (int i = 0; i < col; ++i) {
         mvaddch(start_row + num_lines, i, '=');
     }
+    
 
     refresh();
     move(top_half_rows, 0);
