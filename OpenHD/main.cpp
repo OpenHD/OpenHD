@@ -251,10 +251,16 @@ int main(int argc, char *argv[]) {
         }
     };
 
-     // Seperator
+    // Calculate position for separator line
+    int separator_row = table_start_row + 4; // Adjust this based on your table structure
+
+    // Draw separator line
+    attron(COLOR_PAIR(4)); // Activate red color pair
     for (int i = 0; i < col; ++i) {
-        mvaddch(25 + num_lines, i, '=');
+        mvaddch(separator_row, i, '='); // Draw separator line
     }
+    attroff(COLOR_PAIR(4)); // Deactivate red color pair
+
 
     refresh();
   // Create the folder structure for the (per-module-specific) settings if
