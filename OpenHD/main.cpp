@@ -270,7 +270,7 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < col; ++i) {
         mvaddch(start_row + num_lines, i, '=');
     }
-    mvprintw(start_row + num_lines + 2, 1, "Status: Booting as %s", platform);
+    //mvprintw(start_row + num_lines + 2, 1, "Status: Booting as %s", platform);
     
     refresh();
 
