@@ -14,7 +14,6 @@
 #include <csignal>
 #include <iostream>
 #include <memory>
-#include <string>
 
 #include "openhd_buttons.h"
 #include "openhd_global_constants.hpp"
@@ -234,7 +233,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Add a table with three rows and three columns
-    const char *table[3][3] = {
+    std::string table[3][3] = {
         {"Status", std::string(openhd_type), "Column 3"},
         {"Row 1, Col 1", "Row 1, Col 2", "Row 1, Col 3"},
         {"Row 2, Col 1", "Row 2, Col 2", "Row 2, Col 3"}
