@@ -232,7 +232,7 @@ int main(int argc, char *argv[]) {
         mvaddch(start_row + num_lines, i, '=');
     }
 
-    mvprintw(20,1,openhd_type);
+    mvprintw(20,1,"openhd_type");
 
     refresh();
   // Create the folder structure for the (per-module-specific) settings if
