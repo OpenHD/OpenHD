@@ -214,12 +214,12 @@ int main(int argc, char *argv[]) {
 
     if (air_status == "Y") {
         attron(COLOR_PAIR(1));
-        openhd_type=="Air Unit"
+        openhd_type=="Air Unit";
         mvprintw(1,1,"BROADCASTING -- AIR UNIT");
         attroff(COLOR_PAIR(1));
     } else {
         attron(COLOR_PAIR(1));
-        openhd_type=="Ground Unit"
+        openhd_type=="Ground Unit";
         mvprintw(1,1,"LISTENING -- GROUND UNIT");
         attroff(COLOR_PAIR(1));
     }
