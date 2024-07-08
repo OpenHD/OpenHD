@@ -232,27 +232,8 @@ int main(int argc, char *argv[]) {
         mvaddch(start_row + num_lines, i, '=');
     }
 
-    // Add a table with three rows and three columns
-    const char *table[3][3] = {
-        {"Status", openhd_type, "Column 3"},
-        {"Row 1, Col 1", "Row 1, Col 2", "Row 1, Col 3"},
-        {"Row 2, Col 1", "Row 2, Col 2", "Row 2, Col 3"}
-    };
+    mvprintw(20,1,openhd_type);
 
-    int table_start_row = start_row + num_lines + 1 + 1; // Position below separator line
-    for (int i = 0; i < 3; ++i) {
-        int total_len = 0;
-        for (int j = 0; j < 3; ++j) {
-            total_len += strlen(table[i][j]) + 2; // Add space for spacing
-        }
-        int start_col = (col - total_len) / 2;
-
-        int current_col = start_col;
-        for (int j = 0; j < 3; ++j) {
-            mvprintw(table_start_row + i, current_col, "%s", table[i][j]);
-            current_col += strlen(table[i][j]) + 2; // Move to next column position
-        }
-    };
     refresh();
   // Create the folder structure for the (per-module-specific) settings if
   // needed
