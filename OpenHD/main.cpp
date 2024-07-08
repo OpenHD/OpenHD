@@ -177,9 +177,10 @@ int main(int argc, char *argv[]) {
     curs_set(0);
     start_color();
     // Define color pairs
-    init_pair(1, COLOR_RED, COLOR_BLACK);   // Cyan on Black
-    init_pair(2, COLOR_YELLOW, COLOR_BLACK); // Yellow on Black
-    
+    init_pair(1, COLOR_RED, COLOR_BLACK);
+    init_pair(2, COLOR_YELLOW, COLOR_BLACK);
+    init_pair(3, COLOR_BLUE, COLOR_BLACK);
+
     int row, col;
     // Get the number of rows and columns in the terminal
     getmaxyx(stdscr, row, col);
@@ -249,6 +250,9 @@ int main(int argc, char *argv[]) {
             mvprintw(table_start_row + i, current_col, "%s", table[i][j]);
             current_col += strlen(table[i][j]) + 2; // Move to next column position
         }
+    }
+    for (int i = 0; i < col; ++i) {
+        mvaddch(start_row + num_lines, i, '=');
     }
 
     refresh();
