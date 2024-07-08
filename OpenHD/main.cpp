@@ -184,7 +184,6 @@ int main(int argc, char *argv[]) {
     int row, col;
     // Get the number of rows and columns in the terminal
     getmaxyx(stdscr, row, col);
-    int top_half_rows = row / 2;
 
     const char *text[] = {
             
@@ -264,7 +263,6 @@ int main(int argc, char *argv[]) {
 
 
     refresh();
-    move(top_half_rows, 0);
   // Create the folder structure for the (per-module-specific) settings if
   // needed
   openhd::generateSettingsDirectoryIfNonExists();
