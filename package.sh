@@ -26,12 +26,12 @@ nameserver 8.8.4.4
 EOF
 fi
 
-apt-get install -y apt-transport-https || exit 1
-curl -1sLf 'https://dl.cloudsmith.io/public/openhd/openhd-2-0/cfg/gpg/gpg.B9F0E99CF5787237.key' | apt-key add - || exit 1
+#apt-get install -y apt-transport-https || exit 1
+#curl -1sLf 'https://dl.cloudsmith.io/public/openhd/openhd-2-0/cfg/gpg/gpg.B9F0E99CF5787237.key' | apt-key add - || exit 1
 
-echo "deb https://dl.cloudsmith.io/public/openhd/openhd-2-0/deb/${OS} ${DISTRO} main" > /etc/apt/sources.list.d/openhd-2-0.list || exit 1
+#echo "deb https://dl.cloudsmith.io/public/openhd/openhd-2-0/deb/${OS} ${DISTRO} main" > /etc/apt/sources.list.d/openhd-2-0.list || exit 1
 
-apt -y update --allow-releaseinfo-change || exit 1
+#apt -y update --allow-releaseinfo-change || exit 1
 
 PACKAGE_NAME=openhd
 
@@ -69,11 +69,11 @@ mkdir -p ${TMPDIR}/usr/local/share/wifibroadcast-scripts || exit 1
 
 ./install_dep.sh || exit 1
 
-build_pi_dep() {
-    pushd /opt/vc/src/hello_pi/libs/ilclient
-    make || exit 1
-    popd
-}
+#build_pi_dep() {
+#    pushd /opt/vc/src/hello_pi/libs/ilclient
+#    make || exit 1
+#    popd
+#}
 
 
 build_source() {
@@ -136,13 +136,13 @@ build_source() {
     popd
 
 
-    if [[ "${PLATFORM}" == "pi" ]]; then
-        pushd wifibroadcast-hello_video
-        make clean
-        make || exit 1
-        make install DESTDIR=${TMPDIR} || exit 1
-        popd
-    fi
+#    if [[ "${PLATFORM}" == "pi" ]]; then
+#        pushd wifibroadcast-hello_video
+#        make clean
+#        make || exit 1
+#        make install DESTDIR=${TMPDIR} || exit 1
+#        popd
+#    fi
 
     pushd JoystickIn/JoystickIn
     make clean
@@ -257,15 +257,11 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${TM
   -p ${PACKAGE_NAME}_VERSION_ARCH.deb \
   --after-install after-install.sh \
   --before-install before-install.sh \
-  -d "wiringpi" \
-  -d "trackermavfilter" \
-  -d "libasio-dev >= 1.10" \
   -d "libboost-system-dev >= 1.62.0" \
   -d "libboost-program-options-dev >= 1.62.0" \
   -d "openhd-router >= 0.1.8" \
   -d "openhd-microservice >= 0.1.18" \
   -d "qopenhd" \
-  -d "openhd-linux-pi >= 20201122.2" \
   -d "libseek-thermal >= 20201118.1" \
   -d "flirone-driver >= 20200704.3" \
   -d "veye-raspberrypi >= 20201122.1" \
@@ -302,26 +298,26 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${TM
   -d "libboost-regex-dev" \
   -d "libboost-filesystem-dev" \
   -d "libboost-thread-dev" \
-  -d "gstreamer1.0-plugins-base" \
-  -d "gstreamer1.0-plugins-good" \
-  -d "gstreamer1.0-plugins-bad" \
-  -d "gstreamer1.0-plugins-ugly" \
-  -d "gstreamer1.0-libav" \
-  -d "gstreamer1.0-tools" \
-  -d "gstreamer1.0-alsa" \
-  -d "gstreamer1.0-pulseaudio" \
-  -d "gstreamer1.0-omx-rpi-config" || exit 1
+#  -d "gstreamer1.0-plugins-base" \
+#  -d "gstreamer1.0-plugins-good" \
+#  -d "gstreamer1.0-plugins-bad" \
+#  -d "gstreamer1.0-plugins-ugly" \
+#  -d "gstreamer1.0-libav" \
+#  -d "gstreamer1.0-tools" \
+#  -d "gstreamer1.0-alsa" \
+#  -d "gstreamer1.0-pulseaudio" \
+#  -d "gstreamer1.0-omx-rpi-config" || exit 1
 
 #
 # Only push to cloudsmith for tags. If you don't want something to be pushed to the repo, 
 # don't create a tag. You can build packages and test them locally without tagging.
 #
-git describe --exact-match HEAD > /dev/null 2>&1
-if [[ $? -eq 0 ]]; then
-    echo "Pushing package to OpenHD repository"
-    cloudsmith push deb openhd/openhd-2-0/${OS}/${DISTRO} ${PACKAGE_NAME}_${VERSION//v}_${PACKAGE_ARCH}.deb || exit 1
-else
-    echo "Pushing package to OpenHD testing repository"
-    cloudsmith push deb openhd/openhd-2-0-testing/${OS}/${DISTRO} ${PACKAGE_NAME}_${VERSION//v}_${PACKAGE_ARCH}.deb || exit 1
-fi
+#git describe --exact-match HEAD > /dev/null 2>&1
+#if [[ $? -eq 0 ]]; then
+#    echo "Pushing package to OpenHD repository"
+#    cloudsmith push deb openhd/openhd-2-0/${OS}/${DISTRO} ${PACKAGE_NAME}_${VERSION//v}_${PACKAGE_ARCH}.deb || exit 1
+#else
+#    echo "Pushing package to OpenHD testing repository"
+#    cloudsmith push deb openhd/openhd-2-0-testing/${OS}/${DISTRO} ${PACKAGE_NAME}_${VERSION//v}_${PACKAGE_ARCH}.deb || exit 1
+#fi
 

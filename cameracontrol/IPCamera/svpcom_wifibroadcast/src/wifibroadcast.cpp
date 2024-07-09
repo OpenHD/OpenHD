@@ -7,6 +7,7 @@
 #include <arpa/inet.h>
 #include <string>
 #include <memory>
+#include <stdexcept>
 
 #include "wifibroadcast.hpp"
 

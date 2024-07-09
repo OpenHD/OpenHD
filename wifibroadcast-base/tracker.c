@@ -15,7 +15,7 @@
 
 #include "openhdlib.h"
 
-#include <wiringPi.h>
+#include <jetgpio.h>
 
 wifibroadcast_rx_status_t *status_memory_open(char* shm_file, char* line) {
 	
@@ -50,14 +50,14 @@ wifibroadcast_rx_status_t *status_memory_open(char* shm_file, char* line) {
 
 
 void turnleft() {
-	digitalWrite (23, LOW);
+	gpioWrite (23, 0);
 	usleep(2);
-	digitalWrite (17, HIGH);
+	gpioWrite (17, 1);
 
 	usleep(3);
-	digitalWrite (27, HIGH);
+	gpioWrite (27, 1);
 	usleep(3);
-	digitalWrite (27, LOW);
+	gpioWrite (27, 0);
 
 //	usleep(10000);
 //	digitalWrite (23, HIGH);
@@ -65,14 +65,14 @@ void turnleft() {
 }
 
 void turnleftbrake() {
-	digitalWrite (23, LOW);
+	gpioWrite (23, 0);
 	usleep(2);
-	digitalWrite (17, HIGH);
+	gpioWrite (17, 1);
 
 	usleep(3);
-	digitalWrite (27, HIGH);
+	gpioWrite (27, 1);
 	usleep(3);
-	digitalWrite (27, LOW);
+	gpioWrite (27, 0);
 
 	usleep(10000);
 	//digitalWrite (23, HIGH);
@@ -80,14 +80,14 @@ void turnleftbrake() {
 }
 
 void turnright() {
-	digitalWrite (23, LOW);
+	gpioWrite (23, 0);
 	usleep(2);
-	digitalWrite (17, LOW);
+	gpioWrite (17, 0);
 
 	usleep(3);
-	digitalWrite (27, HIGH);
+	gpioWrite (27, 1);
 	usleep(3);
-	digitalWrite (27, LOW);
+	gpioWrite (27, 0);
 
 //	usleep(10000);
 //	digitalWrite (23, HIGH);
@@ -95,14 +95,14 @@ void turnright() {
 }
 
 void turnrightbrake() {
-	digitalWrite (23, LOW);
+	gpioWrite (23, 0);
 	usleep(2);
-	digitalWrite (17, LOW);
+	gpioWrite (17, 0);
 
 	usleep(3);
-	digitalWrite (27, HIGH);
+	gpioWrite (27, 1);
 	usleep(3);
-	digitalWrite (27, LOW);
+	gpioWrite (27, 0);
 
 	usleep(10000);
 //	digitalWrite (23, HIGH);
@@ -112,23 +112,23 @@ void turnrightbrake() {
 
 int main(int argc, char *argv[]) {
 
-	wiringPiSetupGpio();
-	pinMode(17, OUTPUT); // DIR
-	pinMode(27, OUTPUT); // STEP
+	gpioInitialise();
+	gpioSetMode(17, JET_OUTPUT); // DIR
+	gpioSetMode(27, JET_OUTPUT); // STEP
 
-	pinMode(22, OUTPUT); // RESET?
-	pinMode(4, OUTPUT); // SLEEP?
+	gpioSetMode(22, JET_OUTPUT); // RESET?
+	gpioSetMode(4, JET_OUTPUT); // SLEEP?
 
-	pinMode(23, OUTPUT); // ENABLE
+	gpioSetMode(23, JET_OUTPUT); // ENABLE
 
 	// set reset and sleep to high to enable DRV
-	digitalWrite (22, HIGH);
+	gpioWrite (22, 1);
 	usleep(2);
-	digitalWrite (4, HIGH);
+	gpioWrite (4, 1);
 	usleep(2);
 
 	// set enable to high to disable FETs
-	digitalWrite (23, HIGH);
+	gpioWrite (23, 1);
 	usleep(3);
 
 
@@ -250,7 +250,7 @@ int main(int argc, char *argv[]) {
 
 			    if (idlecount > 10) {
 				printf("idlecount > 10 switching FETs off");
-				digitalWrite (23, HIGH);
+				gpioWrite (23, 1);
 			    }
 			    samedircount = 0;
 		    }

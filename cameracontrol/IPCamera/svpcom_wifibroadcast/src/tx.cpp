@@ -31,7 +31,7 @@
 #include <string>
 #include <memory>
 #include <vector>
-
+#include <stdexcept>
 extern "C"
 {
 #include "fec.h"
