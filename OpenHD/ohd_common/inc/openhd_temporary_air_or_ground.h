@@ -15,7 +15,7 @@ static constexpr auto FILENAME_AIR = "/boot/openhd/air.txt";
 static constexpr auto FILENAME_GROUND = "/boot/openhd/ground.txt";
 
 static constexpr auto FILENAME_ALT_AIR = "/external/openhd/air.txt";
-static constexpr auto FILENAME_ALT_GROUND= "/external/openhd/ground.txt";
+static constexpr auto FILENAME_ALT_GROUND = "/external/openhd/ground.txt";
 
 static bool file_air_exists() {
   return OHDFilesystemUtil::exists(FILENAME_AIR);
