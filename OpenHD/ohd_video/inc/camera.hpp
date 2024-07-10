@@ -230,8 +230,8 @@ struct XCamera {
   }
   bool is_camera_type_usb_infiray() const {
     return camera_type == X_CAM_TYPE_USB_INFIRAY ||
-      camera_type == X_CAM_TYPE_USB_INFIRAY_T2 ||
-      camera_type == X_CAM_TYPE_USB_INFIRAY_X2;
+           camera_type == X_CAM_TYPE_USB_INFIRAY_T2 ||
+           camera_type == X_CAM_TYPE_USB_INFIRAY_X2;
   };
   // Returns a list of known supported resolution(s).
   // They should be ordered in ascending resolution / framerate
@@ -260,7 +260,7 @@ struct XCamera {
       // work ...
       return {ResolutionFramerate{0, 0, 0}};
     } else if (camera_type == X_CAM_TYPE_USB_INFIRAY_X2) {
-      return {ResolutionFramerate{256,192,50}};
+      return {ResolutionFramerate{256, 192, 50}};
     } else if (camera_type == X_CAM_TYPE_USB_GENERIC) {
       std::vector<ResolutionFramerate> ret;
       // most likely working resolution
