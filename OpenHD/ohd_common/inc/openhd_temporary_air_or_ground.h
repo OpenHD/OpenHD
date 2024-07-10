@@ -14,11 +14,20 @@ namespace openhd::tmp {
 static constexpr auto FILENAME_AIR = "/boot/openhd/air.txt";
 static constexpr auto FILENAME_GROUND = "/boot/openhd/ground.txt";
 
+static constexpr auto FILENAME_ALT_AIR = "/external/openhd/air.txt";
+static constexpr auto FILENAME_ALT_GROUND= "/external/openhd/ground.txt";
+
 static bool file_air_exists() {
   return OHDFilesystemUtil::exists(FILENAME_AIR);
 }
 static bool file_ground_exists() {
   return OHDFilesystemUtil::exists(FILENAME_GROUND);
+}
+static bool file_alt_air_exists() {
+  return OHDFilesystemUtil::exists(FILENAME_ALT_AIR);
+}
+static bool file_alt_ground_exists() {
+  return OHDFilesystemUtil::exists(FILENAME_ALT_GROUND);
 }
 
 static bool file_air_or_ground_exists() {
