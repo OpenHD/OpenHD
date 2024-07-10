@@ -188,7 +188,7 @@ void OHDInterface::generate_keys_from_pw_if_exists_and_delete() {
       OHDFilesystemUtil::remove_if_existing(openhd::SECURITY_KEYPAIR_FILENAME);
     }
   }
-  //Check alt location (little dirty)
+  // Check alt location (little dirty)
   if (OHDFilesystemUtil::exists(PW_ALT_FILENAME)) {
     auto pw = OHDFilesystemUtil::read_file(PW_ALT_FILENAME);
     OHDUtil::trim(pw);
