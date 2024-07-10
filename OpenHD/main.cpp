@@ -112,25 +112,18 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
     // command line parameters not used, use the file(s) for detection (default
     // for normal OpenHD images) The logs/checks here are just to help
     // developer(s) avoid common misconfigurations
-    std::cout << "Using files to detect air or ground\n";
     const bool file_run_as_ground_exists = openhd::tmp::file_ground_exists();
     const bool file_run_as_air_exists = openhd::tmp::file_air_exists();
     bool error = false;
     if (file_run_as_air_exists &&
         file_run_as_ground_exists) {  // both files exist
-      std::cerr << "Both air and ground files exist,unknown what you want - "
-                   "either use the command line param or delete one of them\n";
       std::cerr << "Assuming ground\n";
-      // Just run as ground
       ret.run_as_air = false;
       error = true;
     }
     if (!file_run_as_air_exists &&
         !file_run_as_ground_exists) {  // no file exists
-      std::cerr << "No file air or ground exists,unknown what you want - "
-                   "either use the command line param or create a file\n";
       std::cerr << "Assuming ground\n";
-      // Just run as ground
       ret.run_as_air = false;
       error = true;
     }
