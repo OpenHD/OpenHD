@@ -62,9 +62,9 @@ AirCameraGenericSettings AirCameraGenericSettingsHolder::create_default()
               X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W) ||
              (OHDPlatform::instance().platform_type ==
               X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3)) {
-    ret.primary_camera_type = X_CAM_TYPE_ROCK_RK3566_IMX219;
+    ret.primary_camera_type = X_CAM_TYPE_ROCK_3_HDMI_IN;
   } else if (OHDPlatform::instance().is_rock()) {
-    ret.primary_camera_type = X_CAM_TYPE_ROCK_HDMI_IN;
+    ret.primary_camera_type = X_CAM_TYPE_ROCK_5_HDMI_IN;
   } else if (OHDPlatform::instance().platform_type ==
              X_PLATFORM_TYPE_OPENIPC_SIGMASTAR_UNDEFINED) {
     ret.primary_camera_type = X_CAM_TYPE_EXTERNAL;

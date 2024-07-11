@@ -101,7 +101,7 @@ std::string GStreamerStream::create_source_encode_pipeline(
     auto bus = "/dev/video0";
     pipeline << OHDGstHelper::create_veye_vl2_stream(setting, bus);
   } else if (camera.requires_rockchip_mpp_pipeline()) {
-    if (camera.camera_type == X_CAM_TYPE_ROCK_HDMI_IN) {
+    if (camera.camera_type == X_CAM_TYPE_ROCK_5_HDMI_IN) {
       pipeline << OHDGstHelper::createRockchipHDMIStream(setting);
     } else {
       // TODO: Differences Radxa zero and RK3588
