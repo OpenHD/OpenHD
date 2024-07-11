@@ -267,8 +267,8 @@ struct XCamera {
   }
   bool is_camera_type_usb_infiray() const {
     return camera_type == X_CAM_TYPE_USB_INFIRAY ||
-      camera_type == X_CAM_TYPE_USB_INFIRAY_T2 ||
-      camera_type == X_CAM_TYPE_USB_INFIRAY_X2;
+           camera_type == X_CAM_TYPE_USB_INFIRAY_T2 ||
+           camera_type == X_CAM_TYPE_USB_INFIRAY_X2;
   };
   // Returns a list of known supported resolution(s).
   // They should be ordered in ascending resolution / framerate
@@ -685,31 +685,32 @@ static std::vector<ManufacturerForPlatform> get_camera_choices_for_platform(
     return std::vector<ManufacturerForPlatform>{
         ManufacturerForPlatform{"HDZERO", generic_cameras},
         ManufacturerForPlatform{"RUNCAM", runcam_cameras}};
-  } else if ((platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W) || (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3)) {
+  } else if ((platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W) ||
+             (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3)) {
     std::vector<CameraNameAndType> generic_cameras{
-      CameraNameAndType{"HDMI IN", X_CAM_TYPE_ROCK_3_HDMI_IN},
-      CameraNameAndType{"OV5647", X_CAM_TYPE_ROCK_3_OV5647},
-      CameraNameAndType{"IMX219", X_CAM_TYPE_ROCK_3_IMX219},
-      CameraNameAndType{"IMX708", X_CAM_TYPE_ROCK_3_IMX708},
-      CameraNameAndType{"OpenHD Jaguar", X_CAM_TYPE_ROCK_3_OHD_Jaguar},
+        CameraNameAndType{"HDMI IN", X_CAM_TYPE_ROCK_3_HDMI_IN},
+        CameraNameAndType{"OV5647", X_CAM_TYPE_ROCK_3_OV5647},
+        CameraNameAndType{"IMX219", X_CAM_TYPE_ROCK_3_IMX219},
+        CameraNameAndType{"IMX708", X_CAM_TYPE_ROCK_3_IMX708},
+        CameraNameAndType{"OpenHD Jaguar", X_CAM_TYPE_ROCK_3_OHD_Jaguar},
     };
     return std::vector<ManufacturerForPlatform>{
         ManufacturerForPlatform{"Generic", generic_cameras}, MANUFACTURER_USB,
         MANUFACTURER_DEBUG};
   } else if (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A) {
     std::vector<CameraNameAndType> generic_cameras{
-      CameraNameAndType{"IMX415", X_CAM_TYPE_ROCK_5_IMX415},
-      CameraNameAndType{"IMX462", X_CAM_TYPE_ROCK_5_IMX462},
-      CameraNameAndType{"IMX477", X_CAM_TYPE_ROCK_5_IMX477},
-      CameraNameAndType{"IMX519", X_CAM_TYPE_ROCK_5_IMX519},
-      CameraNameAndType{"OV5647", X_CAM_TYPE_ROCK_5_OV5647},
-      CameraNameAndType{"IMX219", X_CAM_TYPE_ROCK_5_IMX219},
-      CameraNameAndType{"IMX708", X_CAM_TYPE_ROCK_5_IMX708},
-      CameraNameAndType{"OpenHD Jaguar", X_CAM_TYPE_ROCK_5_OHD_Jaguar},
+        CameraNameAndType{"IMX415", X_CAM_TYPE_ROCK_5_IMX415},
+        CameraNameAndType{"IMX462", X_CAM_TYPE_ROCK_5_IMX462},
+        CameraNameAndType{"IMX477", X_CAM_TYPE_ROCK_5_IMX477},
+        CameraNameAndType{"IMX519", X_CAM_TYPE_ROCK_5_IMX519},
+        CameraNameAndType{"OV5647", X_CAM_TYPE_ROCK_5_OV5647},
+        CameraNameAndType{"IMX219", X_CAM_TYPE_ROCK_5_IMX219},
+        CameraNameAndType{"IMX708", X_CAM_TYPE_ROCK_5_IMX708},
+        CameraNameAndType{"OpenHD Jaguar", X_CAM_TYPE_ROCK_5_OHD_Jaguar},
     };
     return std::vector<ManufacturerForPlatform>{
-      ManufacturerForPlatform{"Generic", generic_cameras}, MANUFACTURER_USB,
-      MANUFACTURER_DEBUG};
+        ManufacturerForPlatform{"Generic", generic_cameras}, MANUFACTURER_USB,
+        MANUFACTURER_DEBUG};
   } else if (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B) {
     std::vector<CameraNameAndType> generic_cameras{
         CameraNameAndType{"HDMI IN", X_CAM_TYPE_ROCK_5_HDMI_IN},
