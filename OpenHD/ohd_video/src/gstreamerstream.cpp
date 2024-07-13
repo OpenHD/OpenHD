@@ -113,7 +113,6 @@ std::string GStreamerStream::create_source_encode_pipeline(
                       X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3
               ? 0
               : 11;
-      std::cout << "Debug: Using Rockchip CSI Stream with v4l2_filenumber " << v4l2_filenumber << std::endl;  // Debug message
       pipeline << OHDGstHelper::createRockchipCSIStream(v4l2_filenumber,
                                                         setting);
     }
