@@ -27,7 +27,7 @@ GStreamerStream::GStreamerStream(std::shared_ptr<CameraHolder> camera_holder,
   m_console = openhd::log::create_or_get(
       fmt::format("cam{}", m_camera_holder->get_camera().index));
   assert(m_console);
-  m_console->debug("GStreamerStream::GStreamerStream for cam{}",
+  m_console->debug("GStreamerStream::GStreamerStream for cam {}",
                    m_camera_holder->get_camera().cam_type_as_verbose_string());
   if (OHDFilesystemUtil::exists("/boot/openhd/exp_raw.txt")) {
     dirty_use_raw = true;
