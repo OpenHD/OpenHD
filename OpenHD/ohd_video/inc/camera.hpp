@@ -260,7 +260,7 @@ struct XCamera {
            camera_type != X_CAM_TYPE_X20_HDZERO_GENERIC;
   }
   bool requires_rockchip_mpp_pipeline() const {
-    return camera_type >= 80 && camera_type < 90;
+    return camera_type >= 90 && camera_type < 100;
   }
   std::string cam_type_as_verbose_string() const {
     return x_cam_type_to_string(camera_type);
