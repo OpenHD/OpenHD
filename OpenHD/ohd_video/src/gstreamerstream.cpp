@@ -27,7 +27,7 @@ GStreamerStream::GStreamerStream(std::shared_ptr<CameraHolder> camera_holder,
   m_console = openhd::log::create_or_get(
       fmt::format("cam{}", m_camera_holder->get_camera().index));
   assert(m_console);
-  m_console->debug("GStreamerStream::GStreamerStream for cam{}",
+  m_console->debug("GStreamerStream::GStreamerStream for cam {}",
                    m_camera_holder->get_camera().cam_type_as_verbose_string());
   if (OHDFilesystemUtil::exists("/boot/openhd/exp_raw.txt")) {
     dirty_use_raw = true;
@@ -101,7 +101,7 @@ std::string GStreamerStream::create_source_encode_pipeline(
     auto bus = "/dev/video0";
     pipeline << OHDGstHelper::create_veye_vl2_stream(setting, bus);
   } else if (camera.requires_rockchip_mpp_pipeline()) {
-    if (camera.camera_type == X_CAM_TYPE_ROCK_5_HDMI_IN || X_CAM_TYPE_ROCK_3_HDMI_IN) {
+    if (camera.camera_type == X_CAM_TYPE_ROCK_5_HDMI_IN) {
       pipeline << OHDGstHelper::createRockchipHDMIStream(setting);
     } else {
       // TODO: Differences Radxa zero and RK3588

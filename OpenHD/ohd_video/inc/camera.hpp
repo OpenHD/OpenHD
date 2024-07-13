@@ -384,7 +384,6 @@ struct XCamera {
       ret.push_back(ResolutionFramerate{640, 480, 60});
       ret.push_back(ResolutionFramerate{1280, 720, 30});
       ret.push_back(ResolutionFramerate{1920, 1080, 30});
-      ret.push_back(ResolutionFramerate{2592, 1944, 10});
       return ret;
     } else if (camera_type == X_CAM_TYPE_ROCK_5_IMX219) {
       std::vector<ResolutionFramerate> ret;
@@ -453,7 +452,6 @@ struct XCamera {
       ret.push_back(ResolutionFramerate{640, 480, 60});
       ret.push_back(ResolutionFramerate{1280, 720, 30});
       ret.push_back(ResolutionFramerate{1920, 1080, 30});
-      ret.push_back(ResolutionFramerate{2592, 1944, 10});
       return ret;
     } else if (camera_type == X_CAM_TYPE_ROCK_3_IMX219) {
       std::vector<ResolutionFramerate> ret;
@@ -461,7 +459,6 @@ struct XCamera {
       ret.push_back(ResolutionFramerate{848, 480, 30});
       ret.push_back(ResolutionFramerate{1280, 720, 30});
       ret.push_back(ResolutionFramerate{1920, 1080, 30});
-      ret.push_back(ResolutionFramerate{3280, 2464, 21});
       return ret;
     } else if (camera_type == X_CAM_TYPE_ROCK_3_IMX708) {
       std::vector<ResolutionFramerate> ret;
