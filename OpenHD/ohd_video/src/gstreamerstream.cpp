@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "air_recording_helper.hpp"
+#include "config.h"
 #include "gst_appsink_helper.h"
 #include "gst_debug_helper.h"
 #include "gst_helper.hpp"
@@ -29,7 +30,8 @@ GStreamerStream::GStreamerStream(std::shared_ptr<CameraHolder> camera_holder,
   assert(m_console);
   m_console->debug("GStreamerStream::GStreamerStream for cam {}",
                    m_camera_holder->get_camera().cam_type_as_verbose_string());
-  if (OHDFilesystemUtil::exists("/boot/openhd/exp_raw.txt")) {
+  if (OHDFilesystemUtil::exists(
+          (std::string(CONFIG_BASE_PATH) + "exp_raw.txt").c_str())) {
     dirty_use_raw = true;
   }
   m_camera_holder->register_listener([this]() {
