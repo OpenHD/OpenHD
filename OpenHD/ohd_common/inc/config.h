@@ -9,4 +9,4 @@
 
 extern const char* CONFIG_BASE_PATH;
 
-#endif // CONFIG_H
+#endif  // CONFIG_H
