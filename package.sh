@@ -5,7 +5,7 @@ PACKAGE_ARCH="${2}"
 OS="${3}"
 
 PKGDIR="/out/openhd-installdir/"
-VERSION="2.6.0-$(date '+%Y%m%d%H%M')-$(git rev-parse --short HEAD)"
+VERSION="2.6.1-$(date '+%Y%m%d%H%M')-$(git rev-parse --short HEAD)"
 
 create_package_directory() {
   rm -rf /tmp/openhd-installdir

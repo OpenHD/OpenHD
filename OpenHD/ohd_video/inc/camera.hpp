@@ -42,7 +42,7 @@ static constexpr int X_CAM_TYPE_USB_INFIRAY = 11;
 // 256x192@25 but only 0x0@0 works (urghs)
 static constexpr int X_CAM_TYPE_USB_INFIRAY_T2 = 12;
 static constexpr int X_CAM_TYPE_USB_INFIRAY_X2 = 13;
-
+static constexpr int X_CAM_TYPE_USB_INFIRAY_P2_PRO = 14;
 // ... reserved for future (Thermal) USB cameras
 
 //
@@ -133,6 +133,10 @@ static std::string x_cam_type_to_string(int camera_type) {
       return "INFIRAY";
     case X_CAM_TYPE_USB_INFIRAY_T2:
       return "INFIRAY_T2";
+    case X_CAM_TYPE_USB_INFIRAY_P2_PRO:
+      return "INFIRAY_P2_PRO";
+    case X_CAM_TYPE_USB_INFIRAY_X2:
+      return "INFIRAY_X2";
     // All the rpi stuff begin
     case X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI:
       return "MMAL_HDMI";
@@ -268,6 +272,7 @@ struct XCamera {
   bool is_camera_type_usb_infiray() const {
     return camera_type == X_CAM_TYPE_USB_INFIRAY ||
            camera_type == X_CAM_TYPE_USB_INFIRAY_T2 ||
+           camera_type == X_CAM_TYPE_USB_INFIRAY_P2_PRO ||
            camera_type == X_CAM_TYPE_USB_INFIRAY_X2;
   };
   // Returns a list of known supported resolution(s).
@@ -296,6 +301,8 @@ struct XCamera {
       // return {ResolutionFramerate{256,192,25}}; for whatever reason doesn't
       // work ...
       return {ResolutionFramerate{0, 0, 0}};
+    } else if (camera_type == X_CAM_TYPE_USB_INFIRAY_P2_PRO) {
+        return {ResolutionFramerate{256, 192, 25}};
     } else if (camera_type == X_CAM_TYPE_USB_INFIRAY_X2) {
       return {ResolutionFramerate{384, 292, 50}};
     } else if (camera_type == X_CAM_TYPE_USB_GENERIC) {
@@ -611,6 +618,7 @@ static std::vector<ManufacturerForPlatform> get_camera_choices_for_platform(
   std::vector<CameraNameAndType> usb_cameras{
       CameraNameAndType{"INFIRAY USB", X_CAM_TYPE_USB_INFIRAY},
       CameraNameAndType{"INFIRAY USB T2", X_CAM_TYPE_USB_INFIRAY_T2},
+      CameraNameAndType{"INFIRAY USB P2 Pro", X_CAM_TYPE_USB_INFIRAY_P2_PRO},
       CameraNameAndType{"INFIRAY USB X2", X_CAM_TYPE_USB_INFIRAY_X2},
       CameraNameAndType{"EXP USB GENERIC", X_CAM_TYPE_USB_GENERIC}};
   ManufacturerForPlatform MANUFACTURER_USB{"USB", usb_cameras};
