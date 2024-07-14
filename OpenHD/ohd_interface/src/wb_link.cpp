@@ -1615,8 +1615,8 @@ void WBLink::wt_perform_update_thermal_protection() {
     m_thermal_protection_level = THERMAL_PROTECTION_NONE;
     return;
   }
-  static auto THERMAL_LIMIT_VIDEO_REDUCED = 75;
-  static auto THERMAL_LIMIT_VIDEO_OFF = 79;
+  static auto THERMAL_LIMIT_VIDEO_REDUCED = 85;
+  static auto THERMAL_LIMIT_VIDEO_OFF = 90;
   uint8_t new_thermal_protection_level;
   if (temp >= THERMAL_LIMIT_VIDEO_OFF) {
     // >=X degree, disable video
