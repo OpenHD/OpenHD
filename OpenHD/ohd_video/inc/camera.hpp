@@ -302,7 +302,7 @@ struct XCamera {
       // work ...
       return {ResolutionFramerate{0, 0, 0}};
     } else if (camera_type == X_CAM_TYPE_USB_INFIRAY_P2_PRO) {
-        return {ResolutionFramerate{256, 192, 25}};
+      return {ResolutionFramerate{256, 192, 25}};
     } else if (camera_type == X_CAM_TYPE_USB_INFIRAY_X2) {
       return {ResolutionFramerate{384, 292, 50}};
     } else if (camera_type == X_CAM_TYPE_USB_GENERIC) {
