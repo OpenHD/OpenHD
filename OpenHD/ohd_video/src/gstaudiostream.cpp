@@ -10,6 +10,7 @@
 #include "gst_appsink_helper.h"
 #include "gst_debug_helper.h"
 #include "gst_helper.hpp"
+#include "config.h"
 
 GstAudioStream::GstAudioStream() {
   OHDGstHelper::initGstreamerOrThrow();
@@ -87,9 +88,9 @@ static std::string rpi_detect_alsasrc_device() {
 std::string GstAudioStream::create_pipeline() {
   std::stringstream ss;
   auto opt_manual_audio_source =
-      OHDFilesystemUtil::opt_read_file("/boot/openhd/audio_source.txt", false);
+      OHDFilesystemUtil::opt_read_file(std::string(CONFIG_BASE_PATH)+"audio_source.txt", false);
   // audiotestsrc always works, but obviously is not a mic ;)
-  if (OHDFilesystemUtil::exists("/boot/openhd/test_audio.txt") ||
+  if (OHDFilesystemUtil::exists(std::string(CONFIG_BASE_PATH)+"test_audio.txt") ||
       openhd_enable_audio_test) {
     ss << "audiotestsrc" << " ! ";
   } else if (opt_manual_audio_source.has_value()) {
