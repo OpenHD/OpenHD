@@ -125,7 +125,7 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
     }
     if (!file_run_as_air_exists &&
         !file_run_as_ground_exists) {  // no file exists
-      std::cerr << "Assuming ground\n";
+      std::cerr << "Assuming ground,cause none are found\n";
       // Just run as ground
       ret.run_as_air = false;
       error = true;
@@ -162,11 +162,10 @@ int main(int argc, char *argv[]) {
   // OpenHD needs to be run as root, otherwise we cannot access/ modify the
   // Wi-Fi cards for example (And there are also many other places where we just
   // need to be root).
-  // First discover the platform -
+  OHDUtil::terminate_if_not_root();
   const auto platform = OHDPlatform::instance();
   openhd::LEDManager::instance().set_status_loading();
 
-  OHDUtil::terminate_if_not_root();
 
   // Create the folder structure for the (per-module-specific) settings if
   // needed
