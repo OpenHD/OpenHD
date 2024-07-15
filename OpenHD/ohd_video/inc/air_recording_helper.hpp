@@ -9,9 +9,9 @@
 #include <sstream>
 #include <string>
 
+#include "config.h"
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"
-#include "config.h"
 
 namespace openhd::video {
 
