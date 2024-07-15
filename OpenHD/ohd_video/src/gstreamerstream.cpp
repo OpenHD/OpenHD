@@ -78,8 +78,8 @@ std::string GStreamerStream::create_source_encode_pipeline(
     const CameraHolder& cam_holder) {
   const auto& camera = cam_holder.get_camera();
   CameraSettings setting = cam_holder.get_settings();
-  const bool RPI_HDMI_TO_CSI_USE_V4l2 =
-      OHDFilesystemUtil::exists(std::string(CONFIG_BASE_PATH)+"hdmi_v4l2.txt");
+  const bool RPI_HDMI_TO_CSI_USE_V4l2 = OHDFilesystemUtil::exists(
+      std::string(CONFIG_BASE_PATH) + "hdmi_v4l2.txt");
 
   if (OHDPlatform::instance().is_x20()) {
     openhd::x20::apply_x20_runcam_iq_settings(setting);
