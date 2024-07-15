@@ -11,9 +11,8 @@
 #include "openhd_spdlog_include.h"
 
 bool openhd::wb::disable_all_frequency_checks() {
-  static constexpr auto FIlE_DISABLE_ALL_FREQUENCY_CHECKS =
-      std::string(CONFIG_BASE_PATH) + "disable_all_frequency_checks.txt";
-  return OHDFilesystemUtil::exists(FIlE_DISABLE_ALL_FREQUENCY_CHECKS);
+  return OHDFilesystemUtil::exists(std::string(CONFIG_BASE_PATH) +
+                                   "disable_all_frequency_checks.txt");
 }
 
 bool openhd::wb::all_cards_support_frequency(

@@ -5,11 +5,13 @@
 #include "openhd_config.h"
 
 #include "../lib/ini/ini.hpp"
+#include "config.h"
 #include "openhd_spdlog.h"
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"
 
-static std::string CONFIG_FILE_PATH = "/boot/openhd/hardware.config";
+static std::string CONFIG_FILE_PATH =
+    std::string(CONFIG_BASE_PATH) + "hardware.config";
 
 static std::shared_ptr<spdlog::logger> get_logger() {
   return openhd::log::create_or_get("config");
