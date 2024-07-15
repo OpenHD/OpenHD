@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "air_recording_helper.hpp"
+#include "config.h"
 #include "gst_appsink_helper.h"
 #include "gst_debug_helper.h"
 #include "gst_helper.hpp"
@@ -29,7 +30,8 @@ GStreamerStream::GStreamerStream(std::shared_ptr<CameraHolder> camera_holder,
   assert(m_console);
   m_console->debug("GStreamerStream::GStreamerStream for cam {}",
                    m_camera_holder->get_camera().cam_type_as_verbose_string());
-  if (OHDFilesystemUtil::exists("/boot/openhd/exp_raw.txt")) {
+  if (OHDFilesystemUtil::exists(
+          (std::string(CONFIG_BASE_PATH) + "exp_raw.txt").c_str())) {
     dirty_use_raw = true;
   }
   m_camera_holder->register_listener([this]() {
@@ -76,8 +78,9 @@ std::string GStreamerStream::create_source_encode_pipeline(
     const CameraHolder& cam_holder) {
   const auto& camera = cam_holder.get_camera();
   CameraSettings setting = cam_holder.get_settings();
-  const bool RPI_HDMI_TO_CSI_USE_V4l2 =
-      OHDFilesystemUtil::exists("/boot/openhd/hdmi_v4l2.txt");
+  const bool RPI_HDMI_TO_CSI_USE_V4l2 = OHDFilesystemUtil::exists(
+      std::string(CONFIG_BASE_PATH) + "hdmi_v4l2.txt");
+
   if (OHDPlatform::instance().is_x20()) {
     openhd::x20::apply_x20_runcam_iq_settings(setting);
   } else if (camera.requires_rpi_mmal_pipeline() && RPI_HDMI_TO_CSI_USE_V4l2) {

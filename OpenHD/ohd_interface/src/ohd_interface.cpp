@@ -9,6 +9,7 @@
 
 #include <utility>
 
+#include "config.h"
 #include "microhard_link.h"
 #include "openhd_config.h"
 #include "openhd_global_constants.hpp"
@@ -168,11 +169,11 @@ void OHDInterface::generate_keys_from_pw_if_exists_and_delete() {
     exit(EXIT_FAILURE);
   }
   auto console = openhd::log::get_default();
-  static constexpr auto PW_FILENAME = "/boot/openhd/password.txt";
-  static constexpr auto PW_ALT_FILENAME = "/external/openhd/password.txt";
 
-  if (OHDFilesystemUtil::exists(PW_FILENAME)) {
-    auto pw = OHDFilesystemUtil::read_file(PW_FILENAME);
+  if (OHDFilesystemUtil::exists(std::string(CONFIG_BASE_PATH) +
+                                "password.txt")) {
+    auto pw = OHDFilesystemUtil::read_file(std::string(CONFIG_BASE_PATH) +
+                                           "password.txt");
     OHDUtil::trim(pw);
     console->info("Generating key(s) from pw [{}]",
                   OHDUtil::password_as_hidden_str(pw));  // don't show the pw
@@ -180,25 +181,8 @@ void OHDInterface::generate_keys_from_pw_if_exists_and_delete() {
     if (wb::write_keypair_to_file(keys, openhd::SECURITY_KEYPAIR_FILENAME)) {
       console->debug("Keypair file successfully written");
       // delete the file
-      OHDFilesystemUtil::remove_if_existing(PW_FILENAME);
-      OHDFilesystemUtil::make_file_read_write_everyone(
-          openhd::SECURITY_KEYPAIR_FILENAME);
-    } else {
-      console->error("Cannot write keypair file !");
-      OHDFilesystemUtil::remove_if_existing(openhd::SECURITY_KEYPAIR_FILENAME);
-    }
-  }
-  // Check alt location (little dirty)
-  if (OHDFilesystemUtil::exists(PW_ALT_FILENAME)) {
-    auto pw = OHDFilesystemUtil::read_file(PW_ALT_FILENAME);
-    OHDUtil::trim(pw);
-    console->info("Generating key(s) from pw [{}]",
-                  OHDUtil::password_as_hidden_str(pw));  // don't show the pw
-    auto keys = wb::generate_keypair_from_bind_phrase(pw);
-    if (wb::write_keypair_to_file(keys, openhd::SECURITY_KEYPAIR_FILENAME)) {
-      console->debug("Keypair file successfully written");
-      // delete the file
-      OHDFilesystemUtil::remove_if_existing(PW_ALT_FILENAME);
+      OHDFilesystemUtil::remove_if_existing(std::string(CONFIG_BASE_PATH) +
+                                            "password.txt");
       OHDFilesystemUtil::make_file_read_write_everyone(
           openhd::SECURITY_KEYPAIR_FILENAME);
     } else {

@@ -23,6 +23,7 @@
 // For logging the commit hash and more
 // #include "git.h"
 #include "openhd_config.h"
+#include "config.h"
 
 // |-------------------------------------------------------------------------------|
 // |                         OpenHD core executable | | Weather you run as air
@@ -102,7 +103,7 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
               "infinite),for debugging] \n";
         ss << "--hardware-config-file -h [specify path to hardware.config "
               "file]\n";
-        ss << "Use /boot/openhd/hardware.conf for more configuration\n";
+        ss << "Use hardware.conf for more configuration\n";
         std::cout << ss.str() << std::flush;
       }
         exit(1);
@@ -114,23 +115,23 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
     // developer(s) avoid common misconfigurations
     const bool file_run_as_ground_exists = openhd::tmp::file_ground_exists();
     const bool file_run_as_air_exists = openhd::tmp::file_air_exists();
-    const bool file_run_as_alt_ground_exists = openhd::tmp::file_alt_ground_exists();
-    const bool file_run_as_alt_air_exists = openhd::tmp::file_alt_air_exists();
     bool error = false;
-    if ((file_run_as_air_exists || file_run_as_alt_air_exists) &&
-    (file_run_as_ground_exists || file_run_as_alt_ground_exists)) {
+    if (file_run_as_air_exists &&
+        file_run_as_ground_exists) {  // both files exist
       std::cerr << "Assuming ground\n";
+      // Just run as ground
       ret.run_as_air = false;
       error = true;
     }
-    if ((!file_run_as_air_exists || !file_run_as_alt_air_exists) &&
-        (!file_run_as_ground_exists || !file_run_as_alt_ground_exists)){  // no file exists
+    if (!file_run_as_air_exists &&
+        !file_run_as_ground_exists) {  // no file exists
       std::cerr << "Assuming ground\n";
+      // Just run as ground
       ret.run_as_air = false;
       error = true;
     }
     if (!error) {
-      if (!file_run_as_air_exists && !file_run_as_alt_air_exists ) {
+      if (!file_run_as_air_exists) {
         ret.run_as_air = false;
       } else {
         ret.run_as_air = true;
@@ -143,8 +144,8 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
   }
   // If this file exists, delete all openhd settings resulting in default
   // value(s)
-  static constexpr auto FILE_PATH_RESET = "/boot/openhd/reset.txt";
-  if (OHDUtil::file_exists_and_delete(FILE_PATH_RESET)) {
+    const auto filePathReset = std::string(CONFIG_BASE_PATH) + "reset.txt";
+  if (OHDUtil::file_exists_and_delete(filePathReset.c_str())) {
     ret.reset_all_settings = true;
   }
 #ifndef ENABLE_AIR

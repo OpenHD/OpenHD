@@ -4,6 +4,7 @@
 #include "ohd_video_air_generic_settings.h"
 
 #include "camera.hpp"
+#include "config.h"
 #include "include_json.hpp"
 #include "openhd_platform.h"
 #include "openhd_spdlog_include.h"
@@ -28,8 +29,8 @@ std::string AirCameraGenericSettingsHolder::imp_serialize(
 }
 
 // The image writer writes the cam type to here
-static constexpr auto IMAGE_WRITER_CAM_FILENAME = "/boot/openhd/camera1.txt";
-
+static const auto IMAGE_WRITER_CAM_FILENAME =
+    std::string(CONFIG_BASE_PATH) + "camera1.txt";
 static int rpi_get_default_primary_cam_type() {
   // The image writer writes the cam type to
   const auto opt_content =

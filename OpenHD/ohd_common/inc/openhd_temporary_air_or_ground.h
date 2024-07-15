@@ -5,29 +5,20 @@
 #ifndef OPENHD_OPENHD_OHD_COMMON_OPENHD_TEMPORARY_AIR_OR_GROUND_H_
 #define OPENHD_OPENHD_OHD_COMMON_OPENHD_TEMPORARY_AIR_OR_GROUND_H_
 
+#include "config.h"
 #include "openhd_util_filesystem.h"
-
 // Dirty, temporary
 namespace openhd::tmp {
 
 // Note: case sensitive
-static constexpr auto FILENAME_AIR = "/boot/openhd/air.txt";
-static constexpr auto FILENAME_GROUND = "/boot/openhd/ground.txt";
-
-static constexpr auto FILENAME_ALT_AIR = "/external/openhd/air.txt";
-static constexpr auto FILENAME_ALT_GROUND = "/external/openhd/ground.txt";
+const auto FILENAME_AIR = std::string(CONFIG_BASE_PATH) + "air.txt";
+const auto FILENAME_GROUND = std::string(CONFIG_BASE_PATH) + "ground.txt";
 
 static bool file_air_exists() {
   return OHDFilesystemUtil::exists(FILENAME_AIR);
 }
 static bool file_ground_exists() {
   return OHDFilesystemUtil::exists(FILENAME_GROUND);
-}
-static bool file_alt_air_exists() {
-  return OHDFilesystemUtil::exists(FILENAME_ALT_AIR);
-}
-static bool file_alt_ground_exists() {
-  return OHDFilesystemUtil::exists(FILENAME_ALT_GROUND);
 }
 
 static bool file_air_or_ground_exists() {
@@ -40,12 +31,12 @@ static void delete_any_file_air_or_ground() {
 }
 
 static void write_file_air() {
-  OHDFilesystemUtil::create_directories("/boot/openhd/");
+  OHDFilesystemUtil::create_directories(std::string(CONFIG_BASE_PATH));
   OHDFilesystemUtil::write_file(openhd::tmp::FILENAME_AIR, " ");
 }
 
 static void write_file_ground() {
-  OHDFilesystemUtil::create_directories("/boot/openhd/");
+  OHDFilesystemUtil::create_directories(std::string(CONFIG_BASE_PATH));
   OHDFilesystemUtil::write_file(openhd::tmp::FILENAME_GROUND, " ");
 }
 
