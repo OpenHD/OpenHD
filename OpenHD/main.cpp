@@ -118,14 +118,14 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
     bool error = false;
     if (file_run_as_air_exists &&
         file_run_as_ground_exists) {  // both files exist
-      std::cerr << "Assuming ground\n";
+      std::cerr << "Assuming ground\n" << std::string(CONFIG_BASE_PATH) + "air.txt";
       // Just run as ground
       ret.run_as_air = false;
       error = true;
     }
     if (!file_run_as_air_exists &&
         !file_run_as_ground_exists) {  // no file exists
-      std::cerr << "Assuming ground,cause none are found\n";
+      std::cerr << "Assuming ground\n" << std::string(CONFIG_BASE_PATH) + "air.txt";
       // Just run as ground
       ret.run_as_air = false;
       error = true;
