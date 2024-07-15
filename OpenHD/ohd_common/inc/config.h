@@ -8,5 +8,6 @@
 #define CONFIG_H
 
 extern const char* CONFIG_BASE_PATH;
+extern const char* VIDEO_PATH;
 
 #endif  // CONFIG_H
