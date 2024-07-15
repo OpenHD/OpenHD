@@ -4,6 +4,7 @@
 #include <regex>
 #include <thread>
 
+#include "config.h"
 #include "openhd_spdlog.h"
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"
@@ -124,7 +125,8 @@ std::optional<WiFiCard> DWifiCards::fill_linux_wifi_card_identifiers(
   card.mac = mac;
   if (card.type == WiFiCardType::OPENHD_RTL_88X2AU) {
     const bool custom_hardware =
-        OHDFilesystemUtil::exists("/boot/openhd/hardware_vtx_v20.txt") ||
+        OHDFilesystemUtil::exists(std::string(CONFIG_BASE_PATH) +
+                                  "hardware_vtx_v20.txt") ||
         OHDPlatform::instance().is_x20();
     if (custom_hardware) {
       card.sub_type = WIFI_CARD_SUB_TYPE_RTL8812AU_X20;
