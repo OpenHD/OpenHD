@@ -1,4 +1,3 @@
-//
 // Created by consti10 on 10.02.23.
 //
 
@@ -23,10 +22,12 @@ static constexpr auto SIGMASTAR_BOARDID_PATH = "/dev/mstar_ive0";
 static int internal_discover_platform() {
   // These are the 'easy ones'
   if (OHDFilesystemUtil::exists(ALLWINNER_BOARDID_PATH)) {
+    openhd::log::get_default()->info("Platform detected: ALLWINNER X20");
     return X_PLATFORM_TYPE_ALWINNER_X20;
   }
 
   if (OHDFilesystemUtil::exists(SIGMASTAR_BOARDID_PATH)) {
+    openhd::log::get_default()->info("Platform detected: OPENIPC SIGMASTAR");
     return X_PLATFORM_TYPE_OPENIPC_SIGMASTAR_UNDEFINED;
   }
 
@@ -42,18 +43,23 @@ static int internal_discover_platform() {
       if (chip == "rk3588") {
         if (OHDUtil::contains_after_uppercase(device_tree_model,
                                               "Radxa ROCK 5A")) {
+          openhd::log::get_default()->info("Platform detected: ROCKCHIP RK3588 RADXA ROCK5 A");
           return X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A;
         } else {
+          openhd::log::get_default()->info("Platform detected: ROCKCHIP RK3588 RADXA ROCK5 B");
           return X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B;
         }
       } else if (chip == "rk3566") {
         if (OHDUtil::contains_after_uppercase(device_tree_model,
                                               "Radxa CM3 RPI CM4 IO")) {
+          openhd::log::get_default()->info("Platform detected: ROCKCHIP RK3566 RADXA CM3");
           return X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3;
         } else {
+          openhd::log::get_default()->info("Platform detected: ROCKCHIP RK3566 RADXA ZERO3W");
           return X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W;
         }
       } else if (chip == "rv1126") {
+        openhd::log::get_default()->info("Platform detected: ROCKCHIP RV1126 UNDEFINED");
         return X_PLATFORM_TYPE_ROCKCHIP_RV1126_UNDEFINED;
       }
     }
@@ -67,14 +73,18 @@ static int internal_discover_platform() {
       openhd::log::get_default()->warn(
           "File {} does not exist, rpi detection unavailable",
           filename_proc_cpuinfo);
+      openhd::log::get_default()->info("Platform detected: RPI OLD");
       return X_PLATFORM_TYPE_RPI_OLD;
     }
     if (OHDUtil::contains(proc_cpuinfo_opt.value(), "BCM2711")) {
+      openhd::log::get_default()->info("Platform detected: RPI 4");
       return X_PLATFORM_TYPE_RPI_4;
     }
+    openhd::log::get_default()->info("Platform detected: RPI OLD");
     return X_PLATFORM_TYPE_RPI_OLD;
   }
   if (OHDFilesystemUtil::exists(MVIDIA_XAVIER_BOARDID_PATH)) {
+    openhd::log::get_default()->info("Platform detected: NVIDIA XAVIER");
     return X_PLATFORM_TYPE_NVIDIA_XAVIER;
   }
   {
@@ -89,6 +99,7 @@ static int internal_discover_platform() {
     std::regex r1{"x86_64"};
     auto res1 = std::regex_search(arch, result, r1);
     if (res1) {
+      openhd::log::get_default()->info("Platform detected: X86");
       return X_PLATFORM_TYPE_X86;
     }
   }
@@ -148,6 +159,7 @@ std::string x_platform_type_to_string(int platform_type) {
   ss << "ERR-UNDEFINED{" << platform_type << "}";
   return ss.str();
 }
+
 int get_fec_max_block_size_for_platform() {
   auto platform_type = OHDPlatform::instance().platform_type;
   if (platform_type == X_PLATFORM_TYPE_RPI_4 ||
