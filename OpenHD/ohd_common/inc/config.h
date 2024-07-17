@@ -10,4 +10,6 @@
 extern const char* CONFIG_BASE_PATH;
 extern const char* VIDEO_PATH;
 
+void set_paths();
+
 #endif  // CONFIG_H
