@@ -53,9 +53,11 @@ static int internal_discover_platform() {
         if (OHDUtil::contains_after_uppercase(device_tree_model,
                                               "Radxa CM3 RPI CM4 IO")) {
           openhd::log::get_default()->info("Platform detected: ROCKCHIP RK3566 RADXA CM3");
+          #define X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W;
           return X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3;
         } else {
           openhd::log::get_default()->info("Platform detected: ROCKCHIP RK3566 RADXA ZERO3W");
+          #define X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W;
           return X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W;
         }
       } else if (chip == "rv1126") {
