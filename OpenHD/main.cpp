@@ -163,7 +163,6 @@ int main(int argc, char *argv[]) {
   // Wi-Fi cards for example (And there are also many other places where we just
   // need to be root).
   OHDUtil::terminate_if_not_root();
-  set_paths();
   const auto platform = OHDPlatform::instance();
   openhd::LEDManager::instance().set_status_loading();
 
