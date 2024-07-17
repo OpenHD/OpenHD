@@ -10,6 +10,7 @@
 
 #include "openhd_spdlog.h"
 #include "openhd_util.h"
+#include "config.h"
 #include "openhd_util_filesystem.h"
 
 static constexpr auto MVIDIA_XAVIER_BOARDID_PATH =
@@ -44,9 +45,11 @@ static int internal_discover_platform() {
         if (OHDUtil::contains_after_uppercase(device_tree_model,
                                               "Radxa ROCK 5A")) {
           openhd::log::get_default()->info("Platform detected: ROCKCHIP RK3588 RADXA ROCK5 A");
+          const char* CONFIG_BASE_PATH = "/config/openhd/";
           return X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A;
         } else {
           openhd::log::get_default()->info("Platform detected: ROCKCHIP RK3588 RADXA ROCK5 B");
+          const char* CONFIG_BASE_PATH = "/config/openhd/";
           return X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B;
         }
       } else if (chip == "rk3566") {
@@ -54,10 +57,11 @@ static int internal_discover_platform() {
                                               "Radxa CM3 RPI CM4 IO")) {
           openhd::log::get_default()->info("Platform detected: ROCKCHIP RK3566 RADXA CM3");
           X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W == true;
+          const char* CONFIG_BASE_PATH = "/config/openhd/";
           return X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3;
         } else {
           openhd::log::get_default()->info("Platform detected: ROCKCHIP RK3566 RADXA ZERO3W");
-          X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W == true;
+          const char* CONFIG_BASE_PATH = "/config/openhd/";
           return X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W;
         }
       } else if (chip == "rv1126") {
@@ -80,9 +84,11 @@ static int internal_discover_platform() {
     }
     if (OHDUtil::contains(proc_cpuinfo_opt.value(), "BCM2711")) {
       openhd::log::get_default()->info("Platform detected: RPI 4");
+      const char* CONFIG_BASE_PATH = "/boot/openhd/";
       return X_PLATFORM_TYPE_RPI_4;
     }
     openhd::log::get_default()->info("Platform detected: RPI OLD");
+    const char* CONFIG_BASE_PATH = "/boot/openhd/";
     return X_PLATFORM_TYPE_RPI_OLD;
   }
   if (OHDFilesystemUtil::exists(MVIDIA_XAVIER_BOARDID_PATH)) {
@@ -102,6 +108,7 @@ static int internal_discover_platform() {
     auto res1 = std::regex_search(arch, result, r1);
     if (res1) {
       openhd::log::get_default()->info("Platform detected: X86");
+      const char* CONFIG_BASE_PATH = "/boot/openhd/";
       return X_PLATFORM_TYPE_X86;
     }
   }
