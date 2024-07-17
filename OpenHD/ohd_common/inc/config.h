@@ -8,7 +8,7 @@
 #define CONFIG_H
 
 extern const char* CONFIG_BASE_PATH;
-extern const char* VIDEO_PATH;
+extern const char* VIDEO_PATH = "/home/openhd/Videos/";
 
 void set_paths();
 
