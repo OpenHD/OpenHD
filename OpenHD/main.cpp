@@ -164,6 +164,9 @@ int main(int argc, char *argv[]) {
   // need to be root).
   OHDUtil::terminate_if_not_root();
   const auto platform = OHDPlatform::instance();
+  const char* CONFIG_BASE_PATH = "/config/openhd/";
+  const char* VIDEO_PATH = "/home/openhd/Videos/";
+
   openhd::LEDManager::instance().set_status_loading();
 
 
