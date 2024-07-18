@@ -10,6 +10,8 @@
 #include "openhd_util_async.h"
 
 static constexpr auto OHD_WIFI_HOTSPOT_CONNECTION_NAME = "ohd_wifi_hotspot";
+const std::string blue = "\033[34m";
+const std::string reset = "\033[0m";
 
 static std::string get_ohd_wifi_hotspot_connection_nm_filename() {
   return fmt::format("/etc/NetworkManager/system-connections/{}.nmconnection",
@@ -84,6 +86,7 @@ void WifiHotspot::start() {
   OHDUtil::run_command("nmcli", args);
   started = true;
   m_console->info("Wifi hotspot started");
+  std::cout << blue << "Started WIFI hotspot on card {}", m_wifi_card.device_name << reset << std::endl;
 }
 
 void WifiHotspot::stop() {
