@@ -186,19 +186,21 @@ int main(int argc, char *argv[]) {
     if (options.run_as_air) {
         ss << "----------------------- " << green << "Air Unit" << reset << " -----------------------\n";
     } else {
-        ss << "----------------------- " << red << "Ground Unit" << reset << " -----------------------\n";
+        ss << "----------------------- " << red << "Ground Unit" << reset << " ----------------------\n";
     }
 
     if (options.reset_all_settings) {
         ss << red << "Reset Settings" << reset << "\n";
     }
 
-    ss << "hardware-config-file:["
-       << options.hardware_config_file.value_or("DEFAULT") << "]\n";
+    ss << "\n";
+    ss << "\n";
+    ss << "\n";
+
     // ss << "Git info:Branch:" << git_Branch() << " SHA:" << git_CommitSHA1() << " Dirty:" << OHDUtil::yes_or_no(git_AnyUncommittedChanges()) << "\n";
 
     std::cout << ss.str() << std::flush;
-    openhd::debug_config();
+    // openhd::debug_config();
     OHDInterface::print_internal_fec_optimization_method();
 }
   // Create the folder structure
