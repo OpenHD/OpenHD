@@ -1,9 +1,19 @@
 #!/usr/bin/env bash
 
 # back it up in case the user has written valuable scripting that would be lost otherwise
-mv /boot/openhd/scripts/custom_unmanaged_camera.sh /boot/openhd/scripts/custom_unmanaged_camera_old.sh
+if [ -f "/boot/openhd/scripts/custom_unmanaged_camera.sh" ]; then
+    mv /boot/openhd/scripts/custom_unmanaged_camera_old.sh /config/openhd/scripts/custom_unmanaged_camera_old.sh
+fi
+if [ -f "/config/openhd/scripts/custom_unmanaged_camera.sh" ]; then
+    mv /config/openhd/scripts/custom_unmanaged_camera_old.sh /config/openhd/scripts/custom_unmanaged_camera_old.sh
+fi
 # NOTE: Updating overwrites the .config file and also the service file
-rm -rf /boot/openhd/hardware.config
+if [ -f "/boot/openhd/hardware.config" ]; then
+    rm -rf /boot/openhd/hardware.config
+if [ -f "/config/openhd/hardware.config" ]; then
+    rm -rf /config/openhd/hardware.config
+fi
+
 
 if [ "$(uname -m)" == "x86_64" ]; then
     if ! uname -a | grep -q "azure"; then

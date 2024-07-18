@@ -24,7 +24,7 @@ const char* getConfigBasePath() {
     if (platform_debug.is_rock()) {
         return "/config/openhd/";
     } else if (platform_debug.is_x20()) {
-        return "/external/openhd/";
+        return "/config/openhd/";
     } else {
         return "/boot/openhd/";
     }
