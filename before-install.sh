@@ -10,6 +10,7 @@ fi
 # NOTE: Updating overwrites the .config file and also the service file
 if [ -f "/boot/openhd/hardware.config" ]; then
     rm -rf /boot/openhd/hardware.config
+fi
 if [ -f "/config/openhd/hardware.config" ]; then
     rm -rf /config/openhd/hardware.config
 fi
