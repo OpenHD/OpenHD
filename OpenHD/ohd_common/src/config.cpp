@@ -6,6 +6,9 @@
 #include "config.h"
 #include <cstring>
 #include <cstdlib>
+#include <csignal>
+#include <iostream>
+#include <memory>
 
 // Initial default paths
 static char* CONFIG_BASE_PATH = nullptr;
