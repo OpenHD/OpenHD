@@ -340,7 +340,7 @@ void DWifiCards::main_discover_an_process_wifi_cards(
     std::vector<WiFiCard>& m_monitor_mode_cards,
     std::optional<WiFiCard>& m_opt_hotspot_card) {
   const auto m_platform = OHDPlatform::instance();
-  m_console->debug("Waiting for wifi card(s)...");
+  openhd::log::get_default()->debug("Waiting for wifi card(s)...");
   const bool debug = false;
   if (config.WIFI_MONITOR_CARD_EMULATE) {
     m_monitor_mode_cards.push_back(DWifiCards::create_card_monitor_emulate());
