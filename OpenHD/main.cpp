@@ -159,26 +159,27 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
 }
 
 int main(int argc, char *argv[]) {
-  // OpenHD needs to be run as root, otherwise we cannot access/ modify the
-  // Wi-Fi cards for example (And there are also many other places where we just
-  // need to be root).
+  // OpenHD needs to be run as root!
   OHDUtil::terminate_if_not_root();
-  // Create the folder structure for the (per-module-specific) settings if
-  // needed
+  // Create the folder structure
   openhd::generateSettingsDirectoryIfNonExists();
-
   // Generate the keys and delete pw if needed
   OHDInterface::generate_keys_from_pw_if_exists_and_delete();
-
-  // Parse the program arguments, also uses the "yes if file exists" pattern for
-  // some params
+  // Parse the program arguments
   const OHDRunOptions options = parse_run_parameters(argc, argv);
   if (options.hardware_config_file.has_value()) {
     openhd::set_config_file(options.hardware_config_file.value());
   }
   {  // Print all the arguments the OHD main executable is started with
     std::stringstream ss;
-    ss << "OpenHD START with \n";
+    ss << "  #######  ########  ######## ##    ## ##     ## ######## \n";
+    ss << " ##     ## ##     ## ##       ###   ## ##     ## ##     ##\n";
+    ss << " ##     ## ##     ## ##       ####  ## ##     ## ##     ##\n";
+    ss << " ##     ## ########  ######   ## ## ## ######### ##     ##\n";
+    ss << " ##     ## ##        ##       ##  #### ##     ## ##     ##\n";
+    ss << " ##     ## ##        ##       ##   ### ##     ## ##     ##\n";
+    ss << "  #######  ##        ######## ##    ## ##     ## ######## \n";                                                                                                     
+    ss << "----------------------- OpenSource -----------------------\n";
     ss << "air:" << OHDUtil::yes_or_no(options.run_as_air) << "\n";
     ss << "reset_all_settings:"
        << OHDUtil::yes_or_no(options.reset_all_settings) << "\n";
