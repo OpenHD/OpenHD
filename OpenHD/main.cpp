@@ -161,23 +161,23 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
 const char* CONFIG_BASE_PATH = nullptr;
 const char* VIDEO_PATH = nullptr;
 
-void setPlatformPaths(const OHDPlatform& platform) {
-    // if (platform.is_rock() && platform.is_zero3w()) {
-        CONFIG_BASE_PATH = "/config/openhd/";
-        VIDEO_PATH = "/home/openhd/Videos/";
-//     } else if (platform.is_x20()) {
-//         CONFIG_BASE_PATH = "/external/openhd/";
+// void setPlatformPaths(const OHDPlatform& platform) {
+//     // if (platform.is_rock() && platform.is_zero3w()) {
+//         CONFIG_BASE_PATH = "/config/openhd/";
 //         VIDEO_PATH = "/home/openhd/Videos/";
-//     } else {
-//         // Set default or other platform paths
-//         CONFIG_BASE_PATH = "/boot/openhd/";
-//         VIDEO_PATH = "/home/openhd/Videos/";
-//         std::cerr << "Platform: " << platform.to_string() << std::endl;
-//     }
-// if (CONFIG_BASE_PATH == nullptr || VIDEO_PATH == nullptr) {
-//         throw std::runtime_error("Failed to set configuration paths.");
-//     }
-}
+// //     } else if (platform.is_x20()) {
+// //         CONFIG_BASE_PATH = "/external/openhd/";
+// //         VIDEO_PATH = "/home/openhd/Videos/";
+// //     } else {
+// //         // Set default or other platform paths
+// //         CONFIG_BASE_PATH = "/boot/openhd/";
+// //         VIDEO_PATH = "/home/openhd/Videos/";
+// //         std::cerr << "Platform: " << platform.to_string() << std::endl;
+// //     }
+// // if (CONFIG_BASE_PATH == nullptr || VIDEO_PATH == nullptr) {
+// //         throw std::runtime_error("Failed to set configuration paths.");
+// //     }
+// }
 
 int main(int argc, char *argv[]) {
   // OpenHD needs to be run as root, otherwise we cannot access/ modify the
