@@ -165,6 +165,8 @@ void setPlatformPaths(const OHDPlatform& platform) {
     if (platform.is_rock()) {
 char* CONFIG_BASE_PATH = "/config/openhd/";
 char* VIDEO_PATH = "/home/openhd/Videos/";
+    std::cerr << "here please: " << platform.to_string() << std::endl;
+
     } else if (platform.is_x20()) {
 char* CONFIG_BASE_PATH = "/config/openhd/";
 char* VIDEO_PATH = "/home/openhd/Videos/";
