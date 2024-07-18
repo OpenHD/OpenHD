@@ -158,11 +158,6 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
   return ret;
 }
 
-// Define global variables outside any function
-const char* CONFIG_BASE_PATH = "/boot/openhd/";
-const char* VIDEO_PATH = "/home/openhd/Videos/";
-
-
 void setPlatformPaths(const OHDPlatform& platform) {
     if (platform.is_rock()) {
         CONFIG_BASE_PATH = "/config/openhd/";
