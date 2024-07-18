@@ -164,6 +164,10 @@ int main(int argc, char *argv[]) {
     openhd::set_config_file(options.hardware_config_file.value());
   }
   {  // Print all the arguments the OHD main executable is started with
+    const std::string green = "\033[32m";
+    const std::string red = "\033[31m";
+    const std::string reset = "\033[0m";
+
     std::stringstream ss;
     ss << openhd::get_ohd_version_as_string() << "\n";
     ss << "  #######  ########  ######## ##    ## ##     ## ######## \n";
@@ -175,8 +179,11 @@ int main(int argc, char *argv[]) {
     ss << "  #######  ##        ######## ##    ## ##     ## ######## \n";                                                                                                     
     ss << "----------------------- OpenSource -----------------------\n";
     ss << "\n";
-    ss << "----------------------- " << (options.run_as_air ? "Air Unit" : "Ground Unit") << " -----------------------\n";
-    ss << "reset_all_settings:"
+    if (options.run_as_air) {
+        ss << "----------------------- " << green << "Air Unit" << reset << " -----------------------\n";
+    } else {
+        ss << "----------------------- " << red << "Ground Unit" << reset << " -----------------------\n";
+    }   ss << "reset_all_settings:"
        << OHDUtil::yes_or_no(options.reset_all_settings) << "\n";
     ss << "run_time_seconds:" << options.run_time_seconds << "\n";
     ss << "hardware-config-file:["
