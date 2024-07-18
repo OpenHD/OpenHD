@@ -11,8 +11,8 @@
 namespace openhd::tmp {
 
 // Note: case sensitive
-const auto FILENAME_AIR = std::string(getConfigBasePath())+ "air.txt";
-const auto FILENAME_GROUND = std::string(getConfigBasePath())+ "ground.txt";
+const auto FILENAME_AIR = std::string(getConfigBasePath()) + "air.txt";
+const auto FILENAME_GROUND = std::string(getConfigBasePath()) + "ground.txt";
 
 static bool file_air_exists() {
   return OHDFilesystemUtil::exists(FILENAME_AIR);

@@ -4,9 +4,8 @@
 
 #include "wifi_hotspot.h"
 
-#include <utility>
 #include <iostream>
-
+#include <utility>
 
 #include "openhd_spdlog.h"
 #include "openhd_util_async.h"
@@ -88,7 +87,8 @@ void WifiHotspot::start() {
   OHDUtil::run_command("nmcli", args);
   started = true;
   m_console->info("Wifi hotspot started");
-  std::cout << blue << "Started WIFI hotspot on card " << m_wifi_card.device_name << reset << std::endl;
+  std::cout << blue << "Started WIFI hotspot on card "
+            << m_wifi_card.device_name << reset << std::endl;
 }
 
 void WifiHotspot::stop() {

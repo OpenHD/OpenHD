@@ -10,7 +10,6 @@
 #include <string>
 
 #include "config_paths.h"
-
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"
 
@@ -73,7 +72,8 @@ static std::string create_unused_recording_filename(const std::string& suffix) {
   // deletes a video
   const int track_index = get_recording_index_track_count();
   std::stringstream ss;
-  ss << std::string(getConfigBasePath()) << "recording_" << track_index << suffix;
+  ss << std::string(getConfigBasePath()) << "recording_" << track_index
+     << suffix;
   return ss.str();
   /*for(int i=0;i<10000;i++){
     // Suffix might be either .

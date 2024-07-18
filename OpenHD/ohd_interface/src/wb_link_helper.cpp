@@ -8,11 +8,10 @@
 #include "wifi_command_helper.h"
 // #include "wifi_command_helper2.h"
 #include "config_paths.h"
-
 #include "openhd_spdlog_include.h"
 
 bool openhd::wb::disable_all_frequency_checks() {
-  return OHDFilesystemUtil::exists(std::string(getConfigBasePath())+
+  return OHDFilesystemUtil::exists(std::string(getConfigBasePath()) +
                                    "disable_all_frequency_checks.txt");
 }
 

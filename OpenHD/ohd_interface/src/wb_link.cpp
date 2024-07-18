@@ -6,7 +6,6 @@
 #include <utility>
 
 #include "config_paths.h"
-
 #include "openhd_bitrate.h"
 #include "openhd_config.h"
 #include "openhd_global_constants.hpp"
@@ -1608,7 +1607,7 @@ void WBLink::wt_perform_update_thermal_protection() {
     // Only works on x20
     return;
   }
-  if (OHDFilesystemUtil::exists(std::string(getConfigBasePath())+
+  if (OHDFilesystemUtil::exists(std::string(getConfigBasePath()) +
                                 "disable_thermal_limits.txt")) {
     m_thermal_protection_level = THERMAL_PROTECTION_NONE;
     return;

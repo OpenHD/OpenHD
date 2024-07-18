@@ -10,7 +10,6 @@
 #include <utility>
 
 #include "config_paths.h"
-
 #include "microhard_link.h"
 #include "openhd_config.h"
 #include "openhd_global_constants.hpp"
