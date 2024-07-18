@@ -161,11 +161,6 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
 int main(int argc, char *argv[]) {
   // OpenHD needs to be run as root!
   OHDUtil::terminate_if_not_root();
-  // Create the folder structure
-  openhd::generateSettingsDirectoryIfNonExists();
-  // Generate the keys and delete pw if needed
-  OHDInterface::generate_keys_from_pw_if_exists_and_delete();
-  // Parse the program arguments
   const OHDRunOptions options = parse_run_parameters(argc, argv);
   if (options.hardware_config_file.has_value()) {
     openhd::set_config_file(options.hardware_config_file.value());
@@ -193,8 +188,13 @@ int main(int argc, char *argv[]) {
     openhd::debug_config();
     OHDInterface::print_internal_fec_optimization_method();
   }
+  // Create the folder structure
+  openhd::generateSettingsDirectoryIfNonExists();
   const auto platform = OHDPlatform::instance();
   openhd::LEDManager::instance().set_status_loading();
+  // Generate the keys and delete pw if needed
+  OHDInterface::generate_keys_from_pw_if_exists_and_delete();
+  // Parse the program arguments
   // This is the console we use inside main, in general different openhd
   // modules/classes have their own loggers with different tags
   std::shared_ptr<spdlog::logger> m_console =
