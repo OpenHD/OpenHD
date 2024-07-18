@@ -65,7 +65,7 @@ set(sources
     "src/openhd_platform.cpp"
     "src/openhd_spdlog.cpp"
     "src/openhd_reboot_util.cpp"
-    "src/openhd_config.cpp"
+    "src/openhd_config_paths.cpp"
     "src/openhd_util_async.cpp"
     "src/openhd_external_device.cpp"
     "src/openhd_action_handler.cpp"

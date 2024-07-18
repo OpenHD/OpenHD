@@ -5,7 +5,8 @@
 #include "openhd_config.h"
 
 #include "../lib/ini/ini.hpp"
-#include "config.h"
+#include "config_paths.h"
+
 #include "openhd_spdlog.h"
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"

@@ -7,7 +7,8 @@
 #include <iostream>
 #include <utility>
 
-#include "config.h"
+#include "config_paths.h"
+
 #include "gst_appsink_helper.h"
 #include "gst_debug_helper.h"
 #include "gst_helper.hpp"

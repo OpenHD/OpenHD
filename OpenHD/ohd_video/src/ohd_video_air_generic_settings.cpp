@@ -4,7 +4,8 @@
 #include "ohd_video_air_generic_settings.h"
 
 #include "camera.hpp"
-#include "config.h"
+#include "config_paths.h"
+
 #include "include_json.hpp"
 #include "openhd_platform.h"
 #include "openhd_spdlog_include.h"

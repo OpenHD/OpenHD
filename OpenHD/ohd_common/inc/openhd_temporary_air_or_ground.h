@@ -5,7 +5,7 @@
 #ifndef OPENHD_OPENHD_OHD_COMMON_OPENHD_TEMPORARY_AIR_OR_GROUND_H_
 #define OPENHD_OPENHD_OHD_COMMON_OPENHD_TEMPORARY_AIR_OR_GROUND_H_
 
-#include "config.h"
+#include "config_paths.h"
 #include "openhd_util_filesystem.h"
 // Dirty, temporary
 namespace openhd::tmp {

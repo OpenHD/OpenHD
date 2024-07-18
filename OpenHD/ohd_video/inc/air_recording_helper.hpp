@@ -9,7 +9,8 @@
 #include <sstream>
 #include <string>
 
-#include "config.h"
+#include "config_paths.h"
+
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"
 

@@ -23,7 +23,7 @@
 // For logging the commit hash and more
 // #include "git.h"
 #include "openhd_config.h"
-#include "config.h"
+#include "config_paths.h"
 
 // |-------------------------------------------------------------------------------|
 // |                         OpenHD core executable | | Weather you run as air

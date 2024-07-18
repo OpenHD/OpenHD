@@ -5,7 +5,8 @@
 
 #include <utility>
 
-#include "config.h"
+#include "config_paths.h"
+
 #include "openhd_bitrate.h"
 #include "openhd_config.h"
 #include "openhd_global_constants.hpp"

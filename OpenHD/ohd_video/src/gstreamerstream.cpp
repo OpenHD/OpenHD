@@ -7,7 +7,8 @@
 #include <vector>
 
 #include "air_recording_helper.hpp"
-#include "config.h"
+#include "config_paths.h"
+
 #include "gst_appsink_helper.h"
 #include "gst_debug_helper.h"
 #include "gst_helper.hpp"

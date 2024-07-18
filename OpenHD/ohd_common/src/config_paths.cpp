@@ -1,9 +1,10 @@
 //
 // Created by Raphael on 7/15/24.
 //
-// config.cpp
+// 
 
-#include "config.h"
+#include "config_paths.h"
+
 #include <cstring>
 #include <cstdlib>
 #include <csignal>
