@@ -182,15 +182,9 @@ const OHDPlatform& OHDPlatform::instance() {
 }
 
 std::string OHDPlatform::to_string() const {
-  try {
-    std::stringstream ss;
-    ss << "OHDPlatform:[" << x_platform_type_to_string(platform_type) << "]";
-    return ss.str();
-  } catch (const std::exception& e) {
-    return "OHDPlatform:[unknown]";
-  } catch (...) {
-    return "OHDPlatform:[unknown]";
-  }
+  std::stringstream ss;
+  ss << "OHDPlatform:[" << x_platform_type_to_string(platform_type) << "]";
+  return ss.str();
 }
 
 bool OHDPlatform::is_rpi() const {
