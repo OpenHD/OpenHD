@@ -158,6 +158,24 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
   return ret;
 }
 
+const char* CONFIG_BASE_PATH;
+const char* VIDEO_PATH;
+
+void setPlatformPaths(const OHDPlatform& platform) {
+    if (platform.is_rock() && platform.is_zero3w()) {
+        CONFIG_BASE_PATH = "/config/openhd/";
+        VIDEO_PATH = "/home/openhd/Videos/";
+    } else if (platform.is_x20()) {
+        CONFIG_BASE_PATH = "/external/openhd/";
+        VIDEO_PATH = "/home/openhd/Videos/";
+    } else {
+        // Set default or other platform paths
+        CONFIG_BASE_PATH = "/boot/openhd/";
+        VIDEO_PATH = "/home/openhd/Videos/";
+        std::cerr << "Platform: " << platform.to_string() << std::endl;
+    }
+}
+
 int main(int argc, char *argv[]) {
   // OpenHD needs to be run as root, otherwise we cannot access/ modify the
   // Wi-Fi cards for example (And there are also many other places where we just
@@ -165,12 +183,7 @@ int main(int argc, char *argv[]) {
   OHDUtil::terminate_if_not_root();
   const auto platform = OHDPlatform::instance();
   openhd::LEDManager::instance().set_status_loading();
-  if (platform == "radxa") {
-          #define X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W
-      } else {
-          std::cerr << "Platform: " << platform << std::endl;
-      }
-
+  setPlatformPaths(platform);
   // Create the folder structure for the (per-module-specific) settings if
   // needed
   openhd::generateSettingsDirectoryIfNonExists();
