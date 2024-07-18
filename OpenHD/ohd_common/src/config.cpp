@@ -10,6 +10,8 @@
 #include <iostream>
 #include <memory>
 #include "openhd_platform.h"
+#include "openhd_util_filesystem.h"
+
 
 
 // Initial default paths
