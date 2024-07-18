@@ -165,7 +165,7 @@ int main(int argc, char *argv[]) {
   }
   {  // Print all the arguments the OHD main executable is started with
     std::stringstream ss;
-    ss << "Version number:" << openhd::get_ohd_version_as_string() << "\n";
+    ss << openhd::get_ohd_version_as_string() << "\n";
     ss << "  #######  ########  ######## ##    ## ##     ## ######## \n";
     ss << " ##     ## ##     ## ##       ###   ## ##     ## ##     ##\n";
     ss << " ##     ## ##     ## ##       ####  ## ##     ## ##     ##\n";
@@ -174,7 +174,7 @@ int main(int argc, char *argv[]) {
     ss << " ##     ## ##        ##       ##   ### ##     ## ##     ##\n";
     ss << "  #######  ##        ######## ##    ## ##     ## ######## \n";                                                                                                     
     ss << "----------------------- OpenSource -----------------------\n";
-    ss << "air:" << OHDUtil::yes_or_no(options.run_as_air) << "\n";
+    ss << (options.run_as_air ? "Air Unit" : "Ground Unit") << "\n";
     ss << "reset_all_settings:"
        << OHDUtil::yes_or_no(options.reset_all_settings) << "\n";
     ss << "run_time_seconds:" << options.run_time_seconds << "\n";
