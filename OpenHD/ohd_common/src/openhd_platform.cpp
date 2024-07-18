@@ -1,4 +1,3 @@
-//
 // Created by consti10 on 10.02.23.
 //
 
@@ -107,7 +106,6 @@ static OHDPlatform discover_and_write_manifest() {
   auto platform_int = internal_discover_platform();
   auto platform = OHDPlatform(platform_int);
   write_platform_manifest(platform);
-  openhd::log::get_default()->info("{}", platform.to_string());
   return platform;
 }
 
@@ -148,6 +146,7 @@ std::string x_platform_type_to_string(int platform_type) {
   ss << "ERR-UNDEFINED{" << platform_type << "}";
   return ss.str();
 }
+
 int get_fec_max_block_size_for_platform() {
   auto platform_type = OHDPlatform::instance().platform_type;
   if (platform_type == X_PLATFORM_TYPE_RPI_4 ||

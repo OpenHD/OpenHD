@@ -9,7 +9,7 @@
 #include <sstream>
 #include <string>
 
-#include "config.h"
+#include "config_paths.h"
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"
 
@@ -39,7 +39,7 @@ static std::string format_track_count(int count) {
 
 static int get_recording_index_track_count() {
   const std::string recording_track_filename =
-      std::string(VIDEO_PATH) + "track_count.txt";
+      std::string(getVideoPath()) + "track_count.txt";
   int track_count = 1;
   const auto opt_content =
       OHDFilesystemUtil::opt_read_file(recording_track_filename);
@@ -62,8 +62,8 @@ static int get_recording_index_track_count() {
  * @param suffix the suffix of the filename,e.g. ".avi" or ".mp4"
  */
 static std::string create_unused_recording_filename(const std::string& suffix) {
-  if (!OHDFilesystemUtil::exists(VIDEO_PATH)) {
-    OHDFilesystemUtil::create_directories(VIDEO_PATH);
+  if (!OHDFilesystemUtil::exists(std::string(getConfigBasePath()))) {
+    OHDFilesystemUtil::create_directories(std::string(getConfigBasePath()));
   }
   // TEMPORARY - considering how many users use RPI (where date is not reliable)
   // we just name the files ascending
@@ -72,7 +72,8 @@ static std::string create_unused_recording_filename(const std::string& suffix) {
   // deletes a video
   const int track_index = get_recording_index_track_count();
   std::stringstream ss;
-  ss << VIDEO_PATH << "recording_" << track_index << suffix;
+  ss << std::string(getConfigBasePath()) << "recording_" << track_index
+     << suffix;
   return ss.str();
   /*for(int i=0;i<10000;i++){
     // Suffix might be either .

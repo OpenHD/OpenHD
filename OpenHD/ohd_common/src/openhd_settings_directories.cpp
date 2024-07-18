@@ -38,9 +38,7 @@ void openhd::clean_all_settings() {
 
 void openhd::check_currently_running_file_and_write() {
   if (OHDFilesystemUtil::exists(get_openhd_is_running_filename())) {
-    openhd::log::get_default()->warn(
-        "OpenHD is either still running in another process or did not "
-        "terminate properly last time");
+    openhd::log::get_default()->warn("OpenHD started ditry!");
   }
   OHDFilesystemUtil::write_file(get_openhd_is_running_filename(), "dummy");
 }

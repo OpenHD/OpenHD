@@ -34,9 +34,18 @@ create_package_directory() {
       sudo chmod +777 ${PKGDIR}etc/profile.d/desktop-truster.sh
   fi
   # always - copy the hardware.config file
-  mkdir -p "${PKGDIR}/boot/openhd/"
-  cp OpenHD/ohd_common/config/hardware.config "${PKGDIR}/boot/openhd/hardware.config" || exit 1
-}
+  if [[ "${PACKAGE_ARCH}" == "armhf" ]]; then
+      if [[ "${CUSTOM}" == "standard" ]]; then
+      mkdir -p "${PKGDIR}/boot/openhd/"
+      cp OpenHD/ohd_common/config/hardware.config "${PKGDIR}/boot/openhd/hardware.config" || exit 1
+      else
+      mkdir -p "${PKGDIR}/config/openhd/"
+      cp OpenHD/ohd_common/config/hardware.config "${PKGDIR}/config/openhd/hardware.config" || exit 1
+      fi
+      mkdir -p "${PKGDIR}/config/openhd/"
+      cp OpenHD/ohd_common/config/hardware.config "${PKGDIR}/config/openhd/hardware.config" || exit 1
+  fi
+ }
 build_package() {
 
   if [[ "${PACKAGE_ARCH}" == "armhf" ]]; then

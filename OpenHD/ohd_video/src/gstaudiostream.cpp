@@ -7,7 +7,7 @@
 #include <iostream>
 #include <utility>
 
-#include "config.h"
+#include "config_paths.h"
 #include "gst_appsink_helper.h"
 #include "gst_debug_helper.h"
 #include "gst_helper.hpp"
@@ -88,12 +88,13 @@ static std::string rpi_detect_alsasrc_device() {
 std::string GstAudioStream::create_pipeline() {
   std::stringstream ss;
   auto opt_manual_audio_source = OHDFilesystemUtil::opt_read_file(
-      std::string(CONFIG_BASE_PATH) + "audio_source.txt", false);
+      std::string(getConfigBasePath()) + "audio_source.txt", false);
   // audiotestsrc always works, but obviously is not a mic ;)
-  if (OHDFilesystemUtil::exists(std::string(CONFIG_BASE_PATH) +
+  if (OHDFilesystemUtil::exists(std::string(getConfigBasePath()) +
                                 "test_audio.txt") ||
       openhd_enable_audio_test) {
-    ss << "audiotestsrc" << " ! ";
+    ss << "audiotestsrc"
+       << " ! ";
   } else if (opt_manual_audio_source.has_value()) {
     // File, for development
     ss << opt_manual_audio_source.value() << " ! ";
@@ -103,7 +104,8 @@ std::string GstAudioStream::create_pipeline() {
       // the device(s) depend on fkms / kms or are in general weird.
       ss << "alsasrc device=" << rpi_detect_alsasrc_device() << " ! ";
     } else {
-      ss << "autoaudiosrc" << " ! ";
+      ss << "autoaudiosrc"
+         << " ! ";
     }
   }
   /*ss << "autoaudiosrc ! ";

@@ -43,8 +43,9 @@ static constexpr int X_CAM_TYPE_USB_INFIRAY = 11;
 static constexpr int X_CAM_TYPE_USB_INFIRAY_T2 = 12;
 static constexpr int X_CAM_TYPE_USB_INFIRAY_X2 = 13;
 static constexpr int X_CAM_TYPE_USB_INFIRAY_P2_PRO = 14;
+static constexpr int X_CAM_TYPE_USB_FLIR_VUE = 15;
+static constexpr int X_CAM_TYPE_USB_FLIR_BOSON = 16;
 // ... reserved for future (Thermal) USB cameras
-
 //
 // RPI Specific starts here
 //
@@ -137,6 +138,10 @@ static std::string x_cam_type_to_string(int camera_type) {
       return "INFIRAY_P2_PRO";
     case X_CAM_TYPE_USB_INFIRAY_X2:
       return "INFIRAY_X2";
+    case X_CAM_TYPE_USB_FLIR_VUE:
+      return "FLIR VUE";
+    case X_CAM_TYPE_USB_FLIR_BOSON:
+      return "FLIR BOSON";
     // All the rpi stuff begin
     case X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI:
       return "MMAL_HDMI";
@@ -273,6 +278,8 @@ struct XCamera {
     return camera_type == X_CAM_TYPE_USB_INFIRAY ||
            camera_type == X_CAM_TYPE_USB_INFIRAY_T2 ||
            camera_type == X_CAM_TYPE_USB_INFIRAY_P2_PRO ||
+           camera_type == X_CAM_TYPE_USB_FLIR_VUE ||
+           camera_type == X_CAM_TYPE_USB_FLIR_BOSON ||
            camera_type == X_CAM_TYPE_USB_INFIRAY_X2;
   };
   // Returns a list of known supported resolution(s).
@@ -305,6 +312,10 @@ struct XCamera {
       return {ResolutionFramerate{256, 192, 25}};
     } else if (camera_type == X_CAM_TYPE_USB_INFIRAY_X2) {
       return {ResolutionFramerate{384, 292, 50}};
+    } else if (camera_type == X_CAM_TYPE_USB_FLIR_VUE) {
+      return {ResolutionFramerate{640, 512, 30}};
+    } else if (camera_type == X_CAM_TYPE_USB_FLIR_BOSON) {
+      return {ResolutionFramerate{640, 512, 60}};
     } else if (camera_type == X_CAM_TYPE_USB_GENERIC) {
       std::vector<ResolutionFramerate> ret;
       // most likely working resolution
@@ -620,6 +631,8 @@ static std::vector<ManufacturerForPlatform> get_camera_choices_for_platform(
       CameraNameAndType{"INFIRAY USB T2", X_CAM_TYPE_USB_INFIRAY_T2},
       CameraNameAndType{"INFIRAY USB P2 Pro", X_CAM_TYPE_USB_INFIRAY_P2_PRO},
       CameraNameAndType{"INFIRAY USB X2", X_CAM_TYPE_USB_INFIRAY_X2},
+      CameraNameAndType{"INFIRAY USB X2", X_CAM_TYPE_USB_FLIR_VUE},
+      CameraNameAndType{"INFIRAY USB X2", X_CAM_TYPE_USB_FLIR_BOSON},
       CameraNameAndType{"EXP USB GENERIC", X_CAM_TYPE_USB_GENERIC}};
   ManufacturerForPlatform MANUFACTURER_USB{"USB", usb_cameras};
   std::vector<CameraNameAndType> debug_cameras{

@@ -1,10 +1,11 @@
 #include "wifi_card_discovery.h"
 
+#include <iostream>
 #include <list>
 #include <regex>
 #include <thread>
 
-#include "config.h"
+#include "config_paths.h"
 #include "openhd_spdlog.h"
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"
@@ -125,7 +126,7 @@ std::optional<WiFiCard> DWifiCards::fill_linux_wifi_card_identifiers(
   card.mac = mac;
   if (card.type == WiFiCardType::OPENHD_RTL_88X2AU) {
     const bool custom_hardware =
-        OHDFilesystemUtil::exists(std::string(CONFIG_BASE_PATH) +
+        OHDFilesystemUtil::exists(std::string(getConfigBasePath()) +
                                   "hardware_vtx_v20.txt") ||
         OHDPlatform::instance().is_x20();
     if (custom_hardware) {
@@ -339,7 +340,9 @@ void DWifiCards::main_discover_an_process_wifi_cards(
     std::vector<WiFiCard>& m_monitor_mode_cards,
     std::optional<WiFiCard>& m_opt_hotspot_card) {
   const auto m_platform = OHDPlatform::instance();
-  m_console->debug("Waiting for wifi card(s)...");
+  const std::string blue = "\033[34m";
+  const std::string reset = "\033[0m";
+  std::cout << blue << "Waiting for wifi card(s)..." << reset << std::endl;
   const bool debug = false;
   if (config.WIFI_MONITOR_CARD_EMULATE) {
     m_monitor_mode_cards.push_back(DWifiCards::create_card_monitor_emulate());

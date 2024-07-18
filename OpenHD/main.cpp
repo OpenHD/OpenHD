@@ -23,7 +23,7 @@
 // For logging the commit hash and more
 // #include "git.h"
 #include "openhd_config.h"
-#include "config.h"
+#include "config_paths.h"
 
 // |-------------------------------------------------------------------------------|
 // |                         OpenHD core executable | | Weather you run as air
@@ -44,6 +44,10 @@ static const struct option long_options[] = {
     {"hardware-config-file", required_argument, nullptr, 'h'},
     {nullptr, 0, nullptr, 0},
 };
+    const std::string red = "\033[31m";
+    const std::string green = "\033[32m";
+    const std::string blue = "\033[94m";
+    const std::string reset = "\033[0m";
 
 struct OHDRunOptions {
   bool run_as_air = false;
@@ -118,14 +122,12 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
     bool error = false;
     if (file_run_as_air_exists &&
         file_run_as_ground_exists) {  // both files exist
-      std::cerr << "Assuming ground\n";
       // Just run as ground
       ret.run_as_air = false;
       error = true;
     }
     if (!file_run_as_air_exists &&
         !file_run_as_ground_exists) {  // no file exists
-      std::cerr << "Assuming ground\n";
       // Just run as ground
       ret.run_as_air = false;
       error = true;
@@ -144,7 +146,7 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
   }
   // If this file exists, delete all openhd settings resulting in default
   // value(s)
-    const auto filePathReset = std::string(CONFIG_BASE_PATH) + "reset.txt";
+    const auto filePathReset = std::string(getConfigBasePath())+ "reset.txt";
   if (OHDUtil::file_exists_and_delete(filePathReset.c_str())) {
     ret.reset_all_settings = true;
   }
@@ -159,40 +161,55 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
 }
 
 int main(int argc, char *argv[]) {
-  // OpenHD needs to be run as root, otherwise we cannot access/ modify the
-  // Wi-Fi cards for example (And there are also many other places where we just
-  // need to be root).
+  // OpenHD needs to be run as root!
   OHDUtil::terminate_if_not_root();
-
-  // Create the folder structure for the (per-module-specific) settings if
-  // needed
-  openhd::generateSettingsDirectoryIfNonExists();
-
-  // Generate the keys and delete pw if needed
-  OHDInterface::generate_keys_from_pw_if_exists_and_delete();
-
-  // Parse the program arguments, also uses the "yes if file exists" pattern for
-  // some params
   const OHDRunOptions options = parse_run_parameters(argc, argv);
   if (options.hardware_config_file.has_value()) {
     openhd::set_config_file(options.hardware_config_file.value());
   }
   {  // Print all the arguments the OHD main executable is started with
-    std::stringstream ss;
-    ss << "OpenHD START with \n";
-    ss << "air:" << OHDUtil::yes_or_no(options.run_as_air) << "\n";
-    ss << "reset_all_settings:"
-       << OHDUtil::yes_or_no(options.reset_all_settings) << "\n";
-    ss << "run_time_seconds:" << options.run_time_seconds << "\n";
-    ss << "hardware-config-file:["
-       << options.hardware_config_file.value_or("DEFAULT") << "]\n";
-    ss << "Version number:" << openhd::get_ohd_version_as_string() << "\n";
-    // ss<<"Git info:Branch:"<<git_Branch()<<" SHA:"<<git_CommitSHA1()<<"
-    // Dirty:"<<OHDUtil::yes_or_no(git_AnyUncommittedChanges())<<"\n";
+ std::cout << "\033[2J\033[1;1H"; //clear terminal
+ std::stringstream ss;
+    ss << openhd::get_ohd_version_as_string() << "\n";
+    ss << blue;
+    ss << "  #######  ########  ######## ##    ## ##     ## ######## \n";
+    ss << " ##     ## ##     ## ##       ###   ## ##     ## ##     ##\n";
+    ss << " ##     ## ##     ## ##       ####  ## ##     ## ##     ##\n";
+    ss << " ##     ## ########  ######   ## ## ## ######### ##     ##\n";
+    ss << " ##     ## ##        ##       ##  #### ##     ## ##     ##\n";
+    ss << " ##     ## ##        ##       ##   ### ##     ## ##     ##\n";
+    ss << "  #######  ##        ######## ##    ## ##     ## ######## \n";
+    ss << reset;
+    ss << "----------------------- OpenSource -----------------------\n";
+    ss << "\n";
+
+    if (options.run_as_air) {
+        ss << "----------------------- " << green << "Air Unit" << reset << " -----------------------\n";
+    } else {
+        ss << "----------------------- " << red << "Ground Unit" << reset << " ----------------------\n";
+    }
+
+    if (options.reset_all_settings) {
+        ss << red << "Reset Settings" << reset << "\n";
+    }
+
+    ss << "\n";
+    ss << "\n";
+    ss << "\n";
+
+    // ss << "Git info:Branch:" << git_Branch() << " SHA:" << git_CommitSHA1() << " Dirty:" << OHDUtil::yes_or_no(git_AnyUncommittedChanges()) << "\n";
+
     std::cout << ss.str() << std::flush;
-    openhd::debug_config();
-    OHDInterface::print_internal_fec_optimization_method();
-  }
+    // openhd::debug_config();
+    // OHDInterface::print_internal_fec_optimization_method();
+}
+  // Create the folder structure
+  openhd::generateSettingsDirectoryIfNonExists();
+  const auto platform = OHDPlatform::instance();
+  openhd::LEDManager::instance().set_status_loading();
+  // Generate the keys and delete pw if needed
+  OHDInterface::generate_keys_from_pw_if_exists_and_delete();
+  // Parse the program arguments
   // This is the console we use inside main, in general different openhd
   // modules/classes have their own loggers with different tags
   std::shared_ptr<spdlog::logger> m_console =
@@ -202,10 +219,6 @@ int main(int argc, char *argv[]) {
   // not guaranteed, but better than nothing, check if openhd is already running
   // (kinda) and print warning if yes.
   openhd::check_currently_running_file_and_write();
-
-  // First discover the platform -
-  const auto platform = OHDPlatform::instance();
-  openhd::LEDManager::instance().set_status_loading();
 
   // Create and link all the OpenHD modules.
   try {
@@ -276,10 +289,8 @@ int main(int argc, char *argv[]) {
     ohdTelemetry->settings_generic_ready();
     // now telemetry can send / receive data via wifibroadcast
     ohdTelemetry->set_link_handle(ohdInterface->get_link_handle());
-    m_console->info("All OpenHD modules running");
+    std::cout << green << "OpenHD was successfully started." << reset << std::endl;
     openhd::LEDManager::instance().set_status_okay();
-    openhd::log::log_to_kernel("All OpenHD modules running");
-
     // run forever, everything has its own threads. Note that the only way to
     // break out basically is when one of the modules encounters an exception.
     static bool quit = false;

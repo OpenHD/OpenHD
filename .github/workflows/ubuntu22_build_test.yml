@@ -106,7 +106,8 @@ jobs:
         run: |
           sudo ./OpenHD/ohd_common/copy_config_file.sh
           sudo sed -i 's/\(^WIFI_MONITOR_CARD_EMULATE =\).*/\1true/' /boot/openhd/hardware.config
-          
+          sudo sed -i 's/\(^WIFI_MONITOR_CARD_EMULATE =\).*/\1true/' /config/openhd/hardware.config
+
       - name: Run as air, but limited to X seconds
         run: |
           sudo ./OpenHD/build/openhd -a --run-time-seconds 10
