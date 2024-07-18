@@ -165,7 +165,11 @@ int main(int argc, char *argv[]) {
   OHDUtil::terminate_if_not_root();
   const auto platform = OHDPlatform::instance();
   openhd::LEDManager::instance().set_status_loading();
-
+  if (platform == "radxa") {
+          #define X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W
+      } else {
+          std::cerr << "Platform: " << platform << std::endl;
+      }
 
   // Create the folder structure for the (per-module-specific) settings if
   // needed
