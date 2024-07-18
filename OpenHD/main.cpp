@@ -169,35 +169,38 @@ int main(int argc, char *argv[]) {
     const std::string blue = "\033[34m";
     const std::string reset = "\033[0m";
 
-    std::stringstream ss;
+ std::stringstream ss;
     ss << openhd::get_ohd_version_as_string() << "\n";
-    ss << blue 
-       << "  #######  ########  ######## ##    ## ##     ## ######## \n";
+    ss << blue;
+    ss << "  #######  ########  ######## ##    ## ##     ## ######## \n";
     ss << " ##     ## ##     ## ##       ###   ## ##     ## ##     ##\n";
     ss << " ##     ## ##     ## ##       ####  ## ##     ## ##     ##\n";
     ss << " ##     ## ########  ######   ## ## ## ######### ##     ##\n";
     ss << " ##     ## ##        ##       ##  #### ##     ## ##     ##\n";
     ss << " ##     ## ##        ##       ##   ### ##     ## ##     ##\n";
     ss << "  #######  ##        ######## ##    ## ##     ## ######## \n";
-    ss << reset <<                                                                                                     
+    ss << reset;
     ss << "----------------------- OpenSource -----------------------\n";
     ss << "\n";
+
     if (options.run_as_air) {
         ss << "----------------------- " << green << "Air Unit" << reset << " -----------------------\n";
     } else {
-        ss << "----------------------  " << red << "Ground Unit" << reset << " -----------------------\n";
+        ss << "----------------------- " << red << "Ground Unit" << reset << " -----------------------\n";
     }
+
     if (options.reset_all_settings) {
         ss << red << "Reset Settings" << reset << "\n";
-    } 
+    }
+
     ss << "hardware-config-file:["
        << options.hardware_config_file.value_or("DEFAULT") << "]\n";
-    // ss<<"Git info:Branch:"<<git_Branch()<<" SHA:"<<git_CommitSHA1()<<"
-    // Dirty:"<<OHDUtil::yes_or_no(git_AnyUncommittedChanges())<<"\n";
+    // ss << "Git info:Branch:" << git_Branch() << " SHA:" << git_CommitSHA1() << " Dirty:" << OHDUtil::yes_or_no(git_AnyUncommittedChanges()) << "\n";
+
     std::cout << ss.str() << std::flush;
     openhd::debug_config();
     OHDInterface::print_internal_fec_optimization_method();
-  }
+}
   // Create the folder structure
   openhd::generateSettingsDirectoryIfNonExists();
   const auto platform = OHDPlatform::instance();
