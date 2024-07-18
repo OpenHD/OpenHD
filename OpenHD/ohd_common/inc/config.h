@@ -7,7 +7,7 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-extern char* CONFIG_BASE_PATH;
-extern char* VIDEO_PATH;
+extern char* CONFIG_BASE_PATH = "/home/openhd/Videos/";
+extern char* VIDEO_PATH = "/home/openhd/Videos/";
 
 #endif  // CONFIG_H
