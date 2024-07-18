@@ -168,6 +168,8 @@ int main(int argc, char *argv[]) {
     const std::string green = "\033[32m";
     const std::string blue = "\033[34m";
     const std::string reset = "\033[0m";
+    std::cout << "\033[2J\033[1;1H"; //clear terminal
+
 
  std::stringstream ss;
     ss << openhd::get_ohd_version_as_string() << "\n";
