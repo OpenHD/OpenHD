@@ -18,8 +18,11 @@ static char* VIDEO_PATH = nullptr;
 
 const char* getConfigBasePath() {
     const auto platform_debug = OHDPlatform::instance();
-    std::cerr << "Setting paths for rock platform: " << platform_debug.to_string() << std::endl;
-    return CONFIG_BASE_PATH ? CONFIG_BASE_PATH : "/config/openhd/";
+    if (platform_debug.to_string() == "RADXA CM3") {
+        return current_path();  // Replace current_path() with your logic to get the current path
+    } else {
+        return "/boot/openhd/";
+    }
 }
 
 const char* getVideoPath() {
