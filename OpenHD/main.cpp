@@ -118,14 +118,12 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
     bool error = false;
     if (file_run_as_air_exists &&
         file_run_as_ground_exists) {  // both files exist
-      std::cerr << "Assuming ground\n";
       // Just run as ground
       ret.run_as_air = false;
       error = true;
     }
     if (!file_run_as_air_exists &&
         !file_run_as_ground_exists) {  // no file exists
-      std::cerr << "Assuming ground\n";
       // Just run as ground
       ret.run_as_air = false;
       error = true;
@@ -167,6 +165,7 @@ int main(int argc, char *argv[]) {
   }
   {  // Print all the arguments the OHD main executable is started with
     std::stringstream ss;
+    ss << "Version number:" << openhd::get_ohd_version_as_string() << "\n";
     ss << "  #######  ########  ######## ##    ## ##     ## ######## \n";
     ss << " ##     ## ##     ## ##       ###   ## ##     ## ##     ##\n";
     ss << " ##     ## ##     ## ##       ####  ## ##     ## ##     ##\n";
@@ -181,7 +180,6 @@ int main(int argc, char *argv[]) {
     ss << "run_time_seconds:" << options.run_time_seconds << "\n";
     ss << "hardware-config-file:["
        << options.hardware_config_file.value_or("DEFAULT") << "]\n";
-    ss << "Version number:" << openhd::get_ohd_version_as_string() << "\n";
     // ss<<"Git info:Branch:"<<git_Branch()<<" SHA:"<<git_CommitSHA1()<<"
     // Dirty:"<<OHDUtil::yes_or_no(git_AnyUncommittedChanges())<<"\n";
     std::cout << ss.str() << std::flush;
