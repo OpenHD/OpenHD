@@ -90,7 +90,7 @@ std::shared_ptr<spdlog::logger> openhd::log::create_or_get(
   if (ret == nullptr) {
     auto created = spdlog::stdout_color_mt(logger_name);
     assert(created);
-    created->set_level(spdlog::level::debug);
+    created->set_level(spdlog::level::warning);
     // Add the sink that sends out warning or higher via UDP
     // created->sinks().push_back(std::make_shared<openhd::log::sink::UdpTelemetrySink>());
     created->sinks().push_back(
