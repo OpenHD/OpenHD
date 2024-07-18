@@ -20,13 +20,21 @@ const char* getConfigBasePath() {
     const auto platform_debug = OHDPlatform::instance();
     if (platform_debug.is_rock()) {
         return "/config/openhd/";
+    } else if (platform_debug.is_x20()) {
+        return "/external/openhd/";
     } else {
         return "/boot/openhd/";
     }
 }
 
+
 const char* getVideoPath() {
-    return VIDEO_PATH ? VIDEO_PATH : "/home/openhd/Videos/";
+    const auto FILENAME_VIDEO_EXTERNAL = "/Videos/external_video_part.txt";
+    if (OHDFilesystemUtil::exists(FILENAME_VIDEO_NORMAL)) {
+    return VIDEO_PATH ? VIDEO_PATH : "/Videos/";
+    } else {
+        return "/home/openhd/Videos/";
+    }
 }
 
 void setConfigBasePath(const char* path) {
