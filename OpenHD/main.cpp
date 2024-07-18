@@ -44,6 +44,10 @@ static const struct option long_options[] = {
     {"hardware-config-file", required_argument, nullptr, 'h'},
     {nullptr, 0, nullptr, 0},
 };
+    const std::string red = "\033[31m";
+    const std::string green = "\033[32m";
+    const std::string blue = "\033[94m";
+    const std::string reset = "\033[0m";
 
 struct OHDRunOptions {
   bool run_as_air = false;
@@ -164,13 +168,7 @@ int main(int argc, char *argv[]) {
     openhd::set_config_file(options.hardware_config_file.value());
   }
   {  // Print all the arguments the OHD main executable is started with
-    const std::string red = "\033[31m";
-    const std::string green = "\033[32m";
-    const std::string blue = "\033[94m";
-    const std::string reset = "\033[0m";
-    std::cout << "\033[2J\033[1;1H"; //clear terminal
-
-
+ std::cout << "\033[2J\033[1;1H"; //clear terminal
  std::stringstream ss;
     ss << openhd::get_ohd_version_as_string() << "\n";
     ss << blue;
