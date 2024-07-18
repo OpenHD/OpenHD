@@ -174,7 +174,8 @@ int main(int argc, char *argv[]) {
     ss << " ##     ## ##        ##       ##   ### ##     ## ##     ##\n";
     ss << "  #######  ##        ######## ##    ## ##     ## ######## \n";                                                                                                     
     ss << "----------------------- OpenSource -----------------------\n";
-    ss << (options.run_as_air ? "Air Unit" : "Ground Unit") << "\n";
+    ss << "\n";
+    ss << "----------------------- " << (options.run_as_air ? "Air Unit" : "Ground Unit") << " -----------------------\n";
     ss << "reset_all_settings:"
        << OHDUtil::yes_or_no(options.reset_all_settings) << "\n";
     ss << "run_time_seconds:" << options.run_time_seconds << "\n";
