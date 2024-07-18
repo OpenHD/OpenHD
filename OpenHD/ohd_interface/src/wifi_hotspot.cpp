@@ -5,6 +5,8 @@
 #include "wifi_hotspot.h"
 
 #include <utility>
+#include <iostream>
+
 
 #include "openhd_spdlog.h"
 #include "openhd_util_async.h"
