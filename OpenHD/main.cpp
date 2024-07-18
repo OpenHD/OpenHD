@@ -186,7 +186,7 @@ int main(int argc, char *argv[]) {
   OHDUtil::terminate_if_not_root();
   const auto platform = OHDPlatform::instance();
   openhd::LEDManager::instance().set_status_loading();
-  setPlatformPaths(platform);
+  // setPlatformPaths(platform);
   // Create the folder structure for the (per-module-specific) settings if
   // needed
   openhd::generateSettingsDirectoryIfNonExists();
