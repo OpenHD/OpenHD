@@ -22,7 +22,7 @@ const char* getConfigBasePath() {
             std::cerr << "Setting paths for rock platform: " << platform_debug.to_string() << std::endl;
         return "/config/openhd/";
     } else if (platform_debug.is_radxa_cm3()) {
-        std::cerr << "Setting paths for rock cm3 platform: " << platform.to_string() << std::endl;
+        std::cerr << "Setting paths for rock cm3 platform: " << platform_debug.to_string() << std::endl;
         return "/config/openhd/";
     } else {
             std::cerr << "Setting paths for normal platform: " << platform_debug.to_string() << std::endl;
