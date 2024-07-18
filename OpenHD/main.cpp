@@ -158,35 +158,11 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
   return ret;
 }
 
-void setPlatformPaths(const OHDPlatform& platform) {
-    if (platform.is_rock()) {
-        setConfigBasePath("/config/openhd/");
-        setVideoPath("/home/openhd/Videos/");
-        std::cerr << "Setting paths for rock platform: " << platform.to_string() << std::endl;
-    } else if (platform.is_x20()) {
-        // CONFIG_BASE_PATH = "/config/openhd/";
-        // VIDEO_PATH = "/home/openhd/Videos/";
-        std::cerr << "Setting paths for x20 platform: " << platform.to_string() << std::endl;
-    } else {
-        // Set default or other platform paths
-        // CONFIG_BASE_PATH = "/boot/openhd/";
-        // VIDEO_PATH = "/home/openhd/Videos/";
-        std::cerr << "Setting default paths for unknown platform: " << platform.to_string() << std::endl;
-    }
-    // Now you can use CONFIG_BASE_PATH and VIDEO_PATH as needed
-    std::cerr << "Platform: " << platform.to_string() << std::endl;
-    // std::cerr << "CONFIG_BASE_PATH: " << CONFIG_BASE_PATH << std::endl;
-    // std::cerr << "VIDEO_PATH: " << VIDEO_PATH << std::endl;
-}
-
 int main(int argc, char *argv[]) {
   // OpenHD needs to be run as root, otherwise we cannot access/ modify the
   // Wi-Fi cards for example (And there are also many other places where we just
   // need to be root).
   OHDUtil::terminate_if_not_root();
-  const auto platform = OHDPlatform::instance();
-  openhd::LEDManager::instance().set_status_loading();
-  // setPlatformPaths(platform);
   // Create the folder structure for the (per-module-specific) settings if
   // needed
   openhd::generateSettingsDirectoryIfNonExists();
@@ -216,6 +192,8 @@ int main(int argc, char *argv[]) {
     openhd::debug_config();
     OHDInterface::print_internal_fec_optimization_method();
   }
+  const auto platform = OHDPlatform::instance();
+  openhd::LEDManager::instance().set_status_loading();
   // This is the console we use inside main, in general different openhd
   // modules/classes have their own loggers with different tags
   std::shared_ptr<spdlog::logger> m_console =
