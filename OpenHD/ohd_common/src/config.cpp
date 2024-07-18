@@ -30,7 +30,7 @@ const char* getConfigBasePath() {
 
 const char* getVideoPath() {
     const auto FILENAME_VIDEO_EXTERNAL = "/Videos/external_video_part.txt";
-    if (OHDFilesystemUtil::exists(FILENAME_VIDEO_NORMAL)) {
+    if (OHDFilesystemUtil::exists(FILENAME_VIDEO_EXTERNAL)) {
     return VIDEO_PATH ? VIDEO_PATH : "/Videos/";
     } else {
         return "/home/openhd/Videos/";
