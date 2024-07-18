@@ -159,21 +159,20 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
 }
 
 void setPlatformPaths(const OHDPlatform& platform) {
-    // if (platform.is_rock()) {
-    //     CONFIG_BASE_PATH = "/config/openhd/";
-    //     VIDEO_PATH = "/home/openhd/Videos/";
-    //     std::cerr << "Setting paths for rock platform: " << platform.to_string() << std::endl;
-    // } else if (platform.is_x20()) {
-    //     // CONFIG_BASE_PATH = "/config/openhd/";
-    //     // VIDEO_PATH = "/home/openhd/Videos/";
-    //     std::cerr << "Setting paths for x20 platform: " << platform.to_string() << std::endl;
-    // } else {
-    //     // Set default or other platform paths
-    //     // CONFIG_BASE_PATH = "/boot/openhd/";
-    //     // VIDEO_PATH = "/home/openhd/Videos/";
-    //     std::cerr << "Setting default paths for unknown platform: " << platform.to_string() << std::endl;
-    //}
-
+    if (platform.is_rock()) {
+        setConfigBasePath("/config/openhd/");
+        setVideoPath("/home/openhd/Videos/");
+        std::cerr << "Setting paths for rock platform: " << platform.to_string() << std::endl;
+    } else if (platform.is_x20()) {
+        // CONFIG_BASE_PATH = "/config/openhd/";
+        // VIDEO_PATH = "/home/openhd/Videos/";
+        std::cerr << "Setting paths for x20 platform: " << platform.to_string() << std::endl;
+    } else {
+        // Set default or other platform paths
+        // CONFIG_BASE_PATH = "/boot/openhd/";
+        // VIDEO_PATH = "/home/openhd/Videos/";
+        std::cerr << "Setting default paths for unknown platform: " << platform.to_string() << std::endl;
+    }
     // Now you can use CONFIG_BASE_PATH and VIDEO_PATH as needed
     std::cerr << "Platform: " << platform.to_string() << std::endl;
     // std::cerr << "CONFIG_BASE_PATH: " << CONFIG_BASE_PATH << std::endl;

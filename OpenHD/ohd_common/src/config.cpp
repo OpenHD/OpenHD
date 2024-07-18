@@ -12,7 +12,7 @@ static char* CONFIG_BASE_PATH = nullptr;
 static char* VIDEO_PATH = nullptr;
 
 const char* getConfigBasePath() {
-    return CONFIG_BASE_PATH ? CONFIG_BASE_PATH : "/home/openhd/Videos/";
+    return CONFIG_BASE_PATH ? CONFIG_BASE_PATH : "/home/openhd/";
 }
 
 const char* getVideoPath() {
