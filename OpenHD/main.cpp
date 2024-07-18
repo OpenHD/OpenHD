@@ -158,8 +158,8 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
   return ret;
 }
 
-const char* CONFIG_BASE_PATH;
-const char* VIDEO_PATH;
+const char* CONFIG_BASE_PATH = nullptr;
+const char* VIDEO_PATH = nullptr;
 
 void setPlatformPaths(const OHDPlatform& platform) {
     if (platform.is_rock() && platform.is_zero3w()) {
@@ -173,6 +173,9 @@ void setPlatformPaths(const OHDPlatform& platform) {
         CONFIG_BASE_PATH = "/boot/openhd/";
         VIDEO_PATH = "/home/openhd/Videos/";
         std::cerr << "Platform: " << platform.to_string() << std::endl;
+    }
+if (CONFIG_BASE_PATH == nullptr || VIDEO_PATH == nullptr) {
+        throw std::runtime_error("Failed to set configuration paths.");
     }
 }
 
