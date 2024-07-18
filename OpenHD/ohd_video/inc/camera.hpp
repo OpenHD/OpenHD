@@ -627,7 +627,7 @@ static std::vector<ManufacturerForPlatform> get_camera_choices_for_platform(
       CameraNameAndType{"INFIRAY USB T2", X_CAM_TYPE_USB_INFIRAY_T2},
       CameraNameAndType{"INFIRAY USB P2 Pro", X_CAM_TYPE_USB_INFIRAY_P2_PRO},
       CameraNameAndType{"INFIRAY USB X2", X_CAM_TYPE_USB_INFIRAY_X2},
-      CameraNameAndType{"INFIRAY USB X2", X_CAM_TYPE_USB_FLIR_VUE};
+      CameraNameAndType{"INFIRAY USB X2", X_CAM_TYPE_USB_FLIR_VUE},
       CameraNameAndType{"EXP USB GENERIC", X_CAM_TYPE_USB_GENERIC}};
   ManufacturerForPlatform MANUFACTURER_USB{"USB", usb_cameras};
   std::vector<CameraNameAndType> debug_cameras{
