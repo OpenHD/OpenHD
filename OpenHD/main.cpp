@@ -166,7 +166,7 @@ int main(int argc, char *argv[]) {
   {  // Print all the arguments the OHD main executable is started with
     const std::string red = "\033[31m";
     const std::string green = "\033[32m";
-    const std::string blue = "\033[34m";
+    const std::string blue = "\033[94m";
     const std::string reset = "\033[0m";
     std::cout << "\033[2J\033[1;1H"; //clear terminal
 
