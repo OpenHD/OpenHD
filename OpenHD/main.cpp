@@ -158,8 +158,8 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
   return ret;
 }
 
-const char* CONFIG_BASE_PATH;
-const char* VIDEO_PATH;
+// const char* CONFIG_BASE_PATH;
+// const char* VIDEO_PATH;
 
 // void setPlatformPaths(const OHDPlatform& platform) {
 //     // if (platform.is_rock() && platform.is_zero3w()) {
