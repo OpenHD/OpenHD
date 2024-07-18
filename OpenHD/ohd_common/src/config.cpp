@@ -18,8 +18,8 @@ static char* VIDEO_PATH = nullptr;
 
 const char* getConfigBasePath() {
     const auto platform_debug = OHDPlatform::instance();
-    if (platform_debug.to_string() == "RADXA CM3") {
-        return "/config/openhd/"();
+    if (platform_debug.to_string() == "RADXA CM3"){
+        return "/config/openhd/";
     } else {
         return "/boot/openhd/";
     }
