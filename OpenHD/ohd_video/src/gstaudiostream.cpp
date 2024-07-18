@@ -88,9 +88,9 @@ static std::string rpi_detect_alsasrc_device() {
 std::string GstAudioStream::create_pipeline() {
   std::stringstream ss;
   auto opt_manual_audio_source = OHDFilesystemUtil::opt_read_file(
-      std::string(CONFIG_BASE_PATH) + "audio_source.txt", false);
+      std::string(getConfigBasePath())+ "audio_source.txt", false);
   // audiotestsrc always works, but obviously is not a mic ;)
-  if (OHDFilesystemUtil::exists(std::string(CONFIG_BASE_PATH) +
+  if (OHDFilesystemUtil::exists(std::string(getConfigBasePath())+
                                 "test_audio.txt") ||
       openhd_enable_audio_test) {
     ss << "audiotestsrc" << " ! ";

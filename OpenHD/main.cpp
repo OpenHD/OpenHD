@@ -144,7 +144,7 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
   }
   // If this file exists, delete all openhd settings resulting in default
   // value(s)
-    const auto filePathReset = std::string(CONFIG_BASE_PATH) + "reset.txt";
+    const auto filePathReset = std::string(getConfigBasePath())+ "reset.txt";
   if (OHDUtil::file_exists_and_delete(filePathReset.c_str())) {
     ret.reset_all_settings = true;
   }

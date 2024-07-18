@@ -11,8 +11,8 @@
 namespace openhd::tmp {
 
 // Note: case sensitive
-const auto FILENAME_AIR = std::string(CONFIG_BASE_PATH) + "air.txt";
-const auto FILENAME_GROUND = std::string(CONFIG_BASE_PATH) + "ground.txt";
+const auto FILENAME_AIR = std::string(getConfigBasePath())+ "air.txt";
+const auto FILENAME_GROUND = std::string(getConfigBasePath())+ "ground.txt";
 
 static bool file_air_exists() {
   return OHDFilesystemUtil::exists(FILENAME_AIR);
@@ -31,12 +31,12 @@ static void delete_any_file_air_or_ground() {
 }
 
 static void write_file_air() {
-  OHDFilesystemUtil::create_directories(std::string(CONFIG_BASE_PATH));
+  OHDFilesystemUtil::create_directories(std::string(getConfigBasePath()));
   OHDFilesystemUtil::write_file(openhd::tmp::FILENAME_AIR, " ");
 }
 
 static void write_file_ground() {
-  OHDFilesystemUtil::create_directories(std::string(CONFIG_BASE_PATH));
+  OHDFilesystemUtil::create_directories(std::string(getConfigBasePath()));
   OHDFilesystemUtil::write_file(openhd::tmp::FILENAME_GROUND, " ");
 }
 

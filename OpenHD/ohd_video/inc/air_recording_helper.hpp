@@ -39,7 +39,7 @@ static std::string format_track_count(int count) {
 
 static int get_recording_index_track_count() {
   const std::string recording_track_filename =
-      std::string(VIDEO_PATH) + "track_count.txt";
+      std::string(getVideoPath()) + "track_count.txt";
   int track_count = 1;
   const auto opt_content =
       OHDFilesystemUtil::opt_read_file(recording_track_filename);

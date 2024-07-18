@@ -170,9 +170,9 @@ void OHDInterface::generate_keys_from_pw_if_exists_and_delete() {
   }
   auto console = openhd::log::get_default();
 
-  if (OHDFilesystemUtil::exists(std::string(CONFIG_BASE_PATH) +
+  if (OHDFilesystemUtil::exists(std::string(getConfigBasePath()) +
                                 "password.txt")) {
-    auto pw = OHDFilesystemUtil::read_file(std::string(CONFIG_BASE_PATH) +
+    auto pw = OHDFilesystemUtil::read_file(std::string(getConfigBasePath()) +
                                            "password.txt");
     OHDUtil::trim(pw);
     console->info("Generating key(s) from pw [{}]",
@@ -181,7 +181,7 @@ void OHDInterface::generate_keys_from_pw_if_exists_and_delete() {
     if (wb::write_keypair_to_file(keys, openhd::SECURITY_KEYPAIR_FILENAME)) {
       console->debug("Keypair file successfully written");
       // delete the file
-      OHDFilesystemUtil::remove_if_existing(std::string(CONFIG_BASE_PATH) +
+      OHDFilesystemUtil::remove_if_existing(std::string(getConfigBasePath()) +
                                             "password.txt");
       OHDFilesystemUtil::make_file_read_write_everyone(
           openhd::SECURITY_KEYPAIR_FILENAME);

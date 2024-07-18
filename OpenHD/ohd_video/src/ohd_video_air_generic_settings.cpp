@@ -30,7 +30,7 @@ std::string AirCameraGenericSettingsHolder::imp_serialize(
 
 // The image writer writes the cam type to here
 static const auto IMAGE_WRITER_CAM_FILENAME =
-    std::string(CONFIG_BASE_PATH) + "camera1.txt";
+    std::string(getConfigBasePath())+ "camera1.txt";
 static int rpi_get_default_primary_cam_type() {
   // The image writer writes the cam type to
   const auto opt_content =

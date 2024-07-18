@@ -125,7 +125,7 @@ std::optional<WiFiCard> DWifiCards::fill_linux_wifi_card_identifiers(
   card.mac = mac;
   if (card.type == WiFiCardType::OPENHD_RTL_88X2AU) {
     const bool custom_hardware =
-        OHDFilesystemUtil::exists(std::string(CONFIG_BASE_PATH) +
+        OHDFilesystemUtil::exists(std::string(getConfigBasePath())+
                                   "hardware_vtx_v20.txt") ||
         OHDPlatform::instance().is_x20();
     if (custom_hardware) {
