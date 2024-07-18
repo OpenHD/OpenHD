@@ -201,7 +201,7 @@ int main(int argc, char *argv[]) {
 
     std::cout << ss.str() << std::flush;
     // openhd::debug_config();
-    OHDInterface::print_internal_fec_optimization_method();
+    // OHDInterface::print_internal_fec_optimization_method();
 }
   // Create the folder structure
   openhd::generateSettingsDirectoryIfNonExists();
