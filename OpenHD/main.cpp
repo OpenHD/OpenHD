@@ -182,7 +182,7 @@ int main(int argc, char *argv[]) {
     if (options.run_as_air) {
         ss << "----------------------- " << green << "Air Unit" << reset << " -----------------------\n";
     } else {
-        ss << "----------------------- " << red << "Ground Unit" << reset << " -----------------------\n";
+        ss << "---------------------- " << red << "Ground Unit" << reset << " -----------------------\n";
     }   ss << "reset_all_settings:"
        << OHDUtil::yes_or_no(options.reset_all_settings) << "\n";
     ss << "run_time_seconds:" << options.run_time_seconds << "\n";
