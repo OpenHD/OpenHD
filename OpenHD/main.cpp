@@ -182,10 +182,11 @@ int main(int argc, char *argv[]) {
     if (options.run_as_air) {
         ss << "----------------------- " << green << "Air Unit" << reset << " -----------------------\n";
     } else {
-        ss << "---------------------- " << red << "Ground Unit" << reset << " -----------------------\n";
-    }   ss << "reset_all_settings:"
-       << OHDUtil::yes_or_no(options.reset_all_settings) << "\n";
-    ss << "run_time_seconds:" << options.run_time_seconds << "\n";
+        ss << "----------------------  " << red << "Ground Unit" << reset << " -----------------------\n";
+    }
+    if (options.reset_all_settings) {
+        ss << red << "Reset Settings" << reset << "\n";
+    } 
     ss << "hardware-config-file:["
        << options.hardware_config_file.value_or("DEFAULT") << "]\n";
     // ss<<"Git info:Branch:"<<git_Branch()<<" SHA:"<<git_CommitSHA1()<<"
