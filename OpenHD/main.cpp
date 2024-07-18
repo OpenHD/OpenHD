@@ -159,7 +159,7 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
 }
 
 const char* CONFIG_BASE_PATH = "/config/openhd/";
-const char* CONFIG_BASE_PATH = "/config/openhd/";
+const char* VIDEO_PATH = "/home/openhd/Videos/";
 
 // void setPlatformPaths(const OHDPlatform& platform) {
 //     // if (platform.is_rock() && platform.is_zero3w()) {
