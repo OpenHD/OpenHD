@@ -172,12 +172,12 @@ void setPlatformPaths(const OHDPlatform& platform) {
     //     // CONFIG_BASE_PATH = "/boot/openhd/";
     //     // VIDEO_PATH = "/home/openhd/Videos/";
     //     std::cerr << "Setting default paths for unknown platform: " << platform.to_string() << std::endl;
-    }
+    //}
 
     // Now you can use CONFIG_BASE_PATH and VIDEO_PATH as needed
     std::cerr << "Platform: " << platform.to_string() << std::endl;
-    std::cerr << "CONFIG_BASE_PATH: " << CONFIG_BASE_PATH << std::endl;
-    std::cerr << "VIDEO_PATH: " << VIDEO_PATH << std::endl;
+    // std::cerr << "CONFIG_BASE_PATH: " << CONFIG_BASE_PATH << std::endl;
+    // std::cerr << "VIDEO_PATH: " << VIDEO_PATH << std::endl;
 }
 
 int main(int argc, char *argv[]) {
