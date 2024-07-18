@@ -291,10 +291,8 @@ int main(int argc, char *argv[]) {
     ohdTelemetry->settings_generic_ready();
     // now telemetry can send / receive data via wifibroadcast
     ohdTelemetry->set_link_handle(ohdInterface->get_link_handle());
-    m_console->info("All OpenHD modules running");
+    std::cout << green << "OpenHD was successfully started." << reset << std::endl;
     openhd::LEDManager::instance().set_status_okay();
-    openhd::log::log_to_kernel("All OpenHD modules running");
-
     // run forever, everything has its own threads. Note that the only way to
     // break out basically is when one of the modules encounters an exception.
     static bool quit = false;

@@ -3,9 +3,9 @@
 #include <list>
 #include <regex>
 #include <thread>
+#include <iostream>
 
 #include "config_paths.h"
-
 #include "openhd_spdlog.h"
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"
@@ -340,7 +340,9 @@ void DWifiCards::main_discover_an_process_wifi_cards(
     std::vector<WiFiCard>& m_monitor_mode_cards,
     std::optional<WiFiCard>& m_opt_hotspot_card) {
   const auto m_platform = OHDPlatform::instance();
-  openhd::log::get_default()->warn("Waiting for wifi card(s)...");
+  const std::string blue = "\033[34m";
+  const std::string reset = "\033[0m";
+  std::cout << blue << "Waiting for wifi card(s)..." << reset << std::endl;
   const bool debug = false;
   if (config.WIFI_MONITOR_CARD_EMULATE) {
     m_monitor_mode_cards.push_back(DWifiCards::create_card_monitor_emulate());
