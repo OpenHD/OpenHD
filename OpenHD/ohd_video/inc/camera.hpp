@@ -139,7 +139,7 @@ static std::string x_cam_type_to_string(int camera_type) {
       return "INFIRAY_P2_PRO";
     case X_CAM_TYPE_USB_INFIRAY_X2:
       return"INFIRAY_X2";
-    case  X_CAM_TYPE_USB_FLIR_VUE
+    case  X_CAM_TYPE_USB_FLIR_VUE:
       return "FLIR VUE";
     // All the rpi stuff begin
     case X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI:
