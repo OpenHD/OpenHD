@@ -9,6 +9,8 @@
 #include <csignal>
 #include <iostream>
 #include <memory>
+#include "openhd_platform.h"
+
 
 // Initial default paths
 static char* CONFIG_BASE_PATH = nullptr;
