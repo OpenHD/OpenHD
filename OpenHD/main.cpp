@@ -160,8 +160,8 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
 
 void setPlatformPaths(const OHDPlatform& platform) {
     if (platform.is_rock()) {
-        // CONFIG_BASE_PATH = "/config/openhd/";
-        // VIDEO_PATH = "/home/openhd/Videos/";
+        CONFIG_BASE_PATH = "/config/openhd/";
+        VIDEO_PATH = "/home/openhd/Videos/";
         std::cerr << "Setting paths for rock platform: " << platform.to_string() << std::endl;
     } else if (platform.is_x20()) {
         // CONFIG_BASE_PATH = "/config/openhd/";
