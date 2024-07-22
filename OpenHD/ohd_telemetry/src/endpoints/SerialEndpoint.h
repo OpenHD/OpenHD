@@ -79,6 +79,7 @@ class SerialEndpoint : public MEndpoint {
  private:
   const HWOptions m_options;
   int m_fd = -1;
+  bool uart_log_warning_once=false;
   std::mutex m_connect_receive_thread_mutex;
   std::unique_ptr<std::thread> m_connect_receive_thread = nullptr;
   bool _stop_requested = false;
