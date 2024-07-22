@@ -25,11 +25,12 @@ void openhd::set_config_file(const std::string& config_file_path) {
 static openhd::Config load_or_default() {
   try {
     openhd::Config ret{};
-    if (OHDFilesystemUtil::exists(CONFIG_FILE_PATH)) {
-      get_logger()->warn(
+    if (!OHDFilesystemUtil::exists(CONFIG_FILE_PATH)) {
+      return ret;
+    } else {
+          get_logger()->warn(
           "Advanced config file [{}] used!",
           CONFIG_FILE_PATH);
-      return ret;
     }
     inih::INIReader r{CONFIG_FILE_PATH};
     // Get and parse the ini value
