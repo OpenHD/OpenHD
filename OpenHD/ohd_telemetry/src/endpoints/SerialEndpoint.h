@@ -65,6 +65,7 @@ class SerialEndpoint : public MEndpoint {
   static bool is_valid_linux_baudrate(int baudrate);
 
  private:
+  bool uart_log_warning_once = false;
   bool sendMessagesImpl(const std::vector<MavlinkMessage>& messages) override;
   static int define_from_baudrate(int baudrate);
   static int setup_port(const HWOptions& options,

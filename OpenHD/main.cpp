@@ -13,6 +13,7 @@
 #include <csignal>
 #include <iostream>
 #include <memory>
+#include <cstdlib>
 
 #include "openhd_buttons.h"
 #include "openhd_global_constants.hpp"
@@ -163,6 +164,9 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
 int main(int argc, char *argv[]) {
   // OpenHD needs to be run as root!
   OHDUtil::terminate_if_not_root();
+  if (OHDFilesystemUtil::exists("/run/openhd/hold.pid")) {
+      std::exit(0);
+  }
   const OHDRunOptions options = parse_run_parameters(argc, argv);
   if (options.hardware_config_file.has_value()) {
     openhd::set_config_file(options.hardware_config_file.value());
