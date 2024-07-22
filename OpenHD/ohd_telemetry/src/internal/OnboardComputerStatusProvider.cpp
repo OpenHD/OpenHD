@@ -220,7 +220,11 @@ OnboardComputerStatusProvider::get_current_status_as_mavlink_message(
 
 void OnboardComputerStatusProvider::ina219_log_warning_once() {
   if (m_ina_219.has_any_error && !m_ina219_warning_logged) {
-    openhd::log::get_default()->warn("No INA219 detected!");
+    openhd::log::get_default()->debug("No INA219 detected!");
+    m_ina219_warning_logged = true;
+  }
+  else{
+    openhd::log::get_default()->warn("INA219 detected!");
     m_ina219_warning_logged = true;
   }
 }

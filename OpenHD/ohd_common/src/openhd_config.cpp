@@ -25,9 +25,9 @@ void openhd::set_config_file(const std::string& config_file_path) {
 static openhd::Config load_or_default() {
   try {
     openhd::Config ret{};
-    if (!OHDFilesystemUtil::exists(CONFIG_FILE_PATH)) {
+    if (OHDFilesystemUtil::exists(CONFIG_FILE_PATH)) {
       get_logger()->warn(
-          "Config file [{}] does not exist, using default settings",
+          "Advanced config file [{}] used!",
           CONFIG_FILE_PATH);
       return ret;
     }
