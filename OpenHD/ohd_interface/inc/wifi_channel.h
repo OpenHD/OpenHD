@@ -254,8 +254,8 @@ static std::vector<WifiChannel> frequencies_to_channels(
   return ret;
 }
 
-static std::vector<WifiChannel> get_openhd_channels_1_to_5() {
-  std::vector<uint32_t> frequencies = {5700, 5745, 5785, 5825, 5865};
+static std::vector<WifiChannel> get_openhd_channels_1_to_7() {
+  std::vector<uint32_t> frequencies = {5700, 5745, 5785, 5825, 5865, 5260, 5280};
   return frequencies_to_channels(frequencies);
 }
 

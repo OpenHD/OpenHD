@@ -151,8 +151,8 @@ std::vector<openhd::WifiChannel> openhd::wb::get_scan_channels_frequencies(
     const WiFiCard& card, int channels_to_scan) {
   std::vector<openhd::WifiChannel> ret;
   if (channels_to_scan == 0) {
-    // OpenHD channels 1 to 5 only
-    return openhd::get_openhd_channels_1_to_5();
+    // OpenHD channels 1 to 7 only
+    return openhd::get_openhd_channels_1_to_7();
   }
   if (channels_to_scan == 1) {
     auto supported = card.supported_frequencies_2G;
@@ -166,8 +166,8 @@ std::vector<openhd::WifiChannel> openhd::wb::get_analyze_channels_frequencies(
     const WiFiCard& card, int channels_to_scan) {
   std::vector<openhd::WifiChannel> ret;
   if (channels_to_scan == 0) {
-    // OpenHD channels 1 to 5 only
-    return openhd::get_openhd_channels_1_to_5();
+    // OpenHD channels 1 to 7 only
+    return openhd::get_openhd_channels_1_to_7();
   }
   if (channels_to_scan == 1) {
     // 2.4G but we scan in 40Mhz increments
