@@ -232,7 +232,10 @@ int SerialEndpoint::setup_port(const SerialEndpoint::HWOptions& options,
 void SerialEndpoint::connect_and_read_loop() {
   while (!_stop_requested) {
     if (!OHDFilesystemUtil::exists(m_options.linux_filename)) {
-      m_console->warn("UART file does not exist");
+      if (!uart_log_warning_once) {
+      m_console->warn("UART not found!");
+      uart_log_warning_once=true;
+      }
       std::this_thread::sleep_for(std::chrono::seconds(1));
       continue;
     }
