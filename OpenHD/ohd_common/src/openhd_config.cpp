@@ -28,9 +28,7 @@ static openhd::Config load_or_default() {
     if (!OHDFilesystemUtil::exists(CONFIG_FILE_PATH)) {
       return ret;
     } else {
-          get_logger()->warn(
-          "Advanced config file [{}] used!",
-          CONFIG_FILE_PATH);
+      get_logger()->warn("Advanced config file [{}] used!", CONFIG_FILE_PATH);
     }
     inih::INIReader r{CONFIG_FILE_PATH};
     // Get and parse the ini value
