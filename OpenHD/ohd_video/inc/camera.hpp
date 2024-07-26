@@ -137,10 +137,10 @@ static std::string x_cam_type_to_string(int camera_type) {
     case X_CAM_TYPE_USB_INFIRAY_P2_PRO:
       return "INFIRAY_P2_PRO";
     case X_CAM_TYPE_USB_INFIRAY_X2:
-      return"INFIRAY_X2";
-    case  X_CAM_TYPE_USB_FLIR_VUE:
+      return "INFIRAY_X2";
+    case X_CAM_TYPE_USB_FLIR_VUE:
       return "FLIR VUE";
-    case  X_CAM_TYPE_USB_FLIR_BOSON:
+    case X_CAM_TYPE_USB_FLIR_BOSON:
       return "FLIR BOSON";
     // All the rpi stuff begin
     case X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI:
@@ -305,17 +305,17 @@ struct XCamera {
     } else if (camera_type == X_CAM_TYPE_USB_INFIRAY) {
       return {ResolutionFramerate{384, 292, 25}};
     } else if (camera_type == X_CAM_TYPE_USB_INFIRAY_T2) {
-        std::vector<ResolutionFramerate> ret;
-        ret.push_back(ResolutionFramerate{256, 192, 25});
-        ret.push_back(ResolutionFramerate{0, 0, 0});
+      std::vector<ResolutionFramerate> ret;
+      ret.push_back(ResolutionFramerate{256, 192, 25});
+      ret.push_back(ResolutionFramerate{0, 0, 0});
     } else if (camera_type == X_CAM_TYPE_USB_INFIRAY_P2_PRO) {
       return {ResolutionFramerate{256, 192, 25}};
     } else if (camera_type == X_CAM_TYPE_USB_INFIRAY_X2) {
       return {ResolutionFramerate{384, 292, 50}};
-     } else if (camera_type == X_CAM_TYPE_USB_FLIR_VUE) {
+    } else if (camera_type == X_CAM_TYPE_USB_FLIR_VUE) {
       return {ResolutionFramerate{640, 512, 30}};
     } else if (camera_type == X_CAM_TYPE_USB_FLIR_BOSON) {
-      return {ResolutionFramerate{640, 512, 60}}; 
+      return {ResolutionFramerate{640, 512, 60}};
     } else if (camera_type == X_CAM_TYPE_USB_GENERIC) {
       std::vector<ResolutionFramerate> ret;
       // most likely working resolution
