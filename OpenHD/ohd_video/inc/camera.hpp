@@ -305,9 +305,9 @@ struct XCamera {
     } else if (camera_type == X_CAM_TYPE_USB_INFIRAY) {
       return {ResolutionFramerate{384, 292, 25}};
     } else if (camera_type == X_CAM_TYPE_USB_INFIRAY_T2) {
-      // return {ResolutionFramerate{256,192,25}}; for whatever reason doesn't
-      // work ...
-      return {ResolutionFramerate{0, 0, 0}};
+      std::vector<ResolutionFramerate> ret;
+      ret.push_back(ResolutionFramerate{256, 192, 25});
+      ret.push_back(ResolutionFramerate{0, 0, 0});
     } else if (camera_type == X_CAM_TYPE_USB_INFIRAY_P2_PRO) {
       return {ResolutionFramerate{256, 192, 25}};
     } else if (camera_type == X_CAM_TYPE_USB_INFIRAY_X2) {
@@ -631,8 +631,8 @@ static std::vector<ManufacturerForPlatform> get_camera_choices_for_platform(
       CameraNameAndType{"INFIRAY USB T2", X_CAM_TYPE_USB_INFIRAY_T2},
       CameraNameAndType{"INFIRAY USB P2 Pro", X_CAM_TYPE_USB_INFIRAY_P2_PRO},
       CameraNameAndType{"INFIRAY USB X2", X_CAM_TYPE_USB_INFIRAY_X2},
-      CameraNameAndType{"INFIRAY USB X2", X_CAM_TYPE_USB_FLIR_VUE},
-      CameraNameAndType{"INFIRAY USB X2", X_CAM_TYPE_USB_FLIR_BOSON},
+      CameraNameAndType{"FLIR_VUE", X_CAM_TYPE_USB_FLIR_VUE},
+      CameraNameAndType{"FLIR_BOSON", X_CAM_TYPE_USB_FLIR_BOSON},
       CameraNameAndType{"EXP USB GENERIC", X_CAM_TYPE_USB_GENERIC}};
   ManufacturerForPlatform MANUFACTURER_USB{"USB", usb_cameras};
   std::vector<CameraNameAndType> debug_cameras{
