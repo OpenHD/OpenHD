@@ -63,14 +63,14 @@ jobs:
 
       - name: Push
         id: push
-        if: github.ref_name == 'release' || github.ref_name == 'dev-release'
+        if: github.ref_name == 'release' || github.ref_name == 'dev-release' || github.ref_name == 'x-20'
         uses: cloudsmith-io/action@master
         with:
           api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
           command: "push"
           format: "deb"
           owner: "openhd"
-          repo: dev-release
+          repo: "dev-release"
           distro: "debian"
           release: "bullseye"
           republish: "true" # needed ONLY if version is not changing
