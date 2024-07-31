@@ -1603,52 +1603,75 @@ void WBLink::on_wifi_card_fatal_error() {
 }
 
 void WBLink::wt_perform_update_thermal_protection() {
+  m_console->error("Entering wt_perform_update_thermal_protection");
+
   if (!OHDPlatform::instance().is_x20()) {
+    m_console->error("Not an x20 platform, exiting");
     // Only works on x20
     return;
   }
-  if (OHDFilesystemUtil::exists(std::string(getConfigBasePath()) +
-                                "disable_thermal_limits.txt")) {
+
+  std::string disable_thermal_limits_path = std::string(getConfigBasePath()) + "disable_thermal_limits.txt";
+  m_console->error("Checking for disable thermal limits file at: {}", disable_thermal_limits_path);
+  if (OHDFilesystemUtil::exists(disable_thermal_limits_path)) {
+    m_console->error("Disable thermal limits file found, setting thermal protection to NONE");
     m_thermal_protection_level = THERMAL_PROTECTION_NONE;
     return;
   }
+
+  m_console->error("Reading temperature from RTL8812AU thermal sensor");
   auto temp = openhd::x20_read_rtl8812au_thermal_sensor_degree();
+  m_console->error("Current temperature: {}", temp);
   if (temp <= 0) {
+    m_console->error("Invalid temperature reading, setting thermal protection to NONE");
     m_thermal_protection_level = THERMAL_PROTECTION_NONE;
     return;
   }
+
   static auto THERMAL_LIMIT_VIDEO_REDUCED = 85;
   static auto THERMAL_LIMIT_VIDEO_OFF = 95;
+  m_console->error("Thermal limits - Video Reduced: {}, Video Off: {}", THERMAL_LIMIT_VIDEO_REDUCED, THERMAL_LIMIT_VIDEO_OFF);
+
   uint8_t new_thermal_protection_level;
   if (temp >= THERMAL_LIMIT_VIDEO_OFF) {
-    // >=X degree, disable video
+    m_console->error("Temperature >= {}, setting thermal protection to VIDEO_DISABLED", THERMAL_LIMIT_VIDEO_OFF);
     new_thermal_protection_level = THERMAL_PROTECTION_VIDEO_DISABLED;
   } else if (temp >= THERMAL_LIMIT_VIDEO_REDUCED) {
-    //  >=X degree, throttle video
+    m_console->error("Temperature >= {}, setting thermal protection to RATE_REDUCED", THERMAL_LIMIT_VIDEO_REDUCED);
     new_thermal_protection_level = THERMAL_PROTECTION_RATE_REDUCED;
-  } else {  // no thermal protection
+  } else {
+    m_console->error("Temperature < {}, setting thermal protection to NONE", THERMAL_LIMIT_VIDEO_REDUCED);
     new_thermal_protection_level = THERMAL_PROTECTION_NONE;
   }
+
   if (new_thermal_protection_level > m_thermal_protection_level) {
-    // apply immediately
+    m_console->error("New thermal protection level {} is greater than current {}, applying immediately", new_thermal_protection_level, m_thermal_protection_level);
     m_thermal_protection_level = new_thermal_protection_level;
     m_thermal_protection_enable_tp = std::chrono::steady_clock::now();
   } else if (new_thermal_protection_level < m_thermal_protection_level) {
-    const auto elapsed_since_thermal_protection_enabled =
-        std::chrono::steady_clock::now() - m_thermal_protection_enable_tp;
-    // Every time some type of thermal protection is activated, it stays active
-    // for at least X seconds to avoid oscillating
+    m_console->error("New thermal protection level {} is less than current {}", new_thermal_protection_level, m_thermal_protection_level);
+    const auto elapsed_since_thermal_protection_enabled = std::chrono::steady_clock::now() - m_thermal_protection_enable_tp;
+    m_console->error("Elapsed time since thermal protection enabled: {}", std::chrono::duration_cast<std::chrono::seconds>(elapsed_since_thermal_protection_enabled).count());
+
     if (elapsed_since_thermal_protection_enabled < std::chrono::seconds(10)) {
+      m_console->error("Elapsed time < 10 seconds, maintaining current thermal protection level");
       return;
     }
+
     if (m_thermal_protection_level == THERMAL_PROTECTION_VIDEO_DISABLED) {
-      // When video streaming is disabled, we only re-enable it once we have
-      // cooled down significantly
-      if (temp <= 70) {
+      m_console->error("Current thermal protection level is VIDEO_DISABLED, checking if temperature <= 80");
+      if (temp <= 80) {
+        m_console->error("Temperature <= 80, updating thermal protection level to {}", new_thermal_protection_level);
         m_thermal_protection_level = new_thermal_protection_level;
+      } else {
+        m_console->error("Temperature > 80, maintaining VIDEO_DISABLED protection");
       }
     } else {
+      m_console->error("Updating thermal protection level to {}", new_thermal_protection_level);
       m_thermal_protection_level = new_thermal_protection_level;
     }
   }
+
+  m_console->error("Exiting wt_perform_update_thermal_protection");
 }
+

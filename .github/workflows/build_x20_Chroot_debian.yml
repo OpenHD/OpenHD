@@ -6,7 +6,7 @@ on:
       - "2.5-evo"
       - "dev-release"
       - "release"
-      - "usenewbuilder"
+      - "x-20"
 
 jobs:
   build:
@@ -70,7 +70,7 @@ jobs:
           command: "push"
           format: "deb"
           owner: "openhd"
-          repo: ${{ github.ref_name }}
+          repo: dev-release
           distro: "debian"
           release: "bullseye"
           republish: "true" # needed ONLY if version is not changing
