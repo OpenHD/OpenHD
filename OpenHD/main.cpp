@@ -2,7 +2,6 @@
 // Created by consti10 on 02.05.22.
 //
 
-#include "microhard_link.h"
 #include <OHDTelemetry.h>
 #include <getopt.h>
 #include <ohd_interface.h>
@@ -26,6 +25,7 @@
 // #include "git.h"
 #include "openhd_config.h"
 #include "config_paths.h"
+#include "microhard_link.h"
 
 // |-------------------------------------------------------------------------------|
 // |                         OpenHD core executable | | Weather you run as air
