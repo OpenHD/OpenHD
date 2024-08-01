@@ -154,7 +154,6 @@ static void wait_for_microhard_module(bool air) {
             openhd::log::get_default()->debug("Microhard module found at {}", microhard_device_ip);
             break;
         }
-        openhd::log::get_default()->debug("Waiting for microhard module at {}", microhard_device_ip);
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 }
