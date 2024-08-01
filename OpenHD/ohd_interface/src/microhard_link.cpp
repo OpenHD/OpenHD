@@ -3,6 +3,10 @@
 //
 
 #include "microhard_link.h"
+#include <iostream>
+#include <cstdio>
+#include <string>
+#include <cstring>
 
 #include <arpa/inet.h>
 
