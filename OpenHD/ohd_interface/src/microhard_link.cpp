@@ -77,10 +77,10 @@ void log_ip_addresses() {
     if (!ip_addresses.empty()) {
         for (const auto& ip : ip_addresses) {
             openhd::log::get_default()->warn("Found IP address: {}", ip);
-            if (ground==="true") {
+            if (ground =="true") {
             openhd::log::get_default()->warn("Ground Unit");
             }
-            if (ground==="false") {
+            if (ground =="false") {
             openhd::log::get_default()->warn("Air Unit");
             }
         }
