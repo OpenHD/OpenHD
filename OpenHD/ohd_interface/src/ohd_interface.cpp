@@ -44,7 +44,7 @@ OHDInterface::OHDInterface(OHDProfile profile1)
   m_opt_hotspot_card = std::nullopt;
   const auto config = openhd::load_config();
   bool microhard_device_present = is_microhard_device_present();
-  m_console->warn("Microhard device presence: {}", microhard_device_present);
+  m_console->warn("Using Enterprise Link: {}", microhard_device_present);
   if (!microhard_device_present) {
     m_microhard_link = std::make_shared<MicrohardLink>(m_profile);
     return;
