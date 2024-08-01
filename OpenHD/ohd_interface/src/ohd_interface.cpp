@@ -48,6 +48,7 @@ OHDInterface::OHDInterface(OHDProfile profile1)
   if (microhard_device_present) {
     m_console->warn("Using Link: Microhard");
     m_microhard_link = std::make_shared<MicrohardLink>(m_profile);
+    return;
   } else {
     m_console->warn("Using Link: ohd_wifibroadcast");
   }
