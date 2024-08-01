@@ -4,7 +4,7 @@ set -e
 PLATFORM="$1"
 
 
-BASE_PACKAGES="libusb-1.0-0-dev libpcap-dev libsodium-dev libnl-3-dev libnl-genl-3-dev libnl-route-3-dev libsdl2-dev"
+BASE_PACKAGES="clang-format libusb-1.0-0-dev libpcap-dev libsodium-dev libnl-3-dev libnl-genl-3-dev libnl-route-3-dev libsdl2-dev"
 VIDEO_PACKAGES="libgstreamer-plugins-base1.0-dev libv4l-dev"
 BUILD_PACKAGES="git build-essential autotools-dev automake libtool python3-pip autoconf apt-transport-https ruby-dev cmake"
 
