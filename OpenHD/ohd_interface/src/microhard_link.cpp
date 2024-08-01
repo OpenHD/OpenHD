@@ -6,6 +6,35 @@
 
 #include <arpa/inet.h>
 
+bool checkMicrohardDevice() {
+    const std::string command = "lsusb";
+    const std::string target = "Microhard";
+
+    // Open a pipe to run the command
+    FILE* pipe = popen(command.c_str(), "r");
+    if (!pipe) {
+        std::cerr << "Failed to run lsusb command" << std::endl;
+        return false;
+    }
+
+    char buffer[128];
+    bool found = false;
+
+    // Read the output line by line
+    while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+        // Check if the line contains the target string
+        if (std::strstr(buffer, target.c_str()) != nullptr) {
+            found = true;
+            break;
+        }
+    }
+
+    // Close the pipe
+    pclose(pipe);
+
+    return found;
+}
+
 // Master -
 static constexpr auto MICROHARD_AIR_IP = "192.168.168.11";
 // CLient

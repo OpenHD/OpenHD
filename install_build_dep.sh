@@ -14,7 +14,7 @@ PLATFORM_PACKAGES="libcamera-openhd"
 PLATFORM_PACKAGES_REMOVE="python3-libcamera libcamera0"
 }
 function install_x86_packages {
-PLATFORM_PACKAGES="libunwind-dev gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly"
+PLATFORM_PACKAGES="iw libunwind-dev gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly"
 PLATFORM_PACKAGES_REMOVE=""
 }
 function install_rock_packages {
