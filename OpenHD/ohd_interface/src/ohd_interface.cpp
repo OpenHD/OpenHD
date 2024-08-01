@@ -47,14 +47,11 @@ OHDInterface::OHDInterface(OHDProfile profile1)
   bool microhard_device_present = is_microhard_device_present();
   if (microhard_device_present) {
     m_console->warn("Using Link: Microhard");
+    m_microhard_link = std::make_shared<MicrohardLink>(m_profile);
   } else {
-    m_console->warn("Using Link: OHD_wfb");
+    m_console->warn("Using Link: ohd_wifibroadcast");
   }
 
-  if (!microhard_device_present) {
-    m_microhard_link = std::make_shared<MicrohardLink>(m_profile);
-    return;
-  }
   DWifiCards::main_discover_an_process_wifi_cards(
       config, m_profile, m_console, m_monitor_mode_cards, m_opt_hotspot_card);
   m_console->debug("monitor_mode card(s):{}",
