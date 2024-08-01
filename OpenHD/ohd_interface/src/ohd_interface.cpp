@@ -16,6 +16,26 @@
 #include "openhd_util_filesystem.h"
 #include "wb_link.h"
 
+// Helper function to execute a shell command and return the output
+std::string exec(const std::string& cmd) {
+    std::array<char, 128> buffer;
+    std::string result;
+    std::shared_ptr<FILE> pipe(popen(cmd.c_str(), "r"), pclose);
+    if (!pipe) {
+        throw std::runtime_error("popen() failed!");
+    }
+    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+        result += buffer.data();
+    }
+    return result;
+}
+
+// Helper function to check if a Microhard device is present
+bool is_microhard_device_present() {
+    std::string output = exec("lsusb");
+    return output.find("Microhard") != std::string::npos;
+}
+
 OHDInterface::OHDInterface(OHDProfile profile1)
     : m_profile(std::move(profile1)) {
   m_console = openhd::log::create_or_get("interface");
@@ -23,7 +43,9 @@ OHDInterface::OHDInterface(OHDProfile profile1)
   m_monitor_mode_cards = {};
   m_opt_hotspot_card = std::nullopt;
   const auto config = openhd::load_config();
-  if (!config.DEV_ENABLE_MICROHARD) {
+  bool microhard_device_present = is_microhard_device_present();
+  m_console->debug("Microhard device presence: {}", microhard_device_present);
+  if (!microhard_device_present) {
     m_microhard_link = std::make_shared<MicrohardLink>(m_profile);
     return;
   }
