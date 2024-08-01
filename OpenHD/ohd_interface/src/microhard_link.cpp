@@ -72,7 +72,7 @@ std::vector<std::string> get_ip_addresses(const std::string& prefix) {
 
 void log_ip_addresses() {
     LOG_FUNCTION_ENTRY();
-    bool ground = openhd::tmp::file_ground_exists()
+    bool ground = openhd::tmp::file_ground_exists();
     auto ip_addresses = get_ip_addresses("192.168.168");
     if (!ip_addresses.empty()) {
         for (const auto& ip : ip_addresses) {
