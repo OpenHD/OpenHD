@@ -124,6 +124,7 @@ void MicrohardLink::monitor_gateway_signal_strength(const std::string& gateway_i
     while (true) {
                     openhd::log::get_default()->warn("get rssi");
         try {
+            openhd::log::get_default()->warn("start talking");
             std::string command = "AT+MWRSSI\n";
             communicate_with_device(gateway_ip, command);
             openhd::log::get_default()->warn("got rssi");
