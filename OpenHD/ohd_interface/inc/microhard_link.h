@@ -26,6 +26,7 @@ class MicrohardLink : public OHDLink {
    * and/or the used hardware
    */
   std::vector<openhd::Setting> get_all_settings();
+  void monitor_gateway_signal_strength(const std::string& gateway_ip);
 
  private:
   const OHDProfile m_profile;

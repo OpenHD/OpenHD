@@ -80,6 +80,56 @@ std::vector<std::string> get_ip_addresses(const std::string& prefix) {
     return ip_addresses;
 }
 
+void monitor_gateway_signal_strength(const std::string& gateway_ip) {
+    LOG_FUNCTION_ENTRY();
+    if (gateway_ip.empty()) {
+        openhd::log::get_default()->warn("Gateway IP is empty. Exiting monitoring.");
+        return;
+    }
+
+    // Define the command and credentials
+    const std::string telnet_cmd = "telnet " + gateway_ip + " 23";
+    const std::string username = "admin\n";
+    const std::string password = "qwertz1\n";
+    const std::string command = "AT+MWRSSI\n";
+
+    // Continuously connect, send command, and print output every second
+    while (true) {
+        try {
+            // Open the connection using popen
+            FILE* telnet_process = popen(telnet_cmd.c_str(), "w+");
+            if (!telnet_process) {
+                openhd::log::get_default()->warn("Failed to run telnet command: {}", telnet_cmd.c_str());
+                return;
+            }
+
+            // Send credentials and command
+            fwrite(username.c_str(), 1, username.size(), telnet_process);
+            fwrite(password.c_str(), 1, password.size(), telnet_process);
+            fwrite(command.c_str(), 1, command.size(), telnet_process);
+            fflush(telnet_process);
+
+            // Read the response
+            char buffer[128];
+            std::string output;
+            while (fgets(buffer, sizeof(buffer), telnet_process) != nullptr) {
+                output += buffer;
+            }
+
+            // Log the output
+            openhd::log::get_default()->warn("Signal Strength Output: {}", output.c_str());
+
+            // Close the telnet process
+            pclose(telnet_process);
+        } catch (const std::exception& e) {
+            openhd::log::get_default()->warn("Exception occurred: {}", e.what());
+        }
+
+        // Wait for 1 second before the next iteration
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+}
+
 std::string get_gateway_ip() {
     openhd::log::get_default()->warn("Getting gateway IP...");
     std::string cmd = "ip route show default | awk '/default/ {print $3}' | grep '^192\\.168\\.168'";
@@ -229,6 +279,10 @@ MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
     if (m_video_rx) {
         m_video_rx->runInBackground();
     }
+
+     // Start monitoring gateway signal strength
+    std::thread monitor_thread(monitor_gateway_signal_strength, get_gateway_ip());
+    monitor_thread.detach(); // Run in the background
 }
 
 void MicrohardLink::transmit_telemetry_data(OHDLink::TelemetryTxPacket packet) {
