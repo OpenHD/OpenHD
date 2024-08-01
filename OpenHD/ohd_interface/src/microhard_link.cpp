@@ -143,7 +143,7 @@ void communicate_with_device(const std::string& ip, const std::string& command) 
       }
 
       // Optionally, add a sleep interval to avoid overwhelming the device
-      std::this_thread::sleep_for(std::chrono::seconds(1));
+      std::this_thread::sleep_for(std::chrono::milliseconds (100));
     }
 
   } catch (const Poco::Exception& e) {
