@@ -77,7 +77,6 @@ std::vector<std::string> get_ip_addresses(const std::string& prefix) {
 
 std::string get_gateway_ip(const std::string& ip) {
     LOG_FUNCTION_ENTRY();
-    std::string gateway_ip;
     openhd::log::get_default()->warn("Get gateway ip from :", ip);
     std::string cmd = "ip route show | grep 'default' | awk '{print $3}'";
     
