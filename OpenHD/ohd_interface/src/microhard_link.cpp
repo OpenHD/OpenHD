@@ -129,6 +129,10 @@ void communicate_with_device(const std::string& ip, const std::string& command) 
       while (std::getline(stream, line)) {
         response += line + "\n";
         openhd::log::get_default()->warn("Received line: {}", line);
+        // Break out of the loop if the end of the response is reached
+        if (line.find("OK") != std::string::npos) {
+          break;
+        }
       }
 
       // Log the response
@@ -145,6 +149,7 @@ void communicate_with_device(const std::string& ip, const std::string& command) 
   }
   LOG_FUNCTION_EXIT();
 }
+
 
 
 void MicrohardLink::monitor_gateway_signal_strength(const std::string& gateway_ip) {
