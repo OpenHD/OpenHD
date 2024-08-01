@@ -70,15 +70,6 @@ std::vector<std::string> get_ip_addresses(const std::string& prefix) {
     return ip_addresses;
 }
 
-void checkGroundUnit(const std::string& ground) {
-    bool ground = openhd::tmp::file_ground_exists();
-    if (ground == "true") {
-        openhd::log::get_default()->warn("Ground Unit");
-    } else if (ground == "false") {
-        openhd::log::get_default()->warn("Air Unit");
-    }
-}
-
 void log_ip_addresses() {
     LOG_FUNCTION_ENTRY();
     auto ip_addresses = get_ip_addresses("192.168.168");
@@ -135,18 +126,22 @@ static bool check_ip_alive(const std::string &ip, int port = 80) {
 static void wait_for_microhard_module(bool air) {
     LOG_FUNCTION_ENTRY();
     log_ip_addresses();
-    checkGroundUnit();
-    while (true) {
-        const auto microhard_device_ip = air ? MICROHARD_AIR_IP : MICROHARD_GND_IP;
-        auto available = check_ip_alive(microhard_device_ip);
-        if (available) {
-            openhd::log::get_default()->debug("Microhard module found");
-            break;
+    
+    bool fileGroundExists = openhd::tmp::file_ground_exists();
+    openhd::log::get_default()->debug("file_ground_exists: {}", fileGroundExists ? "true" : "false");
+
+        while (true) {
+            const auto microhard_device_ip = air ? MICROHARD_AIR_IP : MICROHARD_GND_IP;
+            auto available = check_ip_alive(microhard_device_ip);
+            if (available) {
+                openhd::log::get_default()->debug("Microhard module found");
+                break;
+            }
+            openhd::log::get_default()->debug("Waiting for microhard module");
+            std::this_thread::sleep_for(std::chrono::seconds(1));
         }
-        openhd::log::get_default()->debug("Waiting for microhard module");
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-    }
 }
+
 
 MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
     LOG_FUNCTION_ENTRY();
