@@ -2,6 +2,7 @@
 // Created by consti10 on 02.05.22.
 //
 
+#include "microhard_link.h"
 #include <OHDTelemetry.h>
 #include <getopt.h>
 #include <ohd_interface.h>
