@@ -1,13 +1,11 @@
-// Created by consti10 on 05.04.24.
-// Refactored and improved by Raphael 01.08.24
-//
-
+#include <iostream>
 #include <vector>
 #include <cstring>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
+#include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <thread>
@@ -15,9 +13,9 @@
 #include "microhard_link.h"
 #include "openhd_temporary_air_or_ground.h"
 
-
 // Macro to log function entry
 #define LOG_FUNCTION_ENTRY() openhd::log::get_default()->warn("Entering function: {}", __FUNCTION__)
+
 // Master
 static constexpr auto MICROHARD_AIR_IP = "192.168.168.11";
 // Client
@@ -25,6 +23,7 @@ static constexpr auto MICROHARD_GND_IP = "192.168.168.12";
 // The assigned IPs
 // NOTE: They have to be set correctly!
 static constexpr auto DEVICE_IP_AIR = "192.168.168.153";
+
 // Helper function to retrieve IP addresses starting with a specific prefix
 std::vector<std::string> get_ip_addresses(const std::string& prefix) {
     LOG_FUNCTION_ENTRY();
@@ -70,12 +69,57 @@ std::vector<std::string> get_ip_addresses(const std::string& prefix) {
     return ip_addresses;
 }
 
+std::string get_gateway_ip(const std::string& ip) {
+    LOG_FUNCTION_ENTRY();
+    int sockfd;
+    struct ifreq ifr;
+    struct rtentry rt;
+    struct sockaddr_in* sin;
+    char buf[4096];
+    struct ifconf ifc;
+    struct ifreq* it;
+    struct ifreq* end;
+    std::string gateway_ip = "";
+
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sockfd < 0) {
+        perror("socket");
+        return gateway_ip;
+    }
+
+    memset(&ifr, 0, sizeof(ifr));
+    strncpy(ifr.ifr_name, "eth0", IFNAMSIZ - 1); // Use the appropriate network interface name
+    if (ioctl(sockfd, SIOCGIFADDR, &ifr) < 0) {
+        perror("ioctl");
+        close(sockfd);
+        return gateway_ip;
+    }
+
+    sin = (struct sockaddr_in*)&ifr.ifr_addr;
+    memset(&rt, 0, sizeof(rt));
+    rt.rt_dst.sa_family = AF_INET;
+    ((struct sockaddr_in*)&rt.rt_dst)->sin_addr.s_addr = inet_addr(ip.c_str());
+    if (ioctl(sockfd, SIOCGROUTE, &rt) < 0) {
+        perror("ioctl");
+        close(sockfd);
+        return gateway_ip;
+    }
+
+    sin = (struct sockaddr_in*)&rt.rt_gateway;
+    gateway_ip = inet_ntoa(sin->sin_addr);
+
+    close(sockfd);
+    return gateway_ip;
+}
+
 void log_ip_addresses() {
     LOG_FUNCTION_ENTRY();
     auto ip_addresses = get_ip_addresses("192.168.168");
     if (!ip_addresses.empty()) {
         for (const auto& ip : ip_addresses) {
             openhd::log::get_default()->warn("Found IP address: {}", ip);
+            std::string gateway_ip = get_gateway_ip(ip);
+            openhd::log::get_default()->warn("Gateway IP for {}: {}", ip, gateway_ip);
         }
     } else {
         openhd::log::get_default()->warn("No IP addresses starting with 192.168.168 found.");
@@ -93,7 +137,6 @@ std::string get_detected_ip_address() {
         return ""; // Return an empty string if no IP found
     }
 }
-
 
 std::string find_device_ip_gnd() {
     LOG_FUNCTION_ENTRY();
@@ -157,9 +200,6 @@ static void wait_for_microhard_module(bool air) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 }
-
-
-
 
 MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
     LOG_FUNCTION_ENTRY();
