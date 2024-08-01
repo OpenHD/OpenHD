@@ -170,7 +170,6 @@ std::string get_gateway_ip() {
   std::string result;
   if (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
     result = buffer;
-    openhd::log::get_default()->warn("Raw gateway IP result: {}", result);
   }
   pclose(pipe);
 
@@ -273,13 +272,11 @@ std::string get_detected_ip_address() {
 }
 
 static void wait_for_microhard_module(bool is_air) {
-  LOG_FUNCTION_ENTRY();
   const std::string microhard_device_ip = get_gateway_ip();
 
   if (microhard_device_ip.empty()) {
     openhd::log::get_default()->warn(
         "No microhard device IP address detected. Exiting.");
-    LOG_FUNCTION_EXIT();
     return;
   }
 
