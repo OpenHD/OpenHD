@@ -75,7 +75,7 @@ class OHDInterface {
 };
 
 void OHDInterface::checkMicrohardDeviceStatus() {
-    bool result = checkMicrohardDevice();
+    bool result = checkMicrohardDeviceStatus();
     if (result) {
         m_console->warn("Microhard device check passed.");
     } else {

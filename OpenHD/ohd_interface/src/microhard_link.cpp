@@ -10,7 +10,7 @@
 
 #include <arpa/inet.h>
 
-bool checkMicrohardDevice() {
+bool checkMicrohardDeviceStatus() {
     const std::string command = "lsusb";
     const std::string target = "Microhard";
 

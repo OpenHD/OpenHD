@@ -30,7 +30,7 @@ class MicrohardLink : public OHDLink {
    */
   std::vector<openhd::Setting> get_all_settings();
 
-  bool checkMicrohardDevice();
+  bool checkMicrohardDeviceStatus();
 
  private:
   const OHDProfile m_profile;

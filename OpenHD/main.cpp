@@ -202,7 +202,7 @@ int main(int argc, char *argv[]) {
     ss << "\n";
 
     // Check for Microhard device
-    if (checkMicrohardDevice()) {
+    if (checkMicrohardDeviceStatus()) {
         std::cout << "Microhard device is connected and functioning properly.\n";
     } else {
         std::cerr << "Failed to detect the Microhard device.\n";
