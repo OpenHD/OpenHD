@@ -25,7 +25,7 @@
 // #include "git.h"
 #include "openhd_config.h"
 #include "config_paths.h"
-#include "ohd_interface/inc/microhard_link.h"
+#include "ohd_interface/microhard_link.h"
 
 // |-------------------------------------------------------------------------------|
 // |                         OpenHD core executable | | Weather you run as air
