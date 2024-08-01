@@ -10,6 +10,9 @@ add_subdirectory(../ohd_common commonlib EXCLUDE_FROM_ALL)
 # Build and include wifibroadcast
 include(lib/wifibroadcast/wifibroadcast/WBLib.cmake)
 
+# Find the POCO package
+find_package(Poco REQUIRED COMPONENTS Foundation Net) # Add other components if needed
+
 add_library(OHDInterfaceLib STATIC) # initialized below
 add_library(OHDInterfaceLib::OHDInterfaceLib ALIAS OHDInterfaceLib)
 
@@ -21,7 +24,7 @@ set(sources
     src/wifi_hotspot.cpp
     src/wb_link_helper.cpp
     src/wifi_command_helper.cpp
-        src/wifi_card.cpp
+    src/wifi_card.cpp
     src/wb_link_manager.cpp
     src/networking_settings.cpp
     src/wb_link_settings.cpp
@@ -40,16 +43,17 @@ target_include_directories(OHDInterfaceLib
     PUBLIC
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc>")
 
-#find_package(spdlog REQUIRED)
-#target_link_libraries(OHDInterfaceLib PRIVATE spdlog::spdlog)
+# Find and link POCO libraries
+target_include_directories(OHDInterfaceLib PUBLIC ${Poco_INCLUDE_DIRS})
+target_link_libraries(OHDInterfaceLib PUBLIC Poco::Foundation Poco::Net)
 
+# Link with other libraries
 target_link_libraries(OHDInterfaceLib PUBLIC OHDCommonLib)
 
 # needed to set wifi cards to monitor mode and more
 #include(cmake/FindLibNL.cmake)
 #target_include_directories(OHDInterfaceLib PRIVATE ${LibNL_INCLUDE_DIR})
 #target_link_libraries(OHDInterfaceLib PRIVATE ${LibNL_LIBRARIES})
-
 
 target_include_directories(OHDInterfaceLib PUBLIC inc/)
 target_link_libraries(OHDInterfaceLib PUBLIC ${WB_TARGET_LINK_LIBRARIES})
