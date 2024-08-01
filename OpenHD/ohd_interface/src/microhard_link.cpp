@@ -152,7 +152,7 @@ static constexpr int MICROHARD_UDP_PORT_TELEMETRY_AIR_TX = 5920;
 
 static bool check_ip_alive(const std::string &ip, int port = 23) {
     LOG_FUNCTION_ENTRY();
-    std::string gateway_ip = get_gateway_ip;
+    std::string gateway_ip = get_gateway_ip();
     openhd::log::get_default()->warn("Checking if IP {} is alive on port {}", ip, port);
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
@@ -172,6 +172,7 @@ static bool check_ip_alive(const std::string &ip, int port = 23) {
     
     return connected;
 }
+
 
 static void wait_for_microhard_module(bool air) {
     LOG_FUNCTION_ENTRY();
