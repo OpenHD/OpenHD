@@ -6,6 +6,47 @@
 
 #include <arpa/inet.h>
 
+// Helper function to retrieve IP addresses starting with a specific prefix
+std::vector<std::string> get_ip_addresses(const std::string& prefix) {
+    std::vector<std::string> ip_addresses;
+    int sockfd;
+    struct ifreq ifr;
+    struct ifconf ifc;
+    char buf[4096];
+    struct ifreq* it;
+
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sockfd < 0) {
+        perror("socket");
+        return ip_addresses;
+    }
+
+    ifc.ifc_len = sizeof(buf);
+    ifc.ifc_buf = buf;
+    if (ioctl(sockfd, SIOCGIFCONF, &ifc) < 0) {
+        perror("ioctl");
+        close(sockfd);
+        return ip_addresses;
+    }
+
+    for (it = ifc.ifc_req; (char*)it < buf + ifc.ifc_len; it++) {
+        ifr = *it;
+        if (ioctl(sockfd, SIOCGIFADDR, &ifr) < 0) {
+            perror("ioctl");
+            continue;
+        }
+        struct sockaddr_in* addr = (struct sockaddr_in*)&ifr.ifr_addr;
+        std::string ip = inet_ntoa(addr->sin_addr);
+        if (ip.find(prefix) == 0) {
+            ip_addresses.push_back(ip);
+        }
+    }
+
+    close(sockfd);
+    return ip_addresses;
+}
+
+
 // Master -
 static constexpr auto MICROHARD_AIR_IP = "192.168.168.11";
 // CLient
