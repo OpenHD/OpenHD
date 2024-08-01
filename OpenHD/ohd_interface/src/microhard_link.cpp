@@ -117,7 +117,7 @@ void communicate_with_device(const std::string& ip, const std::string& command) 
     stream << password << std::flush;
     std::this_thread::sleep_for(std::chrono::seconds(3)); // Wait for a second to process password
 
-while (true) { // Infinite loop for sending commands and receiving responses
+    while (true) { // Infinite loop for sending commands and receiving responses
       // Send the command to the device
       openhd::log::get_default()->warn("Sending command: {}", command);
       stream << command << std::flush;
@@ -137,6 +137,7 @@ while (true) { // Infinite loop for sending commands and receiving responses
       // Optionally, add a sleep interval to avoid overwhelming the device
       std::this_thread::sleep_for(std::chrono::seconds(1));
     }
+
   } catch (const Poco::Exception& e) {
     openhd::log::get_default()->warn("POCO Exception: {}", e.displayText());
   } catch (const std::exception& e) {
@@ -144,6 +145,7 @@ while (true) { // Infinite loop for sending commands and receiving responses
   }
   LOG_FUNCTION_EXIT();
 }
+
 
 void MicrohardLink::monitor_gateway_signal_strength(const std::string& gateway_ip) {
   LOG_FUNCTION_ENTRY();
