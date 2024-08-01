@@ -1,4 +1,3 @@
-//
 // refactored/rewritten by Raphael
 // based on consti10's work
 //
@@ -31,9 +30,11 @@
 
 #include "openhd_temporary_air_or_ground.h"
 
-// Macro to log function entry
+// Macro to log function entry and exit
 #define LOG_FUNCTION_ENTRY() \
   openhd::log::get_default()->warn("Entering function: {}", __FUNCTION__)
+#define LOG_FUNCTION_EXIT() \
+  openhd::log::get_default()->warn("Exiting function: {}", __FUNCTION__)
 
 // Constants
 static constexpr auto MICROHARD_AIR_IP = "192.168.168.11";
@@ -61,6 +62,7 @@ std::vector<std::string> get_ip_addresses(const std::string& prefix) {
   sockfd = socket(AF_INET, SOCK_DGRAM, 0);
   if (sockfd < 0) {
     perror("socket");
+    openhd::log::get_default()->warn("Failed to create socket for IP retrieval.");
     return ip_addresses;
   }
 
@@ -68,6 +70,7 @@ std::vector<std::string> get_ip_addresses(const std::string& prefix) {
   ifc.ifc_buf = buf;
   if (ioctl(sockfd, SIOCGIFCONF, &ifc) < 0) {
     perror("ioctl");
+    openhd::log::get_default()->warn("ioctl failed while getting interface configuration.");
     close(sockfd);
     return ip_addresses;
   }
@@ -79,22 +82,25 @@ std::vector<std::string> get_ip_addresses(const std::string& prefix) {
     strncpy(ifr.ifr_name, it->ifr_name, IFNAMSIZ - 1);
     if (ioctl(sockfd, SIOCGIFADDR, &ifr) < 0) {
       perror("ioctl");
+      openhd::log::get_default()->warn("ioctl failed while getting IP address for interface {}", ifr.ifr_name);
       continue;
     }
     auto* addr = (struct sockaddr_in*)&ifr.ifr_addr;
     std::string ip = inet_ntoa(addr->sin_addr);
     if (ip.find(prefix) == 0) {
       ip_addresses.push_back(ip);
+      openhd::log::get_default()->warn("Found IP address: {}", ip);
     }
   }
 
   close(sockfd);
+  LOG_FUNCTION_EXIT();
   return ip_addresses;
 }
 
-void communicate_with_device(const std::string& ip,
-                             const std::string& command) {
-  openhd::log::get_default()->warn("start talking");
+void communicate_with_device(const std::string& ip, const std::string& command) {
+  LOG_FUNCTION_ENTRY();
+  openhd::log::get_default()->warn("Starting communication with device at IP: {}", ip);
 
   try {
     Poco::Net::SocketAddress address(ip, 23);  // Telnet typically uses port 23
@@ -102,55 +108,55 @@ void communicate_with_device(const std::string& ip,
     Poco::Net::SocketStream stream(socket);
 
     // Send command to the device
-    openhd::log::get_default()->warn("send command");
+    openhd::log::get_default()->warn("Sending command: {}", command);
 
     stream << command << std::flush;
-    openhd::log::get_default()->warn("start reading");
+    openhd::log::get_default()->warn("Command sent, starting to read response.");
 
     // Read the response from the device
     std::string response;
     std::string line;
     while (std::getline(stream, line)) {
       response += line + "\n";
-      openhd::log::get_default()->warn("response");
+      openhd::log::get_default()->warn("Received line: {}", line);
     }
 
     // Log the response
-    openhd::log::get_default()->warn("Signal Strength Output: {}",
-                                     response.c_str());
+    openhd::log::get_default()->warn("Complete response received: \n{}", response);
   } catch (const Poco::Exception& e) {
     openhd::log::get_default()->warn("POCO Exception: {}", e.displayText());
   } catch (const std::exception& e) {
     openhd::log::get_default()->warn("Standard Exception: {}", e.what());
   }
+  LOG_FUNCTION_EXIT();
 }
 
-void MicrohardLink::monitor_gateway_signal_strength(
-    const std::string& gateway_ip) {
+void MicrohardLink::monitor_gateway_signal_strength(const std::string& gateway_ip) {
   LOG_FUNCTION_ENTRY();
   if (gateway_ip.empty()) {
-    openhd::log::get_default()->warn(
-        "Gateway IP is empty. Exiting monitoring.");
+    openhd::log::get_default()->warn("Gateway IP is empty. Exiting monitoring.");
+    LOG_FUNCTION_EXIT();
     return;
   }
 
   // Continuously connect, send command, and print output every second
   while (true) {
-    openhd::log::get_default()->warn("get rssi");
+    openhd::log::get_default()->warn("Getting RSSI from gateway IP: {}", gateway_ip);
     try {
       std::string command = "AT+MWRSSI\n";
       communicate_with_device(gateway_ip, command);
-      openhd::log::get_default()->warn("got rssi");
+      openhd::log::get_default()->warn("RSSI data retrieval complete.");
     } catch (const std::exception& e) {
-      openhd::log::get_default()->warn("Exception occurred: {}", e.what());
+      openhd::log::get_default()->warn("Exception occurred while getting RSSI data: {}", e.what());
     }
     // Wait for 1 second before the next iteration
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
+  LOG_FUNCTION_EXIT();
 }
 
 std::string get_gateway_ip() {
-  openhd::log::get_default()->warn("Getting gateway IP...");
+  LOG_FUNCTION_ENTRY();
   std::string cmd =
       "ip route show default | awk '/default/ {print $3}' | grep "
       "'^192\\.168\\.168'";
@@ -164,6 +170,7 @@ std::string get_gateway_ip() {
   std::string result;
   if (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
     result = buffer;
+    openhd::log::get_default()->warn("Raw gateway IP result: {}", result);
   }
   pclose(pipe);
 
@@ -173,17 +180,17 @@ std::string get_gateway_ip() {
   }
 
   openhd::log::get_default()->warn("Filtered Gateway IP: {}", result.c_str());
+  LOG_FUNCTION_EXIT();
   return result;
 }
 
 bool check_ip_alive(const std::string& ip, int port = 23) {
   LOG_FUNCTION_ENTRY();
-  openhd::log::get_default()->warn("Checking if IP {} is alive on port {}", ip,
-                                   port);
+  openhd::log::get_default()->warn("Checking if IP {} is alive on port {}", ip, port);
 
   int sockfd = socket(AF_INET, SOCK_STREAM, 0);
   if (sockfd < 0) {
-    openhd::log::get_default()->warn("Socket creation failed for IP {}", ip);
+    openhd::log::get_default()->warn("Failed to create socket for IP check: {}", ip);
     return false;
   }
 
@@ -197,6 +204,7 @@ bool check_ip_alive(const std::string& ip, int port = 23) {
     openhd::log::get_default()->warn("IP {} is not alive", ip);
   }
 
+  LOG_FUNCTION_EXIT();
   return connected;
 }
 
@@ -205,23 +213,28 @@ std::string find_device_ip_gnd() {
   auto ip_addresses = get_ip_addresses("192.168.168");
   for (const auto& ip : ip_addresses) {
     if (ip != MICROHARD_AIR_IP && ip != MICROHARD_GND_IP) {
+      LOG_FUNCTION_EXIT();
       return ip;
     }
   }
   openhd::log::get_default()->warn(
       "No suitable IP address found for DEVICE_IP_GND. Using default.");
+  LOG_FUNCTION_EXIT();
   return DEFAULT_DEVICE_IP_GND;
 }
+
 std::string find_device_ip_air() {
   LOG_FUNCTION_ENTRY();
   auto ip_addresses = get_ip_addresses("192.168.168");
   for (const auto& ip : ip_addresses) {
     if (ip != MICROHARD_AIR_IP && ip != MICROHARD_GND_IP) {
+      LOG_FUNCTION_EXIT();
       return ip;
     }
   }
   openhd::log::get_default()->warn(
-      "No suitable IP address found for DEVICE_IP_GND. Using default.");
+      "No suitable IP address found for DEVICE_IP_AIR. Using default.");
+  LOG_FUNCTION_EXIT();
   return DEFAULT_DEVICE_IP_AIR;
 }
 
@@ -242,16 +255,19 @@ void log_ip_addresses() {
     openhd::log::get_default()->warn(
         "No IP addresses starting with 192.168.168 found.");
   }
+  LOG_FUNCTION_EXIT();
 }
 
 std::string get_detected_ip_address() {
   LOG_FUNCTION_ENTRY();
   auto ip_addresses = get_ip_addresses("192.168.168");
   if (!ip_addresses.empty()) {
+    LOG_FUNCTION_EXIT();
     return ip_addresses.front();
   } else {
     openhd::log::get_default()->warn(
         "No IP addresses starting with 192.168.168 found.");
+    LOG_FUNCTION_EXIT();
     return "";  // Return an empty string if no IP found
   }
 }
@@ -263,6 +279,7 @@ static void wait_for_microhard_module(bool is_air) {
   if (microhard_device_ip.empty()) {
     openhd::log::get_default()->warn(
         "No microhard device IP address detected. Exiting.");
+    LOG_FUNCTION_EXIT();
     return;
   }
 
@@ -274,6 +291,7 @@ static void wait_for_microhard_module(bool is_air) {
     }
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
+  LOG_FUNCTION_EXIT();
 }
 
 MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
@@ -317,14 +335,18 @@ MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
   // Start monitoring gateway signal strength
   std::thread monitor_thread(monitor_gateway_signal_strength, get_gateway_ip());
   monitor_thread.detach();  // Run in the background
+
+  LOG_FUNCTION_EXIT();
 }
 
 void MicrohardLink::transmit_telemetry_data(OHDLink::TelemetryTxPacket packet) {
   LOG_FUNCTION_ENTRY();
   const auto destination_ip = m_profile.is_air ? DEVICE_IP_GND : DEVICE_IP_AIR;
+  openhd::log::get_default()->warn("Transmitting telemetry data to IP: {} on port: {}", destination_ip, MICROHARD_UDP_PORT_TELEMETRY_AIR_TX);
   m_telemetry_tx_rx->forwardPacketViaUDP(
       destination_ip, MICROHARD_UDP_PORT_TELEMETRY_AIR_TX, packet.data->data(),
       packet.data->size());
+  LOG_FUNCTION_EXIT();
 }
 
 void MicrohardLink::transmit_video_data(
@@ -332,17 +354,20 @@ void MicrohardLink::transmit_video_data(
     const openhd::FragmentedVideoFrame& fragmented_video_frame) {
   LOG_FUNCTION_ENTRY();
   assert(m_profile.is_air);
+  openhd::log::get_default()->warn("Transmitting video data for stream index: {}", stream_index);
   if (stream_index == 0) {
     for (const auto& fragment : fragmented_video_frame.rtp_fragments) {
       m_video_tx->forwardPacketViaUDP(fragment->data(), fragment->size());
     }
   }
+  LOG_FUNCTION_EXIT();
 }
 
 void MicrohardLink::transmit_audio_data(
     const openhd::AudioPacket& audio_packet) {
   LOG_FUNCTION_ENTRY();
-  // not implemented
+  openhd::log::get_default()->warn("Transmitting audio data (not implemented)");
+  LOG_FUNCTION_EXIT();
 }
 
 std::vector<openhd::Setting> MicrohardLink::get_all_settings() {
@@ -352,5 +377,6 @@ std::vector<openhd::Setting> MicrohardLink::get_all_settings() {
   auto change_dummy =
       IntSetting{0, [this](std::string, int value) { return true; }};
   settings.push_back(Setting{"MICROHARD_DUMMY0", change_dummy});
+  LOG_FUNCTION_EXIT();
   return settings;
 }
