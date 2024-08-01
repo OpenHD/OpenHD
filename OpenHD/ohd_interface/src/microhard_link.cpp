@@ -62,10 +62,10 @@ void log_ip_addresses() {
     auto ip_addresses = get_ip_addresses("192.168.168");
     if (!ip_addresses.empty()) {
         for (const auto& ip : ip_addresses) {
-            m_console->info("Found IP address: {}", ip);
+            openhd::log::get_default()->warn("Found IP address: {}", ip);
         }
     } else {
-        m_console->info("No IP addresses starting with 192.168.168 found.");
+        openhd::log::get_default()->warn("No IP addresses starting with 192.168.168 found.");
     }
 }
 
