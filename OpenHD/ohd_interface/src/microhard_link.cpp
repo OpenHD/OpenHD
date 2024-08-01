@@ -118,7 +118,6 @@ void log_ip_addresses() {
 std::string get_detected_ip_address() {
     LOG_FUNCTION_ENTRY();
     auto ip_addresses = get_ip_addresses("192.168.168");
-    openhd::log::get_default()->warn("192.168.168 found.");
     if (!ip_addresses.empty()) {
         // Return the first detected IP address
         return ip_addresses.front();
@@ -149,6 +148,7 @@ static constexpr int MICROHARD_UDP_PORT_TELEMETRY_AIR_TX = 5920;
 
 static bool check_ip_alive(const std::string &ip, int port = 23) {
     LOG_FUNCTION_ENTRY();
+    std::string gateway_ip = get_gateway_ip(ip);
     openhd::log::get_default()->warn("Checking if IP {} is alive on port {}", ip, port);
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
