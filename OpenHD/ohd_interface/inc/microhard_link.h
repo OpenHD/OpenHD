@@ -1,5 +1,6 @@
 //
 // Created by consti10 on 05.04.24.
+// Improved by raphael 08.24
 //
 
 #ifndef OPENHD_MICROHARD_LINK_H
@@ -8,6 +9,8 @@
 #include "openhd_link.hpp"
 #include "openhd_settings_imp.h"
 #include "openhd_udp.h"
+#include <vector>
+#include <memory>
 
 /**
  * Experimental link implementation for microhard modules
@@ -26,6 +29,7 @@ class MicrohardLink : public OHDLink {
    * and/or the used hardware
    */
   std::vector<openhd::Setting> get_all_settings();
+
   bool checkMicrohardDevice();
 
  private:

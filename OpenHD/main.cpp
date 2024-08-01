@@ -202,10 +202,11 @@ int main(int argc, char *argv[]) {
     ss << "\n";
     ss << "\n";
 
+    // Check for Microhard device
     if (checkMicrohardDevice()) {
-        std::cout << "Microhard device found!" << std::endl;
+        std::cout << "Microhard device is connected and functioning properly.\n";
     } else {
-        std::cout << "Microhard device not found." << std::endl;
+        std::cerr << "Failed to detect the Microhard device.\n";
     }
 
     // ss << "Git info:Branch:" << git_Branch() << " SHA:" << git_CommitSHA1() << " Dirty:" << OHDUtil::yes_or_no(git_AnyUncommittedChanges()) << "\n";
