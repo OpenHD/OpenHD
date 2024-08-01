@@ -118,6 +118,7 @@ void log_ip_addresses() {
 std::string get_detected_ip_address() {
     LOG_FUNCTION_ENTRY();
     auto ip_addresses = get_ip_addresses("192.168.168");
+    openhd::log::get_default()->warn("192.168.168 found.");
     if (!ip_addresses.empty()) {
         // Return the first detected IP address
         return ip_addresses.front();
