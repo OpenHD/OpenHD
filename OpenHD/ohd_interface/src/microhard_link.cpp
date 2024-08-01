@@ -17,7 +17,7 @@ bool checkMicrohardDevice() {
     // Open a pipe to run the command
     FILE* pipe = popen(command.c_str(), "r");
     if (!pipe) {
-        std::cerr << "Failed to run lsusb command" << std::endl;
+        openhd::log::get_default()->debug("Failed to run lsusb command");
         return false;
     }
 
