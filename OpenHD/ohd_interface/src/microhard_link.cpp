@@ -210,9 +210,9 @@ MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
     if (m_telemetry_tx_rx) {
         m_telemetry_tx_rx->runInBackground();
     }
-    if (m_video_tx) {
-        m_video_tx->runInBackground();
-    }
+    // if (m_video_tx) {
+    //     m_video_tx->runInBackground();
+    // }
     if (m_video_rx) {
         m_video_rx->runInBackground();
     }
