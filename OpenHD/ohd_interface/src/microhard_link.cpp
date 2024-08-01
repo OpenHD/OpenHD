@@ -75,21 +75,22 @@ std::vector<std::string> get_ip_addresses(const std::string& prefix) {
     return ip_addresses;
 }
 
-std::string get_gateway_ip(const std::string& ip) {
-    LOG_FUNCTION_ENTRY();
-    openhd::log::get_default()->warn("Get gateway ip from :", ip);
-    std::string cmd = "ip route show | grep 'default' | awk '{print $3}' | grep '^192\\.168\\.168'";
-    
+std::string get_gateway_ip() {
+    openhd::log::get_default()->warn("Getting gateway IP...");
+
+    // Command to get the default gateway IP and filter it
+    std::string cmd = "ip route show default | awk '/default/ {print $3}' | grep '^192\\.168\\.168'";
+
     FILE* pipe = popen(cmd.c_str(), "r");
     if (!pipe) {
-        openhd::log::get_default()->warn("Failed to run command: {}", cmd);
-        return gateway_ip;
+        openhd::log::get_default()->warn("Failed to run command: {}", cmd.c_str());
+        throw std::runtime_error("Failed to run command.");
     }
 
     char buffer[128];
-    std::string result = "";
-    while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
-        result += buffer;
+    std::string result;
+    if (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+        result = buffer;
     }
     pclose(pipe);
 
@@ -97,6 +98,9 @@ std::string get_gateway_ip(const std::string& ip) {
     if (!result.empty()) {
         result.erase(result.find_last_not_of("\n\r") + 1);
     }
+
+    // Log the result
+    openhd::log::get_default()->warn("Filtered Gateway IP: {}", result.c_str());
 
     return result;
 }
