@@ -80,7 +80,7 @@ std::vector<std::string> get_ip_addresses(const std::string& prefix) {
     return ip_addresses;
 }
 
-void monitor_gateway_signal_strength(const std::string& gateway_ip) {
+void MicrohardLink::monitor_gateway_signal_strength(const std::string& gateway_ip) {
     LOG_FUNCTION_ENTRY();
     if (gateway_ip.empty()) {
         openhd::log::get_default()->warn("Gateway IP is empty. Exiting monitoring.");
