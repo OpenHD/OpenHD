@@ -89,19 +89,25 @@ std::vector<std::string> get_ip_addresses(const std::string& prefix) {
 }
 
 void communicate_with_device(const std::string& ip, const std::string& command) {
+                openhd::log::get_default()->warn("start talking");
+
     try {
         Poco::Net::SocketAddress address(ip, 23); // Telnet typically uses port 23
         Poco::Net::StreamSocket socket(address);
         Poco::Net::SocketStream stream(socket);
 
         // Send command to the device
+                    openhd::log::get_default()->warn("send command");
+
         stream << command << std::flush;
+            openhd::log::get_default()->warn("start reading");
 
         // Read the response from the device
         std::string response;
         std::string line;
         while (std::getline(stream, line)) {
             response += line + "\n";
+                        openhd::log::get_default()->warn("response");
         }
 
         // Log the response
@@ -124,7 +130,6 @@ void MicrohardLink::monitor_gateway_signal_strength(const std::string& gateway_i
     while (true) {
                     openhd::log::get_default()->warn("get rssi");
         try {
-            openhd::log::get_default()->warn("start talking");
             std::string command = "AT+MWRSSI\n";
             communicate_with_device(gateway_ip, command);
             openhd::log::get_default()->warn("got rssi");
