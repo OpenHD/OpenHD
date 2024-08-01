@@ -13,6 +13,8 @@
 #include <thread>
 #include <chrono>
 #include "microhard_link.h"
+#include "openhd_temporary_air_or_ground.h"
+
 
 // Macro to log function entry
 #define LOG_FUNCTION_ENTRY() openhd::log::get_default()->warn("Entering function: {}", __FUNCTION__)
@@ -75,6 +77,7 @@ void log_ip_addresses() {
     if (!ip_addresses.empty()) {
         for (const auto& ip : ip_addresses) {
             openhd::log::get_default()->warn("Found IP address: {}", ip);
+            openhd::log::get_default()->warn(ground)
         }
     } else {
         openhd::log::get_default()->warn("No IP addresses starting with 192.168.168 found.");
