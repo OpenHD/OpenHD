@@ -128,7 +128,7 @@ static void wait_for_microhard_module(bool air) {
     log_ip_addresses();
     
     bool fileGroundExists = openhd::tmp::file_ground_exists();
-    openhd::log::get_default()->debug("file_ground_exists: {}", fileGroundExists ? "true" : "false");
+    openhd::log::get_default()->warn("file_ground_exists: {}", fileGroundExists ? "true" : "false");
 
         while (true) {
             const auto microhard_device_ip = air ? MICROHARD_AIR_IP : MICROHARD_GND_IP;
