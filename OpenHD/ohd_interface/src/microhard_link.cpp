@@ -191,8 +191,9 @@ MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
             auto shared = std::make_shared<std::vector<uint8_t>>(data, data + data_len);
             on_receive_telemetry_data(shared);
         };
-        m_telemetry_tx_rx = std::make_unique<openhd::UDPReceiver>(DEVICE_IP_AIR, MICROHARD_UDP_PORT_TELEMETRY_AIR_TX, cb_telemetry_rx);
-    } else {
+        m_telemetry_tx_rx = std::make_unique<openhd::UDPReceiver>(
+        DEVICE_IP_AIR, MICROHARD_UDP_PORT_TELEMETRY_AIR_TX, cb_telemetry_rx);
+    m_telemetry_tx_rx->runInBackground();    } else {
         auto cb_video_rx = [this](const uint8_t* payload, std::size_t payloadSize) {
             on_receive_video_data(0, payload, payloadSize);
         };
