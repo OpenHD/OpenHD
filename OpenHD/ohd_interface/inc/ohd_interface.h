@@ -55,6 +55,8 @@ class OHDInterface {
   // Agnostic of the link, even though r.n we only have a wifibroadcast
   // implementation (but this might change).
   std::shared_ptr<OHDLink> get_link_handle();
+  void checkMicrohardDeviceStatus();
+
 
  private:
   void update_wifi_hotspot_enable();
@@ -71,5 +73,14 @@ class OHDInterface {
   std::optional<WiFiCard> m_opt_hotspot_card = std::nullopt;
   NetworkingSettingsHolder m_nw_settings;
 };
+
+void OHDInterface::checkMicrohardDeviceStatus() {
+    bool result = checkMicrohardDevice();
+    if (result) {
+        m_console->warn("Microhard device check passed.");
+    } else {
+        m_console->warn("Microhard device check failed.");
+    }
+}
 
 #endif  // OPENHD_OPENHD_INTERFACE_H

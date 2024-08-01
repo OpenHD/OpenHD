@@ -220,6 +220,8 @@ int main(int argc, char *argv[]) {
   openhd::LEDManager::instance().set_status_loading();
   // Generate the keys and delete pw if needed
   OHDInterface::generate_keys_from_pw_if_exists_and_delete();
+  ohdInterface.checkMicrohardDeviceStatus();
+
   // Parse the program arguments
   // This is the console we use inside main, in general different openhd
   // modules/classes have their own loggers with different tags
