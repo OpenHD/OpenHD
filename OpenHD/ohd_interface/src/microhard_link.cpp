@@ -165,7 +165,7 @@ std::string get_detected_ip_address() {
 
 static void wait_for_microhard_module(bool is_air) {
     LOG_FUNCTION_ENTRY();
-    const std::string microhard_device_ip = get_detected_ip_address();
+    const std::string microhard_device_ip = get_gateway_ip();
 
     if (microhard_device_ip.empty()) {
         openhd::log::get_default()->warn("No microhard device IP address detected. Exiting.");
