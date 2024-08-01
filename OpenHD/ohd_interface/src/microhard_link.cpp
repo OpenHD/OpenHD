@@ -10,6 +10,12 @@
 #include <unistd.h>
 #include <thread>
 #include <chrono>
+#include <memory>
+#include <cstdio>
+#include <cstdlib>
+#include <string>
+#include <sstream>
+#include <stdexcept>
 #include "microhard_link.h"
 #include "openhd_temporary_air_or_ground.h"
 
@@ -71,45 +77,28 @@ std::vector<std::string> get_ip_addresses(const std::string& prefix) {
 
 std::string get_gateway_ip(const std::string& ip) {
     LOG_FUNCTION_ENTRY();
-    int sockfd;
-    struct ifreq ifr;
-    struct rtentry rt;
-    struct sockaddr_in* sin;
-    char buf[4096];
-    struct ifconf ifc;
-    struct ifreq* it;
-    struct ifreq* end;
-    std::string gateway_ip = "";
-
-    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sockfd < 0) {
-        perror("socket");
+    std::string gateway_ip;
+    std::string cmd = "ip route show | grep 'default' | awk '{print $3}'";
+    
+    FILE* pipe = popen(cmd.c_str(), "r");
+    if (!pipe) {
+        openhd::log::get_default()->warn("Failed to run command: {}", cmd);
         return gateway_ip;
     }
 
-    memset(&ifr, 0, sizeof(ifr));
-    strncpy(ifr.ifr_name, "eth0", IFNAMSIZ - 1); // Use the appropriate network interface name
-    if (ioctl(sockfd, SIOCGIFADDR, &ifr) < 0) {
-        perror("ioctl");
-        close(sockfd);
-        return gateway_ip;
+    char buffer[128];
+    std::string result = "";
+    while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+        result += buffer;
+    }
+    pclose(pipe);
+
+    // Trim trailing newline
+    if (!result.empty()) {
+        result.erase(result.find_last_not_of("\n\r") + 1);
     }
 
-    sin = (struct sockaddr_in*)&ifr.ifr_addr;
-    memset(&rt, 0, sizeof(rt));
-    rt.rt_dst.sa_family = AF_INET;
-    ((struct sockaddr_in*)&rt.rt_dst)->sin_addr.s_addr = inet_addr(ip.c_str());
-    if (ioctl(sockfd, SIOCGROUTE, &rt) < 0) {
-        perror("ioctl");
-        close(sockfd);
-        return gateway_ip;
-    }
-
-    sin = (struct sockaddr_in*)&rt.rt_gateway;
-    gateway_ip = inet_ntoa(sin->sin_addr);
-
-    close(sockfd);
-    return gateway_ip;
+    return result;
 }
 
 void log_ip_addresses() {
