@@ -125,17 +125,21 @@ static bool check_ip_alive(const std::string &ip, int port = 80) {
 
 static void wait_for_microhard_module(bool air) {
     LOG_FUNCTION_ENTRY();
-    
-        while (true) {
-            auto available = check_ip_alive(log_ip_addresses());
-            if (available) {
-                openhd::log::get_default()->debug("Microhard module found");
-                break;
-            }
-            openhd::log::get_default()->debug("Waiting for microhard module");
-            std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    // Assuming log_ip_addresses() returns a std::string representing the IP address
+    const auto microhard_device_ip = log_ip_addresses();
+
+    while (true) {
+        auto available = check_ip_alive(microhard_device_ip);
+        if (available) {
+            openhd::log::get_default()->debug("Microhard module found");
+            break;
         }
+        openhd::log::get_default()->debug("Waiting for microhard module");
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
 }
+
 
 
 MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
