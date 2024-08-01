@@ -34,6 +34,10 @@ static constexpr int MICROHARD_UDP_PORT_VIDEO_AIR_TX = 5910;
 static constexpr int MICROHARD_UDP_PORT_TELEMETRY_AIR_TX = 5920;
 static const std::string DEFAULT_DEVICE_IP_GND = "192.168.168.122";
 static const std::string DEFAULT_DEVICE_IP_AIR = "192.168.168.153";
+const std::string telnet_cmd = "telnet 192.168.168.1";
+const std::string username = "admin\n";
+const std::string password = "qwertz1\n";
+const std::string command = "AT+MWRSSI\n";
 
 // Helper function to retrieve IP addresses starting with a specific prefix
 std::vector<std::string> get_ip_addresses(const std::string& prefix) {
@@ -86,12 +90,6 @@ void MicrohardLink::monitor_gateway_signal_strength(const std::string& gateway_i
         openhd::log::get_default()->warn("Gateway IP is empty. Exiting monitoring.");
         return;
     }
-
-    // Define the command and credentials
-    const std::string telnet_cmd = "telnet " + gateway_ip + " 23";
-    const std::string username = "admin\n";
-    const std::string password = "qwertz1\n";
-    const std::string command = "AT+MWRSSI\n";
 
     // Continuously connect, send command, and print output every second
     while (true) {
