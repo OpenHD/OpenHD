@@ -21,6 +21,10 @@
 #include <string>
 #include <sstream>
 #include <stdexcept>
+#include <Poco/Net/StreamSocket.h>
+#include <Poco/Net/SocketStream.h>
+#include <Poco/Net/SocketAddress.h>
+#include <Poco/Exception.h>
 #include "microhard_link.h"
 #include "openhd_temporary_air_or_ground.h"
 
@@ -84,6 +88,31 @@ std::vector<std::string> get_ip_addresses(const std::string& prefix) {
     return ip_addresses;
 }
 
+void communicate_with_device(const std::string& ip, const std::string& command) {
+    try {
+        Poco::Net::SocketAddress address(ip, 23); // Telnet typically uses port 23
+        Poco::Net::StreamSocket socket(address);
+        Poco::Net::SocketStream stream(socket);
+
+        // Send command to the device
+        stream << command << std::flush;
+
+        // Read the response from the device
+        std::string response;
+        std::string line;
+        while (std::getline(stream, line)) {
+            response += line + "\n";
+        }
+
+        // Log the response
+        openhd::log::get_default()->warn("Signal Strength Output: {}", response.c_str());
+    } catch (const Poco::Exception& e) {
+        openhd::log::get_default()->warn("POCO Exception: {}", e.displayText());
+    } catch (const std::exception& e) {
+        openhd::log::get_default()->warn("Standard Exception: {}", e.what());
+    }
+}
+
 void MicrohardLink::monitor_gateway_signal_strength(const std::string& gateway_ip) {
     LOG_FUNCTION_ENTRY();
     if (gateway_ip.empty()) {
@@ -94,31 +123,8 @@ void MicrohardLink::monitor_gateway_signal_strength(const std::string& gateway_i
     // Continuously connect, send command, and print output every second
     while (true) {
         try {
-            // Open the connection using popen
-            FILE* telnet_process = popen(telnet_cmd.c_str(), "w+");
-            if (!telnet_process) {
-                openhd::log::get_default()->warn("Failed to run telnet command: {}", telnet_cmd.c_str());
-                return;
-            }
-
-            // Send credentials and command
-            fwrite(username.c_str(), 1, username.size(), telnet_process);
-            fwrite(password.c_str(), 1, password.size(), telnet_process);
-            fwrite(command.c_str(), 1, command.size(), telnet_process);
-            fflush(telnet_process);
-
-            // Read the response
-            char buffer[128];
-            std::string output;
-            while (fgets(buffer, sizeof(buffer), telnet_process) != nullptr) {
-                output += buffer;
-            }
-
-            // Log the output
-            openhd::log::get_default()->warn("Signal Strength Output: {}", output.c_str());
-
-            // Close the telnet process
-            pclose(telnet_process);
+            std::string command = "AT+MWRSSI\n";
+            communicate_with_device(gateway_ip, command);
         } catch (const std::exception& e) {
             openhd::log::get_default()->warn("Exception occurred: {}", e.what());
         }
@@ -127,6 +133,7 @@ void MicrohardLink::monitor_gateway_signal_strength(const std::string& gateway_i
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 }
+
 
 std::string get_gateway_ip() {
     openhd::log::get_default()->warn("Getting gateway IP...");
