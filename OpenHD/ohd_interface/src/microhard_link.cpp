@@ -1,3 +1,8 @@
+//
+//refactored/rewritten by Raphael
+//based on consti10's work
+//
+
 #include <iostream>
 #include <vector>
 #include <cstring>
@@ -25,10 +30,10 @@
 // Constants
 static constexpr auto MICROHARD_AIR_IP = "192.168.168.11";
 static constexpr auto MICROHARD_GND_IP = "192.168.168.12";
-static constexpr auto DEVICE_IP_AIR = "192.168.168.153";
 static constexpr int MICROHARD_UDP_PORT_VIDEO_AIR_TX = 5910;
 static constexpr int MICROHARD_UDP_PORT_TELEMETRY_AIR_TX = 5920;
 static const std::string DEFAULT_DEVICE_IP_GND = "192.168.168.122";
+static const std::string DEFAULT_DEVICE_IP_AIR = "192.168.168.153";
 
 // Helper function to retrieve IP addresses starting with a specific prefix
 std::vector<std::string> get_ip_addresses(const std::string& prefix) {
@@ -134,9 +139,21 @@ std::string find_device_ip_gnd() {
     openhd::log::get_default()->warn("No suitable IP address found for DEVICE_IP_GND. Using default.");
     return DEFAULT_DEVICE_IP_GND;
 }
+std::string find_device_ip_air() {
+    LOG_FUNCTION_ENTRY();
+    auto ip_addresses = get_ip_addresses("192.168.168");
+    for (const auto& ip : ip_addresses) {
+        if (ip != MICROHARD_AIR_IP && ip != MICROHARD_GND_IP) {
+            return ip;
+        }
+    }
+    openhd::log::get_default()->warn("No suitable IP address found for DEVICE_IP_GND. Using default.");
+    return DEFAULT_DEVICE_IP_AIR;
+}
 
 // The assigned IP
 static const std::string DEVICE_IP_GND = find_device_ip_gnd();
+static const std::string DEVICE_IP_AIR = find_device_ip_air();
 
 void log_ip_addresses() {
     LOG_FUNCTION_ENTRY();
