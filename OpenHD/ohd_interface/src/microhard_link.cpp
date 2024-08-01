@@ -111,7 +111,7 @@ void log_ip_addresses() {
     if (!ip_addresses.empty()) {
         for (const auto& ip : ip_addresses) {
             openhd::log::get_default()->warn("Found IP address: {}", ip);
-            std::string gateway_ip = get_gateway_ip;
+            std::string gateway_ip = get_gateway_ip();
             openhd::log::get_default()->warn("Gateway IP for {}: {}", ip, gateway_ip);
         }
     } else {
