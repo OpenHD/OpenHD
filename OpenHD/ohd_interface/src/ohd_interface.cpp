@@ -23,7 +23,7 @@ OHDInterface::OHDInterface(OHDProfile profile1)
   m_monitor_mode_cards = {};
   m_opt_hotspot_card = std::nullopt;
   const auto config = openhd::load_config();
-  if (config.DEV_ENABLE_MICROHARD) {
+  if (!config.DEV_ENABLE_MICROHARD) {
     m_microhard_link = std::make_shared<MicrohardLink>(m_profile);
     return;
   }
