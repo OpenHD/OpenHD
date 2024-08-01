@@ -340,19 +340,16 @@ MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
 }
 
 void MicrohardLink::transmit_telemetry_data(OHDLink::TelemetryTxPacket packet) {
-  LOG_FUNCTION_ENTRY();
   const auto destination_ip = m_profile.is_air ? DEVICE_IP_GND : DEVICE_IP_AIR;
   openhd::log::get_default()->warn("Transmitting telemetry data to IP: {} on port: {}", destination_ip, MICROHARD_UDP_PORT_TELEMETRY_AIR_TX);
   m_telemetry_tx_rx->forwardPacketViaUDP(
       destination_ip, MICROHARD_UDP_PORT_TELEMETRY_AIR_TX, packet.data->data(),
       packet.data->size());
-  LOG_FUNCTION_EXIT();
 }
 
 void MicrohardLink::transmit_video_data(
     int stream_index,
     const openhd::FragmentedVideoFrame& fragmented_video_frame) {
-  LOG_FUNCTION_ENTRY();
   assert(m_profile.is_air);
   openhd::log::get_default()->warn("Transmitting video data for stream index: {}", stream_index);
   if (stream_index == 0) {
@@ -360,7 +357,6 @@ void MicrohardLink::transmit_video_data(
       m_video_tx->forwardPacketViaUDP(fragment->data(), fragment->size());
     }
   }
-  LOG_FUNCTION_EXIT();
 }
 
 void MicrohardLink::transmit_audio_data(
