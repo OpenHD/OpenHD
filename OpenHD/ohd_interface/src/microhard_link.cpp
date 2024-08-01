@@ -82,13 +82,14 @@ void log_ip_addresses() {
     }
 }
 
-std::string get_first_ip_address(const std::string& prefix) {
+std::string get_detected_ip_address() {
     LOG_FUNCTION_ENTRY();
-    auto ip_addresses = get_ip_addresses(prefix);
+    auto ip_addresses = get_ip_addresses("192.168.168");
     if (!ip_addresses.empty()) {
-        return ip_addresses.front(); // Return the first matching IP address
+        // Return the first detected IP address
+        return ip_addresses.front();
     } else {
-        openhd::log::get_default()->warn("No IP addresses starting with {} found.", prefix);
+        openhd::log::get_default()->warn("No IP addresses starting with 192.168.168 found.");
         return ""; // Return an empty string if no IP found
     }
 }
@@ -137,23 +138,27 @@ static bool check_ip_alive(const std::string &ip, int port = 80) {
 
 static void wait_for_microhard_module(bool air) {
     LOG_FUNCTION_ENTRY();
-  const std::string microhard_device_ip = get_first_ip_address(prefix);
 
+    // Get the detected IP address
+    const std::string microhard_device_ip = get_detected_ip_address();
+
+    // Check if the IP address was successfully retrieved
     if (microhard_device_ip.empty()) {
-        openhd::log::get_default()->warn("No microhard device IP address found.");
+        openhd::log::get_default()->warn("No microhard device IP address detected. Exiting.");
         return;
     }
 
     while (true) {
         auto available = check_ip_alive(microhard_device_ip);
         if (available) {
-            openhd::log::get_default()->debug("Microhard module found");
+            openhd::log::get_default()->debug("Microhard module found at {}", microhard_device_ip);
             break;
         }
-        openhd::log::get_default()->debug("Waiting for microhard module");
+        openhd::log::get_default()->debug("Waiting for microhard module at {}", microhard_device_ip);
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 }
+
 
 
 
