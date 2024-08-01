@@ -20,26 +20,29 @@ static constexpr int MICROHARD_UDP_PORT_VIDEO_AIR_TX = 5910;
 static constexpr int MICROHARD_UDP_PORT_TELEMETRY_AIR_TX = 5920;
 
 static bool is_microhard_device_attached() {
-    const std::string command = "lsusb";
-    std::array<char, 128> buffer;
-    std::string result;
-    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command.c_str(), "r"), pclose);
-    
-    if (!pipe) {
-        openhd::log::get_default()->debug("Failed to run lsusb command");
-        return false;
-    }
+  const std::string command = "lsusb";
+  std::array<char, 128> buffer;
+  std::string result;
+  std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command.c_str(), "r"),
+                                                pclose);
 
-    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-        result += buffer.data();
-        if (result.find("Microhard") != std::string::npos) {
-            openhd::log::get_default()->debug("Microhard device found in lsusb output");
-            return true;
-        }
-    }
-    
-    openhd::log::get_default()->debug("Microhard device not found in lsusb output");
+  if (!pipe) {
+    openhd::log::get_default()->debug("Failed to run lsusb command");
     return false;
+  }
+
+  while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+    result += buffer.data();
+    if (result.find("Microhard") != std::string::npos) {
+      openhd::log::get_default()->debug(
+          "Microhard device found in lsusb output");
+      return true;
+    }
+  }
+
+  openhd::log::get_default()->debug(
+      "Microhard device not found in lsusb output");
+  return false;
 }
 
 static bool check_ip_alive(const std::string &ip, int port = 80) {

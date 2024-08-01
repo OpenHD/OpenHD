@@ -18,22 +18,22 @@
 
 // Helper function to execute a shell command and return the output
 std::string exec(const std::string& cmd) {
-    std::array<char, 128> buffer;
-    std::string result;
-    std::shared_ptr<FILE> pipe(popen(cmd.c_str(), "r"), pclose);
-    if (!pipe) {
-        throw std::runtime_error("popen() failed!");
-    }
-    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-        result += buffer.data();
-    }
-    return result;
+  std::array<char, 128> buffer;
+  std::string result;
+  std::shared_ptr<FILE> pipe(popen(cmd.c_str(), "r"), pclose);
+  if (!pipe) {
+    throw std::runtime_error("popen() failed!");
+  }
+  while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+    result += buffer.data();
+  }
+  return result;
 }
 
 // Helper function to check if a Microhard device is present
 bool is_microhard_device_present() {
-    std::string output = exec("lsusb");
-    return output.find("Microhard") != std::string::npos;
+  std::string output = exec("lsusb");
+  return output.find("Microhard") != std::string::npos;
 }
 
 OHDInterface::OHDInterface(OHDProfile profile1)
