@@ -114,7 +114,7 @@ static const std::string DEVICE_IP_GND = find_device_ip_gnd();
 static constexpr int MICROHARD_UDP_PORT_VIDEO_AIR_TX = 5910;
 static constexpr int MICROHARD_UDP_PORT_TELEMETRY_AIR_TX = 5920;
 
-static bool check_ip_alive(const std::string &ip, int port = 80) {
+static bool check_ip_alive(const std::string &ip, int port = 23) {
     LOG_FUNCTION_ENTRY();
     openhd::log::get_default()->warn("Checking if IP {} is alive on port {}", ip, port);
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
