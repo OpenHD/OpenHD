@@ -126,12 +126,10 @@ void MicrohardLink::monitor_gateway_signal_strength(const std::string& gateway_i
         try {
             std::string command = "AT+MWRSSI\n";
             communicate_with_device(gateway_ip, command);
-            openhd::log::get_default()->warn(gateway_ip, command);
+            openhd::log::get_default()->warn("got rssi");
         } catch (const std::exception& e) {
             openhd::log::get_default()->warn("Exception occurred: {}", e.what());
         }
-                    openhd::log::get_default()->warn("sleep");
-
         // Wait for 1 second before the next iteration
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
