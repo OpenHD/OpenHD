@@ -51,6 +51,17 @@ std::vector<std::string> get_ip_addresses(const std::string& prefix) {
     return ip_addresses;
 }
 
+m_console->warn("Starting Microhard");
+
+    // Retrieve and print IP addresses starting with 192.168.168
+    auto ip_addresses = get_ip_addresses("192.168.168");
+    if (!ip_addresses.empty()) {
+        for (const auto& ip : ip_addresses) {
+            m_console->info("Found IP address: {}", ip);
+        }
+    } else {
+        m_console->info("No IP addresses starting with 192.168.168 found.");
+    }
 
 // Master -
 static constexpr auto MICROHARD_AIR_IP = "192.168.168.11";
