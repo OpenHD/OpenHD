@@ -153,21 +153,21 @@ static constexpr int MICROHARD_UDP_PORT_TELEMETRY_AIR_TX = 5920;
 static bool check_ip_alive(const std::string &ip, int port = 23) {
     LOG_FUNCTION_ENTRY();
     std::string gateway_ip = get_gateway_ip();
-    openhd::log::get_default()->warn("Checking if IP {} is alive on port {}", ip, port);
+    openhd::log::get_default()->warn("Checking if IP {} is alive on port {}", gateway_ip, port);
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
-        openhd::log::get_default()->warn("Socket creation failed for IP {}", ip);
+        openhd::log::get_default()->warn("Socket creation failed for IP {}", gateway_ip);
         return false;
     }
     
-    struct sockaddr_in addr = {AF_INET, htons(port), inet_addr(ip.c_str())};
+    struct sockaddr_in addr = {AF_INET, htons(port), inet_addr(gateway_ip.c_str())};
     bool connected = connect(sockfd, (struct sockaddr *)&addr, sizeof(addr)) == 0;
     close(sockfd);
     
     if (connected) {
-        openhd::log::get_default()->warn("IP {} is alive", ip);
+        openhd::log::get_default()->warn("IP {} is alive", gateway_ip);
     } else {
-        openhd::log::get_default()->warn("IP {} is not alive", ip);
+        openhd::log::get_default()->warn("IP {} is not alive", gateway_ip);
     }
     
     return connected;
