@@ -1,4 +1,5 @@
 // Created by consti10 on 05.04.24.
+// Refactored and improved by Raphael 01.08.24
 //
 
 #include <vector>
