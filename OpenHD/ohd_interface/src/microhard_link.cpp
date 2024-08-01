@@ -125,14 +125,9 @@ static bool check_ip_alive(const std::string &ip, int port = 80) {
 
 static void wait_for_microhard_module(bool air) {
     LOG_FUNCTION_ENTRY();
-    log_ip_addresses();
     
-    bool fileGroundExists = openhd::tmp::file_ground_exists();
-    openhd::log::get_default()->warn("file_ground_exists: {}", fileGroundExists ? "true" : "false");
-
         while (true) {
-            const auto microhard_device_ip = air ? MICROHARD_AIR_IP : MICROHARD_GND_IP;
-            auto available = check_ip_alive(microhard_device_ip);
+            auto available = check_ip_alive(log_ip_addresses());
             if (available) {
                 openhd::log::get_default()->debug("Microhard module found");
                 break;
