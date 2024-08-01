@@ -107,9 +107,17 @@ void communicate_with_device(const std::string& ip, const std::string& command) 
     Poco::Net::StreamSocket socket(address);
     Poco::Net::SocketStream stream(socket);
 
-    // Send command to the device
-    openhd::log::get_default()->warn("Sending command: {}", command);
+    // Login to the device
+    openhd::log::get_default()->warn("Sending username: {}", username);
+    stream << username << std::flush;
+    std::this_thread::sleep_for(std::chrono::seconds(1)); // Wait for a second to process username
 
+    openhd::log::get_default()->warn("Sending password: {}", password);
+    stream << password << std::flush;
+    std::this_thread::sleep_for(std::chrono::seconds(1)); // Wait for a second to process password
+
+    // Send the command to the device
+    openhd::log::get_default()->warn("Sending command: {}", command);
     stream << command << std::flush;
     openhd::log::get_default()->warn("Command sent, starting to read response.");
 
