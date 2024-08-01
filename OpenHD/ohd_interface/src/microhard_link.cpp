@@ -74,13 +74,25 @@ void log_ip_addresses() {
     }
 }
 
+std::string find_device_ip_gnd() {
+    LOG_FUNCTION_ENTRY();
+    auto ip_addresses = get_ip_addresses("192.168.168");
+    for (const auto& ip : ip_addresses) {
+        if (ip != MICROHARD_AIR_IP && ip != MICROHARD_GND_IP) {
+            return ip;
+        }
+    }
+    openhd::log::get_default()->warn("No suitable IP address found for DEVICE_IP_GND. Using default.");
+    return "192.168.168.122";
+}
+
 // Master
 static constexpr auto MICROHARD_AIR_IP = "192.168.168.11";
 // Client
 static constexpr auto MICROHARD_GND_IP = "192.168.168.12";
 // The assigned IPs
 // NOTE: They have to be set correctly!
-static constexpr auto DEVICE_IP_GND = "192.168.168.122";
+static const std::string DEVICE_IP_GND = find_device_ip_gnd();
 static constexpr auto DEVICE_IP_AIR = "192.168.168.153";
 
 // We send data over those port(s)
