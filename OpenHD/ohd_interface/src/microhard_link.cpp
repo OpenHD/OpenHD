@@ -70,19 +70,21 @@ std::vector<std::string> get_ip_addresses(const std::string& prefix) {
     return ip_addresses;
 }
 
+void checkGroundUnit(const std::string& ground) {
+    bool ground = openhd::tmp::file_ground_exists();
+    if (ground == "true") {
+        openhd::log::get_default()->warn("Ground Unit");
+    } else if (ground == "false") {
+        openhd::log::get_default()->warn("Air Unit");
+    }
+}
+
 void log_ip_addresses() {
     LOG_FUNCTION_ENTRY();
-    bool ground = openhd::tmp::file_ground_exists();
     auto ip_addresses = get_ip_addresses("192.168.168");
     if (!ip_addresses.empty()) {
         for (const auto& ip : ip_addresses) {
             openhd::log::get_default()->warn("Found IP address: {}", ip);
-            if (ground =="true") {
-            openhd::log::get_default()->warn("Ground Unit");
-            }
-            if (ground =="false") {
-            openhd::log::get_default()->warn("Air Unit");
-            }
         }
     } else {
         openhd::log::get_default()->warn("No IP addresses starting with 192.168.168 found.");
@@ -133,6 +135,7 @@ static bool check_ip_alive(const std::string &ip, int port = 80) {
 static void wait_for_microhard_module(bool air) {
     LOG_FUNCTION_ENTRY();
     log_ip_addresses();
+    checkGroundUnit();
     while (true) {
         const auto microhard_device_ip = air ? MICROHARD_AIR_IP : MICROHARD_GND_IP;
         auto available = check_ip_alive(microhard_device_ip);
