@@ -115,7 +115,7 @@ void communicate_with_device(const std::string& ip, const std::string& command) 
 
     openhd::log::get_default()->warn("Sending password: {}", password);
     stream << password << std::flush;
-    std::this_thread::sleep_for(std::chrono::seconds(1)); // Wait for a second to process password
+    std::this_thread::sleep_for(std::chrono::seconds(3)); // Wait for a second to process password
 
     // Send the command to the device
     openhd::log::get_default()->warn("Sending command: {}", command);
