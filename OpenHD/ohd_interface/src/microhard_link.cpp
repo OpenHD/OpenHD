@@ -130,6 +130,7 @@ void communicate_with_device(const std::string& ip, const std::string& command) 
         response += line + "\n";
         openhd::log::get_default()->warn("Received line: {}", line);
       }
+    }
 
 
     // Log the response
