@@ -16,7 +16,6 @@
 
 // Macro to log function entry
 #define LOG_FUNCTION_ENTRY() openhd::log::get_default()->warn("Entering function: {}", __FUNCTION__)
-
 // Master
 static constexpr auto MICROHARD_AIR_IP = "192.168.168.11";
 // Client
@@ -24,7 +23,6 @@ static constexpr auto MICROHARD_GND_IP = "192.168.168.12";
 // The assigned IPs
 // NOTE: They have to be set correctly!
 static constexpr auto DEVICE_IP_AIR = "192.168.168.153";
-
 // Helper function to retrieve IP addresses starting with a specific prefix
 std::vector<std::string> get_ip_addresses(const std::string& prefix) {
     LOG_FUNCTION_ENTRY();
@@ -72,6 +70,7 @@ std::vector<std::string> get_ip_addresses(const std::string& prefix) {
 
 void log_ip_addresses() {
     LOG_FUNCTION_ENTRY();
+    bool ground = openhd::tmp::file_ground_exists()
     auto ip_addresses = get_ip_addresses("192.168.168");
     if (!ip_addresses.empty()) {
         for (const auto& ip : ip_addresses) {
