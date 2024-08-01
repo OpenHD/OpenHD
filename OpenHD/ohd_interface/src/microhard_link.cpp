@@ -77,7 +77,12 @@ void log_ip_addresses() {
     if (!ip_addresses.empty()) {
         for (const auto& ip : ip_addresses) {
             openhd::log::get_default()->warn("Found IP address: {}", ip);
-            openhd::log::get_default()->warn(ground);
+            if (ground) {
+            openhd::log::get_default()->warn(Ground Unit);
+            }
+            else {
+            openhd::log::get_default()->warn(Air Unit);   
+            }
         }
     } else {
         openhd::log::get_default()->warn("No IP addresses starting with 192.168.168 found.");
