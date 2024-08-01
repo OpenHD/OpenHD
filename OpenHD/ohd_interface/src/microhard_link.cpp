@@ -1,4 +1,3 @@
-//
 // Created by consti10 on 05.04.24.
 //
 
@@ -14,8 +13,12 @@
 #include <chrono>
 #include "microhard_link.h"
 
+// Macro to log function entry
+#define LOG_FUNCTION_ENTRY() openhd::log::get_default()->warn("Entering function: {}", __FUNCTION__)
+
 // Helper function to retrieve IP addresses starting with a specific prefix
 std::vector<std::string> get_ip_addresses(const std::string& prefix) {
+    LOG_FUNCTION_ENTRY();
     std::vector<std::string> ip_addresses;
     int sockfd;
     struct ifreq ifr;
@@ -59,6 +62,7 @@ std::vector<std::string> get_ip_addresses(const std::string& prefix) {
 }
 
 void log_ip_addresses() {
+    LOG_FUNCTION_ENTRY();
     auto ip_addresses = get_ip_addresses("192.168.168");
     if (!ip_addresses.empty()) {
         for (const auto& ip : ip_addresses) {
@@ -83,6 +87,7 @@ static constexpr int MICROHARD_UDP_PORT_VIDEO_AIR_TX = 5910;
 static constexpr int MICROHARD_UDP_PORT_TELEMETRY_AIR_TX = 5920;
 
 static bool is_microhard_device_attached() {
+    LOG_FUNCTION_ENTRY();
     const std::string command = "lsusb";
     std::array<char, 128> buffer;
     std::string result;
@@ -106,6 +111,7 @@ static bool is_microhard_device_attached() {
 }
 
 static bool check_ip_alive(const std::string &ip, int port = 80) {
+    LOG_FUNCTION_ENTRY();
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) return false;
     
@@ -116,6 +122,7 @@ static bool check_ip_alive(const std::string &ip, int port = 80) {
 }
 
 static void wait_for_microhard_module(bool air) {
+    LOG_FUNCTION_ENTRY();
     while (true) {
         const auto microhard_device_ip = air ? MICROHARD_AIR_IP : MICROHARD_GND_IP;
         auto available = check_ip_alive(microhard_device_ip);
@@ -129,6 +136,7 @@ static void wait_for_microhard_module(bool air) {
 }
 
 MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
+    LOG_FUNCTION_ENTRY();
     // Wait for the module to become available
     wait_for_microhard_module(m_profile.is_air);
 
@@ -158,12 +166,14 @@ MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
 }
 
 void MicrohardLink::transmit_telemetry_data(OHDLink::TelemetryTxPacket packet) {
+    LOG_FUNCTION_ENTRY();
     const auto destination_ip = m_profile.is_air ? DEVICE_IP_GND : DEVICE_IP_AIR;
     m_telemetry_tx_rx->forwardPacketViaUDP(
         destination_ip, MICROHARD_UDP_PORT_TELEMETRY_AIR_TX, packet.data->data(), packet.data->size());
 }
 
 void MicrohardLink::transmit_video_data(int stream_index, const openhd::FragmentedVideoFrame &fragmented_video_frame) {
+    LOG_FUNCTION_ENTRY();
     assert(m_profile.is_air);
     if (stream_index == 0) {
         for (auto &fragment : fragmented_video_frame.rtp_fragments) {
@@ -173,10 +183,12 @@ void MicrohardLink::transmit_video_data(int stream_index, const openhd::Fragment
 }
 
 void MicrohardLink::transmit_audio_data(const openhd::AudioPacket &audio_packet) {
+    LOG_FUNCTION_ENTRY();
     // not implemented
 }
 
 std::vector<openhd::Setting> MicrohardLink::get_all_settings() {
+    LOG_FUNCTION_ENTRY();
     using namespace openhd;
     std::vector<openhd::Setting> ret{};
     auto change_dummy = openhd::IntSetting{0, [this](std::string, int value) { return true; }};
