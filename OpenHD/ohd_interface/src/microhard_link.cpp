@@ -82,6 +82,18 @@ void log_ip_addresses() {
     }
 }
 
+std::string get_first_ip_address(const std::string& prefix) {
+    LOG_FUNCTION_ENTRY();
+    auto ip_addresses = get_ip_addresses(prefix);
+    if (!ip_addresses.empty()) {
+        return ip_addresses.front(); // Return the first matching IP address
+    } else {
+        openhd::log::get_default()->warn("No IP addresses starting with {} found.", prefix);
+        return ""; // Return an empty string if no IP found
+    }
+}
+
+
 std::string find_device_ip_gnd() {
     LOG_FUNCTION_ENTRY();
     auto ip_addresses = get_ip_addresses("192.168.168");
@@ -125,9 +137,12 @@ static bool check_ip_alive(const std::string &ip, int port = 80) {
 
 static void wait_for_microhard_module(bool air) {
     LOG_FUNCTION_ENTRY();
+  const std::string microhard_device_ip = get_first_ip_address(prefix);
 
-    // Assuming log_ip_addresses() returns a std::string representing the IP address
-    const auto microhard_device_ip = log_ip_addresses();
+    if (microhard_device_ip.empty()) {
+        openhd::log::get_default()->warn("No microhard device IP address found.");
+        return;
+    }
 
     while (true) {
         auto available = check_ip_alive(microhard_device_ip);
