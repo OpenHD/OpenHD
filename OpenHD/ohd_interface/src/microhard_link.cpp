@@ -1,10 +1,15 @@
 //
 // Created by consti10 on 05.04.24.
 //
-
-#include "microhard_link.h"
-
+#include <vector>
+#include <cstring>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
 #include <arpa/inet.h>
+#include <unistd.h>
+#include "microhard_link.h"
 
 // Helper function to retrieve IP addresses starting with a specific prefix
 std::vector<std::string> get_ip_addresses(const std::string& prefix) {
