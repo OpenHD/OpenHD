@@ -201,6 +201,13 @@ int main(int argc, char *argv[]) {
     ss << "\n";
     ss << "\n";
 
+    // Check for Microhard device
+    if (checkMicrohardDeviceStatus()) {
+        std::cout << "Microhard device is connected and functioning properly.\n";
+    } else {
+        std::cerr << "Failed to detect the Microhard device.\n";
+    }
+
     // ss << "Git info:Branch:" << git_Branch() << " SHA:" << git_CommitSHA1() << " Dirty:" << OHDUtil::yes_or_no(git_AnyUncommittedChanges()) << "\n";
 
     std::cout << ss.str() << std::flush;
@@ -213,6 +220,8 @@ int main(int argc, char *argv[]) {
   openhd::LEDManager::instance().set_status_loading();
   // Generate the keys and delete pw if needed
   OHDInterface::generate_keys_from_pw_if_exists_and_delete();
+  OHDInterface.checkMicrohardDeviceStatus();
+
   // Parse the program arguments
   // This is the console we use inside main, in general different openhd
   // modules/classes have their own loggers with different tags
