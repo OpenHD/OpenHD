@@ -36,7 +36,8 @@ bool is_microhard_device_present() {
                                 "wfb.txt")) {
   std::string output = exec("lsusb");
   return output.find("Microhard") != std::string::npos;
-                                }
+ }
+ return false;
 }
 
 OHDInterface::OHDInterface(OHDProfile profile1)
