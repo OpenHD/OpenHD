@@ -123,8 +123,8 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
     int curr_clock_core = 0;
     int curr_clock_v3d = 0;
     bool curr_rpi_undervolt = false;
-    int curr_ina219_voltage = 2;
-    int curr_ina219_current = 133;
+    int curr_ina219_voltage = 0;
+    int curr_ina219_current = 0;
     const int curr_space_left = OHDFilesystemUtil::get_remaining_space_in_mb();
     const auto ohd_platform =
         static_cast<uint8_t>(OHDPlatform::instance().platform_type);
