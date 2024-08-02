@@ -68,7 +68,7 @@ class OnboardComputerStatusProvider {
   void calculate_cpu_usage_until_terminate();
   // Extra thread for "the rest"
   void calculate_other_until_terminate();
-  void ina219_log_warning_once();
+  void ina219_log_warning_once(int curr_ina219_voltage);
 };
 
 #endif  // OPENHD_OPENHD_OHD_TELEMETRY_SRC_INTERNAL_ONBOARDCOMPUTERSTATUSPROVIDER_H_
