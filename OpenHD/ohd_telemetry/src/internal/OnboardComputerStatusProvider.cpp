@@ -219,7 +219,7 @@ OnboardComputerStatusProvider::get_current_status_as_mavlink_message(
 }
 
 void OnboardComputerStatusProvider::ina219_log_warning_once() {
-  if (!m_ina219_warning_logged && m_ina_219.has_value) {
+  if (!m_ina219_warning_logged && (m_ina_219.voltage() > 0)) {
     openhd::log::get_default()->warn("INA219 detected!");
     m_ina219_warning_logged = true;
   }
