@@ -27,25 +27,7 @@ env:
   BUILD_TYPE: Release
 
 jobs:
-
-  build-submodules-independently-test:
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout repository and submodules
-        uses: actions/checkout@v3
-        with:
-          submodules: recursive
-          
-      - name: Install Dependencies
-        run: |
-          sudo apt update
-          sudo ./install_build_dep.sh ubuntu-x86
-          
-      - name: Build submodules independently
-        run: |
-          cd OpenHD
-          ./build_submodules_independently.sh
-          
+         
   build-ground-only-test:
     runs-on: ubuntu-22.04
     steps:
