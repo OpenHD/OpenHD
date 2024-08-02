@@ -32,8 +32,11 @@ std::string exec(const std::string& cmd) {
 
 // Helper function to check if a Microhard device is present
 bool is_microhard_device_present() {
+    if (!OHDFilesystemUtil::exists(std::string(getConfigBasePath()) +
+                                "wfb.txt")) {
   std::string output = exec("lsusb");
   return output.find("Microhard") != std::string::npos;
+                                }
 }
 
 OHDInterface::OHDInterface(OHDProfile profile1)

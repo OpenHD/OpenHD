@@ -10,8 +10,7 @@
 #include "openhd_udp.h"
 
 /**
- * Experimental link implementation for microhard modules
- * (Or anything else really using IP addresses)
+ * Link implementation for microhard modules
  */
 class MicrohardLink : public OHDLink {
  public:
