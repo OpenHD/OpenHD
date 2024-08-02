@@ -203,7 +203,6 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
   }
 }
 
-
 MavlinkMessage
 OnboardComputerStatusProvider::get_current_status_as_mavlink_message(
     const uint8_t sys_id, const uint8_t comp_id,
@@ -219,7 +218,8 @@ OnboardComputerStatusProvider::get_current_status_as_mavlink_message(
   return msg;
 }
 
-void OnboardComputerStatusProvider::ina219_log_warning_once(int curr_ina219_voltage) {
+void OnboardComputerStatusProvider::ina219_log_warning_once(
+    int curr_ina219_voltage) {
   if (!m_ina219_warning_logged && (curr_ina219_voltage > 0)) {
     openhd::log::get_default()->warn("INA219 detected!");
     m_ina219_warning_logged = true;

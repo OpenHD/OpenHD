@@ -22,12 +22,12 @@
 #include <cstring>
 #include <iostream>
 #include <memory>
+#include <regex>
 #include <sstream>
 #include <stdexcept>
 #include <string>
 #include <thread>
 #include <vector>
-#include <regex> 
 
 #include "openhd_temporary_air_or_ground.h"
 
@@ -45,7 +45,6 @@ const std::string command = "AT+MWRSSI\n";
 
 // Helper function to retrieve IP addresses starting with a specific prefix
 std::vector<std::string> get_ip_addresses(const std::string& prefix) {
-  
   std::vector<std::string> ip_addresses;
   int sockfd;
   struct ifreq ifr;
@@ -57,7 +56,8 @@ std::vector<std::string> get_ip_addresses(const std::string& prefix) {
   sockfd = socket(AF_INET, SOCK_DGRAM, 0);
   if (sockfd < 0) {
     perror("socket");
-    openhd::log::get_default()->warn("Failed to create socket for IP retrieval.");
+    openhd::log::get_default()->warn(
+        "Failed to create socket for IP retrieval.");
     return ip_addresses;
   }
 
@@ -65,7 +65,8 @@ std::vector<std::string> get_ip_addresses(const std::string& prefix) {
   ifc.ifc_buf = buf;
   if (ioctl(sockfd, SIOCGIFCONF, &ifc) < 0) {
     perror("ioctl");
-    openhd::log::get_default()->warn("ioctl failed while getting interface configuration.");
+    openhd::log::get_default()->warn(
+        "ioctl failed while getting interface configuration.");
     close(sockfd);
     return ip_addresses;
   }
@@ -77,7 +78,9 @@ std::vector<std::string> get_ip_addresses(const std::string& prefix) {
     strncpy(ifr.ifr_name, it->ifr_name, IFNAMSIZ - 1);
     if (ioctl(sockfd, SIOCGIFADDR, &ifr) < 0) {
       perror("ioctl");
-      openhd::log::get_default()->warn("ioctl failed while getting IP address for interface {}", ifr.ifr_name);
+      openhd::log::get_default()->warn(
+          "ioctl failed while getting IP address for interface {}",
+          ifr.ifr_name);
       continue;
     }
     auto* addr = (struct sockaddr_in*)&ifr.ifr_addr;
@@ -89,13 +92,14 @@ std::vector<std::string> get_ip_addresses(const std::string& prefix) {
   }
 
   close(sockfd);
-  
+
   return ip_addresses;
 }
 
-void communicate_with_device(const std::string& ip, const std::string& command) {
-  
-  openhd::log::get_default()->warn("Starting communication with device at IP: {}", ip);
+void communicate_with_device(const std::string& ip,
+                             const std::string& command) {
+  openhd::log::get_default()->warn(
+      "Starting communication with device at IP: {}", ip);
 
   try {
     Poco::Net::SocketAddress address(ip, 23);
@@ -103,16 +107,20 @@ void communicate_with_device(const std::string& ip, const std::string& command) 
     Poco::Net::SocketStream stream(socket);
 
     // Login to the device
-    std::this_thread::sleep_for(std::chrono::seconds(1)); // Wait for a second to process username
+    std::this_thread::sleep_for(
+        std::chrono::seconds(1));  // Wait for a second to process username
     openhd::log::get_default()->debug("Sending username: {}", username);
     stream << username << std::flush;
-    std::this_thread::sleep_for(std::chrono::seconds(1)); // Wait for a second to process username
+    std::this_thread::sleep_for(
+        std::chrono::seconds(1));  // Wait for a second to process username
 
     openhd::log::get_default()->debug("Sending password: {}", password);
     stream << password << std::flush;
-    std::this_thread::sleep_for(std::chrono::seconds(3)); // Wait for a second to process password
+    std::this_thread::sleep_for(
+        std::chrono::seconds(3));  // Wait for a second to process password
 
-    while (true) { // Infinite loop for sending commands and receiving responses
+    while (
+        true) {  // Infinite loop for sending commands and receiving responses
       // Send the command to the device
       stream << command << std::flush;
 
@@ -133,7 +141,8 @@ void communicate_with_device(const std::string& ip, const std::string& command) 
       if (std::regex_search(response, match, rssi_regex)) {
         std::string rssi_value_str = match[1].str();
         int rssi_value = std::stoi(rssi_value_str);
-        openhd::log::get_default()->warn("Extracted RSSI value: {} dBm", rssi_value);
+        openhd::log::get_default()->warn("Extracted RSSI value: {} dBm",
+                                         rssi_value);
 
         // some_other_function(rssi_value);
 
@@ -149,36 +158,33 @@ void communicate_with_device(const std::string& ip, const std::string& command) 
   }
 }
 
-
-
-
-
-void MicrohardLink::monitor_gateway_signal_strength(const std::string& gateway_ip) {
-  
+void MicrohardLink::monitor_gateway_signal_strength(
+    const std::string& gateway_ip) {
   if (gateway_ip.empty()) {
-    openhd::log::get_default()->warn("Gateway IP is empty. Exiting monitoring.");
-    
+    openhd::log::get_default()->warn(
+        "Gateway IP is empty. Exiting monitoring.");
+
     return;
   }
 
   // Continuously connect, send command, and print output every second
   while (true) {
-    openhd::log::get_default()->warn("Getting RSSI from gateway IP: {}", gateway_ip);
+    openhd::log::get_default()->warn("Getting RSSI from gateway IP: {}",
+                                     gateway_ip);
     try {
       std::string command = "AT+MWRSSI\n";
       communicate_with_device(gateway_ip, command);
       openhd::log::get_default()->warn("RSSI data retrieval complete.");
     } catch (const std::exception& e) {
-      openhd::log::get_default()->warn("Exception occurred while getting RSSI data: {}", e.what());
+      openhd::log::get_default()->warn(
+          "Exception occurred while getting RSSI data: {}", e.what());
     }
     // Wait for 1 second before the next iteration
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
-  
 }
 
 std::string get_gateway_ip() {
-  
   std::string cmd =
       "ip route show default | awk '/default/ {print $3}' | grep "
       "'^192\\.168\\.168'";
@@ -201,17 +207,18 @@ std::string get_gateway_ip() {
   }
 
   openhd::log::get_default()->warn("Filtered Gateway IP: {}", result.c_str());
-  
+
   return result;
 }
 
 bool check_ip_alive(const std::string& ip, int port = 23) {
-  
-  openhd::log::get_default()->warn("Checking if IP {} is alive on port {}", ip, port);
+  openhd::log::get_default()->warn("Checking if IP {} is alive on port {}", ip,
+                                   port);
 
   int sockfd = socket(AF_INET, SOCK_STREAM, 0);
   if (sockfd < 0) {
-    openhd::log::get_default()->warn("Failed to create socket for IP check: {}", ip);
+    openhd::log::get_default()->warn("Failed to create socket for IP check: {}",
+                                     ip);
     return false;
   }
 
@@ -225,37 +232,32 @@ bool check_ip_alive(const std::string& ip, int port = 23) {
     openhd::log::get_default()->warn("IP {} is not alive", ip);
   }
 
-  
   return connected;
 }
 
 std::string find_device_ip_gnd() {
-  
   auto ip_addresses = get_ip_addresses("192.168.168");
   for (const auto& ip : ip_addresses) {
     if (ip != MICROHARD_AIR_IP && ip != MICROHARD_GND_IP) {
-      
       return ip;
     }
   }
   openhd::log::get_default()->warn(
       "No suitable IP address found for DEVICE_IP_GND. Using default.");
-  
+
   return DEFAULT_DEVICE_IP_GND;
 }
 
 std::string find_device_ip_air() {
-  
   auto ip_addresses = get_ip_addresses("192.168.168");
   for (const auto& ip : ip_addresses) {
     if (ip != MICROHARD_AIR_IP && ip != MICROHARD_GND_IP) {
-      
       return ip;
     }
   }
   openhd::log::get_default()->warn(
       "No suitable IP address found for DEVICE_IP_AIR. Using default.");
-  
+
   return DEFAULT_DEVICE_IP_AIR;
 }
 
@@ -264,7 +266,6 @@ static const std::string DEVICE_IP_GND = find_device_ip_gnd();
 static const std::string DEVICE_IP_AIR = find_device_ip_air();
 
 void log_ip_addresses() {
-  
   auto ip_addresses = get_ip_addresses("192.168.168");
   if (!ip_addresses.empty()) {
     for (const auto& ip : ip_addresses) {
@@ -276,19 +277,16 @@ void log_ip_addresses() {
     openhd::log::get_default()->warn(
         "No IP addresses starting with 192.168.168 found.");
   }
-  
 }
 
 std::string get_detected_ip_address() {
-  
   auto ip_addresses = get_ip_addresses("192.168.168");
   if (!ip_addresses.empty()) {
-    
     return ip_addresses.front();
   } else {
     openhd::log::get_default()->warn(
         "No IP addresses starting with 192.168.168 found.");
-    
+
     return "";  // Return an empty string if no IP found
   }
 }
@@ -310,11 +308,9 @@ static void wait_for_microhard_module(bool is_air) {
     }
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
-  
 }
 
 MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
-  
   wait_for_microhard_module(m_profile.is_air);
 
   if (m_profile.is_air) {
@@ -354,8 +350,6 @@ MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
   // Start monitoring gateway signal strength
   std::thread monitor_thread(monitor_gateway_signal_strength, get_gateway_ip());
   monitor_thread.detach();  // Run in the background
-
-  
 }
 
 void MicrohardLink::transmit_telemetry_data(OHDLink::TelemetryTxPacket packet) {
@@ -378,18 +372,15 @@ void MicrohardLink::transmit_video_data(
 
 void MicrohardLink::transmit_audio_data(
     const openhd::AudioPacket& audio_packet) {
-  
   openhd::log::get_default()->warn("Transmitting audio data (not implemented)");
-  
 }
 
 std::vector<openhd::Setting> MicrohardLink::get_all_settings() {
-  
   using namespace openhd;
   std::vector<Setting> settings;
   auto change_dummy =
       IntSetting{0, [this](std::string, int value) { return true; }};
   settings.push_back(Setting{"MICROHARD_DUMMY0", change_dummy});
-  
+
   return settings;
 }
