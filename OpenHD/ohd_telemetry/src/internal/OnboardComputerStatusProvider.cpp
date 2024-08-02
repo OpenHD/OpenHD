@@ -64,7 +64,7 @@ static int read_battery_charging_linux() {
 }
 OnboardComputerStatusProvider::OnboardComputerStatusProvider(bool enable)
     : m_enable(enable), m_ina_219(SHUNT_OHMS, MAX_EXPECTED_AMPS) {
-  ina219_log_warning_once();
+  ina219_log_warning_once(0);
   if (!m_ina_219.has_any_error) {
     m_ina_219.configure(RANGE, GAIN, BUS_ADC, SHUNT_ADC);
   }
@@ -130,7 +130,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
         static_cast<uint8_t>(OHDPlatform::instance().platform_type);
     const auto curr_ram_usage =
         openhd::onboard::calculate_memory_usage_percent();
-    ina219_log_warning_once();
+    ina219_log_warning_once(curr_ina219_voltage);
     if (!m_ina_219.has_any_error) {
       float voltage = roundf(m_ina_219.voltage() * 1000);
       float current = roundf(m_ina_219.current() * 1000) / 1000;
@@ -203,6 +203,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
   }
 }
 
+
 MavlinkMessage
 OnboardComputerStatusProvider::get_current_status_as_mavlink_message(
     const uint8_t sys_id, const uint8_t comp_id,
@@ -224,4 +225,3 @@ void OnboardComputerStatusProvider::ina219_log_warning_once(int curr_ina219_volt
     m_ina219_warning_logged = true;
   }
 }
-
