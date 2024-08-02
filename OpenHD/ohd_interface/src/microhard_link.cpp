@@ -138,8 +138,8 @@ void communicate_with_device(const std::string& ip, const std::string& command) 
       std::smatch match;
       if (std::regex_search(response, match, rssi_regex)) {
         std::string rssi_value_str = match[1].str();
-        int rssi_value = std::stoi(rssi_value_str); // Convert to integer
-        openhd::log::get_default()->warn("Extracted RSSI value: {} dBm", rssi_value);
+        int rssi_value = std::stoi(rssi_value_str);
+        openhd::log::get_default()->warn("Extracted RSSI value: -{} dBm", rssi_value);
 
         // some_other_function(rssi_value);
 
