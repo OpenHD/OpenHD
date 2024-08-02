@@ -77,10 +77,8 @@ bool SerialEndpoint::write_data_serial(const std::vector<uint8_t>& data) {
   if (m_fd == -1) {
     // cannot send data at the time, UART not setup / doesn't exist. Limit
     // message to once per second
-    const bool send_already;
-    if (!send_already) {
+    if (!uart_log_warning_once) {
       m_console->warn("Cannot send data, no fd");
-      send_already==true;
     }
     return false;
   }
