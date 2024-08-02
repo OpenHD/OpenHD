@@ -44,7 +44,7 @@ static constexpr int MICROHARD_UDP_PORT_VIDEO_AIR_TX = 5910;
 static constexpr int MICROHARD_UDP_PORT_TELEMETRY_AIR_TX = 5920;
 static const std::string DEFAULT_DEVICE_IP_GND = "192.168.168.122";
 static const std::string DEFAULT_DEVICE_IP_AIR = "192.168.168.153";
-const std::string telnet_cmd = "telnet 192.168.168.1";
+const std::string telnet_cmd = "telnet",DEVICE_IP_GND;
 const std::string username = "admin\n";
 const std::string password = "qwertz1\n";
 const std::string command = "AT+MWRSSI\n";
@@ -100,10 +100,11 @@ std::vector<std::string> get_ip_addresses(const std::string& prefix) {
 }
 
 void communicate_with_device(const std::string& ip, const std::string& command) {
+  LOG_FUNCTION_ENTRY();
   openhd::log::get_default()->warn("Starting communication with device at IP: {}", ip);
 
   try {
-    Poco::Net::SocketAddress address(ip, 23);  // Telnet typically uses port 23
+    Poco::Net::SocketAddress address(ip, 23);
     Poco::Net::StreamSocket socket(address);
     Poco::Net::SocketStream stream(socket);
 
@@ -119,13 +120,16 @@ void communicate_with_device(const std::string& ip, const std::string& command) 
 
     while (true) { // Infinite loop for sending commands and receiving responses
       // Send the command to the device
+      openhd::log::get_default()->warn("Sending command: {}", command);
       stream << command << std::flush;
+      openhd::log::get_default()->warn("Command sent, starting to read response.");
 
       // Read the response from the device
       std::string response;
       std::string line;
       while (std::getline(stream, line)) {
         response += line + "\n";
+        openhd::log::get_default()->warn("Received line: {}", line);
         // Break out of the loop if the end of the response is reached
         if (line.find("OK") != std::string::npos) {
           break;
@@ -133,17 +137,18 @@ void communicate_with_device(const std::string& ip, const std::string& command) 
       }
 
       // Extract and log the RSSI value
-      std::regex rssi_regex(R"(([-\d]+ dBm))");
+      std::regex rssi_regex(R"(([-\d]+) dBm)");
       std::smatch match;
       if (std::regex_search(response, match, rssi_regex)) {
-        std::string rssi_value = match[1].str();
+        std::string rssi_value_str = match[1].str();
+        int rssi_value = std::stoi(rssi_value_str); // Convert to integer
         openhd::log::get_default()->warn("Extracted RSSI value: {}", rssi_value);
+
+        // some_other_function(rssi_value);
+
       } else {
         openhd::log::get_default()->warn("RSSI value not found in response");
       }
-
-      // Optionally, add a sleep interval to avoid overwhelming the device
-      std::this_thread::sleep_for(std::chrono::milliseconds (100));
     }
 
   } catch (const Poco::Exception& e) {
@@ -151,8 +156,8 @@ void communicate_with_device(const std::string& ip, const std::string& command) 
   } catch (const std::exception& e) {
     openhd::log::get_default()->warn("Standard Exception: {}", e.what());
   }
-  LOG_FUNCTION_EXIT();
 }
+
 
 
 
