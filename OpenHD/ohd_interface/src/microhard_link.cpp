@@ -104,11 +104,11 @@ void communicate_with_device(const std::string& ip, const std::string& command) 
 
     // Login to the device
     std::this_thread::sleep_for(std::chrono::seconds(1)); // Wait for a second to process username
-    openhd::log::get_default()->warn("Sending username: {}", username);
+    openhd::log::get_default()->debug("Sending username: {}", username);
     stream << username << std::flush;
     std::this_thread::sleep_for(std::chrono::seconds(1)); // Wait for a second to process username
 
-    openhd::log::get_default()->warn("Sending password: {}", password);
+    openhd::log::get_default()->debug("Sending password: {}", password);
     stream << password << std::flush;
     std::this_thread::sleep_for(std::chrono::seconds(3)); // Wait for a second to process password
 
