@@ -20,7 +20,7 @@ class LEDManager {
   static LEDManager& instance();
   static constexpr int STATUS_OFF = 0;
   static constexpr int STATUS_ON = 1;
-  
+
   void set_red_led_status(int status);
   void set_green_led_status(int status);
 
@@ -39,6 +39,8 @@ class LEDManager {
   void start_loading_thread();
   void stop_loading_thread();
   void loading_loop();
+  void blink_okay();
+  void blink_error();
 
  private:
   std::unique_ptr<std::thread> m_loading_thread;
