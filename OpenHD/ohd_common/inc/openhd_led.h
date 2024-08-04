@@ -19,6 +19,7 @@ class LEDManager {
   
   void set_primary_led_status(int status);
   void set_secondary_led_status(int status);
+  void set_status_stopped(int status);
 
   // OpenHD is running and healthy
   void set_status_okay();
