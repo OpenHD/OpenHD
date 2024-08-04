@@ -206,9 +206,10 @@ void openhd::LEDManager::set_status_okay() {
 
 void openhd::LEDManager::set_status_loading() {
   // is executed when OpenHD starts executing
-
   set_primary_led_status(STATUS_OFF);
   set_secondary_led_status(STATUS_OFF);
+  set_aux_led_status(STATUS_OFF);
+  set_rgb_led_status(STATUS_OFF);
 }
 
 void openhd::LEDManager::set_status_error() {
