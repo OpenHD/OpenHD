@@ -50,8 +50,8 @@ void turnOnAllLeds(const std::vector<std::string>& ledFolders, const std::string
 // All PI's allow toggling the red LED
 namespace openhd::rpi {
 // so far, I have only tested this on the RPI 4 and CM4
-static void toggle_red_led(const bool on) {
-  openhd::log::get_default()->warn("toggle_red_led: on={}", on);
+static void toggle_secondary_led(const bool on) {
+  openhd::log::get_default()->warn("toggle_secondary_led: on={}", on);
   static constexpr auto filename = "/sys/class/leds/PWR/brightness";
   if (!OHDFilesystemUtil::exists(filename)) {
     openhd::log::get_default()->warn("RPI LED1 brightness does not exist\n");
@@ -63,8 +63,8 @@ static void toggle_red_led(const bool on) {
 }
 
 // I think the green LED only supports on/off on the 4th generation PI's
-static void toggle_green_led(const bool on) {
-  openhd::log::get_default()->warn("toggle_green_led: on={}", on);
+static void toggle_primary_led(const bool on) {
+  openhd::log::get_default()->warn("toggle_primary_led: on={}", on);
   static constexpr auto filename = "/sys/class/leds/ACT/brightness";
   if (!OHDFilesystemUtil::exists(filename)) {
     openhd::log::get_default()->warn("RPI LED0 brightness does not exist");
@@ -79,9 +79,9 @@ static void toggle_green_led(const bool on) {
 static void red_led_on_off_delayed(const std::chrono::milliseconds &delay1,
                                    const std::chrono::milliseconds &delay2) {
   openhd::log::get_default()->warn("red_led_on_off_delayed: delay1={}ms, delay2={}ms", delay1.count(), delay2.count());
-  rpi::toggle_red_led(false);
+  rpi::toggle_secondary_led(false);
   std::this_thread::sleep_for(delay1);
-  rpi::toggle_red_led(true);
+  rpi::toggle_secondary_led(true);
   std::this_thread::sleep_for(delay2);
 }
 
@@ -89,9 +89,9 @@ static void red_led_on_off_delayed(const std::chrono::milliseconds &delay1,
 static void green_led_on_off_delayed(const std::chrono::milliseconds &delay1,
                                      const std::chrono::milliseconds &delay2) {
   openhd::log::get_default()->warn("green_led_on_off_delayed: delay1={}ms, delay2={}ms", delay1.count(), delay2.count());
-  rpi::toggle_green_led(false);
+  rpi::toggle_primary_led(false);
   std::this_thread::sleep_for(delay1);
-  rpi::toggle_green_led(true);
+  rpi::toggle_primary_led(true);
   std::this_thread::sleep_for(delay2);
 }
 
@@ -99,16 +99,16 @@ static void green_led_on_off_delayed(const std::chrono::milliseconds &delay1,
 
 namespace openhd::zero3w {
 
-static void toggle_red_led(const bool on) {
-  openhd::log::get_default()->warn("zero3w::toggle_red_led: on={}", on);
+static void toggle_secondary_led(const bool on) {
+  openhd::log::get_default()->warn("zero3w::toggle_secondary_led: on={}", on);
   static constexpr auto filename = "/sys/class/leds/mmc0::/brightness";
   const auto content = on ? "1" : "0";
   openhd::log::get_default()->warn("Writing to {}: {}", filename, content);
   OHDFilesystemUtil::write_file(filename, content);
 }
 
-static void toggle_green_led(const bool on) {
-  openhd::log::get_default()->warn("zero3w::toggle_green_led: on={}", on);
+static void toggle_primary_led(const bool on) {
+  openhd::log::get_default()->warn("zero3w::toggle_primary_led: on={}", on);
   static constexpr auto filename = "/sys/class/leds/board-led/brightness";
   const auto content = on ? "1" : "0";
   openhd::log::get_default()->warn("Writing to {}: {}", filename, content);
@@ -119,16 +119,16 @@ static void toggle_green_led(const bool on) {
 
 namespace openhd::radxacm3 {
 
-static void toggle_red_led(const bool on) {
-  openhd::log::get_default()->warn("radxacm3::toggle_red_led: on={}", on);
+static void toggle_secondary_led(const bool on) {
+  openhd::log::get_default()->warn("radxacm3::toggle_secondary_led: on={}", on);
   static constexpr auto filename = "/sys/class/leds/pwr-led-red/brightness";
   const auto content = on ? "1" : "0";
   openhd::log::get_default()->warn("Writing to {}: {}", filename, content);
   OHDFilesystemUtil::write_file(filename, content);
 }
 
-static void toggle_green_led(const bool on) {
-  openhd::log::get_default()->warn("radxacm3::toggle_green_led: on={}", on);
+static void toggle_primary_led(const bool on) {
+  openhd::log::get_default()->warn("radxacm3::toggle_primary_led: on={}", on);
   static constexpr auto filename = "/sys/class/leds/pi-led-green/brightness";
   const auto content = on ? "1" : "0";
   openhd::log::get_default()->warn("Writing to {}: {}", filename, content);
@@ -148,13 +148,13 @@ void openhd::LEDManager::set_aux_led_status(int status) {
   openhd::log::get_default()->warn("LEDManager::set_aux_led_status: on={}", on);
   if (OHDPlatform::instance().is_rpi()) {
     openhd::log::get_default()->warn("LEDManager::set_aux_led_status: Platform is RPI");
-    openhd::rpi::toggle_red_led(on);
+    openhd::rpi::toggle_secondary_led(on);
   } else if (OHDPlatform::instance().is_zero3w()) {
     openhd::log::get_default()->warn("LEDManager::set_aux_led_status: Platform is Zero3W");
-    openhd::zero3w::toggle_red_led(on);
+    openhd::zero3w::toggle_secondary_led(on);
   } else if (OHDPlatform::instance().is_radxa_cm3()) {
     openhd::log::get_default()->warn("LEDManager::set_aux_led_status: Platform is Radxa CM3");
-    openhd::radxacm3::toggle_red_led(on);
+    openhd::radxacm3::toggle_secondary_led(on);
   }
 }
 
@@ -164,13 +164,13 @@ void openhd::LEDManager::set_rgb_led_status(int status, int color) {
   openhd::log::get_default()->warn("LEDManager::set_rgb_led_status: on={}", on);
   if (OHDPlatform::instance().is_rpi()) {
     openhd::log::get_default()->warn("LEDManager::set_rgb_led_status: Platform is RPI");
-    openhd::rpi::toggle_red_led(on);
+    openhd::rpi::toggle_secondary_led(on);
   } else if (OHDPlatform::instance().is_zero3w()) {
     openhd::log::get_default()->warn("LEDManager::set_rgb_led_status: Platform is Zero3W");
-    openhd::zero3w::toggle_red_led(on);
+    openhd::zero3w::toggle_secondary_led(on);
   } else if (OHDPlatform::instance().is_radxa_cm3()) {
     openhd::log::get_default()->warn("LEDManager::set_rgb_led_status: Platform is Radxa CM3");
-    openhd::radxacm3::toggle_red_led(on);
+    openhd::radxacm3::toggle_secondary_led(on);
   }
 }
 
@@ -180,13 +180,13 @@ void openhd::LEDManager::set_secondary_led_status(int status) {
   openhd::log::get_default()->warn("LEDManager::set_secondary_led_status: on={}", on);
   if (OHDPlatform::instance().is_rpi()) {
     openhd::log::get_default()->warn("LEDManager::set_secondary_led_status: Platform is RPI");
-    openhd::rpi::toggle_red_led(on);
+    openhd::rpi::toggle_secondary_led(on);
   } else if (OHDPlatform::instance().is_zero3w()) {
     openhd::log::get_default()->warn("LEDManager::set_secondary_led_status: Platform is Zero3W");
-    openhd::zero3w::toggle_red_led(on);
+    openhd::zero3w::toggle_secondary_led(on);
   } else if (OHDPlatform::instance().is_radxa_cm3()) {
     openhd::log::get_default()->warn("LEDManager::set_secondary_led_status: Platform is Radxa CM3");
-    openhd::radxacm3::toggle_red_led(on);
+    openhd::radxacm3::toggle_secondary_led(on);
   }
 }
 
@@ -196,13 +196,13 @@ void openhd::LEDManager::set_primary_led_status(int status) {
   openhd::log::get_default()->warn("LEDManager::set_primary_led_status: on={}", on);
   if (OHDPlatform::instance().is_rpi()) {
     openhd::log::get_default()->warn("LEDManager::set_primary_led_status: Platform is RPI");
-    openhd::rpi::toggle_green_led(on);
+    openhd::rpi::toggle_primary_led(on);
   } else if (OHDPlatform::instance().is_zero3w()) {
     openhd::log::get_default()->warn("LEDManager::set_primary_led_status: Platform is Zero3W");
-    openhd::zero3w::toggle_green_led(on);
+    openhd::zero3w::toggle_primary_led(on);
   } else if (OHDPlatform::instance().is_radxa_cm3()) {
     openhd::log::get_default()->warn("LEDManager::set_primary_led_status: Platform is Radxa CM3");
-    openhd::radxacm3::toggle_green_led(on);
+    openhd::radxacm3::toggle_primary_led(on);
   }
 }
 
