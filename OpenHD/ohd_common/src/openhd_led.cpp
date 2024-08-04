@@ -186,6 +186,7 @@ void openhd::LEDManager::set_status_loading() {
   m_has_error = false;
   m_is_loading = true;
   start_loading_thread();
+  openhd::log::get_default()->warn("STARTING");
 }
 
 void openhd::LEDManager::set_status_error() {
@@ -195,10 +196,12 @@ void openhd::LEDManager::set_status_error() {
   m_has_error = true;
   m_is_loading = false;
   start_loading_thread();
+    openhd::log::get_default()->warn("ERROR");
 }
 
 void openhd::LEDManager::set_status_stopped() {
   stop_loading_thread();
   set_primary_led_status(STATUS_OFF);
   set_secondary_led_status(STATUS_OFF);
+  openhd::log::get_default()->warn("STOPPING");
 }
