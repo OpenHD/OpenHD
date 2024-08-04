@@ -8,8 +8,6 @@
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"
 
-// NOTE: Some PI's allow toggling both the red and green LED
-// All Pi's allow toggling the red LED
 namespace openhd::rpi {
 
 static void toggle_red_led(const bool on) {
@@ -40,13 +38,15 @@ static void green_led_on_off_delayed(const std::chrono::milliseconds &delay1,
   std::this_thread::sleep_for(delay2);
 }
 
-// Blink both LEDs fast
 static void blink_leds_fast(const std::chrono::milliseconds &delay) {
   red_led_on_off_delayed(delay, delay);
   green_led_on_off_delayed(delay, delay);
 }
 
-// Blink LEDs in alternating fashion
+static void blink_leds_slow(const std::chrono::milliseconds &delay) {
+  green_led_on_off_delayed(delay, delay);
+}
+
 static void blink_leds_alternating(const std::chrono::milliseconds &delay, std::atomic<bool> &running) {
   while (running) {
     toggle_red_led(true);
@@ -92,7 +92,7 @@ static void toggle_green_led(const bool on) {
 
 }  // namespace openhd::radxacm3
 
-openhd::LEDManager &openhd::LEDManager::instance() {
+openhd::LEDManager& openhd::LEDManager::instance() {
   static LEDManager instance{};
   return instance;
 }
@@ -119,7 +119,7 @@ void openhd::LEDManager::set_green_led_status(int status) {
   }
 }
 
-openhd::LEDManager::LEDManager() : m_loading_thread(nullptr), m_running(false) {}
+openhd::LEDManager::LEDManager() : m_loading_thread(nullptr), m_running(false), m_has_error(false), m_is_loading(false) {}
 
 openhd::LEDManager::~LEDManager() {
   stop_loading_thread();
@@ -146,6 +146,8 @@ void openhd::LEDManager::loading_loop() {
   while (m_running) {
     if (m_has_error) {
       blink_error();
+    } else if (m_is_loading) {
+      blink_loading();
     } else {
       blink_okay();
     }
@@ -157,25 +159,39 @@ void openhd::LEDManager::blink_okay() {
   openhd::rpi::blink_leds_fast(std::chrono::milliseconds(50));
 }
 
+void openhd::LEDManager::blink_loading() {
+  // Blink green LED slowly
+  openhd::rpi::blink_leds_slow(std::chrono::milliseconds(100));
+}
+
 void openhd::LEDManager::blink_error() {
   // Blink LEDs in alternating fashion
   openhd::rpi::blink_leds_alternating(std::chrono::milliseconds(50), m_running);
 }
 
 void openhd::LEDManager::set_status_okay() {
-  if (m_has_error) {
-    set_status_error();
+  if (m_is_loading) {
+    stop_loading_thread();
   }
   m_has_error = false;
+  m_is_loading = false;
   start_loading_thread();
 }
 
 void openhd::LEDManager::set_status_loading() {
+  if (m_has_error) {
+    stop_loading_thread();
+  }
   m_has_error = false;
+  m_is_loading = true;
   start_loading_thread();
 }
 
 void openhd::LEDManager::set_status_error() {
+  if (m_is_loading) {
+    stop_loading_thread();
+  }
   m_has_error = true;
+  m_is_loading = false;
   start_loading_thread();
 }
