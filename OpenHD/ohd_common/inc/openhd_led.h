@@ -28,9 +28,13 @@ class LEDManager {
   void set_primary_led_status(int status);
   void set_aux_led_status(int status);
   void set_rgb_led_status(int status, int color);
-  void blink_leds(int frequency_hz, int duration_seconds);
 
-  
+  // Start blinking the primary LED at a given frequency (Hz) for a duration (seconds)
+  void start_blinking_primary_led(int frequency_hz, int duration_seconds);
+
+  // Stop blinking the primary LED
+  void stop_blinking_primary_led();
+
   // OpenHD is running and healthy
   void set_status_okay();
   // OpenHD is starting
@@ -41,8 +45,16 @@ class LEDManager {
  private:
   explicit LEDManager();
   ~LEDManager();
+
   void loop();
   void set_led_status(bool on, const std::function<void(bool)>& toggle_led_fn);
+
+  // Thread management
+  void blink_leds_thread(int frequency_hz, int duration_seconds);
+
+  std::atomic<bool> m_blinking_running{false};
+  std::thread m_blinking_thread;
+  std::mutex m_blinking_mutex;
 
   bool m_has_error = false;
 };
