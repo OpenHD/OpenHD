@@ -27,6 +27,8 @@ class LEDManager {
   void set_status_loading();
   // OpenHD encountered an error
   void set_status_error();
+  // OpenHD was closed
+  void set_status_stopped();
 
  private:
   LEDManager();
