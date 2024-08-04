@@ -9,6 +9,8 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <atomic>
+#include <mutex>
 
 #include "openhd_platform.h"
 #include "openhd_spdlog.h"
@@ -104,6 +106,35 @@ namespace openhd::radxacm3 {
 }
 
 namespace openhd {
+    class LEDManager {
+    public:
+        static LEDManager& instance();
+
+        void set_led_status(bool on, const std::function<void(bool)>& toggle_led_fn);
+        void set_aux_led_status(int status);
+        void set_rgb_led_status(int status, int color);
+        void set_secondary_led_status(int status);
+        void set_primary_led_status(int status);
+        void set_status_okay();
+        void set_status_loading();
+        void set_status_error();
+        
+        void start_blinking_primary_led(int frequency_hz, int duration_seconds);
+        void stop_blinking_primary_led();
+
+    private:
+        LEDManager();
+        ~LEDManager();
+
+        void loop();
+        void blink_leds(int frequency_hz, int duration_seconds);
+        void blink_leds_thread(int frequency_hz, int duration_seconds);
+
+        std::atomic<bool> m_blinking_running{false};
+        std::thread m_blinking_thread;
+        std::mutex m_blinking_mutex;
+    };
+
     LEDManager& LEDManager::instance() {
         static LEDManager instance{};
         return instance;
@@ -161,6 +192,10 @@ namespace openhd {
     }
 
     LEDManager::~LEDManager() {
+        stop_blinking_primary_led(); // Ensure thread is stopped
+        if (m_blinking_thread.joinable()) {
+            m_blinking_thread.join();
+        }
     }
 
     void LEDManager::loop() {
@@ -173,8 +208,7 @@ namespace openhd {
     }
 
     void LEDManager::set_status_loading() {
-        // Blink the primary LED at 1 Hz while loading
-        blink_leds(1, 10);  // Blink at 1 Hz for 10 seconds
+        start_blinking_primary_led(1, 10);  // Blink at 1 Hz for 10 seconds
     }
 
     void LEDManager::set_status_error() {
@@ -183,16 +217,31 @@ namespace openhd {
         m_has_error = true;
     }
 
-    void LEDManager::blink_leds(int frequency_hz, int duration_seconds) {
-        if (!OHDPlatform::instance().is_rpi()) {
-            // If not on a RPi, you might need to adjust this logic for other platforms.
+    void LEDManager::start_blinking_primary_led(int frequency_hz, int duration_seconds) {
+        std::lock_guard<std::mutex> lock(m_blinking_mutex);
+        if (m_blinking_running) {
+            // Already running
             return;
         }
-        
+        m_blinking_running = true;
+        m_blinking_thread = std::thread(&LEDManager::blink_leds_thread, this, frequency_hz, duration_seconds);
+    }
+
+    void LEDManager::stop_blinking_primary_led() {
+        {
+            std::lock_guard<std::mutex> lock(m_blinking_mutex);
+            m_blinking_running = false;
+        }
+        if (m_blinking_thread.joinable()) {
+            m_blinking_thread.join();
+        }
+    }
+
+    void LEDManager::blink_leds_thread(int frequency_hz, int duration_seconds) {
         auto delay_on = std::chrono::milliseconds(1000 / (frequency_hz * 2));
         auto end_time = std::chrono::steady_clock::now() + std::chrono::seconds(duration_seconds);
 
-        while (std::chrono::steady_clock::now() < end_time) {
+        while (m_blinking_running && std::chrono::steady_clock::now() < end_time) {
             set_primary_led_status(STATUS_ON);
             std::this_thread::sleep_for(delay_on);
             set_primary_led_status(STATUS_OFF);
