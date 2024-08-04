@@ -104,39 +104,70 @@ static void toggle_green_led(const bool on) {
 }  // namespace openhd::radxacm3
 
 openhd::LEDManager &openhd::LEDManager::instance() {
-  openhd::log::get_default()->warn("LEDManager::instance()");
   static LEDManager instance{};
   return instance;
 }
 
-void openhd::LEDManager::set_red_led_status(int status) {
-  openhd::log::get_default()->warn("LEDManager::set_red_led_status: status={}", status);
+void openhd::LEDManager::set_aux_led_status(int status) {
+  openhd::log::get_default()->warn("LEDManager::set_aux_led_status: status={}", status);
   const bool on = status != STATUS_ON;
-  openhd::log::get_default()->warn("LEDManager::set_red_led_status: on={}", on);
+  openhd::log::get_default()->warn("LEDManager::set_aux_led_status: on={}", on);
   if (OHDPlatform::instance().is_rpi()) {
-    openhd::log::get_default()->warn("LEDManager::set_red_led_status: Platform is RPI");
+    openhd::log::get_default()->warn("LEDManager::set_aux_led_status: Platform is RPI");
     openhd::rpi::toggle_red_led(on);
   } else if (OHDPlatform::instance().is_zero3w()) {
-    openhd::log::get_default()->warn("LEDManager::set_red_led_status: Platform is Zero3W");
+    openhd::log::get_default()->warn("LEDManager::set_aux_led_status: Platform is Zero3W");
     openhd::zero3w::toggle_red_led(on);
   } else if (OHDPlatform::instance().is_radxa_cm3()) {
-    openhd::log::get_default()->warn("LEDManager::set_red_led_status: Platform is Radxa CM3");
+    openhd::log::get_default()->warn("LEDManager::set_aux_led_status: Platform is Radxa CM3");
     openhd::radxacm3::toggle_red_led(on);
   }
 }
 
-void openhd::LEDManager::set_green_led_status(int status) {
-  openhd::log::get_default()->warn("LEDManager::set_green_led_status: status={}", status);
+int openhd::LEDManager::set_rgb_led_status(int status) {
+  openhd::log::get_default()->warn("LEDManager::set_rgb_led_status: status={}", status);
   const bool on = status != STATUS_ON;
-  openhd::log::get_default()->warn("LEDManager::set_green_led_status: on={}", on);
+  openhd::log::get_default()->warn("LEDManager::set_rgb_led_status: on={}", on);
   if (OHDPlatform::instance().is_rpi()) {
-    openhd::log::get_default()->warn("LEDManager::set_green_led_status: Platform is RPI");
+    openhd::log::get_default()->warn("LEDManager::set_rgb_led_status: Platform is RPI");
+    openhd::rpi::toggle_red_led(on);
+  } else if (OHDPlatform::instance().is_zero3w()) {
+    openhd::log::get_default()->warn("LEDManager::set_rgb_led_status: Platform is Zero3W");
+    openhd::zero3w::toggle_red_led(on);
+  } else if (OHDPlatform::instance().is_radxa_cm3()) {
+    openhd::log::get_default()->warn("LEDManager::set_rgb_led_status: Platform is Radxa CM3");
+    openhd::radxacm3::toggle_red_led(on);
+  }
+}
+
+void openhd::LEDManager::set_secondary_led_status(int status) {
+  openhd::log::get_default()->warn("LEDManager::set_secondary_led_status: status={}", status);
+  const bool on = status != STATUS_ON;
+  openhd::log::get_default()->warn("LEDManager::set_secondary_led_status: on={}", on);
+  if (OHDPlatform::instance().is_rpi()) {
+    openhd::log::get_default()->warn("LEDManager::set_secondary_led_status: Platform is RPI");
+    openhd::rpi::toggle_red_led(on);
+  } else if (OHDPlatform::instance().is_zero3w()) {
+    openhd::log::get_default()->warn("LEDManager::set_secondary_led_status: Platform is Zero3W");
+    openhd::zero3w::toggle_red_led(on);
+  } else if (OHDPlatform::instance().is_radxa_cm3()) {
+    openhd::log::get_default()->warn("LEDManager::set_secondary_led_status: Platform is Radxa CM3");
+    openhd::radxacm3::toggle_red_led(on);
+  }
+}
+
+void openhd::LEDManager::set_primary_led_status(int status) {
+  openhd::log::get_default()->warn("LEDManager::set_primary_led_status: status={}", status);
+  const bool on = status != STATUS_ON;
+  openhd::log::get_default()->warn("LEDManager::set_primary_led_status: on={}", on);
+  if (OHDPlatform::instance().is_rpi()) {
+    openhd::log::get_default()->warn("LEDManager::set_primary_led_status: Platform is RPI");
     openhd::rpi::toggle_green_led(on);
   } else if (OHDPlatform::instance().is_zero3w()) {
-    openhd::log::get_default()->warn("LEDManager::set_green_led_status: Platform is Zero3W");
+    openhd::log::get_default()->warn("LEDManager::set_primary_led_status: Platform is Zero3W");
     openhd::zero3w::toggle_green_led(on);
   } else if (OHDPlatform::instance().is_radxa_cm3()) {
-    openhd::log::get_default()->warn("LEDManager::set_green_led_status: Platform is Radxa CM3");
+    openhd::log::get_default()->warn("LEDManager::set_primary_led_status: Platform is Radxa CM3");
     openhd::radxacm3::toggle_green_led(on);
   }
 }
@@ -169,20 +200,21 @@ void openhd::LEDManager::set_status_okay() {
     openhd::log::get_default()->warn("LEDManager::set_status_okay(): has error, setting status to error");
     set_status_error();
   }
-  set_green_led_status(STATUS_ON);
-  set_red_led_status(STATUS_OFF);
+  set_primary_led_status(STATUS_ON);
+  set_secondary_led_status(STATUS_OFF);
 }
 
 void openhd::LEDManager::set_status_loading() {
-  openhd::log::get_default()->warn("LEDManager::set_status_loading()");
-  set_green_led_status(STATUS_OFF);
-  set_red_led_status(STATUS_OFF);
+  // is executed when OpenHD starts executing
+
+  set_primary_led_status(STATUS_OFF);
+  set_secondary_led_status(STATUS_OFF);
 }
 
 void openhd::LEDManager::set_status_error() {
   openhd::log::get_default()->warn("LEDManager::set_status_error()");
-  set_green_led_status(STATUS_ON);
-  set_red_led_status(STATUS_ON);
+  set_primary_led_status(STATUS_ON);
+  set_secondary_led_status(STATUS_ON);
   m_has_error = true;
   openhd::log::get_default()->warn("LEDManager::set_status_error(): m_has_error set to true");
 }

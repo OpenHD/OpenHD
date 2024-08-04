@@ -19,9 +19,11 @@ class LEDManager {
   static LEDManager& instance();
   static constexpr int STATUS_OFF = 0;
   static constexpr auto STATUS_ON = 1;
-  void set_red_led_status(int status);
-  void set_green_led_status(int status);
-
+  void set_secondary_led_status(int status);
+  void set_primary_led_status(int status);
+  void set_aux_led_status(int status);
+  int set_rgb_led_status(int status);
+  
  public:
   // OpenHD is running and healthy
   void set_status_okay();
