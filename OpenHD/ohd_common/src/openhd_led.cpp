@@ -199,6 +199,6 @@ void openhd::LEDManager::set_status_error() {
 
 void openhd::LEDManager::set_status_stopped() {
   stop_loading_thread();
-  set_primary_led_status(STATUS_ON);
-  set_secondary_led_status(STATUS_ON);
+  set_primary_led_status(STATUS_OFF);
+  set_secondary_led_status(STATUS_OFF);
 }
