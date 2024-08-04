@@ -128,11 +128,13 @@ namespace openhd {
 
         void loop();
         void blink_leds(int frequency_hz, int duration_seconds);
-        void blink_leds_thread(int frequency_hz, int duration_seconds);
 
-        std::atomic<bool> m_blinking_running{false};
+        std::atomic<bool> m_blinking{false};
         std::thread m_blinking_thread;
         std::mutex m_blinking_mutex;
+        bool m_blinking_running{false};
+
+        void blink_leds_thread(int frequency_hz, int duration_seconds);
     };
 
     LEDManager& LEDManager::instance() {
