@@ -41,6 +41,14 @@ void turnOffAllLeds(const std::vector<std::string>& ledFolders, const std::strin
     }
 }
 
+void turnOnAllLeds(const std::vector<std::string>& ledFolders, const std::string& baseDir) {
+    for (const std::string& folder : ledFolders) {
+        std::string brightnessFile = baseDir + folder + "/brightness";
+        openhd::log::get_default()->warn("Turning on LED in folder: {}", folder);
+        OHDFilesystemUtil::write_file(brightnessFile, "1");
+    }
+}
+
 // NOTE: Some PI's allow toggling both the red and green LED
 // All PI's allow toggling the red LED
 namespace openhd::rpi {
@@ -224,26 +232,10 @@ void openhd::LEDManager::loop() {
 }
 
 void openhd::LEDManager::set_status_okay() {
-  openhd::log::get_default()->warn("LEDManager::set_status_okay()");
-  if (m_has_error) {
-    openhd::log::get_default()->warn("LEDManager::set_status_okay(): has error, setting status to error");
-    set_status_error();
-  }
-  set_primary_led_status(STATUS_ON);
-  set_secondary_led_status(STATUS_OFF);
+  turnOffAllLeds(folders, baseDir);
 }
 
 void openhd::LEDManager::set_status_loading() {
-  openhd::log::get_default()->warn("LEDManager::set_status_loading()");
-  std::string baseDir = "/sys/class/leds/";
-  std::vector<std::string> folders = listLedFoldersWithBrightness(baseDir);
-
-  openhd::log::get_default()->warn("LED folders with brightness file:");
-  for (const std::string& folder : folders) {
-    openhd::log::get_default()->warn("{}", folder);
-  }
-
-  // Turn off all detected LEDs
   turnOffAllLeds(folders, baseDir);
 }
 
