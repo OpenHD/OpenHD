@@ -367,5 +367,6 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
   openhd::remove_currently_running_file();
+  openhd::LEDManager::instance().set_status_stopped();
   return 0;
 }
