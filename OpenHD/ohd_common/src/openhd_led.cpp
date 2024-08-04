@@ -171,8 +171,7 @@ void openhd::LEDManager::blink_error() {
 }
 
 void openhd::LEDManager::set_status_okay() {
-    openhd::log::get_default()->warn("STARTING");
-
+  openhd::log::get_default()->warn("STARTING");
   if (m_is_loading) {
     stop_loading_thread();
   }
@@ -182,6 +181,7 @@ void openhd::LEDManager::set_status_okay() {
 }
 
 void openhd::LEDManager::set_status_loading() {
+  openhd::log::get_default()->warn("LOADING");
   if (m_has_error) {
     stop_loading_thread();
   }
