@@ -1,3 +1,4 @@
+//
 // Created by consti10 on 01.02.24.
 //
 
@@ -6,35 +7,22 @@
 
 #include <atomic>
 #include <thread>
-#include <vector>
-#include <string>
-#include <chrono>
-#include <functional>
-
 namespace openhd {
 
 /**
- * OpenHD uses 2 LEDs (green and red) for displaying 'stuff' to the user.
- * Whether those LEDs exist or not depends on the HW - here we abstract that
+ * OpenHD uses 2 leds (green and red) for displaying 'stuff' to the user.
+ * Weather those leds exists or not depends on the HW - here we abstract that
  * away.
  */
 class LEDManager {
  public:
   static LEDManager& instance();
   static constexpr int STATUS_OFF = 0;
-  static constexpr int STATUS_ON = 1;
+  static constexpr auto STATUS_ON = 1;
+  void set_red_led_status(int status);
+  void set_green_led_status(int status);
 
-  void set_secondary_led_status(int status);
-  void set_primary_led_status(int status);
-  void set_aux_led_status(int status);
-  void set_rgb_led_status(int status, int color);
-
-  // Start blinking the primary LED at a given frequency (Hz) for a duration (seconds)
-  void start_blinking_primary_led(int frequency_hz, int duration_seconds);
-
-  // Stop blinking the primary LED
-  void stop_blinking_primary_led();
-
+ public:
   // OpenHD is running and healthy
   void set_status_okay();
   // OpenHD is starting
@@ -45,41 +33,16 @@ class LEDManager {
  private:
   explicit LEDManager();
   ~LEDManager();
-
   void loop();
-  void set_led_status(bool on, const std::function<void(bool)>& toggle_led_fn);
 
-  // Thread management
-  void blink_leds_thread(int frequency_hz, int duration_seconds);
-
-  std::atomic<bool> m_blinking_running{false};
-  std::thread m_blinking_thread;
-  std::mutex m_blinking_mutex;
-
+ private:
+  // bool m_run= true;
+  // std::unique_ptr<std::thread> m_manage_thread;
   bool m_has_error = false;
 };
 
 }  // namespace openhd
 
-std::vector<std::string> listLedFoldersWithBrightness(const std::string& baseDir);
-void setLedBrightness(const std::vector<std::string>& ledFolders, const std::string& baseDir, const std::string& value);
-void turnOffAllLeds(const std::vector<std::string>& ledFolders, const std::string& baseDir);
-void turnOnAllLeds(const std::vector<std::string>& ledFolders, const std::string& baseDir);
-
-namespace openhd::rpi {
-    void toggle_secondary_led(bool on);
-    void toggle_primary_led(bool on);
-    void toggle_led_delayed(bool on, const std::chrono::milliseconds& delay);
-}
-
-namespace openhd::zero3w {
-    void toggle_secondary_led(bool on);
-    void toggle_primary_led(bool on);
-}
-
-namespace openhd::radxacm3 {
-    void toggle_secondary_led(bool on);
-    void toggle_primary_led(bool on);
-}
+class openhd_led {};
 
 #endif  // OPENHD_OPENHD_LED_H
