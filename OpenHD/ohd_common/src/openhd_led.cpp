@@ -8,10 +8,9 @@
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"
 
-// NOTE: Some PI's allow toggling both the red and green led
-// All pi's allow toggling the red led
+// NOTE: Some PI's allow toggling both the red and green LED
+// All Pi's allow toggling the red LED
 namespace openhd::rpi {
-// Existing functions ...
 
 static void red_led_on_off_delayed(const std::chrono::milliseconds &delay1,
                                    const std::chrono::milliseconds &delay2) {
@@ -36,8 +35,8 @@ static void blink_leds_fast(const std::chrono::milliseconds &delay) {
 }
 
 // Blink LEDs in alternating fashion
-static void blink_leds_alternating(const std::chrono::milliseconds &delay) {
-  while (true) {
+static void blink_leds_alternating(const std::chrono::milliseconds &delay, std::atomic<bool> &running) {
+  while (running) {
     rpi::toggle_red_led(true);
     rpi::toggle_green_led(false);
     std::this_thread::sleep_for(delay);
@@ -148,7 +147,7 @@ void openhd::LEDManager::blink_okay() {
 
 void openhd::LEDManager::blink_error() {
   // Blink LEDs in alternating fashion
-  openhd::rpi::blink_leds_alternating(std::chrono::milliseconds(50));
+  openhd::rpi::blink_leds_alternating(std::chrono::milliseconds(50), m_running);
 }
 
 void openhd::LEDManager::set_status_okay() {
@@ -168,5 +167,3 @@ void openhd::LEDManager::set_status_error() {
   m_has_error = true;
   start_loading_thread();
 }
-
-
