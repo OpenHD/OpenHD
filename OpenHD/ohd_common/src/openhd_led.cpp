@@ -164,7 +164,7 @@ void openhd::LEDManager::blink_okay() {
 }
 
 void openhd::LEDManager::blink_loading() {
-  openhd::rpi::blink_leds_slow(std::chrono::milliseconds(100));
+  openhd::rpi::blink_leds_slow(std::chrono::milliseconds(200));
 }
 
 void openhd::LEDManager::blink_error() {
