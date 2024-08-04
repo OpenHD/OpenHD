@@ -11,7 +11,7 @@
 #include <algorithm>
 #include <atomic>
 #include <mutex>
-
+#include "openhd_led.h"
 #include "openhd_platform.h"
 #include "openhd_spdlog.h"
 #include "openhd_util.h"
