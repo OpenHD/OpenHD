@@ -245,11 +245,6 @@ void openhd::LEDManager::set_status_loading() {
 
   // Turn off all detected LEDs
   turnOffAllLeds(folders, baseDir);
-
-  set_primary_led_status(STATUS_OFF);
-  set_secondary_led_status(STATUS_OFF);
-  set_aux_led_status(STATUS_OFF);
-  set_rgb_led_status(STATUS_OFF, 0);
 }
 
 void openhd::LEDManager::set_status_error() {
