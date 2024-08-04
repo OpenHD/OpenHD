@@ -232,10 +232,28 @@ void openhd::LEDManager::loop() {
 }
 
 void openhd::LEDManager::set_status_okay() {
+  openhd::log::get_default()->warn("LEDManager::set_status_loading()");
+  std::string baseDir = "/sys/class/leds/";
+  std::vector<std::string> folders = listLedFoldersWithBrightness(baseDir);
+
+  openhd::log::get_default()->warn("LED folders with brightness file:");
+  for (const std::string& folder : folders) {
+    openhd::log::get_default()->warn("{}", folder);
+  }
   turnOffAllLeds(folders, baseDir);
 }
 
 void openhd::LEDManager::set_status_loading() {
+  openhd::log::get_default()->warn("LEDManager::set_status_loading()");
+  std::string baseDir = "/sys/class/leds/";
+  std::vector<std::string> folders = listLedFoldersWithBrightness(baseDir);
+
+  openhd::log::get_default()->warn("LED folders with brightness file:");
+  for (const std::string& folder : folders) {
+    openhd::log::get_default()->warn("{}", folder);
+  }
+
+  // Turn off all detected LEDs
   turnOffAllLeds(folders, baseDir);
 }
 
