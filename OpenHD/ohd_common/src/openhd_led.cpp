@@ -29,14 +29,12 @@ std::vector<std::string> listLedFoldersWithBrightness(const std::string& baseDir
             ledFolders.push_back(folderName);
         }
     }
-
     return ledFolders;
 }
 
 void turnOffAllLeds(const std::vector<std::string>& ledFolders, const std::string& baseDir) {
     for (const std::string& folder : ledFolders) {
         std::string brightnessFile = baseDir + folder + "/brightness";
-        openhd::log::get_default()->warn("Turning off LED in folder: {}", folder);
         OHDFilesystemUtil::write_file(brightnessFile, "0");
     }
 }
@@ -44,7 +42,6 @@ void turnOffAllLeds(const std::vector<std::string>& ledFolders, const std::strin
 void turnOnAllLeds(const std::vector<std::string>& ledFolders, const std::string& baseDir) {
     for (const std::string& folder : ledFolders) {
         std::string brightnessFile = baseDir + folder + "/brightness";
-        openhd::log::get_default()->warn("Turning on LED in folder: {}", folder);
         OHDFilesystemUtil::write_file(brightnessFile, "1");
     }
 }
