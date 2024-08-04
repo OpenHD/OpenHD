@@ -1,11 +1,7 @@
-// Created by consti10 on 01.02.24.
-//
-
 #ifndef OPENHD_OPENHD_LED_H
 #define OPENHD_OPENHD_LED_H
 
 #include <atomic>
-#include <memory>
 #include <thread>
 
 namespace openhd {
@@ -20,7 +16,6 @@ class LEDManager {
   static LEDManager& instance();
   static constexpr int STATUS_OFF = 0;
   static constexpr int STATUS_ON = 1;
-
   void set_red_led_status(int status);
   void set_green_led_status(int status);
 
@@ -35,7 +30,6 @@ class LEDManager {
  private:
   explicit LEDManager();
   ~LEDManager();
-  
   void start_loading_thread();
   void stop_loading_thread();
   void loading_loop();

@@ -12,36 +12,48 @@
 // All Pi's allow toggling the red LED
 namespace openhd::rpi {
 
+static void toggle_red_led(const bool on) {
+  static constexpr auto filename = "/sys/class/leds/PWR/brightness";
+  const auto content = on ? "1" : "0";
+  OHDFilesystemUtil::write_file(filename, content);
+}
+
+static void toggle_green_led(const bool on) {
+  static constexpr auto filename = "/sys/class/leds/ACT/brightness";
+  const auto content = on ? "1" : "0";
+  OHDFilesystemUtil::write_file(filename, content);
+}
+
 static void red_led_on_off_delayed(const std::chrono::milliseconds &delay1,
                                    const std::chrono::milliseconds &delay2) {
-  rpi::toggle_red_led(false);
+  toggle_red_led(false);
   std::this_thread::sleep_for(delay1);
-  rpi::toggle_red_led(true);
+  toggle_red_led(true);
   std::this_thread::sleep_for(delay2);
 }
 
 static void green_led_on_off_delayed(const std::chrono::milliseconds &delay1,
                                      const std::chrono::milliseconds &delay2) {
-  rpi::toggle_green_led(false);
+  toggle_green_led(false);
   std::this_thread::sleep_for(delay1);
-  rpi::toggle_green_led(true);
+  toggle_green_led(true);
   std::this_thread::sleep_for(delay2);
 }
 
 // Blink both LEDs fast
 static void blink_leds_fast(const std::chrono::milliseconds &delay) {
-  rpi::red_led_on_off_delayed(delay, delay);
-  rpi::green_led_on_off_delayed(delay, delay);
+  red_led_on_off_delayed(delay, delay);
+  green_led_on_off_delayed(delay, delay);
 }
 
 // Blink LEDs in alternating fashion
 static void blink_leds_alternating(const std::chrono::milliseconds &delay, std::atomic<bool> &running) {
   while (running) {
-    rpi::toggle_red_led(true);
-    rpi::toggle_green_led(false);
+    toggle_red_led(true);
+    toggle_green_led(false);
     std::this_thread::sleep_for(delay);
-    rpi::toggle_red_led(false);
-    rpi::toggle_green_led(true);
+    toggle_red_led(false);
+    toggle_green_led(true);
     std::this_thread::sleep_for(delay);
   }
 }
