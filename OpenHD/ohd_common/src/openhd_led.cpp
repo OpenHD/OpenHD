@@ -143,7 +143,9 @@ void openhd::LEDManager::set_status_okay() {
   set_red_led_status(STATUS_OFF);
 }
 void openhd::LEDManager::set_status_loading() {
+  while(true){
     openhd::rpi::green_led_on_off_delayed(std::chrono::milliseconds(50), std::chrono::milliseconds(50));
+  }
 }
 void openhd::LEDManager::set_status_error() {
   set_green_led_status(STATUS_ON);
