@@ -240,7 +240,7 @@ void openhd::LEDManager::set_status_okay() {
   for (const std::string& folder : folders) {
     openhd::log::get_default()->warn("{}", folder);
   }
-  turnOffAllLeds(folders, baseDir);
+  turnOnAllLeds(folders, baseDir);
 }
 
 void openhd::LEDManager::set_status_loading() {
