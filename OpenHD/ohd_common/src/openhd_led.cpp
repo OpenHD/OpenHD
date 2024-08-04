@@ -144,6 +144,7 @@ void openhd::LEDManager::set_status_okay() {
 }
 void openhd::LEDManager::set_status_loading() {
   set_green_led_status(STATUS_OFF);
+  green_led_on_off_delayed()
   set_red_led_status(STATUS_OFF);
 }
 void openhd::LEDManager::set_status_error() {
