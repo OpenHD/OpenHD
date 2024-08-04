@@ -14,8 +14,8 @@ namespace openhd {
 class LEDManager {
  public:
   static LEDManager& instance();
-  static constexpr int STATUS_OFF = 0;
-  static constexpr int STATUS_ON = 1;
+  static constexpr int STATUS_OFF = 1;
+  static constexpr int STATUS_ON = 0;
   
   void set_primary_led_status(int status);
   void set_secondary_led_status(int status);
