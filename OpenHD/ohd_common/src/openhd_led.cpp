@@ -37,6 +37,7 @@ static void secondary_led_on_off_delayed(const std::chrono::milliseconds &delay1
 static void primary_led_on_off_delayed(const std::chrono::milliseconds &delay1,
                                      const std::chrono::milliseconds &delay2) {
   toggle_primary_led(false);
+  toggle_secondary_led(true);
   std::this_thread::sleep_for(delay1);
   toggle_primary_led(true);
   std::this_thread::sleep_for(delay2);
@@ -49,7 +50,6 @@ static void blink_leds_fast(const std::chrono::milliseconds &delay) {
 
 static void blink_leds_slow(const std::chrono::milliseconds &delay) {
   primary_led_on_off_delayed(delay, delay);
-  set_secondary_led_status(STATUS_ON);
 }
 
 static void blink_leds_alternating(const std::chrono::milliseconds &delay, std::atomic<bool> &running) {
