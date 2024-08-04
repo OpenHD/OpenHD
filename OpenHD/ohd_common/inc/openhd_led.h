@@ -28,6 +28,8 @@ class LEDManager {
   void set_primary_led_status(int status);
   void set_aux_led_status(int status);
   void set_rgb_led_status(int status, int color);
+  void blink_leds(int frequency_hz, int duration_seconds);
+
   
   // OpenHD is running and healthy
   void set_status_okay();

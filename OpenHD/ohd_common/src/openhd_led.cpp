@@ -173,14 +173,32 @@ namespace openhd {
     }
 
     void LEDManager::set_status_loading() {
-        std::string baseDir = "/sys/class/leds/";
-        auto folders = listLedFoldersWithBrightness(baseDir);
-        turnOffAllLeds(folders, baseDir);
+        // Blink the primary LED at 1 Hz while loading
+        blink_leds(1, 10);  // Blink at 1 Hz for 10 seconds
     }
 
     void LEDManager::set_status_error() {
         set_primary_led_status(STATUS_ON);
         set_secondary_led_status(STATUS_ON);
         m_has_error = true;
+    }
+
+    void LEDManager::blink_leds(int frequency_hz, int duration_seconds) {
+        if (!OHDPlatform::instance().is_rpi()) {
+            // If not on a RPi, you might need to adjust this logic for other platforms.
+            return;
+        }
+        
+        auto delay_on = std::chrono::milliseconds(1000 / (frequency_hz * 2));
+        auto end_time = std::chrono::steady_clock::now() + std::chrono::seconds(duration_seconds);
+
+        while (std::chrono::steady_clock::now() < end_time) {
+            set_primary_led_status(STATUS_ON);
+            std::this_thread::sleep_for(delay_on);
+            set_primary_led_status(STATUS_OFF);
+            std::this_thread::sleep_for(delay_on);
+        }
+
+        set_primary_led_status(STATUS_OFF);  // Ensure LED is off after blinking
     }
 }
