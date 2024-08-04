@@ -37,7 +37,7 @@ static void secondary_led_on_off_delayed(const std::chrono::milliseconds &delay1
 static void primary_led_on_off_delayed(const std::chrono::milliseconds &delay1,
                                      const std::chrono::milliseconds &delay2) {
   toggle_primary_led(false);
-  toggle_secondary_led(true);
+  toggle_secondary_led(false);
   std::this_thread::sleep_for(delay1);
   toggle_primary_led(true);
   std::this_thread::sleep_for(delay2);
