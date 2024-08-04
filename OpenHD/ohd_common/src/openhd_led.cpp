@@ -124,7 +124,7 @@ void openhd::LEDManager::set_aux_led_status(int status) {
   }
 }
 
-int openhd::LEDManager::set_rgb_led_status(int status) {
+void openhd::LEDManager::set_rgb_led_status(int status,int color) {
   openhd::log::get_default()->warn("LEDManager::set_rgb_led_status: status={}", status);
   const bool on = status != STATUS_ON;
   openhd::log::get_default()->warn("LEDManager::set_rgb_led_status: on={}", on);

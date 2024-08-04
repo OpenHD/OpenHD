@@ -22,7 +22,7 @@ class LEDManager {
   void set_secondary_led_status(int status);
   void set_primary_led_status(int status);
   void set_aux_led_status(int status);
-  int set_rgb_led_status(int status);
+  int set_rgb_led_status(int status, int color);
   
  public:
   // OpenHD is running and healthy
