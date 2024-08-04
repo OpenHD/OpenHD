@@ -137,7 +137,7 @@ void openhd::LEDManager::stop_loading_thread() {
 
 void openhd::LEDManager::loading_loop() {
   while (m_running) {
-    openhd::rpi::green_led_on_off_delayed(std::chrono::milliseconds(50), std::chrono::milliseconds(50));
+    openhd::rpi::green_led_on_off_delayed(std::chrono::milliseconds(200), std::chrono::milliseconds(200));
   }
 }
 
