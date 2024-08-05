@@ -21,6 +21,7 @@ static void toggle_secondary_led(const bool on) {
 }
 
 static void toggle_primary_led(const bool on) {
+    static constexpr auto filename = "/sys/class/leds/ACT/brightness";;
   if (OHDPlatform::instance().is_rpi()) {
     static constexpr auto filename = "/sys/class/leds/ACT/brightness";;
   } else if (OHDPlatform::instance().is_zero3w()) {
