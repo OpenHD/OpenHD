@@ -90,30 +90,17 @@ static void blink_leds_alternating(const std::chrono::milliseconds &delay, std::
 }  // namespace openhd::rpi
 
 void openhd::LEDManager::set_secondary_led_status(int status) {
-  // const bool on = status != STATUS_ON;
-  // if (OHDPlatform::instance().is_rpi()) {
-  //   openhd::rpi::toggle_secondary_led(on);
-  // } else if (OHDPlatform::instance().is_zero3w()) {
-  //   openhd::zero3w::toggle_secondary_led(on);
-  // } else if (OHDPlatform::instance().is_radxa_cm3()) {
-  //   openhd::radxacm3::toggle_secondary_led(on);
-  // } else if (OHDPlatform::instance().is_rock5_a()) {
-  //   openhd::rock5a::toggle_secondary_led(on);
-  // }
+  const bool on = status != STATUS_ON;
+  if (OHDPlatform::instance().is_rpi()) {
+    openhd::rpi::toggle_secondary_led(on);
+  }
 }
 
 void openhd::LEDManager::set_primary_led_status(int status) {
-  // const bool on = status != STATUS_ON;
-  // openhd::log::get_default()->warn("set_primary_led_status");
-  // if (OHDPlatform::instance().is_rpi()) {
-  //   openhd::rpi::toggle_primary_led(on);
-  // } else if (OHDPlatform::instance().is_zero3w()) {
-  //   openhd::zero3w::toggle_primary_led(on);
-  // } else if (OHDPlatform::instance().is_radxa_cm3()) {
-  //   openhd::radxacm3::toggle_primary_led(on);
-  // } else if (OHDPlatform::instance().is_rock5_a()) {
-  //   openhd::rock5a::toggle_primary_led(on);
-  // }
+  const bool on = status != STATUS_ON;
+  if (OHDPlatform::instance().is_rpi()) {
+    openhd::rpi::toggle_primary_led(on);
+  }
 }
 
 openhd::LEDManager::LEDManager() : m_loading_thread(nullptr), m_running(false), m_has_error(false), m_is_loading(false) {}
