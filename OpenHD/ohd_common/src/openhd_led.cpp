@@ -89,22 +89,6 @@ static void blink_leds_alternating(const std::chrono::milliseconds &delay, std::
 
 }  // namespace openhd::rpi
 
-namespace openhd::radxacm3 {
-
-static void toggle_secondary_led(const bool on) {
-  static constexpr auto filename = "/sys/class/leds/pwr-led-red/brightness";
-  const auto content = on ? "1" : "0";
-  OHDFilesystemUtil::write_file(filename, content);
-}
-
-static void toggle_primary_led(const bool on) {
-  static constexpr auto filename = "/sys/class/leds/pi-led-green/brightness";
-  const auto content = on ? "1" : "0";
-  OHDFilesystemUtil::write_file(filename, content);
-}
-
-}  // namespace openhd::radxacm3
-
 openhd::LEDManager& openhd::LEDManager::instance() {
   static LEDManager instance{};
   return instance;
