@@ -142,22 +142,6 @@ static void blink_leds_alternating(const std::chrono::milliseconds &delay, std::
 
 }  // namespace openhd::rock5a
 
-namespace openhd::zero3w {
-
-static void toggle_secondary_led(const bool on) {
-  static constexpr auto filename = "/sys/class/leds/mmc0::/brightness";
-  const auto content = on ? "1" : "0";
-  OHDFilesystemUtil::write_file(filename, content);
-}
-
-static void toggle_primary_led(const bool on) {
-  static constexpr auto filename = "/sys/class/leds/board-led/brightness";
-  const auto content = on ? "1" : "0";
-  OHDFilesystemUtil::write_file(filename, content);
-}
-
-}  // namespace openhd::zero3w
-
 namespace openhd::radxacm3 {
 
 static void toggle_secondary_led(const bool on) {
