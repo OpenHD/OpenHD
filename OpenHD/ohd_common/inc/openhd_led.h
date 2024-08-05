@@ -1,15 +1,16 @@
-// Created by consti10 on 01.02.24
-// Improved by Rapha on 04.08.24
-
 #ifndef OPENHD_OPENHD_LED_H
 #define OPENHD_OPENHD_LED_H
 
 #include <atomic>
 #include <thread>
-#include <memory>
 
 namespace openhd {
 
+/**
+ * OpenHD uses 2 LEDs (green and red) for displaying status to the user.
+ * Whether those LEDs exist or not depends on the hardware - here we abstract that
+ * away.
+ */
 class LEDManager {
  public:
   static LEDManager& instance();
