@@ -26,8 +26,14 @@ static void toggle_primary_led(const bool on) {
     const auto content = on ? "1" : "0";
     OHDFilesystemUtil::write_file(filename, content);
   } else if (OHDPlatform::instance().is_zero3w()) {
+    static constexpr auto filename = "/sys/class/leds/board-led/brightness";
+    const auto content = on ? "1" : "0";
+    OHDFilesystemUtil::write_file(filename, content);
   } else if (OHDPlatform::instance().is_radxa_cm3()) {
-  } else if (OHDPlatform::instance().is_rock5_a()) {
+    static constexpr auto filename = "/sys/class/leds/pi-led-green/brightness";
+    const auto content = on ? "1" : "0";
+    OHDFilesystemUtil::write_file(filename, content);
+  } else if (OHDPlatform::instance().is_rock5_a_b()) {
    static constexpr auto filename = "/sys/class/leds/user-led1/brightness";
    const auto content = on ? "1" : "0";
    OHDFilesystemUtil::write_file(filename, content);
