@@ -153,10 +153,12 @@ static void toggle_primary_led(const bool on) {
 openhd::LEDManager& openhd::LEDManager::instance() {
   static LEDManager instance{};
   return instance;
+  openhd::log::get_default()->warn("step1");
 }
 
 void openhd::LEDManager::set_secondary_led_status(int status) {
   const bool on = status != STATUS_ON;
+  openhd::log::get_default()->warn("step2");
   if (OHDPlatform::instance().is_rpi()) {
     openhd::rpi::toggle_secondary_led(on);
   } else if (OHDPlatform::instance().is_zero3w()) {
