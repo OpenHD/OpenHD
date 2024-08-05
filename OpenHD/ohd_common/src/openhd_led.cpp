@@ -21,6 +21,7 @@ static void toggle_secondary_led(const bool on) {
 }
 
 static void toggle_primary_led(const bool on) {
+    openhd::log::get_default()->warn("pi");
   static constexpr auto filename = "/sys/class/leds/ACT/brightness";
   const auto content = on ? "1" : "0";
   OHDFilesystemUtil::write_file(filename, content);
