@@ -136,15 +136,15 @@ void openhd::LEDManager::loading_loop() {
 }
 
 void openhd::LEDManager::blink_okay() {
-  openhd::rpi::blink_leds_fast(std::chrono::milliseconds(50));
+  blink_leds_fast(std::chrono::milliseconds(50));
 }
 
 void openhd::LEDManager::blink_loading() {
-  openhd::rpi::blink_leds_slow(std::chrono::milliseconds(200));
+  blink_leds_slow(std::chrono::milliseconds(200));
 }
 
 void openhd::LEDManager::blink_error() {
-  openhd::rpi::blink_leds_alternating(std::chrono::milliseconds(50), m_running);
+  blink_leds_alternating(std::chrono::milliseconds(50), m_running);
 }
 
 void openhd::LEDManager::set_status_okay() {
