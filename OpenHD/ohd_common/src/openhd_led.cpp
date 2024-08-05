@@ -1,6 +1,6 @@
 //
-// Created by consti10 on 01.02.24
-// Improved by Rapha on 04.08.24
+// rewritten by Rapha 04.08.24
+// based on consti10's code
 
 #include "openhd_led.h"
 
