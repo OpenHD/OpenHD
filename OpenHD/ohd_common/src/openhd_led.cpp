@@ -21,8 +21,15 @@ static void toggle_secondary_led(const bool on) {
 }
 
 static void toggle_primary_led(const bool on) {
-    openhd::log::get_default()->warn("pi");
-  static constexpr auto filename = "/sys/class/leds/ACT/brightness";
+  if (OHDPlatform::instance().is_rpi()) {
+    static constexpr auto filename = "/sys/class/leds/ACT/brightness";;
+  } else if (OHDPlatform::instance().is_zero3w()) {
+    openhd::zero3w::toggle_secondary_led(on);
+  } else if (OHDPlatform::instance().is_radxa_cm3()) {
+    openhd::radxacm3::toggle_secondary_led(on);
+  } else if (OHDPlatform::instance().is_rock5_a()) {
+   static constexpr auto filename = " /sys/class/leds/user-led1/brightness";
+  }
   const auto content = on ? "1" : "0";
   OHDFilesystemUtil::write_file(filename, content);
 }
