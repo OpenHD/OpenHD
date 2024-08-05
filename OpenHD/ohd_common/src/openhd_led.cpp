@@ -12,87 +12,119 @@
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"
 
-namespace openhd::rpi {
+namespace openhd::led_util {
 
-static void toggle_secondary_led(const bool on) {
-  static constexpr auto filename = "/sys/class/leds/PWR/brightness";
+void toggle_led(const std::string& filename, const bool on) {
   const auto content = on ? "1" : "0";
   OHDFilesystemUtil::write_file(filename, content);
 }
 
-static void toggle_primary_led(const bool on) {
-  static constexpr auto filename = "/sys/class/leds/ACT/brightness";
-  const auto content = on ? "1" : "0";
-  OHDFilesystemUtil::write_file(filename, content);
-}
-
-static void secondary_led_on_off_delayed(const std::chrono::milliseconds &delay1,
-                                   const std::chrono::milliseconds &delay2) {
-  toggle_secondary_led(false);
+void led_on_off_delayed(const std::string& filename, const std::chrono::milliseconds& delay1, const std::chrono::milliseconds& delay2) {
+  toggle_led(filename, false);
   std::this_thread::sleep_for(delay1);
-  toggle_secondary_led(true);
+  toggle_led(filename, true);
   std::this_thread::sleep_for(delay2);
 }
 
-static void primary_led_on_off_delayed(const std::chrono::milliseconds &delay1,
-                                     const std::chrono::milliseconds &delay2) {
-  toggle_primary_led(false);
-  toggle_secondary_led(false);
-  std::this_thread::sleep_for(delay1);
-  toggle_primary_led(true);
-  std::this_thread::sleep_for(delay2);
+void blink_leds_fast(const std::string& primary_filename, const std::string& secondary_filename, const std::chrono::milliseconds& delay) {
+  led_on_off_delayed(secondary_filename, delay, delay);
+  led_on_off_delayed(primary_filename, delay, delay);
 }
 
-static void blink_leds_fast(const std::chrono::milliseconds &delay) {
-  secondary_led_on_off_delayed(delay, delay);
-  primary_led_on_off_delayed(delay, delay);
+void blink_leds_slow(const std::string& primary_filename, const std::string& secondary_filename, const std::chrono::milliseconds& delay) {
+  led_on_off_delayed(primary_filename, delay, delay);
 }
 
-static void blink_leds_slow(const std::chrono::milliseconds &delay) {
-  primary_led_on_off_delayed(delay, delay);
-}
-
-static void blink_leds_alternating(const std::chrono::milliseconds &delay, std::atomic<bool> &running) {
+void blink_leds_alternating(const std::string& primary_filename, const std::string& secondary_filename, const std::chrono::milliseconds& delay, std::atomic<bool>& running) {
   while (running) {
-    toggle_secondary_led(true);
-    toggle_primary_led(false);
+    toggle_led(secondary_filename, true);
+    toggle_led(primary_filename, false);
     std::this_thread::sleep_for(delay);
-    toggle_secondary_led(false);
-    toggle_primary_led(true);
+    toggle_led(secondary_filename, false);
+    toggle_led(primary_filename, true);
     std::this_thread::sleep_for(delay);
   }
+}
+
+}  // namespace openhd::led_util
+
+namespace openhd::rpi {
+
+static constexpr auto secondary_led_filename = "/sys/class/leds/PWR/brightness";
+static constexpr auto primary_led_filename = "/sys/class/leds/ACT/brightness";
+
+void toggle_secondary_led(const bool on) {
+  openhd::led_util::toggle_led(secondary_led_filename, on);
+}
+
+void toggle_primary_led(const bool on) {
+  openhd::led_util::toggle_led(primary_led_filename, on);
+}
+
+void blink_leds_fast(const std::chrono::milliseconds& delay) {
+  openhd::led_util::blink_leds_fast(primary_led_filename, secondary_led_filename, delay);
+}
+
+void blink_leds_slow(const std::chrono::milliseconds& delay) {
+  openhd::led_util::blink_leds_slow(primary_led_filename, secondary_led_filename, delay);
+}
+
+void blink_leds_alternating(const std::chrono::milliseconds& delay, std::atomic<bool>& running) {
+  openhd::led_util::blink_leds_alternating(primary_led_filename, secondary_led_filename, delay, running);
 }
 
 }  // namespace openhd::rpi
 
 namespace openhd::zero3w {
 
-static void toggle_secondary_led(const bool on) {
-  static constexpr auto filename = "/sys/class/leds/mmc0::/brightness";
-  const auto content = on ? "1" : "0";
-  OHDFilesystemUtil::write_file(filename, content);
+static constexpr auto secondary_led_filename = "/sys/class/leds/mmc0::/brightness";
+static constexpr auto primary_led_filename = "/sys/class/leds/board-led/brightness";
+
+void toggle_secondary_led(const bool on) {
+  openhd::led_util::toggle_led(secondary_led_filename, on);
 }
 
-static void toggle_primary_led(const bool on) {
-  static constexpr auto filename = "/sys/class/leds/board-led/brightness";
-  const auto content = on ? "1" : "0";
-  OHDFilesystemUtil::write_file(filename, content);
+void toggle_primary_led(const bool on) {
+  openhd::led_util::toggle_led(primary_led_filename, on);
+}
+
+void blink_leds_fast(const std::chrono::milliseconds& delay) {
+  openhd::led_util::blink_leds_fast(primary_led_filename, secondary_led_filename, delay);
+}
+
+void blink_leds_slow(const std::chrono::milliseconds& delay) {
+  openhd::led_util::blink_leds_slow(primary_led_filename, secondary_led_filename, delay);
+}
+
+void blink_leds_alternating(const std::chrono::milliseconds& delay, std::atomic<bool>& running) {
+  openhd::led_util::blink_leds_alternating(primary_led_filename, secondary_led_filename, delay, running);
 }
 
 }  // namespace openhd::zero3w
 
 namespace openhd::radxacm3 {
 
-static void toggle_secondary_led(const bool on) {
-  static constexpr auto filename = "/sys/class/leds/pwr-led-red/brightness";
-  const auto content = on ? "1" : "0";
-  OHDFilesystemUtil::write_file(filename, content);
+static constexpr auto secondary_led_filename = "/sys/class/leds/pwr-led-red/brightness";
+static constexpr auto primary_led_filename = "/sys/class/leds/pi-led-green/brightness";
+
+void toggle_secondary_led(const bool on) {
+  openhd::led_util::toggle_led(secondary_led_filename, on);
 }
 
-static void toggle_primary_led(const bool on) {
-  static constexpr auto filename = "/sys/class/leds/pi-led-green/brightness";
-  const auto content = on ? "1" : "0";
-  OHDFilesystemUtil::write_file(filename, content);
+void toggle_primary_led(const bool on) {
+  openhd::led_util::toggle_led(primary_led_filename, on);
+}
+
+void blink_leds_fast(const std::chrono::milliseconds& delay) {
+  openhd::led_util::blink_leds_fast(primary_led_filename, secondary_led_filename, delay);
+}
+
+void blink_leds_slow(const std::chrono::milliseconds& delay) {
+  openhd::led_util::blink_leds_slow(primary_led_filename, secondary_led_filename, delay);
+}
+
+void blink_leds_alternating(const std::chrono::milliseconds& delay, std::atomic<bool>& running) {
+  openhd::led_util::blink_leds_alternating(primary_led_filename, secondary_led_filename, delay, running);
 }
 
 }  // namespace openhd::radxacm3
@@ -160,15 +192,33 @@ void openhd::LEDManager::loading_loop() {
 }
 
 void openhd::LEDManager::blink_okay() {
-  openhd::rpi::blink_leds_fast(std::chrono::milliseconds(50));
+  if (OHDPlatform::instance().is_rpi()) {
+    openhd::rpi::blink_leds_fast(std::chrono::milliseconds(50));
+  } else if (OHDPlatform::instance().is_zero3w()) {
+    openhd::zero3w::blink_leds_fast(std::chrono::milliseconds(50));
+  } else if (OHDPlatform::instance().is_radxa_cm3()) {
+    openhd::radxacm3::blink_leds_fast(std::chrono::milliseconds(50));
+  }
 }
 
 void openhd::LEDManager::blink_loading() {
-  openhd::rpi::blink_leds_slow(std::chrono::milliseconds(200));
+  if (OHDPlatform::instance().is_rpi()) {
+    openhd::rpi::blink_leds_slow(std::chrono::milliseconds(200));
+  } else if (OHDPlatform::instance().is_zero3w()) {
+    openhd::zero3w::blink_leds_slow(std::chrono::milliseconds(200));
+  } else if (OHDPlatform::instance().is_radxa_cm3()) {
+    openhd::radxacm3::blink_leds_slow(std::chrono::milliseconds(200));
+  }
 }
 
 void openhd::LEDManager::blink_error() {
-  openhd::rpi::blink_leds_alternating(std::chrono::milliseconds(50), m_running);
+  if (OHDPlatform::instance().is_rpi()) {
+    openhd::rpi::blink_leds_alternating(std::chrono::milliseconds(50), m_running);
+  } else if (OHDPlatform::instance().is_zero3w()) {
+    openhd::zero3w::blink_leds_alternating(std::chrono::milliseconds(50), m_running);
+  } else if (OHDPlatform::instance().is_radxa_cm3()) {
+    openhd::radxacm3::blink_leds_alternating(std::chrono::milliseconds(50), m_running);
+  }
 }
 
 void openhd::LEDManager::set_status_okay() {
