@@ -12,8 +12,6 @@
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"
 
-namespace openhd::rpi {
-
 static void toggle_secondary_led(const bool on) {
     if (OHDPlatform::instance().is_rpi()) {
     static constexpr auto filename = "/sys/class/leds/PWR/brightness";;
@@ -87,8 +85,6 @@ static void blink_leds_alternating(const std::chrono::milliseconds &delay, std::
   }
 }
 
-}  // namespace openhd::rpi
-
 openhd::LEDManager& openhd::LEDManager::instance() {
   static LEDManager instance{};
   return instance;
@@ -96,17 +92,12 @@ openhd::LEDManager& openhd::LEDManager::instance() {
 
 void openhd::LEDManager::set_secondary_led_status(int status) {
   const bool on = status != STATUS_ON;
-  if (OHDPlatform::instance().is_rpi()) {
-    openhd::rpi::toggle_secondary_led(on);
-  }
+  toggle_secondary_led(on);
 }
 
 void openhd::LEDManager::set_primary_led_status(int status) {
   const bool on = status != STATUS_ON;
-  openhd::log::get_default()->warn("set_primary_led_status");
-  if (OHDPlatform::instance().is_rpi()) {
-    openhd::rpi::toggle_primary_led(on);
-  }
+  toggle_primary_led(on);
 }
 
 openhd::LEDManager::LEDManager() : m_loading_thread(nullptr), m_running(false), m_has_error(false), m_is_loading(false) {}
