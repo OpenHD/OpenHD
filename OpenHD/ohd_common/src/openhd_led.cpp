@@ -163,7 +163,7 @@ void openhd::LEDManager::set_secondary_led_status(int status) {
     openhd::zero3w::toggle_secondary_led(on);
   } else if (OHDPlatform::instance().is_radxa_cm3()) {
     openhd::radxacm3::toggle_secondary_led(on);
-  } else if (OHDPlatform::instance().is_radxa_rock5_a()) {
+  } else if (OHDPlatform::instance().is_rock5_a()) {
     openhd::rock5a::toggle_secondary_led(on);
   }
 }
