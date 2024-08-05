@@ -15,9 +15,19 @@
 namespace openhd::rpi {
 
 static void toggle_secondary_led(const bool on) {
-  static constexpr auto filename = "/sys/class/leds/PWR/brightness";
-  const auto content = on ? "1" : "0";
-  OHDFilesystemUtil::write_file(filename, content);
+    if (OHDPlatform::instance().is_rpi()) {
+    static constexpr auto filename = "/sys/class/leds/PWR/brightness";;
+    const auto content = on ? "1" : "0";
+    OHDFilesystemUtil::write_file(filename, content);
+  } else if (OHDPlatform::instance().is_radxa_cm3()) {
+    static constexpr auto filename = "/sys/class/leds/pwr-led-red/brightness";
+    const auto content = on ? "1" : "0";
+    OHDFilesystemUtil::write_file(filename, content);
+  } else if (OHDPlatform::instance().is_rock5_a_b()) {
+   static constexpr auto filename = "/sys/class/leds/user-led2/brightness";
+   const auto content = on ? "1" : "0";
+   OHDFilesystemUtil::write_file(filename, content);
+  }
 }
 
 static void toggle_primary_led(const bool on) {
