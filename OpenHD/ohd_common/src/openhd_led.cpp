@@ -167,8 +167,6 @@ void openhd::LEDManager::set_secondary_led_status(int status) {
   const bool on = status != STATUS_ON;
   if (OHDPlatform::instance().is_rpi()) {
     openhd::rpi::toggle_secondary_led(on);
-  } else if (OHDPlatform::instance().is_zero3w()) {
-    openhd::zero3w::toggle_secondary_led(on);
   } else if (OHDPlatform::instance().is_radxa_cm3()) {
     openhd::radxacm3::toggle_secondary_led(on);
   } else if (OHDPlatform::instance().is_rock5_a()) {
@@ -181,8 +179,6 @@ void openhd::LEDManager::set_primary_led_status(int status) {
   openhd::log::get_default()->warn("set_primary_led_status");
   if (OHDPlatform::instance().is_rpi()) {
     openhd::rpi::toggle_primary_led(on);
-  } else if (OHDPlatform::instance().is_zero3w()) {
-    openhd::zero3w::toggle_primary_led(on);
   } else if (OHDPlatform::instance().is_radxa_cm3()) {
     openhd::radxacm3::toggle_primary_led(on);
   } else if (OHDPlatform::instance().is_rock5_a()) {
