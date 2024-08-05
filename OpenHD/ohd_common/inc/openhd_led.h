@@ -1,5 +1,5 @@
-// Rewritten by Rapha 08.24'
-// based on consti10's code
+// Created by consti10 on 01.02.24
+// Improved by Rapha on 04.08.24
 
 #ifndef OPENHD_OPENHD_LED_H
 #define OPENHD_OPENHD_LED_H
