@@ -21,7 +21,7 @@ static void toggle_secondary_led(const bool on) {
     static constexpr auto filename = "/sys/class/leds/pwr-led-red/brightness";
     const auto content = on ? "1" : "0";
     OHDFilesystemUtil::write_file(filename, content);
-  } else if (OHDPlatform::instance().is_rock5_a_b) {
+  } else if (OHDPlatform::instance().is_rock5_a_b()) {
    static constexpr auto filename = "/sys/class/leds/user-led2/brightness";
    const auto content = on ? "1" : "0";
    OHDFilesystemUtil::write_file(filename, content);
