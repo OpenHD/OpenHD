@@ -103,7 +103,7 @@ std::string GStreamerStream::create_source_encode_pipeline(
     // veye  IMX462 needs video0. I think the others too ...
     auto bus = "/dev/video0";
     pipeline << OHDGstHelper::create_veye_vl2_stream(setting, bus);
-  } else if (camera.requires_rockchip_mpp_pipeline()) {
+  } else if (camera.requires_rockchip3_mpp_pipeline()) {
     if (camera.camera_type == X_CAM_TYPE_ROCK_5_HDMI_IN) {
       pipeline << OHDGstHelper::createRockchipHDMIStream(setting);
     } else {
@@ -114,6 +114,20 @@ std::string GStreamerStream::create_source_encode_pipeline(
                       X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W ||
                   OHDPlatform::instance().platform_type ==
                       X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3
+              ? 0
+              : 11;
+      pipeline << OHDGstHelper::createRockchipCSIStream(v4l2_filenumber,
+                                                        setting);
+    }
+  } else if (camera.requires_rockchip5_mpp_pipeline()) {
+    if (camera.camera_type == X_CAM_TYPE_ROCK_5_HDMI_IN) {
+      pipeline << OHDGstHelper::createRockchipHDMIStream(setting);
+    } else {
+      const int v4l2_filenumber =
+          OHDPlatform::instance().platform_type ==
+                      X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A ||
+                  OHDPlatform::instance().platform_type ==
+                      X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B
               ? 0
               : 11;
       pipeline << OHDGstHelper::createRockchipCSIStream(v4l2_filenumber,
@@ -217,7 +231,7 @@ void GStreamerStream::setup() {
         (uint16_t)setting.streamed_video_format.framerate};
     openhd::LinkActionHandler::instance().set_cam_info(index, cam_info);
   }
-  m_console->debug("Starting pipeline:[{}]", pipeline_content.str());
+  m_console->warn("Starting pipeline:[{}]", pipeline_content.str());
   // Protect against unwanted use - stop and free the pipeline first
   assert(m_gst_pipeline == nullptr);
   // Now start the (as a string) built pipeline

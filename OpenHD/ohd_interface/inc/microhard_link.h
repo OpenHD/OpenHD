@@ -10,8 +10,7 @@
 #include "openhd_udp.h"
 
 /**
- * Experimental link implementation for microhard modules
- * (Or anything else really using IP addresses)
+ * Link implementation for microhard modules
  */
 class MicrohardLink : public OHDLink {
  public:
@@ -26,6 +25,7 @@ class MicrohardLink : public OHDLink {
    * and/or the used hardware
    */
   std::vector<openhd::Setting> get_all_settings();
+  static void monitor_gateway_signal_strength(const std::string& gateway_ip);
 
  private:
   const OHDProfile m_profile;

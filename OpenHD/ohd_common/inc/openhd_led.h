@@ -1,48 +1,52 @@
-//
-// Created by consti10 on 01.02.24.
-//
-
 #ifndef OPENHD_OPENHD_LED_H
 #define OPENHD_OPENHD_LED_H
 
 #include <atomic>
 #include <thread>
+
 namespace openhd {
 
 /**
- * OpenHD uses 2 leds (green and red) for displaying 'stuff' to the user.
- * Weather those leds exists or not depends on the HW - here we abstract that
- * away.
+ * OpenHD uses 2 LEDs (green and red) for displaying status to the user.
+ * Whether those LEDs exist or not depends on the hardware - here we abstract
+ * that away.
  */
 class LEDManager {
  public:
   static LEDManager& instance();
+  static constexpr int STATUS_ON = 1;
   static constexpr int STATUS_OFF = 0;
-  static constexpr auto STATUS_ON = 1;
-  void set_red_led_status(int status);
-  void set_green_led_status(int status);
 
- public:
+  void set_primary_led_status(int status);
+  void set_secondary_led_status(int status);
+  void set_status_stopped(int status);
+
   // OpenHD is running and healthy
   void set_status_okay();
   // OpenHD is starting
   void set_status_loading();
   // OpenHD encountered an error
   void set_status_error();
+  // OpenHD was closed
+  void set_status_stopped();
 
  private:
-  explicit LEDManager();
+  LEDManager();
   ~LEDManager();
-  void loop();
 
- private:
-  // bool m_run= true;
-  // std::unique_ptr<std::thread> m_manage_thread;
-  bool m_has_error = false;
+  void start_loading_thread();
+  void stop_loading_thread();
+  void loading_loop();
+  void blink_okay();
+  void blink_loading();
+  void blink_error();
+
+  std::unique_ptr<std::thread> m_loading_thread;
+  std::atomic<bool> m_running;
+  std::atomic<bool> m_has_error;
+  std::atomic<bool> m_is_loading;
 };
 
 }  // namespace openhd
-
-class openhd_led {};
 
 #endif  // OPENHD_OPENHD_LED_H

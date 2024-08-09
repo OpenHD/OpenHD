@@ -64,7 +64,7 @@ static int read_battery_charging_linux() {
 }
 OnboardComputerStatusProvider::OnboardComputerStatusProvider(bool enable)
     : m_enable(enable), m_ina_219(SHUNT_OHMS, MAX_EXPECTED_AMPS) {
-  ina219_log_warning_once();
+  ina219_log_warning_once(0);
   if (!m_ina_219.has_any_error) {
     m_ina_219.configure(RANGE, GAIN, BUS_ADC, SHUNT_ADC);
   }
@@ -123,14 +123,14 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
     int curr_clock_core = 0;
     int curr_clock_v3d = 0;
     bool curr_rpi_undervolt = false;
-    int curr_ina219_voltage = 2;
-    int curr_ina219_current = 133;
+    int curr_ina219_voltage = 0;
+    int curr_ina219_current = 0;
     const int curr_space_left = OHDFilesystemUtil::get_remaining_space_in_mb();
     const auto ohd_platform =
         static_cast<uint8_t>(OHDPlatform::instance().platform_type);
     const auto curr_ram_usage =
         openhd::onboard::calculate_memory_usage_percent();
-    ina219_log_warning_once();
+    ina219_log_warning_once(curr_ina219_voltage);
     if (!m_ina_219.has_any_error) {
       float voltage = roundf(m_ina_219.voltage() * 1000);
       float current = roundf(m_ina_219.current() * 1000) / 1000;
@@ -218,8 +218,9 @@ OnboardComputerStatusProvider::get_current_status_as_mavlink_message(
   return msg;
 }
 
-void OnboardComputerStatusProvider::ina219_log_warning_once() {
-  if (!m_ina_219.has_any_error && !m_ina219_warning_logged) {
+void OnboardComputerStatusProvider::ina219_log_warning_once(
+    int curr_ina219_voltage) {
+  if (!m_ina219_warning_logged && (curr_ina219_voltage > 0)) {
     openhd::log::get_default()->warn("INA219 detected!");
     m_ina219_warning_logged = true;
   }

@@ -328,6 +328,7 @@ int main(int argc, char *argv[]) {
     }
     // --- terminate openhd, most likely requested by a developer with sigterm
     m_console->debug("Terminating openhd");
+    openhd::LEDManager::instance().set_status_stopped();
     // Stop any communication between modules, to eliminate any issues created
     // by threads during cleanup
     openhd::LinkActionHandler::instance().disable_all_callables();

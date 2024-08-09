@@ -1,0 +1,128 @@
+Factory Details:
+  Rank                     primary + 1 (257)
+  Long-name                Rockchip Mpp H265 Encoder
+  Klass                    Codec/Encoder/Video
+  Description              Encode video streams via Rockchip Mpp
+  Author                   Jeffy Chen <jeffy.chen@rock-chips.com>
+
+Plugin Details:
+  Name                     rockchipmpp
+  Description              Rockchip Mpp Video Plugin
+  Filename                 /usr/lib/aarch64-linux-gnu/gstreamer-1.0/libgstrockchipmpp.so
+  Version                  1.14.4
+  License                  LGPL
+  Source module            gst-rockchip
+  Binary package           GStreamer Rockchip Plug-ins
+  Origin URL               Unknown package origin
+
+GObject
+ +----GInitiallyUnowned
+       +----GstObject
+             +----GstElement
+                   +----GstVideoEncoder
+                         +----GstMppEnc
+                               +----GstMppH265Enc
+
+Implemented Interfaces:
+  GstPreset
+
+Pad Templates:
+  SRC template: 'src'
+    Availability: Always
+    Capabilities:
+      video/x-h265
+                  width: [ 96, 2147483647 ]
+                 height: [ 64, 2147483647 ]
+          stream-format: { (string)byte-stream }
+              alignment: { (string)au }
+  
+  SINK template: 'sink'
+    Availability: Always
+    Capabilities:
+      video/x-raw
+                 format: { (string)NV12, (string)I420, (string)YUY2, (string)UYVY, (string)BGR16, (string)RGB16, (string)ABGR, (string)ARGB, (string)BGRA, (string)RGBA, (string)xBGR, (string)xRGB, (string)BGRx, (string)RGBx, (string)NV12, (string)NV21, (string)I420, (string)YV12, (string)NV16, (string)NV61, (string)BGR16, (string)RGB, (string)BGR, (string)RGBA, (string)BGRA, (string)RGBx, (string)BGRx }
+                  width: [ 96, 2147483647 ]
+                 height: [ 64, 2147483647 ]
+
+Element has no clocking capabilities.
+Element has no URI handling capabilities.
+
+Pads:
+  SINK: 'sink'
+    Pad Template: 'sink'
+  SRC: 'src'
+    Pad Template: 'src'
+
+Element Properties:
+  bps                 : Target BPS (0 = auto calculate)
+                        flags: readable, writable
+                        Unsigned Integer. Range: 0 - 2147483647 Default: 0 
+  bps-max             : Max BPS (0 = auto calculate)
+                        flags: readable, writable
+                        Unsigned Integer. Range: 0 - 2147483647 Default: 0 
+  bps-min             : Min BPS (0 = auto calculate)
+                        flags: readable, writable
+                        Unsigned Integer. Range: 0 - 2147483647 Default: 0 
+  gop                 : Group of pictures starting with I frame (-1 = FPS, 1 = all I frames)
+                        flags: readable, writable
+                        Integer. Range: -1 - 2147483647 Default: -1 
+  header-mode         : Header mode
+                        flags: readable, writable
+                        Enum "MppEncHeaderMode" Default: 0, "first-frame"
+                           (0): first-frame      - Only in the first frame
+                           (1): each-idr         - In every IDR frames
+  height              : Height (0 = original)
+                        flags: readable, writable
+                        Unsigned Integer. Range: 0 - 2147483647 Default: 0 
+  max-reenc           : Max re-encode times for one frame
+                        flags: readable, writable
+                        Unsigned Integer. Range: 0 - 3 Default: 1 
+  min-force-key-unit-interval: Minimum interval between force-keyunit requests in nanoseconds
+                        flags: readable, writable
+                        Unsigned Integer64. Range: 0 - 18446744073709551615 Default: 0 
+  name                : The name of the object
+                        flags: readable, writable, 0x2000
+                        String. Default: "mpph265enc0"
+  parent              : The parent of the object
+                        flags: readable, writable, 0x2000
+                        Object of type "GstObject"
+  qos                 : Handle Quality-of-Service events from downstream
+                        flags: readable, writable
+                        Boolean. Default: false
+  qp-init             : Initial QP (lower value means higher quality)
+                        flags: readable, writable
+                        Unsigned Integer. Range: 0 - 51 Default: 26 
+  qp-max              : Max QP (0 = default)
+                        flags: readable, writable
+                        Unsigned Integer. Range: 0 - 51 Default: 0 
+  qp-max-step         : Max delta QP step between two frames (-1 = default)
+                        flags: readable, writable
+                        Integer. Range: -1 - 51 Default: -1 
+  qp-min              : Min QP (0 = default)
+                        flags: readable, writable
+                        Unsigned Integer. Range: 0 - 51 Default: 0 
+  rc-mode             : RC mode
+                        flags: readable, writable
+                        Enum "GstMppEncRcMode" Default: 1, "cbr"
+                           (0): vbr              - Variable bitrate
+                           (1): cbr              - Constant bitrate
+                           (2): fixqp            - Fixed QP
+  rotation            : Rotation
+                        flags: readable, writable
+                        Enum "GstMppEncRotation" Default: 0, "0"
+                           (0): 0                - Rotate 0
+                           (90): 90               - Rotate 90
+                           (180): 180              - Rotate 180
+                           (270): 270              - Rotate 270
+  sei-mode            : SEI mode
+                        flags: readable, writable
+                        Enum "GstMppEncSeiMode" Default: 0, "disable"
+                           (0): disable          - SEI disabled
+                           (1): one-seq          - One SEI per sequence
+                           (2): one-frame        - One SEI per frame(if changed)
+  width               : Width (0 = original)
+                        flags: readable, writable
+                        Unsigned Integer. Range: 0 - 2147483647 Default: 0 
+  zero-copy-pkt       : Zero-copy encoded packet
+                        flags: readable, writable
+                        Boolean. Default: true
