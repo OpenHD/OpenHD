@@ -233,7 +233,7 @@ void GStreamerStream::setup() {
         (uint16_t)setting.streamed_video_format.framerate};
     openhd::LinkActionHandler::instance().set_cam_info(index, cam_info);
   }
-  m_console->debug("Starting pipeline:[{}]", pipeline_content.str());
+  m_console->warn("Starting pipeline:[{}]", pipeline_content.str());
   // Protect against unwanted use - stop and free the pipeline first
   assert(m_gst_pipeline == nullptr);
   // Now start the (as a string) built pipeline
