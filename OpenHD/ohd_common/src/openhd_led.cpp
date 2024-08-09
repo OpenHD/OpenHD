@@ -13,8 +13,9 @@
 #include "openhd_util_filesystem.h"
 
 static void toggle_secondary_led(const bool on) {
-    if (OHDPlatform::instance().is_rpi()) {
-    static constexpr auto filename = "/sys/class/leds/PWR/brightness";;
+  if (OHDPlatform::instance().is_rpi()) {
+    static constexpr auto filename = "/sys/class/leds/PWR/brightness";
+    ;
     const auto content = on ? "1" : "0";
     OHDFilesystemUtil::write_file(filename, content);
   } else if (OHDPlatform::instance().is_radxa_cm3()) {
@@ -22,19 +23,21 @@ static void toggle_secondary_led(const bool on) {
     const auto content = on ? "1" : "0";
     OHDFilesystemUtil::write_file(filename, content);
   } else if (OHDPlatform::instance().is_rock5_a_b()) {
-   static constexpr auto filename = "/sys/class/leds/user-led2/brightness";
-   const auto content = on ? "1" : "0";
-   OHDFilesystemUtil::write_file(filename, content);
+    static constexpr auto filename = "/sys/class/leds/user-led2/brightness";
+    const auto content = on ? "1" : "0";
+    OHDFilesystemUtil::write_file(filename, content);
   } else if (OHDPlatform::instance().is_x20()) {
-   static constexpr auto filename = "/sys/class/leds/openhd-x20dev:red:usr/brightness";
-   const auto content = on ? "1" : "0";
-   OHDFilesystemUtil::write_file(filename, content);
+    static constexpr auto filename =
+        "/sys/class/leds/openhd-x20dev:red:usr/brightness";
+    const auto content = on ? "1" : "0";
+    OHDFilesystemUtil::write_file(filename, content);
   }
 }
 
 static void toggle_primary_led(const bool on) {
   if (OHDPlatform::instance().is_rpi()) {
-    static constexpr auto filename = "/sys/class/leds/ACT/brightness";;
+    static constexpr auto filename = "/sys/class/leds/ACT/brightness";
+    ;
     const auto content = on ? "1" : "0";
     OHDFilesystemUtil::write_file(filename, content);
   } else if (OHDPlatform::instance().is_zero3w()) {
@@ -46,30 +49,33 @@ static void toggle_primary_led(const bool on) {
     const auto content = on ? "1" : "0";
     OHDFilesystemUtil::write_file(filename, content);
   } else if (OHDPlatform::instance().is_rock5_a()) {
-   static constexpr auto filename = "/sys/class/leds/user-led1/brightness";
-   const auto content = on ? "1" : "0";
-   OHDFilesystemUtil::write_file(filename, content);
+    static constexpr auto filename = "/sys/class/leds/user-led1/brightness";
+    const auto content = on ? "1" : "0";
+    OHDFilesystemUtil::write_file(filename, content);
   } else if (OHDPlatform::instance().is_rock5_b()) {
-   static constexpr auto filename = "/sys/class/leds/mmc0::/brightness";
-   const auto content = on ? "1" : "0";
-   OHDFilesystemUtil::write_file(filename, content);
+    static constexpr auto filename = "/sys/class/leds/mmc0::/brightness";
+    const auto content = on ? "1" : "0";
+    OHDFilesystemUtil::write_file(filename, content);
   } else if (OHDPlatform::instance().is_x20()) {
-   static constexpr auto filename = "/sys/class/leds/openhd-x20dev:green:usr/brightness";
-   const auto content = on ? "1" : "0";
-   OHDFilesystemUtil::write_file(filename, content);
+    static constexpr auto filename =
+        "/sys/class/leds/openhd-x20dev:green:usr/brightness";
+    const auto content = on ? "1" : "0";
+    OHDFilesystemUtil::write_file(filename, content);
   }
 }
 
-static void secondary_led_on_off_delayed(const std::chrono::milliseconds &delay1,
-                                   const std::chrono::milliseconds &delay2) {
+static void secondary_led_on_off_delayed(
+    const std::chrono::milliseconds &delay1,
+    const std::chrono::milliseconds &delay2) {
   toggle_secondary_led(false);
   std::this_thread::sleep_for(delay1);
   toggle_secondary_led(true);
   std::this_thread::sleep_for(delay2);
 }
 
-static void primary_led_on_off_delayed(const std::chrono::milliseconds &delay1,
-                                     const std::chrono::milliseconds &delay2) {
+static void primary_led_on_off_delayed(
+    const std::chrono::milliseconds &delay1,
+    const std::chrono::milliseconds &delay2) {
   toggle_primary_led(false);
   toggle_secondary_led(false);
   std::this_thread::sleep_for(delay1);
@@ -86,7 +92,8 @@ static void blink_leds_slow(const std::chrono::milliseconds &delay) {
   primary_led_on_off_delayed(delay, delay);
 }
 
-static void blink_leds_alternating(const std::chrono::milliseconds &delay, std::atomic<bool> &running) {
+static void blink_leds_alternating(const std::chrono::milliseconds &delay,
+                                   std::atomic<bool> &running) {
   while (running) {
     toggle_secondary_led(true);
     toggle_primary_led(false);
@@ -97,7 +104,7 @@ static void blink_leds_alternating(const std::chrono::milliseconds &delay, std::
   }
 }
 
-openhd::LEDManager& openhd::LEDManager::instance() {
+openhd::LEDManager &openhd::LEDManager::instance() {
   static LEDManager instance{};
   return instance;
 }
@@ -112,17 +119,20 @@ void openhd::LEDManager::set_primary_led_status(int status) {
   toggle_primary_led(on);
 }
 
-openhd::LEDManager::LEDManager() : m_loading_thread(nullptr), m_running(false), m_has_error(false), m_is_loading(false) {}
+openhd::LEDManager::LEDManager()
+    : m_loading_thread(nullptr),
+      m_running(false),
+      m_has_error(false),
+      m_is_loading(false) {}
 
-openhd::LEDManager::~LEDManager() {
-  stop_loading_thread();
-}
+openhd::LEDManager::~LEDManager() { stop_loading_thread(); }
 
 void openhd::LEDManager::start_loading_thread() {
-  if (m_running) return; // already running
+  if (m_running) return;  // already running
 
   m_running = true;
-  m_loading_thread = std::make_unique<std::thread>(&LEDManager::loading_loop, this);
+  m_loading_thread =
+      std::make_unique<std::thread>(&LEDManager::loading_loop, this);
 }
 
 void openhd::LEDManager::stop_loading_thread() {

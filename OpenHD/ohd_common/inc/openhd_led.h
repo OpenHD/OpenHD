@@ -8,15 +8,15 @@ namespace openhd {
 
 /**
  * OpenHD uses 2 LEDs (green and red) for displaying status to the user.
- * Whether those LEDs exist or not depends on the hardware - here we abstract that
- * away.
+ * Whether those LEDs exist or not depends on the hardware - here we abstract
+ * that away.
  */
 class LEDManager {
  public:
   static LEDManager& instance();
   static constexpr int STATUS_ON = 1;
   static constexpr int STATUS_OFF = 0;
-  
+
   void set_primary_led_status(int status);
   void set_secondary_led_status(int status);
   void set_status_stopped(int status);
@@ -33,7 +33,7 @@ class LEDManager {
  private:
   LEDManager();
   ~LEDManager();
-  
+
   void start_loading_thread();
   void stop_loading_thread();
   void loading_loop();
