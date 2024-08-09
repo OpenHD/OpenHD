@@ -160,7 +160,7 @@ std::string GStreamerStream::create_source_encode_pipeline(
 }
 
 void GStreamerStream::setup() {
-  m_console->warn("GStreamerStream::setup() begin");
+  m_console->debug("GStreamerStream::setup() begin");
   const auto& camera = m_camera_holder->get_camera();
   const auto& setting = m_camera_holder->get_settings();
   std::stringstream pipeline_content;
