@@ -119,6 +119,22 @@ std::string GStreamerStream::create_source_encode_pipeline(
       pipeline << OHDGstHelper::createRockchipCSIStream(v4l2_filenumber,
                                                         setting);
     }
+ } else if (camera.requires_rockchip5_mpp_pipeline()) {
+    if (camera.camera_type == X_CAM_TYPE_ROCK_5_HDMI_IN) {
+      pipeline << OHDGstHelper::createRockchipHDMIStream(setting);
+    } else {
+      // TODO: Differences Radxa zero and RK3588
+      // RK3566 has camera on /dev/video0, RK3588 has it on /dev/video11
+      const int v4l2_filenumber =
+          OHDPlatform::instance().platform_type ==
+                      X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W ||
+                  OHDPlatform::instance().platform_type ==
+                      X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3
+              ? 0
+              : 11;
+      pipeline << OHDGstHelper::createRockchipCSIStream(v4l2_filenumber,
+                                                        setting);
+    }
   } else if (camera.requires_x20_cedar_pipeline()) {
     pipeline << OHDGstHelper::createAllwinnerStream(setting);
   } else if (is_usb_camera(camera.camera_type)) {
