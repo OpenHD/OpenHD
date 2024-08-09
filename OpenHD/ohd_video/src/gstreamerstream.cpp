@@ -123,9 +123,13 @@ std::string GStreamerStream::create_source_encode_pipeline(
     if (camera.camera_type == X_CAM_TYPE_ROCK_5_HDMI_IN) {
       pipeline << OHDGstHelper::createRockchipHDMIStream(setting);
     } else {
-      // TODO: Differences Radxa zero and RK3588
-      // RK3566 has camera on /dev/video0, RK3588 has it on /dev/video11
-      const int v4l2_filenumber = 11;
+      const int v4l2_filenumber =
+          OHDPlatform::instance().platform_type ==
+                      X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A ||
+                  OHDPlatform::instance().platform_type ==
+                      X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B
+              ? 0
+              : 11;
       pipeline << OHDGstHelper::createRockchipCSIStream(v4l2_filenumber,
                                                         setting);
     }
