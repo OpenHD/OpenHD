@@ -328,6 +328,7 @@ struct XCamera {
       return ret;
     } else if (requires_rpi_libcamera_pipeline()) {
       std::vector<ResolutionFramerate> ret;
+      openhd::log::get_default()->warn("cam[0]=["+camera_type+"]");
       if (camera_type == X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX462 ||
           camera_type ==
               X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX462_LOWLIGHT_MINI) {
@@ -391,6 +392,13 @@ struct XCamera {
       ret.push_back(ResolutionFramerate{1280, 720, 60});
       ret.push_back(ResolutionFramerate{1920, 1080, 60});
       return ret;
+    } else if (camera_type == X_CAM_TYPE_ROCK_5_IMX462) {
+      std::vector<ResolutionFramerate> ret;
+      ret.push_back(ResolutionFramerate{1280, 720, 30});
+      ret.push_back(ResolutionFramerate{1280, 720, 60});
+      ret.push_back(ResolutionFramerate{1920, 1080, 30});
+      ret.push_back(ResolutionFramerate{1920, 1080, 60});
+      return ret;
     } else if (camera_type == X_CAM_TYPE_ROCK_5_HDMI_IN) {
       std::vector<ResolutionFramerate> ret;
       ret.push_back(ResolutionFramerate{1280, 720, 30});
@@ -419,20 +427,6 @@ struct XCamera {
       ret.push_back(ResolutionFramerate{1280, 720, 60});
       ret.push_back(ResolutionFramerate{1920, 1080, 60});
       ret.push_back(ResolutionFramerate{4608, 2592, 14});
-      return ret;
-    } else if (camera_type == X_CAM_TYPE_ROCK_5_IMX462) {
-      std::vector<ResolutionFramerate> ret;
-      ret.push_back(ResolutionFramerate{1280, 720, 30});
-      ret.push_back(ResolutionFramerate{1280, 720, 60});
-      ret.push_back(ResolutionFramerate{1920, 1080, 30});
-      ret.push_back(ResolutionFramerate{1920, 1080, 60});
-      return ret;
-    } else if (camera_type == X_CAM_TYPE_ROCK_5_IMX462) {
-      std::vector<ResolutionFramerate> ret;
-      ret.push_back(ResolutionFramerate{1280, 720, 30});
-      ret.push_back(ResolutionFramerate{1280, 720, 60});
-      ret.push_back(ResolutionFramerate{1920, 1080, 30});
-      ret.push_back(ResolutionFramerate{1920, 1080, 60});
       return ret;
     } else if (camera_type == X_CAM_TYPE_ROCK_5_IMX415) {
       std::vector<ResolutionFramerate> ret;
