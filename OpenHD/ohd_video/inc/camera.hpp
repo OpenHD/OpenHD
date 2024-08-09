@@ -268,7 +268,7 @@ struct XCamera {
     return requires_x20_cedar_pipeline() &&
            camera_type != X_CAM_TYPE_X20_HDZERO_GENERIC;
   }
-  bool requires_rockchip_mpp_pipeline() const {
+  bool requires_rockchip3_mpp_pipeline() const {
     return camera_type >= 90 && camera_type < 100;
   }
   std::string cam_type_as_verbose_string() const {

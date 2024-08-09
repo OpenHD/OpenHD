@@ -83,7 +83,7 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
       m_camera.requires_rpi_libcamera_pipeline() ||
       m_camera.requires_rpi_mmal_pipeline() ||
       m_camera.x20_supports_basic_iq_params() ||
-      m_camera.requires_rockchip_mpp_pipeline() ||
+      m_camera.requires_rockchip3_mpp_pipeline() ||
       m_camera.camera_type == X_CAM_TYPE_DEVELOPMENT_FILESRC;
   if (supports_rotation_vflip_hflip) {
     auto c_rotation = [this](std::string, int value) {
