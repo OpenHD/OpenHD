@@ -165,6 +165,7 @@ void communicate_with_device_second(const std::string& ip,
       "Starting second communication with device at IP: {}", ip);
 
   try {
+    std::this_thread::sleep_for(std::chrono::seconds(5));
     Poco::Net::SocketAddress address(ip, 23);
     Poco::Net::StreamSocket socket(address);
     Poco::Net::SocketStream stream(socket);
