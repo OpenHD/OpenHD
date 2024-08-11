@@ -159,7 +159,7 @@ void communicate_with_device(const std::string& ip,
 }
 
 void communicate_with_device_slow(const std::string& ip,
-                             const std::string& command) {
+                             const std::string& command2) {
   openhd::log::get_default()->warn(
       "Starting slower communication with device at IP: {}", ip);
 
@@ -185,7 +185,7 @@ void communicate_with_device_slow(const std::string& ip,
     while (
         true) {  // Infinite loop for sending commands and receiving responses
       // Send the command to the device
-      stream << command << std::flush;
+      stream << command2 << std::flush;
 
       // Read the response from the device
       std::string response;
@@ -237,8 +237,8 @@ void MicrohardLink::monitor_gateway_signal_strength(
     openhd::log::get_default()->warn("Getting RSSI from gateway IP: {}",
                                      gateway_ip);
     try {
-      std::string command = "AT+MWRSSI\n";
-      communicate_with_device(gateway_ip, command);
+      std::string command2 = "AT+MWRSSI\n";
+      communicate_with_device(gateway_ip, command2);
       openhd::log::get_default()->warn("RSSI data retrieval complete.");
     } catch (const std::exception& e) {
       openhd::log::get_default()->warn(
@@ -418,7 +418,7 @@ MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
   monitor_thread.detach();  // Run in the background
 
   // Start the second communication thread
-  std::thread second_thread(communicate_with_device_slow, get_gateway_ip(), command);
+  std::thread second_thread(communicate_with_device_slow, get_gateway_ip(), command2);
   second_thread.detach();  // Run in the background
 }
 
