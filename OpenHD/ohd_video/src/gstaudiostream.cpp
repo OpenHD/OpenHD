@@ -150,8 +150,9 @@ void GstAudioStream::stream_once() {
     // Restart in case no data comes in
     if (std::chrono::steady_clock::now() - m_last_audio_packet >
         std::chrono::seconds(5)) {
-      bool testinge3 = m_generic_settings->get_settings().enable_audio;
-      m_console->warn("Audio is", testinge3);
+        m_generic_settings = std::make_unique<AirCameraGenericSettingsHolder>();
+        bool testinge3 = m_generic_settings->get_settings().enable_audio;
+        m_console->warn("Audio is", testinge3);
       break;
     }
     auto buffer_x = openhd::gst_app_sink_try_pull_sample_and_copy(
