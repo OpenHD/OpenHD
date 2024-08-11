@@ -11,6 +11,8 @@
 #include "openhd_util.h"
 #include "x20_cam_helper.h"
 
+const int OPENHD_AUDIO_DISABLE = 1;
+
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
     AirCameraGenericSettings, switch_primary_and_secondary,
     dualcam_primary_video_allocated_bandwidth_perc, primary_camera_type,
