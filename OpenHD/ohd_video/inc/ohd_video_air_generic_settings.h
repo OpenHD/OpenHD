@@ -57,4 +57,6 @@ class AirCameraGenericSettingsHolder
       const AirCameraGenericSettings& data) const override;
 };
 
+extern AirCameraGenericSettings globalSettings;
+
 #endif  // OPENHD_OPENHD_OHD_VIDEO_INC_OHD_VIDEO_AIR_GENERIC_SETTINGS_H_
