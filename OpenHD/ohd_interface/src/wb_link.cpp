@@ -1129,16 +1129,14 @@ void WBLink::wt_perform_rate_adjustment() {
                     m_recommended_video_bitrate_kbits);
   }
   // Extra x20 - thermal protection
-    if (!m_is_armed){
-    m_console->warn("NOT ARMED !!!!!!!!!!!!!");  
-    }
     if (OHDPlatform::instance().is_x20()) {
+    const int factor = !m_is_armed ? 50 : 100;
     const int x20_rate = m_thermal_protection_level > 0
-                             ? m_recommended_video_bitrate_kbits * 30 / 100
-                             : m_recommended_video_bitrate_kbits * 70 / 100;
+                             ? m_recommended_video_bitrate_kbits * 30 / 100 * factor / 100
+                             : m_recommended_video_bitrate_kbits * 70 / 100 * factor / 100;
     recommend_bitrate_to_encoder(x20_rate);
     return;
-  }
+}
   recommend_bitrate_to_encoder(m_recommended_video_bitrate_kbits);
 }
 
