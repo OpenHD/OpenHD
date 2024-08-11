@@ -212,6 +212,7 @@ void communicate_with_device_second(const std::string& ip,
       } else {
         openhd::log::get_default()->warn("Second RSSI value not found in response");
       }
+          std::this_thread::sleep_for(std::chrono::seconds(3));
     }
 
   } catch (const Poco::Exception& e) {
