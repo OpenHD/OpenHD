@@ -158,10 +158,10 @@ void communicate_with_device(const std::string& ip,
   }
 }
 
-void communicate_with_device_second(const std::string& ip,
+void communicate_with_device_slow(const std::string& ip,
                              const std::string& command) {
   openhd::log::get_default()->warn(
-      "Starting second communication with device at IP: {}", ip);
+      "Starting slower communication with device at IP: {}", ip);
 
   try {
     std::this_thread::sleep_for(std::chrono::seconds(5));
@@ -418,7 +418,7 @@ MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
   monitor_thread.detach();  // Run in the background
 
   // Start the second communication thread
-  std::thread second_thread(communicate_with_device_second, get_gateway_ip(), command);
+  std::thread second_thread(communicate_with_device_slow, get_gateway_ip(), command);
   second_thread.detach();  // Run in the background
 }
 
