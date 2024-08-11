@@ -117,7 +117,7 @@ void communicate_with_device(const std::string& ip,
     openhd::log::get_default()->warn("Sending password: {}", password);
     stream << password << std::flush;
     std::this_thread::sleep_for(
-        std::chrono::seconds(4));  // Wait for a second to process password
+        std::chrono::seconds(3));  // Wait for a second to process password
 
     while (
         true) {  // Infinite loop for sending commands and receiving responses
@@ -212,7 +212,7 @@ void communicate_with_device_slow(const std::string& ip,
       } else {
         openhd::log::get_default()->warn("Second RSSI value not found in response");
       }
-          std::this_thread::sleep_for(std::chrono::seconds(4));
+          std::this_thread::sleep_for(std::chrono::seconds(3));
     }
 
   } catch (const Poco::Exception& e) {
@@ -237,17 +237,12 @@ void MicrohardLink::monitor_gateway_signal_strength(
     openhd::log::get_default()->warn("Getting RSSI from gateway IP: {}",
                                      gateway_ip);
     try {
-      std::string command_tx = "AT+MWTXPOWER\n";
-      std::string command_bw = "AT+MWBAND\n";
-      std::string command_freq = "AT+MWFREQ2400\n";
-      std::string command_rate = "AT+MWVRATE\n";      
-      std::string command_noise = "AT+MWNOISEFLOOR\n";
-      std::string command_snr = "AT+MWSNR\n";
-      communicate_with_device(gateway_ip, command_tx);
-      openhd::log::get_default()->warn("TX-Data retrieval complete.");
+      std::string command = "AT+MWRSSI\n";
+      communicate_with_device(gateway_ip, command);
+      openhd::log::get_default()->warn("RSSI data retrieval complete.");
     } catch (const std::exception& e) {
       openhd::log::get_default()->warn(
-          "Exception occurred while getting TX-Data data: {}", e.what());
+          "Exception occurred while getting RSSI data: {}", e.what());
     }
     // Wait for 1 second before the next iteration
     std::this_thread::sleep_for(std::chrono::seconds(1));
