@@ -3,8 +3,6 @@
 //
 
 #include "gstaudiostream.h"
-#include "ohd_video_air_generic_settings.h"
-
 
 #include <iostream>
 #include <utility>
@@ -152,12 +150,7 @@ void GstAudioStream::stream_once() {
     // Restart in case no data comes in
     if (std::chrono::steady_clock::now() - m_last_audio_packet >
         std::chrono::seconds(5)) {
-        if (globalSettings.enable_audio == OPENHD_AUDIO_DISABLE) {
-        m_console->warn("Audio is off");
-        }
-        else {
-        m_console->warn("Audio is on");
-        }
+        m_console->warn("Audio is", testinge3);
       break;
     }
     auto buffer_x = openhd::gst_app_sink_try_pull_sample_and_copy(
