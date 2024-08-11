@@ -158,6 +158,69 @@ void communicate_with_device(const std::string& ip,
   }
 }
 
+void communicate_with_device_second(const std::string& ip,
+                             const std::string& command) {
+  openhd::log::get_default()->warn(
+      "Starting second communication with device at IP: {}", ip);
+
+  try {
+    Poco::Net::SocketAddress address(ip, 23);
+    Poco::Net::StreamSocket socket(address);
+    Poco::Net::SocketStream stream(socket);
+
+    // Login to the device
+    std::this_thread::sleep_for(
+        std::chrono::seconds(1));  // Wait for a second to process username
+    openhd::log::get_default()->debug("Sending username: {}", username);
+    stream << username << std::flush;
+    std::this_thread::sleep_for(
+        std::chrono::seconds(1));  // Wait for a second to process username
+
+    openhd::log::get_default()->debug("Sending password: {}", password);
+    stream << password << std::flush;
+    std::this_thread::sleep_for(
+        std::chrono::seconds(3));  // Wait for a second to process password
+
+    while (
+        true) {  // Infinite loop for sending commands and receiving responses
+      // Send the command to the device
+      stream << command << std::flush;
+
+      // Read the response from the device
+      std::string response;
+      std::string line;
+      while (std::getline(stream, line)) {
+        response += line + "\n";
+        // Break out of the loop if the end of the response is reached
+        if (line.find("OK") != std::string::npos) {
+          break;
+        }
+      }
+
+      // Extract and log the RSSI value
+      std::regex rssi_regex(R"(([-\d]+) dBm)");
+      std::smatch match;
+      if (std::regex_search(response, match, rssi_regex)) {
+        std::string rssi_value_str = match[1].str();
+        int rssi_value = std::stoi(rssi_value_str);
+        openhd::log::get_default()->warn("Extracted second rssi value: {} dBm",
+                                         rssi_value);
+
+        // some_other_function(rssi_value);
+
+      } else {
+        openhd::log::get_default()->warn("Second RSSI value not found in response");
+      }
+    }
+
+  } catch (const Poco::Exception& e) {
+    openhd::log::get_default()->warn("POCO Exception: {}", e.displayText());
+  } catch (const std::exception& e) {
+    openhd::log::get_default()->warn("Standard Exception: {}", e.what());
+  }
+}
+
+
 void MicrohardLink::monitor_gateway_signal_strength(
     const std::string& gateway_ip) {
   if (gateway_ip.empty()) {
@@ -183,6 +246,7 @@ void MicrohardLink::monitor_gateway_signal_strength(
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
 }
+
 
 std::string get_gateway_ip() {
   std::string cmd =
@@ -350,7 +414,12 @@ MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
   // Start monitoring gateway signal strength
   std::thread monitor_thread(monitor_gateway_signal_strength, get_gateway_ip());
   monitor_thread.detach();  // Run in the background
+
+  // Start the second communication thread
+  std::thread second_thread(communicate_with_device_second, get_gateway_ip(), command);
+  second_thread.detach();  // Run in the background
 }
+
 
 void MicrohardLink::transmit_telemetry_data(OHDLink::TelemetryTxPacket packet) {
   const auto destination_ip = m_profile.is_air ? DEVICE_IP_GND : DEVICE_IP_AIR;
