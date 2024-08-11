@@ -421,7 +421,7 @@ bool WBLink::request_set_tx_power_mw(int tx_power_mw, bool armed) {
 
 bool WBLink::request_set_tx_power_rtl8812au(int tx_power_index_override,
                                             bool armed) {
-  m_console->debug("request_set_tx_power_rtl8812au {}index",
+  m_console->warn("request_set_tx_power_rtl8812au {}index",
                    tx_power_index_override);
   if (!openhd::validate_wb_rtl8812au_tx_pwr_idx_override(
           tx_power_index_override)) {
@@ -1130,7 +1130,7 @@ void WBLink::wt_perform_rate_adjustment() {
   }
   // Extra x20 - thermal protection
   m_console->warn("debug stop");
-  if (OHDPlatform::instance().is_x20()) {
+    if (OHDPlatform::instance().is_x20()) {
     const int x20_rate = m_thermal_protection_level > 0
                              ? m_recommended_video_bitrate_kbits * 30 / 100
                              : m_recommended_video_bitrate_kbits * 70 / 100;
