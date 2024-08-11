@@ -147,11 +147,13 @@ void GstAudioStream::stream_once() {
   while (true) {
     // Quickly terminate if openhd wants to terminate
     if (!m_keep_looping) break;
-    // Restart in case no data comes in
-    // if (std::chrono::steady_clock::now() - m_last_audio_packet >
-    //     std::chrono::seconds(5)) {
-    //   break;
-    // }
+    // Restart in case no data comes in //CURRENTLY DISABLED BECAUSE IT EVEN RESTARTS IF AUDIO IS DISABLED .. 
+    if (false) {
+      if (std::chrono::steady_clock::now() - m_last_audio_packet >
+          std::chrono::seconds(5)) {
+        break;
+      }
+    }
     auto buffer_x = openhd::gst_app_sink_try_pull_sample_and_copy(
         m_app_sink_element, timeout_ns);
     if (buffer_x.has_value()) {
