@@ -1603,6 +1603,7 @@ void WBLink::on_wifi_card_fatal_error() {
 }
 
 void WBLink::wt_perform_update_thermal_protection() {
+  m_console->debug("thermal_protection, function started");
   if (!OHDPlatform::instance().is_x20()) {
     // Only works on x20
     return;
