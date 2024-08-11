@@ -8,6 +8,9 @@
 #include <gst/gst.h>
 
 #include "openhd_link.hpp"
+#include "ohd_video_air_generic_settings.h"
+
+AirCameraGenericSettings globalSettings;
 
 /**
  * Similar to gstreamerstream
