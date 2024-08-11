@@ -11,7 +11,7 @@
 #include "openhd_settings_directories.h"
 #include "openhd_settings_persistent.h"
 
-static int OPENHD_AUDIO_DISABLE = 1;
+extern int OPENHD_AUDIO_DISABLE = 1;
 static int OPENHD_AUDIO_TEST = 100;
 
 struct AirCameraGenericSettings {
