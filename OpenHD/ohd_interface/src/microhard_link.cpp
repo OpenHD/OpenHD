@@ -42,6 +42,7 @@ const std::string telnet_cmd = "telnet 192.168.168.1";
 const std::string username = "admin\n";
 const std::string password = "qwertz1\n";
 const std::string command = "AT+MWRSSI\n";
+const std::string command2 = "AT+MWRSSI\n";
 
 // Helper function to retrieve IP addresses starting with a specific prefix
 std::vector<std::string> get_ip_addresses(const std::string& prefix) {
