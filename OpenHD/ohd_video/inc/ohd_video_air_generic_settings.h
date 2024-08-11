@@ -11,7 +11,7 @@
 #include "openhd_settings_directories.h"
 #include "openhd_settings_persistent.h"
 
-extern int OPENHD_AUDIO_DISABLE = 1;
+static int OPENHD_AUDIO_DISABLE = 1;
 static int OPENHD_AUDIO_TEST = 100;
 
 struct AirCameraGenericSettings {
@@ -56,7 +56,5 @@ class AirCameraGenericSettingsHolder
   std::string imp_serialize(
       const AirCameraGenericSettings& data) const override;
 };
-
-extern AirCameraGenericSettings globalSettings;
 
 #endif  // OPENHD_OPENHD_OHD_VIDEO_INC_OHD_VIDEO_AIR_GENERIC_SETTINGS_H_

@@ -14,6 +14,8 @@
 #include "gst_debug_helper.h"
 #include "gst_helper.hpp"
 
+AirCameraGenericSettings g_airCameraGenericSettings;
+
 GstAudioStream::GstAudioStream() {
   OHDGstHelper::initGstreamerOrThrow();
   m_console = openhd::log::create_or_get("audio");
@@ -149,9 +151,8 @@ void GstAudioStream::stream_once() {
   while (true) {
     // Quickly terminate if openhd wants to terminate
     if (!m_keep_looping) break;
-    int audioSetting = OPENHD_AUDIO_DISABLE;
     // Restart in case no data comes in //CURRENTLY DISABLED BECAUSE IT EVEN RESTARTS IF AUDIO IS DISABLED .. 
-    if (audioSetting == 1) {
+    if (g_airCameraGenericSettings.enable_audio == 1) {
       m_console->warn("Audio is", audioSetting);
       if (std::chrono::steady_clock::now() - m_last_audio_packet >
           std::chrono::seconds(5)) {
