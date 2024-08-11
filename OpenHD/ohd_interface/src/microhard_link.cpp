@@ -109,12 +109,12 @@ void communicate_with_device(const std::string& ip,
     // Login to the device
     std::this_thread::sleep_for(
         std::chrono::seconds(1));  // Wait for a second to process username
-    openhd::log::get_default()->debug("Sending username: {}", username);
+    openhd::log::get_default()->warn("Sending username: {}", username);
     stream << username << std::flush;
     std::this_thread::sleep_for(
         std::chrono::seconds(1));  // Wait for a second to process username
 
-    openhd::log::get_default()->debug("Sending password: {}", password);
+    openhd::log::get_default()->warn("Sending password: {}", password);
     stream << password << std::flush;
     std::this_thread::sleep_for(
         std::chrono::seconds(3));  // Wait for a second to process password
@@ -172,12 +172,12 @@ void communicate_with_device_second(const std::string& ip,
     // Login to the device
     std::this_thread::sleep_for(
         std::chrono::seconds(1));  // Wait for a second to process username
-    openhd::log::get_default()->debug("Sending username: {}", username);
+    openhd::log::get_default()->warn("Sending username: {}", username);
     stream << username << std::flush;
     std::this_thread::sleep_for(
         std::chrono::seconds(1));  // Wait for a second to process username
 
-    openhd::log::get_default()->debug("Sending password: {}", password);
+    openhd::log::get_default()->warn("Sending password: {}", password);
     stream << password << std::flush;
     std::this_thread::sleep_for(
         std::chrono::seconds(3));  // Wait for a second to process password
@@ -212,6 +212,7 @@ void communicate_with_device_second(const std::string& ip,
       } else {
         openhd::log::get_default()->warn("Second RSSI value not found in response");
       }
+      std::this_thread::sleep_for(std::chrono::seconds(5));
     }
 
   } catch (const Poco::Exception& e) {
@@ -367,7 +368,7 @@ static void wait_for_microhard_module(bool is_air) {
 
   while (true) {
     if (check_ip_alive(microhard_device_ip)) {
-      openhd::log::get_default()->debug("Microhard module found at {}",
+      openhd::log::get_default()->warn("Microhard module found at {}",
                                         microhard_device_ip);
       break;
     }
