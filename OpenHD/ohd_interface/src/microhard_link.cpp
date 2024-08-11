@@ -200,7 +200,7 @@ void communicate_with_device_slow(const std::string& ip,
       }
 
       // Extract and log the RSSI value
-      std::regex rssi_regex(R"(([-\d]+) dBm)");
+      std::regex rssi_regex(R"(([-\d]+) dBm)", std::regex::icase);
       std::smatch match;
       if (std::regex_search(response, match, rssi_regex)) {
         std::string rssi_value_str = match[1].str();
