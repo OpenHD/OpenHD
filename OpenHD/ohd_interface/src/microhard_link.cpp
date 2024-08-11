@@ -211,7 +211,7 @@ void communicate_with_device_slow(const std::string& ip,
         // some_other_function(rssi_value);
 
       } else {
-        openhd::log::get_default()->warn("Second RSSI value not found in response");
+          openhd::log::get_default()->warn("RSSI value not found in response: '{}'", response);
       }
           std::this_thread::sleep_for(std::chrono::seconds(3));
     }
