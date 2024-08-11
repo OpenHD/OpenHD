@@ -1132,7 +1132,7 @@ void WBLink::wt_perform_rate_adjustment() {
   if (OHDPlatform::instance().is_x20()) {
     const int x20_rate = m_thermal_protection_level > 0
                              ? m_recommended_video_bitrate_kbits * 30 / 100
-                             : m_recommended_video_bitrate_kbits * 70 / 100;
+                             : m_recommended_video_bitrate_kbits;
     recommend_bitrate_to_encoder(x20_rate);
     return;
   }
