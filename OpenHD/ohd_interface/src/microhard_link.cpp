@@ -342,7 +342,7 @@ void communicate_with_device_slow(const std::string& ip,
 
       // Extract and log the value
       std::regex snr_regex(R"(\b(\d+)\s*MHz\b)", std::regex::icase);
-      std::smatch match2;
+      std::smatch match6;
       if (std::regex_search(response6, match6, snr_regex)) {
         std::string snr_value_str = match6[1].str();
         int snr_value = std::stoi(snr_value_str);
