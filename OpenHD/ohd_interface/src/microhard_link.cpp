@@ -110,12 +110,12 @@ void communicate_with_device(const std::string& ip,
     // Login to the device
     std::this_thread::sleep_for(
         std::chrono::seconds(1));  // Wait for a second to process username
-    openhd::log::get_default()->warn("Sending username: {}", username);
+    openhd::log::get_default()->debug("Sending username: {}", username);
     stream << username << std::flush;
     std::this_thread::sleep_for(
         std::chrono::seconds(1));  // Wait for a second to process username
 
-    openhd::log::get_default()->warn("Sending password: {}", password);
+    openhd::log::get_default()->debug("Sending password: {}", password);
     stream << password << std::flush;
     std::this_thread::sleep_for(
         std::chrono::seconds(3));  // Wait for a second to process password
@@ -173,12 +173,12 @@ void communicate_with_device_slow(const std::string& ip,
     // Login to the device
     std::this_thread::sleep_for(
         std::chrono::seconds(1));  // Wait for a second to process username
-    openhd::log::get_default()->warn("Sending username: {}", username);
+    openhd::log::get_default()->debug("Sending username: {}", username);
     stream << username << std::flush;
     std::this_thread::sleep_for(
         std::chrono::seconds(1));  // Wait for a second to process username
 
-    openhd::log::get_default()->warn("Sending password: {}", password);
+    openhd::log::get_default()->debug("Sending password: {}", password);
     stream << password << std::flush;
     std::this_thread::sleep_for(
         std::chrono::seconds(3));  // Wait for a second to process password
@@ -199,19 +199,17 @@ void communicate_with_device_slow(const std::string& ip,
         }
       }
 
-      // Extract and log the RSSI value
+      // Extract and log the value
       std::regex rssi_regex(R"(([-\d]+) dBm)", std::regex::icase);
       std::smatch match;
       if (std::regex_search(response, match, rssi_regex)) {
         std::string rssi_value_str = match[1].str();
         int rssi_value = std::stoi(rssi_value_str);
-        openhd::log::get_default()->warn("Extracted second rssi value: {} dBm",
+        openhd::log::get_default()->warn("TX-Power value: {} dBm",
                                          rssi_value);
 
-        // some_other_function(rssi_value);
-
       } else {
-          openhd::log::get_default()->warn("RSSI value not found in response: '{}'", response);
+          openhd::log::get_default()->warn("TX-Power not found in response: '{}'", response);
       }
           std::this_thread::sleep_for(std::chrono::seconds(3));
     }
