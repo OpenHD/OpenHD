@@ -235,13 +235,13 @@ void communicate_with_device_slow(const std::string& ip,
       }
 
       // Extract and log the value
-      std::regex bandwith_regex(R"((\d+)(?!.*\d))");
+      std::regex bandwith_regex(R"(([-\d]+) dBm)", std::regex::icase);
       std::smatch match2;
       if (std::regex_search(response2, match2, bandwith_regex)) {
         std::string rssi_value_str = match2[1].str();
         int rssi_value = std::stoi(rssi_value_str);
         openhd::log::get_default()->warn("Bandwith value: {} mhz",
-                                         rssi_value,response2);
+                                         rssi_value);
 
       } else {
           openhd::log::get_default()->warn("Bandwith value not found in response2: '{}'", response2);
