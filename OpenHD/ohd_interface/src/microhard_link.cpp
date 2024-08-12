@@ -102,26 +102,32 @@ std::vector<std::string> get_ip_addresses(const std::string& prefix) {
   return ip_addresses;
 }
 
-void send_command_and_process_response(Poco::Net::SocketStream& stream, const std::string& command, const std::regex& regex, const std::string& value_name) {
-    stream << command << std::flush;
+void send_command_and_process_response(Poco::Net::SocketStream& stream,
+                                       const std::string& command,
+                                       const std::regex& regex,
+                                       const std::string& value_name) {
+  stream << command << std::flush;
 
-    std::string response;
-    std::string line;
-    while (std::getline(stream, line)) {
-        response += line + "\n";
-        if (line.find("OK") != std::string::npos) {
-            break;
-        }
+  std::string response;
+  std::string line;
+  while (std::getline(stream, line)) {
+    response += line + "\n";
+    if (line.find("OK") != std::string::npos) {
+      break;
     }
+  }
 
-    std::smatch match;
-    if (std::regex_search(response, match, regex)) {
-        std::string value_str = match[1].str();
-        int value = std::stoi(value_str);
-        openhd::log::get_default()->warn("{} value: {} {}", value_name, value, (value_name == "SNR" || value_name == "NoiseFloor") ? "dBm" : "MHz");
-    } else {
-        openhd::log::get_default()->warn("{} not found in response: '{}'", value_name, response);
-    }
+  std::smatch match;
+  if (std::regex_search(response, match, regex)) {
+    std::string value_str = match[1].str();
+    int value = std::stoi(value_str);
+    openhd::log::get_default()->warn(
+        "{} value: {} {}", value_name, value,
+        (value_name == "SNR" || value_name == "NoiseFloor") ? "dBm" : "MHz");
+  } else {
+    openhd::log::get_default()->warn("{} not found in response: '{}'",
+                                     value_name, response);
+  }
 }
 
 void communicate_with_device(const std::string& ip,
@@ -186,50 +192,51 @@ void communicate_with_device(const std::string& ip,
   }
 }
 
-void communicate_with_device_slow(const std::string& ip, const std::string& command2) {
-    openhd::log::get_default()->warn("Starting slower communication with device at IP: {}", ip);
+void communicate_with_device_slow(const std::string& ip,
+                                  const std::string& command2) {
+  openhd::log::get_default()->warn(
+      "Starting slower communication with device at IP: {}", ip);
 
-    try {
-        std::this_thread::sleep_for(std::chrono::seconds(5));
-        Poco::Net::SocketAddress address(ip, 23);
-        Poco::Net::StreamSocket socket(address);
-        Poco::Net::SocketStream stream(socket);
+  try {
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+    Poco::Net::SocketAddress address(ip, 23);
+    Poco::Net::StreamSocket socket(address);
+    Poco::Net::SocketStream stream(socket);
 
-        // Login to the device
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-        openhd::log::get_default()->debug("Sending username: {}", username);
-        stream << username << std::flush;
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+    // Login to the device
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    openhd::log::get_default()->debug("Sending username: {}", username);
+    stream << username << std::flush;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
-        openhd::log::get_default()->debug("Sending password: {}", password);
-        stream << password << std::flush;
-        std::this_thread::sleep_for(std::chrono::seconds(3));
+    openhd::log::get_default()->debug("Sending password: {}", password);
+    stream << password << std::flush;
+    std::this_thread::sleep_for(std::chrono::seconds(3));
 
-        const std::vector<std::pair<std::string, std::regex>> commands = {
-            {command2, std::regex(R"(([-\d]+) dBm)", std::regex::icase)},
-            {command3, std::regex(R"(\b(\d+)\s*MHz\b)", std::regex::icase)},
-            {command4, std::regex(R"(\b(\d+)\s*MHz\b)", std::regex::icase)},
-            {command5, std::regex(R"(\b(\d+)\b)", std::regex::icase)},
-            {command6, std::regex(R"((-?\d+)\s*dBm\b)", std::regex::icase)},
-            {command7, std::regex(R"(\b(\d+)\s*dB\b)", std::regex::icase)}
-        };
+    const std::vector<std::pair<std::string, std::regex>> commands = {
+        {command2, std::regex(R"(([-\d]+) dBm)", std::regex::icase)},
+        {command3, std::regex(R"(\b(\d+)\s*MHz\b)", std::regex::icase)},
+        {command4, std::regex(R"(\b(\d+)\s*MHz\b)", std::regex::icase)},
+        {command5, std::regex(R"(\b(\d+)\b)", std::regex::icase)},
+        {command6, std::regex(R"((-?\d+)\s*dBm\b)", std::regex::icase)},
+        {command7, std::regex(R"(\b(\d+)\s*dB\b)", std::regex::icase)}};
 
-        const std::vector<std::string> value_names = {
-            "TX-Power", "Bandwidth", "Frequency", "Rate Mode", "NoiseFloor", "SNR"
-        };
+    const std::vector<std::string> value_names = {
+        "TX-Power", "Bandwidth", "Frequency", "Rate Mode", "NoiseFloor", "SNR"};
 
-        while (true) {
-            for (size_t i = 0; i < commands.size(); ++i) {
-                send_command_and_process_response(stream, commands[i].first, commands[i].second, value_names[i]);
-            }
-            std::this_thread::sleep_for(std::chrono::seconds(3));
-        }
-
-    } catch (const Poco::Exception& e) {
-        openhd::log::get_default()->warn("POCO Exception: {}", e.displayText());
-    } catch (const std::exception& e) {
-        openhd::log::get_default()->warn("Standard Exception: {}", e.what());
+    while (true) {
+      for (size_t i = 0; i < commands.size(); ++i) {
+        send_command_and_process_response(stream, commands[i].first,
+                                          commands[i].second, value_names[i]);
+      }
+      std::this_thread::sleep_for(std::chrono::seconds(3));
     }
+
+  } catch (const Poco::Exception& e) {
+    openhd::log::get_default()->warn("POCO Exception: {}", e.displayText());
+  } catch (const std::exception& e) {
+    openhd::log::get_default()->warn("Standard Exception: {}", e.what());
+  }
 }
 
 void MicrohardLink::monitor_gateway_signal_strength(
