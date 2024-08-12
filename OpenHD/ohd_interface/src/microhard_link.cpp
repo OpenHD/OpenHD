@@ -274,6 +274,110 @@ void communicate_with_device_slow(const std::string& ip,
       } else {
           openhd::log::get_default()->warn("Frequency not found in response: '{}'", response3);
       }
+//COMMAND 4
+      stream << command3 << std::flush;
+
+      // Read the response2 from the device
+      std::string response2;
+      std::string line2;
+      while (std::getline(stream, line2)) {
+        response2 += line2 + "\n";
+        // Break out of the loop if the end of the response2 is reached
+        if (line2.find("OK") != std::string::npos) {
+          break;
+        }
+      }
+
+      // Extract and log the value
+      std::regex bandwidth_regex(R"(\b(\d+)\s*MHz\b)", std::regex::icase);
+      std::smatch match2;
+      if (std::regex_search(response2, match2, bandwidth_regex)) {
+        std::string bandwidth_value_str = match2[1].str();
+        int bandwidth_value = std::stoi(bandwidth_value_str);
+        openhd::log::get_default()->warn("Bandwith value: {} mhz",
+                                         bandwidth_value_str);
+
+      } else {
+          openhd::log::get_default()->warn("Bandwith value not found in response2: '{}'", response2);
+      }
+//COMMAND 5
+      stream << command3 << std::flush;
+
+      // Read the response2 from the device
+      std::string response2;
+      std::string line2;
+      while (std::getline(stream, line2)) {
+        response2 += line2 + "\n";
+        // Break out of the loop if the end of the response2 is reached
+        if (line2.find("OK") != std::string::npos) {
+          break;
+        }
+      }
+
+      // Extract and log the value
+      std::regex bandwidth_regex(R"(\b(\d+)\s*MHz\b)", std::regex::icase);
+      std::smatch match2;
+      if (std::regex_search(response2, match2, bandwidth_regex)) {
+        std::string bandwidth_value_str = match2[1].str();
+        int bandwidth_value = std::stoi(bandwidth_value_str);
+        openhd::log::get_default()->warn("Bandwith value: {} mhz",
+                                         bandwidth_value_str);
+
+      } else {
+          openhd::log::get_default()->warn("Bandwith value not found in response2: '{}'", response2);
+      }
+//COMMAND 6
+      stream << command3 << std::flush;
+
+      // Read the response2 from the device
+      std::string response2;
+      std::string line2;
+      while (std::getline(stream, line2)) {
+        response2 += line2 + "\n";
+        // Break out of the loop if the end of the response2 is reached
+        if (line2.find("OK") != std::string::npos) {
+          break;
+        }
+      }
+
+      // Extract and log the value
+      std::regex bandwidth_regex(R"(\b(\d+)\s*MHz\b)", std::regex::icase);
+      std::smatch match2;
+      if (std::regex_search(response2, match2, bandwidth_regex)) {
+        std::string bandwidth_value_str = match2[1].str();
+        int bandwidth_value = std::stoi(bandwidth_value_str);
+        openhd::log::get_default()->warn("Bandwith value: {} mhz",
+                                         bandwidth_value_str);
+
+      } else {
+          openhd::log::get_default()->warn("Bandwith value not found in response2: '{}'", response2);
+      }
+//COMMAND 7
+      stream << command3 << std::flush;
+
+      // Read the response2 from the device
+      std::string response2;
+      std::string line2;
+      while (std::getline(stream, line2)) {
+        response2 += line2 + "\n";
+        // Break out of the loop if the end of the response2 is reached
+        if (line2.find("OK") != std::string::npos) {
+          break;
+        }
+      }
+
+      // Extract and log the value
+      std::regex bandwidth_regex(R"(\b(\d+)\s*MHz\b)", std::regex::icase);
+      std::smatch match2;
+      if (std::regex_search(response2, match2, bandwidth_regex)) {
+        std::string bandwidth_value_str = match2[1].str();
+        int bandwidth_value = std::stoi(bandwidth_value_str);
+        openhd::log::get_default()->warn("Bandwith value: {} mhz",
+                                         bandwidth_value_str);
+
+      } else {
+          openhd::log::get_default()->warn("Bandwith value not found in response2: '{}'", response2);
+      }
           std::this_thread::sleep_for(std::chrono::seconds(3));
 
     }
