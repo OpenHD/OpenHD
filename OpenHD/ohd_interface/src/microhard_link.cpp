@@ -262,13 +262,14 @@ void communicate_with_device_slow(const std::string& ip,
       }
 
       // Extract and log the value
-      std::regex freq_regex(R"(([-\d]+) dBm)", std::regex::icase);
-      std::smatch match3;
-      if (std::regex_search(response3, match3, freq_regex)) {
-        std::string rssi_value_str = match3[1].str();
-        int rssi_value = std::stoi(rssi_value_str);
-        openhd::log::get_default()->warn("Frequency: {} mhz",
-                                         rssi_value);
+    std::regex freq_regex(R"(\b(\d+)\s*MHz\b)", std::regex::icase);
+    std::smatch match3;
+
+    if (std::regex_search(response3, match3, freq_regex)) {
+        // Extract the last number which is the frequency value
+        std::string freq_value_str = match3[1].str();
+        int freq_value = std::stoi(freq_value_str);
+        openhd::log::get_default()->warn("Frequency: {} MHz", freq_value);
 
       } else {
           openhd::log::get_default()->warn("Frequency not found in response: '{}'", response3);
