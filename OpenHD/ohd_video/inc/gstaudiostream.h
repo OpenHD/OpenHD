@@ -9,7 +9,6 @@
 
 #include "openhd_link.hpp"
 
-
 /**
  * Similar to gstreamerstream
  * only for audio ;)

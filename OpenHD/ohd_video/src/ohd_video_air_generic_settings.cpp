@@ -13,7 +13,6 @@
 
 extern AirCameraGenericSettings g_airCameraGenericSettings;
 
-
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
     AirCameraGenericSettings, switch_primary_and_secondary,
     dualcam_primary_video_allocated_bandwidth_perc, primary_camera_type,

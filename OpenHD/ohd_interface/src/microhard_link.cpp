@@ -49,8 +49,6 @@ const std::string command5 = "AT+MWVRATE\n";
 const std::string command6 = "AT+MWNOISEFLOOR\n";
 const std::string command7 = "AT+MWSNR\n";
 
-
-
 // Helper function to retrieve IP addresses starting with a specific prefix
 std::vector<std::string> get_ip_addresses(const std::string& prefix) {
   std::vector<std::string> ip_addresses;
@@ -167,7 +165,7 @@ void communicate_with_device(const std::string& ip,
 }
 
 void communicate_with_device_slow(const std::string& ip,
-                             const std::string& command2) {
+                                  const std::string& command2) {
   openhd::log::get_default()->warn(
       "Starting slower communication with device at IP: {}", ip);
 
@@ -193,8 +191,8 @@ void communicate_with_device_slow(const std::string& ip,
     while (true) {
       // Infinite loop for sending commands and receiving responses
       // Send the command to the device
-      
-//COMMAND 1
+
+      // COMMAND 1
       stream << command2 << std::flush;
 
       // Read the response from the device
@@ -214,13 +212,13 @@ void communicate_with_device_slow(const std::string& ip,
       if (std::regex_search(response, match, txpower_regex)) {
         std::string rssi_value_str = match[1].str();
         int rssi_value = std::stoi(rssi_value_str);
-        openhd::log::get_default()->warn("TX-Power value: {} dBm",
-                                         rssi_value);
+        openhd::log::get_default()->warn("TX-Power value: {} dBm", rssi_value);
 
       } else {
-          openhd::log::get_default()->warn("TX-Power not found in response: '{}'", response);
+        openhd::log::get_default()->warn("TX-Power not found in response: '{}'",
+                                         response);
       }
-//COMMAND 2
+      // COMMAND 2
       stream << command3 << std::flush;
 
       // Read the response2 from the device
@@ -244,10 +242,11 @@ void communicate_with_device_slow(const std::string& ip,
                                          bandwidth_value_str);
 
       } else {
-          openhd::log::get_default()->warn("Bandwith value not found in response2: '{}'", response2);
+        openhd::log::get_default()->warn(
+            "Bandwith value not found in response2: '{}'", response2);
       }
 
-//COMMAND 3
+      // COMMAND 3
       stream << command4 << std::flush;
 
       // Read the response from the device
@@ -262,19 +261,20 @@ void communicate_with_device_slow(const std::string& ip,
       }
 
       // Extract and log the value
-    std::regex freq_regex(R"(\b(\d+)\s*MHz\b)", std::regex::icase);
-    std::smatch match3;
+      std::regex freq_regex(R"(\b(\d+)\s*MHz\b)", std::regex::icase);
+      std::smatch match3;
 
-    if (std::regex_search(response3, match3, freq_regex)) {
+      if (std::regex_search(response3, match3, freq_regex)) {
         // Extract the last number which is the frequency value
         std::string freq_value_str = match3[1].str();
         int freq_value = std::stoi(freq_value_str);
         openhd::log::get_default()->warn("Frequency: {} MHz", freq_value);
 
       } else {
-          openhd::log::get_default()->warn("Frequency not found in response: '{}'", response3);
+        openhd::log::get_default()->warn(
+            "Frequency not found in response: '{}'", response3);
       }
-//COMMAND 4
+      // COMMAND 4
       stream << command5 << std::flush;
 
       // Read the response4 from the device
@@ -289,18 +289,19 @@ void communicate_with_device_slow(const std::string& ip,
       }
 
       std::regex rate_regex(R"(\b(\d+)\b)", std::regex::icase);
-    std::smatch match4;
+      std::smatch match4;
 
-    if (std::regex_search(response4, match4, rate_regex)) {
+      if (std::regex_search(response4, match4, rate_regex)) {
         // Extract the first number which is the rate value
         std::string rate_value_str = match4[1].str();
         int rate_value = std::stoi(rate_value_str);
         openhd::log::get_default()->warn("Rate Mode: {}", rate_value);
 
-    } else {
-        openhd::log::get_default()->warn("Rate value not found in response4: '{}'", response4);
-    }
-//COMMAND 5
+      } else {
+        openhd::log::get_default()->warn(
+            "Rate value not found in response4: '{}'", response4);
+      }
+      // COMMAND 5
       stream << command6 << std::flush;
 
       // Read the response5 from the device
@@ -324,9 +325,10 @@ void communicate_with_device_slow(const std::string& ip,
                                          noise_value_str);
 
       } else {
-          openhd::log::get_default()->warn("NoiseFloor value not found in response5: '{}'", response5);
+        openhd::log::get_default()->warn(
+            "NoiseFloor value not found in response5: '{}'", response5);
       }
-//COMMAND 6
+      // COMMAND 6
       stream << command7 << std::flush;
 
       // Read the response6 from the device
@@ -342,19 +344,19 @@ void communicate_with_device_slow(const std::string& ip,
 
       // Extract and log the value
       std::regex snr_regex(R"(\b(\d+)\s*dB\b)", std::regex::icase);
-    std::smatch match6;
+      std::smatch match6;
 
-    if (std::regex_search(response6, match6, snr_regex)) {
+      if (std::regex_search(response6, match6, snr_regex)) {
         // Extract the number which is the SNR value
         std::string snr_value_str = match6[1].str();
         int snr_value = std::stoi(snr_value_str);
         openhd::log::get_default()->warn("SNR value: {} dB", snr_value);
 
-    } else {
-        openhd::log::get_default()->warn("SNR value not found in response6: '{}'", response6);
-    }
-          std::this_thread::sleep_for(std::chrono::seconds(3));
-
+      } else {
+        openhd::log::get_default()->warn(
+            "SNR value not found in response6: '{}'", response6);
+      }
+      std::this_thread::sleep_for(std::chrono::seconds(3));
     }
 
   } catch (const Poco::Exception& e) {
@@ -363,7 +365,6 @@ void communicate_with_device_slow(const std::string& ip,
     openhd::log::get_default()->warn("Standard Exception: {}", e.what());
   }
 }
-
 
 void MicrohardLink::monitor_gateway_signal_strength(
     const std::string& gateway_ip) {
@@ -390,7 +391,6 @@ void MicrohardLink::monitor_gateway_signal_strength(
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
 }
-
 
 std::string get_gateway_ip() {
   std::string cmd =
@@ -511,7 +511,7 @@ static void wait_for_microhard_module(bool is_air) {
   while (true) {
     if (check_ip_alive(microhard_device_ip)) {
       openhd::log::get_default()->warn("Microhard module found at {}",
-                                        microhard_device_ip);
+                                       microhard_device_ip);
       break;
     }
     std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -560,10 +560,10 @@ MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
   monitor_thread.detach();  // Run in the background
 
   // Start the second communication thread
-  std::thread second_thread(communicate_with_device_slow, get_gateway_ip(), command2);
+  std::thread second_thread(communicate_with_device_slow, get_gateway_ip(),
+                            command2);
   second_thread.detach();  // Run in the background
 }
-
 
 void MicrohardLink::transmit_telemetry_data(OHDLink::TelemetryTxPacket packet) {
   const auto destination_ip = m_profile.is_air ? DEVICE_IP_GND : DEVICE_IP_AIR;
