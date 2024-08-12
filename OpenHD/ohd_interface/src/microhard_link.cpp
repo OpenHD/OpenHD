@@ -288,18 +288,18 @@ void communicate_with_device_slow(const std::string& ip,
         }
       }
 
-      // Extract and log the value
-      std::regex rate_regex(R"(\b(\d+)\s*MHz\b)", std::regex::icase);
-      std::smatch match4;
-      if (std::regex_search(response4, match4, rate_regex)) {
+      std::regex rate_regex(R"(\b(\d+)\b)", std::regex::icase);
+    std::smatch match4;
+
+    if (std::regex_search(response4, match4, rate_regex)) {
+        // Extract the first number which is the rate value
         std::string rate_value_str = match4[1].str();
         int rate_value = std::stoi(rate_value_str);
-        openhd::log::get_default()->warn("Rate value: {} mhz",
-                                         rate_value_str);
+        openhd::log::get_default()->warn("Rate value: {} mhz", rate_value);
 
-      } else {
-          openhd::log::get_default()->warn("Rate value not found in response4: '{}'", response4);
-      }
+    } else {
+        openhd::log::get_default()->warn("Rate value not found in response4: '{}'", response4);
+    }
 //COMMAND 5
       stream << command6 << std::flush;
 
@@ -315,7 +315,7 @@ void communicate_with_device_slow(const std::string& ip,
       }
 
       // Extract and log the value
-      std::regex noise_regex(R"(\b(\d+)\s*MHz\b)", std::regex::icase);
+      std::regex noise_regex(R"(-?\d+)\s*dBm\b)", std::regex::icase);
       std::smatch match5;
       if (std::regex_search(response5, match5, noise_regex)) {
         std::string noise_value_str = match5[1].str();
