@@ -241,7 +241,7 @@ void communicate_with_device_slow(const std::string& ip,
         std::string rssi_value_str = match2[1].str();
         int rssi_value = std::stoi(rssi_value_str);
         openhd::log::get_default()->warn("Bandwith value: {} mhz",
-                                         rssi_value);
+                                         rssi_value,response2);
 
       } else {
           openhd::log::get_default()->warn("Bandwith value not found in response2: '{}'", response2);
