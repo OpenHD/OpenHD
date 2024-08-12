@@ -262,7 +262,7 @@ void communicate_with_device_slow(const std::string& ip,
       }
 
       // Extract and log the value
-      std::regex freq_regex(R"(([-\d]+) dBm)", std::regex::icase);
+      std::regex freq_regex(R"((\d+)(?!.*\d))");
       std::smatch match3;
       if (std::regex_search(response3, match3, freq_regex)) {
         std::string rssi_value_str = match3[1].str();
