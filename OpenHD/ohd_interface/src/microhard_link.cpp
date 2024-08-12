@@ -239,7 +239,7 @@ void communicate_with_device_slow(const std::string& ip,
       std::smatch match2;
       if (std::regex_search(response2, match2, bandwidth_regex)) {
         std::string bandwidth_value_str = match2[1].str();
-        int bandwidth_value = std::stoi(bandwidth_value_str)
+        int bandwidth_value = std::stoi(bandwidth_value_str);
         openhd::log::get_default()->warn("Bandwith value: {} mhz",
                                          bandwidth_value_str);
 
