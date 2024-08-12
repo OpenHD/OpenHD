@@ -102,6 +102,28 @@ std::vector<std::string> get_ip_addresses(const std::string& prefix) {
   return ip_addresses;
 }
 
+void send_command_and_process_response(Poco::Net::SocketStream& stream, const std::string& command, const std::regex& regex, const std::string& value_name) {
+    stream << command << std::flush;
+
+    std::string response;
+    std::string line;
+    while (std::getline(stream, line)) {
+        response += line + "\n";
+        if (line.find("OK") != std::string::npos) {
+            break;
+        }
+    }
+
+    std::smatch match;
+    if (std::regex_search(response, match, regex)) {
+        std::string value_str = match[1].str();
+        int value = std::stoi(value_str);
+        openhd::log::get_default()->warn("{} value: {} {}", value_name, value, (value_name == "SNR" || value_name == "NoiseFloor") ? "dBm" : "MHz");
+    } else {
+        openhd::log::get_default()->warn("{} not found in response: '{}'", value_name, response);
+    }
+}
+
 void communicate_with_device(const std::string& ip,
                              const std::string& command) {
   openhd::log::get_default()->warn(
@@ -164,206 +186,50 @@ void communicate_with_device(const std::string& ip,
   }
 }
 
-void communicate_with_device_slow(const std::string& ip,
-                                  const std::string& command2) {
-  openhd::log::get_default()->warn(
-      "Starting slower communication with device at IP: {}", ip);
+void communicate_with_device_slow(const std::string& ip, const std::string& command2) {
+    openhd::log::get_default()->warn("Starting slower communication with device at IP: {}", ip);
 
-  try {
-    std::this_thread::sleep_for(std::chrono::seconds(5));
-    Poco::Net::SocketAddress address(ip, 23);
-    Poco::Net::StreamSocket socket(address);
-    Poco::Net::SocketStream stream(socket);
+    try {
+        std::this_thread::sleep_for(std::chrono::seconds(5));
+        Poco::Net::SocketAddress address(ip, 23);
+        Poco::Net::StreamSocket socket(address);
+        Poco::Net::SocketStream stream(socket);
 
-    // Login to the device
-    std::this_thread::sleep_for(
-        std::chrono::seconds(1));  // Wait for a second to process username
-    openhd::log::get_default()->debug("Sending username: {}", username);
-    stream << username << std::flush;
-    std::this_thread::sleep_for(
-        std::chrono::seconds(1));  // Wait for a second to process username
+        // Login to the device
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        openhd::log::get_default()->debug("Sending username: {}", username);
+        stream << username << std::flush;
+        std::this_thread::sleep_for(std::chrono::seconds(1));
 
-    openhd::log::get_default()->debug("Sending password: {}", password);
-    stream << password << std::flush;
-    std::this_thread::sleep_for(
-        std::chrono::seconds(3));  // Wait for a second to process password
+        openhd::log::get_default()->debug("Sending password: {}", password);
+        stream << password << std::flush;
+        std::this_thread::sleep_for(std::chrono::seconds(3));
 
-    while (true) {
-      // Infinite loop for sending commands and receiving responses
-      // Send the command to the device
+        const std::vector<std::pair<std::string, std::regex>> commands = {
+            {command2, std::regex(R"(([-\d]+) dBm)", std::regex::icase)},
+            {command3, std::regex(R"(\b(\d+)\s*MHz\b)", std::regex::icase)},
+            {command4, std::regex(R"(\b(\d+)\s*MHz\b)", std::regex::icase)},
+            {command5, std::regex(R"(\b(\d+)\b)", std::regex::icase)},
+            {command6, std::regex(R"((-?\d+)\s*dBm\b)", std::regex::icase)},
+            {command7, std::regex(R"(\b(\d+)\s*dB\b)", std::regex::icase)}
+        };
 
-      // COMMAND 1
-      stream << command2 << std::flush;
+        const std::vector<std::string> value_names = {
+            "TX-Power", "Bandwidth", "Frequency", "Rate Mode", "NoiseFloor", "SNR"
+        };
 
-      // Read the response from the device
-      std::string response;
-      std::string line;
-      while (std::getline(stream, line)) {
-        response += line + "\n";
-        // Break out of the loop if the end of the response is reached
-        if (line.find("OK") != std::string::npos) {
-          break;
+        while (true) {
+            for (size_t i = 0; i < commands.size(); ++i) {
+                send_command_and_process_response(stream, commands[i].first, commands[i].second, value_names[i]);
+            }
+            std::this_thread::sleep_for(std::chrono::seconds(3));
         }
-      }
 
-      // Extract and log the value
-      std::regex txpower_regex(R"(([-\d]+) dBm)", std::regex::icase);
-      std::smatch match;
-      if (std::regex_search(response, match, txpower_regex)) {
-        std::string rssi_value_str = match[1].str();
-        int rssi_value = std::stoi(rssi_value_str);
-        openhd::log::get_default()->warn("TX-Power value: {} dBm", rssi_value);
-
-      } else {
-        openhd::log::get_default()->warn("TX-Power not found in response: '{}'",
-                                         response);
-      }
-      // COMMAND 2
-      stream << command3 << std::flush;
-
-      // Read the response2 from the device
-      std::string response2;
-      std::string line2;
-      while (std::getline(stream, line2)) {
-        response2 += line2 + "\n";
-        // Break out of the loop if the end of the response2 is reached
-        if (line2.find("OK") != std::string::npos) {
-          break;
-        }
-      }
-
-      // Extract and log the value
-      std::regex bandwidth_regex(R"(\b(\d+)\s*MHz\b)", std::regex::icase);
-      std::smatch match2;
-      if (std::regex_search(response2, match2, bandwidth_regex)) {
-        std::string bandwidth_value_str = match2[1].str();
-        int bandwidth_value = std::stoi(bandwidth_value_str);
-        openhd::log::get_default()->warn("Bandwith value: {} mhz",
-                                         bandwidth_value_str);
-
-      } else {
-        openhd::log::get_default()->warn(
-            "Bandwith value not found in response2: '{}'", response2);
-      }
-
-      // COMMAND 3
-      stream << command4 << std::flush;
-
-      // Read the response from the device
-      std::string response3;
-      std::string line3;
-      while (std::getline(stream, line3)) {
-        response3 += line3 + "\n";
-        // Break out of the loop if the end of the response3 is reached
-        if (line3.find("OK") != std::string::npos) {
-          break;
-        }
-      }
-
-      // Extract and log the value
-      std::regex freq_regex(R"(\b(\d+)\s*MHz\b)", std::regex::icase);
-      std::smatch match3;
-
-      if (std::regex_search(response3, match3, freq_regex)) {
-        // Extract the last number which is the frequency value
-        std::string freq_value_str = match3[1].str();
-        int freq_value = std::stoi(freq_value_str);
-        openhd::log::get_default()->warn("Frequency: {} MHz", freq_value);
-
-      } else {
-        openhd::log::get_default()->warn(
-            "Frequency not found in response: '{}'", response3);
-      }
-      // COMMAND 4
-      stream << command5 << std::flush;
-
-      // Read the response4 from the device
-      std::string response4;
-      std::string line4;
-      while (std::getline(stream, line4)) {
-        response4 += line4 + "\n";
-        // Break out of the loop if the end of the response4 is reached
-        if (line4.find("OK") != std::string::npos) {
-          break;
-        }
-      }
-
-      std::regex rate_regex(R"(\b(\d+)\b)", std::regex::icase);
-      std::smatch match4;
-
-      if (std::regex_search(response4, match4, rate_regex)) {
-        // Extract the first number which is the rate value
-        std::string rate_value_str = match4[1].str();
-        int rate_value = std::stoi(rate_value_str);
-        openhd::log::get_default()->warn("Rate Mode: {}", rate_value);
-
-      } else {
-        openhd::log::get_default()->warn(
-            "Rate value not found in response4: '{}'", response4);
-      }
-      // COMMAND 5
-      stream << command6 << std::flush;
-
-      // Read the response5 from the device
-      std::string response5;
-      std::string line5;
-      while (std::getline(stream, line5)) {
-        response5 += line5 + "\n";
-        // Break out of the loop if the end of the response5 is reached
-        if (line5.find("OK") != std::string::npos) {
-          break;
-        }
-      }
-
-      // Extract and log the value
-      std::regex noise_regex(R"((-?\d+)\s*dBm\b)", std::regex::icase);
-      std::smatch match5;
-      if (std::regex_search(response5, match5, noise_regex)) {
-        std::string noise_value_str = match5[1].str();
-        int noise_value = std::stoi(noise_value_str);
-        openhd::log::get_default()->warn("NoiseFloor value: {} mhz",
-                                         noise_value_str);
-
-      } else {
-        openhd::log::get_default()->warn(
-            "NoiseFloor value not found in response5: '{}'", response5);
-      }
-      // COMMAND 6
-      stream << command7 << std::flush;
-
-      // Read the response6 from the device
-      std::string response6;
-      std::string line6;
-      while (std::getline(stream, line6)) {
-        response6 += line6 + "\n";
-        // Break out of the loop if the end of the response6 is reached
-        if (line6.find("OK") != std::string::npos) {
-          break;
-        }
-      }
-
-      // Extract and log the value
-      std::regex snr_regex(R"(\b(\d+)\s*dB\b)", std::regex::icase);
-      std::smatch match6;
-
-      if (std::regex_search(response6, match6, snr_regex)) {
-        // Extract the number which is the SNR value
-        std::string snr_value_str = match6[1].str();
-        int snr_value = std::stoi(snr_value_str);
-        openhd::log::get_default()->warn("SNR value: {} dB", snr_value);
-
-      } else {
-        openhd::log::get_default()->warn(
-            "SNR value not found in response6: '{}'", response6);
-      }
-      std::this_thread::sleep_for(std::chrono::seconds(3));
+    } catch (const Poco::Exception& e) {
+        openhd::log::get_default()->warn("POCO Exception: {}", e.displayText());
+    } catch (const std::exception& e) {
+        openhd::log::get_default()->warn("Standard Exception: {}", e.what());
     }
-
-  } catch (const Poco::Exception& e) {
-    openhd::log::get_default()->warn("POCO Exception: {}", e.displayText());
-  } catch (const std::exception& e) {
-    openhd::log::get_default()->warn("Standard Exception: {}", e.what());
-  }
 }
 
 void MicrohardLink::monitor_gateway_signal_strength(
