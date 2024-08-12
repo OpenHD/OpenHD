@@ -237,9 +237,9 @@ void communicate_with_device_slow(const std::string& ip,
 
       // Extract and log the value
       std::regex bandwith_regex(R"(([-\d]+) dBm)", std::regex::icase);
-      std::smatch match;
-      if (std::regex_search(response2, match, bandwith_regex)) {
-        std::string rssi_value_str = match[1].str();
+      std::smatch match2;
+      if (std::regex_search(response2, match2, bandwith_regex)) {
+        std::string rssi_value_str = match2[1].str();
         int rssi_value = std::stoi(rssi_value_str);
         openhd::log::get_default()->warn("TX-Power value: {} dBm",
                                          rssi_value);
@@ -265,9 +265,9 @@ void communicate_with_device_slow(const std::string& ip,
 
       // Extract and log the value
       std::regex freq_regex(R"(([-\d]+) dBm)", std::regex::icase);
-      std::smatch match;
-      if (std::regex_search(response3, match, freq_regex)) {
-        std::string rssi_value_str = match[1].str();
+      std::smatch match3;
+      if (std::regex_search(response3, match3, freq_regex)) {
+        std::string rssi_value_str = match3[1].str();
         int rssi_value = std::stoi(rssi_value_str);
         openhd::log::get_default()->warn("TX-Power value: {} dBm",
                                          rssi_value);
