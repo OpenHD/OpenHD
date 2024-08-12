@@ -43,6 +43,13 @@ const std::string username = "admin\n";
 const std::string password = "qwertz1\n";
 const std::string command = "AT+MWRSSI\n";
 const std::string command2 = "AT+MWTXPOWER\n";
+const std::string command3 = "AT+MWBAND\n";
+const std::string command4 = "AT+MWFREQ2400\n";
+const std::string command5 = "AT+MWVRATE\n";
+const std::string command6 = "AT+MWNOISEFLOOR\n";
+const std::string command7 = "AT+MWSNR\n";
+
+
 
 // Helper function to retrieve IP addresses starting with a specific prefix
 std::vector<std::string> get_ip_addresses(const std::string& prefix) {
