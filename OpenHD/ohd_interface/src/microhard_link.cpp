@@ -220,7 +220,6 @@ void communicate_with_device_slow(const std::string& ip,
       } else {
           openhd::log::get_default()->warn("TX-Power not found in response: '{}'", response);
       }
-          std::this_thread::sleep_for(std::chrono::seconds(3));
 //COMMAND 2
       stream << command3 << std::flush;
 
@@ -236,7 +235,7 @@ void communicate_with_device_slow(const std::string& ip,
       }
 
       // Extract and log the value
-      std::regex bandwith_regex(R"(([-\d]+) dBm)", std::regex::icase);
+      std::regex bandwith_regex(R"((\d+)(?!.*\d))");
       std::smatch match2;
       if (std::regex_search(response2, match2, bandwith_regex)) {
         std::string rssi_value_str = match2[1].str();
@@ -247,7 +246,6 @@ void communicate_with_device_slow(const std::string& ip,
       } else {
           openhd::log::get_default()->warn("Bandwith value not found in response2: '{}'", response2);
       }
-          std::this_thread::sleep_for(std::chrono::seconds(3));
 
 //COMMAND 3
       stream << command4 << std::flush;
