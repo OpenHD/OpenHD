@@ -289,16 +289,16 @@ void communicate_with_device_slow(const std::string& ip,
       }
 
       // Extract and log the value
-      std::regex bandwidth_regex(R"(\b(\d+)\s*MHz\b)", std::regex::icase);
+      std::regex rate_regex(R"(\b(\d+)\s*MHz\b)", std::regex::icase);
       std::smatch match4;
-      if (std::regex_search(response4, match4, bandwidth_regex)) {
-        std::string bandwidth_value_str = match4[1].str();
-        int bandwidth_value = std::stoi(bandwidth_value_str);
-        openhd::log::get_default()->warn("Bandwith value: {} mhz",
-                                         bandwidth_value_str);
+      if (std::regex_search(response4, match4, rate_regex)) {
+        std::string rate_value_str = match4[1].str();
+        int rate_value = std::stoi(rate_value_str);
+        openhd::log::get_default()->warn("Rate value: {} mhz",
+                                         rate_value_str);
 
       } else {
-          openhd::log::get_default()->warn("Bandwith value not found in response4: '{}'", response4);
+          openhd::log::get_default()->warn("Rate value not found in response4: '{}'", response4);
       }
 //COMMAND 5
       stream << command6 << std::flush;
@@ -315,16 +315,16 @@ void communicate_with_device_slow(const std::string& ip,
       }
 
       // Extract and log the value
-      std::regex bandwidth_regex(R"(\b(\d+)\s*MHz\b)", std::regex::icase);
+      std::regex noise_regex(R"(\b(\d+)\s*MHz\b)", std::regex::icase);
       std::smatch match5;
-      if (std::regex_search(response5, match5, bandwidth_regex)) {
-        std::string bandwidth_value_str = match5[1].str();
-        int bandwidth_value = std::stoi(bandwidth_value_str);
-        openhd::log::get_default()->warn("Bandwith value: {} mhz",
-                                         bandwidth_value_str);
+      if (std::regex_search(response5, match5, noise_regex)) {
+        std::string noise_value_str = match5[1].str();
+        int noise_value = std::stoi(noise_value_str);
+        openhd::log::get_default()->warn("NoiseFloor value: {} mhz",
+                                         noise_value_str);
 
       } else {
-          openhd::log::get_default()->warn("Bandwith value not found in response5: '{}'", response5);
+          openhd::log::get_default()->warn("NoiseFloor value not found in response5: '{}'", response5);
       }
 //COMMAND 6
       stream << command7 << std::flush;
@@ -341,16 +341,16 @@ void communicate_with_device_slow(const std::string& ip,
       }
 
       // Extract and log the value
-      std::regex bandwidth_regex(R"(\b(\d+)\s*MHz\b)", std::regex::icase);
+      std::regex snr_regex(R"(\b(\d+)\s*MHz\b)", std::regex::icase);
       std::smatch match2;
-      if (std::regex_search(response6, match6, bandwidth_regex)) {
-        std::string bandwidth_value_str = match6[1].str();
-        int bandwidth_value = std::stoi(bandwidth_value_str);
-        openhd::log::get_default()->warn("Bandwith value: {} mhz",
-                                         bandwidth_value_str);
+      if (std::regex_search(response6, match6, snr_regex)) {
+        std::string snr_value_str = match6[1].str();
+        int snr_value = std::stoi(snr_value_str);
+        openhd::log::get_default()->warn("SNR value: {} mhz",
+                                         snr_value_str);
 
       } else {
-          openhd::log::get_default()->warn("Bandwith value not found in response6: '{}'", response6);
+          openhd::log::get_default()->warn("SNR value not found in response6: '{}'", response6);
       }
           std::this_thread::sleep_for(std::chrono::seconds(3));
 
