@@ -190,9 +190,11 @@ void communicate_with_device_slow(const std::string& ip,
     std::this_thread::sleep_for(
         std::chrono::seconds(3));  // Wait for a second to process password
 
-    while (
-        true) {  // Infinite loop for sending commands and receiving responses
+    while (true) {
+      // Infinite loop for sending commands and receiving responses
       // Send the command to the device
+      
+//COMMAND 1
       stream << command2 << std::flush;
 
       // Read the response from the device
@@ -219,6 +221,62 @@ void communicate_with_device_slow(const std::string& ip,
           openhd::log::get_default()->warn("TX-Power not found in response: '{}'", response);
       }
           std::this_thread::sleep_for(std::chrono::seconds(3));
+//COMMAND 2
+      stream << command2 << std::flush;
+
+      // Read the response from the device
+      std::string response;
+      std::string line;
+      while (std::getline(stream, line)) {
+        response += line + "\n";
+        // Break out of the loop if the end of the response is reached
+        if (line.find("OK") != std::string::npos) {
+          break;
+        }
+      }
+
+      // Extract and log the value
+      std::regex rssi_regex(R"(([-\d]+) dBm)", std::regex::icase);
+      std::smatch match;
+      if (std::regex_search(response, match, rssi_regex)) {
+        std::string rssi_value_str = match[1].str();
+        int rssi_value = std::stoi(rssi_value_str);
+        openhd::log::get_default()->warn("TX-Power value: {} dBm",
+                                         rssi_value);
+
+      } else {
+          openhd::log::get_default()->warn("TX-Power not found in response: '{}'", response);
+      }
+          std::this_thread::sleep_for(std::chrono::seconds(3));
+
+//COMMAND 3
+      stream << command2 << std::flush;
+
+      // Read the response from the device
+      std::string response;
+      std::string line;
+      while (std::getline(stream, line)) {
+        response += line + "\n";
+        // Break out of the loop if the end of the response is reached
+        if (line.find("OK") != std::string::npos) {
+          break;
+        }
+      }
+
+      // Extract and log the value
+      std::regex rssi_regex(R"(([-\d]+) dBm)", std::regex::icase);
+      std::smatch match;
+      if (std::regex_search(response, match, rssi_regex)) {
+        std::string rssi_value_str = match[1].str();
+        int rssi_value = std::stoi(rssi_value_str);
+        openhd::log::get_default()->warn("TX-Power value: {} dBm",
+                                         rssi_value);
+
+      } else {
+          openhd::log::get_default()->warn("TX-Power not found in response: '{}'", response);
+      }
+          std::this_thread::sleep_for(std::chrono::seconds(3));
+
     }
 
   } catch (const Poco::Exception& e) {
