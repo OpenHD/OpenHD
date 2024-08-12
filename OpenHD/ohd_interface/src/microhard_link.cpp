@@ -236,7 +236,6 @@ void MicrohardLink::monitor_gateway_signal_strength(
     openhd::log::get_default()->warn("Getting RSSI from gateway IP: {}",
                                      gateway_ip);
     try {
-      std::string command2 = "AT+MWRSSI\n";
       communicate_with_device(gateway_ip, command2);
       openhd::log::get_default()->warn("RSSI data retrieval complete.");
     } catch (const std::exception& e) {
