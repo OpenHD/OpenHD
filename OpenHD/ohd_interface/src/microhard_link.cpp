@@ -226,11 +226,11 @@ void communicate_with_device_slow(const std::string& ip,
 
       // Read the response2 from the device
       std::string response2;
-      std::string line;
-      while (std::getline(stream, line)) {
-        response2 += line + "\n";
+      std::string line2;
+      while (std::getline(stream, line2)) {
+        response2 += line2 + "\n";
         // Break out of the loop if the end of the response2 is reached
-        if (line.find("OK") != std::string::npos) {
+        if (line2.find("OK") != std::string::npos) {
           break;
         }
       }
@@ -254,11 +254,11 @@ void communicate_with_device_slow(const std::string& ip,
 
       // Read the response from the device
       std::string response3;
-      std::string line;
-      while (std::getline(stream, line)) {
-        response3 += line + "\n";
+      std::string line3;
+      while (std::getline(stream, line3)) {
+        response3 += line3 + "\n";
         // Break out of the loop if the end of the response3 is reached
-        if (line.find("OK") != std::string::npos) {
+        if (line3.find("OK") != std::string::npos) {
           break;
         }
       }
