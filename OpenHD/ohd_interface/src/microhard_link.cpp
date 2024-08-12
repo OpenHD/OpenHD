@@ -341,17 +341,18 @@ void communicate_with_device_slow(const std::string& ip,
       }
 
       // Extract and log the value
-      std::regex snr_regex(R"(\b(\d+)\s*MHz\b)", std::regex::icase);
-      std::smatch match6;
-      if (std::regex_search(response6, match6, snr_regex)) {
+      std::regex snr_regex(R"(\b(\d+)\s*dB\b)", std::regex::icase);
+    std::smatch match6;
+
+    if (std::regex_search(response6, match6, snr_regex)) {
+        // Extract the number which is the SNR value
         std::string snr_value_str = match6[1].str();
         int snr_value = std::stoi(snr_value_str);
-        openhd::log::get_default()->warn("SNR value: {} mhz",
-                                         snr_value_str);
+        openhd::log::get_default()->warn("SNR value: {} dB", snr_value);
 
-      } else {
-          openhd::log::get_default()->warn("SNR value not found in response6: '{}'", response6);
-      }
+    } else {
+        openhd::log::get_default()->warn("SNR value not found in response6: '{}'", response6);
+    }
           std::this_thread::sleep_for(std::chrono::seconds(3));
 
     }
