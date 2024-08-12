@@ -222,7 +222,7 @@ void communicate_with_device_slow(const std::string& ip,
       }
           std::this_thread::sleep_for(std::chrono::seconds(3));
 //COMMAND 2
-      stream << command2 << std::flush;
+      stream << command3 << std::flush;
 
       // Read the response2 from the device
       std::string response2;
@@ -241,16 +241,16 @@ void communicate_with_device_slow(const std::string& ip,
       if (std::regex_search(response2, match2, bandwith_regex)) {
         std::string rssi_value_str = match2[1].str();
         int rssi_value = std::stoi(rssi_value_str);
-        openhd::log::get_default()->warn("TX-Power value: {} dBm",
+        openhd::log::get_default()->warn("Bandwith value: {} mhz",
                                          rssi_value);
 
       } else {
-          openhd::log::get_default()->warn("TX-Power not found in response2: '{}'", response2);
+          openhd::log::get_default()->warn("Bandwith value not found in response2: '{}'", response2);
       }
           std::this_thread::sleep_for(std::chrono::seconds(3));
 
 //COMMAND 3
-      stream << command2 << std::flush;
+      stream << command4 << std::flush;
 
       // Read the response from the device
       std::string response3;
@@ -269,11 +269,11 @@ void communicate_with_device_slow(const std::string& ip,
       if (std::regex_search(response3, match3, freq_regex)) {
         std::string rssi_value_str = match3[1].str();
         int rssi_value = std::stoi(rssi_value_str);
-        openhd::log::get_default()->warn("TX-Power value: {} dBm",
+        openhd::log::get_default()->warn("Frequency: {} mhz",
                                          rssi_value);
 
       } else {
-          openhd::log::get_default()->warn("TX-Power not found in response: '{}'", response3);
+          openhd::log::get_default()->warn("Frequency not found in response: '{}'", response3);
       }
           std::this_thread::sleep_for(std::chrono::seconds(3));
 
