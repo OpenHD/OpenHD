@@ -117,14 +117,14 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
     // just to make sure to not hog too much cpu here.
     std::this_thread::sleep_for(std::chrono::seconds(1));
     // microhard link
-    bool microhard_enabled = 0;
-    int microhard_rssi = 0;
-    int microhard_tx_pwr = 0;
-    int microhard_bw = 0;
-    int microhard_freq = 0;
-    int microhard_tx_rate = 0;
-    int microhard_noise = 0;
-    int microhard_snr = 0;
+    int microhard_enabled = 21;
+    int microhard_rssi = 22;
+    int microhard_tx_pwr = 24;
+    int microhard_bw = 25;
+    int microhard_freq = 26;
+    int microhard_tx_rate = 27;
+    int microhard_noise = 28;
+    int microhard_snr = 29;
     // normal stuff
     int8_t curr_temperature_core = 0;
     int curr_clock_cpu = 0;
@@ -197,6 +197,13 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       m_curr_onboard_computer_status.storage_usage[1] = curr_space_left;
       m_curr_onboard_computer_status.storage_usage[2] = curr_ina219_voltage;
       m_curr_onboard_computer_status.storage_usage[3] = curr_ina219_current;
+      m_curr_onboard_computer_status.link_tx_rate[0] = microhard_enabled;
+      m_curr_onboard_computer_status.link_rx_rate[1] = microhard_rssi;
+      m_curr_onboard_computer_status.link_rx_rate[2] = microhard_tx_pwr;
+      m_curr_onboard_computer_status.link_rx_rate[3] = microhard_bw;
+      m_curr_onboard_computer_status.link_rx_rate[4] = microhard_freq;
+      m_curr_onboard_computer_status.link_rx_rate[5] = microhard_noise;
+      m_curr_onboard_computer_status.link_rx_rate[6] = microhard_snr;
       // openhd status message
       m_curr_onboard_computer_status.link_type[0] =
           ohd_platform;                                 // ohd_platform;
