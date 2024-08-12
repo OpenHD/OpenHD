@@ -62,8 +62,8 @@ static int get_recording_index_track_count() {
  * @param suffix the suffix of the filename,e.g. ".avi" or ".mp4"
  */
 static std::string create_unused_recording_filename(const std::string& suffix) {
-  if (!OHDFilesystemUtil::exists(std::string(getConfigBasePath()))) {
-    OHDFilesystemUtil::create_directories(std::string(getConfigBasePath()));
+  if (!OHDFilesystemUtil::exists(std::string(getVideoPath()))) {
+    OHDFilesystemUtil::create_directories(std::string(getVideoPath()));
   }
   // TEMPORARY - considering how many users use RPI (where date is not reliable)
   // we just name the files ascending
@@ -72,7 +72,7 @@ static std::string create_unused_recording_filename(const std::string& suffix) {
   // deletes a video
   const int track_index = get_recording_index_track_count();
   std::stringstream ss;
-  ss << std::string(getConfigBasePath()) << "recording_" << track_index
+  ss << std::string(getVideoPath()) << "recording_" << track_index
      << suffix;
   return ss.str();
   /*for(int i=0;i<10000;i++){
