@@ -224,12 +224,12 @@ void communicate_with_device_slow(const std::string& ip,
 //COMMAND 2
       stream << command2 << std::flush;
 
-      // Read the response from the device
-      std::string response;
+      // Read the response2 from the device
+      std::string response2;
       std::string line;
       while (std::getline(stream, line)) {
-        response += line + "\n";
-        // Break out of the loop if the end of the response is reached
+        response2 += line + "\n";
+        // Break out of the loop if the end of the response2 is reached
         if (line.find("OK") != std::string::npos) {
           break;
         }
@@ -238,14 +238,14 @@ void communicate_with_device_slow(const std::string& ip,
       // Extract and log the value
       std::regex rssi_regex(R"(([-\d]+) dBm)", std::regex::icase);
       std::smatch match;
-      if (std::regex_search(response, match, rssi_regex)) {
+      if (std::regex_search(response2, match, rssi_regex)) {
         std::string rssi_value_str = match[1].str();
         int rssi_value = std::stoi(rssi_value_str);
         openhd::log::get_default()->warn("TX-Power value: {} dBm",
                                          rssi_value);
 
       } else {
-          openhd::log::get_default()->warn("TX-Power not found in response: '{}'", response);
+          openhd::log::get_default()->warn("TX-Power not found in response2: '{}'", response2);
       }
           std::this_thread::sleep_for(std::chrono::seconds(3));
 
@@ -253,11 +253,11 @@ void communicate_with_device_slow(const std::string& ip,
       stream << command2 << std::flush;
 
       // Read the response from the device
-      std::string response;
+      std::string response3;
       std::string line;
       while (std::getline(stream, line)) {
-        response += line + "\n";
-        // Break out of the loop if the end of the response is reached
+        response3 += line + "\n";
+        // Break out of the loop if the end of the response3 is reached
         if (line.find("OK") != std::string::npos) {
           break;
         }
@@ -266,14 +266,14 @@ void communicate_with_device_slow(const std::string& ip,
       // Extract and log the value
       std::regex rssi_regex(R"(([-\d]+) dBm)", std::regex::icase);
       std::smatch match;
-      if (std::regex_search(response, match, rssi_regex)) {
+      if (std::regex_search(response3, match, rssi_regex)) {
         std::string rssi_value_str = match[1].str();
         int rssi_value = std::stoi(rssi_value_str);
         openhd::log::get_default()->warn("TX-Power value: {} dBm",
                                          rssi_value);
 
       } else {
-          openhd::log::get_default()->warn("TX-Power not found in response: '{}'", response);
+          openhd::log::get_default()->warn("TX-Power not found in response: '{}'", response3);
       }
           std::this_thread::sleep_for(std::chrono::seconds(3));
 
