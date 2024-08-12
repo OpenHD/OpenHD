@@ -328,7 +328,6 @@ struct XCamera {
       return ret;
     } else if (requires_rpi_libcamera_pipeline()) {
       std::vector<ResolutionFramerate> ret;
-      openhd::log::get_default()->warn("cam[0]=["+camera_type+"]");
       if (camera_type == X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX462 ||
           camera_type ==
               X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX462_LOWLIGHT_MINI) {

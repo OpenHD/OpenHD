@@ -11,6 +11,9 @@
 #include "gst_appsink_helper.h"
 #include "gst_debug_helper.h"
 #include "gst_helper.hpp"
+#include "ohd_video_air_generic_settings.h"
+
+AirCameraGenericSettings g_airCameraGenericSettings;
 
 GstAudioStream::GstAudioStream() {
   OHDGstHelper::initGstreamerOrThrow();
@@ -147,17 +150,20 @@ void GstAudioStream::stream_once() {
   while (true) {
     // Quickly terminate if openhd wants to terminate
     if (!m_keep_looping) break;
-    // Restart in case no data comes in
-    if (std::chrono::steady_clock::now() - m_last_audio_packet >
-        std::chrono::seconds(5)) {
-      m_console->warn("Restarting audio due to no data for >5 seconds");
-      break;
-    }
-    auto buffer_x = openhd::gst_app_sink_try_pull_sample_and_copy(
-        m_app_sink_element, timeout_ns);
-    if (buffer_x.has_value()) {
-      on_audio_packet(buffer_x->buffer);
-      m_last_audio_packet = std::chrono::steady_clock::now();
+    // Restart in case no data comes in //CURRENTLY DISABLED BECAUSE IT EVEN
+    // RESTARTS IF AUDIO IS DISABLED ..
+    if (g_airCameraGenericSettings.enable_audio != 1) {
+      m_console->warn("No Audio data, restarting");
+      if (std::chrono::steady_clock::now() - m_last_audio_packet >
+          std::chrono::seconds(5)) {
+        break;
+      }
+      auto buffer_x = openhd::gst_app_sink_try_pull_sample_and_copy(
+          m_app_sink_element, timeout_ns);
+      if (buffer_x.has_value()) {
+        on_audio_packet(buffer_x->buffer);
+        m_last_audio_packet = std::chrono::steady_clock::now();
+      }
     }
   }
   // cleanup

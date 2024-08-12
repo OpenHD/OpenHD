@@ -116,6 +116,16 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
     // We always sleep for 1 second
     // just to make sure to not hog too much cpu here.
     std::this_thread::sleep_for(std::chrono::seconds(1));
+    // microhard link
+    bool microhard_enabled = 0;
+    int microhard_rssi = 0;
+    int microhard_tx_pwr = 0;
+    int microhard_bw = 0;
+    int microhard_freq = 0;
+    int microhard_tx_rate = 0;
+    int microhard_noise = 0;
+    int microhard_snr = 0;
+    // normal stuff
     int8_t curr_temperature_core = 0;
     int curr_clock_cpu = 0;
     int curr_clock_isp = 0;

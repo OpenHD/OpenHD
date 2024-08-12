@@ -42,6 +42,12 @@ const std::string telnet_cmd = "telnet 192.168.168.1";
 const std::string username = "admin\n";
 const std::string password = "qwertz1\n";
 const std::string command = "AT+MWRSSI\n";
+const std::string command2 = "AT+MWTXPOWER\n";
+const std::string command3 = "AT+MWBAND\n";
+const std::string command4 = "AT+MWFREQ2400\n";
+const std::string command5 = "AT+MWVRATE\n";
+const std::string command6 = "AT+MWNOISEFLOOR\n";
+const std::string command7 = "AT+MWSNR\n";
 
 // Helper function to retrieve IP addresses starting with a specific prefix
 std::vector<std::string> get_ip_addresses(const std::string& prefix) {
@@ -94,6 +100,34 @@ std::vector<std::string> get_ip_addresses(const std::string& prefix) {
   close(sockfd);
 
   return ip_addresses;
+}
+
+void send_command_and_process_response(Poco::Net::SocketStream& stream,
+                                       const std::string& command,
+                                       const std::regex& regex,
+                                       const std::string& value_name) {
+  stream << command << std::flush;
+
+  std::string response;
+  std::string line;
+  while (std::getline(stream, line)) {
+    response += line + "\n";
+    if (line.find("OK") != std::string::npos) {
+      break;
+    }
+  }
+
+  std::smatch match;
+  if (std::regex_search(response, match, regex)) {
+    std::string value_str = match[1].str();
+    int value = std::stoi(value_str);
+    openhd::log::get_default()->warn(
+        "{} value: {} {}", value_name, value,
+        (value_name == "SNR" || value_name == "NoiseFloor") ? "dBm" : "MHz");
+  } else {
+    openhd::log::get_default()->warn("{} not found in response: '{}'",
+                                     value_name, response);
+  }
 }
 
 void communicate_with_device(const std::string& ip,
@@ -158,6 +192,53 @@ void communicate_with_device(const std::string& ip,
   }
 }
 
+void communicate_with_device_slow(const std::string& ip,
+                                  const std::string& command2) {
+  openhd::log::get_default()->warn(
+      "Starting slower communication with device at IP: {}", ip);
+
+  try {
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+    Poco::Net::SocketAddress address(ip, 23);
+    Poco::Net::StreamSocket socket(address);
+    Poco::Net::SocketStream stream(socket);
+
+    // Login to the device
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    openhd::log::get_default()->debug("Sending username: {}", username);
+    stream << username << std::flush;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    openhd::log::get_default()->debug("Sending password: {}", password);
+    stream << password << std::flush;
+    std::this_thread::sleep_for(std::chrono::seconds(3));
+
+    const std::vector<std::pair<std::string, std::regex>> commands = {
+        {command2, std::regex(R"(([-\d]+) dBm)", std::regex::icase)},
+        {command3, std::regex(R"(\b(\d+)\s*MHz\b)", std::regex::icase)},
+        {command4, std::regex(R"(\b(\d+)\s*MHz\b)", std::regex::icase)},
+        {command5, std::regex(R"(\b(\d+)\b)", std::regex::icase)},
+        {command6, std::regex(R"((-?\d+)\s*dBm\b)", std::regex::icase)},
+        {command7, std::regex(R"(\b(\d+)\s*dB\b)", std::regex::icase)}};
+
+    const std::vector<std::string> value_names = {
+        "TX-Power", "Bandwidth", "Frequency", "Rate Mode", "NoiseFloor", "SNR"};
+
+    while (true) {
+      for (size_t i = 0; i < commands.size(); ++i) {
+        send_command_and_process_response(stream, commands[i].first,
+                                          commands[i].second, value_names[i]);
+      }
+      std::this_thread::sleep_for(std::chrono::seconds(3));
+    }
+
+  } catch (const Poco::Exception& e) {
+    openhd::log::get_default()->warn("POCO Exception: {}", e.displayText());
+  } catch (const std::exception& e) {
+    openhd::log::get_default()->warn("Standard Exception: {}", e.what());
+  }
+}
+
 void MicrohardLink::monitor_gateway_signal_strength(
     const std::string& gateway_ip) {
   if (gateway_ip.empty()) {
@@ -172,8 +253,8 @@ void MicrohardLink::monitor_gateway_signal_strength(
     openhd::log::get_default()->warn("Getting RSSI from gateway IP: {}",
                                      gateway_ip);
     try {
-      std::string command = "AT+MWRSSI\n";
-      communicate_with_device(gateway_ip, command);
+      std::string command2 = "AT+MWRSSI\n";
+      communicate_with_device(gateway_ip, command2);
       openhd::log::get_default()->warn("RSSI data retrieval complete.");
     } catch (const std::exception& e) {
       openhd::log::get_default()->warn(
@@ -302,8 +383,8 @@ static void wait_for_microhard_module(bool is_air) {
 
   while (true) {
     if (check_ip_alive(microhard_device_ip)) {
-      openhd::log::get_default()->debug("Microhard module found at {}",
-                                        microhard_device_ip);
+      openhd::log::get_default()->warn("Microhard module found at {}",
+                                       microhard_device_ip);
       break;
     }
     std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -350,6 +431,11 @@ MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
   // Start monitoring gateway signal strength
   std::thread monitor_thread(monitor_gateway_signal_strength, get_gateway_ip());
   monitor_thread.detach();  // Run in the background
+
+  // Start the second communication thread
+  std::thread second_thread(communicate_with_device_slow, get_gateway_ip(),
+                            command2);
+  second_thread.detach();  // Run in the background
 }
 
 void MicrohardLink::transmit_telemetry_data(OHDLink::TelemetryTxPacket packet) {
