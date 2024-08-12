@@ -197,7 +197,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       m_curr_onboard_computer_status.storage_usage[1] = curr_space_left;
       m_curr_onboard_computer_status.storage_usage[2] = curr_ina219_voltage;
       m_curr_onboard_computer_status.storage_usage[3] = curr_ina219_current;
-      m_curr_onboard_computer_status.link_tx_rate[0] = microhard_enabled;
+      m_curr_onboard_computer_status.link_rx_rate[0] = microhard_enabled;
       m_curr_onboard_computer_status.link_rx_rate[1] = microhard_rssi;
       m_curr_onboard_computer_status.link_rx_rate[2] = microhard_tx_pwr;
       m_curr_onboard_computer_status.link_rx_rate[3] = microhard_bw;
