@@ -25,6 +25,9 @@ static WiFiCardType driver_to_wifi_card_type(const std::string& driver_name) {
     // NOTE: "rtw_8822cu" is the bad kernel driver which is fucking horrible.
     return WiFiCardType::OPENHD_RTL_88X2CU;
   }
+  if (OHDUtil::equal_after_uppercase(driver_name, "rtl88x2eu_ohd")) {
+    return WiFiCardType::OPENHD_RTL_88X2EU;
+  }
   if (OHDUtil::equal_after_uppercase(driver_name, "rtl8852bu_ohd")) {
     // NOTE: "rtw_8822bu" is the bad kernel driver which is fucking horrible.
     return WiFiCardType::OPENHD_RTL_8852BU;
@@ -189,6 +192,7 @@ std::optional<WiFiCard> DWifiCards::process_card(
   if (card.type == WiFiCardType::OPENHD_RTL_88X2AU ||
       card.type == WiFiCardType::OPENHD_RTL_88X2BU ||
       card.type == WiFiCardType::OPENHD_RTL_88X2CU ||
+      card.type == WiFiCardType::OPENHD_RTL_88X2EU ||
       card.type == WiFiCardType::OPENHD_RTL_8852BU) {
     card.supported_frequencies_2G = openhd::get_all_channel_frequencies(
         openhd::get_channels_2G_legal_at_least_one_country());
@@ -249,6 +253,10 @@ std::vector<WiFiCard> reorder_monitor_mode_cards(std::vector<WiFiCard> cards) {
       card.second = true;
     }
     if (card.first.type == WiFiCardType::OPENHD_RTL_88X2CU) {
+      ret.push_back(card.first);
+      card.second = true;
+    }
+    if (card.first.type == WiFiCardType::OPENHD_RTL_88X2EU) {
       ret.push_back(card.first);
       card.second = true;
     }
