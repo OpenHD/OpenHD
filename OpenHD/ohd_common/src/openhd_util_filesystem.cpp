@@ -123,7 +123,7 @@ void OHDFilesystemUtil::make_file_read_write_everyone(
 }
 
 int OHDFilesystemUtil::get_remaining_space_in_mb() {
-  std::filesystem::space_info info = std::filesystem::space("/");
+  std::filesystem::space_info info = std::filesystem::space("/Videos/");
   return info.available / 1024 / 1024;
 }
 
