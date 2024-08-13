@@ -55,6 +55,7 @@ jobs:
           submodules: recursive
       - name: Install Dependencies
         run: |
+          sudo mkdir -p /Videos/
           sudo apt update
           sudo ./install_build_dep.sh ubuntu-x86
           # Doesn't require libusb and libv4l2
@@ -78,6 +79,7 @@ jobs:
           submodules: recursive
       - name: Install Dependencies
         run: |
+          sudo mkdir -p /Videos/
           sudo apt update
           sudo ./install_build_dep.sh ubuntu-x86
       - name: Build with make
