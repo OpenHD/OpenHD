@@ -64,32 +64,34 @@ bool openhd::wb::any_card_support_frequency(
 bool openhd::wb::set_frequency_and_channel_width_for_all_cards(
     uint32_t frequency, uint32_t channel_width,
     const std::vector<WiFiCard>& m_broadcast_cards) {
-  bool ret = true;
+  bool ret = true;  // Initialize return value to true
   for (const auto& card : m_broadcast_cards) {
+    // Skip emulated cards
     if (card.type == WiFiCardType::OPENHD_EMULATED) {
       break;
     }
+
+    // Handle specific card types with a custom function
     if (card.type == WiFiCardType::OPENHD_RTL_88X2AU ||
         card.type == WiFiCardType::OPENHD_RTL_88X2BU ||
         card.type == WiFiCardType::OPENHD_RTL_88X2CU ||
         card.type == WiFiCardType::OPENHD_RTL_88X2EU ||
         card.type == WiFiCardType::OPENHD_RTL_8852BU) {
-      const int type = card.type == WiFiCardType::OPENHD_RTL_88X2AU ? 0 : 1;
       wifi::commandhelper::openhd_driver_set_frequency_and_channel_width(
-          type, card.device_name, frequency, channel_width);
+          card.type, card.device_name, frequency, channel_width);
     } else {
+      // Handle other card types with a different function
       const bool success =
           wifi::commandhelper::iw_set_frequency_and_channel_width(
               card.device_name, frequency, channel_width);
-      // const bool
-      // success=wifi::commandhelper2::set_wifi_frequency_and_log_result(card->get_wifi_card().interface_name,frequency,channel_width);
       if (!success) {
-        ret = false;
+        ret = false;  // Set return value to false if any setting fails
       }
     }
   }
-  return ret;
+  return ret;  // Return the result
 }
+
 
 void openhd::wb::set_tx_power_for_all_cards(
     int tx_power_mw, int rtl8812au_tx_power_index_override,
