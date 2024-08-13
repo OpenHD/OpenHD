@@ -208,17 +208,26 @@ bool wifi::commandhelper::iw_supports_monitor_mode(int phy_index) {
   return OHDUtil::contains(res_opt.value(), "* monitor");
 }
 
-static constexpr auto OPENHD_DRIVER_RTL8812AU_CHANNEL_OVERRIDE =
+static char * OPENHD_DRIVER_RTL8812AU_CHANNEL_OVERRIDE =
     "/sys/module/88XXau_ohd/parameters/openhd_override_channel";
-static constexpr auto OPENHD_DRIVER_RTL8812AU_TX_POWER_INDEX_OVERRIDE =
+static char * OPENHD_DRIVER_RTL8812AU_TX_POWER_INDEX_OVERRIDE =
     "/sys/module/88XXau_ohd/parameters/openhd_override_tx_power_index";
-static constexpr auto OPENHD_DRIVER_RTL88xxBU_CHANNEL_OVERRIDE =
+static char * OPENHD_DRIVER_RTL88xxBU_CHANNEL_OVERRIDE =
     "/sys/module/88x2bu_ohd/parameters/openhd_override_channel";
-static constexpr auto OPENHD_DRIVER_RTL88xxBU_TX_POWER_MW_OVERRIDE =
+static char * OPENHD_DRIVER_RTL88xxBU_TX_POWER_MW_OVERRIDE =
     "/sys/module/88x2bu_ohd/parameters/openhd_override_tx_power_mbm";
+static char * OPENHD_DRIVER_RTL88xxCU_CHANNEL_OVERRIDE =
+    "/sys/module/88x2cu_ohd/parameters/openhd_override_channel";
+static char * OPENHD_DRIVER_RTL88xxCU_TX_POWER_MW_OVERRIDE =
+    "/sys/module/88x2cu_ohd/parameters/openhd_override_tx_power_mbm";
+static char * OPENHD_DRIVER_RTL88xxEU_CHANNEL_OVERRIDE =
+    "/sys/module/88x2eu_ohd/parameters/openhd_override_channel";
+static char * OPENHD_DRIVER_RTL88xxEU_TX_POWER_MW_OVERRIDE =
+    "/sys/module/88x2eu_ohd/parameters/openhd_override_tx_power_mbm";
+
 
 bool wifi::commandhelper::openhd_driver_set_frequency_and_channel_width(
-    int type, const std::string &device, uint32_t freq_mhz,
+    WiFiCardType type, const std::string &device, uint32_t freq_mhz,
     uint32_t channel_width) {
   const auto channel_opt = openhd::channel_from_frequency(freq_mhz);
   if (!channel_opt.has_value()) {
@@ -231,9 +240,27 @@ bool wifi::commandhelper::openhd_driver_set_frequency_and_channel_width(
       "openhd_driver_set_frequency_and_channel_width wanted:{}@{}Mhz, using "
       "channel override:{}",
       freq_mhz, channel_width, rtl8812au_channel);
-  const std::string CHANNEL_OVERRIDE_FILENAME =
-      type == 0 ? OPENHD_DRIVER_RTL8812AU_CHANNEL_OVERRIDE
-                : OPENHD_DRIVER_RTL88xxBU_CHANNEL_OVERRIDE;
+    char *CHANNEL_OVERRIDE_FILENAME;
+    switch(type)
+   {
+      /*case(WiFiCardType::OPENHD_RTL_88X2AU): 
+          CHANNEL_OVERRIDE_FILENAME = OPENHD_DRIVER_RTL8812AU_CHANNEL_OVERRIDE;
+          break;*/
+      case(WiFiCardType::OPENHD_RTL_88X2BU): 
+          CHANNEL_OVERRIDE_FILENAME = OPENHD_DRIVER_RTL88xxBU_CHANNEL_OVERRIDE;
+          break;
+      case(WiFiCardType::OPENHD_RTL_88X2CU): 
+          CHANNEL_OVERRIDE_FILENAME = OPENHD_DRIVER_RTL88xxCU_CHANNEL_OVERRIDE;
+          break;
+      case(WiFiCardType::OPENHD_RTL_88X2EU): 
+          CHANNEL_OVERRIDE_FILENAME = OPENHD_DRIVER_RTL88xxEU_CHANNEL_OVERRIDE;
+          break;
+      default: 
+          openhd::log::get_default()->error(
+        "INVALID DRIVER TYPE; CHANNEL WON'T WORK");
+          break;
+  }
+      
   if (!OHDFilesystemUtil::exists(CHANNEL_OVERRIDE_FILENAME)) {
     openhd::log::get_default()->error(
         "YOU ARE USING THE WRONG DRIVER; CHANNEL WON'T WORK");
@@ -264,17 +291,39 @@ bool wifi::commandhelper::openhd_driver_set_frequency_and_channel_width(
   return true;
 }
 
-bool wifi::commandhelper::openhd_driver_set_tx_power(const std::string &device,
-                                                     uint32_t tx_power_mBm) {
+bool wifi::commandhelper::openhd_driver_set_tx_power(WiFiCardType type,
+    const std::string &device, uint32_t tx_power_mBm) {
+        
+    char *TXPOWER_OVERRIDE_FILENAME;
+    switch(type)
+   {
+      case(WiFiCardType::OPENHD_RTL_88X2AU): 
+          TXPOWER_OVERRIDE_FILENAME = OPENHD_DRIVER_RTL8812AU_TX_POWER_INDEX_OVERRIDE;
+          break;
+      case(WiFiCardType::OPENHD_RTL_88X2BU): 
+          TXPOWER_OVERRIDE_FILENAME = OPENHD_DRIVER_RTL88xxBU_TX_POWER_MW_OVERRIDE;
+          break;
+      case(WiFiCardType::OPENHD_RTL_88X2CU): 
+          TXPOWER_OVERRIDE_FILENAME = OPENHD_DRIVER_RTL88xxCU_TX_POWER_MW_OVERRIDE;
+          break;
+      case(WiFiCardType::OPENHD_RTL_88X2EU): 
+          TXPOWER_OVERRIDE_FILENAME = OPENHD_DRIVER_RTL88xxEU_TX_POWER_MW_OVERRIDE;
+          break;
+      default: 
+          openhd::log::get_default()->error(
+        "INVALID DRIVER TYPE; TX POWER WON'T WORK");
+          break;
+  }
+  
   if (!OHDFilesystemUtil::exists(
-          OPENHD_DRIVER_RTL88xxBU_TX_POWER_MW_OVERRIDE)) {
+          TXPOWER_OVERRIDE_FILENAME)) {
     openhd::log::get_default()->error(
         "YOU ARE USING THE WRONG DRIVER; TX POWER WON'T WORK");
     // hope this works
     wifi::commandhelper::iw_set_tx_power(device, tx_power_mBm);
     return true;
   }
-  OHDFilesystemUtil::write_file(OPENHD_DRIVER_RTL88xxBU_TX_POWER_MW_OVERRIDE,
+  OHDFilesystemUtil::write_file(TXPOWER_OVERRIDE_FILENAME,
                                 fmt::format("{}", tx_power_mBm));
   // initiate change
   wifi::commandhelper::iw_set_tx_power(device,
