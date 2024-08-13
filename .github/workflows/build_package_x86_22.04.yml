@@ -3,7 +3,7 @@ name: build_package_x86_22.04
 on:
   push:
    branches:
-      - "2.5-evo"
+      - "2.6-evo"
       - "dev-release"
       - "release"
 

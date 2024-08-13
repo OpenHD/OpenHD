@@ -3,10 +3,9 @@ name: build_package_x20_debian
 on:
   push:
    branches:
-      - "2.5-evo"
+      - "2.6-evo"
       - "dev-release"
       - "release"
-      - "usenewbuilder"
 
 jobs:
   build:

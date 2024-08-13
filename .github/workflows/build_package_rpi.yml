@@ -3,7 +3,7 @@ name: build_package_rpi
 on:
   push:
    branches:
-      - "2.5-evo"
+      - "2.6-evo"
       - "dev-release"
       - "release"
 
