@@ -107,8 +107,8 @@ bool openhd_driver_set_frequency_and_channel_width(WiFiCardType type,
                                                    uint32_t channel_width);
 
 // RTL8812bu driver only so far
-bool openhd_driver_set_tx_power(WiFiCardType type,
-    const std::string &device, uint32_t tx_power_mBm);
+bool openhd_driver_set_tx_power(WiFiCardType type, const std::string& device,
+                                uint32_t tx_power_mBm);
 // RTL8812au driver only
 void openhd_driver_set_tx_power_index_override(const std::string& device,
                                                uint32_t tpi);
