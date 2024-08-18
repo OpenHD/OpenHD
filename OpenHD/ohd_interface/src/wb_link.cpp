@@ -18,6 +18,8 @@
 #include "wb_link_rate_helper.hpp"
 #include "wifi_card.h"
 
+bool firstloop = true;
+bool firstloop = true;
 static constexpr auto WB_LINK_ARM_CHANGED_TX_POWER_TAG = "wb_link_tx_power";
 
 WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
@@ -1139,6 +1141,22 @@ if (OHDPlatform::instance().is_x20()) {
             : m_recommended_video_bitrate_kbits * 70 / 100 * factor / 100;
     recommend_bitrate_to_encoder(x20_rate);
     
+    if (!m_is_armed && firstloop) {
+        firstloop=false;
+        m_console->warn("forcing MCS0 when not armed.");
+        m_settings->unsafe_get_settings().wb_air_mcs_index = 0;
+        m_settings->persist();
+        m_request_apply_air_mcs_index = true;
+    }
+
+    if (m_is_armed && firstarm) {
+        firstarm=false;
+        m_console->warn("Armed, setting MCS index !");
+        m_settings->unsafe_get_settings().wb_air_mcs_index = static_cast<int>(settings.wb_air_mcs_index);
+        m_settings->persist();
+        m_request_apply_air_mcs_index = true;
+    }
+
     if (m_thermal_protection_level > 0 && m_thermal_protection_level != lastLevel) {
         lastLevel = m_thermal_protection_level;
         m_console->warn("Thermal Protection enabled");
@@ -1146,6 +1164,16 @@ if (OHDPlatform::instance().is_x20()) {
         m_settings->persist();
         m_request_apply_air_mcs_index = true;
     }
+
+    if (m_thermal_protection_level = 0 && m_thermal_protection_level != 0) {
+        lastLevel = m_thermal_protection_level;
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        m_console->warn("Thermal Protection disabled");
+        m_settings->unsafe_get_settings().wb_air_mcs_index = static_cast<int>(settings.wb_air_mcs_index);
+        m_settings->persist();
+        m_request_apply_air_mcs_index = true;
+    }
+
     return;
 }
   recommend_bitrate_to_encoder(m_recommended_video_bitrate_kbits);
