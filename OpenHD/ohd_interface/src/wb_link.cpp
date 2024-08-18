@@ -19,7 +19,7 @@
 #include "wifi_card.h"
 
 bool firstloop = true;
-bool firstloop = true;
+bool firstarm = true;
 static constexpr auto WB_LINK_ARM_CHANGED_TX_POWER_TAG = "wb_link_tx_power";
 
 WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
