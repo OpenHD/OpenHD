@@ -1130,20 +1130,21 @@ void WBLink::wt_perform_rate_adjustment() {
                     m_recommended_video_bitrate_kbits);
   }
   // Extra x20 - thermal protection
-  if (OHDPlatform::instance().is_x20()) {
+if (OHDPlatform::instance().is_x20()) {
     const int factor = !m_is_armed ? 20 : 100;
-    const int lastLevel = 0;
-    const int x20_rate =
+    int lastLevel = 0;
+    int x20_rate =
         m_thermal_protection_level > 0
             ? m_recommended_video_bitrate_kbits * 30 / 100 * factor / 100
             : m_recommended_video_bitrate_kbits * 70 / 100 * factor / 100;
     recommend_bitrate_to_encoder(x20_rate);
-      if (m_thermal_protection_level > 0) && (m_thermal_protection_level != lastLevel){
-      lastLevel=m_thermal_protection_level;
-      m_console->warn("Thermal Protection enabled");
-      }
+    
+    if (m_thermal_protection_level > 0 && m_thermal_protection_level != lastLevel) {
+        lastLevel = m_thermal_protection_level;
+        m_console->warn("Thermal Protection enabled");
+    }
     return;
-  }
+}
   recommend_bitrate_to_encoder(m_recommended_video_bitrate_kbits);
 }
 
