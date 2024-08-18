@@ -1132,8 +1132,8 @@ void WBLink::wt_perform_rate_adjustment() {
   // Extra x20 - thermal protection
 if (OHDPlatform::instance().is_x20()) {
     const int factor = !m_is_armed ? 20 : 100;
-    int lastLevel = 0;
-    int x20_rate =
+    const int lastLevel = 0;
+    const int x20_rate =
         m_thermal_protection_level > 0
             ? m_recommended_video_bitrate_kbits * 30 / 100 * factor / 100
             : m_recommended_video_bitrate_kbits * 70 / 100 * factor / 100;
