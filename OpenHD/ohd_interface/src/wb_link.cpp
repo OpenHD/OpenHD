@@ -1142,6 +1142,9 @@ if (OHDPlatform::instance().is_x20()) {
     if (m_thermal_protection_level > 0 && m_thermal_protection_level != lastLevel) {
         lastLevel = m_thermal_protection_level;
         m_console->warn("Thermal Protection enabled");
+        m_settings->unsafe_get_settings().wb_air_mcs_index = 0;
+        m_settings->persist();
+        m_request_apply_air_mcs_index = true;
     }
     return;
 }
