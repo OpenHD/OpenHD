@@ -17,8 +17,8 @@ static void toggle_secondary_led(const bool on) {
     static constexpr auto filename = "/sys/class/leds/PWR/brightness";
     ;
     const auto content = on ? "1" : "0";
-    if (!OHDFilesystemUtil::exists(filename)){ 
-    OHDFilesystemUtil::write_file(filename, content);
+    if (!OHDFilesystemUtil::exists(filename)) {
+      OHDFilesystemUtil::write_file(filename, content);
     }
   } else if (OHDPlatform::instance().is_radxa_cm3()) {
     static constexpr auto filename = "/sys/class/leds/pwr-led-red/brightness";
