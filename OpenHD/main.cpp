@@ -36,11 +36,12 @@
 
 // A few run time options, only for development. Way more configuration (during
 // development) can be done by using the hardware.config file
-static const char optstr[] = "?:agcr:h:";
+static const char optstr[] = "?:agcwr:h:";
 static const struct option long_options[] = {
     {"air", no_argument, nullptr, 'a'},
     {"ground", no_argument, nullptr, 'g'},
     {"clean-start", no_argument, nullptr, 'c'},
+    {"no-qt-autostart", no_argument, nullptr, 'w'},
     {"run-time-seconds", required_argument, nullptr, 'r'},
     {"hardware-config-file", required_argument, nullptr, 'h'},
     {nullptr, 0, nullptr, 0},
@@ -53,6 +54,7 @@ static const struct option long_options[] = {
 struct OHDRunOptions {
   bool run_as_air = false;
   bool reset_all_settings = false;
+  bool no_qopenhd_autostart=false;
   int run_time_seconds = -1;  //-1= infinite, only usefully for debugging
   // Specify the hardware.config file, otherwise,
   // the default location (and default values if no file exists at the default
@@ -87,6 +89,9 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
         break;
       case 'c':
         ret.reset_all_settings = true;
+        break;
+      case 'w':
+        ret.no_qopenhd_autostart = true;
         break;
       case 'r':
         ret.run_time_seconds = atoi(tmp_optarg);
@@ -243,12 +248,14 @@ int main(int argc, char *argv[]) {
     // it when we are running as air. can be disabled for development purposes.
     // On x20, we do not have qopenhd installed (we run as air only) so we can
     // skip this step
-    if (!openhd::load_config().GEN_NO_QOPENHD_AUTOSTART &&
-        !OHDPlatform::instance().is_x20()) {
-      if (!profile.is_air) {
-        OHDUtil::run_command("systemctl", {"start", "qopenhd"});
-      } else {
-        OHDUtil::run_command("systemctl", {"stop", "qopenhd"});
+    if(!options.no_qopenhd_autostart){
+      if (!openhd::load_config().GEN_NO_QOPENHD_AUTOSTART &&
+          !OHDPlatform::instance().is_x20()) {
+        if (!profile.is_air) {
+          OHDUtil::run_command("systemctl", {"start", "qopenhd"});
+        } else {
+          OHDUtil::run_command("systemctl", {"stop", "qopenhd"});
+        }
       }
     }
 
