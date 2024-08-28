@@ -26,7 +26,7 @@ jobs:
         remove-android: 'true'
         remove-haskell: 'true'
         overprovision-lvm: 'true'
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         submodules: recursive
     - uses: pguyot/arm-runner-action@98b8d5a3228f504a8bd54913ab1e23d70f369c6e
