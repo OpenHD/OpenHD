@@ -729,6 +729,7 @@ static std::vector<ManufacturerForPlatform> get_camera_choices_for_platform(
     std::vector<CameraNameAndType> generic_cameras{
         CameraNameAndType{"HDMI IN", X_CAM_TYPE_ROCK_5_HDMI_IN},
         CameraNameAndType{"IMX415", X_CAM_TYPE_ROCK_5_IMX415},
+        CameraNameAndType{"IMX462", X_CAM_TYPE_ROCK_5_IMX462},
         CameraNameAndType{"IMX477", X_CAM_TYPE_ROCK_5_IMX477},
         CameraNameAndType{"IMX519", X_CAM_TYPE_ROCK_5_IMX519},
         CameraNameAndType{"OV5647", X_CAM_TYPE_ROCK_5_OV5647},
