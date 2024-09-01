@@ -269,7 +269,7 @@ struct XCamera {
            camera_type != X_CAM_TYPE_X20_HDZERO_GENERIC;
   }
   bool requires_rockchip5_mpp_pipeline() const {
-    return camera_type >= 80 && camera_type < 90;
+    return camera_type >= 81 && camera_type < 90;
   }
   bool requires_rockchip3_mpp_pipeline() const {
     return camera_type >= 90 && camera_type < 100;
@@ -727,7 +727,6 @@ static std::vector<ManufacturerForPlatform> get_camera_choices_for_platform(
         MANUFACTURER_DEBUG};
   } else if (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B) {
     std::vector<CameraNameAndType> generic_cameras{
-        CameraNameAndType{"IMX462", X_CAM_TYPE_ROCK_5_IMX462},
         CameraNameAndType{"HDMI IN", X_CAM_TYPE_ROCK_5_HDMI_IN},
         CameraNameAndType{"IMX415", X_CAM_TYPE_ROCK_5_IMX415},
         CameraNameAndType{"IMX477", X_CAM_TYPE_ROCK_5_IMX477},
