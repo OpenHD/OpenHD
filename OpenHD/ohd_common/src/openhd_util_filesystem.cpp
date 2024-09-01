@@ -8,13 +8,13 @@
 #include <openhd_util.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include "config_paths.h"
-
 
 #include <filesystem>
 #include <fstream>
 #include <optional>
 #include <vector>
+
+#include "config_paths.h"
 
 std::vector<std::string> OHDFilesystemUtil::getAllEntriesFullPathInDirectory(
     const std::string &directory) {
@@ -135,7 +135,6 @@ int OHDFilesystemUtil::get_remaining_space_in_mb() {
     return 0;
   }
 }
-
 
 long OHDFilesystemUtil::get_file_size_bytes(const std::string &filepath) {
   struct stat stat_buf {};

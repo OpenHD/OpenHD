@@ -52,7 +52,8 @@ static int rpi_get_default_primary_cam_type() {
   return X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI;
 }
 
-AirCameraGenericSettings AirCameraGenericSettingsHolder::create_default() const {
+AirCameraGenericSettings AirCameraGenericSettingsHolder::create_default()
+    const {
   AirCameraGenericSettings ret{};
   ret.primary_camera_type = X_CAM_TYPE_DUMMY_SW;
   ret.secondary_camera_type = X_CAM_TYPE_DISABLED;
@@ -66,9 +67,11 @@ AirCameraGenericSettings AirCameraGenericSettingsHolder::create_default() const 
              (OHDPlatform::instance().platform_type ==
               X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3)) {
     ret.primary_camera_type = X_CAM_TYPE_ROCK_3_HDMI_IN;
-  } else if (OHDPlatform::instance().platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A) {
+  } else if (OHDPlatform::instance().platform_type ==
+             X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A) {
     ret.primary_camera_type = X_CAM_TYPE_ROCK_5_IMX462;
-  } else if (OHDPlatform::instance().platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B) {
+  } else if (OHDPlatform::instance().platform_type ==
+             X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B) {
     ret.primary_camera_type = X_CAM_TYPE_ROCK_5_HDMI_IN;
   } else if (OHDPlatform::instance().platform_type ==
              X_PLATFORM_TYPE_OPENIPC_SIGMASTAR_UNDEFINED) {
@@ -77,10 +80,9 @@ AirCameraGenericSettings AirCameraGenericSettingsHolder::create_default() const 
              X_PLATFORM_TYPE_NVIDIA_XAVIER) {
     ret.primary_camera_type = X_CAM_TYPE_NVIDIA_XAVIER_IMX577;
   }
-  
+
   return ret;
 }
-
 
 void AirCameraGenericSettingsHolder::x20_only_discover_and_save_camera_type() {
   // On the X20, every time openhd is started, we (newly) detect the camera

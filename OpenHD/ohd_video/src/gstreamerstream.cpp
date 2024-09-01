@@ -78,17 +78,20 @@ std::string GStreamerStream::create_source_encode_pipeline(
     const CameraHolder& cam_holder) {
   const auto& camera = cam_holder.get_camera();
   CameraSettings setting = cam_holder.get_settings();
- 
+
   const bool RPI_HDMI_TO_CSI_USE_V4l2 = OHDFilesystemUtil::exists(
       std::string(getConfigBasePath()) + "hdmi_v4l2.txt");
 
-  openhd::log::get_default()->warn("RPI_HDMI_TO_CSI_USE_V4l2: {}", RPI_HDMI_TO_CSI_USE_V4l2);
+  openhd::log::get_default()->warn("RPI_HDMI_TO_CSI_USE_V4l2: {}",
+                                   RPI_HDMI_TO_CSI_USE_V4l2);
 
   if (OHDPlatform::instance().is_x20()) {
-    openhd::log::get_default()->warn("Platform is x20. Applying x20 RunCam IQ settings.");
+    openhd::log::get_default()->warn(
+        "Platform is x20. Applying x20 RunCam IQ settings.");
     openhd::x20::apply_x20_runcam_iq_settings(setting);
   } else if (camera.requires_rpi_mmal_pipeline() && RPI_HDMI_TO_CSI_USE_V4l2) {
-    openhd::log::get_default()->warn("Initializing resolution for RPI MMAL pipeline with V4l2.");
+    openhd::log::get_default()->warn(
+        "Initializing resolution for RPI MMAL pipeline with V4l2.");
     openhd::rpi::hdmi::initialize_resolution(
         setting.streamed_video_format.width,
         setting.streamed_video_format.height,
@@ -120,7 +123,8 @@ std::string GStreamerStream::create_source_encode_pipeline(
       openhd::log::get_default()->warn("Using Rockchip HDMI stream.");
       pipeline << OHDGstHelper::createRockchipHDMIStream(setting);
     } else {
-      openhd::log::get_default()->warn("Determining V4l2 file number for Rockchip platform.");
+      openhd::log::get_default()->warn(
+          "Determining V4l2 file number for Rockchip platform.");
       const int v4l2_filenumber =
           OHDPlatform::instance().platform_type ==
                       X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W ||
@@ -128,7 +132,8 @@ std::string GStreamerStream::create_source_encode_pipeline(
                       X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3
               ? 0
               : 11;
-      pipeline << OHDGstHelper::createRockchipCSIStream(v4l2_filenumber, setting);
+      pipeline << OHDGstHelper::createRockchipCSIStream(v4l2_filenumber,
+                                                        setting);
     }
   } else if (camera.requires_rockchip5_mpp_pipeline()) {
     openhd::log::get_default()->warn("Camera requires Rockchip5 MPP pipeline.");
@@ -137,8 +142,10 @@ std::string GStreamerStream::create_source_encode_pipeline(
       pipeline << OHDGstHelper::createRockchipHDMIStream(setting);
     } else {
       const int v4l2_filenumber = 11;
-      openhd::log::get_default()->warn("Using V4l2 file number: 11 for Rockchip CSI stream.");
-      pipeline << OHDGstHelper::createRockchipCSIStream(v4l2_filenumber, setting);
+      openhd::log::get_default()->warn(
+          "Using V4l2 file number: 11 for Rockchip CSI stream.");
+      pipeline << OHDGstHelper::createRockchipCSIStream(v4l2_filenumber,
+                                                        setting);
     }
   } else if (camera.requires_x20_cedar_pipeline()) {
     openhd::log::get_default()->warn("Camera requires X20 Cedar pipeline.");
@@ -154,10 +161,12 @@ std::string GStreamerStream::create_source_encode_pipeline(
     pipeline << OHDGstHelper::createDummyStreamX(setting);
   } else if (camera.camera_type == X_CAM_TYPE_EXTERNAL ||
              camera.camera_type == X_CAM_TYPE_EXTERNAL_IP) {
-    openhd::log::get_default()->warn("Using external camera or external IP camera.");
+    openhd::log::get_default()->warn(
+        "Using external camera or external IP camera.");
     pipeline << OHDGstHelper::create_input_custom_udp_rtp_port(setting);
   } else if (camera.camera_type == X_CAM_TYPE_DEVELOPMENT_FILESRC) {
-    openhd::log::get_default()->warn("Using development file source camera type.");
+    openhd::log::get_default()->warn(
+        "Using development file source camera type.");
     pipeline << OHDGstHelper::create_dummy_filesrc_stream(setting);
   } else if (camera.camera_type == X_CAM_TYPE_NVIDIA_XAVIER_IMX577) {
     openhd::log::get_default()->warn("Using NVIDIA Xavier IMX577 camera type.");
