@@ -8,6 +8,8 @@
 #include <openhd_util.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include "config_paths.h"
+
 
 #include <filesystem>
 #include <fstream>
@@ -123,19 +125,17 @@ void OHDFilesystemUtil::make_file_read_write_everyone(
 }
 
 int OHDFilesystemUtil::get_remaining_space_in_mb() {
-  const std::filesystem::path folderPath1 = "/Videos/";
-  const std::filesystem::path folderPath2 = "/home/openhd/Videos";
-  
-  if (std::filesystem::exists(folderPath1)) {
-    std::filesystem::space_info info = std::filesystem::space(folderPath1);
-    return info.available / 1024 / 1024;
-  } else if (std::filesystem::exists(folderPath2)) {
-    std::filesystem::space_info info = std::filesystem::space(folderPath2);
+  std::string videoPath = getVideoPath();
+  std::filesystem::path folderPath = videoPath;
+
+  if (std::filesystem::exists(folderPath)) {
+    std::filesystem::space_info info = std::filesystem::space(folderPath);
     return info.available / 1024 / 1024;
   } else {
     return 0;
   }
 }
+
 
 long OHDFilesystemUtil::get_file_size_bytes(const std::string &filepath) {
   struct stat stat_buf {};
