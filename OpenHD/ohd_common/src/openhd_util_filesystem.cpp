@@ -15,7 +15,6 @@
 #include <fstream>
 #include <optional>
 #include <vector>
-#include <iostream> 
 
 std::vector<std::string> OHDFilesystemUtil::getAllEntriesFullPathInDirectory(
     const std::string &directory) {
@@ -128,8 +127,6 @@ void OHDFilesystemUtil::make_file_read_write_everyone(
 int OHDFilesystemUtil::get_remaining_space_in_mb() {
   std::string videoPath = getVideoPath();
   std::filesystem::path folderPath = videoPath;
-  std::cout << "Checking remaining space for path: " << folderPath << std::endl;
-
 
   if (std::filesystem::exists(folderPath)) {
     std::filesystem::space_info info = std::filesystem::space(folderPath);
