@@ -14,6 +14,8 @@
 #include <optional>
 #include <vector>
 
+#include "config_paths.h"
+
 std::vector<std::string> OHDFilesystemUtil::getAllEntriesFullPathInDirectory(
     const std::string &directory) {
   if (!OHDFilesystemUtil::exists(directory)) {
@@ -123,12 +125,15 @@ void OHDFilesystemUtil::make_file_read_write_everyone(
 }
 
 int OHDFilesystemUtil::get_remaining_space_in_mb() {
-  const std::filesystem::path folderPath = "/Videos/";
-  if (!std::filesystem::exists(folderPath)) {
+  std::string videoPath = getVideoPath();
+  std::filesystem::path folderPath = videoPath;
+
+  if (std::filesystem::exists(folderPath)) {
+    std::filesystem::space_info info = std::filesystem::space(folderPath);
+    return info.available / 1024 / 1024;
+  } else {
     return 0;
   }
-  std::filesystem::space_info info = std::filesystem::space(folderPath);
-  return info.available / 1024 / 1024;
 }
 
 long OHDFilesystemUtil::get_file_size_bytes(const std::string &filepath) {
