@@ -262,7 +262,8 @@ void GStreamerStream::setup() {
   m_gst_pipeline = gst_parse_launch(pipeline_content.str().c_str(), &error);
   m_console->debug("GStreamerStream::setup() end");
     std::this_thread::sleep_for(std::chrono::milliseconds(15000));
-  m_request_restart = true;
+    m_console->error("DEBUGGGGIENE");
+  // m_request_restart = true;
   if (error) {
     m_console->error("Failed to create pipeline: {}", error->message);
     return;
