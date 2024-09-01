@@ -123,12 +123,18 @@ void OHDFilesystemUtil::make_file_read_write_everyone(
 }
 
 int OHDFilesystemUtil::get_remaining_space_in_mb() {
-  const std::filesystem::path folderPath = "/Videos/";
-  if (!std::filesystem::exists(folderPath)) {
+  const std::filesystem::path folderPath1 = "/Videos/";
+  const std::filesystem::path folderPath2 = "/home/openhd/Videos";
+  
+  if (std::filesystem::exists(folderPath1)) {
+    std::filesystem::space_info info = std::filesystem::space(folderPath1);
+    return info.available / 1024 / 1024;
+  } else if (std::filesystem::exists(folderPath2)) {
+    std::filesystem::space_info info = std::filesystem::space(folderPath2);
+    return info.available / 1024 / 1024;
+  } else {
     return 0;
   }
-  std::filesystem::space_info info = std::filesystem::space(folderPath);
-  return info.available / 1024 / 1024;
 }
 
 long OHDFilesystemUtil::get_file_size_bytes(const std::string &filepath) {
