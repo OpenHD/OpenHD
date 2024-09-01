@@ -78,9 +78,7 @@ std::string GStreamerStream::create_source_encode_pipeline(
     const CameraHolder& cam_holder) {
   const auto& camera = cam_holder.get_camera();
   CameraSettings setting = cam_holder.get_settings();
-
-  openhd::log::get_default()->warn("Initializing pipeline creation for camera: {}", camera.name);
-  
+ 
   const bool RPI_HDMI_TO_CSI_USE_V4l2 = OHDFilesystemUtil::exists(
       std::string(getConfigBasePath()) + "hdmi_v4l2.txt");
 
