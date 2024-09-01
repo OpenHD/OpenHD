@@ -257,6 +257,7 @@ void GStreamerStream::setup() {
   m_console->warn("Starting pipeline:[{}]", pipeline_content.str());
   // Protect against unwanted use - stop and free the pipeline first
   assert(m_gst_pipeline == nullptr);
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   // Now start the (as a string) built pipeline
   GError* error = nullptr;
   m_gst_pipeline = gst_parse_launch(pipeline_content.str().c_str(), &error);
