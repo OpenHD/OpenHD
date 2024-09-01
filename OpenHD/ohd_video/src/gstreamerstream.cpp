@@ -123,7 +123,7 @@ std::string GStreamerStream::create_source_encode_pipeline(
     if (camera.camera_type == X_CAM_TYPE_ROCK_5_HDMI_IN) {
       pipeline << OHDGstHelper::createRockchipHDMIStream(setting);
     } else {
-      const int v4l2_filenumber = 11
+      const int v4l2_filenumber = 11;
       pipeline << OHDGstHelper::createRockchipCSIStream(v4l2_filenumber,
                                                         setting);
     }
