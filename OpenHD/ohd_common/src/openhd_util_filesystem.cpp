@@ -15,6 +15,7 @@
 #include <fstream>
 #include <optional>
 #include <vector>
+#include <iostream> 
 
 std::vector<std::string> OHDFilesystemUtil::getAllEntriesFullPathInDirectory(
     const std::string &directory) {
