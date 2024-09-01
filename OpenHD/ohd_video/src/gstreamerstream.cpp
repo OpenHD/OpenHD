@@ -78,37 +78,51 @@ std::string GStreamerStream::create_source_encode_pipeline(
     const CameraHolder& cam_holder) {
   const auto& camera = cam_holder.get_camera();
   CameraSettings setting = cam_holder.get_settings();
+
+  openhd::log::get_default()->warn("Initializing pipeline creation for camera: {}", camera.name);
+  
   const bool RPI_HDMI_TO_CSI_USE_V4l2 = OHDFilesystemUtil::exists(
       std::string(getConfigBasePath()) + "hdmi_v4l2.txt");
 
+  openhd::log::get_default()->warn("RPI_HDMI_TO_CSI_USE_V4l2: {}", RPI_HDMI_TO_CSI_USE_V4l2);
+
   if (OHDPlatform::instance().is_x20()) {
+    openhd::log::get_default()->warn("Platform is x20. Applying x20 RunCam IQ settings.");
     openhd::x20::apply_x20_runcam_iq_settings(setting);
   } else if (camera.requires_rpi_mmal_pipeline() && RPI_HDMI_TO_CSI_USE_V4l2) {
+    openhd::log::get_default()->warn("Initializing resolution for RPI MMAL pipeline with V4l2.");
     openhd::rpi::hdmi::initialize_resolution(
         setting.streamed_video_format.width,
         setting.streamed_video_format.height,
         setting.streamed_video_format.framerate);
   }
+
   std::stringstream pipeline;
+
   if (camera.requires_rpi_mmal_pipeline()) {
+    openhd::log::get_default()->warn("Camera requires RPI MMAL pipeline.");
     if (RPI_HDMI_TO_CSI_USE_V4l2) {
+      openhd::log::get_default()->warn("Using RPI HDMI V4l2 stream.");
       pipeline << OHDGstHelper::create_rpi_hdmi_v4l2_stream(setting);
     } else {
+      openhd::log::get_default()->warn("Using RPI Camera source stream.");
       pipeline << OHDGstHelper::createRpicamsrcStream(
           -1, setting, cam_holder.requires_half_bitrate_workaround());
     }
   } else if (camera.requires_rpi_libcamera_pipeline()) {
+    openhd::log::get_default()->warn("Camera requires RPI Libcamera pipeline.");
     pipeline << OHDGstHelper::createLibcamerasrcStream(setting);
   } else if (camera.requires_rpi_veye_pipeline()) {
-    // veye  IMX462 needs video0. I think the others too ...
+    openhd::log::get_default()->warn("Camera requires RPI Veye pipeline.");
     auto bus = "/dev/video0";
     pipeline << OHDGstHelper::create_veye_vl2_stream(setting, bus);
   } else if (camera.requires_rockchip3_mpp_pipeline()) {
+    openhd::log::get_default()->warn("Camera requires Rockchip3 MPP pipeline.");
     if (camera.camera_type == X_CAM_TYPE_ROCK_5_HDMI_IN) {
+      openhd::log::get_default()->warn("Using Rockchip HDMI stream.");
       pipeline << OHDGstHelper::createRockchipHDMIStream(setting);
     } else {
-      // TODO: Differences Radxa zero and RK3588
-      // RK3566 has camera on /dev/video0, RK3588 has it on /dev/video11
+      openhd::log::get_default()->warn("Determining V4l2 file number for Rockchip platform.");
       const int v4l2_filenumber =
           OHDPlatform::instance().platform_type ==
                       X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W ||
@@ -116,38 +130,46 @@ std::string GStreamerStream::create_source_encode_pipeline(
                       X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3
               ? 0
               : 11;
-      pipeline << OHDGstHelper::createRockchipCSIStream(v4l2_filenumber,
-                                                        setting);
+      pipeline << OHDGstHelper::createRockchipCSIStream(v4l2_filenumber, setting);
     }
   } else if (camera.requires_rockchip5_mpp_pipeline()) {
+    openhd::log::get_default()->warn("Camera requires Rockchip5 MPP pipeline.");
     if (camera.camera_type == X_CAM_TYPE_ROCK_5_HDMI_IN) {
+      openhd::log::get_default()->warn("Using Rockchip HDMI stream.");
       pipeline << OHDGstHelper::createRockchipHDMIStream(setting);
     } else {
       const int v4l2_filenumber = 11;
-      pipeline << OHDGstHelper::createRockchipCSIStream(v4l2_filenumber,
-                                                        setting);
+      openhd::log::get_default()->warn("Using V4l2 file number: 11 for Rockchip CSI stream.");
+      pipeline << OHDGstHelper::createRockchipCSIStream(v4l2_filenumber, setting);
     }
   } else if (camera.requires_x20_cedar_pipeline()) {
+    openhd::log::get_default()->warn("Camera requires X20 Cedar pipeline.");
     pipeline << OHDGstHelper::createAllwinnerStream(setting);
   } else if (is_usb_camera(camera.camera_type)) {
+    openhd::log::get_default()->warn("Detected USB camera.");
     const auto v4l2_device_name =
         get_v4l2_device_name_string(camera.usb_v4l2_device_number);
     pipeline << OHDGstHelper::createV4l2SrcRawAndSwEncodeStream(
         v4l2_device_name, setting);
   } else if (camera.camera_type == X_CAM_TYPE_DUMMY_SW) {
+    openhd::log::get_default()->warn("Using Dummy SW camera type.");
     pipeline << OHDGstHelper::createDummyStreamX(setting);
-    // pipeline<<OHDGstHelper::createDummyStreamRPI(setting);
   } else if (camera.camera_type == X_CAM_TYPE_EXTERNAL ||
              camera.camera_type == X_CAM_TYPE_EXTERNAL_IP) {
+    openhd::log::get_default()->warn("Using external camera or external IP camera.");
     pipeline << OHDGstHelper::create_input_custom_udp_rtp_port(setting);
   } else if (camera.camera_type == X_CAM_TYPE_DEVELOPMENT_FILESRC) {
+    openhd::log::get_default()->warn("Using development file source camera type.");
     pipeline << OHDGstHelper::create_dummy_filesrc_stream(setting);
   } else if (camera.camera_type == X_CAM_TYPE_NVIDIA_XAVIER_IMX577) {
+    openhd::log::get_default()->warn("Using NVIDIA Xavier IMX577 camera type.");
     pipeline << OHDGstHelper::create_nvidia_xavier_stream(setting);
   } else {
     openhd::log::get_default()->warn("UNKNOWN CAMERA TYPE");
     pipeline << "ERROR";
   }
+
+  openhd::log::get_default()->warn("Pipeline created: {}", pipeline.str());
   return pipeline.str();
 }
 
