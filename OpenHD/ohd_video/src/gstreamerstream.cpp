@@ -116,7 +116,7 @@ std::string GStreamerStream::create_source_encode_pipeline(
     pipeline << OHDGstHelper::create_veye_vl2_stream(setting, bus);
   } else if (camera.requires_rockchip3_mpp_pipeline()) {
     openhd::log::get_default()->warn("Camera requires Rockchip3 MPP pipeline.");
-    if (camera.camera_type == X_CAM_TYPE_ROCK_5_HDMI_IN) {
+    if (camera.camera_type == X_CAM_TYPE_ROCK_3_HDMI_IN) {
       openhd::log::get_default()->warn("Using Rockchip HDMI stream.");
       pipeline << OHDGstHelper::createRockchipHDMIStream(setting);
     } else {
