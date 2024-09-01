@@ -287,7 +287,8 @@ void CameraHolder::check_remaining_space_air_recording(bool call_callback) {
   }
     openhd::log::get_default()->warn(
         "Not enough free space available. Remaining space: {} MB",
-        OHDFilesystemUtil::get_remaining_space_in_mb());  if (get_settings().air_recording != AIR_RECORDING_OFF) {
+        OHDFilesystemUtil::get_remaining_space_in_mb());
+    if (get_settings().air_recording != AIR_RECORDING_OFF) {
     openhd::log::get_default()->debug("Disabling air recording");
     unsafe_get_settings().air_recording = AIR_RECORDING_OFF;
     persist(call_callback);
