@@ -86,9 +86,9 @@ static void create_ethernet_hotspot_connection_if_needed(
     const std::shared_ptr<spdlog::logger>& m_console,
     const std::string& eth_device_name) {
   // sudo nmcli con add type ethernet con-name "ohd_eth_hotspot" ipv4.method
-  // shared ifname eth0 ipv4.addresses 192.168.2.1/24 gw4 192.168.2.1 sudo nmcli
-  // con add type ethernet ifname eth0 con-name ohd_eth_hotspot autoconnect no
-  // sudo nmcli con modify ohd_eth_hotspot ipv4.method shared ifname eth0
+  // shared ifname eth1 ipv4.addresses 192.168.2.1/24 gw4 192.168.2.1 sudo nmcli
+  // con add type ethernet ifname eth1 con-name ohd_eth_hotspot autoconnect no
+  // sudo nmcli con modify ohd_eth_hotspot ipv4.method shared ifname eth1
   // ipv4.addresses 192.168.2.1/24 gw4 192.168.2.1
   if (OHDFilesystemUtil::exists(get_ohd_eth_hotspot_connection_nm_filename())) {
     m_console->debug("Eth hs connection already exists");
@@ -100,7 +100,7 @@ static void create_ethernet_hotspot_connection_if_needed(
                 OHD_ETHERNET_HOTSPOT_CONNECTION_NAME});
   OHDUtil::run_command("nmcli",
                        {"con modify", OHD_ETHERNET_HOTSPOT_CONNECTION_NAME,
-                        "ipv4.method shared ifname eth0 ipv4.addresses "
+                        "ipv4.method shared ifname eth1 ipv4.addresses "
                         "192.168.2.1/24 gw4 192.168.2.1"});
   m_console->debug("end create hotspot connection");
 }
@@ -141,11 +141,11 @@ void EthernetManager::loop(int operating_mode) {
   if (openhd::nw_ethernet_card_manual_active(config)) {
     opt_ethernet_card = config.NW_ETHERNET_CARD;
   } else if (platform.is_rpi()) {
-    opt_ethernet_card = std::string("eth0");
+    opt_ethernet_card = std::string("eth1");
   } else if (platform.is_rock5_b()) {
     opt_ethernet_card = "enP4p65s0";
   } else if (platform.is_rock5_a()) {
-    opt_ethernet_card = "eth0";
+    opt_ethernet_card = "eth1";
   }
   if (opt_ethernet_card == std::nullopt) {
     // We need to figure out the ethernet card ourselves
@@ -190,7 +190,7 @@ void EthernetManager::loop_ethernet_external_device_listener(
   while (!m_terminate) {
     std::this_thread::sleep_for(std::chrono::seconds(1));
     if (openhd::ethernet::check_eth_adapter_up(device_name)) {
-      m_console->debug("Eth0 is up");
+      m_console->debug("eth1 is up");
       break;
     }
   }
@@ -220,7 +220,7 @@ void EthernetManager::loop_ethernet_external_device_listener(
     std::this_thread::sleep_for(std::chrono::seconds(1));
     // check if the state is still okay
     if (!openhd::ethernet::check_eth_adapter_up(device_name)) {
-      m_console->debug("Eth0 is not up anymore,removing ext device");
+      m_console->debug("eth1 is not up anymore,removing ext device");
       break;
     }
   }
