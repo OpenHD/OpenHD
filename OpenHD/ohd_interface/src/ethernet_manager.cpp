@@ -6,6 +6,7 @@
 
 #include <regex>
 #include <utility>
+#include <vector>
 
 #include "networking_settings.h"
 #include "openhd_config.h"
