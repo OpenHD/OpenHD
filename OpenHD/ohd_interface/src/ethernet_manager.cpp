@@ -21,16 +21,20 @@ namespace openhd::ethernet {
 
 // Check if the given ethernet device is in an "up" state by reading linux
 // file(s)
-static bool check_eth_adapter_up(const std::string& eth_device_name = "eth0") {
-  const auto filename_operstate =
-      fmt::format("/sys/class/net/{}/operstate", eth_device_name);
-  if (!OHDFilesystemUtil::exists(filename_operstate)) return false;
-  const auto content_opt = OHDFilesystemUtil::opt_read_file(filename_operstate);
-  if (!content_opt.has_value()) return false;
-  const auto& content = content_opt.value();
-  if (OHDUtil::contains(content, "up")) {
-    return true;
+static bool check_eth_adapter_up(std::string& eth_device_name, const std::vector<std::string>& eth_device_names = {"eth0", "eth1"}) {
+  for (const auto& device_name : eth_device_names) {
+    const auto filename_operstate =
+        fmt::format("/sys/class/net/{}/operstate", device_name);
+    if (!OHDFilesystemUtil::exists(filename_operstate)) continue;
+    const auto content_opt = OHDFilesystemUtil::opt_read_file(filename_operstate);
+    if (!content_opt.has_value()) continue;
+    const auto& content = content_opt.value();
+    if (OHDUtil::contains(content, "up")) {
+      eth_device_name = device_name;  // Set the output parameter to the device name that is up
+      return true;
+    }
   }
+  eth_device_name.clear();  // Clear the output parameter if no device is up
   return false;
 }
 
