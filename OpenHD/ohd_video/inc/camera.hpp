@@ -104,8 +104,10 @@ static constexpr int X_CAM_TYPE_ROCK_3_HDMI_IN = 90;
 static constexpr int X_CAM_TYPE_ROCK_3_OV5647 = 91;
 static constexpr int X_CAM_TYPE_ROCK_3_IMX219 = 92;
 static constexpr int X_CAM_TYPE_ROCK_3_IMX708 = 93;
-static constexpr int X_CAM_TYPE_ROCK_3_OHD_Jaguar = 94;
-static constexpr int X_CAM_TYPE_ROCK_3_VEYE = 95;
+static constexpr int X_CAM_TYPE_ROCK_3_IMX462 = 94;
+static constexpr int X_CAM_TYPE_ROCK_3_IMX519 = 95;
+static constexpr int X_CAM_TYPE_ROCK_3_OHD_Jaguar = 96;
+static constexpr int X_CAM_TYPE_ROCK_3_VEYE = 97;
 //
 // NVIDIA XAVIER specific starts here
 static constexpr int X_CAM_TYPE_NVIDIA_XAVIER_IMX577 = 101;
@@ -215,6 +217,10 @@ static std::string x_cam_type_to_string(int camera_type) {
       return "ROCK_3_IMX219";
     case X_CAM_TYPE_ROCK_3_IMX708:
       return "ROCK_3_IMX708";
+    case X_CAM_TYPE_ROCK_3_IMX462:
+      return "ROCK_3_IMX462";
+    case X_CAM_TYPE_ROCK_3_IMX519:
+      return "ROCK_3_IMX519";
     case X_CAM_TYPE_ROCK_3_OHD_Jaguar:
       return "ROCK_3_OHD_Jaguar";
     case X_CAM_TYPE_DISABLED:
@@ -480,6 +486,20 @@ struct XCamera {
       ret.push_back(ResolutionFramerate{1280, 720, 60});
       ret.push_back(ResolutionFramerate{1920, 1080, 60});
       return ret;
+    } else if (camera_type == X_CAM_TYPE_ROCK_3_IMX462) {
+      std::vector<ResolutionFramerate> ret;
+      ret.push_back(ResolutionFramerate{1280, 720, 60});
+      ret.push_back(ResolutionFramerate{1280, 720, 30});
+      ret.push_back(ResolutionFramerate{1920, 1080, 30});
+      ret.push_back(ResolutionFramerate{1920, 1080, 60});
+      return ret;
+    } else if (camera_type == X_CAM_TYPE_ROCK_3_IMX519) {
+      std::vector<ResolutionFramerate> ret;
+      ret.push_back(ResolutionFramerate{1280, 720, 60});
+      ret.push_back(ResolutionFramerate{1280, 720, 30});
+      ret.push_back(ResolutionFramerate{1920, 1080, 30});
+      ret.push_back(ResolutionFramerate{1920, 1080, 60});
+      return ret;
     } else if (camera_type == X_CAM_TYPE_ROCK_3_OHD_Jaguar) {
       std::vector<ResolutionFramerate> ret;
       ret.push_back(ResolutionFramerate{1280, 720, 60});
@@ -701,12 +721,15 @@ static std::vector<ManufacturerForPlatform> get_camera_choices_for_platform(
         ManufacturerForPlatform{"RUNCAM", runcam_cameras}};
   } else if ((platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W) ||
              (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3)) {
+    std::vector<CameraNameAndType> arducam_cameras{
+        CameraNameAndType{"IMX462", X_CAM_TYPE_ROCK_3_IMX462},
+        CameraNameAndType{"IMX519", X_CAM_TYPE_ROCK_3_IMX519},
+        CameraNameAndType{"IMX708", X_CAM_TYPE_ROCK_3_IMX708},
+        CameraNameAndType{"OpenHD Jaguar", X_CAM_TYPE_ROCK_3_OHD_Jaguar},
     std::vector<CameraNameAndType> generic_cameras{
         CameraNameAndType{"HDMI IN", X_CAM_TYPE_ROCK_3_HDMI_IN},
         CameraNameAndType{"OV5647", X_CAM_TYPE_ROCK_3_OV5647},
-        CameraNameAndType{"IMX219", X_CAM_TYPE_ROCK_3_IMX219},
-        CameraNameAndType{"IMX708", X_CAM_TYPE_ROCK_3_IMX708},
-        CameraNameAndType{"OpenHD Jaguar", X_CAM_TYPE_ROCK_3_OHD_Jaguar},
+        CameraNameAndType{"IMX219", X_CAM_TYPE_ROCK_3_IMX219}
     };
     return std::vector<ManufacturerForPlatform>{
         ManufacturerForPlatform{"Generic", generic_cameras}, MANUFACTURER_USB,

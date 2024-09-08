@@ -49,7 +49,7 @@ static std::string get_ip_address_in_between_brackets(
     }
   }
   if (debug) {
-    openhd::log::get_default()->debug("Given:[{}] Result:[{}]", s, matched);
+    openhd::log::get_default()->warn("Given:[{}] Result:[{}]", s, matched);
   }
   return matched;
 }
@@ -91,10 +91,10 @@ static void create_ethernet_hotspot_connection_if_needed(
   // sudo nmcli con modify ohd_eth_hotspot ipv4.method shared ifname eth0
   // ipv4.addresses 192.168.2.1/24 gw4 192.168.2.1
   if (OHDFilesystemUtil::exists(get_ohd_eth_hotspot_connection_nm_filename())) {
-    m_console->debug("Eth hs connection already exists");
+    m_console->warn("Eth hs connection already exists");
     return;
   }
-  m_console->debug("begin create hotspot connection");
+  m_console->warn("begin create hotspot connection");
   OHDUtil::run_command(
       "nmcli", {"con add type ethernet ifname", eth_device_name, "con-name",
                 OHD_ETHERNET_HOTSPOT_CONNECTION_NAME});
@@ -102,7 +102,7 @@ static void create_ethernet_hotspot_connection_if_needed(
                        {"con modify", OHD_ETHERNET_HOTSPOT_CONNECTION_NAME,
                         "ipv4.method shared ifname eth0 ipv4.addresses "
                         "192.168.2.1/24 gw4 192.168.2.1"});
-  m_console->debug("end create hotspot connection");
+  m_console->warn("end create hotspot connection");
 }
 
 static std::optional<std::string> find_ethernet_device_name() {
@@ -164,18 +164,18 @@ void EthernetManager::loop(int operating_mode) {
 }
 
 void EthernetManager::stop() {
-  m_console->debug("stop begin");
+  m_console->warn("stop begin");
   m_terminate = true;
   if (m_thread) {
     m_thread->join();
     m_thread = nullptr;
   }
-  m_console->debug("stop end");
+  m_console->warn("stop end");
 }
 
 void EthernetManager::configure(int operating_mode,
                                 const std::string& ethernet_card) {
-  m_console->debug("configure {}", ethernet_card);
+  m_console->warn("configure {}", ethernet_card);
   if (operating_mode == ETHERNET_OPERATING_MODE_HOTSPOT) {
     create_ethernet_hotspot_connection_if_needed(m_console, ethernet_card);
   } else {
@@ -190,7 +190,7 @@ void EthernetManager::loop_ethernet_external_device_listener(
   while (!m_terminate) {
     std::this_thread::sleep_for(std::chrono::seconds(1));
     if (openhd::ethernet::check_eth_adapter_up(device_name)) {
-      m_console->debug("Eth0 is up");
+      m_console->warn("Eth0 is up");
       break;
     }
   }
@@ -220,7 +220,7 @@ void EthernetManager::loop_ethernet_external_device_listener(
     std::this_thread::sleep_for(std::chrono::seconds(1));
     // check if the state is still okay
     if (!openhd::ethernet::check_eth_adapter_up(device_name)) {
-      m_console->debug("Eth0 is not up anymore,removing ext device");
+      m_console->warn("Eth0 is not up anymore,removing ext device");
       break;
     }
   }
