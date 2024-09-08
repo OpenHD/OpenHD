@@ -743,7 +743,7 @@ static std::vector<ManufacturerForPlatform> get_camera_choices_for_platform(
         CameraNameAndType{"OV5647", X_CAM_TYPE_ROCK_5_OV5647},
         CameraNameAndType{"IMX219", X_CAM_TYPE_ROCK_5_IMX219},
         CameraNameAndType{"IMX708", X_CAM_TYPE_ROCK_5_IMX708},
-        CameraNameAndType{"OpenHD Jaguar", X_CAM_TYPE_ROCK_5_OHD_Jaguar},
+        CameraNameAndType{"OpenHD Jaguar", X_CAM_TYPE_ROCK_5_OHD_Jaguar}
     };
     return std::vector<ManufacturerForPlatform>{
         ManufacturerForPlatform{"Generic", generic_cameras}, MANUFACTURER_USB,
