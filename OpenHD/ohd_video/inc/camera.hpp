@@ -338,7 +338,9 @@ struct XCamera {
           camera_type ==
               X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX462_LOWLIGHT_MINI) {
         ret.push_back(ResolutionFramerate{640, 480, 60});
+        ret.push_back(ResolutionFramerate{896, 504, 30});
         ret.push_back(ResolutionFramerate{896, 504, 60});
+        ret.push_back(ResolutionFramerate{1280, 720, 30});
         ret.push_back(ResolutionFramerate{1280, 720, 60});
         ret.push_back(ResolutionFramerate{1920, 1080, 30});
       } else if (camera_type == X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX477M ||
