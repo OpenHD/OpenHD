@@ -10,4 +10,3 @@
 [submodule "OpenHD/ohd_interface/lib/wifibroadcast"]
 	path = OpenHD/ohd_interface/lib/wifibroadcast
 	url = https://github.com/OpenHD/wifibroadcast.git
-	branch = consti-dev

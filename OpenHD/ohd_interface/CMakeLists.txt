@@ -4,18 +4,29 @@ project(OpenHD-Interface)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Option to build Poco as static library
+set(ENABLE_TESTS OFF CACHE BOOL "Disable tests for Poco")
+set(POCO_STATIC ON CACHE BOOL "Build Poco as static library")
+
+# Fetch Poco and build as static library
+include(FetchContent)
+FetchContent_Declare(
+  Poco
+  URL https://github.com/pocoproject/poco/archive/refs/tags/poco-1.12.5p2-release.zip
+)
+FetchContent_MakeAvailable(Poco)
+
 # Only needed when we build this submodule manually
 add_subdirectory(../ohd_common commonlib EXCLUDE_FROM_ALL)
 
 # Build and include wifibroadcast
 include(lib/wifibroadcast/wifibroadcast/WBLib.cmake)
 
-# Find the POCO package
-find_package(Poco REQUIRED COMPONENTS Foundation Net) # Add other components if needed
-
-add_library(OHDInterfaceLib STATIC) # initialized below
+# Add the OHDInterfaceLib static library
+add_library(OHDInterfaceLib STATIC)
 add_library(OHDInterfaceLib::OHDInterfaceLib ALIAS OHDInterfaceLib)
 
+# Set the source files
 set(sources
     src/wifi_card_discovery.cpp
     src/ohd_interface.cpp
@@ -31,39 +42,27 @@ set(sources
     src/wifi_client.cpp
     src/microhard_link.cpp
     src/ethernet_manager.cpp
-    #src/wifi_command_helper2.cpp
 )
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
 
-include(CMakePackageConfigHelpers)
+# Include public headers
+target_include_directories(OHDInterfaceLib PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc>")
+
+# Add the source files to the target
 target_sources(OHDInterfaceLib PRIVATE ${sources})
 
-target_include_directories(OHDInterfaceLib
-    PUBLIC
-        "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc>")
+# Link Poco Libraries
+target_link_libraries(OHDInterfaceLib PUBLIC
+    PocoFoundation
+    PocoUtil
+    PocoNet
+    OHDCommonLib
+    ${WB_TARGET_LINK_LIBRARIES}
+    Threads::Threads
+)
 
-# Find and link POCO libraries
-target_include_directories(OHDInterfaceLib PUBLIC ${Poco_INCLUDE_DIRS})
-target_link_libraries(OHDInterfaceLib PUBLIC Poco::Foundation Poco::Net)
-
-# Link with other libraries
-target_link_libraries(OHDInterfaceLib PUBLIC OHDCommonLib)
-
-# needed to set wifi cards to monitor mode and more
-#include(cmake/FindLibNL.cmake)
-#target_include_directories(OHDInterfaceLib PRIVATE ${LibNL_INCLUDE_DIR})
-#target_link_libraries(OHDInterfaceLib PRIVATE ${LibNL_LIBRARIES})
-
-target_include_directories(OHDInterfaceLib PUBLIC inc/)
-target_link_libraries(OHDInterfaceLib PUBLIC ${WB_TARGET_LINK_LIBRARIES})
-#target_include_directories(OHDInterfaceLib PUBLIC ${WB_INCLUDE_DIRECTORES})
-
-#for some reason, otherwise pi complains about threads
-find_package(Threads REQUIRED)
-target_link_libraries(OHDInterfaceLib PUBLIC Threads::Threads)
-
-# Custom testing
+# Custom testing executables
 add_executable(test_interface test/test_interface.cpp)
 target_link_libraries(test_interface OHDInterfaceLib)
 
