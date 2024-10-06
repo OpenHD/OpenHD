@@ -32,6 +32,7 @@ jobs:
         run: |
           ls
           cd OpenHD
+          sudo apt install libpoco-dev -y
           sudo ./install_build_dep.sh ubuntu-x86
 
       - name: Build with make

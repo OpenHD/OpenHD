@@ -26,6 +26,7 @@ jobs:
           echo "BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV
           apt update
           apt install -y git sudo
+          sudo apt install libpoco-dev -y
 
       - name: clone OpenHD
         run: |
