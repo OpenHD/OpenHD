@@ -28,7 +28,7 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
   m_console = openhd::log::create_or_get("wb_streams");
   assert(m_console);
   m_frame_drop_helper.set_console(m_console);
-  // m_console->info("Broadcast cards:{}", debug_cards(m_broadcast_cards));
+  m_console->info("Broadcast cards:{}", debug_cards(m_broadcast_cards));
   // sanity checks
   if (m_broadcast_cards.empty() ||
       (m_profile.is_air && m_broadcast_cards.size() > 1)) {
