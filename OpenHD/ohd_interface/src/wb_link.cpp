@@ -334,7 +334,7 @@ WBLink::~WBLink() {
 }
 
 int get_atomic_value(const std::atomic<int>& atomic_val) {
-    return atomic_val.load();
+  return atomic_val.load();
 }
 
 bool WBLink::request_set_frequency(int frequency) {
@@ -1550,9 +1550,11 @@ void WBLink::wt_gnd_perform_channel_management() {
         air_reported_frequency > 100) {
       if (m_gnd_curr_rx_channel_width != air_reported_channel_width ||
           m_gnd_curr_rx_frequency != air_reported_frequency) {
-          m_console->debug("m_gnd_curr_rx_frequency: {}", m_gnd_curr_rx_frequency.load());
-          m_console->debug("air_reported_frequency: {}", air_reported_frequency);
-          m_console->debug("air_reported_channel_width: {}", air_reported_channel_width);
+        m_console->debug("m_gnd_curr_rx_frequency: {}",
+                         m_gnd_curr_rx_frequency.load());
+        m_console->debug("air_reported_frequency: {}", air_reported_frequency);
+        m_console->debug("air_reported_channel_width: {}",
+                         air_reported_channel_width);
         m_gnd_curr_rx_frequency = air_reported_frequency;
         m_gnd_curr_rx_channel_width = air_reported_channel_width;
         m_settings->unsafe_get_settings().wb_frequency = air_reported_frequency;
