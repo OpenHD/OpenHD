@@ -1551,7 +1551,7 @@ void WBLink::wt_gnd_perform_channel_management() {
       if (m_gnd_curr_rx_channel_width != air_reported_channel_width ||
           m_gnd_curr_rx_frequency != air_reported_frequency) {
           m_console->debug("m_gnd_curr_rx_frequency: {}", m_gnd_curr_rx_frequency.load());
-          m_console->debug("m_gnd_curr_rx_channel_width: {}", m_gnd_curr_rx_channel_width);
+          //m_console->debug("m_gnd_curr_rx_channel_width: {}", m_gnd_curr_rx_channel_width);
           m_console->debug("air_reported_frequency: {}", air_reported_frequency);
           m_console->debug("air_reported_channel_width: {}", air_reported_channel_width);
         m_gnd_curr_rx_frequency = air_reported_frequency;
