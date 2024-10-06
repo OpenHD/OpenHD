@@ -4,6 +4,11 @@ project(OpenHD-Interface)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Option to build Poco as static library
+set(ENABLE_TESTS OFF CACHE BOOL "Disable tests for Poco")
+set(POCO_STATIC ON CACHE BOOL "Build Poco as static library")
+
+# Fetch Poco and build as static library
 include(FetchContent)
 FetchContent_Declare(
   Poco
@@ -49,9 +54,9 @@ target_sources(OHDInterfaceLib PRIVATE ${sources})
 
 # Link Poco Libraries
 target_link_libraries(OHDInterfaceLib PUBLIC
-    Poco::Foundation
-    Poco::Util
-    Poco::Net
+    PocoFoundation
+    PocoUtil
+    PocoNet
     OHDCommonLib
     ${WB_TARGET_LINK_LIBRARIES}
     Threads::Threads
