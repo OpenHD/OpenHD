@@ -9,4 +9,4 @@
 	url = https://github.com/OpenHD/mavlink-headers.git
 [submodule "OpenHD/ohd_interface/lib/wifibroadcast"]
 	path = OpenHD/ohd_interface/lib/wifibroadcast
-	url = https://github.com/raphaelscholle/wifibroadcast_mod/
+	url = https://github.com/OpenHD/wifibroadcast.git
