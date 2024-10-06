@@ -241,9 +241,9 @@ bool wifi::commandhelper::openhd_driver_set_frequency_and_channel_width(
       freq_mhz, channel_width, rtl8812au_channel);
   char *CHANNEL_OVERRIDE_FILENAME;
   switch (type) {
-    case (WiFiCardType::OPENHD_RTL_88X2AU):
-      CHANNEL_OVERRIDE_FILENAME = OPENHD_DRIVER_RTL8812AU_CHANNEL_OVERRIDE;
-      break;
+    case(WiFiCardType::OPENHD_RTL_88X2AU):
+        CHANNEL_OVERRIDE_FILENAME = OPENHD_DRIVER_RTL8812AU_CHANNEL_OVERRIDE;
+        break;
     case (WiFiCardType::OPENHD_RTL_88X2BU):
       CHANNEL_OVERRIDE_FILENAME = OPENHD_DRIVER_RTL88xxBU_CHANNEL_OVERRIDE;
       break;
