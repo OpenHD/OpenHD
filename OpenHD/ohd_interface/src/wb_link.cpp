@@ -333,6 +333,10 @@ WBLink::~WBLink() {
   m_console->debug("WBLink::~WBLink() end");
 }
 
+int get_atomic_value(const std::atomic<int>& atomic_val) {
+    return atomic_val.load();
+}
+
 bool WBLink::request_set_frequency(int frequency) {
   m_console->debug("request_set_frequency {}", frequency);
   if (!openhd::wb::validate_frequency_change(
