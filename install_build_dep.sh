@@ -10,8 +10,7 @@ BUILD_PACKAGES="git build-essential autotools-dev automake libtool python3-pip a
 
 
 function install_pi_packages {
-PLATFORM_PACKAGES="libcamera-openhd"
-PLATFORM_PACKAGES_REMOVE="python3-libcamera libcamera0"
+PLATFORM_PACKAGES="libcamera0"
 }
 function install_x86_packages {
 PLATFORM_PACKAGES="libunwind-dev gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly"
