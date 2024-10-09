@@ -40,7 +40,7 @@ static int internal_discover_platform() {
       const std::string chip = sm[1];
         if (OHDUtil::contains_after_uppercase(device_tree_model,
                                               "Radxa ROCK3 Model A")) {
-          return X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W;
+          return X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_3A;
                                               }
       if (chip == "rk3588") {
         if (OHDUtil::contains_after_uppercase(device_tree_model,
@@ -131,6 +131,8 @@ std::string x_platform_type_to_string(int platform_type) {
       return "RADXA ZERO3W";
     case X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3:
       return "RADXA CM3";
+    case X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_3A:
+      return "RADXA 3A";
     case X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A:
       return "RADXA RK3588S";
     case X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B:
@@ -165,6 +167,7 @@ int get_fec_max_block_size_for_platform() {
     return 80;
   }
   if (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W ||
+      platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_3A ||
       platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3 ||
       platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A ||
       platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B) {
@@ -208,6 +211,9 @@ bool OHDPlatform::is_x20() const {
 }
 bool OHDPlatform::is_zero3w() const {
   return platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W;
+}
+bool OHDPlatform::is_3a() const {
+  return platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_3A;
 }
 bool OHDPlatform::is_radxa_cm3() const {
   return platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3;

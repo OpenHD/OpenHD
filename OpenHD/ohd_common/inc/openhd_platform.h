@@ -26,8 +26,9 @@ static constexpr int X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W =
 static constexpr int X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A = 21;
 static constexpr int X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B = 22;
 static constexpr int X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3 = 24;
+static constexpr int X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_3A = 25;
 
-static constexpr int X_PLATFORM_TYPE_ROCKCHIP_RV1126_UNDEFINED = 23;  // FUTURE
+static constexpr int X_PLATFORM_TYPE_ROCKCHIP_RV1126_UNDEFINED = 26;  // FUTURE
 
 // Numbers 30..35 are reserved for allwinner
 static constexpr int X_PLATFORM_TYPE_ALWINNER_X20 = 30;
@@ -56,6 +57,7 @@ struct OHDPlatform {
   bool is_rpi() const;
   bool is_rock() const;
   bool is_zero3w() const;
+  bool is_3a() const;
   bool is_radxa_cm3() const;
   bool is_rock5_a() const;
   bool is_rock5_b() const;
