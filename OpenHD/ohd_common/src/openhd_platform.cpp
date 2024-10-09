@@ -36,7 +36,6 @@ static int internal_discover_platform() {
                                               "Radxa ROCK 3A")) {
           return X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W;
       }
-          return X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W;
   }
 
   if (OHDFilesystemUtil::exists(DEVICE_TREE_COMPATIBLE_PATH)) {
