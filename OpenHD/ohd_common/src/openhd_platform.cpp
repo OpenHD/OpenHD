@@ -38,6 +38,10 @@ static int internal_discover_platform() {
     std::smatch sm;
     if (regex_search(compatible_content, sm, r)) {
       const std::string chip = sm[1];
+      if (OHDUtil::contains_after_uppercase(device_tree_model,
+                                              "Radxa ROCK 3A")) {
+          return X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W;
+      }
       if (chip == "rk3588") {
         if (OHDUtil::contains_after_uppercase(device_tree_model,
                                               "Radxa ROCK 5A")) {
@@ -55,9 +59,6 @@ static int internal_discover_platform() {
       } else if (chip == "rv1126") {
         return X_PLATFORM_TYPE_ROCKCHIP_RV1126_UNDEFINED;
       }
-      else {
-          return X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W;
-        }
     }
   }
   // If this file exists we can be sure we are on (any) RPI
