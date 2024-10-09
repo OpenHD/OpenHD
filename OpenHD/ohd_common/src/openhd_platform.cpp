@@ -55,6 +55,9 @@ static int internal_discover_platform() {
       } else if (chip == "rv1126") {
         return X_PLATFORM_TYPE_ROCKCHIP_RV1126_UNDEFINED;
       }
+      else {
+          return X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W;
+        }
     }
   }
   // If this file exists we can be sure we are on (any) RPI
