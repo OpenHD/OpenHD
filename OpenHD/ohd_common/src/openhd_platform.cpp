@@ -29,15 +29,6 @@ static int internal_discover_platform() {
     return X_PLATFORM_TYPE_OPENIPC_SIGMASTAR_UNDEFINED;
   }
 
-    if (OHDFilesystemUtil::exists("/proc/device-tree/model")) {
-      const std::string device_tree_model =
-        OHDFilesystemUtil::read_file("/proc/device-tree/model");
-        if (OHDUtil::contains_after_uppercase(device_tree_model,
-                                              "Radxa ROCK 3A")) {
-          return X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W;
-      }
-  }
-
   if (OHDFilesystemUtil::exists(DEVICE_TREE_COMPATIBLE_PATH)) {
     const std::string compatible_content =
         OHDFilesystemUtil::read_file(DEVICE_TREE_COMPATIBLE_PATH);
@@ -47,10 +38,9 @@ static int internal_discover_platform() {
     std::smatch sm;
     if (regex_search(compatible_content, sm, r)) {
       const std::string chip = sm[1];
-      if (OHDUtil::contains_after_uppercase(device_tree_model,
-                                              "Radxa ROCK 3A")) {
+        if (OHDUtil::contains_after_uppercase(device_tree_model,
+                                              "Radxa ROCK3 Model A")) {
           return X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W;
-      }
       if (chip == "rk3588") {
         if (OHDUtil::contains_after_uppercase(device_tree_model,
                                               "Radxa ROCK 5A")) {
