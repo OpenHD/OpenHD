@@ -41,6 +41,7 @@ static int internal_discover_platform() {
         if (OHDUtil::contains_after_uppercase(device_tree_model,
                                               "Radxa ROCK3 Model A")) {
           return X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W;
+                                              }
       if (chip == "rk3588") {
         if (OHDUtil::contains_after_uppercase(device_tree_model,
                                               "Radxa ROCK 5A")) {
