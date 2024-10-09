@@ -111,7 +111,7 @@ static OHDPlatform discover_and_write_manifest() {
   auto platform = OHDPlatform(platform_int);
   write_platform_manifest(platform);
   return platform;
-  std::cout << "platform: " << x_platform_type_to_string(platform_int) << std::endl;
+  std::cout << "platform______________: " << x_platform_type_to_string(platform_int) << std::endl;
 }
 
 std::string x_platform_type_to_string(int platform_type) {
