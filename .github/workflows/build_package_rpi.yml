@@ -29,7 +29,7 @@ jobs:
     - uses: actions/checkout@v4
       with:
         submodules: recursive
-    - uses: pguyot/arm-runner-action@98b8d5a3228f504a8bd54913ab1e23d70f369c6e
+    - uses: pguyot/arm-runner-action@5864a9437a962fa84b1cd4bb9197a5b81ecf4fa9
       id: build_image
       with:
         base_image: raspios_lite:2023-05-03
