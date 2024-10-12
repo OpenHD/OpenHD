@@ -4,17 +4,22 @@ project(OpenHD-Interface)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Option to build Poco as static library
-set(ENABLE_TESTS OFF CACHE BOOL "Disable tests for Poco")
+# Option to build Poco as static library (this can be configured in Buildroot if needed)
 set(POCO_STATIC ON CACHE BOOL "Build Poco as static library")
 
-# Fetch Poco and build as static library
-include(FetchContent)
-FetchContent_Declare(
-  Poco
-  URL https://github.com/pocoproject/poco/archive/refs/tags/poco-1.12.5p2-release.zip
-)
-FetchContent_MakeAvailable(Poco)
+# Debug message to confirm Poco usage
+message(STATUS "##########OPENHD_POCO#########")
+message(STATUS "Using Poco installed in Buildroot")
+
+# Remove Poco fetching as Buildroot provides it
+# FetchContent_Declare(
+#   Poco
+#   URL https://github.com/pocoproject/poco/archive/refs/tags/poco-1.12.5p2-release.zip
+# )
+# FetchContent_MakeAvailable(Poco)
+
+# Ensure CMake can find Poco in the Buildroot installation
+find_package(Poco REQUIRED COMPONENTS Foundation Util Net)
 
 # Only needed when we build this submodule manually
 add_subdirectory(../ohd_common commonlib EXCLUDE_FROM_ALL)
@@ -52,11 +57,11 @@ target_include_directories(OHDInterfaceLib PUBLIC "$<BUILD_INTERFACE:${CMAKE_CUR
 # Add the source files to the target
 target_sources(OHDInterfaceLib PRIVATE ${sources})
 
-# Link Poco Libraries
+# Link Poco Libraries from Buildroot
 target_link_libraries(OHDInterfaceLib PUBLIC
-    PocoFoundation
-    PocoUtil
-    PocoNet
+    Poco::Foundation
+    Poco::Util
+    Poco::Net
     OHDCommonLib
     ${WB_TARGET_LINK_LIBRARIES}
     Threads::Threads
