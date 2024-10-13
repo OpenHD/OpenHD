@@ -4,13 +4,16 @@ project(OpenHD-Interface)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Set the CMAKE_MODULE_PATH to include the directory where FindPoco.cmake is located
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules" ${CMAKE_MODULE_PATH})
+
 # Only needed when we build this submodule manually
 add_subdirectory(../ohd_common commonlib EXCLUDE_FROM_ALL)
 
 # Build and include wifibroadcast
 include(lib/wifibroadcast/wifibroadcast/WBLib.cmake)
 
-# Find the POCO package
+# Find the Poco package (using the custom FindPoco.cmake file)
 find_package(Poco REQUIRED COMPONENTS Foundation Net) # Add other components if needed
 
 add_library(OHDInterfaceLib STATIC) # initialized below
@@ -31,7 +34,6 @@ set(sources
     src/wifi_client.cpp
     src/microhard_link.cpp
     src/ethernet_manager.cpp
-    #src/wifi_command_helper2.cpp
 )
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
@@ -44,7 +46,6 @@ target_include_directories(OHDInterfaceLib
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc>")
 
 # Find and link POCO libraries
-include(${CMAKE_CURRENT_LIST_DIR}/cmake/FindPoco.cmake)
 target_include_directories(OHDInterfaceLib PUBLIC ${Poco_INCLUDE_DIRS})
 target_link_libraries(OHDInterfaceLib PUBLIC Poco::Foundation Poco::Net)
 
@@ -52,15 +53,15 @@ target_link_libraries(OHDInterfaceLib PUBLIC Poco::Foundation Poco::Net)
 target_link_libraries(OHDInterfaceLib PUBLIC OHDCommonLib)
 
 # needed to set wifi cards to monitor mode and more
-#include(cmake/FindLibNL.cmake)
-#target_include_directories(OHDInterfaceLib PRIVATE ${LibNL_INCLUDE_DIR})
-#target_link_libraries(OHDInterfaceLib PRIVATE ${LibNL_LIBRARIES})
+# include(cmake/FindLibNL.cmake)
+# target_include_directories(OHDInterfaceLib PRIVATE ${LibNL_INCLUDE_DIR})
+# target_link_libraries(OHDInterfaceLib PRIVATE ${LibNL_LIBRARIES})
 
 target_include_directories(OHDInterfaceLib PUBLIC inc/)
 target_link_libraries(OHDInterfaceLib PUBLIC ${WB_TARGET_LINK_LIBRARIES})
-#target_include_directories(OHDInterfaceLib PUBLIC ${WB_INCLUDE_DIRECTORES})
+# target_include_directories(OHDInterfaceLib PUBLIC ${WB_INCLUDE_DIRECTORIES})
 
-#for some reason, otherwise pi complains about threads
+# For some reason, otherwise pi complains about threads
 find_package(Threads REQUIRED)
 target_link_libraries(OHDInterfaceLib PUBLIC Threads::Threads)
 
