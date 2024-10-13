@@ -44,7 +44,7 @@ target_include_directories(OHDInterfaceLib
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc>")
 
 # Find and link POCO libraries
-include(${CMAKE_CURRENT_LIST_DIR}/cmake/FindPCAP.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/cmake/FindPoco.cmake)
 target_include_directories(OHDInterfaceLib PUBLIC ${Poco_INCLUDE_DIRS})
 target_link_libraries(OHDInterfaceLib PUBLIC Poco::Foundation Poco::Net)
 
