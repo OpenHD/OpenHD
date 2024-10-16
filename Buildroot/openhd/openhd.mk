@@ -3,9 +3,10 @@
 # OpenHD
 #
 ################################################################################
+$(info Building the OpenHD package...)
 
 # The Git repository from which to clone the source code
-OPENHD_SITE = https://github.com/raphaelscholle/OpenHD.git
+OPENHD_SITE = https://github.com/openhd/OpenHD.git
 OPENHD_SITE_METHOD = git
 OPENHD_GIT_SUBMODULES = YES
 
@@ -27,12 +28,14 @@ OPENHD_DEPENDENCIES = poco libsodium gstreamer1 gst1-plugins-base libpcap host-p
 
 # Additional configuration options for the CMake build
 OPENHD_CONF_OPTS = \
-    -DENABLE_USB_CAMERAS=OFF \
-    -DCMAKE_TOOLCHAIN_FILE=$(BR2_TOOLCHAIN_FILE) \
-    -DCMAKE_SYSROOT=$(STAGING_DIR) \
-    -DCMAKE_PREFIX_PATH=$(STAGING_DIR)/usr \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_INSTALL_PREFIX=/usr
+    -DENABLE_USB_CAMERAS=OFF 
+   
+# Print the staging directory
+$(info The Staging Directory is: $(STAGING_DIR))
+
+# List all files in the staging directory
+$(info Listing all files in the staging directory:)
+$(shell find $(STAGING_DIR) -type f | xargs -I {} echo {})
 
 # Use Buildroot's CMake package infrastructure to handle the build
 $(eval $(cmake-package))
