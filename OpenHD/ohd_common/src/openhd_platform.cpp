@@ -185,7 +185,6 @@ int get_fec_max_block_size_for_platform() {
 
 const OHDPlatform& OHDPlatform::instance() {
   static OHDPlatform instance = discover_and_write_manifest();
-  std::cout << "platform______________: " << x_platform_type_to_string(platform_int) << std::endl;
   return instance;
 }
 
