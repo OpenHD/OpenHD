@@ -125,15 +125,15 @@ std::string GStreamerStream::create_source_encode_pipeline(
     } else {
       openhd::log::get_default()->warn(
           "Determining V4l2 file number for Rockchip platform.");
+      
       const int v4l2_filenumber =
-          OHDPlatform::instance().platform_type ==
-                      X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W ||
-                  OHDPlatform::instance().platform_type ==
-                      X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3
+          OHDPlatform::instance().platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W ||
+          OHDPlatform::instance().platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3 ||
+          OHDPlatform::instance().platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_3A
               ? 0
               : 11;
-      pipeline << OHDGstHelper::createRockchipCSIStream(v4l2_filenumber,
-                                                        setting);
+
+      pipeline << OHDGstHelper::createRockchipCSIStream(v4l2_filenumber, setting);
     }
   } else if (camera.requires_rockchip5_mpp_pipeline()) {
     openhd::log::get_default()->warn("Camera requires Rockchip5 MPP pipeline.");
