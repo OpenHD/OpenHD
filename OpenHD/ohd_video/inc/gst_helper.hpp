@@ -509,7 +509,7 @@ static std::string createRockchipEncoderPipeline(
   } else {
     ss << "mpph265enc ";
   }
-  ss << "rc-mode=cbr qp-min=26 qp-max=51 bps=" << bps;
+  ss << "rc-mode=cbr qp-min=11 qp-max=51 bps=" << bps;
   ss << " width=" << settings.streamed_video_format.width;
   ss << " height=" << settings.streamed_video_format.height;
   if (openhd::validate_camera_rotation(settings.camera_rotation_degree)) {
