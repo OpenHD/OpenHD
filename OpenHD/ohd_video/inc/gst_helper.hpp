@@ -503,7 +503,7 @@ static std::string create_veye_vl2_stream(const CameraSettings& settings,
 static std::string createRockchipEncoderPipeline(
     const CameraSettings& settings) {
   std::stringstream ss;
-  const int bps = (openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits)*2);
+  const int bps = (openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits)/2);
   if (settings.streamed_video_format.videoCodec == VideoCodec::H264) {
     ss << "mpph264enc ";
   } else {
