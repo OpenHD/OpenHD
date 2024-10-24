@@ -503,13 +503,13 @@ static std::string create_veye_vl2_stream(const CameraSettings& settings,
 static std::string createRockchipEncoderPipeline(
     const CameraSettings& settings) {
   std::stringstream ss;
-  const int bps = openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
+  const int bps = (openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits)*2);
   if (settings.streamed_video_format.videoCodec == VideoCodec::H264) {
     ss << "mpph264enc ";
   } else {
     ss << "mpph265enc ";
   }
-  ss << "rc-mode=cbr qp-min=26 qp-max=48 bps=" << bps;
+  ss << "rc-mode=cbr qp-min=12 qp-max=48 bps=" << bps;
   ss << " width=" << settings.streamed_video_format.width;
   ss << " height=" << settings.streamed_video_format.height;
   if (openhd::validate_camera_rotation(settings.camera_rotation_degree)) {
