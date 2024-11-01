@@ -28,6 +28,7 @@ enum class WiFiCardType {
   OPENHD_RTL_8852BU,  // testing phase
   OPENHD_EMULATED,
   AIC,
+  QUALCOMM,
   UNKNOWN
 };
 
@@ -63,6 +64,8 @@ static std::string wifi_card_type_to_string(const WiFiCardType& card_type) {
       return "BROADCOM";
     case WiFiCardType::AIC:
       return "AIC";
+    case WiFiCardType::QUALCOMM:
+      return "QUALCOMM";
     case WiFiCardType::UNKNOWN:
     default:
       return "UNKNOWN";
@@ -110,6 +113,7 @@ struct WiFiCard {
            type == WiFiCardType::OPENHD_RTL_88X2BU ||
            type == WiFiCardType::OPENHD_RTL_88X2CU ||
            type == WiFiCardType::OPENHD_RTL_88X2EU ||
+           type == WiFiCardType::QUALCOMM          ||
            type == WiFiCardType::OPENHD_EMULATED;
   };
   // Returns true if the given card is exatly rtl8812au on x20 (custom HW) and
@@ -130,7 +134,6 @@ struct WiFiCard {
   };
 };
 
-// Only RTL8812au / BU / CU support changing the MCS index
 static bool wifi_card_supports_variable_mcs(const WiFiCard& wifi_card) {
   if (wifi_card.type == WiFiCardType::OPENHD_EMULATED) return true;
   if (wifi_card.type == WiFiCardType::OPENHD_RTL_88X2AU) return true;
@@ -138,9 +141,10 @@ static bool wifi_card_supports_variable_mcs(const WiFiCard& wifi_card) {
   if (wifi_card.type == WiFiCardType::OPENHD_RTL_88X2CU) return true;
   if (wifi_card.type == WiFiCardType::OPENHD_RTL_88X2EU) return true;
   if (wifi_card.type == WiFiCardType::OPENHD_RTL_8852BU) return true;
+  if (wifi_card.type == WiFiCardType::QUALCOMM) return true;
   return false;
 }
-// Only RTL8812au / BU so far support a 40Mhz channel width during injection
+
 static bool wifi_card_supports_40Mhz_channel_width_injection(
     const WiFiCard& wifi_card) {
   if (wifi_card.type == WiFiCardType::OPENHD_EMULATED) return true;
@@ -149,6 +153,7 @@ static bool wifi_card_supports_40Mhz_channel_width_injection(
   if (wifi_card.type == WiFiCardType::OPENHD_RTL_88X2CU) return true;
   if (wifi_card.type == WiFiCardType::OPENHD_RTL_88X2EU) return true;
   if (wifi_card.type == WiFiCardType::OPENHD_RTL_8852BU) return true;
+  if (wifi_card.type == WiFiCardType::QUALCOMM) return true;
   return false;
 }
 
