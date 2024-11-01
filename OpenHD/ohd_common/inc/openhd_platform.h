@@ -35,8 +35,12 @@ static constexpr int X_PLATFORM_TYPE_ALWINNER_X20 = 30;
 // @Buldo is working on openipc / sigmastar, 36..39
 static constexpr int X_PLATFORM_TYPE_OPENIPC_SIGMASTAR_UNDEFINED = 36;
 
-// Numbers 40..50 are reserved for NVIDIA
+// Numbers 40..45 are reserved for NVIDIA
 static constexpr int X_PLATFORM_TYPE_NVIDIA_XAVIER = 40;
+
+// Numbers 46..50 are reserved for QUALCOMM 
+static constexpr int X_PLATFORM_TYPE_QUALCOMM_QRB5165 = 46;
+static constexpr int X_PLATFORM_TYPE_QUALCOMM_QCS405 = 47;
 
 std::string x_platform_type_to_string(int platform_type);
 
@@ -63,6 +67,9 @@ struct OHDPlatform {
   bool is_rpi_or_x86() const;
   // alwinner
   bool is_x20() const;
+  // qualcomm
+  bool is_qrb5165() const;
+  bool is_qcs405() const;
 };
 
 // We need to differentiate between rpi 4 and other pi's to use the right fec

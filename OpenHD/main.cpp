@@ -21,8 +21,6 @@
 #include "openhd_profile.h"
 #include "openhd_spdlog.h"
 #include "openhd_temporary_air_or_ground.h"
-// For logging the commit hash and more
-// #include "git.h"
 #include "openhd_config.h"
 #include "config_paths.h"
 
