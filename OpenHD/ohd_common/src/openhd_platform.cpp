@@ -235,9 +235,9 @@ bool OHDPlatform::is_rock5_b() const {
 bool OHDPlatform::is_rock5_a_b() const {
    return is_rock5_a() || is_rock5_b(); 
 }
-bool OHDPlatform::is_qcs405{
+bool OHDPlatform::is_qcs405() const {
   return platform_type == X_PLATFORM_TYPE_QUALCOMM_QCS405;
 }
-bool OHDPlatform::is_qrb5165{
+bool OHDPlatform::is_qrb5165() const {
   return platform_type == X_PLATFORM_TYPE_QUALCOMM_QRB5165;
 }
