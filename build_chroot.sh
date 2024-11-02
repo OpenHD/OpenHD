@@ -3,6 +3,7 @@
 # We're using cloudsmith-cli to upload the file in CHROOT
     
 su -c "apt-get update && apt install -y sudo"
+sudo mkdir -p /tmp/
 
 sudo apt install -y python3-pip git
 sudo pip3 install --upgrade cloudsmith-cli
