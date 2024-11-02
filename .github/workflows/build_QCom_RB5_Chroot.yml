@@ -1,4 +1,4 @@
-name: build_package_x20_debian
+name: build_package_Qualcomm_ubuntu
 
 on:
   push:
