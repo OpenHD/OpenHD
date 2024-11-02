@@ -67,5 +67,5 @@ PLATFORM_PACKAGES_REMOVE=""
 
 
 # Installing ruby packages
-gem install fpm
+#gem install fpm
 
