@@ -41,8 +41,8 @@ jobs:
           echo $CLOUDSMITH_API_KEY > /opt/OpenHD-ChrootCompiler/additionalFiles/cloudsmith_api_key.txt
           echo "true" > /opt/OpenHD-ChrootCompiler/additionalFiles/custom.txt
           echo "arm64" > /opt/OpenHD-ChrootCompiler/additionalFiles/arch.txt
-          echo "ubuntu" > /opt/OpenHD-ChrootCompiler/additionalFiles/distro.txt
-          echo "focal" > /opt/OpenHD-ChrootCompiler/additionalFiles/flavor.txt
+          echo "focal" > /opt/OpenHD-ChrootCompiler/additionalFiles/distro.txt
+          echo "ubuntu" > /opt/OpenHD-ChrootCompiler/additionalFiles/flavor.txt
           echo "${{ github.ref_name }}" > /opt/OpenHD-ChrootCompiler/additionalFiles/repo.txt
 
           cd /opt/OpenHD-ChrootCompiler/
