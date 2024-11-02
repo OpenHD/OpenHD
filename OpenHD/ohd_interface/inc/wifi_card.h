@@ -113,7 +113,7 @@ struct WiFiCard {
            type == WiFiCardType::OPENHD_RTL_88X2BU ||
            type == WiFiCardType::OPENHD_RTL_88X2CU ||
            type == WiFiCardType::OPENHD_RTL_88X2EU ||
-           type == WiFiCardType::QUALCOMM          ||
+           type == WiFiCardType::QUALCOMM ||
            type == WiFiCardType::OPENHD_EMULATED;
   };
   // Returns true if the given card is exatly rtl8812au on x20 (custom HW) and

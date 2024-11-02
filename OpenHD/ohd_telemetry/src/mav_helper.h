@@ -107,14 +107,16 @@ static void parseAndLog(const uint8_t* data, int data_len,
       nMessages++;
     }
   }
-  std::cout << "parseAndLog:" << " N messages:" << nMessages << "\n";
+  std::cout << "parseAndLog:"
+            << " N messages:" << nMessages << "\n";
 }
 
 static void debugMavlinkPingMessage(const mavlink_message_t msg) {
   mavlink_ping_t ping;
   mavlink_msg_ping_decode(&msg, &ping);
   std::stringstream ss;
-  ss << "Ping[" << "sys_id:" << (int)msg.sysid << " comp_id:" << (int)msg.compid
+  ss << "Ping["
+     << "sys_id:" << (int)msg.sysid << " comp_id:" << (int)msg.compid
      << " seq:" << ping.seq << " target_system:" << (int)ping.target_system
      << " target_component:" << (int)ping.target_component << "]\n";
   std::cout << ss.str();

@@ -38,7 +38,7 @@ static constexpr int X_PLATFORM_TYPE_OPENIPC_SIGMASTAR_UNDEFINED = 36;
 // Numbers 40..45 are reserved for NVIDIA
 static constexpr int X_PLATFORM_TYPE_NVIDIA_XAVIER = 40;
 
-// Numbers 46..50 are reserved for QUALCOMM 
+// Numbers 46..50 are reserved for QUALCOMM
 static constexpr int X_PLATFORM_TYPE_QUALCOMM_QRB5165 = 46;
 static constexpr int X_PLATFORM_TYPE_QUALCOMM_QCS405 = 47;
 static constexpr int X_PLATFORM_TYPE_QUALCOMM_UNKNOWN = 48;

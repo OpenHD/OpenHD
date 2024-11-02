@@ -96,7 +96,8 @@ std::string GstAudioStream::create_pipeline() {
   if (OHDFilesystemUtil::exists(std::string(getConfigBasePath()) +
                                 "test_audio.txt") ||
       openhd_enable_audio_test) {
-    ss << "audiotestsrc" << " ! ";
+    ss << "audiotestsrc"
+       << " ! ";
   } else if (opt_manual_audio_source.has_value()) {
     // File, for development
     ss << opt_manual_audio_source.value() << " ! ";
@@ -106,7 +107,8 @@ std::string GstAudioStream::create_pipeline() {
       // the device(s) depend on fkms / kms or are in general weird.
       ss << "alsasrc device=" << rpi_detect_alsasrc_device() << " ! ";
     } else {
-      ss << "autoaudiosrc" << " ! ";
+      ss << "autoaudiosrc"
+         << " ! ";
     }
   }
   /*ss << "autoaudiosrc ! ";

@@ -26,9 +26,10 @@ static int internal_discover_platform() {
     return X_PLATFORM_TYPE_OPENIPC_SIGMASTAR_UNDEFINED;
   }
 
-if (OHDFilesystemUtil::exists(QUALCOMM_BOARDID_PATH)) {
-    const std::string qualcomm_board_id_content = OHDFilesystemUtil::read_file(QUALCOMM_BOARDID_PATH);
-    
+  if (OHDFilesystemUtil::exists(QUALCOMM_BOARDID_PATH)) {
+    const std::string qualcomm_board_id_content =
+        OHDFilesystemUtil::read_file(QUALCOMM_BOARDID_PATH);
+
     std::regex qualcomm_regex("(qcs405|qrb5165)");
     std::smatch match;
     if (std::regex_search(qualcomm_board_id_content, match, qualcomm_regex)) {
@@ -38,7 +39,8 @@ if (OHDFilesystemUtil::exists(QUALCOMM_BOARDID_PATH)) {
         return X_PLATFORM_TYPE_QUALCOMM_QRB5165;
       }
     } else {
-      openhd::log::get_default()->warn("Unknown Qualcomm board ID: {}", qualcomm_board_id_content);
+      openhd::log::get_default()->warn("Unknown Qualcomm board ID: {}",
+                                       qualcomm_board_id_content);
       return X_PLATFORM_TYPE_QUALCOMM_UNKNOWN;
     }
   }
@@ -187,8 +189,8 @@ int get_fec_max_block_size_for_platform() {
   if (platform_type == X_PLATFORM_TYPE_NVIDIA_XAVIER) {
     return 50;
   }
-    if (platform_type == X_PLATFORM_TYPE_QUALCOMM_QRB5165 ||
-       platform_type == X_PLATFORM_TYPE_QUALCOMM_QCS405) {
+  if (platform_type == X_PLATFORM_TYPE_QUALCOMM_QRB5165 ||
+      platform_type == X_PLATFORM_TYPE_QUALCOMM_QCS405) {
     return 50;
   }
   return 20;
@@ -232,9 +234,7 @@ bool OHDPlatform::is_rock5_a() const {
 bool OHDPlatform::is_rock5_b() const {
   return platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B;
 }
-bool OHDPlatform::is_rock5_a_b() const {
-   return is_rock5_a() || is_rock5_b(); 
-}
+bool OHDPlatform::is_rock5_a_b() const { return is_rock5_a() || is_rock5_b(); }
 bool OHDPlatform::is_qcs405() const {
   return platform_type == X_PLATFORM_TYPE_QUALCOMM_QCS405;
 }
