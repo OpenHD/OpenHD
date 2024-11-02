@@ -19,6 +19,7 @@ echo ${ARCH}
 
 if [[ "${DISTRO}" == "focal" ]]; then
     apt update && apt upgrade -y
+    su -c "apt-get update && apt install -y sudo"
     ./install_build_dep.sh rock5
     apt install -y libv4l-dev sudo
     echo "agx"
