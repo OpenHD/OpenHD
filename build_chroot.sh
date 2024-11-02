@@ -1,33 +1,55 @@
 #!/bin/bash
-# This file is the install instruction for the CHROOT build
-# We're using cloudsmith-cli to upload the file in CHROOT
-    
-su -c "apt-get update && apt install -y sudo"
-sudo mkdir -p /tmp/
+# Install script for CHROOT build using cloudsmith-cli to upload files
 
-sudo apt install -y python3-pip git
-sudo pip3 install --upgrade cloudsmith-cli
+# Ensure /tmp has correct permissions
+chmod 1777 /tmp || { echo "Failed to set permissions on /tmp"; exit 1; }
+
+# Update package lists and install necessary packages as root
+su -c "apt-get update --fix-missing && apt-get install -y sudo" || { echo "Failed to update and install sudo"; exit 1; }
+
+# Install required packages for the script
+apt-get install -y python3-pip git || { echo "Failed to install python3-pip and git"; exit 1; }
+
+# Install or upgrade cloudsmith-cli
+pip3 install --upgrade cloudsmith-cli || { echo "Failed to install cloudsmith-cli"; exit 1; }
+
+# List all files in the current directory for debugging purposes
 ls -a
-API_KEY=$(cat cloudsmith_api_key.txt)
-DISTRO=$(cat distro.txt)
-FLAVOR=$(cat flavor.txt)
-REPO=$(cat repo.txt)
-CUSTOM=$(cat custom.txt)
-ARCH=$(cat arch.txt)
 
-echo ${DISTRO}
-echo ${FLAVOR}
-echo ${CUSTOM}
-echo ${ARCH}
+# Load configuration variables from files and verify they exist
+if [[ -f cloudsmith_api_key.txt && -f distro.txt && -f flavor.txt && -f repo.txt && -f custom.txt && -f arch.txt ]]; then
+    API_KEY=$(cat cloudsmith_api_key.txt)
+    DISTRO=$(cat distro.txt)
+    FLAVOR=$(cat flavor.txt)
+    REPO=$(cat repo.txt)
+    CUSTOM=$(cat custom.txt)
+    ARCH=$(cat arch.txt)
+else
+    echo "One or more required configuration files are missing."
+    exit 1
+fi
 
+# Display loaded configuration for debugging
+echo "Distro: ${DISTRO}"
+echo "Flavor: ${FLAVOR}"
+echo "Custom: ${CUSTOM}"
+echo "Arch: ${ARCH}"
+
+# Install dependencies based on DISTRO or ARCH
 if [[ "${DISTRO}" == "focal" ]]; then
-    sudo apt update && apt upgrade -y
-    sudo ./install_build_dep.sh rock5
-    sudo apt install -y libv4l-dev sudo
+    apt-get update && apt-get upgrade -y || { echo "Failed to update and upgrade packages"; exit 1; }
+    chmod +x ./install_build_dep.sh
+    ./install_build_dep.sh rock5 || { echo "Failed to install build dependencies for rock5"; exit 1; }
+    apt-get install -y libv4l-dev sudo || { echo "Failed to install libv4l-dev and sudo"; exit 1; }
     echo "agx"
 elif [[ "${ARCH}" == "arm64" ]]; then
-    ./install_build_dep.sh rock5
+    chmod +x ./install_build_dep.sh
+    ./install_build_dep.sh rock5 || { echo "Failed to install build dependencies for rock5"; exit 1; }
     echo "rock5"
 fi
 
-sudo ./package.sh ${CUSTOM} ${ARCH} ${DISTRO} ${FLAVOR} || exit 1
+# Package the build using custom configurations
+chmod +x ./package.sh
+./package.sh "${CUSTOM}" "${ARCH}" "${DISTRO}" "${FLAVOR}" || { echo "Packaging failed"; exit 1; }
+
+echo "Script execution completed successfully."
