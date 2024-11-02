@@ -67,5 +67,6 @@ PLATFORM_PACKAGES_REMOVE=""
 
 
 # Installing ruby packages
-#gem install fpm
+gem install dotenv -v 2.8.1
+gem install fpm
 
