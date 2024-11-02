@@ -524,7 +524,6 @@ struct XCamera {
       ret.push_back(ResolutionFramerate{1280, 720, 60});
       ret.push_back(ResolutionFramerate{1920, 1080, 60});
       return ret;
-    }
     } else if (camera_type == X_CAM_TYPE_QC_OV9282) {
       std::vector<ResolutionFramerate> ret;
       //correct specs still missing
