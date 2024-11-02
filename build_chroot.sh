@@ -18,8 +18,9 @@ echo ${CUSTOM}
 echo ${ARCH}
 
 if [[ "${DISTRO}" == "focal" ]]; then
+    apt update && apt upgrade -y
     ./install_build_dep.sh rock5
-    apt install -y libv4l-dev
+    apt install -y libv4l-dev sudo
     echo "agx"
 elif [[ "${ARCH}" == "arm64" ]]; then
     ./install_build_dep.sh rock5
