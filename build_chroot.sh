@@ -1,6 +1,8 @@
 #!/bin/bash
 # This file is the install instruction for the CHROOT build
 # We're using cloudsmith-cli to upload the file in CHROOT
+    
+su -c "apt-get update && apt install -y sudo"
 
 sudo apt install -y python3-pip git
 sudo pip3 install --upgrade cloudsmith-cli
@@ -19,7 +21,6 @@ echo ${ARCH}
 
 if [[ "${DISTRO}" == "focal" ]]; then
     apt update && apt upgrade -y
-    su -c "apt-get update && apt install -y sudo"
     ./install_build_dep.sh rock5
     apt install -y libv4l-dev sudo
     echo "agx"
