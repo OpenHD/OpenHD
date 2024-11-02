@@ -113,7 +113,9 @@ static constexpr int X_CAM_TYPE_ROCK_3_VEYE = 97;
 static constexpr int X_CAM_TYPE_NVIDIA_XAVIER_IMX577 = 101;
 // OpenIPC specific starts here
 static constexpr int X_CAM_TYPE_OPENIPC_GENERIC = 110;
-static constexpr int X_CAM_TYPE_QC_Coretronic_IMX577 = 120;
+static constexpr int X_CAM_TYPE_QC_IMX577 = 120;
+static constexpr int X_CAM_TYPE_QC_OV9282 = 121;
+
 //
 // ... rest is reserved for future use
 // no camera, only exists to have a default value for secondary camera (which is
@@ -229,8 +231,10 @@ static std::string x_cam_type_to_string(int camera_type) {
       return "OPENIPC_X";
     case X_CAM_TYPE_NVIDIA_XAVIER_IMX577:
       return "XAVIER_IMX577";
-    case X_CAM_TYPE_QC_Coretronic_IMX577:
+    case X_CAM_TYPE_QC_IMX577:
       return "CORETRONIC IMX577";
+    case X_CAM_TYPE_QC_OV9282:
+      return "CORETRONIC OV9282";
     default:
       break;
   }
@@ -514,10 +518,17 @@ struct XCamera {
       ret.push_back(ResolutionFramerate{1280, 720, 60});
       ret.push_back(ResolutionFramerate{1920, 1080, 60});
       return ret;
-    } else if (camera_type == X_CAM_TYPE_QC_Coretronic_IMX577) {
+    } else if (camera_type == X_CAM_TYPE_QC_IMX577) {
       std::vector<ResolutionFramerate> ret;
+      //correct specs still missing
       ret.push_back(ResolutionFramerate{1280, 720, 60});
       ret.push_back(ResolutionFramerate{1920, 1080, 60});
+      return ret;
+    }
+    } else if (camera_type == X_CAM_TYPE_QC_OV9282) {
+      std::vector<ResolutionFramerate> ret;
+      //correct specs still missing
+      ret.push_back(ResolutionFramerate{1280, 720, 30});
       return ret;
     }
     // Not mapped yet

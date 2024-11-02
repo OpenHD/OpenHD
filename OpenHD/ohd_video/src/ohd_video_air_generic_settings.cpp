@@ -1,6 +1,3 @@
-//
-// Created by consti10 on 19.09.23.
-//
 #include "ohd_video_air_generic_settings.h"
 
 #include "camera.hpp"
