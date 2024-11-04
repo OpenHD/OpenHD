@@ -41,6 +41,9 @@ if [[ "${DISTRO}" == "focal" ]]; then
     chmod +x ./install_build_dep.sh
     ./install_build_dep.sh rock5 || { echo "Failed to install build dependencies"; exit 1; }
     apt-get install -y libv4l-dev || { echo "Failed to install libv4l-dev"; exit 1; }
+    gcc -v
+    g++ -v
+    cmake -v
 elif [[ "${ARCH}" == "arm64" ]]; then
     chmod +x ./install_build_dep.sh
     ./install_build_dep.sh rock5 || { echo "Failed to install build dependencies"; exit 1; }
