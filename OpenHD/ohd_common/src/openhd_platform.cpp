@@ -15,7 +15,7 @@ static constexpr auto DEVICE_TREE_COMPATIBLE_PATH =
     "/proc/device-tree/compatible";
 static constexpr auto ALLWINNER_BOARDID_PATH = "/dev/cedar_dev";
 static constexpr auto SIGMASTAR_BOARDID_PATH = "/dev/mstar_ive0";
-static constexpr auto QUALCOMM_BOARDID_PATH = "/proc/device-tree/qcom,board-id";
+static constexpr auto QUALCOMM_BOARDID_PATH = "/proc/device-tree/model";
 
 static int internal_discover_platform() {
   if (OHDFilesystemUtil::exists(ALLWINNER_BOARDID_PATH)) {
