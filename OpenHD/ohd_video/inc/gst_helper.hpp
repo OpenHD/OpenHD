@@ -499,10 +499,7 @@ static std::string create_veye_vl2_stream(const CameraSettings& settings,
 static std::string createRockchipEncoderPipeline(
     const CameraSettings& settings) {
   std::stringstream ss;
-  int bitrateBitsPerSecond =
-    openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
-      // const int bps = openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits) * 10;
-    const int bps = 100000;  
+  const int bps = openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
   if (settings.streamed_video_format.videoCodec == VideoCodec::H264) {
     ss << "mpph264enc ";
   } else {
@@ -522,9 +519,6 @@ static std::string createRockchipEncoderPipeline(
   }
   const int rotation = get_rotation_degree_0_90_180_270(settings);
   ss << " rotation=" << rotation;
-  ss << "idr-interval=" << settings.h26x_keyframe_interval << " ";
-  ss << "intra-refresh-mode=" << settings.h26x_intra_refresh_type << " ";
-  ss << "target-bitrate=" << bps;
   ss << " ! ";
   return ss.str();
 }
@@ -598,6 +592,9 @@ static std::string createAllwinnerStream(const CameraSettings& settings) {
 static std::string create_qualcomm_camera1_stream(
     const int device_index, const CameraSettings& settings) {
   std::stringstream ss;
+  int bitrateBitsPerSecond =
+    openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
+      const int bps = openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
 
   // Get the rotation value
   const int rotation = get_rotation_degree_qcom(settings);
@@ -613,6 +610,8 @@ static std::string create_qualcomm_camera1_stream(
   ss << "qtic2venc ";
   ss << "control-rate=1 ";               // Constant bitrate control
   ss << "rotate=" << rotation << " ";
+  ss << "intra-refresh-mode=" << settings.h26x_intra_refresh_type << " ";
+  ss << "target-bitrate=" << bps;
   ss << "! ";
 
   return ss.str();
