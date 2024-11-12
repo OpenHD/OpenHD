@@ -597,11 +597,10 @@ static std::string create_qualcomm_camera1_stream(
     const int device_index, const CameraSettings& settings) {
   std::stringstream ss;
   ss << fmt::format("qtiqmmfsrc camera={} ! ", device_index);
-  ss << fmt::format("video/x-raw, format=NV12, width={}, height={}, framerate={}/1, effect=negative ! ",
-                    settings.streamed_video_format.width, settings.streamed_video_format.height,
+  ss << fmt::format("video/x-raw, format=NV12, width={}, height={}, framerate={}/1 ! ",
+                    settings.streamed_video_format.width,settings.streamed_video_format.height,
                     settings.streamed_video_format.framerate);
-  ss << "qtic2venc ! queue ! h264parse config-interval=-1 ! rtph264pay mtu=1440 ! ";
-  ss << "appsink drop=true name=out_appsink wait-on-eos=false";
+  ss << "qtic2venc ! ";
   return ss.str();
 }
 
