@@ -594,7 +594,7 @@ static std::string create_qualcomm_camera1_stream(
   std::stringstream ss;
   int bitrateBitsPerSecond =
     openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
-      const int bps = openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits)*10;
+      const int bps = openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
 
   // Get the rotation value
   const int rotation = get_rotation_degree_qcom(settings);
