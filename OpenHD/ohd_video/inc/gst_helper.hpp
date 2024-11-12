@@ -502,7 +502,7 @@ static std::string createRockchipEncoderPipeline(
   int bitrateBitsPerSecond =
     openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
       // const int bps = openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits) * 10;
-    const int bps = 10000;  
+    const int bps = 100000;  
   if (settings.streamed_video_format.videoCodec == VideoCodec::H264) {
     ss << "mpph264enc ";
   } else {
