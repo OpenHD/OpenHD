@@ -600,7 +600,7 @@ static std::string create_qualcomm_camera1_stream(
   ss << fmt::format("video/x-raw, format=NV12, width={}, height={}, framerate={}/1 ! ",
                     settings.streamed_video_format.width,settings.streamed_video_format.height,
                     settings.streamed_video_format.framerate);
-  ss << "qtic2venc ! ";
+  ss << "qtic2venc rotate=2 ! ";
   return ss.str();
 }
 
