@@ -596,7 +596,7 @@ static std::string create_qualcomm_camera1_stream(
     openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
       const int bps = openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
 int qcomIntraRefreshMode = (settings.h26x_intra_refresh_type == -1) 
-                           ? 1 
+                           ? 0 
                            : settings.h26x_intra_refresh_type + 1;
   const int rotation = get_rotation_degree_qcom(settings);
   ss << fmt::format("qtiqmmfsrc camera={} ! ", device_index);
