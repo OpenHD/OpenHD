@@ -610,8 +610,8 @@ static std::string create_qualcomm_camera1_stream(
   ss << "qtic2venc ";
   ss << "control-rate=1 ";               // Constant bitrate control
   ss << "rotate=" << rotation << " ";
-  ss << "intra-refresh-mode=" << settings.h26x_intra_refresh_type << " ";
-  ss << "target-bitrate=" << bps;
+  // ss << "intra-refresh-mode=" << settings.h26x_intra_refresh_type << " ";
+  ss << "target-bitrate=" << bps << " ";
   ss << "! ";
 
   return ss.str();
