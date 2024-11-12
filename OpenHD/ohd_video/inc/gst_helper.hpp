@@ -1,7 +1,3 @@
-//
-// Created by consti10 on 15.05.22.
-//
-
 #ifndef OPENHD_OHDGSTHELPER_H
 #define OPENHD_OHDGSTHELPER_H
 
@@ -594,16 +590,40 @@ static std::string createAllwinnerStream(const CameraSettings& settings) {
  * For qrb5165 Cameras that do raw.
  */
 static std::string create_qualcomm_camera1_stream(
-    const int device_index, const CameraSettings& settings) {
+    const int device_index, const CameraSettings& settings, const int bitrateBitsPerSecond) {
   std::stringstream ss;
+
+  // Get the rotation value
   const int rotation = get_rotation_degree_qcom(settings);
+
+  // Add the camera source and raw video format specifications
   ss << fmt::format("qtiqmmfsrc camera={} ! ", device_index);
   ss << fmt::format("video/x-raw, format=NV12, width={}, height={}, framerate={}/1 ! ",
-                    settings.streamed_video_format.width,settings.streamed_video_format.height,
+                    settings.streamed_video_format.width,
+                    settings.streamed_video_format.height,
                     settings.streamed_video_format.framerate);
-  ss << fmt::format("qtic2venc rotate={} ! ", rotation);
+
+  // Add encoder configuration with each setting on a separate line
+  ss << "qtic2venc ";
+  ss << "control-rate=1 ";               // Constant bitrate control
+  ss << "insert-sps-pps=true ";           // Insert SPS and PPS headers
+  ss << "rotate=" << rotation << " "; // Apply rotation setting
+  // ss << "bitrate=" << bitrateBitsPerSecond << " "; // Set bitrate
+
+  // Set keyframe intervals
+  // ss << "iframeinterval=" << settings.h26x_keyframe_interval << " ";
+  // ss << "idrinterval=" << settings.h26x_keyframe_interval << " ";
+
+  // Enable max performance mode
+  // ss << "maxperf-enable=true ";
+
+  // Close off the configuration with pipeline separator
+  ss << "! ";
+
   return ss.str();
 }
+
+
 
 // Camera quirks, omit arguments when set to 0 - some cameras refuse to work
 // even though the correct width, height or fps is given
