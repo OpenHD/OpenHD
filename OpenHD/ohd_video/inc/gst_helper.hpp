@@ -606,18 +606,7 @@ static std::string create_qualcomm_camera1_stream(
   // Add encoder configuration with each setting on a separate line
   ss << "qtic2venc ";
   ss << "control-rate=1 ";               // Constant bitrate control
-  // ss << "insert-sps-pps=true ";           // Insert SPS and PPS headers
-  ss << "rotate=" << rotation << " "; // Apply rotation setting
-  // ss << "bitrate=" << bitrateBitsPerSecond << " "; // Set bitrate
-
-  // Set keyframe intervals
-  // ss << "iframeinterval=" << settings.h26x_keyframe_interval << " ";
-  // ss << "idrinterval=" << settings.h26x_keyframe_interval << " ";
-
-  // Enable max performance mode
-  // ss << "maxperf-enable=true ";
-
-  // Close off the configuration with pipeline separator
+  ss << "rotate=" << rotation << " ";
   ss << "! ";
 
   return ss.str();
