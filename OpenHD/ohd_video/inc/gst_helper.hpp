@@ -520,6 +520,7 @@ static std::string createRockchipEncoderPipeline(
   const int rotation = get_rotation_degree_0_90_180_270(settings);
   ss << " rotation=" << rotation;
   ss << "idr-interval=" << settings.h26x_keyframe_interval << " ";
+  ss << "intra-refresh-mode=" << settings.h26x_intra_refresh_type << " ";
   ss << " ! ";
   return ss.str();
 }
