@@ -587,7 +587,7 @@ static std::string createAllwinnerStream(const CameraSettings& settings) {
 }
 
 /**
- * For qrb5165 Cameras that do raw.
+ * For Qualcomm Cameras 
  */
 static std::string create_qualcomm_camera1_stream(
     const int device_index, const CameraSettings& settings) {
@@ -598,21 +598,16 @@ static std::string create_qualcomm_camera1_stream(
 int qcomIntraRefreshMode = (settings.h26x_intra_refresh_type == -1) 
                            ? 0 
                            : settings.h26x_intra_refresh_type + 1;
-  // Get the rotation value
   const int rotation = get_rotation_degree_qcom(settings);
-
-  // Add the camera source and raw video format specifications
   ss << fmt::format("qtiqmmfsrc camera={} ! ", device_index);
   ss << fmt::format("video/x-raw, format=NV12, width={}, height={}, framerate={}/1 ! ",
                     settings.streamed_video_format.width,
                     settings.streamed_video_format.height,
                     settings.streamed_video_format.framerate);
-
-  // Add encoder configuration with each setting on a separate line
   ss << "qtic2venc ";
-  ss << "control-rate=1 ";               // Constant bitrate control
+  ss << "control-rate=1 ";
   ss << "rotate=" << rotation << " ";
-  // ss << "intra-refresh-mode=" << settings.h26x_intra_refresh_type << " ";
+  ss << "intra-refresh-mode=" << settings.h26x_intra_refresh_type << " ";
   ss << "target-bitrate="<< bps << " ";
   ss << "! ";
 
