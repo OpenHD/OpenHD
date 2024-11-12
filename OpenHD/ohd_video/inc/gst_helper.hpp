@@ -607,7 +607,7 @@ int qcomIntraRefreshMode = (settings.h26x_intra_refresh_type == -1)
   ss << "qtic2venc ";
   ss << "control-rate=1 ";
   ss << "rotate=" << rotation << " ";
-  ss << "intra-refresh-mode=" << settings.h26x_intra_refresh_type << " ";
+  ss << "intra-refresh-mode=" << qcomIntraRefreshMode << " ";
   ss << "target-bitrate="<< bps << " ";
   ss << "! ";
 
