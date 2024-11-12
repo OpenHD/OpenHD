@@ -611,7 +611,7 @@ static std::string create_qualcomm_camera1_stream(
   ss << "control-rate=1 ";               // Constant bitrate control
   ss << "rotate=" << rotation << " ";
   // ss << "intra-refresh-mode=" << settings.h26x_intra_refresh_type << " ";
-  ss << "target-bitrate=" << bps << " ";
+  ss << "target-bitrate=1000000"<< " ";
   ss << "! ";
 
   return ss.str();
