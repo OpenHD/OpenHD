@@ -173,7 +173,7 @@ std::string GStreamerStream::create_source_encode_pipeline(
     pipeline << OHDGstHelper::create_nvidia_xavier_stream(setting);
   } else if (camera.camera_type == X_CAM_TYPE_QC_IMX577) {
     openhd::log::get_default()->warn("Using Qualcomm IMX577 camera type.");
-    pipeline << OHDGstHelper::create_nvidia_xavier_stream(setting);
+    pipeline << OHDGstHelper::create_qualcomm_camera1_stream(setting);
   } else {
     openhd::log::get_default()->warn("UNKNOWN CAMERA TYPE");
     pipeline << "ERROR";

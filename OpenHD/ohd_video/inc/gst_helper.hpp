@@ -593,7 +593,7 @@ static std::string createAllwinnerStream(const CameraSettings& settings) {
 /**
  * For qrb5165 Cameras that do raw.
  */
-static std::string createQrb5165Stream(
+static std::string create_qualcomm_camera1_stream(
     const int device_index, const CameraSettings& settings) {
   std::stringstream ss;
   ss << fmt::format("qtiqmmfsrc camera={} ! ", device_index);
