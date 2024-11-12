@@ -520,7 +520,7 @@ struct XCamera {
       return ret;
     } else if (camera_type == X_CAM_TYPE_QC_IMX577) {
       std::vector<ResolutionFramerate> ret;
-      //very basic integration, driver is missing a lot of settings
+      // very basic integration, driver is missing a lot of settings
       ret.push_back(ResolutionFramerate{1280, 720, 30});
       ret.push_back(ResolutionFramerate{1920, 1080, 30});
       return ret;
