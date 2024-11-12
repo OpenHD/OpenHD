@@ -590,7 +590,7 @@ static std::string createAllwinnerStream(const CameraSettings& settings) {
  * For qrb5165 Cameras that do raw.
  */
 static std::string create_qualcomm_camera1_stream(
-    const int device_index, const CameraSettings& settings, const int bitrateBitsPerSecond) {
+    const int device_index, const CameraSettings& settings) {
   std::stringstream ss;
 
   // Get the rotation value
