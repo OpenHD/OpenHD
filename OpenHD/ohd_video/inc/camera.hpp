@@ -525,6 +525,7 @@ struct XCamera {
       ret.push_back(ResolutionFramerate{1920, 1080, 30});
       // tested features:
       // SHDR = Not implemented
+      // ADRC = No direct change, but working
       return ret;
     } else if (camera_type == X_CAM_TYPE_QC_OV9282) {
       std::vector<ResolutionFramerate> ret;
