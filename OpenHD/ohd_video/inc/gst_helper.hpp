@@ -606,7 +606,7 @@ static std::string create_qualcomm_camera1_stream(
   // Add encoder configuration with each setting on a separate line
   ss << "qtic2venc ";
   ss << "control-rate=1 ";               // Constant bitrate control
-  ss << "insert-sps-pps=true ";           // Insert SPS and PPS headers
+  // ss << "insert-sps-pps=true ";           // Insert SPS and PPS headers
   ss << "rotate=" << rotation << " "; // Apply rotation setting
   // ss << "bitrate=" << bitrateBitsPerSecond << " "; // Set bitrate
 
