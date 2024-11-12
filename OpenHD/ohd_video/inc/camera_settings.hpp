@@ -155,7 +155,7 @@ static int get_rotation_degree_qcom(const CameraSettings& settings) {
   if (settings.openhd_flip == OPENHD_FLIP_NONE) return 0;
   if (settings.openhd_flip == OPENHD_FLIP_HORIZONTAL) return 1;
   if (settings.openhd_flip == OPENHD_FLIP_VERTICAL_AND_HORIZONTAL) return 2;
-  return 1;
+  return 2;
 }
 
 #endif
