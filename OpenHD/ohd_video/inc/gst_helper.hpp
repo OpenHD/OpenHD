@@ -596,7 +596,7 @@ static std::string createAllwinnerStream(const CameraSettings& settings) {
 static std::string create_qualcomm_camera1_stream(
     const int device_index, const CameraSettings& settings) {
   std::stringstream ss;
-  ss << fmt::format("qtiqmmfsrc eis=True camera={} ! ", device_index);
+  ss << fmt::format("qtiqmmfsrc camera={} shdr=true ! ", device_index);
   ss << fmt::format("video/x-raw, format=NV12, width={}, height={}, framerate={}/1 ! ",
                     settings.streamed_video_format.width,settings.streamed_video_format.height,
                     settings.streamed_video_format.framerate);
