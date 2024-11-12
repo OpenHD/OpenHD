@@ -76,6 +76,9 @@ AirCameraGenericSettings AirCameraGenericSettingsHolder::create_default()
   } else if (OHDPlatform::instance().platform_type ==
              X_PLATFORM_TYPE_NVIDIA_XAVIER) {
     ret.primary_camera_type = X_CAM_TYPE_NVIDIA_XAVIER_IMX577;
+  } else if (OHDPlatform::instance().platform_type ==
+             X_PLATFORM_TYPE_QUALCOMM_QRB5165) {
+    ret.primary_camera_type = X_CAM_TYPE_QC_IMX577;
   }
 
   return ret;
