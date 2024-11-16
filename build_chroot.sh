@@ -49,7 +49,6 @@ elif [[ "${DISTRO}" == "focal" ]]; then
     g++ -v
     cmake -v
 fi
-
 # Package the build using custom configurations
 chmod +x ./package.sh
 ./package.sh "${CUSTOM}" "${ARCH}" "${DISTRO}" "${FLAVOR}" || { echo "Packaging failed"; exit 1; }
