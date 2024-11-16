@@ -36,7 +36,11 @@ echo "Custom: ${CUSTOM}"
 echo "Arch: ${ARCH}"
 
 # Install dependencies based on DISTRO or ARCH
-if [[ "${DISTRO}" == "focal" ]]; then
+
+if [[ "${ARCH}" == "arm64" ]]; then
+    chmod +x ./install_build_dep.sh
+    ./install_build_dep.sh rock5 || { echo "Failed to install build dependencies"; exit 1; }
+elif [[ "${DISTRO}" == "focal" ]]; then
     apt-get update || { echo "Failed to update and upgrade packages"; exit 1; }
     chmod +x ./install_build_dep.sh
     ./install_build_dep.sh rock5 || { echo "Failed to install build dependencies"; exit 1; }
@@ -44,9 +48,6 @@ if [[ "${DISTRO}" == "focal" ]]; then
     gcc -v
     g++ -v
     cmake -v
-elif [[ "${ARCH}" == "arm64" ]]; then
-    chmod +x ./install_build_dep.sh
-    ./install_build_dep.sh rock5 || { echo "Failed to install build dependencies"; exit 1; }
 fi
 
 # Package the build using custom configurations
