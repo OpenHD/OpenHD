@@ -106,6 +106,7 @@ void openhd::wb::set_tx_power_for_all_cards(
                                            rtl8812au_tx_power_index_override);
     } else {
       const auto tx_power_mbm = openhd::milli_watt_to_mBm(tx_power_mw);
+      const auto tx_power_mbm_eu = openhd::milli_watt_to_mBm_eu(tx_power_mw);
       openhd::log::get_default()->warn("Tx power mW:{} mBm:{}", tx_power_mw,
                                         tx_power_mbm);
       if (card.type == WiFiCardType::OPENHD_RTL_88X2BU) {
@@ -115,8 +116,7 @@ void openhd::wb::set_tx_power_for_all_cards(
         wifi::commandhelper::openhd_driver_set_tx_power(
             card.type, card.device_name, tx_power_mbm);
       } else if (card.type == WiFiCardType::OPENHD_RTL_88X2EU) {
-        const auto tx_power_calculated = tx_power_mbm * 1.41;
-        wifi::commandhelper::iw_set_tx_power(card.device_name, tx_power_calculated);
+        wifi::commandhelper::iw_set_tx_power(card.device_name, tx_power_mbm_eu);
       } else if (card.type == WiFiCardType::OPENHD_RTL_8852BU) {
         wifi::commandhelper::openhd_driver_set_tx_power(
             card.type, card.device_name, tx_power_mbm);

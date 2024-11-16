@@ -86,6 +86,13 @@ static uint32_t milli_watt_to_mBm(uint32_t milli_watt) {
   return std::lround(milli_dbm);
 }
 
+static uint32_t milli_watt_to_mBm_eu(uint32_t milli_watt) {
+  const double tmp = std::log10(static_cast<double>(milli_watt) / 1.0);
+  const double milli_dbm = tmp * 10 * 100 * 1.41;
+  // return static_cast<uint32_t>(milli_dbm);
+  return std::lround(milli_dbm);
+}
+
 }  // namespace openhd
 
 #endif  // OPENHD_OPENHD_OHD_INTERFACE_INC_VALIDATE_SETTINGS_HELPER_H_
