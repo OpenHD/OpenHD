@@ -114,6 +114,9 @@ void openhd::wb::set_tx_power_for_all_cards(
       } else if (card.type == WiFiCardType::OPENHD_RTL_88X2CU) {
         wifi::commandhelper::openhd_driver_set_tx_power(
             card.type, card.device_name, tx_power_mbm);
+      } else if (card.type == WiFiCardType::OPENHD_RTL_88X2EU) {
+        const auto tx_power_calculated = tx_power_mbm;
+        wifi::commandhelper::iw_set_tx_power(card.device_name, tx_power_calculated);
       } else if (card.type == WiFiCardType::OPENHD_RTL_8852BU) {
         wifi::commandhelper::openhd_driver_set_tx_power(
             card.type, card.device_name, tx_power_mbm);
