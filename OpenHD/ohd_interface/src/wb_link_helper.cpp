@@ -120,6 +120,10 @@ void openhd::wb::set_tx_power_for_all_cards(
         wifi::commandhelper::openhd_driver_set_tx_power(
             const auto tx_power_mbm = openhd::milli_watt_to_mBm(tx_power_mw,1.0f);
             card.type, card.device_name, tx_power_mbm);
+      } else if (card.type == WiFiCardType::QUALCOMM) {
+        wifi::commandhelper::openhd_driver_set_tx_power(
+            const auto tx_power_mbm = openhd::milli_watt_to_mBm(tx_power_mw,1.0f);
+            card.type, card.device_name, tx_power_mbm);
       } else {
         wifi::commandhelper::iw_set_tx_power(card.device_name, tx_power_mbm);
       }
