@@ -100,13 +100,13 @@ void openhd::wb::set_tx_power_for_all_cards(
       break;
     }
     if (card.type == WiFiCardType::OPENHD_RTL_88X2AU) {
-      openhd::log::get_default()->debug("RTL8812AU tx_pwr_idx_override: {}",
+      openhd::log::get_default()->warn("RTL8812AU tx_pwr_idx_override: {}",
                                         rtl8812au_tx_power_index_override);
       wifi::commandhelper::iw_set_tx_power(card.device_name,
                                            rtl8812au_tx_power_index_override);
     } else {
       const auto tx_power_mbm = openhd::milli_watt_to_mBm(tx_power_mw);
-      openhd::log::get_default()->debug("Tx power mW:{} mBm:{}", tx_power_mw,
+      openhd::log::get_default()->warn("Tx power mW:{} mBm:{}", tx_power_mw,
                                         tx_power_mbm);
       if (card.type == WiFiCardType::OPENHD_RTL_88X2BU) {
         wifi::commandhelper::openhd_driver_set_tx_power(
