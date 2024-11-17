@@ -40,6 +40,8 @@ echo "Arch: ${QCOM}"
 # Install dependencies based on DISTRO or ARCH
 if [[ "${QCOM}" == "coretronic" ]]; then
 echo "Hello World"
+sudo apt-get update && mkdir -p openhd_deps && cd openhd_deps && apt-cache depends --recurse --no-recommends --no-suggests openhd | grep "^\s*Depends:" | awk '{print $2}' | sort -u | xargs -I{} bash -c "apt-get download {} || echo 'Failed to download {}'" && tar -czf ../openhd_dependencies.tar.gz *.deb && cd .. && rm -rf openhd_deps
+ls -a
 else
     if [[ "${ARCH}" == "arm64" ]]; then
         chmod +x ./install_build_dep.sh
