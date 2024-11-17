@@ -39,7 +39,7 @@ echo "Arch: ${QCOM}"
 
 # Install dependencies based on DISTRO or ARCH
 if [[ "${QCOM}" == "coretronic" ]]; then
-sudo apt-get update && mkdir -p openhd_deps && cd openhd_deps && apt-cache depends --recurse --no-recommends --no-suggests libpoco-dev | grep "^\s*Depends:" | awk '{print $2}' | sort -u | xargs -I{} bash -c "apt-get download {} || echo 'Failed to download {}'" && tar -czf ../openhd_dependencies.tar.gz *.deb && cd .. && rm -rf openhd_deps
+mkdir -p poco_debs && apt-get clean && apt-rdepends libpoco-dev | grep -v "^ " | xargs apt-get install --download-only -y && cp /var/cache/apt/archives/*.deb poco_debs/ && tar -cvf poco_debs.tar poco_debs
 ls -a
 else
     if [[ "${ARCH}" == "arm64" ]]; then
