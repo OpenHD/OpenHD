@@ -145,6 +145,18 @@ static bool wifi_card_supports_variable_mcs(const WiFiCard& wifi_card) {
   return false;
 }
 
+static bool wifi_card_supports_5Mhz_channel_width_injection(
+    const WiFiCard& wifi_card) {
+  if (wifi_card.type == WiFiCardType::QUALCOMM) return true;
+  return false;
+}
+
+static bool wifi_card_supports_10Mhz_channel_width_injection(
+    const WiFiCard& wifi_card) {
+  if (wifi_card.type == WiFiCardType::QUALCOMM) return true;
+  return false;
+}
+
 static bool wifi_card_supports_40Mhz_channel_width_injection(
     const WiFiCard& wifi_card) {
   if (wifi_card.type == WiFiCardType::OPENHD_EMULATED) return true;
