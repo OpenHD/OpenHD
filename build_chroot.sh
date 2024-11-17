@@ -24,6 +24,7 @@ if [[ -f cloudsmith_api_key.txt && -f distro.txt && -f flavor.txt && -f repo.txt
     REPO=$(cat repo.txt)
     CUSTOM=$(cat custom.txt)
     ARCH=$(cat arch.txt)
+    QCOM=$(cat qcom.txt)
 else
     echo "One or more required configuration files are missing."
     exit 1
@@ -34,23 +35,27 @@ echo "Distro: ${DISTRO}"
 echo "Flavor: ${FLAVOR}"
 echo "Custom: ${CUSTOM}"
 echo "Arch: ${ARCH}"
+echo "Arch: ${QCOM}"
 
 # Install dependencies based on DISTRO or ARCH
+if [[ "${QCOM}" == "coretronic" ]]; then
+echo "Hello World"
+else
+    if [[ "${ARCH}" == "arm64" ]]; then
+        chmod +x ./install_build_dep.sh
+        ./install_build_dep.sh rock5 || { echo "Failed to install build dependencies"; exit 1; }
+    elif [[ "${DISTRO}" == "focal" ]]; then
+        apt-get update || { echo "Failed to update and upgrade packages"; exit 1; }
+        chmod +x ./install_build_dep.sh
+        ./install_build_dep.sh rock5 || { echo "Failed to install build dependencies"; exit 1; }
+        apt-get install -y libv4l-dev || { echo "Failed to install libv4l-dev"; exit 1; }
+        gcc -v
+        g++ -v
+        cmake -v
+    fi
+    # Package the build using custom configurations
+    chmod +x ./package.sh
+    ./package.sh "${CUSTOM}" "${ARCH}" "${DISTRO}" "${FLAVOR}" || { echo "Packaging failed"; exit 1; }
 
-if [[ "${ARCH}" == "arm64" ]]; then
-    chmod +x ./install_build_dep.sh
-    ./install_build_dep.sh rock5 || { echo "Failed to install build dependencies"; exit 1; }
-elif [[ "${DISTRO}" == "focal" ]]; then
-    apt-get update || { echo "Failed to update and upgrade packages"; exit 1; }
-    chmod +x ./install_build_dep.sh
-    ./install_build_dep.sh rock5 || { echo "Failed to install build dependencies"; exit 1; }
-    apt-get install -y libv4l-dev || { echo "Failed to install libv4l-dev"; exit 1; }
-    gcc -v
-    g++ -v
-    cmake -v
+    echo "Script execution completed successfully."
 fi
-# Package the build using custom configurations
-chmod +x ./package.sh
-./package.sh "${CUSTOM}" "${ARCH}" "${DISTRO}" "${FLAVOR}" || { echo "Packaging failed"; exit 1; }
-
-echo "Script execution completed successfully."

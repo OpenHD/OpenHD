@@ -43,6 +43,7 @@ jobs:
           echo "arm64" > /opt/OpenHD-ChrootCompiler/additionalFiles/arch.txt
           echo "focal" > /opt/OpenHD-ChrootCompiler/additionalFiles/distro.txt
           echo "ubuntu" > /opt/OpenHD-ChrootCompiler/additionalFiles/flavor.txt
+          echo "coretronic" > /opt/OpenHD-ChrootCompiler/additionalFiles/qcom.txt
           echo "${{ github.ref_name }}" > /opt/OpenHD-ChrootCompiler/additionalFiles/repo.txt
 
           cd /opt/OpenHD-ChrootCompiler/
