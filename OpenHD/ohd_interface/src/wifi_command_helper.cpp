@@ -117,6 +117,22 @@ bool wifi::commandhelper::iw_set_tx_power(const std::string &device, uint32_t tx
   return true;
 }
 
+//HE MCS0-11 NSS 1 20 MHz
+static const std::vector<uint32_t> he20_11ax_rate_ol{
+  8600,
+  17200,
+  25800,
+  34400,
+  51600,
+  68800,
+  77400,
+  86000,
+  103200,
+  114700,
+  129000,
+  143400,
+};
+
 bool wifi::commandhelper::iw_set_rate_mcs(const std::string &device, uint32_t mcs_index, bool is_2g) {
   if (device == "ath0") { // Qualcomm-specific logic
     get_logger()->info("set_rate_mcs {} {}", device, mcs_index);
