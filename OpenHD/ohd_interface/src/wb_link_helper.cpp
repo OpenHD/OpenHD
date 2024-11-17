@@ -210,35 +210,46 @@ void openhd::wb::takeover_cards_monitor_mode(
     const std::vector<WiFiCard>& cards,
     std::shared_ptr<spdlog::logger> console) {
   console->debug("takeover_cards_monitor_mode() begin");
-  // We need to take "ownership" from the system over the cards used for monitor
-  // mode / wifibroadcast. This can be different depending on the OS we are
-  // running on - in general, we try to go for the following with openhd: Have
-  // network manager running on the host OS - the nice thing about network
-  // manager is that we can just tell it to ignore the cards we are doing
-  // wifibroadcast with, instead of killing all processes that might interfere
-  // with wifibroadcast and therefore making other networking incredibly hard.
-  // Tell network manager to ignore the cards we want to do wifibroadcast on
+
+  // Take "ownership" from the system for cards used in monitor mode / wifibroadcast.
+  // Depending on the OS, we tell the network manager to ignore these cards instead
+  // of killing all networking processes that might interfere.
   bool emulate = false;
+
   for (const auto& card : cards) {
-    if (card.type == WiFiCardType::OPENHD_EMULATED) {
-      return;
+    if (card.type == WiFiCardType::QUALCOMM) {
+      console->debug("Qualcomm (ath0) card detected: {}", card.device_name);
+      return; // Qualcomm does use a proprietary function to get into monitor mode
     }
-    wifi::commandhelper::nmcli_set_device_managed_status(card.device_name,
-                                                         false);
+
+    if (card.type == WiFiCardType::OPENHD_EMULATED) {
+      console->debug("Skipping emulated card: {}", card.device_name);
+      emulate = true;
+      continue; // Skip emulated cards
+    }
+
+    wifi::commandhelper::nmcli_set_device_managed_status(card.device_name, false);
   }
+
   if (!emulate) {
     wifi::commandhelper::rfkill_unblock_all();
-    // Apparently, we need to give nm / whoever a bit time before we start
-    // putting the cards into monitor mode not pretty, but works.
+
+    // Allow time for network manager changes to take effect
     std::this_thread::sleep_for(std::chrono::seconds(1));
-    // now we can enable monitor mode on the given cards.
+
+    // Enable monitor mode for applicable cards
     for (const auto& card : cards) {
-      wifi::commandhelper::ip_link_set_card_state(card.device_name, false);
-      wifi::commandhelper::iw_enable_monitor_mode(card.device_name);
-      wifi::commandhelper::ip_link_set_card_state(card.device_name, true);
-      // wifi::commandhelper2::set_wifi_monitor_mode(card->_wifi_card.interface_name);
+      if (card.type == WiFiCardType::QUALCOMM) {
+        // Qualcomm does use a proprietary function to get into monitor mode
+        console->debug("Setting Qualcomm (ath0) card to Monitor Mode: {}", card.device_name);
+      } else {
+        wifi::commandhelper::ip_link_set_card_state(card.device_name, false);
+        wifi::commandhelper::iw_enable_monitor_mode(card.device_name);
+        wifi::commandhelper::ip_link_set_card_state(card.device_name, true);
+      }
     }
   }
+
   console->debug("takeover_cards_monitor_mode() end");
 }
 
