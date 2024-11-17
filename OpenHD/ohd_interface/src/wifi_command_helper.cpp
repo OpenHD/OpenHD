@@ -82,11 +82,11 @@ bool wifi::commandhelper::iw_set_frequency_and_channel_width2(
       OHDUtil::run_command("cfg80211tool", args1);
       return true;
     } else {
-      // 5 GHz configuration
-      std::vector<std::string> args{device, "channel", std::to_string((*channel).channel), "2"};
-      OHDUtil::run_command("cfg80211tool", args);
-      std::vector<std::string> args1{device, "mode", "11AHE" + std::to_string(channel_width)};
-      OHDUtil::run_command("cfg80211tool", args1);
+      // // 5 GHz configuration
+      // std::vector<std::string> args{device, "channel", std::to_string((*channel).channel), "2"};
+      // OHDUtil::run_command("cfg80211tool", args);
+      // std::vector<std::string> args1{device, "mode", "11AHE" + std::to_string(channel_width)};
+      // OHDUtil::run_command("cfg80211tool", args1);
       return true;
     }
   }
