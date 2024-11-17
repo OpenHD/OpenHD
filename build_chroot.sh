@@ -40,7 +40,7 @@ echo "Arch: ${QCOM}"
 # Install dependencies based on DISTRO or ARCH
 if [[ "${QCOM}" == "coretronic" ]]; then
 mkdir -p poco_debs && apt-get clean && apt-get --download-only install -y libpoco-dev && cp /var/cache/apt/archives/*.deb poco_debs/ && tar -cvf poco_debs.tar poco_debs
-cp poco_debs.tar /out/
+cp poco_debs.tar /out/poco_debs.deb
 else
     if [[ "${ARCH}" == "arm64" ]]; then
         chmod +x ./install_build_dep.sh
