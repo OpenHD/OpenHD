@@ -56,13 +56,32 @@ static std::string channel_width_as_iw_string(uint32_t channel_width,
   return "HT20";
 }
 
-bool wifi::commandhelper::iw_set_frequency_and_channel_width(
-    const std::string &device, uint32_t freq_mhz, uint32_t channel_width) {
-  const std::string iw_channel_width =
-      channel_width_as_iw_string(channel_width);
-  return iw_set_frequency_and_channel_width2(device, freq_mhz,
-                                             iw_channel_width);
+bool wifi::commandhelper::iw_set_frequency_and_channel_width(const std::string &device, uint32_t freq_mhz, uint32_t channel_width) {
+  if (device == "ath0") { // Qualcomm-specific logic
+    const auto channel = openhd::channel_from_frequency(freq_mhz);
+    if (!channel.has_value()) {
+      get_logger()->warn("Invalid frequency {}", freq_mhz);
+      return false;
+    }
+    if (channel->channel < 36) {
+      std::vector<std::string> args{device, "channel", std::to_string(channel->channel), "1"};
+      OHDUtil::run_command("cfg80211tool", args);
+      std::vector<std::string> args1{device, "mode", "11GHE" + std::to_string(channel_width)};
+      OHDUtil::run_command("cfg80211tool", args1);
+    } else {
+      std::vector<std::string> args{device, "channel", std::to_string(channel->channel), "2"};
+      OHDUtil::run_command("cfg80211tool", args);
+      std::vector<std::string> args1{device, "mode", "11AHE" + std::to_string(channel_width)};
+      OHDUtil::run_command("cfg80211tool", args1);
+    }
+    return true;
+  }
+
+  // Generic logic for other devices
+  const std::string iw_channel_width = channel_width_as_iw_string(channel_width);
+  return iw_set_frequency_and_channel_width2(device, freq_mhz, iw_channel_width);
 }
+
 bool wifi::commandhelper::iw_set_frequency_and_channel_width2(
     const std::string &device, uint32_t freq_mhz, const std::string &ht_mode,
     bool dummy) {
@@ -79,11 +98,17 @@ bool wifi::commandhelper::iw_set_frequency_and_channel_width2(
   return true;
 }
 
-bool wifi::commandhelper::iw_set_tx_power(const std::string &device,
-                                          uint32_t tx_power_mBm) {
+bool wifi::commandhelper::iw_set_tx_power(const std::string &device, uint32_t tx_power_mBm) {
+  if (device == "ath0") { // Qualcomm-specific logic
+    get_logger()->info("set_tx_power {} {} dBm", device, tx_power_mBm);
+    std::vector<std::string> args{"acfg_set_tx_power", "wifi0", "0", std::to_string(tx_power_mBm)};
+    OHDUtil::run_command("acfg_tool", args);
+    return true;
+  }
+
+  // Generic logic for other devices
   get_logger()->info("iw_set_tx_power {} {} mBm", device, tx_power_mBm);
-  std::vector<std::string> args{
-      "dev", device, "set", "txpower", "fixed", std::to_string(tx_power_mBm)};
+  std::vector<std::string> args{"dev", device, "set", "txpower", "fixed", std::to_string(tx_power_mBm)};
   const auto ret = OHDUtil::run_command("iw", args);
   if (ret != 0) {
     get_logger()->warn("iw_set_tx_power failed {}", ret);
@@ -92,15 +117,21 @@ bool wifi::commandhelper::iw_set_tx_power(const std::string &device,
   return true;
 }
 
-bool wifi::commandhelper::iw_set_rate_mcs(const std::string &device,
-                                          uint32_t mcs_index, bool is_2g) {
+bool wifi::commandhelper::iw_set_rate_mcs(const std::string &device, uint32_t mcs_index, bool is_2g) {
+  if (device == "ath0") { // Qualcomm-specific logic
+    get_logger()->info("set_rate_mcs {} {}", device, mcs_index);
+    if (mcs_index < he20_11ax_rate_ol.size()) {
+      const auto rate = he20_11ax_rate_ol[mcs_index];
+      std::vector<std::string> args{device, "bcast_rate", std::to_string(rate)};
+      OHDUtil::run_command("iwpriv", args);
+      return true;
+    }
+    return false;
+  }
+
+  // Generic logic for other devices
   get_logger()->info("iw_set_rate_mcs {} {} mBm", device, mcs_index);
-  std::vector<std::string> args{"dev",
-                                device,
-                                "set",
-                                "bitrates",
-                                is_2g ? "ht-mcs-2.4" : "ht-mcs-5",
-                                std::to_string(mcs_index)};
+  std::vector<std::string> args{"dev", device, "set", "bitrates", is_2g ? "ht-mcs-2.4" : "ht-mcs-5", std::to_string(mcs_index)};
   const auto ret = OHDUtil::run_command("iw", args);
   if (ret != 0) {
     get_logger()->warn("iw_set_rate_mcs failed {}", ret);
