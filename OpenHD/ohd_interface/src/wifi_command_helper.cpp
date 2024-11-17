@@ -75,11 +75,11 @@ bool wifi::commandhelper::iw_set_frequency_and_channel_width2(
     get_logger()->info("ath0: Channel {} derived from frequency {}", (*channel).channel, freq_mhz);
 
     if ((*channel).channel < 36) {
-      // 2.4 GHz configuration
-      std::vector<std::string> args{device, "channel", std::to_string((*channel).channel), "1"};
-      OHDUtil::run_command("cfg80211tool", args);
-      std::vector<std::string> args1{device, "mode", "11GHE" + std::to_string(channel_width)};
-      OHDUtil::run_command("cfg80211tool", args1);
+      // // 2.4 GHz configuration
+      // std::vector<std::string> args{device, "channel", std::to_string((*channel).channel), "1"};
+      // OHDUtil::run_command("cfg80211tool", args);
+      // std::vector<std::string> args1{device, "mode", "11GHE" + std::to_string(channel_width)};
+      // OHDUtil::run_command("cfg80211tool", args1);
       return true;
     } else {
       // // 5 GHz configuration
