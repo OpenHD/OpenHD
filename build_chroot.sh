@@ -39,8 +39,35 @@ echo "Arch: ${QCOM}"
 
 # Install dependencies based on DISTRO or ARCH
 if [[ "${QCOM}" == "coretronic" ]]; then
-mkdir -p poco_debs && apt-get clean && apt-get --download-only install -y libpoco-dev && cp /var/cache/apt/archives/*.deb poco_debs/ && tar -cvf poco_debs.tar poco_debs
-cp poco_debs.tar /out/poco_debs.deb
+
+# Create a directory for the downloaded .deb files
+mkdir -p poco_debs
+
+# Clean the APT cache
+apt-get clean
+
+# Download only the required package without installing
+apt-get --download-only install -y libpoco-dev
+
+# Copy all .deb files to the poco_debs directory
+cp /var/cache/apt/archives/*.deb poco_debs/
+
+# Create a directory to extract the .deb files
+mkdir -p poco_debs_extracted
+
+# Extract all .deb files into the poco_debs_extracted directory
+for deb in poco_debs/*.deb; do
+    dpkg-deb -x "$deb" poco_debs_extracted/
+done
+
+# Create a tarball of the extracted files
+tar -cvf poco_debs_extracted.tar poco_debs_extracted
+
+# Rename the tarball with the .deb extension
+cp poco_debs_extracted.tar /out/poco_debs.deb
+
+# Cleanup (optional)
+rm -rf poco_debs poco_debs_extracted poco_debs_extracted.tar
 else
     if [[ "${ARCH}" == "arm64" ]]; then
         chmod +x ./install_build_dep.sh
