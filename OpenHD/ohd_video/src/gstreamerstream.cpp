@@ -179,7 +179,7 @@ std::string GStreamerStream::create_source_encode_pipeline(
     pipeline << "ERROR";
   }
 
-  openhd::log::get_default()->warn("Pipeline created: {}", pipeline.str());
+  openhd::log::get_default()->debug("Pipeline created: {}", pipeline.str());
   return pipeline.str();
 }
 
