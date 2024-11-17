@@ -64,40 +64,14 @@ bool wifi::commandhelper::iw_set_frequency_and_channel_width(
 }
 
 bool wifi::commandhelper::iw_set_frequency_and_channel_width2(
-    const std::string &device, uint32_t freq_mhz, const std::string &ht_mode,
-    bool dummy) {
-  get_logger()->info("{}iw_set_frequency_and_channel_width2 {} {}Mhz {}",
-                     dummy ? "DUMMY! " : "", device, freq_mhz, ht_mode);
+    const std::string &device, uint32_t freq_mhz, const std::string &ht_mode) {
+  get_logger()->info("iw_set_frequency_and_channel_width2 {} {}MHz {}", device, freq_mhz, ht_mode);
 
-  // Qualcomm-specific channel logic
-  if (!device.compare("ath0")) {
-    const auto channel = openhd::channel_from_frequency(freq_mhz);
-    get_logger()->info("ath0: Channel {} derived from frequency {}", (*channel).channel, freq_mhz);
-
-    if ((*channel).channel < 36) {
-      // 2.4 GHz configuration
-      std::vector<std::string> args{device, "channel", std::to_string((*channel).channel), "1"};
-      OHDUtil::run_command("cfg80211tool", args);
-      std::vector<std::string> args1{device, "mode", "11GHE" + std::to_string(channel_width)};
-      OHDUtil::run_command("cfg80211tool", args1);
-      return true;
-    } else {
-      // 5 GHz configuration
-      std::vector<std::string> args{device, "channel", std::to_string((*channel).channel), "2"};
-      OHDUtil::run_command("cfg80211tool", args);
-      std::vector<std::string> args1{device, "mode", "11AHE" + std::to_string(channel_width)};
-      OHDUtil::run_command("cfg80211tool", args1);
-      return true;
-    }
-  }
-
-  // Default behavior for non-ath0 devices
   std::vector<std::string> args{
       "dev", device, "set", "freq", std::to_string(freq_mhz), ht_mode};
   const auto ret = OHDUtil::run_command("iw", args);
   if (ret != 0) {
-    get_logger()->warn("iw {}Mhz@{} not supported {}", freq_mhz, ht_mode, ret);
-    std::cout << std::flush;
+    get_logger()->warn("iw {}MHz@{} not supported {}", freq_mhz, ht_mode, ret);
     return false;
   }
   return true;
