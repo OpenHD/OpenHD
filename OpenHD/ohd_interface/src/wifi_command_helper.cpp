@@ -103,33 +103,75 @@ bool wifi::commandhelper::iw_set_frequency_and_channel_width2(
   return true;
 }
 
-bool wifi::commandhelper::iw_set_tx_power(const std::string &device,
-                                          uint32_t tx_power_mBm) {
+bool wifi::commandhelper::iw_set_tx_power(const std::string &device, uint32_t tx_power_mBm) {
+  if (!device.compare("ath0")) {
+    // Qualcomm-specific logic for 'ath0'
+    get_logger()->info("set_tx_power (Qualcomm) {} {} dBm", device, tx_power_mBm);
+    std::vector<std::string> args{"acfg_set_tx_power", "wifi0", "0", std::to_string(tx_power_mBm)};
+    OHDUtil::run_command("acfg_tool", args);
+    return true; // Assume success for Qualcomm-specific operation
+  }
+
+  // Default behavior for other devices
   get_logger()->info("iw_set_tx_power {} {} mBm", device, tx_power_mBm);
   std::vector<std::string> args{
       "dev", device, "set", "txpower", "fixed", std::to_string(tx_power_mBm)};
   const auto ret = OHDUtil::run_command("iw", args);
+
   if (ret != 0) {
     get_logger()->warn("iw_set_tx_power failed {}", ret);
     return false;
   }
+
   return true;
 }
 
-bool wifi::commandhelper::iw_set_rate_mcs(const std::string &device,
-                                          uint32_t mcs_index, bool is_2g) {
+//HE MCS0-11 NSS 1 20 MHz Qualcomm
+static const std::vector<uint32_t> he20_11ax_rate_ol{
+  8600,
+  17200,
+  25800,
+  34400,
+  51600,
+  68800,
+  77400,
+  86000,
+  103200,
+  114700,
+  129000,
+  143400,
+};
+
+bool wifi::commandhelper::iw_set_rate_mcs(const std::string &device, uint32_t mcs_index, bool is_2g) {
+  if (!device.compare("ath0")) {
+    // Qualcomm-specific logic for 'ath0'
+    get_logger()->info("set_rate_mcs (Qualcomm) {} {}", device, mcs_index);
+
+    // Ensure the MCS index is within the valid range for Qualcomm's implementation
+    if (mcs_index >= 0 && mcs_index < he20_11ax_rate_ol.size()) {
+      const auto rate = he20_11ax_rate_ol[mcs_index];
+      std::vector<std::string> args{device, "bcast_rate", std::to_string(rate)};
+      OHDUtil::run_command("iwpriv", args);
+      return true; // Assume success for Qualcomm-specific operation
+    } else {
+      get_logger()->warn("Invalid MCS index for Qualcomm-specific implementation: {}", mcs_index);
+      return false;
+    }
+  }
+
+  // Default behavior for other devices
   get_logger()->info("iw_set_rate_mcs {} {} mBm", device, mcs_index);
-  std::vector<std::string> args{"dev",
-                                device,
-                                "set",
-                                "bitrates",
-                                is_2g ? "ht-mcs-2.4" : "ht-mcs-5",
-                                std::to_string(mcs_index)};
+  std::vector<std::string> args{
+      "dev", device, "set", "bitrates",
+      is_2g ? "ht-mcs-2.4" : "ht-mcs-5",
+      std::to_string(mcs_index)};
   const auto ret = OHDUtil::run_command("iw", args);
+
   if (ret != 0) {
     get_logger()->warn("iw_set_rate_mcs failed {}", ret);
     return false;
   }
+
   return true;
 }
 
