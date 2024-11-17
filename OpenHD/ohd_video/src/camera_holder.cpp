@@ -291,7 +291,7 @@ void CameraHolder::check_remaining_space_air_recording(bool call_callback) {
 
   if (!error_logged) {
     openhd::log::get_default()->warn(
-        "Not enough free space available. Remaining space: {} MB Funkyque",
+        "Not enough free space available. Remaining space: {} MB",
         OHDFilesystemUtil::get_remaining_space_in_mb());
     error_logged = true;
   }
