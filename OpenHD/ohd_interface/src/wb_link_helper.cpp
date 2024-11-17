@@ -1,7 +1,3 @@
-//
-// Created by consti10 on 10.12.22.
-//
-
 #include "wb_link_helper.h"
 
 #include "wb_link_rate_helper.hpp"
@@ -219,9 +215,8 @@ void openhd::wb::takeover_cards_monitor_mode(
   for (const auto& card : cards) {
     if (card.type == WiFiCardType::QUALCOMM) {
       console->debug("Qualcomm (ath0) card detected: {}", card.device_name);
-      return; // Qualcomm does use a proprietary function to get into monitor mode
+      return;
     }
-
     if (card.type == WiFiCardType::OPENHD_EMULATED) {
       console->debug("Skipping emulated card: {}", card.device_name);
       emulate = true;
@@ -240,8 +235,31 @@ void openhd::wb::takeover_cards_monitor_mode(
     // Enable monitor mode for applicable cards
     for (const auto& card : cards) {
       if (card.type == WiFiCardType::QUALCOMM) {
-        // Qualcomm does use a proprietary function to get into monitor mode
-        console->debug("Setting Qualcomm (ath0) card to Monitor Mode: {}", card.device_name);
+        // Execute the script to enable monitor mode for Qualcomm cards
+        const char* script_path = "/data/misc/wifi/start_monitor";
+        console->debug("Running script to set Qualcomm (ath0) card to Monitor Mode: {}", script_path);
+
+        FILE* pipe = popen(script_path, "r");
+        if (!pipe) {
+          console->error("Failed to execute script: {}", script_path);
+          continue;  // Skip to the next card
+        }
+
+        // Read the output of the script
+        char buffer[128];
+        std::string result;
+        while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+          result += buffer;
+        }
+
+        // Wait for the script to complete
+        int return_code = pclose(pipe);
+        if (return_code == 0) {
+          console->info("Script executed successfully. Output:\n{}", result);
+        } else {
+          console->error("Script execution failed with code {}. Output:\n{}",
+                         return_code, result);
+        }
       } else {
         wifi::commandhelper::ip_link_set_card_state(card.device_name, false);
         wifi::commandhelper::iw_enable_monitor_mode(card.device_name);
@@ -249,9 +267,9 @@ void openhd::wb::takeover_cards_monitor_mode(
       }
     }
   }
-
   console->debug("takeover_cards_monitor_mode() end");
 }
+
 
 void openhd::wb::giveback_cards_monitor_mode(
     const std::vector<WiFiCard>& cards,
