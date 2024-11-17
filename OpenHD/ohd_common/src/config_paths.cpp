@@ -38,6 +38,7 @@ const char* getVideoPath() {
   } else if (OHDFilesystemUtil::exists(FILENAME_VIDEO_EXTERNAL_X20)) {
     return VIDEO_PATH ? VIDEO_PATH : "/external/Videos/";
   } else {
+    OHDFilesystemUtil::create_directories("/home/openhd/Videos/");
     return "/home/openhd/Videos/";
   }
 }
