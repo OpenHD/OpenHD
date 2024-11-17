@@ -86,7 +86,8 @@ std::optional<WiFiCard> DWifiCards::fill_linux_wifi_card_identifiers(
   if (interface_name == "ath0") {
     filename_device_uevent = fmt::format("/sys/class/net/wifi0/device/uevent");
   } else {
-    filename_device_uevent = fmt::format("/sys/class/net/{}/device/uevent", interface_name);
+    filename_device_uevent =
+        fmt::format("/sys/class/net/{}/device/uevent", interface_name);
   }
 
   // Check if the uevent file exists

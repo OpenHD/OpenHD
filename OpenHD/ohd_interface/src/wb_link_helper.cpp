@@ -207,9 +207,10 @@ void openhd::wb::takeover_cards_monitor_mode(
     std::shared_ptr<spdlog::logger> console) {
   console->debug("takeover_cards_monitor_mode() begin");
 
-  // Take "ownership" from the system for cards used in monitor mode / wifibroadcast.
-  // Depending on the OS, we tell the network manager to ignore these cards instead
-  // of killing all networking processes that might interfere.
+  // Take "ownership" from the system for cards used in monitor mode /
+  // wifibroadcast. Depending on the OS, we tell the network manager to ignore
+  // these cards instead of killing all networking processes that might
+  // interfere.
   bool emulate = false;
 
   for (const auto& card : cards) {
@@ -220,10 +221,11 @@ void openhd::wb::takeover_cards_monitor_mode(
     if (card.type == WiFiCardType::OPENHD_EMULATED) {
       console->debug("Skipping emulated card: {}", card.device_name);
       emulate = true;
-      continue; // Skip emulated cards
+      continue;  // Skip emulated cards
     }
 
-    wifi::commandhelper::nmcli_set_device_managed_status(card.device_name, false);
+    wifi::commandhelper::nmcli_set_device_managed_status(card.device_name,
+                                                         false);
   }
 
   if (!emulate) {
@@ -237,7 +239,9 @@ void openhd::wb::takeover_cards_monitor_mode(
       if (card.type == WiFiCardType::QUALCOMM) {
         // Execute the script to enable monitor mode for Qualcomm cards
         const char* script_path = "/data/misc/wifi/start_monitor";
-        console->debug("Running script to set Qualcomm (ath0) card to Monitor Mode: {}", script_path);
+        console->debug(
+            "Running script to set Qualcomm (ath0) card to Monitor Mode: {}",
+            script_path);
 
         FILE* pipe = popen(script_path, "r");
         if (!pipe) {
@@ -269,7 +273,6 @@ void openhd::wb::takeover_cards_monitor_mode(
   }
   console->debug("takeover_cards_monitor_mode() end");
 }
-
 
 void openhd::wb::giveback_cards_monitor_mode(
     const std::vector<WiFiCard>& cards,
