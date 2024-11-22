@@ -233,7 +233,7 @@ bool wifi::commandhelper::openhd_driver_set_frequency_and_channel_width(
     openhd::log::get_default()->warn("Cannot find channel {}Mhz", freq_mhz);
   }
   const auto channel =
-      channel_opt.value_or(openhd::channel_from_frequency(5140).value());
+      channel_opt.value_or(openhd::channel_from_frequency(5120).value());
   const std::string rtl8812au_channel = fmt::format("{}", channel.channel);
   openhd::log::get_default()->warn(
       "openhd_driver_set_frequency_and_channel_width wanted:{}@{}Mhz, using "
