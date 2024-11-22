@@ -130,7 +130,13 @@ static std::vector<WifiChannel> get_channels_2G() {
 static std::vector<WifiChannel> get_channels_5G() {
   return std::vector<WifiChannel>{
       // https://en.wikipedia.org/wiki/List_of_WLAN_channels#5_GHz_(802.11a/h/j/n/ac/ax)
+      // illegal channels
+      WifiChannel{5080, 16, WifiSpace::G5_8, true, true, true, true},
+      WifiChannel{5100, 20, WifiSpace::G5_8, true, true, true, true},
+      WifiChannel{5120, 24, WifiSpace::G5_8, true, true, true, true},
+      WifiChannel{5140, 28, WifiSpace::G5_8, true, true, true, true},
       WifiChannel{5160, 32, WifiSpace::G5_8, true, true, true, true},
+      // legal channels
       WifiChannel{5180, 36, WifiSpace::G5_8, true, true, true, true},
       WifiChannel{5200, 40, WifiSpace::G5_8, true, true, true, false},
       WifiChannel{5220, 44, WifiSpace::G5_8, true, true, true, true},
@@ -175,8 +181,23 @@ static std::vector<WifiChannel> get_channels_5G() {
       // This one (177) is listed in wikipedia, but not valid in any country -
       // but it works on rtl8812bu
       WifiChannel{5885, 177, WifiSpace::G5_8, true, true, true, false},
-      // this one does not work on bu, au no idea - for now, hide it
+      // More illegal channels
       WifiChannel{5905, 181, WifiSpace::G5_8, true, false, false, true},
+      WifiChannel{5925, 185, WifiSpace::G5_8, true, false, false, true},
+      WifiChannel{5945, 189, WifiSpace::G5_8, true, false, false, true},
+      WifiChannel{5965, 193, WifiSpace::G5_8, true, false, false, true},
+      WifiChannel{5985, 197, WifiSpace::G5_8, true, false, false, true},
+      WifiChannel{6005, 201, WifiSpace::G5_8, true, false, false, true},
+      WifiChannel{6025, 205, WifiSpace::G5_8, true, false, false, true},
+      WifiChannel{6045, 209, WifiSpace::G5_8, true, false, false, true},
+      WifiChannel{6065, 213, WifiSpace::G5_8, true, false, false, true},
+      WifiChannel{6085, 233, WifiSpace::G5_8, true, false, false, true},
+      WifiChannel{6105, 237, WifiSpace::G5_8, true, false, false, true},
+      WifiChannel{6125, 241, WifiSpace::G5_8, true, false, false, true},
+      WifiChannel{6145, 245, WifiSpace::G5_8, true, false, false, true},
+      WifiChannel{6165, 249, WifiSpace::G5_8, true, false, false, true},
+      WifiChannel{6205, 253, WifiSpace::G5_8, true, false, false, true},
+
   };
 };
 // Returns all Wi-Fi channels 5G that are legal in any country
