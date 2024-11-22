@@ -130,6 +130,7 @@ static std::vector<WifiChannel> get_channels_2G() {
 static std::vector<WifiChannel> get_channels_5G() {
   return std::vector<WifiChannel>{
       // https://en.wikipedia.org/wiki/List_of_WLAN_channels#5_GHz_(802.11a/h/j/n/ac/ax)
+      WifiChannel{5160, 32, WifiSpace::G5_8, true, true, true, true},
       WifiChannel{5180, 36, WifiSpace::G5_8, true, true, true, true},
       WifiChannel{5200, 40, WifiSpace::G5_8, true, true, true, false},
       WifiChannel{5220, 44, WifiSpace::G5_8, true, true, true, true},
