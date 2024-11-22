@@ -122,6 +122,9 @@ struct WiFiCard {
     return type == WiFiCardType::OPENHD_RTL_88X2AU &&
            sub_type == WIFI_CARD_SUB_TYPE_RTL8812AU_X20;
   };
+  [[nodiscard]] bool is_rtl88x2eu() const {
+    return type == WiFiCardType::OPENHD_RTL_88X2EU;
+  };
   // supported 2G frequencies, in mhz
   std::vector<uint32_t> supported_frequencies_2G{};
   // supported 5G frequencies, in mhz
