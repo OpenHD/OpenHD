@@ -182,16 +182,16 @@ static std::vector<WifiChannel> get_channels_5G() {
       // but it works on rtl8812bu
       WifiChannel{5885, 177, WifiSpace::G5_8, true, true, true, false},
       // More illegal channels
-      WifiChannel{5905, 181, WifiSpace::G5_8, true, false, false, true},
-      WifiChannel{5925, 185, WifiSpace::G5_8, true, false, false, true},
-      WifiChannel{5945, 189, WifiSpace::G5_8, true, false, false, true},
-      WifiChannel{5965, 193, WifiSpace::G5_8, true, false, false, true},
-      WifiChannel{5985, 197, WifiSpace::G5_8, true, false, false, true},
-      WifiChannel{6005, 201, WifiSpace::G5_8, true, false, false, true},
-      WifiChannel{6025, 205, WifiSpace::G5_8, true, false, false, true},
-      WifiChannel{6045, 209, WifiSpace::G5_8, true, false, false, true},
-      WifiChannel{6065, 213, WifiSpace::G5_8, true, false, false, true},
-      WifiChannel{6085, 233, WifiSpace::G5_8, true, false, false, true},
+      WifiChannel{5905, 181, WifiSpace::G5_8, true, true, true, true},
+      WifiChannel{5925, 185, WifiSpace::G5_8, true, true, true, true},
+      WifiChannel{5945, 189, WifiSpace::G5_8, true, true, true, true},
+      WifiChannel{5965, 193, WifiSpace::G5_8, true, true, true, true},
+      WifiChannel{5985, 197, WifiSpace::G5_8, true, true, true, true},
+      WifiChannel{6005, 201, WifiSpace::G5_8, true, true, true, true},
+      WifiChannel{6025, 205, WifiSpace::G5_8, true, true, true, true},
+      WifiChannel{6045, 209, WifiSpace::G5_8, true, true, true, true},
+      WifiChannel{6065, 213, WifiSpace::G5_8, true, true, true, true},
+      WifiChannel{6085, 233, WifiSpace::G5_8, true, true, true, true},
   };
 };
 // Returns all Wi-Fi channels 5G that are legal in any country
