@@ -192,12 +192,6 @@ static std::vector<WifiChannel> get_channels_5G() {
       WifiChannel{6045, 209, WifiSpace::G5_8, true, false, false, true},
       WifiChannel{6065, 213, WifiSpace::G5_8, true, false, false, true},
       WifiChannel{6085, 233, WifiSpace::G5_8, true, false, false, true},
-      WifiChannel{6105, 237, WifiSpace::G5_8, true, false, false, true},
-      WifiChannel{6125, 241, WifiSpace::G5_8, true, false, false, true},
-      WifiChannel{6145, 245, WifiSpace::G5_8, true, false, false, true},
-      WifiChannel{6165, 249, WifiSpace::G5_8, true, false, false, true},
-      WifiChannel{6205, 253, WifiSpace::G5_8, true, false, false, true},
-
   };
 };
 // Returns all Wi-Fi channels 5G that are legal in any country
