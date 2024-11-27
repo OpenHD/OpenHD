@@ -1,4 +1,4 @@
-#include "ethernetlink.h"
+#include "ethernet_link.h"
 #include <cstring>
 #include <arpa/inet.h>
 #include <unistd.h>
