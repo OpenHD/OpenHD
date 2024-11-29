@@ -2,6 +2,7 @@
 #include <cstring>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <iostream>
 
 EthernetLink::EthernetLink(OHDProfile profile) : m_profile(profile) {
     // Load the Ethernet configuration from ethernet.txt if it exists
