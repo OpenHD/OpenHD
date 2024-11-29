@@ -6,12 +6,6 @@
 #include <memory>
 #include <thread>
 
-// Define constants for IP addresses and ports
-static constexpr const char* AIR_UNIT_IP = "192.168.2.18";
-static constexpr const char* GROUND_UNIT_IP = "192.168.2.1";
-static constexpr int VIDEO_PORT = 5910;
-static constexpr int TELEMETRY_PORT = 5920;
-
 class EthernetLink : public OHDLink {
 public:
     explicit EthernetLink(OHDProfile profile);
@@ -24,6 +18,13 @@ public:
 
 private:
     OHDProfile m_profile;
+
+    // Configuration variables (private)
+    std::string GROUND_UNIT_IP = "192.168.2.1"; // Default IP
+    std::string AIR_UNIT_IP = "192.168.2.18";    // Default IP
+    int VIDEO_PORT = 5910;                      // Default video port
+    int TELEMETRY_PORT = 5920;                  // Default telemetry port
+
     std::unique_ptr<openhd::UDPForwarder> m_video_tx;   // Video transmitter
     std::unique_ptr<openhd::UDPReceiver> m_video_rx;   // Video receiver
     std::unique_ptr<openhd::UDPForwarder> m_telemetry_tx; // Telemetry transmitter

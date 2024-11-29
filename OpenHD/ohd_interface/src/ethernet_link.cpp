@@ -4,6 +4,22 @@
 #include <unistd.h>
 
 EthernetLink::EthernetLink(OHDProfile profile) : m_profile(profile) {
+    // Load the Ethernet configuration from ethernet.txt if it exists
+    if (openhd::tmp::file_ethernet_exists()) {
+        try {
+            auto config = openhd::tmp::read_file_ethernet();
+            GROUND_UNIT_IP = config.ground_unit_ip;
+            AIR_UNIT_IP = config.air_unit_ip;
+            VIDEO_PORT = config.video_port;
+            TELEMETRY_PORT = config.telemetry_port;
+        } catch (const std::exception& ex) {
+            std::cerr << "Failed to read ethernet.txt: " << ex.what() << std::endl;
+            throw;
+        }
+    } else {
+        std::cerr << "ethernet.txt not found. Using default configuration." << std::endl;
+    }
+
     // Initialize either air or ground unit based on the profile
     if (m_profile.is_air) {
         initialize_air_unit();
