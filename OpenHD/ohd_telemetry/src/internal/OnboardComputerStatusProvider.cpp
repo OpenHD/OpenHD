@@ -127,6 +127,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
     int microhard_snr = 29;
     // normal stuff
     int8_t curr_temperature_core = 0;
+    int8_t curr_temperature_txc = 0;
     int curr_clock_cpu = 0;
     int curr_clock_isp = 0;
     int curr_clock_h264 = 0;
@@ -174,8 +175,10 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       curr_rpi_undervolt = openhd::onboard::rpi::vcgencmd_get_undervolt();
     } else {
       const auto cpu_temp = (int8_t)openhd::onboard::readTemperature();
+      const auto txc_temp = 20;
       const auto platform = OHDPlatform::instance();
       curr_temperature_core = cpu_temp;
+      curr_temperature_txc = txc_temp;
       if (platform.is_rock() || platform.platform_type == X_PLATFORM_TYPE_X86) {
         if (OHDFilesystemUtil::exists(
                 "/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq")) {
