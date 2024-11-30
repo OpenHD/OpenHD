@@ -4,24 +4,23 @@
 #include "openhd_util.h"
 #include "openhd_config.h"
 
-
 #include <cstring>
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <iostream>
 
-
 static std::string ETHERNET_FILE_PATH =
     std::string(getConfigBasePath()) + "ethernet.txt";
 
-EthernetLink::EthernetLink(OHDProfile profile) : m_profile(profile) {
+EthernetLink::EthernetLink(const openhd::Config& config, OHDProfile profile)
+    : m_config(config), m_profile(profile) {
     // Load the Ethernet configuration from ethernet.txt if it exists
-    if (OHDFilesystemUtil::exists(ETHERNET_FILE_PATH)){
+    if (OHDFilesystemUtil::exists(ETHERNET_FILE_PATH)) {
         try {
-            GROUND_UNIT_IP = config.GROUND_UNIT_IP;
-            AIR_UNIT_IP = config.AIR_UNIT_IP;
-            VIDEO_PORT = config.VIDEO_PORT;
-            TELEMETRY_PORT = config.TELEMETRY_PORT;
+            GROUND_UNIT_IP = m_config.GROUND_UNIT_IP;
+            AIR_UNIT_IP = m_config.AIR_UNIT_IP;
+            VIDEO_PORT = m_config.VIDEO_PORT;
+            TELEMETRY_PORT = m_config.TELEMETRY_PORT;
         } catch (const std::exception& ex) {
             std::cerr << "Failed to read ethernet.txt: " << ex.what() << std::endl;
             throw;
