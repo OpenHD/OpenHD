@@ -190,8 +190,8 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
           std::string wificard_temp = "/proc/net/rtl88x2eu_ohd/" + *result + "/thermal_state";
           std::string fileContent = OHDFilesystemUtil::read_file(wificard_temp);
           txc_temp = extract_temperature(fileContent);
+          openhd::log::get_default()->warn("Temperature: {}", temperature);
       }    
-      txc_temp = 0;
       }
       const auto platform = OHDPlatform::instance();
       curr_temperature_core = cpu_temp;
