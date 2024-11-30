@@ -48,10 +48,11 @@ OHDInterface::OHDInterface(OHDProfile profile1)
   m_opt_hotspot_card = std::nullopt;
   const auto config = openhd::load_config();
 
-  // creating ethernetlink without any checking for testing
+  if (OHDFilesystemUtil::exists(ETHERNET_FILE_PATH)) {
   m_ethernet_link = std::make_shared<EthernetLink>(m_profile);
   m_console->warn("Using Link: EthernetLink");
-
+  }
+  
   // Check if Microhard device is present
   bool microhard_device_present = is_microhard_device_present();
   if (microhard_device_present) {
