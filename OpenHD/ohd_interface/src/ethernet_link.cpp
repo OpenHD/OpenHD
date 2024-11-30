@@ -1,4 +1,5 @@
 #include "ethernet_link.h"
+#include "openhd_util_filesystem.h"
 #include "config_paths.h"
 #include "openhd_util.h"
 
