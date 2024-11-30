@@ -117,7 +117,7 @@ void openhd::wb::set_tx_power_for_all_cards(
           card.type == WiFiCardType::OPENHD_RTL_8852BU ||
           card.type == WiFiCardType::QUALCOMM) {
         wifi::commandhelper::openhd_driver_set_tx_power(
-            card.type, card.device_name, 1000);
+            card.type, card.device_name, tx_power_mbm);
       } else {
         wifi::commandhelper::iw_set_tx_power(card.device_name, tx_power_mbm);
       }
