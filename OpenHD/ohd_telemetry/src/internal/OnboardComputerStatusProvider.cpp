@@ -175,7 +175,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       curr_rpi_undervolt = openhd::onboard::rpi::vcgencmd_get_undervolt();
     } else {
       const auto cpu_temp = (int8_t)openhd::onboard::readTemperature();
-      const auto txc_temp = 0;
+      int txc_temp = 0;
       if (OHDFilesystemUtil::exists("/proc/net/rtl88x2eu/")) {
       txc_temp = 66;
       }
