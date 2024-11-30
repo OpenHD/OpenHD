@@ -174,7 +174,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
           openhd::onboard::rpi::VCGENCMD_CLOCK_V3D);
       curr_rpi_undervolt = openhd::onboard::rpi::vcgencmd_get_undervolt();
     } else {
-      const auto cpu_temp = (int8_t)openhd::onboard::readTemperature();
+      // const auto cpu_temp = (int8_t)openhd::onboard::readTemperature();
       int txc_temp = 0;
       if (OHDFilesystemUtil::exists("/proc/net/rtl88x2eu_ohd/")) {
       auto wifiCard1 = OHDFilesystemUtil::getFirstMatchingDirectoryByPrefix("/proc/net/rtl88x2eu_ohd/", "wlx");
