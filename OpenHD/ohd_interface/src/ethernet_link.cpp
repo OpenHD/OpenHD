@@ -1,5 +1,7 @@
 #include "ethernet_link.h"
 #include "config_paths.h"
+#include "openhd_util.h"
+
 #include <cstring>
 #include <arpa/inet.h>
 #include <unistd.h>
