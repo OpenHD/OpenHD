@@ -43,9 +43,9 @@ EthernetConfig load_ethernet_config(const std::string& filepath) {
             throw std::runtime_error("Failed to parse configuration file");
         }
 
-        // Parse configuration values
-        config.ground_unit_ip = reader.Get<std::string>("ethernet", "ground_unit_ip", config.ground_unit_ip);
-        config.air_unit_ip = reader.Get<std::string>("ethernet", "air_unit_ip", config.air_unit_ip);
+        // Parse configuration values with std::move for default string values
+        config.ground_unit_ip = reader.Get<std::string>("ethernet", "ground_unit_ip", std::move(config.ground_unit_ip));
+        config.air_unit_ip = reader.Get<std::string>("ethernet", "air_unit_ip", std::move(config.air_unit_ip));
         config.video_port = reader.Get<int>("ethernet", "video_port", config.video_port);
         config.telemetry_port = reader.Get<int>("ethernet", "telemetry_port", config.telemetry_port);
     } catch (const std::exception& ex) {
