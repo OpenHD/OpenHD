@@ -50,13 +50,12 @@ std::optional<std::string> OHDFilesystemUtil::getFirstMatchingDirectoryByPrefix(
         for (const auto &entry : std::filesystem::directory_iterator(dirPath)) {
             if (entry.is_directory()) {
                 const auto dirName = entry.path().filename().string();
-                if (dirName.rfind(prefix, 0) == 0) { // Check if prefix matches
+                if (dirName.rfind(prefix, 0) == 0) {
                     return dirName;
                 }
             }
         }
     } catch (const std::filesystem::filesystem_error &e) {
-        // Handle filesystem errors, if needed
     }
     return std::nullopt;
 }

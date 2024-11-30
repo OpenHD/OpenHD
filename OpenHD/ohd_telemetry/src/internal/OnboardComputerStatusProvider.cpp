@@ -179,8 +179,9 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       if (OHDFilesystemUtil::exists("/proc/net/rtl88x2eu_ohd/")) {
       const auto result = OHDFilesystemUtil::getFirstMatchingDirectoryByPrefix("/proc/net/rtl88x2eu_ohd", "wlx");
       if (result) {
-          std::string warningMessage = "/proc/net/rtl88x2eu_ohd/" + *result + "/thermal_state";
-                    openhd::log::get_default()->warn(warningMessage);
+          std::string wificard_temp = "/proc/net/rtl88x2eu_ohd/" + *result + "/thermal_state";
+          std::string temperature_temp OHDFilesystemUtil::read_file(wificard_temp);  
+          openhd::log::get_default()->warn(temperature_temp);
       } else {
           openhd::log::get_default()->warn("No matching directory found for /proc/net/rtl88x2eu_ohd/ starting with 'wlx'");
       }     
