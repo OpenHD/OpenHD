@@ -3,13 +3,11 @@
 //
 
 #include "OnboardComputerStatusProvider.h"
+
 #include "onboard_computer_status.hpp"
 #include "onboard_computer_status_rpi.hpp"
 #include "openhd_spdlog_include.h"
 #include "openhd_util_filesystem.h"
-#include "../../ohd_interface/inc/wb_link_settings.h"
-#include "../../ohd_interface/inc/wifi_card.h"
-
 
 // INA219 stuff
 constexpr float SHUNT_OHMS = 0.1f;
@@ -99,9 +97,13 @@ void OnboardComputerStatusProvider::calculate_cpu_usage_until_terminate() {
     const auto value = openhd::onboard::read_cpuload_once_blocking();
     const auto read_time = std::chrono::steady_clock::now() - before;
     if (value.has_value()) {
+      // lock mutex and write out
       std::lock_guard<std::mutex> lock(m_curr_onboard_computer_status_mutex);
       m_curr_onboard_computer_status.cpu_cores[0] = value.value();
     }
+    // std::cout<<"Took:"<<std::chrono::duration_cast<std::chrono::milliseconds>(read_time).count()<<"\n";
+    //  top can block up to X seconds, but in case it doesn't make sure we don't
+    //  neccessarily waste cpu here
     const auto minimum_delay = std::chrono::seconds(1);
     if (read_time < minimum_delay) {
       std::this_thread::sleep_for((minimum_delay - read_time));
@@ -111,7 +113,10 @@ void OnboardComputerStatusProvider::calculate_cpu_usage_until_terminate() {
 
 void OnboardComputerStatusProvider::calculate_other_until_terminate() {
   while (!terminate) {
+    // We always sleep for 1 second
+    // just to make sure to not hog too much cpu here.
     std::this_thread::sleep_for(std::chrono::seconds(1));
+    // microhard link
     int microhard_enabled = 21;
     int microhard_rssi = 22;
     int microhard_tx_pwr = 24;
@@ -120,6 +125,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
     int microhard_tx_rate = 27;
     int microhard_noise = 28;
     int microhard_snr = 29;
+    // normal stuff
     int8_t curr_temperature_core = 0;
     int8_t curr_temperature_txc = 0;
     int curr_clock_cpu = 0;
@@ -155,6 +161,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
     if (OHDPlatform::instance().is_rpi()) {
       curr_temperature_core =
           (int8_t)openhd::onboard::rpi::read_temperature_soc_degree();
+      // temporary, until we have our own message
       curr_clock_cpu = openhd::onboard::rpi::read_curr_frequency_mhz(
           openhd::onboard::rpi::VCGENCMD_CLOCK_CPU);
       curr_clock_isp = openhd::onboard::rpi::read_curr_frequency_mhz(
@@ -168,13 +175,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       curr_rpi_undervolt = openhd::onboard::rpi::vcgencmd_get_undervolt();
     } else {
       const auto cpu_temp = (int8_t)openhd::onboard::readTemperature();
-
-      std::vector<WiFiCard> wifibroadcast_cards;
-      WiFiCard card;
-      wifibroadcast_cards.push_back(card);
-
-      const auto settings = openhd::create_default_wb_stream_settings(wifibroadcast_cards);
-      const auto txc_temp = (wifibroadcast_cards.at(0).supports_2GHz()) ? 20 : 0;
+      const auto txc_temp = 20;
       const auto platform = OHDPlatform::instance();
       curr_temperature_core = cpu_temp;
       curr_temperature_txc = txc_temp;
@@ -186,11 +187,13 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       }
     }
     {
+      // lock mutex and write out
       std::lock_guard<std::mutex> lock(m_curr_onboard_computer_status_mutex);
       m_curr_onboard_computer_status.temperature_core[0] =
           curr_temperature_core;
       m_curr_onboard_computer_status.temperature_core[1] =
           curr_temperature_txc;
+      // temporary, until we have our own message
       m_curr_onboard_computer_status.storage_type[0] = curr_clock_cpu;
       m_curr_onboard_computer_status.storage_type[1] = curr_clock_isp;
       m_curr_onboard_computer_status.storage_type[2] = curr_clock_h264;
@@ -206,11 +209,12 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       m_curr_onboard_computer_status.link_rx_rate[4] = microhard_freq;
       m_curr_onboard_computer_status.link_rx_rate[5] = microhard_noise;
       m_curr_onboard_computer_status.link_rx_rate[6] = microhard_snr;
+      // openhd status message
       m_curr_onboard_computer_status.link_type[0] =
-          ohd_platform;
-      m_curr_onboard_computer_status.link_type[1] = 0;
-      m_curr_onboard_computer_status.link_type[2] = 0;
-      m_curr_onboard_computer_status.link_type[3] = 0;
+          ohd_platform;                                 // ohd_platform;
+      m_curr_onboard_computer_status.link_type[1] = 0;  // ohd_wifi;
+      m_curr_onboard_computer_status.link_type[2] = 0;  // ohd_cam;
+      m_curr_onboard_computer_status.link_type[3] = 0;  // ohd_ident;
       m_curr_onboard_computer_status.ram_usage =
           static_cast<uint32_t>(curr_ram_usage.ram_usage_perc);
       m_curr_onboard_computer_status.ram_total = curr_ram_usage.ram_total_mb;
