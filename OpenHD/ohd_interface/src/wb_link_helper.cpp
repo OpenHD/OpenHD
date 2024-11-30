@@ -103,14 +103,16 @@ void openhd::wb::set_tx_power_for_all_cards(
                                            rtl8812au_tx_power_index_override);
     } else {
       float adjustment_factor = 1.0f;
+      float adjustment_value = 1.0f;
       if (card.type == WiFiCardType::OPENHD_RTL_88X2EU) {
         adjustment_factor = 1.1f;
+        adjustement_value = 1000;
       }
       if (card.type == WiFiCardType::QUALCOMM) {
         adjustment_factor = 1.2f;
       }
       const auto tx_power_mbm =
-          openhd::milli_watt_to_mBm(tx_power_mw, adjustment_factor);
+          openhd::milli_watt_to_mBm(tx_power_mw, adjustment_factor, adjustment_value);
       if (card.type == WiFiCardType::OPENHD_RTL_88X2BU ||
           card.type == WiFiCardType::OPENHD_RTL_88X2CU ||
           card.type == WiFiCardType::OPENHD_RTL_88X2EU ||
