@@ -1,14 +1,19 @@
 #include "ethernet_link.h"
+#include "config_paths.h"
 #include <cstring>
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <iostream>
 
+
+static std::string ETHERNET_FILE_PATH =
+    std::string(getConfigBasePath()) + "ethernet.txt";
+
 EthernetLink::EthernetLink(OHDProfile profile) : m_profile(profile) {
     // Load the Ethernet configuration from ethernet.txt if it exists
-    if (openhd::tmp::file_ethernet_exists()) {
+    if (OHDFilesystemUtil::exists(ETHERNET_FILE_PATH)){
         try {
-            auto config = openhd::tmp::read_file_ethernet();
+            auto config = OHDFilesystemUtil::opt_read_file("/proc/cpuinfo");
             GROUND_UNIT_IP = config.ground_unit_ip;
             AIR_UNIT_IP = config.air_unit_ip;
             VIDEO_PORT = config.video_port;
