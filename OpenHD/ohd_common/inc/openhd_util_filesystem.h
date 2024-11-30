@@ -28,6 +28,10 @@ std::vector<std::string> getAllEntriesFullPathInDirectory(
 std::vector<std::string> getAllEntriesFilenameOnlyInDirectory(
     const std::string& directory);
 
+static std::optional<std::string> getFirstMatchingDirectoryByPrefix(
+    const std::string &directory, 
+    const std::string &prefix);
+
 // same as boost::filesystem::exists
 bool exists(const std::string& file);
 

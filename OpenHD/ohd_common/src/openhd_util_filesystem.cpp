@@ -42,6 +42,22 @@ OHDFilesystemUtil::getAllEntriesFilenameOnlyInDirectory(
   return ret;
 }
 
+ static std::optional<std::string> getFirstMatchingDirectoryByPrefix(
+        const std::string &directory, 
+        const std::string &prefix) 
+    {
+        std::filesystem::path dirPath(directory);
+        for (auto &entry : std::filesystem::directory_iterator(dirPath)) {
+            if (entry.is_directory()) {
+                const auto dirName = entry.path().filename().string();
+                if (dirName.rfind(prefix, 0) == 0) { // rfind(prefix, 0) checks if prefix is at position 0
+                    return dirName;
+                }
+            }
+        }
+        return std::nullopt;
+    }
+
 bool OHDFilesystemUtil::exists(const std::string &file) {
   return std::filesystem::exists(file);
 }
