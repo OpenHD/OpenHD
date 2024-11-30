@@ -176,7 +176,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
     } else {
       const auto cpu_temp = (int8_t)openhd::onboard::readTemperature();
       int txc_temp = 0;
-      if (OHDFilesystemUtil::exists("/proc/net/rtl88x2eu/")) {
+      if (OHDFilesystemUtil::exists("/proc/net/rtl88x2eu_ohd/")) {
       txc_temp = 66;
       }
       const auto platform = OHDPlatform::instance();
