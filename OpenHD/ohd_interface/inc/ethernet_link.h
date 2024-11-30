@@ -2,6 +2,7 @@
 #define OPENHD_ETHERNET_LINK_H
 
 #include "openhd_link.hpp"
+#include "openhd_config.h"
 #include "openhd_util.h"
 #include "openhd_udp.h"
 #include <memory>

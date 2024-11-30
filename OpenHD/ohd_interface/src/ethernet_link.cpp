@@ -2,6 +2,8 @@
 #include "openhd_util_filesystem.h"
 #include "config_paths.h"
 #include "openhd_util.h"
+#include "openhd_config.h"
+
 
 #include <cstring>
 #include <arpa/inet.h>
@@ -16,12 +18,10 @@ EthernetLink::EthernetLink(OHDProfile profile) : m_profile(profile) {
     // Load the Ethernet configuration from ethernet.txt if it exists
     if (OHDFilesystemUtil::exists(ETHERNET_FILE_PATH)){
         try {
-            // auto config = OHDFilesystemUtil::read_file(ETHERNET_FILE_PATH);
-            // GROUND_UNIT_IP = config.ground_unit_ip;
-            // AIR_UNIT_IP = config.air_unit_ip;
-            // VIDEO_PORT = config.video_port;
-            // TELEMETRY_PORT = config.telemetry_port;
-            std::cerr << "Ethernet-Link used: " << ex.what() << std::endl;
+            GROUND_UNIT_IP = config.GROUND_UNIT_IP;
+            AIR_UNIT_IP = config.AIR_UNIT_IP;
+            VIDEO_PORT = config.VIDEO_PORT;
+            TELEMETRY_PORT = config.TELEMETRY_PORT;
         } catch (const std::exception& ex) {
             std::cerr << "Failed to read ethernet.txt: " << ex.what() << std::endl;
             throw;
