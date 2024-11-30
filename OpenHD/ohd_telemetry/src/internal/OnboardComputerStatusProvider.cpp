@@ -10,7 +10,6 @@
 #include "../../ohd_interface/inc/wb_link_settings.h"
 #include "../../ohd_interface/inc/wifi_card.h"
 
-
 // INA219 stuff
 constexpr float SHUNT_OHMS = 0.1f;
 constexpr float MAX_EXPECTED_AMPS = 3.2f;
@@ -35,9 +34,9 @@ static int read_battery_percentage_linux() {
   for (const auto& filepath : filepaths) {
     if (OHDFilesystemUtil::exists(filepath)) {
       auto content = OHDFilesystemUtil::opt_read_file(filepath);
-      if (!content.has_value()) return -2;  // File read error
+      if (!content.has_value()) return -2;
       auto value = OHDUtil::string_to_int(content.value());
-      if (!value.has_value()) return -3;  // Conversion error
+      if (!value.has_value()) return -3;
       return value.value();
     }
   }
@@ -49,9 +48,9 @@ static int read_battery_charging_linux() {
   for (const auto& filepath : filepaths) {
     if (OHDFilesystemUtil::exists(filepath)) {
       auto content = OHDFilesystemUtil::opt_read_file(filepath);
-      if (!content.has_value()) return -2;  // File read error
+      if (!content.has_value()) return -2;
       std::string state = content.value();
-      int result = -1;  // Default value
+      int result = -1;
       if (state == "Charging\n") {
         result = 1337;
       } else if (state == "Discharging\n") {
@@ -59,10 +58,10 @@ static int read_battery_charging_linux() {
       } else {
         result = -1;
       }
-      return result;  // Returning the charging state
+      return result;
     }
   }
-  return -1;  // No battery status file found
+  return -1;
 }
 OnboardComputerStatusProvider::OnboardComputerStatusProvider(bool enable)
     : m_enable(enable), m_ina_219(SHUNT_OHMS, MAX_EXPECTED_AMPS) {
@@ -168,9 +167,14 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       curr_rpi_undervolt = openhd::onboard::rpi::vcgencmd_get_undervolt();
     } else {
       const auto cpu_temp = (int8_t)openhd::onboard::readTemperature();
-      std::vector<openhd::WiFiCard> wifibroadcast_cards = ...; 
+
+      std::vector<WiFiCard> wifibroadcast_cards;
+      WiFiCard card;
+      card.supports_2GHz = true; // Example configuration
+      wifibroadcast_cards.push_back(card);
+
       const auto settings = openhd::create_default_wb_stream_settings(wifibroadcast_cards);
-      const auto txc_temp = (wifibroadcast_cards.at(0).supports_2GHz()) ? 20 : 0;
+      const auto txc_temp = (wifibroadcast_cards.at(0).supports_2GHz) ? 20 : 0;
       const auto platform = OHDPlatform::instance();
       curr_temperature_core = cpu_temp;
       curr_temperature_txc = txc_temp;
@@ -203,10 +207,10 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       m_curr_onboard_computer_status.link_rx_rate[5] = microhard_noise;
       m_curr_onboard_computer_status.link_rx_rate[6] = microhard_snr;
       m_curr_onboard_computer_status.link_type[0] =
-          ohd_platform; // ohd_platform;
-      m_curr_onboard_computer_status.link_type[1] = 0;  // ohd_wifi;
-      m_curr_onboard_computer_status.link_type[2] = 0;  // ohd_cam;
-      m_curr_onboard_computer_status.link_type[3] = 0;  // ohd_ident;
+          ohd_platform;
+      m_curr_onboard_computer_status.link_type[1] = 0;
+      m_curr_onboard_computer_status.link_type[2] = 0;
+      m_curr_onboard_computer_status.link_type[3] = 0;
       m_curr_onboard_computer_status.ram_usage =
           static_cast<uint32_t>(curr_ram_usage.ram_usage_perc);
       m_curr_onboard_computer_status.ram_total = curr_ram_usage.ram_total_mb;
