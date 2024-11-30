@@ -108,34 +108,37 @@ bool wifi::commandhelper::iw_set_frequency_and_channel_width2(
 bool wifi::commandhelper::iw_set_tx_power(const std::string &device,
                                           uint32_t tx_power_mBm) {
   if (device == "ath0") {  // Qualcomm-specific logic
-    get_logger()->info("set_tx_power {} {} dBm", device, tx_power_mBm);
+    get_logger()->warn("set_tx_power {} {} dBm", device, tx_power_mBm);
     std::vector<std::string> args{"acfg_set_tx_power", "wifi0", "0",
                                   std::to_string(tx_power_mBm)};
-    OHDUtil::run_command("acfg_tool", args);
+    get_logger()->warn("Running command: acfg_tool with arguments: [{}]",
+                       fmt::join(args, ", "));
+    const auto ret = OHDUtil::run_command("acfg_tool", args);
+    if (ret != 0) {
+      get_logger()->warn("Qualcomm-specific set_tx_power failed for device {} with return code {}", device, ret);
+      return false;
+    }
     return true;
   }
 
-// Generic logic for other devices
-get_logger()->warn("Starting iw_set_tx_power for device: {} with power: {} mBm", device, tx_power_mBm);
+  // Generic logic for other devices
+  get_logger()->warn("Setting tx_power for device: {} to {} mBm", device, tx_power_mBm);
 
-// Log the full command being run for debugging purposes
-std::vector<std::string> args{
-    "dev", device, "set", "txpower", "fixed", std::to_string(tx_power_mBm)};
-get_logger()->warn("Running command: iw with arguments: [{}]", fmt::join(args, ", "));
+  std::vector<std::string> args{
+      "dev", device, "set", "txpower", "fixed", std::to_string(tx_power_mBm)};
+  get_logger()->warn("Running command: iw with arguments: [{}]",
+                     fmt::join(args, ", "));
 
-// Execute the command
-const auto ret = OHDUtil::run_command("iw", args);
-
-// Check the return status and log detailed information
-if (ret != 0) {
-    get_logger()->warn("iw_set_tx_power failed for device: {} with power: {} mBm. Return code: {}. Arguments: [{}]", 
+  const auto ret = OHDUtil::run_command("iw", args);
+  if (ret != 0) {
+    get_logger()->warn("Failed to set tx_power for device: {}. Power: {} mBm, Return Code: {}. Command Args: [{}]",
                        device, tx_power_mBm, ret, fmt::join(args, ", "));
     return false;
-}
+  }
 
-// If the command succeeds, log success
-get_logger()->warn("iw_set_tx_power succeeded for device: {} with power: {} mBm", device, tx_power_mBm);
-return true;
+  get_logger()->warn("Successfully set tx_power for device: {} to {} mBm", device, tx_power_mBm);
+  return true;
+}
 
 
 // HE MCS0-11 NSS 1 20 MHz

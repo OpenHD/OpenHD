@@ -2,8 +2,8 @@
 #include "openhd_util_filesystem.h"
 #include "config_paths.h"
 #include "openhd_util.h"
-#include "../lib/ini/ini.hpp" // INI parser
-#include "openhd_spdlog.h"   // Logging library
+#include "../lib/ini/ini.hpp"
+#include "openhd_spdlog.h"
 
 #include <cstring>
 #include <arpa/inet.h>
