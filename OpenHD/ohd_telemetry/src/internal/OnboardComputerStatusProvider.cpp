@@ -10,6 +10,7 @@
 #include "../../ohd_interface/inc/wb_link_settings.h"
 #include "../../ohd_interface/inc/wifi_card.h"
 
+
 // INA219 stuff
 constexpr float SHUNT_OHMS = 0.1f;
 constexpr float MAX_EXPECTED_AMPS = 3.2f;
@@ -34,9 +35,9 @@ static int read_battery_percentage_linux() {
   for (const auto& filepath : filepaths) {
     if (OHDFilesystemUtil::exists(filepath)) {
       auto content = OHDFilesystemUtil::opt_read_file(filepath);
-      if (!content.has_value()) return -2;
+      if (!content.has_value()) return -2;  // File read error
       auto value = OHDUtil::string_to_int(content.value());
-      if (!value.has_value()) return -3;
+      if (!value.has_value()) return -3;  // Conversion error
       return value.value();
     }
   }
@@ -48,9 +49,9 @@ static int read_battery_charging_linux() {
   for (const auto& filepath : filepaths) {
     if (OHDFilesystemUtil::exists(filepath)) {
       auto content = OHDFilesystemUtil::opt_read_file(filepath);
-      if (!content.has_value()) return -2;
+      if (!content.has_value()) return -2;  // File read error
       std::string state = content.value();
-      int result = -1;
+      int result = -1;  // Default value
       if (state == "Charging\n") {
         result = 1337;
       } else if (state == "Discharging\n") {
@@ -58,10 +59,10 @@ static int read_battery_charging_linux() {
       } else {
         result = -1;
       }
-      return result;
+      return result;  // Returning the charging state
     }
   }
-  return -1;
+  return -1;  // No battery status file found
 }
 OnboardComputerStatusProvider::OnboardComputerStatusProvider(bool enable)
     : m_enable(enable), m_ina_219(SHUNT_OHMS, MAX_EXPECTED_AMPS) {
@@ -170,11 +171,10 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
 
       std::vector<WiFiCard> wifibroadcast_cards;
       WiFiCard card;
-      card.supports_2GHz = true; // Example configuration
       wifibroadcast_cards.push_back(card);
 
       const auto settings = openhd::create_default_wb_stream_settings(wifibroadcast_cards);
-      const auto txc_temp = (wifibroadcast_cards.at(0).supports_2GHz) ? 20 : 0;
+      const auto txc_temp = (wifibroadcast_cards.at(0).supports_2GHz()) ? 20 : 0;
       const auto platform = OHDPlatform::instance();
       curr_temperature_core = cpu_temp;
       curr_temperature_txc = txc_temp;
