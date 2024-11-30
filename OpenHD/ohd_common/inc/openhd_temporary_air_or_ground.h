@@ -6,18 +6,20 @@
 #ifndef OPENHD_OPENHD_OHD_COMMON_OPENHD_TEMPORARY_AIR_OR_GROUND_H_
 #define OPENHD_OPENHD_OHD_COMMON_OPENHD_TEMPORARY_AIR_OR_GROUND_H_
 
+#include <map>
+#include <sstream>
+#include <string>
+
 #include "config_paths.h"
 #include "openhd_util_filesystem.h"
-#include <string>
-#include <sstream>
-#include <map>
 
 namespace openhd::tmp {
 
 // Note: case sensitive
 const auto FILENAME_AIR = std::string(getConfigBasePath()) + "air.txt";
 const auto FILENAME_GROUND = std::string(getConfigBasePath()) + "ground.txt";
-const auto FILENAME_ETHERNET = std::string(getConfigBasePath()) + "ethernet.txt";
+const auto FILENAME_ETHERNET =
+    std::string(getConfigBasePath()) + "ethernet.txt";
 
 static bool file_air_exists() {
   return OHDFilesystemUtil::exists(FILENAME_AIR);
@@ -67,15 +69,20 @@ struct EthernetConfig {
     std::istringstream stream(content);
     std::string line;
     while (std::getline(stream, line)) {
-      if (line.empty() || line[0] == '#') continue; // Skip comments and empty lines
+      if (line.empty() || line[0] == '#')
+        continue;  // Skip comments and empty lines
       auto pos = line.find('=');
       if (pos != std::string::npos) {
         auto key = line.substr(0, pos);
         auto value = line.substr(pos + 1);
-        if (key == "GROUND_UNIT_IP") config.ground_unit_ip = value;
-        else if (key == "AIR_UNIT_IP") config.air_unit_ip = value;
-        else if (key == "VIDEO_PORT") config.video_port = std::stoi(value);
-        else if (key == "TELEMETRY_PORT") config.telemetry_port = std::stoi(value);
+        if (key == "GROUND_UNIT_IP")
+          config.ground_unit_ip = value;
+        else if (key == "AIR_UNIT_IP")
+          config.air_unit_ip = value;
+        else if (key == "VIDEO_PORT")
+          config.video_port = std::stoi(value);
+        else if (key == "TELEMETRY_PORT")
+          config.telemetry_port = std::stoi(value);
       }
     }
     return config;
@@ -95,13 +102,15 @@ struct EthernetConfig {
 // Write Ethernet configuration to file
 static void write_file_ethernet(const EthernetConfig& config) {
   OHDFilesystemUtil::create_directories(getConfigBasePath());
-  OHDFilesystemUtil::write_file(openhd::tmp::FILENAME_ETHERNET, config.toString());
+  OHDFilesystemUtil::write_file(openhd::tmp::FILENAME_ETHERNET,
+                                config.toString());
 }
 
 // Read Ethernet configuration from file
 static EthernetConfig read_file_ethernet() {
   if (!file_ethernet_exists()) {
-    throw std::runtime_error("Ethernet configuration file not found: " + FILENAME_ETHERNET);
+    throw std::runtime_error("Ethernet configuration file not found: " +
+                             FILENAME_ETHERNET);
   }
   auto content = OHDFilesystemUtil::read_file(FILENAME_ETHERNET);
   return EthernetConfig::fromString(content);

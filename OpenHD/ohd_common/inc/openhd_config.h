@@ -12,7 +12,8 @@ namespace openhd {
 
 static constexpr auto RPI_ETHERNET_ONLY = "RPI_ETHERNET_ONLY";
 
-// NOTE: Read the .config - file itself for documentation on what these variables do
+// NOTE: Read the .config - file itself for documentation on what these
+// variables do
 struct Config {
   // WIFI
   bool WIFI_ENABLE_AUTODETECT = true;

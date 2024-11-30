@@ -115,14 +115,18 @@ bool wifi::commandhelper::iw_set_tx_power(const std::string &device,
                        fmt::join(args, ", "));
     const auto ret = OHDUtil::run_command("acfg_tool", args);
     if (ret != 0) {
-      get_logger()->warn("Qualcomm-specific set_tx_power failed for device {} with return code {}", device, ret);
+      get_logger()->warn(
+          "Qualcomm-specific set_tx_power failed for device {} with return "
+          "code {}",
+          device, ret);
       return false;
     }
     return true;
   }
 
   // Generic logic for other devices
-  get_logger()->warn("Setting tx_power for device: {} to {} mBm", device, tx_power_mBm);
+  get_logger()->warn("Setting tx_power for device: {} to {} mBm", device,
+                     tx_power_mBm);
 
   std::vector<std::string> args{
       "dev", device, "set", "txpower", "fixed", std::to_string(tx_power_mBm)};
@@ -131,15 +135,17 @@ bool wifi::commandhelper::iw_set_tx_power(const std::string &device,
 
   const auto ret = OHDUtil::run_command("iw", args);
   if (ret != 0) {
-    get_logger()->warn("Failed to set tx_power for device: {}. Power: {} mBm, Return Code: {}. Command Args: [{}]",
-                       device, tx_power_mBm, ret, fmt::join(args, ", "));
+    get_logger()->warn(
+        "Failed to set tx_power for device: {}. Power: {} mBm, Return Code: "
+        "{}. Command Args: [{}]",
+        device, tx_power_mBm, ret, fmt::join(args, ", "));
     return false;
   }
 
-  get_logger()->warn("Successfully set tx_power for device: {} to {} mBm", device, tx_power_mBm);
+  get_logger()->warn("Successfully set tx_power for device: {} to {} mBm",
+                     device, tx_power_mBm);
   return true;
 }
-
 
 // HE MCS0-11 NSS 1 20 MHz
 static const std::vector<uint32_t> he20_11ax_rate_ol{
