@@ -7,7 +7,7 @@
 #include "onboard_computer_status_rpi.hpp"
 #include "openhd_spdlog_include.h"
 #include "openhd_util_filesystem.h"
-#include "wb_link_settings.h"
+#include "../../ohd_interface/inc/wb_link_settings.h"
 
 // INA219 stuff
 constexpr float SHUNT_OHMS = 0.1f;
