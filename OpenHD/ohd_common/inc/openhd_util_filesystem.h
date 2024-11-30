@@ -28,7 +28,7 @@ std::vector<std::string> getAllEntriesFullPathInDirectory(
 std::vector<std::string> getAllEntriesFilenameOnlyInDirectory(
     const std::string& directory);
 
-static std::optional<std::string> getFirstMatchingDirectoryByPrefix(
+std::optional<std::string> getFirstMatchingDirectoryByPrefix(
     const std::string &directory, 
     const std::string &prefix);
 
