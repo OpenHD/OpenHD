@@ -16,7 +16,7 @@ EthernetLink::EthernetLink(OHDProfile profile) : m_profile(profile) {
     // Load the Ethernet configuration from ethernet.txt if it exists
     if (OHDFilesystemUtil::exists(ETHERNET_FILE_PATH)){
         try {
-            auto config = OHDFilesystemUtil::read_file(ETHERNET_FILE_PATH);
+            auto config = OHDFilesystemUtil::opt_read_file(ETHERNET_FILE_PATH);
             GROUND_UNIT_IP = config.ground_unit_ip;
             AIR_UNIT_IP = config.air_unit_ip;
             VIDEO_PORT = config.video_port;
