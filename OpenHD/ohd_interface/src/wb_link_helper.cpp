@@ -104,7 +104,7 @@ void openhd::wb::set_tx_power_for_all_cards(
     } else {
       float adjustment_factor = 1.0f;
       if (card.type == WiFiCardType::OPENHD_RTL_88X2EU) {
-        adjustment_factor = 1f;
+        adjustment_factor = 0.8f;
       }
       if (card.type == WiFiCardType::QUALCOMM) {
         adjustment_factor = 1.2f;
