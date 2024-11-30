@@ -27,6 +27,14 @@ static int read_cpu_current_frequency_linux_mhz() {
   if (!value.has_value()) return -1;
   return value.value() / 1000;
 }
+int extract_temperature(const std::string &input) {
+    auto pos = input.find("temperature:");
+    if (pos != std::string::npos) {
+        pos += std::string("temperature:").length();
+        return std::stoi(input.substr(pos));
+    }
+    return 0;
+}
 static int read_battery_percentage_linux() {
   const std::string filepaths[] = {"/sys/class/power_supply/BAT1/capacity",
                                    "/sys/class/power_supply/BAT0/capacity"};
@@ -180,11 +188,10 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       const auto result = OHDFilesystemUtil::getFirstMatchingDirectoryByPrefix("/proc/net/rtl88x2eu_ohd", "wlx");
       if (result) {
           std::string wificard_temp = "/proc/net/rtl88x2eu_ohd/" + *result + "/thermal_state";
-          openhd::log::get_default()->warn(OHDFilesystemUtil::read_file(wificard_temp));
-      } else {
-          openhd::log::get_default()->warn("No matching directory found for /proc/net/rtl88x2eu_ohd/ starting with 'wlx'");
-      }     
-      txc_temp = 66;
+          std::string fileContent = OHDFilesystemUtil::read_file(wificard_temp);
+          txc_temp = extract_temperature(fileContent);
+      }    
+      txc_temp = 0;
       }
       const auto platform = OHDPlatform::instance();
       curr_temperature_core = cpu_temp;
