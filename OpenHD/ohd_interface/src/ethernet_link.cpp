@@ -2,32 +2,74 @@
 #include "openhd_util_filesystem.h"
 #include "config_paths.h"
 #include "openhd_util.h"
+#include "../lib/ini/ini.hpp" // INI parser
+#include "openhd_spdlog.h"   // Logging library
 
 #include <cstring>
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <iostream>
 
+// Configuration structure for Ethernet
+struct EthernetConfig {
+    std::string ground_unit_ip = "192.168.1.1";  // Default values
+    std::string air_unit_ip = "192.168.1.2";
+    int video_port = 5000;
+    int telemetry_port = 6000;
+};
 
+// Logging setup
+static std::shared_ptr<spdlog::logger> get_logger() {
+    return openhd::log::create_or_get("ethernet_link");
+}
+
+// Static configuration file path
 static std::string ETHERNET_FILE_PATH =
     std::string(getConfigBasePath()) + "ethernet.txt";
 
-EthernetLink::EthernetLink(OHDProfile profile) : m_profile(profile) {
-    // Load the Ethernet configuration from ethernet.txt if it exists
-    if (OHDFilesystemUtil::exists(ETHERNET_FILE_PATH)){
-        try {
-            auto config = OHDFilesystemUtil::opt_read_file(ETHERNET_FILE_PATH);
-            GROUND_UNIT_IP = config.ground_unit_ip;
-            AIR_UNIT_IP = config.air_unit_ip;
-            VIDEO_PORT = config.video_port;
-            TELEMETRY_PORT = config.telemetry_port;
-        } catch (const std::exception& ex) {
-            std::cerr << "Failed to read ethernet.txt: " << ex.what() << std::endl;
-            throw;
-        }
-    } else {
-        std::cerr << "ethernet.txt not found. Using default configuration." << std::endl;
+// Function to load Ethernet configuration
+EthernetConfig load_ethernet_config(const std::string& filepath) {
+    EthernetConfig config;
+
+    if (!OHDFilesystemUtil::exists(filepath)) {
+        get_logger()->warn("Configuration file [{}] not found. Using defaults.", filepath);
+        return config;
     }
+
+    try {
+        get_logger()->info("Loading configuration from [{}]", filepath);
+        inih::INIReader reader(filepath);
+        if (reader.ParseError() < 0) {
+            throw std::runtime_error("Failed to parse configuration file");
+        }
+
+        // Parse configuration values
+        config.ground_unit_ip = reader.Get<std::string>("ethernet", "ground_unit_ip", config.ground_unit_ip);
+        config.air_unit_ip = reader.Get<std::string>("ethernet", "air_unit_ip", config.air_unit_ip);
+        config.video_port = reader.Get<int>("ethernet", "video_port", config.video_port);
+        config.telemetry_port = reader.Get<int>("ethernet", "telemetry_port", config.telemetry_port);
+    } catch (const std::exception& ex) {
+        get_logger()->error("Error reading configuration file [{}]: {}", filepath, ex.what());
+        throw;
+    }
+
+    return config;
+}
+
+EthernetLink::EthernetLink(OHDProfile profile) : m_profile(profile) {
+    // Load the Ethernet configuration
+    EthernetConfig config;
+    try {
+        config = load_ethernet_config(ETHERNET_FILE_PATH);
+    } catch (const std::exception& ex) {
+        get_logger()->error("Falling back to defaults due to error: {}", ex.what());
+    }
+
+    // Assign configuration values
+    GROUND_UNIT_IP = config.ground_unit_ip;
+    AIR_UNIT_IP = config.air_unit_ip;
+    VIDEO_PORT = config.video_port;
+    TELEMETRY_PORT = config.telemetry_port;
 
     // Initialize either air or ground unit based on the profile
     if (m_profile.is_air) {
