@@ -115,17 +115,28 @@ bool wifi::commandhelper::iw_set_tx_power(const std::string &device,
     return true;
   }
 
-  // Generic logic for other devices
-  get_logger()->info("iw_set_tx_power {} {} mBm", device, tx_power_mBm);
-  std::vector<std::string> args{
-      "dev", device, "set", "txpower", "fixed", std::to_string(tx_power_mBm)};
-  const auto ret = OHDUtil::run_command("iw", args);
-  if (ret != 0) {
-    get_logger()->warn("iw_set_tx_power failed {}", ret);
+// Generic logic for other devices
+get_logger()->warn("Starting iw_set_tx_power for device: {} with power: {} mBm", device, tx_power_mBm);
+
+// Log the full command being run for debugging purposes
+std::vector<std::string> args{
+    "dev", device, "set", "txpower", "fixed", std::to_string(tx_power_mBm)};
+get_logger()->warn("Running command: iw with arguments: [{}]", fmt::join(args, ", "));
+
+// Execute the command
+const auto ret = OHDUtil::run_command("iw", args);
+
+// Check the return status and log detailed information
+if (ret != 0) {
+    get_logger()->warn("iw_set_tx_power failed for device: {} with power: {} mBm. Return code: {}. Arguments: [{}]", 
+                       device, tx_power_mBm, ret, fmt::join(args, ", "));
     return false;
-  }
-  return true;
 }
+
+// If the command succeeds, log success
+get_logger()->warn("iw_set_tx_power succeeded for device: {} with power: {} mBm", device, tx_power_mBm);
+return true;
+
 
 // HE MCS0-11 NSS 1 20 MHz
 static const std::vector<uint32_t> he20_11ax_rate_ol{
