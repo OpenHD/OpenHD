@@ -48,7 +48,7 @@ OHDInterface::OHDInterface(OHDProfile profile1)
   m_opt_hotspot_card = std::nullopt;
   const auto config = openhd::load_config();
 
-  if (!OHDFilesystemUtil::exists(std::string(getConfigBasePath()) +
+  if (OHDFilesystemUtil::exists(std::string(getConfigBasePath()) +
                                  "ethernet.txt")) {
     m_ethernet_link = std::make_shared<EthernetLink>(m_profile);
     m_console->warn("Using Link: EthernetLink");
