@@ -61,12 +61,14 @@ static openhd::Config load_or_default() {
     // Parse Ethernet link configuration
     ret.GROUND_UNIT_IP = r.Get<std::string>("ethernet", "GROUND_UNIT_IP", "");
     ret.AIR_UNIT_IP = r.Get<std::string>("ethernet", "AIR_UNIT_IP", "");
-    get_logger()->warn("AIR_UNIT_IP:", ret.AIR_UNIT_IP);
     ret.VIDEO_PORT =
         r.Get<int>("ethernet", "VIDEO_PORT", 5000);  // Default port 5000
     ret.TELEMETRY_PORT =
         r.Get<int>("ethernet", "TELEMETRY_PORT", 5600);  // Default port 5600
-
+        get_logger()->warn("Parsed GROUND_UNIT_IP: [{}]", ret.GROUND_UNIT_IP);
+        get_logger()->warn("Parsed AIR_UNIT_IP: [{}]", ret.AIR_UNIT_IP);
+        get_logger()->warn("Parsed VIDEO_PORT: [{}]", ret.VIDEO_PORT);
+        get_logger()->warn("Parsed TELEMETRY_PORT: [{}]", ret.TELEMETRY_PORT);
     // Parse Generic configuration
     ret.GEN_ENABLE_LAST_KNOWN_POSITION =
         r.Get<bool>("generic", "GEN_ENABLE_LAST_KNOWN_POSITION", false);
