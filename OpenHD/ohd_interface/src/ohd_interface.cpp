@@ -47,22 +47,24 @@ OHDInterface::OHDInterface(OHDProfile profile1)
   m_monitor_mode_cards = {};
   m_opt_hotspot_card = std::nullopt;
   const auto config = openhd::load_config();
+  bool microhard_device_present = is_microhard_device_present();
 
   if (OHDFilesystemUtil::exists(std::string(getConfigBasePath()) +
                                  "ethernet.txt")) {
     m_ethernet_link = std::make_shared<EthernetLink>(m_profile);
     m_console->warn("Using Link: EthernetLink");
-  }
-
-  // Check if Microhard device is present
-  bool microhard_device_present = is_microhard_device_present();
-  if (microhard_device_present) {
+  } else if (microhard_device_present) {
     m_console->warn("Using Link: Microhard");
     m_microhard_link = std::make_shared<MicrohardLink>(m_profile);
     return;
   } else {
-    m_console->warn("Using Link: ohd_wifibroadcast");
+    m_console->warn("Using Link: OpenHD Wifibroadcast");
   }
+  
+  }
+  
+
+  
 
   DWifiCards::main_discover_an_process_wifi_cards(
       config, m_profile, m_console, m_monitor_mode_cards, m_opt_hotspot_card);
