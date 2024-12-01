@@ -22,6 +22,7 @@ EthernetLink::EthernetLink(const openhd::Config& config, OHDProfile profile)
       AIR_UNIT_IP = m_config.AIR_UNIT_IP;
       VIDEO_PORT = m_config.VIDEO_PORT;
       TELEMETRY_PORT = m_config.TELEMETRY_PORT;
+
       // Debugging the values after assignment
       std::cout << "Assigned ethernet parameters:" << std::endl;
       std::cout << "  GROUND_UNIT_IP: " << GROUND_UNIT_IP << std::endl;
@@ -29,11 +30,12 @@ EthernetLink::EthernetLink(const openhd::Config& config, OHDProfile profile)
       std::cout << "  VIDEO_PORT: " << VIDEO_PORT << std::endl;
       std::cout << "  TELEMETRY_PORT: " << TELEMETRY_PORT << std::endl;
     } catch (const std::exception& ex) {
-      std::cerr << "Failed to read ethernet parameters: " << ex.what() << std::endl;
+      std::cerr << "Failed to read ethernet parameters: " << ex.what()
+                << std::endl;
       throw;
     }
   } else {
-    std::cerr << "ethernet parameters not found. Using default configuration."
+    std::cerr << "Ethernet parameters not found. Using default configuration."
               << std::endl;
   }
 
@@ -46,7 +48,7 @@ EthernetLink::EthernetLink(const openhd::Config& config, OHDProfile profile)
 }
 
 EthernetLink::EthernetLink(OHDProfile profile)
-    : EthernetLink(openhd::Config(), profile) {}
+    : EthernetLink(openhd::load_config(), profile) {}
 
 EthernetLink::~EthernetLink() {
   // Stop background receivers
