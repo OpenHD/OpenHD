@@ -64,8 +64,6 @@ OHDInterface::OHDInterface(OHDProfile profile1)
   }
   
 
-  
-
   DWifiCards::main_discover_an_process_wifi_cards(
       config, m_profile, m_console, m_monitor_mode_cards, m_opt_hotspot_card);
   m_console->debug("monitor_mode card(s):{}",
