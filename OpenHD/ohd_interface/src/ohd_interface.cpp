@@ -129,7 +129,6 @@ OHDInterface::OHDInterface(OHDProfile profile1)
                                                             cb);
   }
   m_console->debug("OHDInterface::created");
-}
 
 OHDInterface::~OHDInterface() {
   // Terminate the link first
