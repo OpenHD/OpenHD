@@ -16,19 +16,24 @@ static std::string ETHERNET_FILE_PATH =
 
 EthernetLink::EthernetLink(const openhd::Config& config, OHDProfile profile)
     : m_config(config), m_profile(profile) {
-  // Load the Ethernet configuration from ethernet.txt if it exists
   if (OHDFilesystemUtil::exists(ETHERNET_FILE_PATH)) {
     try {
       GROUND_UNIT_IP = m_config.GROUND_UNIT_IP;
       AIR_UNIT_IP = m_config.AIR_UNIT_IP;
       VIDEO_PORT = m_config.VIDEO_PORT;
       TELEMETRY_PORT = m_config.TELEMETRY_PORT;
+      // Debugging the values after assignment
+      std::cout << "Assigned ethernet parameters:" << std::endl;
+      std::cout << "  GROUND_UNIT_IP: " << GROUND_UNIT_IP << std::endl;
+      std::cout << "  AIR_UNIT_IP: " << AIR_UNIT_IP << std::endl;
+      std::cout << "  VIDEO_PORT: " << VIDEO_PORT << std::endl;
+      std::cout << "  TELEMETRY_PORT: " << TELEMETRY_PORT << std::endl;
     } catch (const std::exception& ex) {
-      std::cerr << "Failed to read ethernet.txt: " << ex.what() << std::endl;
+      std::cerr << "Failed to read ethernet parameters: " << ex.what() << std::endl;
       throw;
     }
   } else {
-    std::cerr << "ethernet.txt not found. Using default configuration."
+    std::cerr << "ethernet parameters not found. Using default configuration."
               << std::endl;
   }
 
