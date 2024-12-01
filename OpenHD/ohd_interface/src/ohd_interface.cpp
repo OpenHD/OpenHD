@@ -51,7 +51,6 @@ OHDInterface::OHDInterface(OHDProfile profile1)
   const auto config = openhd::load_config();
   bool microhard_device_present = is_microhard_device_present();
 
-
   if (OHDFilesystemUtil::exists(std::string(getConfigBasePath()) +
                                 "ethernet.txt")) {
     m_ethernet_link = std::make_shared<EthernetLink>(m_profile);
