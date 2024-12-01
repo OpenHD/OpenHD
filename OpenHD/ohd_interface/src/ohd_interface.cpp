@@ -41,27 +41,29 @@ bool is_microhard_device_present() {
 }
 
 OHDInterface::OHDInterface(OHDProfile profile1)
-    : m_profile(std::move(profile1)) {
-  m_console = openhd::log::create_or_get("interface");
-  assert(m_console);
-  m_monitor_mode_cards = {};
-  m_opt_hotspot_card = std::nullopt;
-  const auto config = openhd::load_config();
-  bool microhard_device_present = is_microhard_device_present();
+    : m_profile(std::move(profile1)), 
+      m_monitor_mode_cards({}), 
+      m_opt_hotspot_card(std::nullopt) {
+    
+    m_console = openhd::log::create_or_get("interface");
+    assert(m_console);
 
-  if (OHDFilesystemUtil::exists(std::string(getConfigBasePath()) +
-                                 "ethernet.txt")) {
-    m_ethernet_link = std::make_shared<EthernetLink>(m_profile);
-    m_console->warn("Using Link: EthernetLink");
-  } else if (microhard_device_present) {
-    m_console->warn("Using Link: Microhard");
-    m_microhard_link = std::make_shared<MicrohardLink>(m_profile);
-    return;
-  } else {
-    m_console->warn("Using Link: OpenHD Wifibroadcast");
-  }
-  
-  }
+    const auto config = openhd::load_config();
+    bool microhard_device_present = is_microhard_device_present();
+
+    if (OHDFilesystemUtil::exists(std::string(getConfigBasePath()) + "ethernet.txt")) {
+        m_ethernet_link = std::make_shared<EthernetLink>(m_profile);
+        m_console->warn("Using Link: EthernetLink");
+        return;
+    } else if (microhard_device_present) {
+        m_console->warn("Using Link: Microhard");
+        m_microhard_link = std::make_shared<MicrohardLink>(m_profile);
+        return;
+    } else {
+        m_console->warn("Using Link: OpenHD Wifibroadcast");
+    }
+}
+
   
 
   DWifiCards::main_discover_an_process_wifi_cards(
