@@ -43,6 +43,9 @@ struct Config {
   std::string MICROHARD_PASSWORD = "";
   std::string MICROHARD_IP_AIR = "";
   std::string MICROHARD_IP_GROUND = "";
+  std::string MICROHARD_IP_RANGE = "";
+  int MICROHARD_VIDEO_PORT = 5910;
+  int MICROHARD_TELEMETRY_PORT = 5920;
 
   // GENERAL
   bool GEN_ENABLE_LAST_KNOWN_POSITION = false;

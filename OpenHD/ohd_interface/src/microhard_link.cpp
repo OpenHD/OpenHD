@@ -32,16 +32,6 @@
 
 #include "openhd_temporary_air_or_ground.h"
 
-// Constants
-// static constexpr auto MICROHARD_AIR_IP = "192.168.168.11";
-// static constexpr auto MICROHARD_GND_IP = "192.168.168.12";
-// static constexpr int MICROHARD_UDP_PORT_VIDEO_AIR_TX = 5910;
-// static constexpr int MICROHARD_UDP_PORT_TELEMETRY_AIR_TX = 5920;
-static const std::string DEFAULT_DEVICE_IP_GND = "192.168.168.122";
-static const std::string DEFAULT_DEVICE_IP_AIR = "192.168.168.153";
-const std::string telnet_cmd = "telnet 192.168.168.1";
-const std::string username = "admin\n";
-const std::string password = "qwertz1\n";
 const std::string command = "AT+MWRSSI\n";
 const std::string command2 = "AT+MWTXPOWER\n";
 const std::string command3 = "AT+MWBAND\n";
@@ -52,10 +42,15 @@ const std::string command7 = "AT+MWSNR\n";
 
 // Parse hardware.config
 const auto config = openhd::load_config();
+static const auto MICROHARD_IP_RANGE = config.MICROHARD_IP_AIR;
 static const auto MICROHARD_AIR_IP = config.MICROHARD_IP_AIR;
 static const auto MICROHARD_GND_IP = config.MICROHARD_IP_GROUND;
-static const int MICROHARD_UDP_PORT_TELEMETRY_AIR_TX = config.TELEMETRY_PORT;
-static const int MICROHARD_UDP_PORT_VIDEO_AIR_TX = config.VIDEO_PORT;
+static const int MICROHARD_UDP_PORT_TELEMETRY_AIR_TX = config.MICROHARD_TELEMETRY_PORT;
+static const int MICROHARD_UDP_PORT_VIDEO_AIR_TX = config.MICROHARD_VIDEO_PORT;
+static const std::string DEFAULT_DEVICE_IP_GND = config.GROUND_UNIT_IP;
+static const std::string DEFAULT_DEVICE_IP_AIR = config.AIR_UNIT_IP;
+const std::string username = config.MICROHARD_USERNAME;
+const std::string password = config.MICROHARD_PASSWORD;
 
 // Helper function to retrieve IP addresses starting with a specific prefix
 std::vector<std::string> get_ip_addresses(const std::string& prefix) {
