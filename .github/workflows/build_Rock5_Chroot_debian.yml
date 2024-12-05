@@ -1,4 +1,4 @@
-name: build_package_Qualcomm_ubuntu
+name: build_package_rock5_debian
 
 on:
   push:
@@ -6,7 +6,6 @@ on:
       - "2.6-evo"
       - "dev-release"
       - "release"
-      - "2.6-mod-qcom"
 
 jobs:
   build:
@@ -39,17 +38,17 @@ jobs:
           mkdir -p /opt/OpenHD-ChrootCompiler/additionalFiles
           git clone https://github.com/OpenHD/OpenHD -b ${{ github.ref_name }} /opt/OpenHD-ChrootCompiler/additionalFiles/ --recursive
           echo $CLOUDSMITH_API_KEY > /opt/OpenHD-ChrootCompiler/additionalFiles/cloudsmith_api_key.txt
-          echo "true" > /opt/OpenHD-ChrootCompiler/additionalFiles/custom.txt
+          echo "standard" > /opt/OpenHD-ChrootCompiler/additionalFiles/custom.txt
           echo "arm64" > /opt/OpenHD-ChrootCompiler/additionalFiles/arch.txt
-          echo "focal" > /opt/OpenHD-ChrootCompiler/additionalFiles/distro.txt
-          echo "ubuntu" > /opt/OpenHD-ChrootCompiler/additionalFiles/flavor.txt
+          echo "debian" > /opt/OpenHD-ChrootCompiler/additionalFiles/distro.txt
+          echo "bullseye" > /opt/OpenHD-ChrootCompiler/additionalFiles/flavor.txt
           echo "${{ github.ref_name }}" > /opt/OpenHD-ChrootCompiler/additionalFiles/repo.txt
 
           cd /opt/OpenHD-ChrootCompiler/
           sudo apt update
           sudo bash install_dep.sh
-          sudo bash ./build.sh qrb5165 $API_KEY ubuntu focal
-      
+          sudo bash build.sh rock5b $API_KEY debian bullseye
+    
       - name: debug
         run:
           cp -r /opt/OpenHD-ChrootCompiler/out/* .
@@ -71,7 +70,8 @@ jobs:
           format: "deb"
           owner: "openhd"
           repo: ${{ github.ref_name }}
-          distro: "ubuntu"
-          release: "focal"
+          distro: "debian"
+          release: "bullseye"
           republish: "true" # needed ONLY if version is not changing
           file: "*.deb"
+
