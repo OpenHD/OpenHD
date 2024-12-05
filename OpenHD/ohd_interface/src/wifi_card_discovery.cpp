@@ -79,12 +79,18 @@ static std::vector<uint32_t> supported_frequencies(const int phy_index,
           phy_index, openhd::get_all_channel_frequencies(channels_to_try));
   return supported_frequencies;
 }
-
 std::optional<WiFiCard> DWifiCards::fill_linux_wifi_card_identifiers(
     const std::string& interface_name) {
-  // get the driver name for this card
-  const auto filename_device_uevent =
-      fmt::format("/sys/class/net/{}/device/uevent", interface_name);
+  // Determine the correct uevent file for the interface
+  std::string filename_device_uevent;
+  if (interface_name == "ath0") {
+    filename_device_uevent = fmt::format("/sys/class/net/wifi0/device/uevent");
+  } else {
+    filename_device_uevent =
+        fmt::format("/sys/class/net/{}/device/uevent", interface_name);
+  }
+
+  // Check if the uevent file exists
   if (!OHDFilesystemUtil::exists(filename_device_uevent)) {
     return std::nullopt;
   }

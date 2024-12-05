@@ -10,12 +10,12 @@
 #include <utility>
 
 #include "config_paths.h"
+#include "ethernet_link.h"
 #include "microhard_link.h"
 #include "openhd_config.h"
 #include "openhd_global_constants.hpp"
 #include "openhd_util_filesystem.h"
 #include "wb_link.h"
-
 // Helper function to execute a shell command and return the output
 std::string exec(const std::string& cmd) {
   std::array<char, 128> buffer;
@@ -33,7 +33,9 @@ std::string exec(const std::string& cmd) {
 // Helper function to check if a Microhard device is present
 bool is_microhard_device_present() {
   if (!OHDFilesystemUtil::exists(std::string(getConfigBasePath()) +
-                                 "wfb.txt")) {
+                                 "wfb.txt") &&
+      !OHDFilesystemUtil::exists(std::string(getConfigBasePath()) +
+                                 "ethernet.txt")) {
     std::string output = exec("lsusb");
     return output.find("Microhard") != std::string::npos;
   }
@@ -47,14 +49,17 @@ OHDInterface::OHDInterface(OHDProfile profile1)
   m_monitor_mode_cards = {};
   m_opt_hotspot_card = std::nullopt;
   const auto config = openhd::load_config();
-  // Check if Microhard device is present
   bool microhard_device_present = is_microhard_device_present();
+
+  if (OHDFilesystemUtil::exists(std::string(getConfigBasePath()) +
+                                "ethernet.txt")) {
+    m_ethernet_link = std::make_shared<EthernetLink>(m_profile);
+    return;
+  }
+
   if (microhard_device_present) {
-    m_console->warn("Using Link: Microhard");
     m_microhard_link = std::make_shared<MicrohardLink>(m_profile);
     return;
-  } else {
-    m_console->warn("Using Link: ohd_wifibroadcast");
   }
 
   DWifiCards::main_discover_an_process_wifi_cards(
@@ -183,10 +188,16 @@ void OHDInterface::print_internal_fec_optimization_method() {
 }
 
 std::shared_ptr<OHDLink> OHDInterface::get_link_handle() {
+  if (m_ethernet_link) {
+    m_console->warn("Using Link: Ethernet");
+    return m_ethernet_link;
+  }
   if (m_wb_link) {
+    m_console->warn("Using Link: OpenHD-WifiBroadCast");
     return m_wb_link;
   }
   if (m_microhard_link) {
+    m_console->warn("Using Link: Microhard");
     return m_microhard_link;
   }
   return nullptr;

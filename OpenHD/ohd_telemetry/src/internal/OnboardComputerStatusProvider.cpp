@@ -27,6 +27,14 @@ static int read_cpu_current_frequency_linux_mhz() {
   if (!value.has_value()) return -1;
   return value.value() / 1000;
 }
+int extract_temperature(const std::string& input) {
+  auto pos = input.find("temperature:");
+  if (pos != std::string::npos) {
+    pos += std::string("temperature:").length();
+    return std::stoi(input.substr(pos));
+  }
+  return 0;
+}
 static int read_battery_percentage_linux() {
   const std::string filepaths[] = {"/sys/class/power_supply/BAT1/capacity",
                                    "/sys/class/power_supply/BAT0/capacity"};
@@ -127,6 +135,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
     int microhard_snr = 29;
     // normal stuff
     int8_t curr_temperature_core = 0;
+    int8_t curr_temperature_txc = 0;
     int curr_clock_cpu = 0;
     int curr_clock_isp = 0;
     int curr_clock_h264 = 0;
@@ -174,8 +183,21 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       curr_rpi_undervolt = openhd::onboard::rpi::vcgencmd_get_undervolt();
     } else {
       const auto cpu_temp = (int8_t)openhd::onboard::readTemperature();
+      int txc_temp = 0;
+      if (OHDFilesystemUtil::exists("/proc/net/rtl88x2eu_ohd/")) {
+        const auto result =
+            OHDFilesystemUtil::getFirstMatchingDirectoryByPrefix(
+                "/proc/net/rtl88x2eu_ohd", "wlx");
+        if (result) {
+          std::string wificard_temp =
+              "/proc/net/rtl88x2eu_ohd/" + *result + "/thermal_state";
+          std::string fileContent = OHDFilesystemUtil::read_file(wificard_temp);
+          txc_temp = extract_temperature(fileContent);
+        }
+      }
       const auto platform = OHDPlatform::instance();
       curr_temperature_core = cpu_temp;
+      curr_temperature_txc = txc_temp;
       if (platform.is_rock() || platform.platform_type == X_PLATFORM_TYPE_X86) {
         if (OHDFilesystemUtil::exists(
                 "/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq")) {
@@ -188,6 +210,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       std::lock_guard<std::mutex> lock(m_curr_onboard_computer_status_mutex);
       m_curr_onboard_computer_status.temperature_core[0] =
           curr_temperature_core;
+      m_curr_onboard_computer_status.temperature_core[1] = curr_temperature_txc;
       // temporary, until we have our own message
       m_curr_onboard_computer_status.storage_type[0] = curr_clock_cpu;
       m_curr_onboard_computer_status.storage_type[1] = curr_clock_isp;

@@ -12,8 +12,8 @@ namespace openhd {
 
 static constexpr auto RPI_ETHERNET_ONLY = "RPI_ETHERNET_ONLY";
 
-// NOTE: Read the .config - file itself for documentation what these variables
-// do
+// NOTE: Read the .config - file itself for documentation on what these
+// variables do
 struct Config {
   // WIFI
   bool WIFI_ENABLE_AUTODETECT = true;
@@ -24,17 +24,35 @@ struct Config {
   bool WIFI_LOCAL_NETWORK_ENABLE = false;
   std::string WIFI_LOCAL_NETWORK_SSID;
   std::string WIFI_LOCAL_NETWORK_PASSWORD;
+
   // NETWORKING
   std::string NW_ETHERNET_CARD = RPI_ETHERNET_ONLY;
   std::vector<std::string> NW_MANUAL_FORWARDING_IPS;
   bool NW_FORWARD_TO_LOCALHOST_58XX = false;
+
+  // ETHERNET LINK
+  std::string GROUND_UNIT_IP = "";
+  std::string AIR_UNIT_IP = "";
+  int VIDEO_PORT = 5000;
+  int TELEMETRY_PORT = 5600;
+
+  // ETHERNET LINK FOR MICROHARD
+  bool DISABLE_MICROHARD_DETECTION = false;
+  bool FORCE_MICROHARD = false;
+  std::string MICROHARD_USERNAME = "admin";
+  std::string MICROHARD_PASSWORD = "qwertz1";
+  std::string MICROHARD_IP_AIR = "";
+  std::string MICROHARD_IP_GROUND = "";
+  std::string MICROHARD_IP_RANGE = "";
+  int MICROHARD_VIDEO_PORT = 5910;
+  int MICROHARD_TELEMETRY_PORT = 5920;
+
   // GENERAL
   bool GEN_ENABLE_LAST_KNOWN_POSITION = false;
   int GEN_RF_METRICS_LEVEL = 0;
   bool GEN_NO_QOPENHD_AUTOSTART = false;
-  // EXTRA
-  bool DEV_ENABLE_MICROHARD = false;
 };
+
 // Otherwise, default location is used
 void set_config_file(const std::string& config_file_path);
 
@@ -43,7 +61,7 @@ Config load_config();
 void debug_config(const Config& config);
 void debug_config();
 
-// Control ethernet via mavlink & Network manager - only on on rpi by default,
+// Control ethernet via mavlink & Network manager - only on rpi by default,
 // otherwise card needs to be manually specified
 bool nw_ethernet_card_manual_active(const Config& config);
 

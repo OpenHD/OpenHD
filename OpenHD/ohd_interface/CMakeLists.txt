@@ -33,6 +33,7 @@ set(sources
     src/wb_link_settings.cpp
     src/wifi_client.cpp
     src/microhard_link.cpp
+    src/ethernet_link.cpp
     src/ethernet_manager.cpp
 )
 

@@ -79,9 +79,10 @@ static uint32_t milli_watt_to_milli_dbm(uint32_t milli_watt) {
 // the power in dBm is P = 30 + 10.log(W)
 // log10(x/1)==log(x) / log(10) = ~2.3
 
-static uint32_t milli_watt_to_mBm(uint32_t milli_watt, double scaler) {
+static uint32_t milli_watt_to_mBm(uint32_t milli_watt, double scaler,
+                                  double remover) {
   const double tmp = std::log10(static_cast<double>(milli_watt) / 1.0);
-  const double milli_dbm = tmp * 10 * 100 * scaler;
+  const double milli_dbm = (tmp * 10 * 100 * scaler) - remover;
   // return static_cast<uint32_t>(milli_dbm);
   return std::lround(milli_dbm);
 }

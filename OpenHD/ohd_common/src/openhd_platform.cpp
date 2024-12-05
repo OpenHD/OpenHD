@@ -9,7 +9,8 @@
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"
 
-static constexpr auto MVIDIA_XAVIER_BOARDID_PATH =
+// Constants
+static constexpr auto NVIDIA_XAVIER_BOARDID_PATH =
     "/proc/device-tree/nvidia,dtsfilename";
 static constexpr auto DEVICE_TREE_COMPATIBLE_PATH =
     "/proc/device-tree/compatible";
@@ -18,40 +19,35 @@ static constexpr auto SIGMASTAR_BOARDID_PATH = "/dev/mstar_ive0";
 static constexpr auto QUALCOMM_BOARDID_PATH = "/proc/device-tree/model";
 
 static int internal_discover_platform() {
+  openhd::log::get_default()->warn("OpenHD Platform Discovery started!");
   if (OHDFilesystemUtil::exists(ALLWINNER_BOARDID_PATH)) {
     return X_PLATFORM_TYPE_ALWINNER_X20;
-  }
+  } else if (OHDFilesystemUtil::exists("/boot/config.txt")) {
+    const auto filename_proc_cpuinfo = "/proc/cpuinfo";
+    const auto proc_cpuinfo_opt =
+        OHDFilesystemUtil::opt_read_file("/proc/cpuinfo");
 
-  if (OHDFilesystemUtil::exists(SIGMASTAR_BOARDID_PATH)) {
-    return X_PLATFORM_TYPE_OPENIPC_SIGMASTAR_UNDEFINED;
-  }
-
-  if (OHDFilesystemUtil::exists(QUALCOMM_BOARDID_PATH)) {
-    const std::string qualcomm_board_id_content =
-        OHDFilesystemUtil::read_file(QUALCOMM_BOARDID_PATH);
-
-    std::regex qualcomm_regex("(qcs405|qrb5165)");
-    std::smatch match;
-    if (std::regex_search(qualcomm_board_id_content, match, qualcomm_regex)) {
-      if (match[1] == "qcs405") {
-        return X_PLATFORM_TYPE_QUALCOMM_QCS405;
-      } else if (match[1] == "qrb5165") {
-        return X_PLATFORM_TYPE_QUALCOMM_QRB5165;
-      }
-    } else {
-      openhd::log::get_default()->warn("Unknown Qualcomm board ID: {}",
-                                       qualcomm_board_id_content);
-      return X_PLATFORM_TYPE_QUALCOMM_UNKNOWN;
+    if (!proc_cpuinfo_opt.has_value()) {
+      openhd::log::get_default()->warn(
+          "File {} does not exist, RPi detection unavailable",
+          filename_proc_cpuinfo);
+      return X_PLATFORM_TYPE_RPI_OLD;
     }
-  }
 
-  if (OHDFilesystemUtil::exists(DEVICE_TREE_COMPATIBLE_PATH)) {
+    if (OHDUtil::contains(proc_cpuinfo_opt.value(), "BCM2711")) {
+      return X_PLATFORM_TYPE_RPI_4;
+    }
+    return X_PLATFORM_TYPE_RPI_OLD;
+  } else if (OHDFilesystemUtil::exists(SIGMASTAR_BOARDID_PATH)) {
+    return X_PLATFORM_TYPE_OPENIPC_SIGMASTAR_UNDEFINED;
+  } else if (OHDFilesystemUtil::exists(DEVICE_TREE_COMPATIBLE_PATH)) {
     const std::string compatible_content =
         OHDFilesystemUtil::read_file(DEVICE_TREE_COMPATIBLE_PATH);
     const std::string device_tree_model =
         OHDFilesystemUtil::read_file("/proc/device-tree/model");
     std::regex r("rockchip,(r[kv][0-9]+)");
     std::smatch sm;
+
     if (regex_search(compatible_content, sm, r)) {
       const std::string chip = sm[1];
       if (chip == "rk3588") {
@@ -72,38 +68,50 @@ static int internal_discover_platform() {
         return X_PLATFORM_TYPE_ROCKCHIP_RV1126_UNDEFINED;
       }
     }
-  }
-  // If this file exists we can be sure we are on (any) RPI
-  if (OHDFilesystemUtil::exists("/boot/config.txt")) {
     const auto filename_proc_cpuinfo = "/proc/cpuinfo";
     const auto proc_cpuinfo_opt =
         OHDFilesystemUtil::opt_read_file("/proc/cpuinfo");
+
     if (!proc_cpuinfo_opt.has_value()) {
       openhd::log::get_default()->warn(
-          "File {} does not exist, rpi detection unavailable",
+          "File {} does not exist, RPi detection unavailable",
           filename_proc_cpuinfo);
       return X_PLATFORM_TYPE_RPI_OLD;
     }
+
     if (OHDUtil::contains(proc_cpuinfo_opt.value(), "BCM2711")) {
       return X_PLATFORM_TYPE_RPI_4;
     }
+
     return X_PLATFORM_TYPE_RPI_OLD;
-  }
-  if (OHDFilesystemUtil::exists(MVIDIA_XAVIER_BOARDID_PATH)) {
+  } else if (OHDFilesystemUtil::exists(NVIDIA_XAVIER_BOARDID_PATH)) {
     return X_PLATFORM_TYPE_NVIDIA_XAVIER;
-  }
-  {
-    // X86
+  } else if (OHDFilesystemUtil::exists(QUALCOMM_BOARDID_PATH)) {
+    const std::string qualcomm_board_id_content =
+        OHDFilesystemUtil::read_file(QUALCOMM_BOARDID_PATH);
+
+    std::regex qualcomm_regex("(qcs405|qrb5165)");
+    std::smatch match;
+
+    if (std::regex_search(qualcomm_board_id_content, match, qualcomm_regex)) {
+      if (match[1] == "qcs405") {
+        return X_PLATFORM_TYPE_QUALCOMM_QCS405;
+      } else if (match[1] == "qrb5165") {
+        return X_PLATFORM_TYPE_QUALCOMM_QRB5165;
+      }
+    }
+  } else {
     const auto arch_opt = OHDUtil::run_command_out("arch");
-    if (arch_opt == std::nullopt) {
+
+    if (!arch_opt.has_value()) {
       openhd::log::get_default()->warn("Arch not found");
       return X_PLATFORM_TYPE_UNKNOWN;
     }
+
     const auto arch = arch_opt.value();
-    std::smatch result;
     std::regex r1{"x86_64"};
-    auto res1 = std::regex_search(arch, result, r1);
-    if (res1) {
+
+    if (std::regex_search(arch, r1)) {
       return X_PLATFORM_TYPE_X86;
     }
   }
@@ -158,15 +166,15 @@ std::string x_platform_type_to_string(int platform_type) {
     case X_PLATFORM_TYPE_QUALCOMM_QRB5165:
       return "QUALCOMM_QRB5165";
     default:
-      break;
+      std::stringstream ss;
+      ss << "ERR-UNDEFINED{" << platform_type << "}";
+      return ss.str();
   }
-  std::stringstream ss;
-  ss << "ERR-UNDEFINED{" << platform_type << "}";
-  return ss.str();
 }
 
 int get_fec_max_block_size_for_platform() {
   auto platform_type = OHDPlatform::instance().platform_type;
+
   if (platform_type == X_PLATFORM_TYPE_RPI_4 ||
       platform_type == X_PLATFORM_TYPE_RPI_CM4) {
     return 50;
@@ -193,9 +201,11 @@ int get_fec_max_block_size_for_platform() {
       platform_type == X_PLATFORM_TYPE_QUALCOMM_QCS405) {
     return 50;
   }
+
   return 20;
 }
 
+// OHDPlatform methods
 const OHDPlatform& OHDPlatform::instance() {
   static OHDPlatform instance = discover_and_write_manifest();
   return instance;
@@ -222,22 +232,29 @@ bool OHDPlatform::is_rpi_or_x86() const {
 bool OHDPlatform::is_x20() const {
   return platform_type == X_PLATFORM_TYPE_ALWINNER_X20;
 }
+
 bool OHDPlatform::is_zero3w() const {
   return platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W;
 }
+
 bool OHDPlatform::is_radxa_cm3() const {
   return platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3;
 }
+
 bool OHDPlatform::is_rock5_a() const {
   return platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A;
 }
+
 bool OHDPlatform::is_rock5_b() const {
   return platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B;
 }
+
 bool OHDPlatform::is_rock5_a_b() const { return is_rock5_a() || is_rock5_b(); }
+
 bool OHDPlatform::is_qcs405() const {
   return platform_type == X_PLATFORM_TYPE_QUALCOMM_QCS405;
 }
+
 bool OHDPlatform::is_qrb5165() const {
   return platform_type == X_PLATFORM_TYPE_QUALCOMM_QRB5165;
 }

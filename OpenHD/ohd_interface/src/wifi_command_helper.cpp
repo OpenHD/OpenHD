@@ -58,11 +58,37 @@ static std::string channel_width_as_iw_string(uint32_t channel_width,
 
 bool wifi::commandhelper::iw_set_frequency_and_channel_width(
     const std::string &device, uint32_t freq_mhz, uint32_t channel_width) {
+  if (device == "ath0") {  // Qualcomm-specific logic
+    const auto channel = openhd::channel_from_frequency(freq_mhz);
+    if (!channel.has_value()) {
+      get_logger()->warn("Invalid frequency {}", freq_mhz);
+      return false;
+    }
+    if (channel->channel < 36) {
+      std::vector<std::string> args{device, "channel",
+                                    std::to_string(channel->channel), "1"};
+      OHDUtil::run_command("cfg80211tool", args);
+      std::vector<std::string> args1{device, "mode",
+                                     "11GHE" + std::to_string(channel_width)};
+      OHDUtil::run_command("cfg80211tool", args1);
+    } else {
+      std::vector<std::string> args{device, "channel",
+                                    std::to_string(channel->channel), "2"};
+      OHDUtil::run_command("cfg80211tool", args);
+      std::vector<std::string> args1{device, "mode",
+                                     "11AHE" + std::to_string(channel_width)};
+      OHDUtil::run_command("cfg80211tool", args1);
+    }
+    return true;
+  }
+
+  // Generic logic for other devices
   const std::string iw_channel_width =
       channel_width_as_iw_string(channel_width);
   return iw_set_frequency_and_channel_width2(device, freq_mhz,
                                              iw_channel_width);
 }
+
 bool wifi::commandhelper::iw_set_frequency_and_channel_width2(
     const std::string &device, uint32_t freq_mhz, const std::string &ht_mode,
     bool dummy) {
@@ -81,19 +107,66 @@ bool wifi::commandhelper::iw_set_frequency_and_channel_width2(
 
 bool wifi::commandhelper::iw_set_tx_power(const std::string &device,
                                           uint32_t tx_power_mBm) {
-  get_logger()->info("iw_set_tx_power {} {} mBm", device, tx_power_mBm);
+  if (device == "ath0") {  // Qualcomm-specific logic
+    get_logger()->warn("set_tx_power {} {} dBm", device, tx_power_mBm);
+    std::vector<std::string> args{"acfg_set_tx_power", "wifi0", "0",
+                                  std::to_string(tx_power_mBm)};
+    get_logger()->warn("Running command: acfg_tool with arguments: [{}]",
+                       fmt::join(args, ", "));
+    const auto ret = OHDUtil::run_command("acfg_tool", args);
+    if (ret != 0) {
+      get_logger()->warn(
+          "Qualcomm-specific set_tx_power failed for device {} with return "
+          "code {}",
+          device, ret);
+      return false;
+    }
+    return true;
+  }
+
+  // Generic logic for other devices
+  get_logger()->debug("Setting tx_power for device: {} to {} mBm", device,
+                      tx_power_mBm);
+
   std::vector<std::string> args{
       "dev", device, "set", "txpower", "fixed", std::to_string(tx_power_mBm)};
+  get_logger()->debug("Running command: iw with arguments: [{}]",
+                      fmt::join(args, ", "));
+
   const auto ret = OHDUtil::run_command("iw", args);
   if (ret != 0) {
-    get_logger()->warn("iw_set_tx_power failed {}", ret);
+    get_logger()->debug(
+        "Failed to set tx_power for device: {}. Power: {} mBm, Return Code: "
+        "{}. Command Args: [{}]",
+        device, tx_power_mBm, ret, fmt::join(args, ", "));
     return false;
   }
+
+  get_logger()->debug("Successfully set tx_power for device: {} to {} mBm",
+                      device, tx_power_mBm);
   return true;
 }
 
+// HE MCS0-11 NSS 1 20 MHz
+static const std::vector<uint32_t> he20_11ax_rate_ol{
+    8600,  17200, 25800,  34400,  51600,  68800,
+    77400, 86000, 103200, 114700, 129000, 143400,
+};
+
 bool wifi::commandhelper::iw_set_rate_mcs(const std::string &device,
                                           uint32_t mcs_index, bool is_2g) {
+  if (device == "ath0") {  // Qualcomm-specific logic
+    get_logger()->info("set_rate_mcs {} {}", device, mcs_index);
+    if (mcs_index < he20_11ax_rate_ol.size()) {
+      const auto rate = he20_11ax_rate_ol[mcs_index];
+      std::vector<std::string> args{device, "bcast_rate", std::to_string(rate)};
+      OHDUtil::run_command("iwpriv", args);
+      return true;
+    }
+    return false;
+  }
+
+  // Generic logic for other devices
   get_logger()->info("iw_set_rate_mcs {} {} mBm", device, mcs_index);
   std::vector<std::string> args{"dev",
                                 device,
@@ -323,8 +396,7 @@ bool wifi::commandhelper::openhd_driver_set_tx_power(WiFiCardType type,
   OHDFilesystemUtil::write_file(TXPOWER_OVERRIDE_FILENAME,
                                 fmt::format("{}", tx_power_mBm));
   // initiate change
-  wifi::commandhelper::iw_set_tx_power(device,
-                                       13);  // 20mW ~ 13mBm, should always work
+  wifi::commandhelper::iw_set_tx_power(device, tx_power_mBm);
   return true;
 }
 

@@ -29,18 +29,9 @@
 #include <thread>
 #include <vector>
 
+#include "openhd_config.h"
 #include "openhd_temporary_air_or_ground.h"
 
-// Constants
-static constexpr auto MICROHARD_AIR_IP = "192.168.168.11";
-static constexpr auto MICROHARD_GND_IP = "192.168.168.12";
-static constexpr int MICROHARD_UDP_PORT_VIDEO_AIR_TX = 5910;
-static constexpr int MICROHARD_UDP_PORT_TELEMETRY_AIR_TX = 5920;
-static const std::string DEFAULT_DEVICE_IP_GND = "192.168.168.122";
-static const std::string DEFAULT_DEVICE_IP_AIR = "192.168.168.153";
-const std::string telnet_cmd = "telnet 192.168.168.1";
-const std::string username = "admin\n";
-const std::string password = "qwertz1\n";
 const std::string command = "AT+MWRSSI\n";
 const std::string command2 = "AT+MWTXPOWER\n";
 const std::string command3 = "AT+MWBAND\n";
@@ -48,6 +39,19 @@ const std::string command4 = "AT+MWFREQ2400\n";
 const std::string command5 = "AT+MWVRATE\n";
 const std::string command6 = "AT+MWNOISEFLOOR\n";
 const std::string command7 = "AT+MWSNR\n";
+
+// Parse hardware.config
+const auto config = openhd::load_config();
+static const auto MICROHARD_IP_RANGE = config.MICROHARD_IP_AIR;
+static const auto MICROHARD_AIR_IP = config.MICROHARD_IP_AIR;
+static const auto MICROHARD_GND_IP = config.MICROHARD_IP_GROUND;
+static const int MICROHARD_UDP_PORT_TELEMETRY_AIR_TX =
+    config.MICROHARD_TELEMETRY_PORT;
+static const int MICROHARD_UDP_PORT_VIDEO_AIR_TX = config.MICROHARD_VIDEO_PORT;
+static const std::string DEFAULT_DEVICE_IP_GND = config.GROUND_UNIT_IP;
+static const std::string DEFAULT_DEVICE_IP_AIR = config.AIR_UNIT_IP;
+const std::string username = config.MICROHARD_USERNAME + "\n";
+const std::string password = config.MICROHARD_PASSWORD + "\n";
 
 // Helper function to retrieve IP addresses starting with a specific prefix
 std::vector<std::string> get_ip_addresses(const std::string& prefix) {
@@ -317,7 +321,7 @@ bool check_ip_alive(const std::string& ip, int port = 23) {
 }
 
 std::string find_device_ip_gnd() {
-  auto ip_addresses = get_ip_addresses("192.168.168");
+  auto ip_addresses = get_ip_addresses(MICROHARD_IP_RANGE);
   for (const auto& ip : ip_addresses) {
     if (ip != MICROHARD_AIR_IP && ip != MICROHARD_GND_IP) {
       return ip;
@@ -330,7 +334,7 @@ std::string find_device_ip_gnd() {
 }
 
 std::string find_device_ip_air() {
-  auto ip_addresses = get_ip_addresses("192.168.168");
+  auto ip_addresses = get_ip_addresses(MICROHARD_IP_RANGE);
   for (const auto& ip : ip_addresses) {
     if (ip != MICROHARD_AIR_IP && ip != MICROHARD_GND_IP) {
       return ip;
@@ -347,7 +351,7 @@ static const std::string DEVICE_IP_GND = find_device_ip_gnd();
 static const std::string DEVICE_IP_AIR = find_device_ip_air();
 
 void log_ip_addresses() {
-  auto ip_addresses = get_ip_addresses("192.168.168");
+  auto ip_addresses = get_ip_addresses(MICROHARD_IP_RANGE);
   if (!ip_addresses.empty()) {
     for (const auto& ip : ip_addresses) {
       openhd::log::get_default()->warn("Found IP address: {}", ip);
@@ -355,18 +359,18 @@ void log_ip_addresses() {
       openhd::log::get_default()->warn("Gateway IP for {}: {}", ip, gateway_ip);
     }
   } else {
-    openhd::log::get_default()->warn(
-        "No IP addresses starting with 192.168.168 found.");
+    openhd::log::get_default()->warn("No IP addresses starting with {} found.",
+                                     MICROHARD_IP_RANGE);
   }
 }
 
 std::string get_detected_ip_address() {
-  auto ip_addresses = get_ip_addresses("192.168.168");
+  auto ip_addresses = get_ip_addresses(MICROHARD_IP_RANGE);
   if (!ip_addresses.empty()) {
     return ip_addresses.front();
   } else {
-    openhd::log::get_default()->warn(
-        "No IP addresses starting with 192.168.168 found.");
+    openhd::log::get_default()->warn("No IP addresses starting with {} found.",
+                                     MICROHARD_IP_RANGE);
 
     return "";  // Return an empty string if no IP found
   }
