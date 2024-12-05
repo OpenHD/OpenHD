@@ -52,7 +52,7 @@ const std::string command7 = "AT+MWSNR\n";
 
 // Parse hardware.config
 const auto config = openhd::load_config();
-MICROHARD_AIR_IP = config.GROUND_UNIT_IP;
+static constexpr auto MICROHARD_AIR_IP = config.GROUND_UNIT_IP;
 
 // Helper function to retrieve IP addresses starting with a specific prefix
 std::vector<std::string> get_ip_addresses(const std::string& prefix) {
