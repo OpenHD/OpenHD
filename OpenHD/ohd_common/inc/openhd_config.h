@@ -39,8 +39,8 @@ struct Config {
   // ETHERNET LINK FOR MICROHARD
   bool DISABLE_MICROHARD_DETECTION = false;
   bool FORCE_MICROHARD = false;
-  std::string MICROHARD_USERNAME = "";
-  std::string MICROHARD_PASSWORD = "";
+  std::string MICROHARD_USERNAME = "admin";
+  std::string MICROHARD_PASSWORD = "qwertz1";
   std::string MICROHARD_IP_AIR = "";
   std::string MICROHARD_IP_GROUND = "";
   std::string MICROHARD_IP_RANGE = "";
