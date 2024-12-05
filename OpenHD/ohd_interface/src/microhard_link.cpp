@@ -49,10 +49,9 @@ static const int MICROHARD_UDP_PORT_TELEMETRY_AIR_TX = config.MICROHARD_TELEMETR
 static const int MICROHARD_UDP_PORT_VIDEO_AIR_TX = config.MICROHARD_VIDEO_PORT;
 static const std::string DEFAULT_DEVICE_IP_GND = config.GROUND_UNIT_IP;
 static const std::string DEFAULT_DEVICE_IP_AIR = config.AIR_UNIT_IP;
-// const std::string username = config.MICROHARD_USERNAME+"/n";
-// const std::string password = config.MICROHARD_PASSWORD+"/n";
-const std::string username = "admin\n";
-const std::string password = "qwertz1\n";
+const std::string username = config.MICROHARD_USERNAME+"/n";
+const std::string password = config.MICROHARD_PASSWORD+"/n";
+
 
 // Helper function to retrieve IP addresses starting with a specific prefix
 std::vector<std::string> get_ip_addresses(const std::string& prefix) {
@@ -148,12 +147,12 @@ void communicate_with_device(const std::string& ip,
     // Login to the device
     std::this_thread::sleep_for(
         std::chrono::seconds(1));  // Wait for a second to process username
-    openhd::log::get_default()->debug("Sending username: {}", username);
+    openhd::log::get_default()->warn("Sending username: {}", username);
     stream << username << std::flush;
     std::this_thread::sleep_for(
         std::chrono::seconds(1));  // Wait for a second to process username
 
-    openhd::log::get_default()->debug("Sending password: {}", password);
+    openhd::log::get_default()->warn("Sending password: {}", password);
     stream << password << std::flush;
     std::this_thread::sleep_for(
         std::chrono::seconds(3));  // Wait for a second to process password
