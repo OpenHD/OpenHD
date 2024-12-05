@@ -59,12 +59,16 @@ static openhd::Config load_or_default() {
         r.Get<bool>("network", "NW_FORWARD_TO_LOCALHOST_58XX", false);
 
     // Parse Ethernet link configuration
+    ret.DISABLE_MICROHARD_DETECTION =
+        r.Get<bool>("ethernet", "DISABLE_MICROHARD_DETECTION", false);
+    ret.FORCE_MICROHARD =
+        r.Get<bool>("ethernet", "FORCE_MICROHARD", false);
     ret.GROUND_UNIT_IP = r.Get<std::string>("ethernet", "GROUND_UNIT_IP", "");
     ret.AIR_UNIT_IP = r.Get<std::string>("ethernet", "AIR_UNIT_IP", "");
     ret.VIDEO_PORT =
-        r.Get<int>("ethernet", "VIDEO_PORT", 5000);  // Default port 5000
+        r.Get<int>("ethernet", "VIDEO_PORT", 5000);
     ret.TELEMETRY_PORT =
-        r.Get<int>("ethernet", "TELEMETRY_PORT", 5600);  // Default port 5600
+        r.Get<int>("ethernet", "TELEMETRY_PORT", 5600);
 
     // Parse Generic configuration
     ret.GEN_ENABLE_LAST_KNOWN_POSITION =
@@ -72,10 +76,6 @@ static openhd::Config load_or_default() {
     ret.GEN_RF_METRICS_LEVEL = r.Get<int>("generic", "GEN_RF_METRICS_LEVEL", 0);
     ret.GEN_NO_QOPENHD_AUTOSTART =
         r.Get<bool>("generic", "GEN_NO_QOPENHD_AUTOSTART", false);
-
-    // Parse Development configuration
-    ret.DEV_ENABLE_MICROHARD =
-        r.Get<bool>("dev", "DEV_ENABLE_MICROHARD", false);
 
     return ret;
   } catch (std::exception& exception) {
