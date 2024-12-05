@@ -31,7 +31,7 @@ struct Config {
   bool NW_FORWARD_TO_LOCALHOST_58XX = false;
 
   // ETHERNET LINK
-  std::string GROUND_UNIT_IP = "";  
+  std::string GROUND_UNIT_IP = "";
   std::string AIR_UNIT_IP = "";
   int VIDEO_PORT = 5000;
   int TELEMETRY_PORT = 5600;
@@ -51,7 +51,6 @@ struct Config {
   bool GEN_ENABLE_LAST_KNOWN_POSITION = false;
   int GEN_RF_METRICS_LEVEL = 0;
   bool GEN_NO_QOPENHD_AUTOSTART = false;
-
 };
 
 // Otherwise, default location is used
