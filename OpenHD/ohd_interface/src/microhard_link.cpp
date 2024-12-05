@@ -3,6 +3,7 @@
 //
 
 #include "microhard_link.h"
+#include "openhd_config.h"
 
 #include <Poco/Exception.h>
 #include <Poco/Net/SocketAddress.h>
