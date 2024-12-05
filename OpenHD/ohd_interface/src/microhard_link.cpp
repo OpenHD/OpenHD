@@ -32,7 +32,7 @@
 #include "openhd_temporary_air_or_ground.h"
 
 // Constants
-static constexpr auto MICROHARD_AIR_IP = "192.168.168.11";
+// static constexpr auto MICROHARD_AIR_IP = "192.168.168.11";
 static constexpr auto MICROHARD_GND_IP = "192.168.168.12";
 static constexpr int MICROHARD_UDP_PORT_VIDEO_AIR_TX = 5910;
 static constexpr int MICROHARD_UDP_PORT_TELEMETRY_AIR_TX = 5920;
@@ -48,6 +48,10 @@ const std::string command4 = "AT+MWFREQ2400\n";
 const std::string command5 = "AT+MWVRATE\n";
 const std::string command6 = "AT+MWNOISEFLOOR\n";
 const std::string command7 = "AT+MWSNR\n";
+
+// Parse hardware.config
+const auto config = openhd::load_config();
+MICROHARD_AIR_IP = config.GROUND_UNIT_IP;
 
 // Helper function to retrieve IP addresses starting with a specific prefix
 std::vector<std::string> get_ip_addresses(const std::string& prefix) {
