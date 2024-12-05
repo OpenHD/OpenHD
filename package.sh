@@ -33,17 +33,46 @@ create_package_directory() {
     sudo chmod +777 ${PKGDIR}etc/profile.d/desktop-truster.sh
   fi
 
-  # Copy hardware.config based on architecture and custom type
-  if [[ "${PACKAGE_ARCH}" == "armhf" ]]; then
-    if [[ "${CUSTOM}" == "standard" ]]; then
-      mkdir -p "${PKGDIR}/boot/openhd/"
-      cp OpenHD/ohd_common/config/hardware.config "${PKGDIR}/boot/openhd/hardware.config" || exit 1
+# Copy hardware.config based on architecture and custom type
+echo "Starting hardware.config copy process..."
+echo "PACKAGE_ARCH=${PACKAGE_ARCH}"
+echo "CUSTOM=${CUSTOM}"
+
+if [[ "${PACKAGE_ARCH}" == "armhf" ]]; then
+  echo "PACKAGE_ARCH matches armhf"
+  
+  if [[ "${CUSTOM}" == "standard" ]]; then
+    echo "CUSTOM matches standard"
+    
+    mkdir -p "${PKGDIR}/boot/openhd/"
+    echo "Created directory: ${PKGDIR}/boot/openhd/"
+    
+    if cp OpenHD/ohd_common/config/hardware.config "${PKGDIR}/boot/openhd/hardware.config"; then
+      echo "Copied hardware.config to ${PKGDIR}/boot/openhd/"
     else
-      mkdir -p "${PKGDIR}/config/openhd/"
-      cp OpenHD/ohd_common/config/hardware.config "${PKGDIR}/config/openhd/hardware.config" || exit 1
+      echo "Error copying hardware.config to ${PKGDIR}/boot/openhd/"
+      exit 1
     fi
+    
+  else
+    echo "CUSTOM does not match standard"
+    
+    mkdir -p "${PKGDIR}/config/openhd/"
+    echo "Created directory: ${PKGDIR}/config/openhd/"
+    
+    if cp OpenHD/ohd_common/config/hardware.config "${PKGDIR}/config/openhd/hardware.config"; then
+      echo "Copied hardware.config to ${PKGDIR}/config/openhd/"
+    else
+      echo "Error copying hardware.config to ${PKGDIR}/config/openhd/"
+      exit 1
+    fi
+    
   fi
-}
+  
+else
+  echo "PACKAGE_ARCH does not match armhf, skipping hardware.config copy"
+fi
+
 
 # Function to build the package
 build_package() {
