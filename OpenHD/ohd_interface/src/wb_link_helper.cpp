@@ -1,7 +1,3 @@
-//
-// Created by consti10 on 10.12.22.
-//
-
 #include "wb_link_helper.h"
 
 #include "wb_link_rate_helper.hpp"
@@ -107,14 +103,16 @@ void openhd::wb::set_tx_power_for_all_cards(
                                            rtl8812au_tx_power_index_override);
     } else {
       float adjustment_factor = 1.0f;
+      float adjustment_value = 1.0f;
       if (card.type == WiFiCardType::OPENHD_RTL_88X2EU) {
-        adjustment_factor = 1.4f;
+        adjustment_factor = 1.1f;
+        adjustment_value = 1000;
       }
       if (card.type == WiFiCardType::QUALCOMM) {
         adjustment_factor = 1.2f;
       }
-      const auto tx_power_mbm =
-          openhd::milli_watt_to_mBm(tx_power_mw, adjustment_factor);
+      const auto tx_power_mbm = openhd::milli_watt_to_mBm(
+          tx_power_mw, adjustment_factor, adjustment_value);
       if (card.type == WiFiCardType::OPENHD_RTL_88X2BU ||
           card.type == WiFiCardType::OPENHD_RTL_88X2CU ||
           card.type == WiFiCardType::OPENHD_RTL_88X2EU ||
@@ -210,33 +208,69 @@ void openhd::wb::takeover_cards_monitor_mode(
     const std::vector<WiFiCard>& cards,
     std::shared_ptr<spdlog::logger> console) {
   console->debug("takeover_cards_monitor_mode() begin");
-  // We need to take "ownership" from the system over the cards used for monitor
-  // mode / wifibroadcast. This can be different depending on the OS we are
-  // running on - in general, we try to go for the following with openhd: Have
-  // network manager running on the host OS - the nice thing about network
-  // manager is that we can just tell it to ignore the cards we are doing
-  // wifibroadcast with, instead of killing all processes that might interfere
-  // with wifibroadcast and therefore making other networking incredibly hard.
-  // Tell network manager to ignore the cards we want to do wifibroadcast on
+
+  // Take "ownership" from the system for cards used in monitor mode /
+  // wifibroadcast. Depending on the OS, we tell the network manager to ignore
+  // these cards instead of killing all networking processes that might
+  // interfere.
   bool emulate = false;
+
   for (const auto& card : cards) {
-    if (card.type == WiFiCardType::OPENHD_EMULATED) {
+    if (card.type == WiFiCardType::QUALCOMM) {
+      console->debug("Qualcomm (ath0) card detected: {}", card.device_name);
       return;
     }
+    if (card.type == WiFiCardType::OPENHD_EMULATED) {
+      console->debug("Skipping emulated card: {}", card.device_name);
+      emulate = true;
+      continue;  // Skip emulated cards
+    }
+
     wifi::commandhelper::nmcli_set_device_managed_status(card.device_name,
                                                          false);
   }
+
   if (!emulate) {
     wifi::commandhelper::rfkill_unblock_all();
-    // Apparently, we need to give nm / whoever a bit time before we start
-    // putting the cards into monitor mode not pretty, but works.
+
+    // Allow time for network manager changes to take effect
     std::this_thread::sleep_for(std::chrono::seconds(1));
-    // now we can enable monitor mode on the given cards.
+
+    // Enable monitor mode for applicable cards
     for (const auto& card : cards) {
-      wifi::commandhelper::ip_link_set_card_state(card.device_name, false);
-      wifi::commandhelper::iw_enable_monitor_mode(card.device_name);
-      wifi::commandhelper::ip_link_set_card_state(card.device_name, true);
-      // wifi::commandhelper2::set_wifi_monitor_mode(card->_wifi_card.interface_name);
+      if (card.type == WiFiCardType::QUALCOMM) {
+        // Execute the script to enable monitor mode for Qualcomm cards
+        const char* script_path = "/data/misc/wifi/start_monitor";
+        console->debug(
+            "Running script to set Qualcomm (ath0) card to Monitor Mode: {}",
+            script_path);
+
+        FILE* pipe = popen(script_path, "r");
+        if (!pipe) {
+          console->error("Failed to execute script: {}", script_path);
+          continue;  // Skip to the next card
+        }
+
+        // Read the output of the script
+        char buffer[128];
+        std::string result;
+        while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+          result += buffer;
+        }
+
+        // Wait for the script to complete
+        int return_code = pclose(pipe);
+        if (return_code == 0) {
+          console->info("Script executed successfully. Output:\n{}", result);
+        } else {
+          console->error("Script execution failed with code {}. Output:\n{}",
+                         return_code, result);
+        }
+      } else {
+        wifi::commandhelper::ip_link_set_card_state(card.device_name, false);
+        wifi::commandhelper::iw_enable_monitor_mode(card.device_name);
+        wifi::commandhelper::ip_link_set_card_state(card.device_name, true);
+      }
     }
   }
   console->debug("takeover_cards_monitor_mode() end");
