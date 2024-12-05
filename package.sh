@@ -22,119 +22,108 @@
 # © OpenHD, All Rights Reserved.
 ################################################################################
 
-CUSTOM="${1}"
-PACKAGE_ARCH="${2}"
-OS="${3}"
+set -euo pipefail  # Enable strict error handling
+
+CUSTOM="${1:-}"
+PACKAGE_ARCH="${2:-}"
+OS="${3:-}"
 
 PKGDIR="/out/openhd-installdir/"
 VERSION="2.6.2-$(date '+%Y%m%d%H%M')-$(git rev-parse --short HEAD)"
 
 # Function to create the package directory structure
 create_package_directory() {
+  echo "Creating package directory structure..."
   rm -rf /tmp/openhd-installdir
-  mkdir -p ${PKGDIR}usr/local/bin
-  mkdir -p ${PKGDIR}tmp
-  mkdir -p ${PKGDIR}settings
-  mkdir -p ${PKGDIR}etc/systemd/system
+  mkdir -p \
+    "${PKGDIR}usr/local/bin" \
+    "${PKGDIR}tmp" \
+    "${PKGDIR}settings" \
+    "${PKGDIR}etc/systemd/system"
 
-  # Copy systemd service based on architecture and custom type
   if [[ "${PACKAGE_ARCH}" != "x86_64" ]]; then
-    echo "Not x86 architecture"
+    echo "Non-x86 architecture detected"
     if [[ "${CUSTOM}" == "standard" ]]; then
-      cp systemd/openhd.service ${PKGDIR}etc/systemd/system/openhd.service || exit 1
+      cp systemd/openhd.service "${PKGDIR}etc/systemd/system/openhd.service"
     else
-      cp systemd/openhd-x20.service ${PKGDIR}etc/systemd/system/openhd.service || exit 1
+      cp systemd/openhd-x20.service "${PKGDIR}etc/systemd/system/openhd.service"
     fi
   else
-    mkdir -p ${PKGDIR}usr/share/applications/
-    cp shortcuts/* ${PKGDIR}usr/share/applications/
-    mkdir -p ${PKGDIR}usr/local/share/openhd_misc/
-    cp shortcuts/OpenHD.ico ${PKGDIR}usr/local/share/openhd_misc/
-    mkdir -p ${PKGDIR}etc/profile.d/
-    cp desktop-truster.sh ${PKGDIR}etc/profile.d/
-    sudo chmod +777 ${PKGDIR}etc/profile.d/desktop-truster.sh
+    mkdir -p "${PKGDIR}usr/share/applications/"
+    cp shortcuts/* "${PKGDIR}usr/share/applications/"
+    mkdir -p "${PKGDIR}usr/local/share/openhd_misc/"
+    cp shortcuts/OpenHD.ico "${PKGDIR}usr/local/share/openhd_misc/"
+    mkdir -p "${PKGDIR}etc/profile.d/"
+    cp desktop-truster.sh "${PKGDIR}etc/profile.d/"
+    chmod 777 "${PKGDIR}etc/profile.d/desktop-truster.sh"
   fi
 
-# Copy hardware.config based on architecture and custom type
-echo "Starting hardware.config copy process..."
-echo "PACKAGE_ARCH=${PACKAGE_ARCH}"
-echo "CUSTOM=${CUSTOM}"
-
-if [[ "${PACKAGE_ARCH}" == "armhf" ]]; then
-  echo "PACKAGE_ARCH matches armhf"
-  
-  if [[ "${CUSTOM}" == "standard" ]]; then
-    echo "CUSTOM matches standard"
-    
-    mkdir -p "${PKGDIR}/boot/openhd/"
-    echo "Created directory: ${PKGDIR}/boot/openhd/"
-    
-    if cp OpenHD/ohd_common/config/hardware.config "${PKGDIR}/boot/openhd/hardware.config"; then
-      echo "Copied hardware.config to ${PKGDIR}/boot/openhd/"
+  # Copy hardware.config based on architecture and custom type
+  echo "Copying hardware.config..."
+  if [[ "${PACKAGE_ARCH}" == "armhf" ]]; then
+    local config_dir
+    if [[ "${CUSTOM}" == "standard" ]]; then
+      config_dir="${PKGDIR}/boot/openhd/"
     else
-      echo "Error copying hardware.config to ${PKGDIR}/boot/openhd/"
-      exit 1
+      config_dir="${PKGDIR}/config/openhd/"
     fi
-    
+    mkdir -p "${config_dir}"
+    cp OpenHD/ohd_common/config/hardware.config "${config_dir}hardware.config"
   else
-    echo "CUSTOM does not match standard"
-    
-    mkdir -p "${PKGDIR}/config/openhd/"
-    echo "Created directory: ${PKGDIR}/config/openhd/"
-    
-    if cp OpenHD/ohd_common/config/hardware.config "${PKGDIR}/config/openhd/hardware.config"; then
-      echo "Copied hardware.config to ${PKGDIR}/config/openhd/"
-    else
-      echo "Error copying hardware.config to ${PKGDIR}/config/openhd/"
-      exit 1
-    fi
-    
+    echo "Skipping hardware.config copy for non-armhf architecture"
   fi
-  
-else
-  echo "PACKAGE_ARCH does not match armhf, skipping hardware.config copy"
-fi
-
+}
 
 # Function to build the package
 build_package() {
+  echo "Building package..."
+  local package_name="openhd"
+  local packages=()
 
-  # Set initial package name
   if [[ "${PACKAGE_ARCH}" == "armhf" ]]; then
     if [[ "${CUSTOM}" == "standard" ]]; then
-      PACKAGE_NAME="openhd"
-      PACKAGES="-d libpoco-dev -d libcamera-openhd -d gst-openhd-plugins -d iw -d nmap -d aircrack-ng -d i2c-tools -d libv4l-dev -d libusb-1.0-0 -d libpcap-dev -d libnl-3-dev -d libnl-genl-3-dev -d libsdl2-2.0-0 -d libsodium-dev -d gstreamer1.0-plugins-base -d gstreamer1.0-plugins-good -d gstreamer1.0-plugins-bad -d gstreamer1.0-plugins-ugly -d gstreamer1.0-libav -d gstreamer1.0-tools -d gstreamer1.0-alsa -d gstreamer1.0-pulseaudio"
+      package_name="openhd"
+      packages+=(
+        libpoco-dev libcamera-openhd gst-openhd-plugins iw nmap aircrack-ng
+        i2c-tools libv4l-dev libusb-1.0-0 libpcap-dev libnl-3-dev libnl-genl-3-dev
+        libsdl2-2.0-0 libsodium-dev gstreamer1.0-plugins-{base,good,bad,ugly,libav}
+        gstreamer1.0-{tools,alsa,pulseaudio}
+      )
     else
-      PACKAGE_NAME="openhd-x20"
-      PACKAGES="-d libpoco-dev -d iw -d i2c-tools -d libv4l-dev -d libusb-1.0-0 -d libpcap-dev -d libnl-3-dev -d libnl-genl-3-dev -d libsdl2-2.0-0 -d libsodium-dev -d gstreamer1.0-plugins-base -d gstreamer1.0-plugins-good -d gstreamer1.0-plugins-bad -d gstreamer1.0-tools"
+      package_name="openhd-x20"
+      packages+=(
+        libpoco-dev iw i2c-tools libv4l-dev libusb-1.0-0 libpcap-dev
+        libnl-3-dev libnl-genl-3-dev libsdl2-2.0-0 libsodium-dev
+        gstreamer1.0-plugins-{base,good,bad} gstreamer1.0-tools
+      )
     fi
   elif [[ "${PACKAGE_ARCH}" == "x86_64" ]]; then
-    PACKAGE_NAME="openhd"
-    PACKAGES="-d libpoco-dev -d dkms -d qopenhd -d git -d iw -d nmap -d aircrack-ng -d i2c-tools -d libv4l-dev -d libusb-1.0-0 -d libpcap-dev -d libnl-3-dev -d libnl-genl-3-dev -d libsdl2-2.0-0 -d libsodium-dev -d gstreamer1.0-plugins-base -d gstreamer1.0-plugins-good -d gstreamer1.0-plugins-bad -d gstreamer1.0-plugins-ugly -d gstreamer1.0-libav -d gstreamer1.0-tools -d gstreamer1.0-alsa -d gstreamer1.0-pulseaudio"
-  else
-    PACKAGE_NAME="openhd"
-    PACKAGES="-d libpoco-dev -d iw -d nmap -d aircrack-ng -d i2c-tools -d libv4l-dev -d libusb-1.0-0 -d libpcap-dev -d libnl-3-dev -d libnl-genl-3-dev -d libsdl2-2.0-0 -d libsodium-dev -d gstreamer1.0-plugins-base -d gstreamer1.0-plugins-good -d gstreamer1.0-plugins-bad -d gstreamer1.0-plugins-ugly -d gstreamer1.0-libav -d gstreamer1.0-tools -d gstreamer1.0-alsa -d gstreamer1.0-pulseaudio"
+    packages+=(
+      libpoco-dev dkms qopenhd git iw nmap aircrack-ng i2c-tools libv4l-dev
+      libusb-1.0-0 libpcap-dev libnl-3-dev libnl-genl-3-dev libsdl2-2.0-0
+      libsodium-dev gstreamer1.0-plugins-{base,good,bad,ugly,libav}
+      gstreamer1.0-{tools,alsa,pulseaudio}
+    )
   fi
 
-  # Check for the presence of qti-gstreamer1.0-plugins-bad-waylandsink and add -QCom to package name if installed
   if dpkg -l | grep -q "qti-gstreamer1.0-plugins-bad-waylandsink"; then
-    PACKAGE_NAME="${PACKAGE_NAME}-QCom"
+    package_name="${package_name}-QCom"
   fi
 
-  rm "${PACKAGE_NAME}_${VERSION}_${PACKAGE_ARCH}.deb" > /dev/null 2>&1 || true
+  rm -f "${package_name}_${VERSION}_${PACKAGE_ARCH}.deb"
   cmake OpenHD/
-  make -j4
-  mkdir -p ${PKGDIR}/usr/local/bin/
-  cp openhd ${PKGDIR}/usr/local/bin/ || exit 1
+  make -j$(nproc)
+
+  mkdir -p "${PKGDIR}usr/local/bin/"
+  cp openhd "${PKGDIR}usr/local/bin/"
 
   # Build the package using fpm
-  fpm -a "${PACKAGE_ARCH}" -s dir -t deb -n "${PACKAGE_NAME}" -v "${VERSION}" -C "${PKGDIR}" \
-    -p "${PACKAGE_NAME}_${VERSION}_${PACKAGE_ARCH}.deb" \
+  fpm -a "${PACKAGE_ARCH}" -s dir -t deb -n "${package_name}" -v "${VERSION}" -C "${PKGDIR}" \
+    -p "${package_name}_${VERSION}_${PACKAGE_ARCH}.deb" \
     --after-install after-install.sh \
     --before-install before-install.sh \
-    ${PACKAGES}
-  
-  # Copy the resulting .deb package to the output directory
+    -d "$(IFS=','; echo "${packages[*]}")"
+
   cp *.deb /out/
 }
 
