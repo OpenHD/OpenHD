@@ -35,8 +35,14 @@ struct Config {
   std::string AIR_UNIT_IP = "";
   int VIDEO_PORT = 5000;
   int TELEMETRY_PORT = 5600;
+
+  // ETHERNET LINK FOR MICROHARD
   bool DISABLE_MICROHARD_DETECTION = false;
   bool FORCE_MICROHARD = false;
+  std::string MICROHARD_USERNAME = "";
+  std::string MICROHARD_PASSWORD = "";
+  std::string MICROHARD_IP_AIR = "";
+  std::string MICROHARD_IP_Ground = "";
 
   // GENERAL
   bool GEN_ENABLE_LAST_KNOWN_POSITION = false;

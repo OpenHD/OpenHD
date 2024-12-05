@@ -59,16 +59,23 @@ static openhd::Config load_or_default() {
         r.Get<bool>("network", "NW_FORWARD_TO_LOCALHOST_58XX", false);
 
     // Parse Ethernet link configuration
-    ret.DISABLE_MICROHARD_DETECTION =
-        r.Get<bool>("ethernet", "DISABLE_MICROHARD_DETECTION", false);
-    ret.FORCE_MICROHARD =
-        r.Get<bool>("ethernet", "FORCE_MICROHARD", false);
     ret.GROUND_UNIT_IP = r.Get<std::string>("ethernet", "GROUND_UNIT_IP", "");
     ret.AIR_UNIT_IP = r.Get<std::string>("ethernet", "AIR_UNIT_IP", "");
     ret.VIDEO_PORT =
         r.Get<int>("ethernet", "VIDEO_PORT", 5000);
     ret.TELEMETRY_PORT =
         r.Get<int>("ethernet", "TELEMETRY_PORT", 5600);
+
+    // Parse Ethernet link Microhard configuration
+    ret.DISABLE_MICROHARD_DETECTION =
+        r.Get<bool>("microhard", "DISABLE_MICROHARD_DETECTION", false);
+    ret.FORCE_MICROHARD =
+        r.Get<bool>("microhard", "FORCE_MICROHARD", false);
+    ret.MICROHARD_USERNAME = r.Get<std::string>("microhard", "MICROHARD_USERNAME", "");
+    ret.MICROHARD_PASSWORD = r.Get<std::string>("microhard", "MICROHARD_PASSWORD", "");
+    ret.MICROHARD_IP_AIR = r.Get<std::string>("microhard", "MICROHARD_IP_AIR", "");
+    ret.MICROHARD_IP_GROUND = r.Get<std::string>("microhard", "MICROHARD_IP_GROUND", "");
+
 
     // Parse Generic configuration
     ret.GEN_ENABLE_LAST_KNOWN_POSITION =
