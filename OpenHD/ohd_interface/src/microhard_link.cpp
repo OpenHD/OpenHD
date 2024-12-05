@@ -52,8 +52,8 @@ const std::string command7 = "AT+MWSNR\n";
 
 // Parse hardware.config
 const auto config = openhd::load_config();
-static const auto MICROHARD_AIR_IP = config.MICROHARD_AIR_IP;
-static const auto MICROHARD_GROUND_IP = config.MICROHARD_GROUND_IP;
+static const auto MICROHARD_AIR_IP = config.MICROHARD_IP_AIR;
+static const auto MICROHARD_GROUND_IP = config.MICROHARD_IP_GROUND;
 static const int MICROHARD_UDP_PORT_TELEMETRY_AIR_TX = config.TELEMETRY_PORT;
 static const int MICROHARD_UDP_PORT_VIDEO_AIR_TX = config.VIDEO_PORT;
 
