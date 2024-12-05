@@ -321,7 +321,7 @@ bool check_ip_alive(const std::string& ip, int port = 23) {
 }
 
 std::string find_device_ip_gnd() {
-  auto ip_addresses = get_ip_addresses("192.168.168");
+  auto ip_addresses = get_ip_addresses(MICROHARD_IP_RANGE);
   for (const auto& ip : ip_addresses) {
     if (ip != MICROHARD_AIR_IP && ip != MICROHARD_GND_IP) {
       return ip;
@@ -334,7 +334,7 @@ std::string find_device_ip_gnd() {
 }
 
 std::string find_device_ip_air() {
-  auto ip_addresses = get_ip_addresses("192.168.168");
+  auto ip_addresses = get_ip_addresses(MICROHARD_IP_RANGE);
   for (const auto& ip : ip_addresses) {
     if (ip != MICROHARD_AIR_IP && ip != MICROHARD_GND_IP) {
       return ip;
@@ -351,7 +351,7 @@ static const std::string DEVICE_IP_GND = find_device_ip_gnd();
 static const std::string DEVICE_IP_AIR = find_device_ip_air();
 
 void log_ip_addresses() {
-  auto ip_addresses = get_ip_addresses("192.168.168");
+  auto ip_addresses = get_ip_addresses(MICROHARD_IP_RANGE);
   if (!ip_addresses.empty()) {
     for (const auto& ip : ip_addresses) {
       openhd::log::get_default()->warn("Found IP address: {}", ip);
@@ -360,17 +360,19 @@ void log_ip_addresses() {
     }
   } else {
     openhd::log::get_default()->warn(
-        "No IP addresses starting with 192.168.168 found.");
+            "No IP addresses starting with {} found.", MICROHARD_IP_RANGE);
+
   }
 }
 
 std::string get_detected_ip_address() {
-  auto ip_addresses = get_ip_addresses("192.168.168");
+  auto ip_addresses = get_ip_addresses(MICROHARD_IP_RANGE);
   if (!ip_addresses.empty()) {
     return ip_addresses.front();
   } else {
-    openhd::log::get_default()->warn(
-        "No IP addresses starting with 192.168.168 found.");
+      openhd::log::get_default()->warn(
+              "No IP addresses starting with {} found.", MICROHARD_IP_RANGE);
+
 
     return "";  // Return an empty string if no IP found
   }
