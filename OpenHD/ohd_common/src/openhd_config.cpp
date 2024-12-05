@@ -75,7 +75,7 @@ static openhd::Config load_or_default() {
     ret.MICROHARD_PASSWORD = r.Get<std::string>("microhard", "MICROHARD_PASSWORD", "qwertz1");
     ret.MICROHARD_IP_AIR = r.Get<std::string>("microhard", "MICROHARD_IP_AIR", "");
     ret.MICROHARD_IP_GROUND = r.Get<std::string>("microhard", "MICROHARD_IP_GROUND", "");
-    ret.MICROHARD_IP_RANGE = r.Get<std::string>("microhard", "MICROHARD_IP_RANGE", "192.168.168");
+    ret.MICROHARD_IP_RANGE = r.Get<std::string>("microhard", "MICROHARD_IP_RANGE", "192.168.2");
     ret.MICROHARD_VIDEO_PORT = r.Get<int>("microhard", "MICROHARD_VIDEO_PORT", 5910);
     ret.TELEMETRY_PORT = r.Get<int>("microhard", "MICROHARD_TELEMETRY_PORT", 5920);
 
