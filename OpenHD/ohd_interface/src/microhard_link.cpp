@@ -34,9 +34,9 @@
 
 // Constants
 // static constexpr auto MICROHARD_AIR_IP = "192.168.168.11";
-static constexpr auto MICROHARD_GND_IP = "192.168.168.12";
-static constexpr int MICROHARD_UDP_PORT_VIDEO_AIR_TX = 5910;
-static constexpr int MICROHARD_UDP_PORT_TELEMETRY_AIR_TX = 5920;
+// static constexpr auto MICROHARD_GND_IP = "192.168.168.12";
+// static constexpr int MICROHARD_UDP_PORT_VIDEO_AIR_TX = 5910;
+// static constexpr int MICROHARD_UDP_PORT_TELEMETRY_AIR_TX = 5920;
 static const std::string DEFAULT_DEVICE_IP_GND = "192.168.168.122";
 static const std::string DEFAULT_DEVICE_IP_AIR = "192.168.168.153";
 const std::string telnet_cmd = "telnet 192.168.168.1";
@@ -52,7 +52,10 @@ const std::string command7 = "AT+MWSNR\n";
 
 // Parse hardware.config
 const auto config = openhd::load_config();
-static const auto MICROHARD_AIR_IP = config.GROUND_UNIT_IP;
+static const auto MICROHARD_AIR_IP = config.MICROHARD_AIR_IP;
+static const auto MICROHARD_GROUND_IP = config.MICROHARD_GROUND_IP;
+static const int MICROHARD_UDP_PORT_TELEMETRY_AIR_TX = config.TELEMETRY_PORT;
+static const int MICROHARD_UDP_PORT_VIDEO_AIR_TX = config.VIDEO_PORT;
 
 // Helper function to retrieve IP addresses starting with a specific prefix
 std::vector<std::string> get_ip_addresses(const std::string& prefix) {
