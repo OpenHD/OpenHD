@@ -42,7 +42,7 @@ struct Config {
   std::string MICROHARD_USERNAME = "";
   std::string MICROHARD_PASSWORD = "";
   std::string MICROHARD_IP_AIR = "";
-  std::string MICROHARD_IP_Ground = "";
+  std::string MICROHARD_IP_GROUND = "";
 
   // GENERAL
   bool GEN_ENABLE_LAST_KNOWN_POSITION = false;
