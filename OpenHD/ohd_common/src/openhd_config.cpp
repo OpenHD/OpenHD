@@ -78,44 +78,44 @@ static openhd::Config load_or_default() {
         r.Get<bool>("network", "NW_FORWARD_TO_LOCALHOST_58XX", false);
 
    // Parse Ethernet link configuration
-get_logger()->debug("Parsing Ethernet link configuration");
+get_logger()->warn("Parsing Ethernet link configuration");
 ret.GROUND_UNIT_IP = r.Get<std::string>("ethernet", "GROUND_UNIT_IP", "");
-get_logger()->debug("GROUND_UNIT_IP: {}", ret.GROUND_UNIT_IP);
+get_logger()->warn("GROUND_UNIT_IP: {}", ret.GROUND_UNIT_IP);
 ret.AIR_UNIT_IP = r.Get<std::string>("ethernet", "AIR_UNIT_IP", "");
-get_logger()->debug("AIR_UNIT_IP: {}", ret.AIR_UNIT_IP);
+get_logger()->warn("AIR_UNIT_IP: {}", ret.AIR_UNIT_IP);
 ret.VIDEO_PORT = r.Get<int>("ethernet", "VIDEO_PORT", 5000);
-get_logger()->debug("VIDEO_PORT: {}", ret.VIDEO_PORT);
+get_logger()->warn("VIDEO_PORT: {}", ret.VIDEO_PORT);
 ret.TELEMETRY_PORT = r.Get<int>("ethernet", "TELEMETRY_PORT", 5600);
-get_logger()->debug("TELEMETRY_PORT: {}", ret.TELEMETRY_PORT);
+get_logger()->warn("TELEMETRY_PORT: {}", ret.TELEMETRY_PORT);
 
 // Parse Ethernet link Microhard configuration
-get_logger()->debug("Parsing Ethernet link Microhard configuration");
+get_logger()->warn("Parsing Ethernet link Microhard configuration");
 ret.DISABLE_MICROHARD_DETECTION =
     r.Get<bool>("microhard", "DISABLE_MICROHARD_DETECTION", false);
-get_logger()->debug("DISABLE_MICROHARD_DETECTION: {}", ret.DISABLE_MICROHARD_DETECTION);
+get_logger()->warn("DISABLE_MICROHARD_DETECTION: {}", ret.DISABLE_MICROHARD_DETECTION);
 ret.FORCE_MICROHARD = r.Get<bool>("microhard", "FORCE_MICROHARD", false);
-get_logger()->debug("FORCE_MICROHARD: {}", ret.FORCE_MICROHARD);
+get_logger()->warn("FORCE_MICROHARD: {}", ret.FORCE_MICROHARD);
 ret.MICROHARD_USERNAME =
     r.Get<std::string>("microhard", "MICROHARD_USERNAME", "admin");
-get_logger()->debug("MICROHARD_USERNAME: {}", ret.MICROHARD_USERNAME);
+get_logger()->warn("MICROHARD_USERNAME: {}", ret.MICROHARD_USERNAME);
 ret.MICROHARD_PASSWORD =
     r.Get<std::string>("microhard", "MICROHARD_PASSWORD", "qwertz1");
-get_logger()->debug("MICROHARD_PASSWORD: {}", ret.MICROHARD_PASSWORD);
+get_logger()->warn("MICROHARD_PASSWORD: {}", ret.MICROHARD_PASSWORD);
 ret.MICROHARD_IP_AIR =
     r.Get<std::string>("microhard", "MICROHARD_IP_AIR", "");
-get_logger()->debug("MICROHARD_IP_AIR: {}", ret.MICROHARD_IP_AIR);
+get_logger()->warn("MICROHARD_IP_AIR: {}", ret.MICROHARD_IP_AIR);
 ret.MICROHARD_IP_GROUND =
     r.Get<std::string>("microhard", "MICROHARD_IP_GROUND", "");
-get_logger()->debug("MICROHARD_IP_GROUND: {}", ret.MICROHARD_IP_GROUND);
+get_logger()->warn("MICROHARD_IP_GROUND: {}", ret.MICROHARD_IP_GROUND);
 ret.MICROHARD_IP_RANGE =
     r.Get<std::string>("microhard", "MICROHARD_IP_RANGE", "192.168.168");
-get_logger()->debug("MICROHARD_IP_RANGE: {}", ret.MICROHARD_IP_RANGE);
+get_logger()->warn("MICROHARD_IP_RANGE: {}", ret.MICROHARD_IP_RANGE);
 ret.MICROHARD_VIDEO_PORT =
     r.Get<int>("microhard", "MICROHARD_VIDEO_PORT", 5910);
-get_logger()->debug("MICROHARD_VIDEO_PORT: {}", ret.MICROHARD_VIDEO_PORT);
+get_logger()->warn("MICROHARD_VIDEO_PORT: {}", ret.MICROHARD_VIDEO_PORT);
 ret.TELEMETRY_PORT =
     r.Get<int>("microhard", "MICROHARD_TELEMETRY_PORT", 5920);
-get_logger()->debug("MICROHARD_TELEMETRY_PORT: {}", ret.TELEMETRY_PORT);
+get_logger()->warn("MICROHARD_TELEMETRY_PORT: {}", ret.TELEMETRY_PORT);
 
 
     // Parse Generic configuration
