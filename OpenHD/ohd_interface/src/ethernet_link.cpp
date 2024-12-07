@@ -40,11 +40,12 @@ static std::string ETHERNET_FILE_PATH =
 EthernetLink::EthernetLink(const openhd::Config& config, OHDProfile profile)
     : m_config(config), m_profile(profile) {
   if (OHDFilesystemUtil::exists(ETHERNET_FILE_PATH)) {
+    const auto config = openhd::load_config();
     try {
-      GROUND_UNIT_IP = m_config.GROUND_UNIT_IP;
-      AIR_UNIT_IP = m_config.AIR_UNIT_IP;
-      VIDEO_PORT = m_config.VIDEO_PORT;
-      TELEMETRY_PORT = m_config.TELEMETRY_PORT;
+      GROUND_UNIT_IP = config.GROUND_UNIT_IP;
+      AIR_UNIT_IP = config.AIR_UNIT_IP;
+      VIDEO_PORT = config.VIDEO_PORT;
+      TELEMETRY_PORT = config.TELEMETRY_PORT;
 
       // Debugging the values after assignment
       std::cout << "Assigned ethernet parameters:" << std::endl;
