@@ -45,6 +45,7 @@ static openhd::Config load_or_default() {
   try {
     openhd::Config ret{};
     if (!OHDFilesystemUtil::exists(CONFIG_FILE_PATH)) {
+      get_logger()->warn("No config file [{}] used!", CONFIG_FILE_PATH);
       return ret;
     } else {
       get_logger()->warn("Advanced config file [{}] used!", CONFIG_FILE_PATH);
@@ -79,13 +80,13 @@ static openhd::Config load_or_default() {
 
    // Parse Ethernet link configuration
 get_logger()->warn("Parsing Ethernet link configuration");
-ret.GROUND_UNIT_IP = r.Get<std::string>("ethernet", "GROUND_UNIT_IP", "");
+    ret.GROUND_UNIT_IP = r.Get<std::string>("ethernet", "GROUND_UNIT_IP", "");
 get_logger()->warn("GROUND_UNIT_IP: {}", ret.GROUND_UNIT_IP);
-ret.AIR_UNIT_IP = r.Get<std::string>("ethernet", "AIR_UNIT_IP", "");
+    ret.AIR_UNIT_IP = r.Get<std::string>("ethernet", "AIR_UNIT_IP", "");
 get_logger()->warn("AIR_UNIT_IP: {}", ret.AIR_UNIT_IP);
-ret.VIDEO_PORT = r.Get<int>("ethernet", "VIDEO_PORT", 5000);
+    ret.VIDEO_PORT = r.Get<int>("ethernet", "VIDEO_PORT", 5000);
 get_logger()->warn("VIDEO_PORT: {}", ret.VIDEO_PORT);
-ret.TELEMETRY_PORT = r.Get<int>("ethernet", "TELEMETRY_PORT", 5600);
+    ret.TELEMETRY_PORT = r.Get<int>("ethernet", "TELEMETRY_PORT", 5600);
 get_logger()->warn("TELEMETRY_PORT: {}", ret.TELEMETRY_PORT);
 
 // Parse Ethernet link Microhard configuration
