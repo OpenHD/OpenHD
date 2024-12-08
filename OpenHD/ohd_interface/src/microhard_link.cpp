@@ -451,7 +451,7 @@ MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
 void MicrohardLink::transmit_telemetry_data(OHDLink::TelemetryTxPacket packet) {
   const auto destination_ip = m_profile.is_air ? DEVICE_IP_GND : DEVICE_IP_AIR;
   m_telemetry_tx_rx->forwardPacketViaUDP(
-      destination_ip, openhd::load_config().MICROHARD_UDP_PORT_TELEMETRY_AIR_TX, packet.data->data(),
+      destination_ip, openhd::load_config().MICROHARD_TELEMETRY_PORT, packet.data->data(),
       packet.data->size());
 }
 
