@@ -169,7 +169,7 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings() {
     OHDUtil::vec_append(ret, settings);
   }
   if (m_microhard_link) {
-    auto settings = m_microhard_link->get_all_settings();
+    m_microhard_link->get_all_settings();
     OHDUtil::vec_append(ret, settings);
   }
   if (m_wifi_hotspot != nullptr) {
