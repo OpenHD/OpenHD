@@ -329,7 +329,7 @@ bool check_ip_alive(const std::string& ip, int port = 23) {
 std::string find_device_ip_gnd() {
   auto ip_addresses = get_ip_addresses(openhd::load_config().MICROHARD_IP_RANGE);
   for (const auto& ip : ip_addresses) {
-    if (ip != openhd::load_config().MICROHARD_IP_AIR && ip != openhd::load_config().MICROHARD_GND_IP) {
+    if (ip != openhd::load_config().MICROHARD_IP_AIR && ip != openhd::load_config().MICROHARD_IP_GROUND) {
       return ip;
     }
   }
@@ -342,7 +342,7 @@ std::string find_device_ip_gnd() {
 std::string find_device_ip_air() {
   auto ip_addresses = get_ip_addresses(openhd::load_config().MICROHARD_IP_RANGE);
   for (const auto& ip : ip_addresses) {
-    if (ip != openhd::load_config().MICROHARD_IP_AIR && ip != openhd::load_config().MICROHARD_GND_IP) {
+    if (ip != openhd::load_config().MICROHARD_IP_AIR && ip != openhd::load_config().MICROHARD_IP_GROUND) {
       return ip;
     }
   }
