@@ -59,6 +59,19 @@ const std::string command5 = "AT+MWVRATE\n";
 const std::string command6 = "AT+MWNOISEFLOOR\n";
 const std::string command7 = "AT+MWSNR\n";
 
+// Parse hardware.config
+const auto config = openhd::load_config();
+static const auto MICROHARD_IP_RANGE = config.MICROHARD_IP_AIR;
+static const auto MICROHARD_AIR_IP = config.MICROHARD_IP_AIR;
+static const auto MICROHARD_GND_IP = config.MICROHARD_IP_GROUND;
+static const int MICROHARD_UDP_PORT_TELEMETRY_AIR_TX =
+    config.MICROHARD_TELEMETRY_PORT;
+static const int MICROHARD_UDP_PORT_VIDEO_AIR_TX = config.MICROHARD_VIDEO_PORT;
+static const std::string DEFAULT_DEVICE_IP_GND = config.GROUND_UNIT_IP;
+static const std::string DEFAULT_DEVICE_IP_AIR = config.AIR_UNIT_IP;
+const std::string username = config.MICROHARD_USERNAME + "\n";
+const std::string password = config.MICROHARD_PASSWORD + "\n";
+
 // Helper function to retrieve IP addresses starting with a specific prefix
 std::vector<std::string> get_ip_addresses(const std::string& prefix) {
   std::vector<std::string> ip_addresses;
@@ -153,13 +166,13 @@ void communicate_with_device(const std::string& ip,
     // Login to the device
     std::this_thread::sleep_for(
         std::chrono::seconds(1));  // Wait for a second to process username
-    openhd::log::get_default()->debug("Sending username: {}", openhd::load_config().MICROHARD_USERNAME);
-    stream << openhd::load_config().MICROHARD_USERNAME << std::flush;
+    openhd::log::get_default()->debug("Sending username: {}", username);
+    stream << username << std::flush;
     std::this_thread::sleep_for(
         std::chrono::seconds(1));  // Wait for a second to process username
 
-    openhd::log::get_default()->debug("Sending password: {}", openhd::load_config().MICROHARD_PASSWORD);
-    stream << openhd::load_config().MICROHARD_PASSWORD << std::flush;
+    openhd::log::get_default()->debug("Sending password: {}", password);
+    stream << password << std::flush;
     std::this_thread::sleep_for(
         std::chrono::seconds(3));  // Wait for a second to process password
 
@@ -215,12 +228,12 @@ void communicate_with_device_slow(const std::string& ip,
 
     // Login to the device
     std::this_thread::sleep_for(std::chrono::seconds(1));
-    openhd::log::get_default()->debug("Sending username: {}", openhd::load_config().MICROHARD_USERNAME);
-    stream << openhd::load_config().MICROHARD_USERNAME << std::flush;
+    openhd::log::get_default()->debug("Sending username: {}", username);
+    stream << username << std::flush;
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
-    openhd::log::get_default()->debug("Sending password: {}", openhd::load_config().MICROHARD_PASSWORD);
-    stream << openhd::load_config().MICROHARD_PASSWORD << std::flush;
+    openhd::log::get_default()->debug("Sending password: {}", password);
+    stream << password << std::flush;
     std::this_thread::sleep_for(std::chrono::seconds(3));
 
     const std::vector<std::pair<std::string, std::regex>> commands = {
@@ -327,29 +340,29 @@ bool check_ip_alive(const std::string& ip, int port = 23) {
 }
 
 std::string find_device_ip_gnd() {
-  auto ip_addresses = get_ip_addresses(openhd::load_config().MICROHARD_IP_RANGE);
+  auto ip_addresses = get_ip_addresses(MICROHARD_IP_RANGE);
   for (const auto& ip : ip_addresses) {
-    if (ip != openhd::load_config().MICROHARD_IP_AIR && ip != openhd::load_config().MICROHARD_IP_GROUND) {
+    if (ip != MICROHARD_AIR_IP && ip != MICROHARD_GND_IP) {
       return ip;
     }
   }
   openhd::log::get_default()->warn(
       "No suitable IP address found for DEVICE_IP_GND. Using default.");
 
-  return openhd::load_config().GROUND_UNIT_IP;
+  return DEFAULT_DEVICE_IP_GND;
 }
 
 std::string find_device_ip_air() {
-  auto ip_addresses = get_ip_addresses(openhd::load_config().MICROHARD_IP_RANGE);
+  auto ip_addresses = get_ip_addresses(MICROHARD_IP_RANGE);
   for (const auto& ip : ip_addresses) {
-    if (ip != openhd::load_config().MICROHARD_IP_AIR && ip != openhd::load_config().MICROHARD_IP_GROUND) {
+    if (ip != MICROHARD_AIR_IP && ip != MICROHARD_GND_IP) {
       return ip;
     }
   }
   openhd::log::get_default()->warn(
       "No suitable IP address found for DEVICE_IP_AIR. Using default.");
 
-  return openhd::load_config().AIR_UNIT_IP;
+  return DEFAULT_DEVICE_IP_AIR;
 }
 
 // The assigned IP
@@ -357,7 +370,7 @@ static const std::string DEVICE_IP_GND = find_device_ip_gnd();
 static const std::string DEVICE_IP_AIR = find_device_ip_air();
 
 void log_ip_addresses() {
-  auto ip_addresses = get_ip_addresses(openhd::load_config().MICROHARD_IP_RANGE);
+  auto ip_addresses = get_ip_addresses(MICROHARD_IP_RANGE);
   if (!ip_addresses.empty()) {
     for (const auto& ip : ip_addresses) {
       openhd::log::get_default()->warn("Found IP address: {}", ip);
@@ -366,17 +379,17 @@ void log_ip_addresses() {
     }
   } else {
     openhd::log::get_default()->warn("No IP addresses starting with {} found.",
-                                     openhd::load_config().MICROHARD_IP_RANGE);
+                                     MICROHARD_IP_RANGE);
   }
 }
 
 std::string get_detected_ip_address() {
-  auto ip_addresses = get_ip_addresses(openhd::load_config().MICROHARD_IP_RANGE);
+  auto ip_addresses = get_ip_addresses(MICROHARD_IP_RANGE);
   if (!ip_addresses.empty()) {
     return ip_addresses.front();
   } else {
     openhd::log::get_default()->warn("No IP addresses starting with {} found.",
-                                     openhd::load_config().MICROHARD_IP_RANGE);
+                                     MICROHARD_IP_RANGE);
 
     return "";  // Return an empty string if no IP found
   }
@@ -406,20 +419,20 @@ MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
 
   if (m_profile.is_air) {
     m_video_tx = std::make_unique<openhd::UDPForwarder>(
-        DEVICE_IP_GND, openhd::load_config().MICROHARD_VIDEO_PORT);
+        DEVICE_IP_GND, MICROHARD_UDP_PORT_VIDEO_AIR_TX);
     auto cb_telemetry_rx = [this](const uint8_t* data, std::size_t data_len) {
       auto shared =
           std::make_shared<std::vector<uint8_t>>(data, data + data_len);
       on_receive_telemetry_data(shared);
     };
     m_telemetry_tx_rx = std::make_unique<openhd::UDPReceiver>(
-        DEVICE_IP_AIR, openhd::load_config().MICROHARD_TELEMETRY_PORT, cb_telemetry_rx);
+        DEVICE_IP_AIR, MICROHARD_UDP_PORT_TELEMETRY_AIR_TX, cb_telemetry_rx);
   } else {
     auto cb_video_rx = [this](const uint8_t* payload, std::size_t payloadSize) {
       on_receive_video_data(0, payload, payloadSize);
     };
     m_video_rx = std::make_unique<openhd::UDPReceiver>(
-        DEVICE_IP_GND, openhd::load_config().MICROHARD_VIDEO_PORT, cb_video_rx);
+        DEVICE_IP_GND, MICROHARD_UDP_PORT_VIDEO_AIR_TX, cb_video_rx);
 
     auto cb_telemetry_rx = [this](const uint8_t* data, std::size_t data_len) {
       auto shared =
@@ -427,7 +440,7 @@ MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
       on_receive_telemetry_data(shared);
     };
     m_telemetry_tx_rx = std::make_unique<openhd::UDPReceiver>(
-        DEVICE_IP_GND, openhd::load_config().MICROHARD_TELEMETRY_PORT, cb_telemetry_rx);
+        DEVICE_IP_GND, MICROHARD_UDP_PORT_TELEMETRY_AIR_TX, cb_telemetry_rx);
   }
 
   if (m_telemetry_tx_rx) {
@@ -451,7 +464,7 @@ MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
 void MicrohardLink::transmit_telemetry_data(OHDLink::TelemetryTxPacket packet) {
   const auto destination_ip = m_profile.is_air ? DEVICE_IP_GND : DEVICE_IP_AIR;
   m_telemetry_tx_rx->forwardPacketViaUDP(
-      destination_ip, openhd::load_config().MICROHARD_TELEMETRY_PORT, packet.data->data(),
+      destination_ip, MICROHARD_UDP_PORT_TELEMETRY_AIR_TX, packet.data->data(),
       packet.data->size());
 }
 
