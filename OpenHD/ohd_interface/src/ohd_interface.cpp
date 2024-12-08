@@ -74,13 +74,13 @@ OHDInterface::OHDInterface(OHDProfile profile1)
   if (OHDFilesystemUtil::exists(std::string(getConfigBasePath()) +
                                 "ethernet.txt")) {
     m_ethernet_link = std::make_shared<EthernetLink>(m_profile);
-        m_console->warn("eth found");
+    m_console->warn("eth found");
     return;
   }
 
   if (microhard_device_present) {
     m_microhard_link = std::make_shared<MicrohardLink>(m_profile);
-        m_console->warn("mc found");
+    m_console->warn("mc found");
     return;
   }
 
