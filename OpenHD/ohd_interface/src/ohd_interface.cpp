@@ -172,7 +172,6 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings() {
   }
   if (m_ethernet_link) {
     auto settings = m_ethernet_link->get_all_settings();
-    OHDUtil::vec_append(ret, settings);
   }
   if (m_wifi_hotspot != nullptr) {
     auto cb_wifi_hotspot_mode = [this](std::string, int value) {
