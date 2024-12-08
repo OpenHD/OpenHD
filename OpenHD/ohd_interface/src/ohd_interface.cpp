@@ -57,9 +57,7 @@ bool is_microhard_device_present() {
                                  "ethernet.txt")) {
     std::string output = exec("lsusb");
     return output.find("Microhard") != std::string::npos;
-        std::cout << "Microhard found " << std::endl;
   }
-        std::cout << "No Microhard found " << std::endl;
 
   return false;
 }
@@ -77,7 +75,6 @@ OHDInterface::OHDInterface(OHDProfile profile1)
                                 "ethernet.txt")) {
     m_ethernet_link = std::make_shared<EthernetLink>(config, m_profile);
         m_console->warn("eth found");
-    return;
   }
 
   if (microhard_device_present) {
