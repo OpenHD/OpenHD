@@ -53,7 +53,7 @@ EthernetLink::EthernetLink(const openhd::Config& config, OHDProfile profile)
 
       // Debugging the values after assignment
       std::cout << "Assigned ethernet parameters:" << std::endl;
-      std::cout << "  GROUND_UNIT_IP: " << GROUND_UNIT_IP << std::endl;
+      std::cout << "  GROUND_UNIT_IP: " << config.GROUND_UNIT_IP << std::endl;
       std::cout << "  AIR_UNIT_IP: " << AIR_UNIT_IP << std::endl;
       std::cout << "  VIDEO_PORT: " << VIDEO_PORT << std::endl;
       std::cout << "  TELEMETRY_PORT: " << TELEMETRY_PORT << std::endl;
