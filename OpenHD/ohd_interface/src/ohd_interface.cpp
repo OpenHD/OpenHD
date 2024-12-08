@@ -73,11 +73,13 @@ OHDInterface::OHDInterface(OHDProfile profile1)
   if (OHDFilesystemUtil::exists(std::string(getConfigBasePath()) +
                                 "ethernet.txt")) {
     m_ethernet_link = std::make_shared<EthernetLink>(config, m_profile);
+        m_console->warn("eth found");
     return;
   }
 
   if (microhard_device_present) {
     m_microhard_link = std::make_shared<MicrohardLink>(m_profile);
+        m_console->warn("mc found");
     return;
   }
 
@@ -166,6 +168,10 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings() {
   }
   if (m_microhard_link) {
     auto settings = m_microhard_link->get_all_settings();
+    OHDUtil::vec_append(ret, settings);
+  }
+  if (m_ethernet_link) {
+    auto settings = m_ethernet_link->get_all_settings();
     OHDUtil::vec_append(ret, settings);
   }
   if (m_wifi_hotspot != nullptr) {
