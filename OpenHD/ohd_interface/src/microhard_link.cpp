@@ -336,7 +336,7 @@ std::string find_device_ip_gnd() {
   openhd::log::get_default()->warn(
       "No suitable IP address found for DEVICE_IP_GND. Using default.");
 
-  return DEFAULT_DEVICE_IP_GND;
+  return openhd::load_config().GROUND_UNIT_IP;
 }
 
 std::string find_device_ip_air() {
@@ -349,7 +349,7 @@ std::string find_device_ip_air() {
   openhd::log::get_default()->warn(
       "No suitable IP address found for DEVICE_IP_AIR. Using default.");
 
-  return DEFAULT_DEVICE_IP_AIR;
+  return openhd::load_config().AIR_UNIT_IP;
 }
 
 // The assigned IP
