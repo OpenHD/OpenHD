@@ -65,7 +65,7 @@ static const auto MICROHARD_IP_RANGE = "config.MICROHARD_IP_AIR";
 static const auto MICROHARD_AIR_IP = "config.MICROHARD_IP_AIR";
 static const auto MICROHARD_GND_IP = "config.MICROHARD_IP_GROUND";
 static const int MICROHARD_UDP_PORT_TELEMETRY_AIR_TX =
-    "config.MICROHARD_TELEMETRY_PORT";
+   1;
 static const int MICROHARD_UDP_PORT_VIDEO_AIR_TX = "config.MICROHARD_VIDEO_PORT";
 static const std::string DEFAULT_DEVICE_IP_GND = "config.GROUND_UNIT_IP";
 static const std::string DEFAULT_DEVICE_IP_AIR = "config.AIR_UNIT_IP";
