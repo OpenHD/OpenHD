@@ -57,7 +57,10 @@ bool is_microhard_device_present() {
                                  "ethernet.txt")) {
     std::string output = exec("lsusb");
     return output.find("Microhard") != std::string::npos;
+        std::cout << "Microhard found " << std::endl;
   }
+        std::cout << "No Microhard found " << std::endl;
+
   return false;
 }
 
