@@ -215,11 +215,11 @@ void communicate_with_device_slow(const std::string& ip,
 
     // Login to the device
     std::this_thread::sleep_for(std::chrono::seconds(1));
-    openhd::log::get_default()->debug("Sending username: {}", username);
+    openhd::log::get_default()->debug("Sending username: {}", openhd::load_config().MICROHARD_USERNAME);
     stream << openhd::load_config().MICROHARD_USERNAME << std::flush;
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
-    openhd::log::get_default()->debug("Sending password: {}", password);
+    openhd::log::get_default()->debug("Sending password: {}", openhd::load_config().MICROHARD_PASSWORD);
     stream << openhd::load_config().MICROHARD_PASSWORD << std::flush;
     std::this_thread::sleep_for(std::chrono::seconds(3));
 
@@ -329,7 +329,7 @@ bool check_ip_alive(const std::string& ip, int port = 23) {
 std::string find_device_ip_gnd() {
   auto ip_addresses = get_ip_addresses(openhd::load_config().MICROHARD_IP_RANGE);
   for (const auto& ip : ip_addresses) {
-    if (ip != openhd::load_config().MICROHARD_AIR_IP && ip != openhd::load_config().MICROHARD_GND_IP) {
+    if (ip != openhd::load_config().MICROHARD_IP_AIR && ip != openhd::load_config().MICROHARD_GND_IP) {
       return ip;
     }
   }
@@ -342,7 +342,7 @@ std::string find_device_ip_gnd() {
 std::string find_device_ip_air() {
   auto ip_addresses = get_ip_addresses(openhd::load_config().MICROHARD_IP_RANGE);
   for (const auto& ip : ip_addresses) {
-    if (ip != openhd::load_config().MICROHARD_AIR_IP && ip != openhd::load_config().MICROHARD_GND_IP) {
+    if (ip != openhd::load_config().MICROHARD_IP_AIR && ip != openhd::load_config().MICROHARD_GND_IP) {
       return ip;
     }
   }
