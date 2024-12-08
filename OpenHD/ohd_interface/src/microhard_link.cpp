@@ -59,6 +59,18 @@ const std::string command5 = "AT+MWVRATE\n";
 const std::string command6 = "AT+MWNOISEFLOOR\n";
 const std::string command7 = "AT+MWSNR\n";
 
+// Parse hardware.config
+static const auto MICROHARD_IP_RANGE = openhd::load_config().MICROHARD_IP_AIR;
+static const auto MICROHARD_AIR_IP = openhd::load_config().MICROHARD_IP_AIR;
+static const auto MICROHARD_GND_IP = openhd::load_config().MICROHARD_IP_GROUND;
+static const int MICROHARD_UDP_PORT_TELEMETRY_AIR_TX =
+    openhd::load_config().MICROHARD_TELEMETRY_PORT;
+static const int MICROHARD_UDP_PORT_VIDEO_AIR_TX = openhd::load_config().MICROHARD_VIDEO_PORT;
+static const std::string DEFAULT_DEVICE_IP_GND = openhd::load_config().GROUND_UNIT_IP;
+static const std::string DEFAULT_DEVICE_IP_AIR = openhd::load_config().AIR_UNIT_IP;
+const std::string username = openhd::load_config().MICROHARD_USERNAME + "\n";
+const std::string password = openhd::load_config().MICROHARD_PASSWORD + "\n";
+
 // Helper function to retrieve IP addresses starting with a specific prefix
 std::vector<std::string> get_ip_addresses(const std::string& prefix) {
   std::vector<std::string> ip_addresses;
@@ -472,15 +484,11 @@ void MicrohardLink::transmit_audio_data(
 }
 
 std::vector<openhd::Setting> MicrohardLink::get_all_settings() {
-const auto config = openhd::load_config();
-static const auto MICROHARD_IP_RANGE = config.MICROHARD_IP_AIR;
-static const auto MICROHARD_AIR_IP = config.MICROHARD_IP_AIR;
-static const auto MICROHARD_GND_IP = config.MICROHARD_IP_GROUND;
-static const int MICROHARD_UDP_PORT_TELEMETRY_AIR_TX =
-    config.MICROHARD_TELEMETRY_PORT;
-static const int MICROHARD_UDP_PORT_VIDEO_AIR_TX = config.MICROHARD_VIDEO_PORT;
-static const std::string DEFAULT_DEVICE_IP_GND = config.GROUND_UNIT_IP;
-static const std::string DEFAULT_DEVICE_IP_AIR = config.AIR_UNIT_IP;
-const std::string username = config.MICROHARD_USERNAME + "\n";
-const std::string password = config.MICROHARD_PASSWORD + "\n";
+  using namespace openhd;
+  std::vector<Setting> settings;
+  auto change_dummy =
+      IntSetting{0, [this](std::string, int value) { return true; }};
+  settings.push_back(Setting{"MICROHARD_DUMMY0", change_dummy});
+
+  return settings;
 }
