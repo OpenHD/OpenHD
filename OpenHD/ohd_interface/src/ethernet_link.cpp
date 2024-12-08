@@ -39,8 +39,12 @@ static std::string ETHERNET_FILE_PATH =
 
 EthernetLink::EthernetLink(const openhd::Config& config, OHDProfile profile)
     : m_config(config), m_profile(profile) {
+    std::cout << "ethernet starting " << std::endl;
+
   if (OHDFilesystemUtil::exists(ETHERNET_FILE_PATH)) {
     const auto config = openhd::load_config();
+            std::cout << "ethernet config load " << std::endl;
+
     try {
       GROUND_UNIT_IP = config.GROUND_UNIT_IP;
       AIR_UNIT_IP = config.AIR_UNIT_IP;
