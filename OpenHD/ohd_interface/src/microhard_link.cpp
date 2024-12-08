@@ -51,10 +51,6 @@
 #include "openhd_config.h"
 #include "openhd_temporary_air_or_ground.h"
 
-
-static std::string MICROHARD_FILE_PATH =
-    std::string(getConfigBasePath()) + "microhard.txt";
-
 const std::string command = "AT+MWRSSI\n";
 const std::string command2 = "AT+MWTXPOWER\n";
 const std::string command3 = "AT+MWBAND\n";
@@ -62,6 +58,19 @@ const std::string command4 = "AT+MWFREQ2400\n";
 const std::string command5 = "AT+MWVRATE\n";
 const std::string command6 = "AT+MWNOISEFLOOR\n";
 const std::string command7 = "AT+MWSNR\n";
+
+// Parse hardware.config
+// const auto config = openhd::load_config();
+static const auto MICROHARD_IP_RANGE = config.MICROHARD_IP_AIR;
+static const auto MICROHARD_AIR_IP = config.MICROHARD_IP_AIR;
+static const auto MICROHARD_GND_IP = config.MICROHARD_IP_GROUND;
+static const int MICROHARD_UDP_PORT_TELEMETRY_AIR_TX =
+    config.MICROHARD_TELEMETRY_PORT;
+static const int MICROHARD_UDP_PORT_VIDEO_AIR_TX = config.MICROHARD_VIDEO_PORT;
+static const std::string DEFAULT_DEVICE_IP_GND = config.GROUND_UNIT_IP;
+static const std::string DEFAULT_DEVICE_IP_AIR = config.AIR_UNIT_IP;
+const std::string username = config.MICROHARD_USERNAME + "\n";
+const std::string password = config.MICROHARD_PASSWORD + "\n";
 
 // Helper function to retrieve IP addresses starting with a specific prefix
 std::vector<std::string> get_ip_addresses(const std::string& prefix) {
@@ -388,52 +397,6 @@ std::string get_detected_ip_address() {
 
 static void wait_for_microhard_module(bool is_air) {
   const std::string microhard_device_ip = get_gateway_ip();
-
-  if (OHDFilesystemUtil::exists(MICROHARD_FILE_PATH)) {
-    const auto config = openhd::load_config();
-            std::cout << "microhard config load " << std::endl;
-
-    try {
-      static const auto MICROHARD_IP_RANGE = config.MICROHARD_IP_RANGE;
-      static const auto MICROHARD_AIR_IP = config.MICROHARD_IP_AIR;
-      static const auto MICROHARD_GND_IP = config.MICROHARD_IP_GROUND;
-      static const int MICROHARD_UDP_PORT_TELEMETRY_AIR_TX =
-          config.MICROHARD_TELEMETRY_PORT;
-      static const int MICROHARD_UDP_PORT_VIDEO_AIR_TX = config.MICROHARD_VIDEO_PORT;
-      static const std::string DEFAULT_DEVICE_IP_GND = config.GROUND_UNIT_IP;
-      static const std::string DEFAULT_DEVICE_IP_AIR = config.AIR_UNIT_IP;
-      const std::string username = config.MICROHARD_USERNAME + "\n";
-      const std::string password = config.MICROHARD_PASSWORD + "\n";
-
-
-      // Debugging the values after assignment
-      std::cout << "Assigned ethernet parameters:" << std::endl;
-      std::cout << "  GROUND_UNIT_IP: " << config.GROUND_UNIT_IP << std::endl;
-      std::cout << "  AIR_UNIT_IP: " << AIR_UNIT_IP << std::endl;
-      std::cout << "  VIDEO_PORT: " << VIDEO_PORT << std::endl;
-      std::cout << "  TELEMETRY_PORT: " << TELEMETRY_PORT << std::endl;
-    } catch (const std::exception& ex) {
-      std::cerr << "Failed to read ethernet parameters: " << ex.what()
-                << std::endl;
-      throw;
-    }
-  } else {
-    std::cerr << "Microhard parameters not found. Using default configuration."
-              << std::endl;
-  }
-
-// Parse hardware.config
-const auto config = openhd::load_config();
-static const auto MICROHARD_IP_RANGE = config.MICROHARD_IP_AIR;
-static const auto MICROHARD_AIR_IP = config.MICROHARD_IP_AIR;
-static const auto MICROHARD_GND_IP = config.MICROHARD_IP_GROUND;
-static const int MICROHARD_UDP_PORT_TELEMETRY_AIR_TX =
-    config.MICROHARD_TELEMETRY_PORT;
-static const int MICROHARD_UDP_PORT_VIDEO_AIR_TX = config.MICROHARD_VIDEO_PORT;
-static const std::string DEFAULT_DEVICE_IP_GND = config.GROUND_UNIT_IP;
-static const std::string DEFAULT_DEVICE_IP_AIR = config.AIR_UNIT_IP;
-const std::string username = config.MICROHARD_USERNAME + "\n";
-const std::string password = config.MICROHARD_PASSWORD + "\n";
 
   if (microhard_device_ip.empty()) {
     openhd::log::get_default()->warn(
