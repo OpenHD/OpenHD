@@ -70,8 +70,8 @@ const std::string command7 = "AT+MWSNR\n";
 
     try {
       static const auto MICROHARD_IP_RANGE = config.MICROHARD_IP_RANGE;
-      static const auto MICROHARD_AIR_IP = "config.MICROHARD_IP_AIR";
-      static const auto MICROHARD_GND_IP = "config.MICROHARD_IP_GROUND";
+      static const auto MICROHARD_AIR_IP = config.MICROHARD_IP_AIR;
+      static const auto MICROHARD_GND_IP = config.MICROHARD_IP_GROUND;
       static const int MICROHARD_UDP_PORT_TELEMETRY_AIR_TX =
           config.MICROHARD_TELEMETRY_PORT;
       static const int MICROHARD_UDP_PORT_VIDEO_AIR_TX = config.MICROHARD_VIDEO_PORT;
