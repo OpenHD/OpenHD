@@ -57,6 +57,7 @@ bool is_microhard_device_present() {
                                  "ethernet.txt")) {
     std::string output = exec("lsusb");
     return output.find("Microhard") != std::string::npos;
+            m_console->warn("mch found");
   }
   return false;
 }
@@ -162,14 +163,15 @@ OHDInterface::~OHDInterface() {
 
 std::vector<openhd::Setting> OHDInterface::get_all_settings() {
   std::vector<openhd::Setting> ret;
+  m_console->warn("get all settings");
   if (m_wb_link) {
     auto settings = m_wb_link->get_all_settings();
     OHDUtil::vec_append(ret, settings);
   }
-  // if (m_microhard_link) {
-  //   auto settings = m_microhard_link->get_all_settings();
-  //   OHDUtil::vec_append(ret, settings);
-  // }
+  if (m_microhard_link) {
+    auto settings = m_microhard_link->get_all_settings();
+    OHDUtil::vec_append(ret, settings);
+  }
   if (m_wifi_hotspot != nullptr) {
     auto cb_wifi_hotspot_mode = [this](std::string, int value) {
       if (!is_valid_wifi_hotspot_mode(value)) return false;
