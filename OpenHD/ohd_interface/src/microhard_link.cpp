@@ -406,20 +406,20 @@ MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
 
   if (m_profile.is_air) {
     m_video_tx = std::make_unique<openhd::UDPForwarder>(
-        DEVICE_IP_GND, openhd::load_config().MICROHARD_UDP_PORT_VIDEO_AIR_TX);
+        DEVICE_IP_GND, openhd::load_config().MICROHARD_VIDEO_PORT);
     auto cb_telemetry_rx = [this](const uint8_t* data, std::size_t data_len) {
       auto shared =
           std::make_shared<std::vector<uint8_t>>(data, data + data_len);
       on_receive_telemetry_data(shared);
     };
     m_telemetry_tx_rx = std::make_unique<openhd::UDPReceiver>(
-        DEVICE_IP_AIR, openhd::load_config().MICROHARD_UDP_PORT_TELEMETRY_AIR_TX, cb_telemetry_rx);
+        DEVICE_IP_AIR, openhd::load_config().MICROHARD_TELEMETRY_PORT, cb_telemetry_rx);
   } else {
     auto cb_video_rx = [this](const uint8_t* payload, std::size_t payloadSize) {
       on_receive_video_data(0, payload, payloadSize);
     };
     m_video_rx = std::make_unique<openhd::UDPReceiver>(
-        DEVICE_IP_GND, openhd::load_config().MICROHARD_UDP_PORT_VIDEO_AIR_TX, cb_video_rx);
+        DEVICE_IP_GND, openhd::load_config().MICROHARD_VIDEO_PORT, cb_video_rx);
 
     auto cb_telemetry_rx = [this](const uint8_t* data, std::size_t data_len) {
       auto shared =
@@ -427,7 +427,7 @@ MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
       on_receive_telemetry_data(shared);
     };
     m_telemetry_tx_rx = std::make_unique<openhd::UDPReceiver>(
-        DEVICE_IP_GND, openhd::load_config().MICROHARD_UDP_PORT_TELEMETRY_AIR_TX, cb_telemetry_rx);
+        DEVICE_IP_GND, openhd::load_config().MICROHARD_TELEMETRY_PORT, cb_telemetry_rx);
   }
 
   if (m_telemetry_tx_rx) {
