@@ -152,3 +152,13 @@ void EthernetLink::handle_telemetry_data(const uint8_t* data, int data_len) {
   auto shared = std::make_shared<std::vector<uint8_t>>(data, data + data_len);
   on_receive_telemetry_data(shared);
 }
+
+std::vector<openhd::Setting> EthernetLink::get_all_settings() {
+  using namespace openhd;
+  std::vector<Setting> settings;
+  auto change_dummy =
+      IntSetting{0, [this](std::string, int value) { return true; }};
+  settings.push_back(Setting{"MICROHARD_DUMMY0", change_dummy});
+
+  return settings;
+}

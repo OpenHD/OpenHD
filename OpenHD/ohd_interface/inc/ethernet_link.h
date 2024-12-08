@@ -62,6 +62,8 @@ class EthernetLink : public OHDLink {
 
   void initialize_air_unit();
   void initialize_ground_unit();
+  std::vector<openhd::Setting> get_all_settings();
+
 
   void handle_video_data(int stream_index, const uint8_t* data, int data_len);
   void handle_telemetry_data(const uint8_t* data, int data_len);
