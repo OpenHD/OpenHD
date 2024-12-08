@@ -60,7 +60,7 @@ const std::string command6 = "AT+MWNOISEFLOOR\n";
 const std::string command7 = "AT+MWSNR\n";
 
 // Parse hardware.config
-const auto config = openhd::load_config();
+// const auto config = openhd::load_config();
 static const auto MICROHARD_IP_RANGE = config.MICROHARD_IP_AIR;
 static const auto MICROHARD_AIR_IP = config.MICROHARD_IP_AIR;
 static const auto MICROHARD_GND_IP = config.MICROHARD_IP_GROUND;

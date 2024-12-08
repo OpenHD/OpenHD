@@ -40,7 +40,6 @@ void openhd::set_config_file(const std::string& config_file_path) {
 static openhd::Config load_or_default() {
   try {
     openhd::Config ret{};
-    std::cerr << "EXECUTED CONFIG SCRIPT" << std::endl;
     if (!OHDFilesystemUtil::exists(CONFIG_FILE_PATH)) {
       std::cerr << "WARN: No config file [" << CONFIG_FILE_PATH << "] used!" << std::endl;
       return ret;
