@@ -69,7 +69,7 @@ OHDInterface::OHDInterface(OHDProfile profile1)
   m_monitor_mode_cards = {};
   m_opt_hotspot_card = std::nullopt;
   const auto config = openhd::load_config();
-  bool microhard_device_present = is_microhard_device_present();
+  bool microhard_device_present = false;
 
   if (OHDFilesystemUtil::exists(std::string(getConfigBasePath()) +
                                 "ethernet.txt")) {
