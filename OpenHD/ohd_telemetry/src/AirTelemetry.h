@@ -71,9 +71,6 @@ class AirTelemetry : public MavlinkSystem {
    * must be called once all settings have been added, this is needed to avoid
    * an invariant parameter set
    */
-  void log_mavlink_messages(const std::vector<MavlinkMessage>& messages, const std::string& source);
-
-
   void settings_generic_ready();
   /**
    * On the air unit we use mavlink to change camera settings. We have exactly
