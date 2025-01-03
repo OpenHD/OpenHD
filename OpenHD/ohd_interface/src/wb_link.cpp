@@ -668,8 +668,9 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
     if (value < 0 || value > 51) {
         m_console->warn("Invalid wb_qp_max value: {}", value);
         return false;
-    }
+    }else {
     m_console->warn("QP_MAX", value);
+    }
     m_settings->unsafe_get_settings().wb_qp_max = value;
     m_settings->persist();
     return true;
@@ -682,10 +683,11 @@ auto cb_wb_qp_min = [this](std::string, int value) {
     if (value < 0 || value > 51) {
         m_console->warn("Invalid wb_qp_min value: {}", value);
         return false;
+    }else {
+    m_console->warn("QP_MIN", value);
     }
     m_settings->unsafe_get_settings().wb_qp_min = value;
     m_settings->persist();
-    m_console->warn("QP_MIN", value);
     return true;
 };
 ret.push_back(Setting{
