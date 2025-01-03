@@ -658,6 +658,10 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
     auto cb_enable_wb_video_variable_bitrate = [this](std::string, int value) {
       return set_air_enable_wb_video_variable_bitrate(value);
     };
+    ret.push_back(Setting{
+        WB_VIDEO_VARIABLE_BITRATE,
+        openhd::IntSetting{(int)settings.enable_wb_video_variable_bitrate,
+                           cb_enable_wb_video_variable_bitrate}});
     auto cb_wb_qp_max = [](std::string, int) {
         return 4; // Static value
     };
@@ -671,12 +675,6 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
     ret.push_back(Setting{
         WB_QP_MIN,
         openhd::IntSetting{4, cb_wb_qp_min}});
-    auto cb_wb_qp_min = [](std::string, int) {
-    return 4; // DEBUG
-    ret.push_back(Setting{
-    WB_QP_MIN,
-    openhd::IntSetting{4, cb_wb_qp_min}}); // DEBUG
-    };                      
     auto cb_wb_max_fec_block_size_for_platform = [this](std::string,
                                                         int value) {
       return set_air_max_fec_block_size_for_platform(value);
