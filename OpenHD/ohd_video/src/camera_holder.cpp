@@ -114,6 +114,13 @@ auto cb_wb_qp_min = [this](std::string, int value) {
     if (value < 0 || value > 51 || value > m_settings->unsafe_get_settings().wb_qp_max) {
         return false;
     }
+    m_settings->unsafe_get_settings().wb_qp_min = value;
+    m_settings->persist();
+    return true;
+};
+ret.push_back(Setting{
+    WB_QP_MIN,
+    openhd::IntSetting{(int)settings.wb_qp_min, cb_wb_qp_min}});
   }
   const bool supports_rotation_vflip_hflip =
       m_camera.requires_rpi_libcamera_pipeline() ||
