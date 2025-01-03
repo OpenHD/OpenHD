@@ -68,8 +68,8 @@ struct CameraSettings {
   // using only telemetry / HUD. Default to true, otherwise we'd have conflicts
   // with the "always a picture without changing any settings" paradigm.
   bool enable_streaming = true;
-  int qp_max = qp_max;
-  int qp_min = qp_min;
+  int qp_max = 0;
+  int qp_min = 0;
   // The video format selected by the user. If the user sets a video format that
   // isn't supported (for example, he might select h264|1920x1080@120 but the
   // camera can only do 60fps) the camera might stop streaming, and the user has
