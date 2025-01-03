@@ -680,11 +680,12 @@ ret.push_back(Setting{
     openhd::IntSetting{(int)settings.wb_qp_max, cb_wb_qp_max}});
 
 auto cb_wb_qp_min = [this](std::string, int value) {
-    if (value > 0 || value > 51) {
+    if (value > 0 || value > 21) {
         m_console->warn("Invalid wb_qp_min value: {}", value);
         return false;
     }else {
-    m_console->warn("QP_MIN", value);
+        m_console->warn("Invalid wb_qp_min value: {}", value);
+        return false;
     }
     m_settings->unsafe_get_settings().wb_qp_min = value;
     m_settings->persist();
