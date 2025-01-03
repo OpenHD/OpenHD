@@ -199,6 +199,8 @@ static constexpr auto WB_RTL8812AU_TX_PWR_IDX_OVERRIDE = "TX_POWER_I";
 static constexpr auto WB_RTL8812AU_TX_PWR_IDX_ARMED = "TX_POWER_I_ARMED";
 //
 static constexpr auto WB_VIDEO_VARIABLE_BITRATE = "VARIABLE_BITRATE";
+static constexpr auto WB_QP_MAX = "QP_MAX";
+static constexpr auto WB_QP_MIN = "QP_MIN";
 //
 static constexpr auto WB_ENABLE_STBC = "WB_E_STBC";
 static constexpr auto WB_ENABLE_LDPC = "WB_E_LDPC";

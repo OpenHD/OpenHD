@@ -45,8 +45,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
     rpi_libcamera_exposure_index, rpi_libcamera_shutter_microseconds,
     // rpi libcamera specific IQ params end
     force_sw_encode, enable_ultra_secure_encryption,
-    infiray_custom_control_zoom_absolute_colorpalete,
-    wb_qp_min, wb_qp_max)
+    infiray_custom_control_zoom_absolute_colorpalete)
 
 std::optional<CameraSettings> CameraHolder::impl_deserialize(
     const std::string &file_as_string) const {
@@ -99,39 +98,6 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
         "HIGH_ENCRYPTION",
         openhd::IntSetting{get_settings().enable_ultra_secure_encryption,
                            cb_encryption}});
-
-    auto cb_wb_qp_max = [this](std::string, int value) {
-      if (value < 0 || value > 51) {
-        return false;
-      }
-      unsafe_get_settings().wb_qp_max = value;
-      persist();
-      return true;
-    };
-    ret.push_back(openhd::Setting{
-        "WB_QP_MAX",
-        openhd::IntSetting{
-            (int)unsafe_get_settings().wb_qp_max,
-            cb_wb_qp_max
-        }
-    });
-
-    auto cb_wb_qp_min = [this](std::string, int value) {
-      if (value < 0 || value > 51 ||
-          value > unsafe_get_settings().wb_qp_max) {
-        return false;
-      }
-      unsafe_get_settings().wb_qp_min = value;
-      persist();
-      return true;
-    };
-    ret.push_back(openhd::Setting{
-        "WB_QP_MIN",
-        openhd::IntSetting{
-            (int)unsafe_get_settings().wb_qp_min,
-            cb_wb_qp_min
-        }
-    });
   }
   const bool supports_rotation_vflip_hflip =
       m_camera.requires_rpi_libcamera_pipeline() ||
@@ -221,6 +187,7 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
         "N_SLICES",
         openhd::IntSetting{get_settings().h26x_num_slices, c_h26x_num_slices}});
   }
+  // right now only supported by libcamera and (partially) x20
   const bool SUPPORTS_OPENHD_IQ = m_camera.requires_rpi_libcamera_pipeline() ||
                                   m_camera.x20_supports_basic_iq_params();
   if (SUPPORTS_OPENHD_IQ) {
