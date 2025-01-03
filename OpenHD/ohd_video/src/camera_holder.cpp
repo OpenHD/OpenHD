@@ -100,7 +100,6 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
                            cb_encryption}});
     auto cb_wb_qp_max = [this](std::string, int value) {
     if (value < 0 || value > 51) { // Assuming valid QP range is 0 to 51
-        m_console->warn("Invalid wb_qp_max value: {}", value);
         return false;
     }
     m_settings->unsafe_get_settings().wb_qp_max = value;
@@ -113,7 +112,6 @@ ret.push_back(Setting{
 
 auto cb_wb_qp_min = [this](std::string, int value) {
     if (value < 0 || value > 51 || value > m_settings->unsafe_get_settings().wb_qp_max) {
-        m_console->warn("Invalid wb_qp_min value: {}", value);
         return false;
     }
   }
