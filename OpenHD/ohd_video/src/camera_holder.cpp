@@ -104,31 +104,31 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
       if (value < 0 || value > 51) {
         return false;
       }
-      m_settings->unsafe_get_settings().wb_qp_max = value;
-      m_settings->persist();
+      unsafe_get_settings().wb_qp_max = value;
+      persist();
       return true;
     };
     ret.push_back(openhd::Setting{
         "WB_QP_MAX",
         openhd::IntSetting{
-            (int)m_settings->unsafe_get_settings().wb_qp_max,
+            (int)unsafe_get_settings().wb_qp_max,
             cb_wb_qp_max
         }
     });
 
     auto cb_wb_qp_min = [this](std::string, int value) {
       if (value < 0 || value > 51 ||
-          value > m_settings->unsafe_get_settings().wb_qp_max) {
+          value > unsafe_get_settings().wb_qp_max) {
         return false;
       }
-      m_settings->unsafe_get_settings().wb_qp_min = value;
+      unsafe_get_settings().wb_qp_min = value;
       m_settings->persist();
       return true;
     };
     ret.push_back(openhd::Setting{
         "WB_QP_MIN",
         openhd::IntSetting{
-            (int)m_settings->unsafe_get_settings().wb_qp_min,
+            (int)unsafe_get_settings().wb_qp_min,
             cb_wb_qp_min
         }
     });
