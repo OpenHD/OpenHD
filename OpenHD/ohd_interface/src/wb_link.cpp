@@ -27,6 +27,8 @@
 // #include "wifi_command_helper2.h"
 
 #include <utility>
+#include <iostream>
+
 
 #include "config_paths.h"
 #include "openhd_bitrate.h"
@@ -665,6 +667,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
     auto cb_wb_qp_max = [](std::string, int) {
         return 4; // Static value
     };
+    std::cout << "Adding WB_QP_MAX setting with static value: 4" << std::endl;
     ret.push_back(Setting{
         WB_QP_MAX,
         openhd::IntSetting{4, cb_wb_qp_max}});
