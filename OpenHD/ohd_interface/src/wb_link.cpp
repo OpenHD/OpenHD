@@ -664,19 +664,32 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
         WB_VIDEO_VARIABLE_BITRATE,
         openhd::IntSetting{(int)settings.enable_wb_video_variable_bitrate,
                            cb_enable_wb_video_variable_bitrate}});
-    auto cb_wb_qp_max = [](std::string, int) {
-        return 4; // Static value
-    };
-    ret.push_back(Setting{
-        WB_QP_MAX,
-        openhd::IntSetting{7, cb_wb_qp_max}});
+    auto cb_wb_qp_max = [this](std::string, int value) {
+    if (value < 0 || value > 51) { // Assuming valid QP range is 0 to 51
+        m_console->warn("Invalid wb_qp_max value: {}", value);
+        return false;
+    }
+    m_settings->unsafe_get_settings().wb_qp_max = value;
+    m_settings->persist();
+    return true;
+};
+ret.push_back(Setting{
+    WB_QP_MAX,
+    openhd::IntSetting{(int)settings.wb_qp_max, cb_wb_qp_max}});
 
-    auto cb_wb_qp_min = [](std::string, int) {
-        return 4; // Static value
-    };
-    ret.push_back(Setting{
-        WB_QP_MIN,
-        openhd::IntSetting{4, cb_wb_qp_min}});
+auto cb_wb_qp_min = [this](std::string, int value) {
+    if (value < 0 || value > 51 || value > m_settings->unsafe_get_settings().wb_qp_max) {
+        m_console->warn("Invalid wb_qp_min value: {}", value);
+        return false;
+    }
+    m_settings->unsafe_get_settings().wb_qp_min = value;
+    m_settings->persist();
+    return true;
+};
+ret.push_back(Setting{
+    WB_QP_MIN,
+    openhd::IntSetting{(int)settings.wb_qp_min, cb_wb_qp_min}});
+
     auto cb_wb_max_fec_block_size_for_platform = [this](std::string,
                                                         int value) {
       return set_air_max_fec_block_size_for_platform(value);
