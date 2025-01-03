@@ -122,7 +122,7 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
         return false;
       }
       unsafe_get_settings().wb_qp_min = value;
-      m_settings->persist();
+      persist();
       return true;
     };
     ret.push_back(openhd::Setting{

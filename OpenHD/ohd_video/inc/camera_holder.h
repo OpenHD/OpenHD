@@ -101,8 +101,6 @@ class CameraHolder :
     persist();
     return true;
   }
-  static constexpr auto WB_QP_MAX = "QP_MAX";
-  static constexpr auto WB_QP_MIN = "QP_MIN";
   bool set_keyframe_interval(int value) {
     if (!openhd::validate_rpi_keyframe_interval(value)) return false;
     unsafe_get_settings().h26x_keyframe_interval = value;

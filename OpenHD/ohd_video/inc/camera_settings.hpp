@@ -125,6 +125,8 @@ struct CameraSettings {
   // encode. Enabling this is no guarantee a sw encoded pipeline exists for this
   // camera.
   bool force_sw_encode = false;
+  static constexpr auto WB_QP_MAX = "QP_MAX";
+  static constexpr auto WB_QP_MIN = "QP_MIN";
 
   // OpenHD WB supports changing encryption on the fly per camera stream
   bool enable_ultra_secure_encryption = false;
