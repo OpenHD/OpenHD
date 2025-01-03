@@ -27,6 +27,8 @@
 // #include "wifi_command_helper2.h"
 
 #include <utility>
+#include <iostream>
+
 
 #include "config_paths.h"
 #include "openhd_bitrate.h"
@@ -622,161 +624,6 @@ void WBLink::apply_txpower() {
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "performance-unnecessary-value-param"
 std::vector<openhd::Setting> WBLink::get_all_settings() {
-    using namespace openhd;
-    std::vector<openhd::Setting> ret{};
-    m_console->warn("Entering get_all_settings");
-
-    const auto settings = m_settings->get_settings();
-    m_console->warn("Fetched current settings");
-
-    auto change_freq = openhd::IntSetting{
-        (int)settings.wb_frequency,
-        [this](std::string, int value) {
-            m_console->warn("Changing frequency to {}", value);
-            return request_set_frequency(value);
-        }};
-    change_freq.get_callback = [this]() {
-        m_console->warn("Retrieving current frequency");
-        return m_settings->unsafe_get_settings().wb_frequency;
-    };
-    ret.push_back(Setting{WB_FREQUENCY, change_freq});
-
-    if (m_profile.is_air) {
-        m_console->warn("Profile is air, adding air-specific settings");
-
-        auto change_wb_air_mcs_index = openhd::IntSetting{
-            (int)settings.wb_air_mcs_index, [this](std::string, int value) {
-                m_console->warn("Changing MCS index to {}", value);
-                return request_set_air_mcs_index(value);
-            }};
-        ret.push_back(Setting{WB_MCS_INDEX, change_wb_air_mcs_index});
-
-        auto change_wb_channel_width = openhd::IntSetting{
-            (int)settings.wb_air_tx_channel_width, [this](std::string, int value) {
-                m_console->warn("Changing channel width to {}", value);
-                return request_set_air_tx_channel_width(value);
-            }};
-        change_wb_channel_width.get_callback = [this]() {
-            m_console->warn("Retrieving current channel width");
-            return m_settings->unsafe_get_settings().wb_air_tx_channel_width;
-        };
-        ret.push_back(Setting{WB_CHANNEL_WIDTH, change_wb_channel_width});
-
-        auto cb_change_video_fec_percentage = [this](std::string, int value) {
-            m_console->warn("Changing video FEC percentage to {}", value);
-            return set_air_video_fec_percentage(value);
-        };
-        ret.push_back(
-            Setting{WB_VIDEO_FEC_PERCENTAGE,
-                    openhd::IntSetting{(int)settings.wb_video_fec_percentage,
-                                       cb_change_video_fec_percentage}});
-
-        auto cb_enable_wb_video_variable_bitrate = [this](std::string, int value) {
-            m_console->warn("Changing video variable bitrate to {}", value);
-            return set_air_enable_wb_video_variable_bitrate(value);
-        };
-        ret.push_back(Setting{
-            WB_VIDEO_VARIABLE_BITRATE,
-            openhd::IntSetting{(int)settings.enable_wb_video_variable_bitrate,
-                               cb_enable_wb_video_variable_bitrate}});
-
-        auto cb_wb_max_fec_block_size_for_platform = [this](std::string,
-                                                            int value) {
-            m_console->warn("Changing max FEC block size to {}", value);
-            return set_air_max_fec_block_size_for_platform(value);
-        };
-        ret.push_back(
-            Setting{WB_MAX_FEC_BLOCK_SIZE_FOR_PLATFORM,
-                    openhd::IntSetting{(int)settings.wb_max_fec_block_size,
-                                       cb_wb_max_fec_block_size_for_platform}});
-
-        auto cb_wb_video_rate_for_mcs_adjustment_percent = [this](std::string,
-                                                                  int value) {
-            m_console->warn("Changing video rate for MCS adjustment to {}", value);
-            return set_air_wb_video_rate_for_mcs_adjustment_percent(value);
-        };
-        ret.push_back(
-            Setting{WB_VIDEO_RATE_FOR_MCS_ADJUSTMENT_PERC,
-                    openhd::IntSetting{
-                        (int)settings.wb_video_rate_for_mcs_adjustment_percent,
-                        cb_wb_video_rate_for_mcs_adjustment_percent}});
-
-        auto cb_dev_air_set_high_retransmit_count = [this](std::string, int value) {
-            m_console->warn("Changing air retransmit count to {}", value);
-            return set_dev_air_set_high_retransmit_count(value);
-        };
-        ret.push_back(Setting{
-            WB_DEV_AIR_SET_HIGH_RETRANSMIT_COUNT,
-            openhd::IntSetting{(int)settings.wb_dev_air_set_high_retransmit_count,
-                               cb_dev_air_set_high_retransmit_count}});
-    }
-
-    if (m_profile.is_ground()) {
-        m_console->warn("Profile is ground, adding ground-specific settings");
-
-        auto cb_passive = [this](std::string, int value) {
-            m_console->warn("Changing passive mode to {}", value);
-            if (!validate_yes_or_no(value)) return false;
-            m_settings->unsafe_get_settings().wb_enable_listen_only_mode = value;
-            m_settings->persist();
-            m_wb_txrx->set_passive_mode(value);
-            return true;
-        };
-        ret.push_back(
-            Setting{openhd::WB_PASSIVE_MODE,
-                    openhd::IntSetting{(int)settings.wb_enable_listen_only_mode,
-                                       cb_passive}});
-    }
-
-    const bool any_card_supports_stbc_ldpc_sgi =
-        openhd::wb::any_card_supports_stbc_ldpc_sgi(m_broadcast_cards);
-    m_console->warn("Checking for STBC, LDPC, SGI support: {}", any_card_supports_stbc_ldpc_sgi);
-
-    if (any_card_supports_stbc_ldpc_sgi) {
-        auto cb_wb_enable_stbc = [this](std::string, int stbc) {
-            m_console->warn("Changing STBC to {}", stbc);
-            if (stbc < 0 || stbc > 3) return false;
-            m_settings->unsafe_get_settings().wb_enable_stbc = stbc;
-            m_settings->persist();
-            m_tx_header_1->update_stbc(stbc);
-            m_tx_header_2->update_stbc(stbc);
-            return true;
-        };
-        ret.push_back(openhd::Setting{
-            WB_ENABLE_STBC,
-            openhd::IntSetting{settings.wb_enable_stbc, cb_wb_enable_stbc}});
-
-        auto cb_wb_enable_ldpc = [this](std::string, int ldpc) {
-            m_console->warn("Changing LDPC to {}", ldpc);
-            if (!validate_yes_or_no(ldpc)) return false;
-            m_settings->unsafe_get_settings().wb_enable_ldpc = ldpc;
-            m_settings->persist();
-            m_tx_header_1->update_ldpc(ldpc);
-            m_tx_header_2->update_ldpc(ldpc);
-            return true;
-        };
-        ret.push_back(openhd::Setting{
-            WB_ENABLE_LDPC,
-            openhd::IntSetting{settings.wb_enable_ldpc, cb_wb_enable_ldpc}});
-
-        auto cb_wb_enable_sg = [this](std::string, int short_gi) {
-            m_console->warn("Changing Short Guard Interval to {}", short_gi);
-            if (!validate_yes_or_no(short_gi)) return false;
-            m_settings->unsafe_get_settings().wb_enable_short_guard = short_gi;
-            m_settings->persist();
-            m_tx_header_1->update_guard_interval(short_gi);
-            m_tx_header_2->update_guard_interval(short_gi);
-            return true;
-        };
-        ret.push_back(openhd::Setting{
-            WB_ENABLE_SHORT_GUARD,
-            openhd::IntSetting{settings.wb_enable_short_guard, cb_wb_enable_sg}});
-    }
-
-    m_console->warn("Returning collected settings");
-    openhd::validate_provided_ids(ret);
-    return ret;
-}
   using namespace openhd;
   std::vector<openhd::Setting> ret{};
   const auto settings = m_settings->get_settings();
@@ -820,6 +667,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
     auto cb_wb_qp_max = [](std::string, int) {
         return 4; // Static value
     };
+    std::cout << "Adding WB_QP_MAX setting with static value: 4" << std::endl;
     ret.push_back(Setting{
         WB_QP_MAX,
         openhd::IntSetting{4, cb_wb_qp_max}});
