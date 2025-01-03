@@ -624,7 +624,6 @@ void WBLink::apply_txpower() {
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "performance-unnecessary-value-param"
 std::vector<openhd::Setting> WBLink::get_all_settings() {
-  m_console->warn("Entering get_all_settings");
   using namespace openhd;
   std::vector<openhd::Setting> ret{};
   const auto settings = m_settings->get_settings();
@@ -668,7 +667,6 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
     auto cb_wb_qp_max = [](std::string, int) {
         return 4; // Static value
     };
-    std::cout << "Adding WB_QP_MAX setting with static value: 4" << std::endl;
     ret.push_back(Setting{
         WB_QP_MAX,
         openhd::IntSetting{4, cb_wb_qp_max}});
