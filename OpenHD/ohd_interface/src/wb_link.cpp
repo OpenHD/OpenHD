@@ -669,7 +669,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
     };
     ret.push_back(Setting{
         WB_QP_MAX,
-        openhd::IntSetting{4, cb_wb_qp_max}});
+        openhd::IntSetting{7, cb_wb_qp_max}});
 
     auto cb_wb_qp_min = [](std::string, int) {
         return 4; // Static value

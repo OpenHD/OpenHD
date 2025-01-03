@@ -185,8 +185,8 @@ class LinkActionHandler {
     uint16_t stream_h = 0;
     uint16_t stream_fps = 0;
     uint8_t supports_variable_bitrate = 0;
-    uint8_t qp_max = 5;
-    uint8_t qp_min = 5;    
+    uint8_t qp_max = 0;
+    uint8_t qp_min = 0;    
   };
   void set_cam_info(uint8_t cam_index, CamInfo camInfo) {
     if (cam_index == 0) {
