@@ -529,8 +529,8 @@ static std::string createRockchipEncoderPipeline(
     ss << "mpph265enc ";
   }
   ss << "rc-mode=cbr ";
-  ss << "qp-min=" << settings.qp_min;
-  ss << "qp-max=" << settings.qp_max;
+  ss << "qp-min=" << settings.wb_qp_min;
+  ss << "qp-max=" << settings.wb_qp_max;
   ss << "bps="<< bps;
   ss << " width=" << settings.streamed_video_format.width;
   ss << " height=" << settings.streamed_video_format.height;
