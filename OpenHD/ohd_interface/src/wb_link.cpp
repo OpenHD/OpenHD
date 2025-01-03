@@ -669,9 +669,9 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
         m_console->warn("Invalid wb_qp_max value: {}", value);
         return false;
     }
+    m_console->warn("QP_MAX", value);
     m_settings->unsafe_get_settings().wb_qp_max = value;
     m_settings->persist();
-    m_console->warn("QP_MAX", value);
     return true;
 };
 ret.push_back(Setting{
