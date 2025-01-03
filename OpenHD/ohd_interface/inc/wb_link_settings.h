@@ -127,8 +127,8 @@ struct WBLinkSettings {
   int wb_bw_via_rc_channel = WB_BW_VIA_RC_CHANNEL_OFF;
   // wb link recommends bitrate(s) to the encoder.
   bool enable_wb_video_variable_bitrate = true;
-  int wb_qp_max = 7;
-  int wb_qp_min = 4;
+  int wb_qp_max = 17;
+  int wb_qp_min = 42;
   // !!!!
   // This allows the ground station to become completely passive (aka tune in on
   // someone elses feed) but obviosuly you cannot reach your air unit anymore
