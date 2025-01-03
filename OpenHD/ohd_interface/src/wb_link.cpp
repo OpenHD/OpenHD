@@ -678,6 +678,7 @@ ret.push_back(Setting{
     openhd::IntSetting{(int)settings.wb_qp_max, cb_wb_qp_max}});
 
 auto cb_wb_qp_min = [this](std::string, int value) {
+    m_console->warn("wb_qp_min value: {}", value);
     if (value < 0 || value > 51) {
         m_console->warn("Invalid wb_qp_min value: {}", value);
         return false;
@@ -688,7 +689,6 @@ auto cb_wb_qp_min = [this](std::string, int value) {
 };
 ret.push_back(Setting{
     WB_QP_MIN,
-    m_console->warn("moppel");
     openhd::IntSetting{(int)settings.wb_qp_min, cb_wb_qp_min}});
 
     auto cb_wb_max_fec_block_size_for_platform = [this](std::string,
