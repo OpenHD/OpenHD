@@ -524,13 +524,13 @@ static std::string createRockchipEncoderPipeline(
   std::stringstream ss;
   const int bps = openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
   if (settings.streamed_video_format.videoCodec == VideoCodec::H264) {
-    ss << "mpph264enc ";
+    ss << " mpph264enc";
   } else {
-    ss << "mpph265enc ";
+    ss << " mpph265enc";
   }
-  ss << "rc-mode=cbr ";
-  ss << "qp-min=" << settings.qp_min;
-  // ss << "qp-max=" << settings.qp_max;
+  ss << " rc-mode=cbr";
+  ss << " qp-min=" << settings.qp_min;
+  ss << " qp-max=" << settings.qp_max;
   ss << " bps="<< bps;
   ss << " width=" << settings.streamed_video_format.width;
   ss << " height=" << settings.streamed_video_format.height;
