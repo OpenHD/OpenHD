@@ -523,9 +523,9 @@ static std::string createRockchipEncoderPipeline(
     const CameraSettings& settings) {
   std::stringstream ss;
   const int bps = openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
-  const int bps_actual = (original_bps * 95) / 100;
-  const int bps_min    = (original_bps * 90) / 100;
-  const int bps_max    = original_bps;
+  const int bps_actual = (bps * 95) / 100;
+  const int bps_min    = (bps * 90) / 100;
+  const int bps_max    = bps;
   if (settings.streamed_video_format.videoCodec == VideoCodec::H264) {
     ss << " mpph264enc";
   } else {
