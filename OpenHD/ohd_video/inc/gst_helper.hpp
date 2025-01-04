@@ -523,15 +523,20 @@ static std::string createRockchipEncoderPipeline(
     const CameraSettings& settings) {
   std::stringstream ss;
   const int bps = openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
+  const int bps_actual = (original_bps * 95) / 100;
+  const int bps_min    = (original_bps * 90) / 100;
+  const int bps_max    = original_bps;
   if (settings.streamed_video_format.videoCodec == VideoCodec::H264) {
     ss << " mpph264enc";
   } else {
     ss << " mpph265enc";
   }
-  ss << " rc-mode=cbr";
+  ss << " rc-mode=1";
+  ss << " bps="<< bps_actual;
+  ss << " bps-max=" << bps_min;
+  ss << " bps-min=" << bps_max;
   ss << " qp-min=" << settings.qp_min;
   ss << " qp-max=" << settings.qp_max;
-  ss << " bps="<< bps;
   ss << " width=" << settings.streamed_video_format.width;
   ss << " height=" << settings.streamed_video_format.height;
   if (openhd::validate_camera_rotation(settings.camera_rotation_degree)) {
