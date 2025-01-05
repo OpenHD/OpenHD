@@ -154,7 +154,7 @@ std::string GStreamerStream::create_source_encode_pipeline(
                   OHDPlatform::instance().platform_type ==
                       X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3
               ? 0
-              : 11;
+              : 0;
       pipeline << OHDGstHelper::createRockchipCSIStream(v4l2_filenumber,
                                                         setting);
     }
