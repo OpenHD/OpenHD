@@ -45,6 +45,22 @@ static int internal_discover_platform() {
   openhd::log::get_default()->warn("OpenHD Platform Discovery started!");
   if (OHDFilesystemUtil::exists(ALLWINNER_BOARDID_PATH)) {
     return X_PLATFORM_TYPE_ALWINNER_X20;
+  } else if (OHDFilesystemUtil::exists("/boot/config.txt")) {
+    const auto filename_proc_cpuinfo = "/proc/cpuinfo";
+    const auto proc_cpuinfo_opt =
+        OHDFilesystemUtil::opt_read_file("/proc/cpuinfo");
+
+    if (!proc_cpuinfo_opt.has_value()) {
+      openhd::log::get_default()->warn(
+          "File {} does not exist, RPi detection unavailable",
+          filename_proc_cpuinfo);
+      return X_PLATFORM_TYPE_RPI_OLD;
+    }
+
+    if (OHDUtil::contains(proc_cpuinfo_opt.value(), "BCM2711")) {
+      return X_PLATFORM_TYPE_RPI_4;
+    }
+    return X_PLATFORM_TYPE_RPI_OLD;
   } else if (OHDFilesystemUtil::exists(SIGMASTAR_BOARDID_PATH)) {
     return X_PLATFORM_TYPE_OPENIPC_SIGMASTAR_UNDEFINED;
   } else if (OHDFilesystemUtil::exists(DEVICE_TREE_COMPATIBLE_PATH)) {
@@ -90,22 +106,6 @@ static int internal_discover_platform() {
       return X_PLATFORM_TYPE_RPI_4;
     }
 
-    return X_PLATFORM_TYPE_RPI_OLD;
-  } else if (OHDFilesystemUtil::exists("/boot/config.txt")) {
-    const auto filename_proc_cpuinfo = "/proc/cpuinfo";
-    const auto proc_cpuinfo_opt =
-        OHDFilesystemUtil::opt_read_file("/proc/cpuinfo");
-
-    if (!proc_cpuinfo_opt.has_value()) {
-      openhd::log::get_default()->warn(
-          "File {} does not exist, RPi detection unavailable",
-          filename_proc_cpuinfo);
-      return X_PLATFORM_TYPE_RPI_OLD;
-    }
-
-    if (OHDUtil::contains(proc_cpuinfo_opt.value(), "BCM2711")) {
-      return X_PLATFORM_TYPE_RPI_4;
-    }
     return X_PLATFORM_TYPE_RPI_OLD;
   } else if (OHDFilesystemUtil::exists(NVIDIA_XAVIER_BOARDID_PATH)) {
     return X_PLATFORM_TYPE_NVIDIA_XAVIER;
