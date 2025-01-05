@@ -43,6 +43,7 @@ static constexpr auto QUALCOMM_BOARDID_PATH = "/proc/device-tree/model";
 
 static int internal_discover_platform() {
   openhd::log::get_default()->warn("OpenHD Platform Discovery started!");
+  
   if (OHDFilesystemUtil::exists(ALLWINNER_BOARDID_PATH)) {
     return X_PLATFORM_TYPE_ALWINNER_X20;
   } else if (OHDFilesystemUtil::exists("/boot/config.txt")) {
@@ -70,7 +71,8 @@ static int internal_discover_platform() {
         OHDFilesystemUtil::read_file("/proc/device-tree/model");
     std::regex r("rockchip,(r[kv][0-9]+)");
     std::smatch sm;
-    openhd::log::get_default()->warn("Rochchip detected!");
+
+    openhd::log::get_default()->warn("Rockchip detected!");
 
     if (regex_search(compatible_content, sm, r)) {
       const std::string chip = sm[1];
@@ -82,7 +84,6 @@ static int internal_discover_platform() {
           return X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B;
         }
       } else if (chip == "rk3566") {
-        // Additional condition for Radxa ROCK3 Model A
         if (OHDUtil::contains_after_uppercase(device_tree_model,
                                               "Radxa CM3 RPI CM4 IO")) {
           return X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3;
@@ -96,33 +97,7 @@ static int internal_discover_platform() {
         return X_PLATFORM_TYPE_ROCKCHIP_RV1126_UNDEFINED;
       }
     }
-    const std::string compatible_content =
-        OHDFilesystemUtil::read_file(DEVICE_TREE_COMPATIBLE_PATH);
-    const std::string device_tree_model =
-        OHDFilesystemUtil::read_file("/proc/device-tree/model");
-    std::regex r("rockchip,(r[kv][0-9]+)");
-    std::smatch sm;
 
-    if (regex_search(compatible_content, sm, r)) {
-      const std::string chip = sm[1];
-      if (chip == "rk3588") {
-        if (OHDUtil::contains_after_uppercase(device_tree_model,
-                                              "Radxa ROCK 5A")) {
-          return X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A;
-        } else {
-          return X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B;
-        }
-      } else if (chip == "rk3566") {
-        if (OHDUtil::contains_after_uppercase(device_tree_model,
-                                              "Radxa CM3 RPI CM4 IO")) {
-          return X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3;
-        } else {
-          return X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W;
-        }
-      } else if (chip == "rv1126") {
-        return X_PLATFORM_TYPE_ROCKCHIP_RV1126_UNDEFINED;
-      }
-    }
     const auto filename_proc_cpuinfo = "/proc/cpuinfo";
     const auto proc_cpuinfo_opt =
         OHDFilesystemUtil::opt_read_file("/proc/cpuinfo");
@@ -170,6 +145,7 @@ static int internal_discover_platform() {
       return X_PLATFORM_TYPE_X86;
     }
   }
+
   openhd::log::get_default()->warn("Unknown platform");
   return X_PLATFORM_TYPE_UNKNOWN;
 }
