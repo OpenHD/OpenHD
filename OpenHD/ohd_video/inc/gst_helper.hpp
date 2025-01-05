@@ -522,7 +522,7 @@ static std::string create_veye_vl2_stream(const CameraSettings& settings,
 static std::string createRockchipEncoderPipeline(
     const CameraSettings& settings) {
   std::stringstream ss;
-  const int bps = openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits) / 10;
+  const int bps = openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
   const int bps_actual = (bps * 95) / 100;
   const int bps_min    = (bps * 90) / 100;
   const int bps_max    = bps;
@@ -543,7 +543,8 @@ static std::string createRockchipEncoderPipeline(
     // Takes 0,90,180,270
     ss << " rotation=" << settings.camera_rotation_degree;
   }
-  ss << " gop=" << settings.h26x_keyframe_interval;
+  // ss << " gop=" << settings.h26x_keyframe_interval;
+  ss << " gop=20";
   if (h264_needs_level_4_2(settings.streamed_video_format,
                            settings.h26x_bitrate_kbits)) {
     ss << " level=42";
