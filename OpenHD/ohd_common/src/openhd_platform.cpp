@@ -70,6 +70,7 @@ static int internal_discover_platform() {
         OHDFilesystemUtil::read_file("/proc/device-tree/model");
     std::regex r("rockchip,(r[kv][0-9]+)");
     std::smatch sm;
+    openhd::log::get_default()->warn("Rochchip detected!");
 
     if (regex_search(compatible_content, sm, r)) {
       const std::string chip = sm[1];
