@@ -544,7 +544,7 @@ static std::string createRockchipEncoderPipeline(
     ss << " rotation=" << settings.camera_rotation_degree;
   }
   // ss << " gop=" << settings.h26x_keyframe_interval;
-  ss << " gop=20";
+  ss << " gop=5";
   if (h264_needs_level_4_2(settings.streamed_video_format,
                            settings.h26x_bitrate_kbits)) {
     ss << " level=42";
