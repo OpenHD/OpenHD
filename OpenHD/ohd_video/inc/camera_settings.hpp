@@ -69,7 +69,7 @@ struct CameraSettings {
   // with the "always a picture without changing any settings" paradigm.
   bool enable_streaming = true;
   int qp_max = 51;
-  int qp_min = 40;
+  int qp_min = 5;
   // The video format selected by the user. If the user sets a video format that
   // isn't supported (for example, he might select h264|1920x1080@120 but the
   // camera can only do 60fps) the camera might stop streaming, and the user has
