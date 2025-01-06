@@ -238,7 +238,7 @@ int get_fec_max_block_size_for_platform() {
       platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3 ||
       platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A ||
       platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B) {
-    return 50;
+    return 30;
   }
   if (platform_type == X_PLATFORM_TYPE_ALWINNER_X20) {
     return 20;
