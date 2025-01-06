@@ -522,7 +522,7 @@ static std::string create_veye_vl2_stream(const CameraSettings& settings,
 static std::string createRockchipEncoderPipeline(
     const CameraSettings& settings) {
   std::stringstream ss;
-  const int bps = openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
+  const int bps = openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits)/2;
   const int bps_actual = (bps * 95) / 100;
   const int bps_min    = (bps * 90) / 100;
   const int bps_max    = bps;
