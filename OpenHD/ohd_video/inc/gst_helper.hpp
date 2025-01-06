@@ -519,38 +519,46 @@ static std::string create_veye_vl2_stream(const CameraSettings& settings,
   return ss.str();
 }
 
-static std::string createRockchipEncoderPipeline(
-    const CameraSettings& settings) {
+static std::string createRockchipEncoderPipeline(const CameraSettings& settings) {
   std::stringstream ss;
-  const int bps = openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits)/2;
-  const int bps_actual = (bps * 95) / 100;
-  const int bps_min    = (bps * 90) / 100;
-  const int bps_max    = bps;
+
+  const int bps = openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits) / 2;
+  const int BPS_ACTUAL_LIMIT = 6650000;
+  const int BPS_MAX_LIMIT = 6300000;
+  const int BPS_MIN_LIMIT = 7000000;
+
+  int bps_actual = std::min((bps * 95) / 100, BPS_ACTUAL_LIMIT);
+  int bps_min = std::min((bps * 90) / 100, BPS_MIN_LIMIT);
+  int bps_max = std::min(bps, BPS_MAX_LIMIT);
+
   if (settings.streamed_video_format.videoCodec == VideoCodec::H264) {
     ss << " mpph264enc";
   } else {
     ss << " mpph265enc";
   }
+
   ss << " rc-mode=1";
-  ss << " bps="<< bps_actual;
-  ss << " bps-max=" << bps_min;
-  ss << " bps-min=" << bps_max;
+  ss << " bps=" << bps_actual;
+  ss << " bps-max=" << bps_max;
+  ss << " bps-min=" << bps_min;
   ss << " qp-min=" << settings.qp_min;
   ss << " qp-max=" << settings.qp_max;
   ss << " width=" << settings.streamed_video_format.width;
   ss << " height=" << settings.streamed_video_format.height;
+
   if (openhd::validate_camera_rotation(settings.camera_rotation_degree)) {
-    // Takes 0,90,180,270
     ss << " rotation=" << settings.camera_rotation_degree;
   }
-  // ss << " gop=" << settings.h26x_keyframe_interval;
+
   ss << " gop=5";
-  if (h264_needs_level_4_2(settings.streamed_video_format,
-                           settings.h26x_bitrate_kbits)) {
+
+  if (h264_needs_level_4_2(settings.streamed_video_format, settings.h26x_bitrate_kbits)) {
     ss << " level=42";
   }
+
   const int rotation = get_rotation_degree_0_90_180_270(settings);
   ss << " rotation=" << rotation;
+
   ss << " ! ";
   return ss.str();
 }
