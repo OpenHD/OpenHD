@@ -519,10 +519,12 @@ static std::string create_veye_vl2_stream(const CameraSettings& settings,
   return ss.str();
 }
 
-static std::string createRockchipEncoderPipeline(const CameraSettings& settings) {
+static std::string createRockchipEncoderPipeline(
+    const CameraSettings& settings) {
   std::stringstream ss;
 
-  const int bps = openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits) / 2;
+  const int bps =
+      openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits) / 2;
   const int BPS_ACTUAL_LIMIT = 6650000;
   const int BPS_MAX_LIMIT = 6300000;
   const int BPS_MIN_LIMIT = 7000000;
@@ -552,7 +554,8 @@ static std::string createRockchipEncoderPipeline(const CameraSettings& settings)
 
   ss << " gop=5";
 
-  if (h264_needs_level_4_2(settings.streamed_video_format, settings.h26x_bitrate_kbits)) {
+  if (h264_needs_level_4_2(settings.streamed_video_format,
+                           settings.h26x_bitrate_kbits)) {
     ss << " level=42";
   }
 

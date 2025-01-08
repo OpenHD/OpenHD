@@ -47,12 +47,14 @@ static int internal_discover_platform() {
   if (OHDFilesystemUtil::exists(ALLWINNER_BOARDID_PATH)) {
     openhd::log::get_default()->warn("Detected Allwinner platform (X20).");
     return X_PLATFORM_TYPE_ALWINNER_X20;
-  } 
-  
+  }
+
   if (OHDFilesystemUtil::exists("/boot/config.txt")) {
-    openhd::log::get_default()->warn("Detected potential Raspberry Pi platform.");
+    openhd::log::get_default()->warn(
+        "Detected potential Raspberry Pi platform.");
     const auto filename_proc_cpuinfo = "/proc/cpuinfo";
-    const auto proc_cpuinfo_opt = OHDFilesystemUtil::opt_read_file("/proc/cpuinfo");
+    const auto proc_cpuinfo_opt =
+        OHDFilesystemUtil::opt_read_file("/proc/cpuinfo");
 
     if (!proc_cpuinfo_opt.has_value()) {
       openhd::log::get_default()->warn(
@@ -69,13 +71,13 @@ static int internal_discover_platform() {
 
     openhd::log::get_default()->warn("Detected an older Raspberry Pi (<=3).");
     return X_PLATFORM_TYPE_RPI_OLD;
-  } 
-  
+  }
+
   if (OHDFilesystemUtil::exists(SIGMASTAR_BOARDID_PATH)) {
     openhd::log::get_default()->warn("Detected SigmaStar platform.");
     return X_PLATFORM_TYPE_OPENIPC_SIGMASTAR_UNDEFINED;
-  } 
-  
+  }
+
   if (OHDFilesystemUtil::exists(DEVICE_TREE_COMPATIBLE_PATH)) {
     openhd::log::get_default()->warn("Checking for Rockchip platforms...");
 
@@ -93,40 +95,46 @@ static int internal_discover_platform() {
       if (chip == "rk3588") {
         if (OHDUtil::contains_after_uppercase(device_tree_model,
                                               "Radxa ROCK 5A")) {
-          openhd::log::get_default()->warn("Detected Rockchip RK3588 (Radxa ROCK 5A).");
+          openhd::log::get_default()->warn(
+              "Detected Rockchip RK3588 (Radxa ROCK 5A).");
           return X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A;
         } else {
-          openhd::log::get_default()->warn("Detected Rockchip RK3588 (Radxa ROCK 5B).");
+          openhd::log::get_default()->warn(
+              "Detected Rockchip RK3588 (Radxa ROCK 5B).");
           return X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B;
         }
       } else if (chip == "rk3566") {
         if (OHDUtil::contains_after_uppercase(device_tree_model,
                                               "Radxa CM3 RPI CM4 IO")) {
-          openhd::log::get_default()->warn("Detected Rockchip RK3566 (Radxa CM3).");
+          openhd::log::get_default()->warn(
+              "Detected Rockchip RK3566 (Radxa CM3).");
           return X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3;
         } else if (OHDUtil::contains_after_uppercase(device_tree_model,
                                                      "Radxa ROCK3 Model A")) {
-          openhd::log::get_default()->warn("Detected Rockchip RK3566 (Radxa ROCK3 Model A).");
+          openhd::log::get_default()->warn(
+              "Detected Rockchip RK3566 (Radxa ROCK3 Model A).");
           return X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W;
         } else {
-          openhd::log::get_default()->warn("Detected Rockchip RK3566 (default Radxa ZERO3W).");
+          openhd::log::get_default()->warn(
+              "Detected Rockchip RK3566 (default Radxa ZERO3W).");
           return X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W;
         }
       } else if (chip == "rv1126") {
-        openhd::log::get_default()->warn("Detected Rockchip RV1126 (Undefined).");
+        openhd::log::get_default()->warn(
+            "Detected Rockchip RV1126 (Undefined).");
         return X_PLATFORM_TYPE_ROCKCHIP_RV1126_UNDEFINED;
       }
     }
 
     openhd::log::get_default()->warn("No specific Rockchip match found.");
     return X_PLATFORM_TYPE_UNKNOWN;
-  } 
-  
+  }
+
   if (OHDFilesystemUtil::exists(NVIDIA_XAVIER_BOARDID_PATH)) {
     openhd::log::get_default()->warn("Detected NVIDIA Xavier platform.");
     return X_PLATFORM_TYPE_NVIDIA_XAVIER;
-  } 
-  
+  }
+
   if (OHDFilesystemUtil::exists(QUALCOMM_BOARDID_PATH)) {
     openhd::log::get_default()->warn("Checking for Qualcomm platforms...");
     const std::string qualcomm_board_id_content =
@@ -147,8 +155,8 @@ static int internal_discover_platform() {
 
     openhd::log::get_default()->warn("No specific Qualcomm match found.");
     return X_PLATFORM_TYPE_UNKNOWN;
-  } 
-  
+  }
+
   const auto arch_opt = OHDUtil::run_command_out("arch");
 
   if (!arch_opt.has_value()) {
