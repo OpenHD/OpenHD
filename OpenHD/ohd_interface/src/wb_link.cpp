@@ -28,6 +28,8 @@
 
 #include <iostream>
 #include <utility>
+#include <iostream>
+
 
 #include "config_paths.h"
 #include "openhd_bitrate.h"
@@ -664,6 +666,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
         openhd::IntSetting{(int)settings.enable_wb_video_variable_bitrate,
                            cb_enable_wb_video_variable_bitrate}});
     auto cb_wb_qp_max = [this](std::string, int value) {
+
       m_console->warn("qp_max value: {}", value);
       if (value < 0 || value > 51) {
         m_console->warn("Invalid wb_qp_max value: {}", value);
