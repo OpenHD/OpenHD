@@ -152,6 +152,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
     int microhard_tx_rate = 27;
     int microhard_noise = 28;
     int microhard_snr = 29;
+    int ohd_encryption = 0;
     // normal stuff
     int8_t curr_temperature_core = 0;
     int8_t curr_temperature_txc = 0;
@@ -184,7 +185,22 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       curr_ina219_voltage = -1;
       curr_ina219_current = -1;
     }
-
+    if (OHDFilesystemUtil::exists(
+                   "/boot/openhd/hidden.txt")) {
+      ohd_encryption=1;
+    }
+    int txc_temp = 0;
+      if (OHDFilesystemUtil::exists("/proc/net/rtl88x2eu_ohd/")) {
+        const auto result =
+            OHDFilesystemUtil::getFirstMatchingDirectoryByPrefix(
+                "/proc/net/rtl88x2eu_ohd", "wlx");
+        if (result) {
+          std::string wificard_temp =
+              "/proc/net/rtl88x2eu_ohd/" + *result + "/thermal_state";
+          std::string fileContent = OHDFilesystemUtil::read_file(wificard_temp);
+          txc_temp = extract_temperature(fileContent);
+        }
+      }
     if (OHDPlatform::instance().is_rpi()) {
       curr_temperature_core =
           (int8_t)openhd::onboard::rpi::read_temperature_soc_degree();
@@ -202,18 +218,6 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       curr_rpi_undervolt = openhd::onboard::rpi::vcgencmd_get_undervolt();
     } else {
       const auto cpu_temp = (int8_t)openhd::onboard::readTemperature();
-      int txc_temp = 0;
-      if (OHDFilesystemUtil::exists("/proc/net/rtl88x2eu_ohd/")) {
-        const auto result =
-            OHDFilesystemUtil::getFirstMatchingDirectoryByPrefix(
-                "/proc/net/rtl88x2eu_ohd", "wlx");
-        if (result) {
-          std::string wificard_temp =
-              "/proc/net/rtl88x2eu_ohd/" + *result + "/thermal_state";
-          std::string fileContent = OHDFilesystemUtil::read_file(wificard_temp);
-          txc_temp = extract_temperature(fileContent);
-        }
-      }
       const auto platform = OHDPlatform::instance();
       curr_temperature_core = cpu_temp;
       curr_temperature_txc = txc_temp;
@@ -252,6 +256,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       m_curr_onboard_computer_status.link_type[1] = 0;  // ohd_wifi;
       m_curr_onboard_computer_status.link_type[2] = 0;  // ohd_cam;
       m_curr_onboard_computer_status.link_type[3] = 0;  // ohd_ident;
+      m_curr_onboard_computer_status.link_type[4] = ohd_encryption;  // ohd_encryption;
       m_curr_onboard_computer_status.ram_usage =
           static_cast<uint32_t>(curr_ram_usage.ram_usage_perc);
       m_curr_onboard_computer_status.ram_total = curr_ram_usage.ram_total_mb;
