@@ -247,6 +247,8 @@ void OHDInterface::generate_keys_from_pw_if_exists_and_delete() {
       // delete the file
       OHDFilesystemUtil::remove_if_existing(std::string(getConfigBasePath()) +
                                             "password.txt");
+      OHDFilesystemUtil::write_file(std::string(getConfigBasePath()) +
+                                   "hidden.txt", "ThisLinkIsEncrypted");
       OHDFilesystemUtil::make_file_read_write_everyone(
           openhd::SECURITY_KEYPAIR_FILENAME);
     } else {

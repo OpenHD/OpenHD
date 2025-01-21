@@ -65,7 +65,8 @@ struct Config {
   std::string MICROHARD_IP_RANGE = "";
   int MICROHARD_VIDEO_PORT = 5910;
   int MICROHARD_TELEMETRY_PORT = 5920;
-
+  // MISC TELEMETRY
+  bool ENCRYPTION_ENABLE = true; 
   // GENERAL
   bool GEN_ENABLE_LAST_KNOWN_POSITION = false;
   int GEN_RF_METRICS_LEVEL = 0;
