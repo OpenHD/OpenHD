@@ -189,7 +189,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
                    "/boot/openhd/hidden.txt")) {
       ohd_encryption=1;
     } else {
-      ohd_encryption=1337;
+      ohd_encryption=3;
     }
     int txc_temp = 0;
       if (OHDFilesystemUtil::exists("/proc/net/rtl88x2eu_ohd/")) {
