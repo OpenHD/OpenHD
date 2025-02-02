@@ -506,6 +506,7 @@ void GStreamerStream::stream_once() {
   std::chrono::steady_clock::time_point
       m_last_air_recording_remaining_space_check =
           std::chrono::steady_clock::now();
+  static int tries=0;
   while (true) {
     // Quickly terminate if openhd wants to terminate
     if (!m_keep_looping) break;
@@ -513,8 +514,15 @@ void GStreamerStream::stream_once() {
     // frame from the camera for more than X seconds
     if (std::chrono::steady_clock::now() - m_last_camera_frame >
         std::chrono::seconds(5)) {
-      m_console->warn("Restarting camera due to no frame after 5 seconds");
-      //m_request_restart = true;
+        tries++;
+        if (tries < 3) {
+          m_console->warn("Restarting camera due to no frame after 5 seconds");
+          m_request_restart = true;
+        } else {
+          m_console->warn("Camera hasn't started after 3 tries");
+          break;
+        }
+        tries=0;
     }
     // Check if we need to set a new bitrate
     if (currently_applied_bitrate != m_curr_dynamic_bitrate_kbits) {
