@@ -35,6 +35,11 @@ add_executable(openhd main.cpp
         ohd_common/inc/config_paths.h
         ohd_common/src/config_paths.cpp)
 
+# Explicitly link stdc++fs for GCC 8.x compatibility with std::filesystem
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
+    target_link_libraries(openhd PRIVATE stdc++fs)
+endif()
+
 # Link the libraries
 target_link_libraries(openhd PRIVATE OHDInterfaceLib OHDVideoLib OHDTelemetryLib OHDCommonLib)
 
