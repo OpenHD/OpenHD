@@ -81,20 +81,37 @@ static bool create_hotspot_connection_file(const WiFiCard& card,
   OHDUtil::run_command("ip", {"addr add 192.168.3.1/24 dev wlan0"});
 
   // Restart ConnMan to apply changes
-  OHDUtil::run_command("systemctl", {"restart connman"});
+  OHDUtil::run_command("/etc/init.d/S45connman", {"restart"});
+  m_console->warn("connection created");
 
   return true;
 }
 
 bool WifiHotspot::util_delete_nm_file() {
-  // cleanup - proper stop of openhd, do not leave any traces behind.
-  if (OHDFilesystemUtil::exists(
-          get_ohd_wifi_hotspot_connection_nm_filename())) {
-    OHDUtil::run_command("nmcli",
-                         {"con", "delete", OHD_WIFI_HOTSPOT_CONNECTION_NAME});
-    return true;
+  // // cleanup - proper stop of openhd, do not leave any traces behind.
+  // if (OHDFilesystemUtil::exists(
+  //         get_ohd_wifi_hotspot_connection_nm_filename())) {
+  //   OHDUtil::run_command("nmcli",
+  //                        {"con", "delete", OHD_WIFI_HOTSPOT_CONNECTION_NAME});
+  //   return true;
+  // }
+  // return false;
+
+  //CONMAN
+  // Check if tethering is enabled (if so, disable it)
+  std::string output = OHDUtil::run_command("connmanctl", {"state"});
+  if (output.find("Tethering") != std::string::npos) {
+      OHDUtil::run_command("connmanctl", {"tether wifi off"});
   }
-  return false;
+
+  // Remove manually assigned static IP address
+  OHDUtil::run_command("ip", {"addr flush dev wlan0"});
+
+  // Restart ConnMan manually (since no systemctl)
+  OHDUtil::run_command("killall", {"connmand"});
+  OHDUtil::run_command("connmand", {"-n", "&"});
+
+  return true;
 }
 
 WifiHotspot::WifiHotspot(OHDProfile profile, WiFiCard wifiCard,
@@ -114,22 +131,70 @@ WifiHotspot::WifiHotspot(OHDProfile profile, WiFiCard wifiCard,
 WifiHotspot::~WifiHotspot() { util_delete_nm_file(); }
 
 void WifiHotspot::start() {
+  // m_console->warn("Starting WIFI hotspot on card {}", m_wifi_card.device_name);
+  // const auto args =
+  //     std::vector<std::string>{"con", "up", OHD_WIFI_HOTSPOT_CONNECTION_NAME};
+  // OHDUtil::run_command("nmcli", args);
+  // started = true;
+  // m_console->info("Wifi hotspot started");
+  // std::cout << blue << "Started WIFI hotspot on card "
+  //           << m_wifi_card.device_name << reset << std::endl;
+
+  //CONNMAN
   m_console->warn("Starting WIFI hotspot on card {}", m_wifi_card.device_name);
-  const auto args =
-      std::vector<std::string>{"con", "up", OHD_WIFI_HOTSPOT_CONNECTION_NAME};
-  OHDUtil::run_command("nmcli", args);
-  started = true;
-  m_console->info("Wifi hotspot started");
-  std::cout << blue << "Started WIFI hotspot on card "
-            << m_wifi_card.device_name << reset << std::endl;
+
+    // Enable Wi-Fi if not already enabled
+    OHDUtil::run_command("connmanctl", {"enable wifi"});
+
+    // Start Wi-Fi tethering (hotspot)
+    OHDUtil::run_command("connmanctl", {"tether wifi on"});
+
+    // Set the SSID dynamically
+    OHDUtil::run_command("connmanctl", 
+                         {"tether wifi set ssid", is_air ? "openhd_air" : "openhd_ground"});
+
+    // Set WPA2 Passphrase
+    OHDUtil::run_command("connmanctl", {"tether wifi set passphrase", "\"openhdopenhd\""});
+
+    // Assign a Static IP manually
+    OHDUtil::run_command("ip", {"addr flush dev wlan0"});
+    OHDUtil::run_command("ip", {"addr add 192.168.3.1/24 dev wlan0"});
+    OHDUtil::run_command("ip", {"link set wlan0 up"});
+
+    // Ensure ConnMan is restarted without systemd/systemctl
+    OHDUtil::run_command("killall", {"connmand"});
+    OHDUtil::run_command("connmand", {"-n", "&"});
+
+    started = true;
+    m_console->info("Wifi hotspot started");
+    std::cout << blue << "Started WIFI hotspot on card "
+              << m_wifi_card.device_name << reset << std::endl;
 }
 
 void WifiHotspot::stop() {
+  // m_console->warn("Stopping wifi hotspot on card {}", m_wifi_card.device_name);
+  // if (!started) return;
+  // const auto args =
+  //     std::vector<std::string>{"con", "down", OHD_WIFI_HOTSPOT_CONNECTION_NAME};
+  // OHDUtil::run_command("nmcli", args);
+  // m_console->info("Wifi hotspot stopped");
+
+  //CONNMAN
   m_console->warn("Stopping wifi hotspot on card {}", m_wifi_card.device_name);
+    
   if (!started) return;
-  const auto args =
-      std::vector<std::string>{"con", "down", OHD_WIFI_HOTSPOT_CONNECTION_NAME};
-  OHDUtil::run_command("nmcli", args);
+
+  // Disable Wi-Fi tethering (hotspot mode)
+  OHDUtil::run_command("connmanctl", {"tether wifi off"});
+
+  // Remove manually assigned static IP
+  OHDUtil::run_command("ip", {"addr flush dev wlan0"});
+
+  // Restart ConnMan manually (without systemd)
+  OHDUtil::run_command("killall", {"connmand"});
+  OHDUtil::run_command("connmand", {"-n", "&"});
+
+  started = false;
   m_console->info("Wifi hotspot stopped");
 }
 
