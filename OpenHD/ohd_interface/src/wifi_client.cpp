@@ -44,10 +44,6 @@ bool WiFiClient::create_if_enabled() {
   if (!config.WIFI_LOCAL_NETWORK_ENABLE) {
     return false;
   }
-  // Disble the wifi hotspot if needed
-  if (WifiHotspot::util_delete_nm_file()) {
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-  }
   const auto command = create_command_wifi_client(
       config.WIFI_LOCAL_NETWORK_SSID, config.WIFI_LOCAL_NETWORK_PASSWORD);
   OHDUtil::run_command(command, {}, true);
