@@ -46,43 +46,29 @@ static bool create_hotspot_connection_file(const WiFiCard& card,
   // connection of that name exists - aka an error here can be ignored. We
   // re-create it just to be sure, since for example, the wifi card might have
   // been changed during re-boots.
-  
-  //NMCLI
-  // if (OHDFilesystemUtil::exists(
-  //         get_ohd_wifi_hotspot_connection_nm_filename())) {
-  //   OHDUtil::run_command("nmcli",
-  //                        {"con", "delete", OHD_WIFI_HOTSPOT_CONNECTION_NAME});
-  // }
-  // // and create the hotspot one
-  // OHDUtil::run_command(
-  //     "nmcli",
-  //     {"con add type wifi ifname", card.device_name, "con-name",
-  //      OHD_WIFI_HOTSPOT_CONNECTION_NAME, "autoconnect no",
-  //      fmt::format("ssid {}", is_air ? "openhd_air" : "openhd_ground")});
-  // OHDUtil::run_command("nmcli",
-  //                      {"con modify ", OHD_WIFI_HOTSPOT_CONNECTION_NAME,
-  //                       " 802-11-wireless.mode ap", "802-11-wireless.band",
-  //                       use_5g_channel ? "a" : "bg", "ipv4.method shared"});
-  // OHDUtil::run_command("nmcli",
-  //                      {"con modify ", OHD_WIFI_HOTSPOT_CONNECTION_NAME,
-  //                       " wifi-sec.key-mgmt wpa-psk"});
-  // OHDUtil::run_command("nmcli",
-  //                      {"con modify ", OHD_WIFI_HOTSPOT_CONNECTION_NAME,
-  //                       " wifi-sec.psk \"openhdopenhd\""});
-  // OHDUtil::run_command("nmcli", {"con modify", OHD_WIFI_HOTSPOT_CONNECTION_NAME,
-  //                                "ipv4.addresses 192.168.3.1/24"});
-  //CONNMAN
-  OHDUtil::run_command("connmanctl", {"enable wifi"});
-  OHDUtil::run_command("connmanctl", {"tether wifi on"});
-  OHDUtil::run_command("connmanctl", {"tether wifi set ssid", is_air ? "openhd_air" : "openhd_ground"});
-  OHDUtil::run_command("connmanctl", {"tether wifi set passphrase", "\"openhdopenhd\""});
-
-  // Assign a static IP
-  OHDUtil::run_command("ip", {"addr add 192.168.3.1/24 dev wlan0"});
-
-  // Restart ConnMan to apply changes
-  OHDUtil::run_command("systemctl", {"restart connman"});
-
+  if (OHDFilesystemUtil::exists(
+          get_ohd_wifi_hotspot_connection_nm_filename())) {
+    OHDUtil::run_command("nmcli",
+                         {"con", "delete", OHD_WIFI_HOTSPOT_CONNECTION_NAME});
+  }
+  // and create the hotspot one
+  OHDUtil::run_command(
+      "nmcli",
+      {"con add type wifi ifname", card.device_name, "con-name",
+       OHD_WIFI_HOTSPOT_CONNECTION_NAME, "autoconnect no",
+       fmt::format("ssid {}", is_air ? "openhd_air" : "openhd_ground")});
+  OHDUtil::run_command("nmcli",
+                       {"con modify ", OHD_WIFI_HOTSPOT_CONNECTION_NAME,
+                        " 802-11-wireless.mode ap", "802-11-wireless.band",
+                        use_5g_channel ? "a" : "bg", "ipv4.method shared"});
+  OHDUtil::run_command("nmcli",
+                       {"con modify ", OHD_WIFI_HOTSPOT_CONNECTION_NAME,
+                        " wifi-sec.key-mgmt wpa-psk"});
+  OHDUtil::run_command("nmcli",
+                       {"con modify ", OHD_WIFI_HOTSPOT_CONNECTION_NAME,
+                        " wifi-sec.psk \"openhdopenhd\""});
+  OHDUtil::run_command("nmcli", {"con modify", OHD_WIFI_HOTSPOT_CONNECTION_NAME,
+                                 "ipv4.addresses 192.168.3.1/24"});
   return true;
 }
 
@@ -161,10 +147,12 @@ bool WifiHotspot::get_use_5g_channel(
   bool should_use_5G = !wifibroadcast_uses_5G;
   if (should_use_5G && !wifiCard.supports_5GHz()) {
     openhd::log::get_default()->warn(
-        "openhd needs 5G hotspot but hotspot card only supports 2G");
+        "openhd needs 5G hotspot but hotspot card only supports 2G,you'l get "
+        "really bad interference");
     openhd::log::get_default()->warn("Using 2.4G hotspot");
     should_use_5G = false;
   }
+  // Not seen a 5G only card yet
   return should_use_5G;
 }
 
