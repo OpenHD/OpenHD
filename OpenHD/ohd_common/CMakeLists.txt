@@ -86,6 +86,11 @@ source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
 # target
 #----------------------------------------------------------------------------------------------------------------------
 
+# Explicitly link stdc++fs for GCC 8.x compatibility with std::filesystem
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
+    target_link_libraries(openhd PRIVATE stdc++fs)
+endif()
+
 target_sources(OHDCommonLib PRIVATE ${sources})
 
 target_include_directories(OHDCommonLib
