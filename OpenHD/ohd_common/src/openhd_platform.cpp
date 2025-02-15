@@ -123,6 +123,14 @@ static int internal_discover_platform() {
         openhd::log::get_default()->warn(
             "Detected Rockchip RV1126 (Undefined).");
         return X_PLATFORM_TYPE_ROCKCHIP_RV1126_UNDEFINED;
+      } else if (chip == "rv1103") {
+        openhd::log::get_default()->warn(
+            "Detected Rockchip RV1103 (Undefined).");
+        return X_PLATFORM_TYPE_ROCKCHIP_RV1103_UNDEFINED;
+      } else if (chip == "rv1106") {
+        openhd::log::get_default()->warn(
+            "Detected Rockchip RV1106 (Undefined).");
+        return X_PLATFORM_TYPE_ROCKCHIP_RV1106_UNDEFINED;
       }
     }
 

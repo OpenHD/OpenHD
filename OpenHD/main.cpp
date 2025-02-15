@@ -195,7 +195,7 @@ int main(int argc, char *argv[]) {
     openhd::set_config_file(options.hardware_config_file.value());
   }
   {  // Print all the arguments the OHD main executable is started with
- std::cout << "\033[2J\033[1;1H"; //clear terminal
+//  std::cout << "\033[2J\033[1;1H"; //clear terminal
  std::stringstream ss;
     ss << openhd::get_ohd_version_as_string() << "\n";
     ss << blue;

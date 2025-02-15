@@ -51,6 +51,8 @@ static constexpr int X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B = 22;
 static constexpr int X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3 = 24;
 
 static constexpr int X_PLATFORM_TYPE_ROCKCHIP_RV1126_UNDEFINED = 23;  // FUTURE
+static constexpr int X_PLATFORM_TYPE_ROCKCHIP_RV1106_UNDEFINED = 25;  // FUTURE
+static constexpr int X_PLATFORM_TYPE_ROCKCHIP_RV1103_UNDEFINED = 26;  // FUTURE
 
 // Numbers 30..35 are reserved for allwinner
 static constexpr int X_PLATFORM_TYPE_ALWINNER_X20 = 30;
