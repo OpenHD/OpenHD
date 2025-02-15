@@ -1,0 +1,130 @@
+#!/bin/bash
+### BEGIN INIT INFO
+# Provides:          ohd_wifihotspot
+# Required-Start:    $network $remote_fs $syslog
+# Required-Stop:     $network $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Manage Wi-Fi hotspot using connman
+# Description:       Starts, stops, and connects to networks using connman
+### END INIT INFO
+
+CONNMANCTL="/usr/bin/connmanctl"
+
+start2gHotspot() {
+    DEVICE=$1
+    CHANNEL=$2
+    SSID=$3
+    PASSPHRASE=$4
+
+    if [[ -z "$DEVICE" || -z "$CHANNEL" || -z "$SSID" || -z "$PASSPHRASE" ]]; then
+        echo "Error: Missing parameters for 2.4 GHz hotspot!"
+        echo "Usage: $0 start2gHotspot <device> <channel> \"SSID\" \"Passphrase\""
+        exit 1
+    fi
+
+    echo "Starting 2.4 GHz Hotspot on $DEVICE, channel $CHANNEL with SSID: $SSID"
+
+    stopHotspot "$DEVICE"
+
+    $CONNMANCTL enable $DEVICE
+    $CONNMANCTL tether $DEVICE on "$SSID" "$PASSPHRASE"
+
+    iw dev "$DEVICE" set channel "$CHANNEL"
+
+    echo "2.4 GHz Hotspot started on $DEVICE, channel $CHANNEL with SSID: $SSID"
+}
+
+start5gHotspot() {
+    DEVICE=$1
+    CHANNEL=$2
+    SSID=$3
+    PASSPHRASE=$4
+
+    if [[ -z "$DEVICE" || -z "$CHANNEL" || -z "$SSID" || -z "$PASSPHRASE" ]]; then
+        echo "Error: Missing parameters for 5 GHz hotspot!"
+        echo "Usage: $0 start5gHotspot <device> <channel> \"SSID\" \"Passphrase\""
+        exit 1
+    fi
+
+    echo "Starting 5 GHz Hotspot on $DEVICE, channel $CHANNEL with SSID: $SSID"
+
+    stopHotspot "$DEVICE"
+
+    $CONNMANCTL enable $DEVICE
+    $CONNMANCTL tether $DEVICE on "$SSID" "$PASSPHRASE"
+
+    iw dev "$DEVICE" set freq "$((5000 + CHANNEL * 5))"
+
+    echo "5 GHz Hotspot started on $DEVICE, channel $CHANNEL with SSID: $SSID"
+}
+
+stopHotspot() {
+    DEVICE=$1
+
+    if [[ -z "$DEVICE" ]]; then
+        echo "Error: Missing device parameter for stopping hotspot!"
+        echo "Usage: $0 stopHotspot <device>"
+        exit 1
+    fi
+
+    echo "Stopping any active hotspot on $DEVICE..."
+    $CONNMANCTL disable "$DEVICE"
+    echo "Hotspot stopped on $DEVICE."
+}
+
+connectToNetwork() {
+    DEVICE=$1
+    SSID="$2"
+    PASSPHRASE="$3"
+
+    if [[ -z "$DEVICE" || -z "$SSID" || -z "$PASSPHRASE" ]]; then
+        echo "Error: Device, SSID, and passphrase are required to connect to a network."
+        echo "Usage: $0 connectToNetwork <device> \"SSID\" \"Passphrase\""
+        exit 1
+    fi
+
+    echo "Scanning for networks on $DEVICE..."
+    $CONNMANCTL scan "$DEVICE"
+
+    echo "Attempting to connect to $SSID on $DEVICE..."
+    NETWORK_SERVICE=$($CONNMANCTL services | grep "$SSID" | awk '{print $3}')
+
+    if [[ -z "$NETWORK_SERVICE" ]]; then
+        echo "Error: Network $SSID not found!"
+        exit 1
+    fi
+
+    echo "Setting passphrase..."
+    $CONNMANCTL config "$NETWORK_SERVICE" --passphrase "$PASSPHRASE"
+
+    echo "Connecting..."
+    $CONNMANCTL connect "$NETWORK_SERVICE"
+
+    echo "Connected to $SSID on $DEVICE"
+}
+
+case "$1" in
+    start2gHotspot)
+        start2gHotspot "$2" "$3" "$4" "$5"
+        ;;
+    start5gHotspot)
+        start5gHotspot "$2" "$3" "$4" "$5"
+        ;;
+    stopHotspot)
+        stopHotspot "$2"
+        ;;
+    connectToNetwork)
+        connectToNetwork "$2" "$3" "$4"
+        ;;
+    restart)
+        stopHotspot "$2"
+        start2gHotspot "$2" 6 "Default_SSID" "Default_Password"
+        ;;
+    *)
+        echo "Usage: $0 {start2gHotspot <device> <channel> \"SSID\" \"Passphrase\"|start5gHotspot <device> <channel> \"SSID\" \"Passphrase\"|stopHotspot <device>|connectToNetwork <device> \"SSID\" \"Passphrase\"|restart <device>}"
+        exit 1
+        ;;
+esac
+
+exit 0

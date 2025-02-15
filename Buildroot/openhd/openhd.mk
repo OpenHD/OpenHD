@@ -1,44 +1,58 @@
 ################################################################################
 # OpenHD
-# 
+#
 # Licensed under the GNU General Public License (GPL) Version 3.
-# 
-# This software is provided "as-is," without warranty of any kind, express or 
-# implied, including but not limited to the warranties of merchantability, 
-# fitness for a particular purpose, and non-infringement. For details, see the 
+#
+# This software is provided "as-is," without warranty of any kind, express or
+# implied, including but not limited to the warranties of merchantability,
+# fitness for a particular purpose, and non-infringement. For details, see the
 # full license in the LICENSE file provided with this source code.
-# 
+#
 # Non-Military Use Only:
-# This software and its associated components are explicitly intended for 
-# civilian and non-military purposes. Use in any military or defense 
-# applications is strictly prohibited unless explicitly and individually 
+# This software and its associated components are explicitly intended for
+# civilian and non-military purposes. Use in any military or defense
+# applications is strictly prohibited unless explicitly and individually
 # licensed otherwise by the OpenHD Team.
-# 
+#
 # Contributors:
 # A full list of contributors can be found at the OpenHD GitHub repository:
 # https://github.com/OpenHD
-# 
+#
 # © OpenHD, All Rights Reserved.
-###############################################################################
-
 ################################################################################
-#
-# OpenHD
-#
-################################################################################
+$(info Building the OpenHD package...)
 
-$(info Building the OpenHD template package...)
-
-OPENHD_SITE = https://github.com/OpenHD/OpenHD
+# The Git repository from which to clone the source code
+OPENHD_SITE = https://github.com/openhd/OpenHD.git
 OPENHD_SITE_METHOD = git
 OPENHD_GIT_SUBMODULES = YES
-OPENHD_VERSION = {{VERSION}}
+
+# Set the version to the latest commit of the default branch
+OPENHD_VERSION = 491be55f6da442dacba9f017b0ef23220db7c246
+
+# Enable Git submodules if the project requires them
+OPENHD_GIT_SUBMODULES = YES
+
+# Subdirectory inside the Git repo, if needed (if OpenHD is not in the root)
 OPENHD_SUBDIR = OpenHD
 
-OPENHD_INSTALL_STAGING = NO
+# Install to the target system
 OPENHD_INSTALL_TARGET = YES
 
-OPENHD_CONF_OPTS = -DENABLE_USB_CAMERAS=OFF
-OPENHD_DEPENDENCIES = libsodium gstreamer1 gst1-plugins-base libpcap host-pkgconf
-$(eval $(cmake-package))
+# List of dependencies that must be built before OpenHD
+OPENHD_DEPENDENCIES = poco libsodium gstreamer1 gst1-plugins-base libpcap host-pkgconf
 
+# Additional configuration options for the CMake build
+OPENHD_CONF_OPTS = \
+    -DENABLE_USB_CAMERAS=OFF \
+    -DCMAKE_EXE_LINKER_FLAGS="-lstdc++fs"
+
+# Install init.d services to target
+define OPENHD_INSTALL_TARGET_CMDS
+    $(INSTALL) -d $(TARGET_DIR)/etc/init.d
+    cp -r $(PKG_BUILD_DIR)/Buildroot/init.d/* $(TARGET_DIR)/etc/init.d/
+    chmod +x $(TARGET_DIR)/etc/init.d/*
+endef
+
+# Use Buildroot's CMake package infrastructure to handle the build
+$(eval $(cmake-package))
