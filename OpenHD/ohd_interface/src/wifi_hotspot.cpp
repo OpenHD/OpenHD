@@ -47,6 +47,9 @@ WifiHotspot::WifiHotspot(OHDProfile profile, WiFiCard wifiCard,
   m_console->warn("end create hotspot connection");
 }
 
+WifiHotspot::~WifiHotspot() { }
+
+
 void WifiHotspot::start() {
   m_console->warn("Starting WIFI hotspot on card {}", m_wifi_card.device_name);
 
