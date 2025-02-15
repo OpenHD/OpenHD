@@ -197,7 +197,7 @@ int main(int argc, char *argv[]) {
   {  // Print all the arguments the OHD main executable is started with
 //  std::cout << "\033[2J\033[1;1H"; //clear terminal
  std::stringstream ss;
-    ss << openhd::get_ohd_version_as_string() << "\n";
+    ss << openhd::get_ohd_version_as_string() << "+1\n";
     ss << blue;
     ss << "  #######  ########  ######## ##    ## ##     ## ######## \n";
     ss << " ##     ## ##     ## ##       ###   ## ##     ## ##     ##\n";
