@@ -51,7 +51,7 @@ GStreamerStream::GStreamerStream(std::shared_ptr<CameraHolder> camera_holder,
   m_console = openhd::log::create_or_get(
       fmt::format("cam{}", m_camera_holder->get_camera().index));
   assert(m_console);
-  m_console->debug("GStreamerStream::GStreamerStream for cam {}",
+  m_console->warn("GStreamerStream::GStreamerStream for cam {}",
                    m_camera_holder->get_camera().cam_type_as_verbose_string());
   if (OHDFilesystemUtil::exists(
           (std::string(getConfigBasePath()) + "exp_raw.txt").c_str())) {
@@ -77,7 +77,7 @@ GStreamerStream::GStreamerStream(std::shared_ptr<CameraHolder> camera_holder,
         m_camera_holder->get_camera().usb_v4l2_device_number);
   }
   // m_gst_video_recorder=std::make_unique<GstVideoRecorder>();
-  m_console->debug("GStreamerStream::GStreamerStream done");
+  m_console->warn("GStreamerStream::GStreamerStream done");
 }
 
 GStreamerStream::~GStreamerStream() { GStreamerStream::terminate_looping(); }
@@ -91,7 +91,7 @@ void GStreamerStream::start_looping() {
 void GStreamerStream::terminate_looping() {
   m_keep_looping = false;
   if (m_loop_thread) {
-    m_console->debug("Wating for loop thread to terminate");
+    m_console->warn("Wating for loop thread to terminate");
     m_loop_thread->join();
     m_loop_thread = nullptr;
   }
@@ -202,12 +202,12 @@ std::string GStreamerStream::create_source_encode_pipeline(
     pipeline << "ERROR";
   }
 
-  openhd::log::get_default()->debug("Pipeline created: {}", pipeline.str());
+  openhd::log::get_default()->warn("Pipeline created: {}", pipeline.str());
   return pipeline.str();
 }
 
 void GStreamerStream::setup() {
-  m_console->debug("GStreamerStream::setup() begin");
+  m_console->warn("GStreamerStream::setup() begin");
   const auto& camera = m_camera_holder->get_camera();
   const auto& setting = m_camera_holder->get_settings();
   std::stringstream pipeline_content;
@@ -246,7 +246,7 @@ void GStreamerStream::setup() {
     pipeline_content << OHDGstHelper::createOutputAppSink();*/
   } else {
     const int rtp_fragment_size = 1440;
-    m_console->debug("Using {} for rtp fragmentation", rtp_fragment_size);
+    m_console->warn("Using {} for rtp fragmentation", rtp_fragment_size);
     pipeline_content << OHDGstHelper::create_parse_and_rtp_packetize(
         setting.streamed_video_format.videoCodec, rtp_fragment_size);
     pipeline_content << OHDGstHelper::createOutputAppSink();
@@ -256,7 +256,7 @@ void GStreamerStream::setup() {
         openhd::video::create_unused_recording_filename(
             OHDGstHelper::file_suffix_for_video_codec(
                 setting.streamed_video_format.videoCodec));
-    m_console->debug("Using [{}] for recording", recording_filename);
+    m_console->warn("Using [{}] for recording", recording_filename);
     pipeline_content << OHDGstHelper::createRecordingForVideoCodec(
         setting.streamed_video_format.videoCodec, recording_filename);
     m_opt_curr_recording_filename = recording_filename;
@@ -286,7 +286,7 @@ void GStreamerStream::setup() {
   // Now start the (as a string) built pipeline
   GError* error = nullptr;
   m_gst_pipeline = gst_parse_launch(pipeline_content.str().c_str(), &error);
-  m_console->debug("GStreamerStream::setup() end");
+  m_console->warn("GStreamerStream::setup() end");
   if (error) {
     m_console->error("Failed to create pipeline: {}", error->message);
     return;
@@ -298,7 +298,7 @@ void GStreamerStream::setup() {
   m_app_sink_element =
       gst_bin_get_by_name(GST_BIN(m_gst_pipeline), "out_appsink");
   assert(m_app_sink_element);
-  // m_console->debug("Cam encoding format: {}",(int)cam_info.encoding_format);
+  // m_console->warn("Cam encoding format: {}",(int)cam_info.encoding_format);
   auto lol_cb =
       [this](
           std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments) {
@@ -310,25 +310,25 @@ void GStreamerStream::setup() {
 }
 
 void GStreamerStream::start() {
-  m_console->debug("GStreamerStream::start()");
+  m_console->warn("GStreamerStream::start()");
   assert(m_gst_pipeline != nullptr);
   openhd::register_message_cb(m_gst_pipeline);
   const auto ret = gst_element_set_state(m_gst_pipeline, GST_STATE_PLAYING);
-  m_console->debug("State change ret:{}",
+  m_console->warn("State change ret:{}",
                    openhd::gst_state_change_return_to_string(ret));
 }
 
 void GStreamerStream::stop() {
-  m_console->debug("GStreamerStream::stop()");
+  m_console->warn("GStreamerStream::stop()");
   assert(m_gst_pipeline != nullptr);
   openhd::gst_element_set_set_state_and_log_result(m_gst_pipeline,
                                                    GST_STATE_PAUSED);
-  m_console->debug(
+  m_console->warn(
       openhd::gst_element_get_current_state_as_string(m_gst_pipeline));
 }
 
 void GStreamerStream::cleanup_pipe() {
-  m_console->debug("GStreamerStream::cleanup_pipe() begin");
+  m_console->warn("GStreamerStream::cleanup_pipe() begin");
   assert(m_gst_pipeline != nullptr);
   // Drop the reference to the bitrate control element (if it exists)
   if (m_bitrate_ctrl_element.has_value()) {
@@ -338,7 +338,7 @@ void GStreamerStream::cleanup_pipe() {
   openhd::unref_appsink_element(m_app_sink_element);
   // Jan 22: Confirmed this hangs quite a lot of pipeline(s) - removed for that
   // reason
-  /*m_console->debug("send EOS begin");
+  /*m_console->warn("send EOS begin");
   // according to @Alex W we need a EOS signal here to properly shut down the
   pipeline if(!gst_element_send_event (m_gst_pipeline, gst_event_new_eos())){
     m_console->info("error gst_element_send_event eos"); // No idea what that
@@ -372,14 +372,14 @@ void GStreamerStream::cleanup_pipe() {
   // !m_opt_action_handler->arm_state.is_currently_armed()){
   // GstRecordingDemuxer::instance().demux_all_remaining_mkv_files_async();
   //}
-  m_console->debug("GStreamerStream::cleanup_pipe() end");
+  m_console->warn("GStreamerStream::cleanup_pipe() end");
 }
 
 void GStreamerStream::request_restart() { m_request_restart = true; }
 
 void GStreamerStream::handle_change_bitrate_request(
     openhd::LinkActionHandler::LinkBitrateInformation lb) {
-  // m_console->debug("handle_change_bitrate_request prev: {} new:{}",
+  // m_console->warn("handle_change_bitrate_request prev: {} new:{}",
   //                  kbits_per_second_to_string(m_curr_dynamic_bitrate_kbits),
   //                  kbits_per_second_to_string(lb.recommended_encoder_bitrate_kbits));
   //  We do some safety checks first - the link might recommend too much / too
@@ -391,7 +391,7 @@ void GStreamerStream::handle_change_bitrate_request(
     MIN_BITRATE_KBITS = 2 * 1000;
   }
   if (bitrate_for_encoder_kbits < MIN_BITRATE_KBITS) {
-    // m_console->debug("Cam cannot do <{}",
+    // m_console->warn("Cam cannot do <{}",
     // kbits_per_second_to_string(MIN_BITRATE_KBITS));
     bitrate_for_encoder_kbits = MIN_BITRATE_KBITS;
   }
@@ -408,7 +408,7 @@ void GStreamerStream::handle_change_bitrate_request(
 }
 
 void GStreamerStream::handle_update_arming_state(bool armed) {
-  m_console->debug("handle_update_arming_state: {}", armed);
+  m_console->warn("handle_update_arming_state: {}", armed);
   const auto settings = m_camera_holder->get_settings();
   if (settings.air_recording == AIR_RECORDING_AUTO_ARM_DISARM) {
     if (armed) {
@@ -441,7 +441,7 @@ void GStreamerStream::stream_once() {
     const auto elapsed_log =
         std::chrono::steady_clock::now() - m_last_log_streaming_disabled;
     if (elapsed_log > std::chrono::seconds(5)) {
-      m_console->debug("streaming disabled");
+      m_console->warn("streaming disabled");
       m_last_log_streaming_disabled = std::chrono::steady_clock::now();
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -459,7 +459,7 @@ void GStreamerStream::stream_once() {
   // - the camera doesn't exist or the resolution set is not supported by the
   // camera, we won't get further than this.
   bool succesfully_streaming = false;
-  m_console->debug(openhd::gst_element_get_current_state_as_string(
+  m_console->warn(openhd::gst_element_get_current_state_as_string(
       m_gst_pipeline, &succesfully_streaming));
   /*if(m_camera_holder->get_camera().rpi_csi_mmal_is_csi_to_hdmi ||
   m_camera_holder->get_camera().type==CameraType::ALLWINNER_CSI){
@@ -519,14 +519,14 @@ void GStreamerStream::stream_once() {
     // Check if we need to set a new bitrate
     if (currently_applied_bitrate != m_curr_dynamic_bitrate_kbits) {
       const int new_bitrate = m_curr_dynamic_bitrate_kbits;
-      m_console->debug("Bitrate change, old:{} new:{}",
+      m_console->warn("Bitrate change, old:{} new:{}",
                        currently_applied_bitrate, new_bitrate);
       if (m_bitrate_ctrl_element != std::nullopt) {
         // apply the new bitrate
         // Don't forget, the rpi csi hdmi needs the 'half bitrate' hack
         auto hacked_bitrate_kbits = new_bitrate;
         if (m_camera_holder->requires_half_bitrate_workaround()) {
-          m_console->debug(
+          m_console->warn(
               "applying hack - reduce bitrate by 2 to get actual correct "
               "bitrate");
           hacked_bitrate_kbits = hacked_bitrate_kbits / 2;
@@ -550,7 +550,7 @@ void GStreamerStream::stream_once() {
     bool tmp_true = true;
     if (m_request_restart.compare_exchange_strong(tmp_true, false)) {
       // Something that requires a whole restart of the pipeline happened
-      m_console->debug("Restart requested, restarting");
+      m_console->warn("Restart requested, restarting");
       break;
     }
     const auto elapsed_remaining_space =
@@ -600,7 +600,7 @@ void GStreamerStream::stream_once() {
   stop();
   cleanup_pipe();
   m_frame_fragments.resize(0);
-  m_console->debug("Terminating pipeline took {}ms",
+  m_console->warn("Terminating pipeline took {}ms",
                    std::chrono::duration_cast<std::chrono::milliseconds>(
                        std::chrono::steady_clock::now() - terminate_begin)
                        .count());
@@ -627,7 +627,7 @@ void GStreamerStream::on_new_rtp_frame_fragment(
       m_last_fu_s_idr = false;
     }
   }
-  // m_console->debug("Fragment {} start:{} end:{}
+  // m_console->warn("Fragment {} start:{} end:{}
   // type:{}",m_frame_fragments.size(),
   //                  OHDUtil::yes_or_no(info.is_fu_start),
   //                  OHDUtil::yes_or_no(info.is_fu_end),
@@ -635,7 +635,7 @@ void GStreamerStream::on_new_rtp_frame_fragment(
   bool is_last_fragment_of_frame = info.is_fu_end;
   if (m_frame_fragments.size() > 500) {
     // Most likely something wrong with the "find end of frame" workaround
-    m_console->debug("No end of frame found after 1000 fragments");
+    m_console->warn("No end of frame found after 1000 fragments");
     is_last_fragment_of_frame = true;
   }
   if (is_last_fragment_of_frame) {
@@ -646,7 +646,7 @@ void GStreamerStream::on_new_rtp_frame_fragment(
 }
 
 void GStreamerStream::on_new_rtp_fragmented_frame() {
-  // m_console->debug("Got frame with {} fragments",rtp_fragments.size());
+  // m_console->warn("Got frame with {} fragments",rtp_fragments.size());
   if (m_output_cb) {
     const auto stream_index = m_camera_holder->get_camera().index;
     const bool enable_ultra_secure_encryption =
@@ -660,10 +660,10 @@ void GStreamerStream::on_new_rtp_fragmented_frame() {
                                               nullptr,
                                               is_intra_enabled,
                                               is_intra_frame};
-    // m_console->debug("{}",frame.to_string());
+    // m_console->warn("{}",frame.to_string());
     m_output_cb(stream_index, frame);
   } else {
-    m_console->debug("No output cb");
+    m_console->warn("No output cb");
   }
 }
 
@@ -682,9 +682,9 @@ void GStreamerStream::x_on_new_rtp_fragmented_frame(
                                               nullptr,
                                               is_intra_enabled,
                                               is_intra_frame};
-    // m_console->debug("{}",frame.to_string());
+    // m_console->warn("{}",frame.to_string());
     m_output_cb(stream_index, frame);
   } else {
-    m_console->debug("No output cb");
+    m_console->warn("No output cb");
   }
 }

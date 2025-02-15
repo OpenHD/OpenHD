@@ -49,7 +49,7 @@ static std::optional<int> get_x20_flip(const CameraSettings& settings) {
 
 // On allwinner / X20 we set IQ params with scripts
 static void apply_x20_runcam_iq_settings(const CameraSettings& settings) {
-  openhd::log::get_default()->debug("apply_x20_runcam_iq_settings begin");
+  openhd::log::get_default()->warn("apply_x20_runcam_iq_settings begin");
   const auto flip = get_x20_flip(settings);
   if (flip.has_value()) {
     std::stringstream ss;
@@ -70,7 +70,7 @@ static void apply_x20_runcam_iq_settings(const CameraSettings& settings) {
        << saturation.value();
     OHDUtil::run_command(ss.str(), {});
   }
-  openhd::log::get_default()->debug("apply_x20_runcam_iq_settings end");
+  openhd::log::get_default()->warn("apply_x20_runcam_iq_settings end");
 }
 
 // On the X20, we can detect the camera type, as it should be to create

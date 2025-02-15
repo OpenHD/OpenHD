@@ -38,7 +38,7 @@
 static bool test_set_wifi_channel(const std::string& device_name,
                                   int channel_number, int width) {
   auto console = openhd::log::get_default();
-  console->debug("test_set_wifi_channel {} {}", device_name, channel_number);
+  console->warn("test_set_wifi_channel {} {}", device_name, channel_number);
   int sockfd;
   struct iwreq wrq {};
 
@@ -82,7 +82,7 @@ static bool test_set_wifi_channel(const std::string& device_name,
   // Close socket
   close(sockfd);
 
-  openhd::log::get_default()->debug("Channel set to {}", channel_number);
+  openhd::log::get_default()->warn("Channel set to {}", channel_number);
   return true;
 }
 

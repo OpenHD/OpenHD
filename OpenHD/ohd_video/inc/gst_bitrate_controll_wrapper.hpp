@@ -72,7 +72,7 @@ get_dynamic_bitrate_control_element_in_pipeline(
     ret.takes_kbit = true;
   }
   if (ret.encoder == nullptr) {
-    openhd::log::get_default()->debug(
+    openhd::log::get_default()->warn(
         "Cannot find dynamic bitrate control element for camera {}",
         camera.cam_type_as_verbose_string());
     return std::nullopt;
@@ -107,17 +107,17 @@ static bool change_bitrate(const GstBitrateControlElement& ctrl_el,
         actual_bits_per_second);
     return false;
   }
-  openhd::log::get_default()->debug("Changed bitrate to {} kbit/s",
+  openhd::log::get_default()->warn("Changed bitrate to {} kbit/s",
                                     bitrate_kbits);
   return true;
 }
 
 static void unref_bitrate_element(GstBitrateControlElement& element) {
   if (element.encoder) {
-    openhd::log::get_default()->debug("Unref bitrate control element begin");
+    openhd::log::get_default()->warn("Unref bitrate control element begin");
     gst_object_unref(element.encoder);
     element.encoder = nullptr;
-    openhd::log::get_default()->debug("Unref bitrate control element end");
+    openhd::log::get_default()->warn("Unref bitrate control element end");
   }
 }
 

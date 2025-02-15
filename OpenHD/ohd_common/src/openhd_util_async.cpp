@@ -60,7 +60,7 @@ void openhd::AsyncHandle::execute_async(const std::string tag,
   task->done = false;
   task->worker_thread = std::make_shared<std::thread>([task]() {
     auto console = openhd::log::get_default();
-    console->debug("{} begin", task->tag);
+    console->warn("{} begin", task->tag);
     try {
       task->runnable();
     } catch (std::exception& ex) {
@@ -68,7 +68,7 @@ void openhd::AsyncHandle::execute_async(const std::string tag,
     } catch (...) {
       console->warn("Unknown Exception on {}", task->tag);
     }
-    console->debug("{} done", task->tag);
+    console->warn("{} done", task->tag);
     task->done = true;
   });
   std::lock_guard<std::mutex> lock(m_threads_mutex);

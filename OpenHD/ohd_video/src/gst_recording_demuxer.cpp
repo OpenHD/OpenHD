@@ -47,13 +47,13 @@ static bool run_gst_pipeline(const std::string& pipeline) { return true; }
 static void demux_mkv(const std::string& in_file) {
   // if(true) return ;
   auto console = openhd::log::create_or_get("gst_demuxer");
-  console->debug("Demuxing {}", in_file);
+  console->warn("Demuxing {}", in_file);
   assert(OHDFilesystemUtil::exists(in_file));
   assert(OHDUtil::endsWith(in_file, ".mkv"));
   assert(in_file.size() >= 4);
   const std::string file_without_suffix = in_file.substr(0, in_file.size() - 4);
   const std::string out_file_mp4 = file_without_suffix + ".mp4";
-  console->debug("New file name: {}", out_file_mp4);
+  console->warn("New file name: {}", out_file_mp4);
   // convert the file
   OHDUtil::run_command("gst-launch-1.0",
                        {create_gst_demux_pipeline(in_file, out_file_mp4)});
@@ -72,7 +72,7 @@ static void demux_mkv(const std::string& in_file) {
   OHDFilesystemUtil::remove_if_existing(in_file);
   // and make the new file rw everybody
   OHDFilesystemUtil::make_file_read_write_everyone(out_file_mp4);
-  console->debug("Demuxing {} done", in_file);
+  console->warn("Demuxing {} done", in_file);
 }
 
 // Returns all files ending in .mkv in the video recordings directory
@@ -90,12 +90,12 @@ static std::vector<std::string> get_all_mkv_video_files() {
 
 GstRecordingDemuxer::~GstRecordingDemuxer() {
   auto console = openhd::log::create_or_get("gst_demuxer");
-  console->debug("~GstRecordingDemuxer, Terminating {} demux ops",
+  console->warn("~GstRecordingDemuxer, Terminating {} demux ops",
                  m_demux_ops.size());
   for (auto& demux : m_demux_ops) {
     auto demux_thread = demux.thread;
     if (demux_thread->joinable()) {
-      console->debug("Waiting for demuxing to end");
+      console->warn("Waiting for demuxing to end");
       demux_thread->join();
     }
   }
@@ -118,7 +118,7 @@ void GstRecordingDemuxer::demux_mkv_file_async_threadsafe(
     std::string filename) {
   auto console = openhd::log::create_or_get("gst_demuxer");
   if (!OHDUtil::endsWith(filename, ".mkv")) {
-    console->debug("{} not a .mkv file", filename);
+    console->warn("{} not a .mkv file", filename);
     return;
   }
   // Check if we are already demuxing file X
@@ -133,6 +133,6 @@ void GstRecordingDemuxer::demux_mkv_file_async_threadsafe(
     m_demux_ops.push_back({filename, demux_thread});
   } else {
     // aldrady demuxed / currently demuxing
-    console->debug("Already demuxed {}", filename);
+    console->warn("Already demuxed {}", filename);
   }
 }

@@ -53,7 +53,7 @@ static MavlinkMessage pack_card(
   tmp.rx_signal_quality_adapter = card_stats.rx_signal_quality_adapter;
   tmp.rx_noise_adapter = card_stats.rx_noise_adapter;
   tmp.tx_active = card_stats.tx_active;
-  // openhd::log::get_default()->debug("XX {}",card_stats.to_string(0));
+  // openhd::log::get_default()->warn("XX {}",card_stats.to_string(0));
   mavlink_msg_openhd_stats_monitor_mode_wifi_card_encode(
       system_id, component_id, &msg.m, &tmp);
   return msg;

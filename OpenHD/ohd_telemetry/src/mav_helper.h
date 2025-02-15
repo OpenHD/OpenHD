@@ -276,7 +276,7 @@ split_into_generic_and_local_only(const std::vector<MavlinkMessage>& messages,
   for (const auto& msg : messages) {
     const auto target = get_target_from_message_if_available(msg.m);
     if (target.has_target() && target.sys_id == local_target_sys_id) {
-      // openhd::log::get_default()->debug("local only message");
+      // openhd::log::get_default()->warn("local only message");
       local_only.push_back(msg);
     } else {
       generic.push_back(msg);

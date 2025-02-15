@@ -58,17 +58,17 @@ static int rpi_get_default_primary_cam_type() {
   const auto opt_content =
       OHDFilesystemUtil::opt_read_file(IMAGE_WRITER_CAM_FILENAME);
   if (opt_content.has_value()) {
-    openhd::log::get_default()->debug("Using[{}] from image writer",
+    openhd::log::get_default()->warn("Using[{}] from image writer",
                                       opt_content.value());
     const auto opt_value_as_int = OHDUtil::string_to_int(opt_content.value());
     if (opt_value_as_int.has_value()) {
       const int primary_cam_type = opt_value_as_int.value();
-      openhd::log::get_default()->debug("Got from image writer: {}",
+      openhd::log::get_default()->warn("Got from image writer: {}",
                                         x_cam_type_to_string(primary_cam_type));
       return primary_cam_type;
     }
   }
-  openhd::log::get_default()->debug("No image writer default, using MMAL");
+  openhd::log::get_default()->warn("No image writer default, using MMAL");
   return X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI;
 }
 

@@ -147,13 +147,13 @@ static void enableSeekIfFound() {
   std::string fps;
 
   if (has_seek_compact) {
-    openhd::log::get_default()->debug("Found seek_compact");
+    openhd::log::get_default()->warn("Found seek_compact");
     model = "seek";
     fps = "7";
   }
 
   if (has_seek_compact_pro) {
-    openhd::log::get_default()->debug("Found seek_compact_pro");
+    openhd::log::get_default()->warn("Found seek_compact_pro");
     model = "seekpro";
     // todo: this is not necessarily accurate, not all compact pro models are
     // 15hz
@@ -161,7 +161,7 @@ static void enableSeekIfFound() {
   }
 
   if (has_seek_compact || has_seek_compact_pro) {
-    openhd::log::get_default()->debug("Found seek_compact / seek_compact_pro");
+    openhd::log::get_default()->warn("Found seek_compact / seek_compact_pro");
     std::stringstream ss;
     // todo: this should be more dynamic and allow for multiple cameras
     ss << "DeviceNode=/dev/video4";
@@ -208,7 +208,7 @@ static std::vector<int> findV4l2VideoDevices() {
     if (!std::regex_search(path, result, r)) {
       continue;
     }
-    // openhd::log::get_default()->debug("XX {}
+    // openhd::log::get_default()->warn("XX {}
     // {}",result[0].str(),result[1].str());
     if (result.size() >= 2) {
       const int v4l2_number = std::stoi(result[1].str());
@@ -252,7 +252,7 @@ Udevaddm_info get_udev_adm_info(const std::string &v4l2_device,
   const auto udev_info_opt =
       OHDUtil::run_command_out(fmt::format("udevadm info {}", v4l2_device));
   if (udev_info_opt == std::nullopt) {
-    m_console->debug("udev_info no result");
+    m_console->warn("udev_info no result");
     return {};
   }
   const auto &udev_info = udev_info_opt.value();
@@ -339,7 +339,7 @@ static EndpointFormats iterate_supported_outputs(
             endpoint_format.width = frmsize.discrete.width;
             endpoint_format.height = frmsize.discrete.height;
             endpoint_format.fps = frmival.discrete.denominator;
-            // m_console->debug("{}", endpoint_format.debug());
+            // m_console->warn("{}", endpoint_format.debug());
             ret.has_any_valid_format = true;
             if (fmtdesc.pixelformat == V4L2_PIX_FMT_H264) {
               ret.formats_h264.push_back(endpoint_format);
@@ -382,12 +382,12 @@ static std::optional<XValidEndpoint> probe_v4l2_device(
   auto v4l2_fp_holder =
       std::make_unique<openhd::v4l2::V4l2FPHolder>(device_node, platform_tpye);
   if (!v4l2_fp_holder->opened_successfully()) {
-    m_console->debug("Can't open {}", device_node);
+    m_console->warn("Can't open {}", device_node);
     return std::nullopt;
   }
   const auto caps_opt = openhd::v4l2::get_capabilities(v4l2_fp_holder);
   if (!caps_opt) {
-    m_console->debug("Can't get caps for {}", device_node);
+    m_console->warn("Can't get caps for {}", device_node);
     return std::nullopt;
   }
   const auto caps = caps_opt.value();
@@ -411,8 +411,8 @@ std::vector<DCameras::DiscoveredUSBCamera> DCameras::detect_usb_cameras(
   std::vector<DCameras::DiscoveredUSBCamera> ret;
   const auto devices = openhd::v4l2::findV4l2VideoDevices();
   if (debug) {
-    m_console->debug("Found {} v4l2 devices", devices.size());
-    for (auto &device : devices) m_console->debug("Device:{}", device);
+    m_console->warn("Found {} v4l2 devices", devices.size());
+    for (auto &device : devices) m_console->warn("Device:{}", device);
   }
   for (const auto &device : devices) {
     const auto v4l2_device_name = get_v4l2_device_name_string(device);
@@ -425,7 +425,7 @@ std::vector<DCameras::DiscoveredUSBCamera> DCameras::detect_usb_cameras(
     const std::string bus((char *)probed.caps.bus_info);
     const std::string driver((char *)probed.caps.driver);
     if (debug) {
-      m_console->debug("V4l2 info {} {} {}", device, bus,
+      m_console->warn("V4l2 info {} {} {}", device, bus,
                        probed.formats.formats_raw.size());
     }
     if (!probed.formats.formats_raw.empty()) {
@@ -445,7 +445,7 @@ std::vector<DCameras::DiscoveredUSBCamera> DCameras::detect_usb_cameras(
   }
   if (debug) {
     for (const auto &usb_cam : ret) {
-      m_console->debug("Found USB cam [{}]-[{}]", usb_cam.bus,
+      m_console->warn("Found USB cam [{}]-[{}]", usb_cam.bus,
                        usb_cam.v4l2_device_number);
     }
   }

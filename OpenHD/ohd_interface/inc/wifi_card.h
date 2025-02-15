@@ -199,7 +199,7 @@ static bool wifi_card_supports_frequency(const WiFiCard& wifi_card,
                                          const uint32_t frequency) {
   const auto channel_opt = openhd::channel_from_frequency(frequency);
   if (!channel_opt.has_value()) {
-    openhd::log::get_default()->debug("OpenHD doesn't know frequency {}",
+    openhd::log::get_default()->warn("OpenHD doesn't know frequency {}",
                                       frequency);
     return false;
   }
@@ -210,7 +210,7 @@ static bool wifi_card_supports_frequency(const WiFiCard& wifi_card,
       return true;
     }
   }
-  openhd::log::get_default()->debug("Card {} does not support frequency {}",
+  openhd::log::get_default()->warn("Card {} does not support frequency {}",
                                     wifi_card.device_name, frequency);
   return false;
 }
@@ -220,13 +220,13 @@ static bool wifi_card_supports_frequency_channel_width(
   auto console = openhd::log::get_default();
   const auto channel_opt = openhd::channel_from_frequency(frequency);
   if (!channel_opt.has_value()) {
-    console->debug("OpenHD doesn't know frequency {}", frequency);
+    console->warn("OpenHD doesn't know frequency {}", frequency);
     return false;
   }
   const auto& channel = channel_opt.value();
   // card (rtl8812au / bu) will crash otherwise anyways
   if (channel_width == 40 && !channel.is_legal_any_country_40Mhz) {
-    console->debug("Card {} doesn't support 40Mhz on {}", wifi_card.device_name,
+    console->warn("Card {} doesn't support 40Mhz on {}", wifi_card.device_name,
                    frequency);
     return false;
   }

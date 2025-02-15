@@ -30,14 +30,14 @@ class TestServer : public openhd::TCPServer {
       : openhd::TCPServer("Test", openhd::TCPServer::Config{5760}){};
   void on_external_device(std::string ip, int port, bool connected) override {
     if (connected) {
-      openhd::log::get_default()->debug("Device {}:{} connected", ip, port);
+      openhd::log::get_default()->warn("Device {}:{} connected", ip, port);
     } else {
-      openhd::log::get_default()->debug("Device {}:{} disconnected", ip, port);
+      openhd::log::get_default()->warn("Device {}:{} disconnected", ip, port);
     }
   };
   void on_packet_any_tcp_client(const uint8_t* data, int data_len) override {
     // do nothing
-    openhd::log::get_default()->debug("Got data {}", data_len);
+    openhd::log::get_default()->warn("Got data {}", data_len);
   };
 };
 

@@ -71,14 +71,14 @@ static std::vector<std::string> get_usb_tethering_devices() {
 }
 
 void USBTetherListener::connectOnce() {
-  m_console->debug("connectOnce()");
+  m_console->warn("connectOnce()");
   const std::string connected_devices_directory = "/sys/class/net/";
   std::string connected_device_name;
   while (!m_check_connection_thread_stop) {
     std::this_thread::sleep_for(std::chrono::seconds(1));
     const auto usb_tether_devices = get_usb_tethering_devices();
     if (!usb_tether_devices.empty()) {
-      m_console->debug("Found {} tethering devices",
+      m_console->warn("Found {} tethering devices",
                        OHDUtil::str_vec_as_string(usb_tether_devices));
       connected_device_name = usb_tether_devices.at(0);
       break;

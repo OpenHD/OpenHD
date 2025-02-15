@@ -31,7 +31,7 @@
 void openhd::set_infiray_custom_control_zoom_absolute_async(
     int value, int v4l2_device_number) {
   if (!is_valid_infiray_custom_control_zoom_absolute_value(value)) {
-    openhd::log::get_default()->debug(
+    openhd::log::get_default()->warn(
         "set_infiray_custom_control_zoom_absolute_async {} not valid", value);
     return;
   }

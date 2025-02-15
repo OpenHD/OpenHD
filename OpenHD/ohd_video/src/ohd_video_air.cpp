@@ -38,7 +38,7 @@ OHDVideoAir::OHDVideoAir(std::vector<XCamera> cameras,
   m_console = openhd::log::create_or_get("v_air");
   assert(m_console);
   assert(!cameras.empty());
-  m_console->debug("OHDVideo::OHDVideo()");
+  m_console->warn("OHDVideo::OHDVideo()");
   m_primary_video_forwarder = std::make_unique<openhd::UDPMultiForwarder>();
   m_secondary_video_forwarder = std::make_unique<openhd::UDPMultiForwarder>();
   m_audio_forwarder = std::make_unique<openhd::UDPMultiForwarder>();
@@ -98,7 +98,7 @@ OHDVideoAir::OHDVideoAir(std::vector<XCamera> cameras,
   // In case any non-demuxed recordings exists (e.g. due to a openhd crash,
   // unsafe shutdown,...)
   // GstRecordingDemuxer::instance().demux_all_remaining_mkv_files_async();
-  m_console->debug("OHDVideo::running");
+  m_console->warn("OHDVideo::running");
 }
 
 OHDVideoAir::~OHDVideoAir() {
@@ -121,7 +121,7 @@ void OHDVideoAir::configure(
       };
   // R.N we use gstreamer for pretty much everything
   // But this might change in the future
-  m_console->debug("GStreamerStream for Camera index:{}", camera.index);
+  m_console->warn("GStreamerStream for Camera index:{}", camera.index);
   auto stream = std::make_shared<GStreamerStream>(camera_holder, frame_cb);
   stream->start_looping();
   m_camera_streams.push_back(stream);
@@ -261,17 +261,17 @@ void OHDVideoAir::start_stop_forwarding_external_device(
 void OHDVideoAir::on_video_data(
     int stream_index,
     const openhd::FragmentedVideoFrame& fragmented_video_frame) {
-  // m_console->debug("Got data {}
+  // m_console->warn("Got data {}
   // {}",stream_index,fragmented_video_frame.rtp_fragments.size());
   if (!(stream_index == 0 || stream_index == 1)) {
-    m_console->debug("Invalid stream index: {}", stream_index);
+    m_console->warn("Invalid stream index: {}", stream_index);
     return;
   }
   if (m_link_handle) {
     m_link_handle->transmit_video_data(stream_index, fragmented_video_frame);
   }
   if (m_has_localhost_forwarding_enabled) {
-    // m_console->debug("Forwarding {}
+    // m_console->warn("Forwarding {}
     // {}",stream_index,fragmented_video_frame.rtp_fragments.size());
     auto& forwarder = stream_index == 0 ? m_primary_video_forwarder
                                         : m_secondary_video_forwarder;
@@ -310,7 +310,7 @@ static std::vector<int> x_discover_usb_cameras(int num_usb_cameras) {
   const auto platform = OHDPlatform::instance();
   auto console = openhd::log::get_default();
   const auto discovery_begin = std::chrono::steady_clock::now();
-  console->debug("Waiting for usb camera(s)");
+  console->warn("Waiting for usb camera(s)");
   std::vector<DCameras::DiscoveredUSBCamera> usb_cameras;
   while (true) {
     usb_cameras = DCameras::detect_usb_cameras(console, false);
@@ -408,7 +408,7 @@ bool OHDVideoAir::x_set_camera_type(bool primary, int cam_type) {
       auto res = OHDUtil::run_command_out(
           fmt::format("bash /usr/local/bin/ohd_camera_setup.sh {}", cam_type),
           {});
-      openhd::log::get_default()->debug("script returned:[{}]",
+      openhd::log::get_default()->warn("script returned:[{}]",
                                         res.value_or("ERROR"));
       reboot_required = true;
     }

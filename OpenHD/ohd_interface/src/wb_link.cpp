@@ -84,11 +84,11 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
   if (OHDFilesystemUtil::exists(openhd::SECURITY_KEYPAIR_FILENAME)) {
     txrx_options.secure_keypair =
         wb::read_keypair_from_file(openhd::SECURITY_KEYPAIR_FILENAME);
-    m_console->debug("Using key from file {}",
+    m_console->warn("Using key from file {}",
                      openhd::SECURITY_KEYPAIR_FILENAME);
   } else {
     txrx_options.secure_keypair = std::nullopt;
-    m_console->debug("Using key from default bind phrase");
+    m_console->warn("Using key from default bind phrase");
   }
   // txrx_options.log_all_received_packets= true;
   // txrx_options.log_all_received_validated_packets= true;
@@ -141,7 +141,7 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
                                                settings.wb_enable_ldpc,
                                                mcs_index,
                                                set_flag_tx_no_ack};
-    m_console->debug("{}", RadiotapHeaderTx::user_params_to_string(tmp_params));
+    m_console->warn("{}", RadiotapHeaderTx::user_params_to_string(tmp_params));
     m_tx_header_1->thread_safe_set(tmp_params);
     auto tmp_params2 =
         RadiotapHeaderTx::UserSelectableParams{20,
@@ -251,12 +251,12 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
           static int64_t last_block = 0;
           if (last_block + 1 != block_idx) {
             const int n_missing = block_idx - last_block;
-            // m_console->debug("Missing {}",n_missing);
+            // m_console->warn("Missing {}",n_missing);
           }
-          // m_console->debug("Got {} {}
+          // m_console->warn("Got {} {}
           // {}",block_idx,n_fragments_total,n_fragments_forwarded);
           last_block = block_idx;
-          // m_console->debug("Got {} {}
+          // m_console->warn("Got {} {}
           // {}",block_idx,n_fragments_total,n_fragments_forwarded);
           /*if(n_fragments_forwarded>2){
               auto aud_buffer=get_h264_aud();
@@ -330,7 +330,7 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
 }
 
 WBLink::~WBLink() {
-  m_console->debug("WBLink::~WBLink() begin");
+  m_console->warn("WBLink::~WBLink() begin");
   if (m_work_thread) {
     m_work_thread_run = false;
     m_work_thread->join();
@@ -354,7 +354,7 @@ WBLink::~WBLink() {
   m_wb_audio_rx.reset();
   m_wb_txrx = nullptr;
   wifi::commandhelper::cleanup_openhd_driver_overrides();
-  m_console->debug("WBLink::~WBLink() end");
+  m_console->warn("WBLink::~WBLink() end");
 }
 
 int get_atomic_value(const std::atomic<int>& atomic_val) {
@@ -362,7 +362,7 @@ int get_atomic_value(const std::atomic<int>& atomic_val) {
 }
 
 bool WBLink::request_set_frequency(int frequency) {
-  m_console->debug("request_set_frequency {}", frequency);
+  m_console->warn("request_set_frequency {}", frequency);
   if (!openhd::wb::validate_frequency_change(
           frequency, m_settings->get_settings().wb_air_tx_channel_width,
           m_broadcast_cards, m_console)) {
@@ -395,7 +395,7 @@ bool WBLink::request_set_frequency(int frequency) {
 
 bool WBLink::request_set_air_tx_channel_width(int channel_width) {
   assert(m_profile.is_air);  // Channel width is only ever changed on air
-  m_console->debug("request_set_air_tx_channel_width {}", channel_width);
+  m_console->warn("request_set_air_tx_channel_width {}", channel_width);
   if (!openhd::wb::validate_air_channel_width_change(
           channel_width, m_broadcast_cards.at(0), m_console)) {
     return false;
@@ -422,7 +422,7 @@ bool WBLink::request_set_air_tx_channel_width(int channel_width) {
 }
 
 bool WBLink::request_set_tx_power_mw(int tx_power_mw, bool armed) {
-  m_console->debug("request_set_tx_power_mw {}mW", tx_power_mw);
+  m_console->warn("request_set_tx_power_mw {}mW", tx_power_mw);
   if (!(openhd::is_valid_tx_power_milli_watt(tx_power_mw) ||
         (armed && tx_power_mw == 0))) {
     m_console->warn("Invalid tx power:{}mW", tx_power_mw);
@@ -476,7 +476,7 @@ bool WBLink::request_set_tx_power_rtl8812au(int tx_power_index_override,
 
 bool WBLink::request_set_air_mcs_index(int mcs_index) {
   assert(m_profile.is_air);
-  m_console->debug("set_air_mcs_index {}", mcs_index);
+  m_console->warn("set_air_mcs_index {}", mcs_index);
   if (!openhd::wb::validate_air_mcs_index_change(
           mcs_index, m_broadcast_cards.at(0), m_console)) {
     return false;
@@ -493,7 +493,7 @@ bool WBLink::request_set_air_mcs_index(int mcs_index) {
   return try_schedule_work_item(work_item);
 }
 bool WBLink::set_air_video_fec_percentage(int fec_percentage) {
-  m_console->debug("set_air_video_fec_percentage {}", fec_percentage);
+  m_console->warn("set_air_video_fec_percentage {}", fec_percentage);
   if (!openhd::is_valid_fec_percentage(fec_percentage)) return false;
   m_settings->unsafe_get_settings().wb_video_fec_percentage = fec_percentage;
   m_settings->persist();
@@ -553,7 +553,7 @@ bool WBLink::request_start_analyze_channels(int channels_to_scan) {
 bool WBLink::apply_frequency_and_channel_width(int frequency,
                                                int channel_width_rx,
                                                int channel_width_tx) {
-  m_console->debug("apply_frequency_and_channel_width {}Mhz RX:{}Mhz TX:{}Mhz",
+  m_console->warn("apply_frequency_and_channel_width {}Mhz RX:{}Mhz TX:{}Mhz",
                    frequency, channel_width_rx, channel_width_tx);
   // Weird bug hunting - I hope this makes the driver less likely too crash
   // Temporarily stop injecting packets
@@ -598,18 +598,18 @@ void WBLink::apply_txpower() {
   uint32_t pwr_mw = (int)settings.wb_tx_power_milli_watt;
   if (m_is_armed && settings.wb_rtl8812au_tx_pwr_idx_override_armed !=
                         openhd::RTL8812AU_TX_POWER_INDEX_ARMED_DISABLED) {
-    m_console->debug("Using power index special for armed");
+    m_console->warn("Using power index special for armed");
     pwr_index = settings.wb_rtl8812au_tx_pwr_idx_override_armed;
   }
   if (m_is_armed && settings.wb_tx_power_milli_watt_armed !=
                         openhd::WIFI_TX_POWER_MILLI_WATT_ARMED_DISABLED) {
-    m_console->debug("Using power mw special for armed");
+    m_console->warn("Using power mw special for armed");
     pwr_mw = settings.wb_tx_power_milli_watt_armed;
   }
   if (m_profile.is_air) {
     if (m_broadcast_cards.at(0).type == WiFiCardType::OPENHD_RTL_88X2AU &&
         pwr_index > 50 && settings.wb_air_tx_channel_width == 40) {
-      m_console->debug("Reducing TX power  to 50 tpi due to 40Mhz");
+      m_console->warn("Reducing TX power  to 50 tpi due to 40Mhz");
       pwr_index = 50;
     }
   }
@@ -617,7 +617,7 @@ void WBLink::apply_txpower() {
   m_curr_tx_power_mw = pwr_mw;
   m_curr_tx_power_idx = pwr_index;
   const auto delta = std::chrono::steady_clock::now() - before;
-  m_console->debug("Changing tx power took {}", MyTimeHelper::R(delta));
+  m_console->warn("Changing tx power took {}", MyTimeHelper::R(delta));
 }
 
 #pragma clang diagnostic push
@@ -851,9 +851,9 @@ void WBLink::loop_do_work() {
       if (!m_work_item_queue.empty()) {
         auto front = m_work_item_queue.front();
         if (front->ready_to_be_executed()) {
-          m_console->debug("Start execute work item {}", front->TAG);
+          m_console->warn("Start execute work item {}", front->TAG);
           front->execute();
-          m_console->debug("Done executing work item {}", front->TAG);
+          m_console->warn("Done executing work item {}", front->TAG);
           m_work_item_queue.pop();
         }
       }
@@ -1004,7 +1004,7 @@ void WBLink::wt_update_statistics() {
   stats.monitor_mode_link.count_tx_dropped_packets =
       txStats.count_tx_dropped_packets;
   stats.monitor_mode_link.curr_tx_mcs_index = curr_settings.wb_air_mcs_index;
-  // m_console->debug("Big gaps:{}",rxStats.curr_big_gaps_counter);
+  // m_console->warn("Big gaps:{}",rxStats.curr_big_gaps_counter);
   stats.monitor_mode_link.curr_tx_channel_mhz = curr_settings.wb_frequency;
   if (m_profile.is_air) {
     stats.monitor_mode_link.curr_tx_channel_w_mhz =
@@ -1045,9 +1045,9 @@ void WBLink::wt_update_statistics() {
         curr_settings.wb_enable_listen_only_mode ? 1 : 0;
     stats.gnd_operating_mode.progress = 0;
   }
-  // m_console->debug("{}",WBTxRx::tx_stats_to_string(txStats));
-  // m_console->debug("{}",WBTxRx::rx_stats_to_string(rxStats));
-  // m_console->debug("Pollution: {}",rxStats.curr_link_pollution_perc);
+  // m_console->warn("{}",WBTxRx::tx_stats_to_string(txStats));
+  // m_console->warn("{}",WBTxRx::rx_stats_to_string(rxStats));
+  // m_console->warn("Pollution: {}",rxStats.curr_link_pollution_perc);
   assert(stats.cards.size() >= 4);
   // only populate actually used cards
   assert(m_broadcast_cards.size() <= stats.cards.size());
@@ -1091,7 +1091,7 @@ void WBLink::wt_update_statistics() {
     card_stats.curr_status = m_wb_txrx->get_card_has_disconnected(i) ? 1 : 0;
     card_stats.card_type = wifi_card_type_to_int(card.type);
     card_stats.card_sub_type = card.sub_type;
-    // m_console->debug("Signal quality {}",card_stats.signal_quality);
+    // m_console->warn("Signal quality {}",card_stats.signal_quality);
   }
   stats.is_air = m_profile.is_air;
   stats.ready = true;
@@ -1106,7 +1106,7 @@ void WBLink::wt_update_statistics() {
       }
     }
   }
-  // m_console->debug("Last received packet mcs:{}
+  // m_console->warn("Last received packet mcs:{}
   // chan_width:{}",rxStats.last_received_packet_mcs_index,rxStats.last_received_packet_channel_width);
 }
 
@@ -1135,7 +1135,7 @@ void WBLink::wt_perform_rate_adjustment() {
                                       settings.wb_video_fec_percentage);
   // const auto stats=m_wb_txrx->get_rx_stats();
   // m_foreign_p_helper.update(stats.count_p_any,stats.count_p_valid);
-  // m_console->debug("N foreign packets per second
+  // m_console->warn("N foreign packets per second
   // :{}",m_foreign_p_helper.get_foreign_packets_per_second());
   if (m_max_video_rate_for_current_wifi_fec_config !=
           max_video_rate_for_current_wifi_fec_config ||
@@ -1144,7 +1144,7 @@ void WBLink::wt_perform_rate_adjustment() {
     // Apply the default for this configuration, then return - we will start the
     // auto-adjustment depending on tx error(s) next time the rate adjustment is
     // called
-    m_console->debug(
+    m_console->warn(
         "MCS:{} ch_width:{} Calculated max_rate:{}, max_video_rate:{}",
         settings.wb_air_mcs_index, settings.wb_air_tx_channel_width,
         openhd::kbits_per_second_to_string(max_rate_for_current_wifi_config),
@@ -1167,7 +1167,7 @@ void WBLink::wt_perform_rate_adjustment() {
   // const bool
   // dropping_many_frames=m_frame_drop_helper.needs_bitrate_reduction();
   const bool dropping_many_frames = false;
-  // m_console->debug("Dropped since last check:{}",dropped_since_last_check);
+  // m_console->warn("Dropped since last check:{}",dropped_since_last_check);
   if (dropping_many_frames) {
     // We are dropping frames / too many tx error hint(s), we need to reduce
     // bitrate. Reduce video bitrate by 1MBit/s
@@ -1204,7 +1204,7 @@ void WBLink::recommend_bitrate_to_encoder(int recommended_video_bitrate_kbits) {
   // "not doing anything" when we recommend the same bitrate to it multiple
   // times
   /*if(!m_opt_action_handler){
-      m_console->debug("No action handler,cannot recommend bitrate to camera");
+      m_console->warn("No action handler,cannot recommend bitrate to camera");
       return;
   }*/
   openhd::LinkActionHandler::LinkBitrateInformation lb{};
@@ -1218,29 +1218,29 @@ bool WBLink::try_schedule_work_item(
   std::unique_lock<std::mutex> lock(m_work_item_queue_mutex, std::try_to_lock);
   if (lock.owns_lock()) {
     if (m_work_item_queue.empty()) {
-      m_console->debug("Adding work item {} to queue", work_item->TAG);
+      m_console->warn("Adding work item {} to queue", work_item->TAG);
       m_work_item_queue.push(work_item);
       return true;
     }
-    m_console->debug("Work queue full,cannot add {}", work_item->TAG);
+    m_console->warn("Work queue full,cannot add {}", work_item->TAG);
     m_console->warn("Please try again later");
     return false;
   }
   // Most likely, the lock is hold by the wb_link thread currently performing a
   // previous work item - this is not an error, the user has to try changing
   // param X later.
-  m_console->debug("Cannot get lock,cannot add {}", work_item->TAG);
+  m_console->warn("Cannot get lock,cannot add {}", work_item->TAG);
   m_console->warn("Please try again later");
   return false;
 }
 
 void WBLink::transmit_telemetry_data(TelemetryTxPacket packet) {
   assert(packet.n_injections >= 1);
-  // m_console->debug("N injections:{}",packet.n_injections);
+  // m_console->warn("N injections:{}",packet.n_injections);
   const auto n_dropped =
       m_wb_tele_tx->enqueue_packet_dropping(packet.data, packet.n_injections);
   if (n_dropped > 0) {
-    m_console->debug("Telemetry queue jam, dropped {}", n_dropped);
+    m_console->warn("Telemetry queue jam, dropped {}", n_dropped);
   }
 }
 
@@ -1249,11 +1249,11 @@ void WBLink::transmit_video_data(
     const openhd::FragmentedVideoFrame& fragmented_video_frame) {
   assert(m_profile.is_air);
   if (stream_index < 0 || stream_index > m_wb_video_tx_list.size()) {
-    m_console->debug("Invalid camera stream_index {}", stream_index);
+    m_console->warn("Invalid camera stream_index {}", stream_index);
     return;
   }
   if (m_air_close_video_in.load(std::memory_order_relaxed)) {
-    m_console->debug("Video TX temporarily disabled");
+    m_console->warn("Video TX temporarily disabled");
     return;
   }
   if (m_thermal_protection_level.load(std::memory_order_relaxed) >=
@@ -1261,7 +1261,7 @@ void WBLink::transmit_video_data(
     // Thermal protection disable video active, don't transmit video
     return;
   }
-  // m_console->debug("Got {}",fragmented_video_frame.rtp_fragments.size());
+  // m_console->warn("Got {}",fragmented_video_frame.rtp_fragments.size());
   auto& tx = *m_wb_video_tx_list[stream_index];
   tx.set_encryption(fragmented_video_frame.enable_ultra_secure_encryption);
   const int max_fec_block_size = get_max_fec_block_size();
@@ -1287,7 +1287,7 @@ void WBLink::transmit_video_data(
           fragmented_video_frame.rtp_fragments, max_fec_block_size, fec_perc,
           fragmented_video_frame.creation_time);
       if (count_removed != 0) {
-        openhd::log::get_default()->debug(
+        openhd::log::get_default()->warn(
             "Cleared {} frames to make space for frame {}", count_removed,
             fragmented_video_frame.to_string());
         n_dropped_frames = count_removed;
@@ -1298,7 +1298,7 @@ void WBLink::transmit_video_data(
           fragmented_video_frame.creation_time);
       if (!res) {
         n_dropped_frames = 1;
-        m_console->debug("TX enqueue video frame failed, queue size:{}",
+        m_console->warn("TX enqueue video frame failed, queue size:{}",
                          tx.get_tx_queue_available_size_approximate());
       }
     }
@@ -1362,7 +1362,7 @@ void WBLink::perform_channel_scan(
   };
   ScanResult result{false, 0, 0};
   // Note: We intentionally do not modify the persistent settings here
-  m_console->debug(
+  m_console->warn(
       "Channel scan N channels to scan:{} N channel widths to scan:{}",
       channels_to_scan.size(), channel_widths_to_scan.size());
   bool done_early = false;
@@ -1400,7 +1400,7 @@ void WBLink::perform_channel_scan(
       m_wb_txrx->set_passive_mode(true);
       // sleeep a bit - some cards /drivers might need time switching
       std::this_thread::sleep_for(std::chrono::milliseconds(200));
-      m_console->debug("Scanning [{}] {}Mhz@{}Mhz", channel.channel,
+      m_console->warn("Scanning [{}] {}Mhz@{}Mhz", channel.channel,
                        channel.frequency, channel_width);
       reset_all_rx_stats();
       m_management_gnd->m_air_reported_curr_frequency = -1;
@@ -1411,7 +1411,7 @@ void WBLink::perform_channel_scan(
       // If we got what looks to be openhd packets, sleep a bit more such that
       // we can reliably get a management frame
       if (n_likely_openhd_packets > 0) {
-        m_console->debug("Got {} likely openhd packets, sleep a bit more",
+        m_console->warn("Got {} likely openhd packets, sleep a bit more",
                          n_likely_openhd_packets);
         const auto begin_long_listen = std::chrono::steady_clock::now();
         while (std::chrono::steady_clock::now() - begin_long_listen <
@@ -1435,14 +1435,14 @@ void WBLink::perform_channel_scan(
           m_management_gnd->m_air_reported_curr_frequency;
       const int air_tx_channel_width =
           m_management_gnd->m_air_reported_curr_channel_width;
-      m_console->debug(
+      m_console->warn(
           "Got {} packets on {}@{} air_reports:[{}@{}] with loss {}%",
           n_valid_packets, channel.frequency, channel_width,
           air_center_frequency, air_tx_channel_width, packet_loss);
       if (n_valid_packets > 0 && air_center_frequency > 0 &&
           (air_tx_channel_width == 20 || air_tx_channel_width == 40) &&
           channel.frequency == air_center_frequency) {
-        m_console->debug("Found air unit");
+        m_console->warn("Found air unit");
         result.frequency = channel.frequency;
         result.channel_width = air_tx_channel_width;
         result.success = true;
@@ -1457,7 +1457,7 @@ void WBLink::perform_channel_scan(
     result.success = false;
     result.frequency = 0;
   } else {
-    m_console->debug("Channel scan success, {}@{}Mhz", result.frequency,
+    m_console->warn("Channel scan success, {}@{}Mhz", result.frequency,
                      result.channel_width);
     m_settings->unsafe_get_settings().wb_frequency = result.frequency;
     m_settings->persist();
@@ -1496,13 +1496,13 @@ void WBLink::perform_channel_analyze(int channels_to_scan) {
     m_wb_txrx->set_passive_mode(true);
     // Sleep a bit to give the card time to switch
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    m_console->debug("Analyzing [{}] {}Mhz@{}Mhz", channel.channel,
+    m_console->warn("Analyzing [{}] {}Mhz@{}Mhz", channel.channel,
                      channel.frequency, channel_width);
     reset_all_rx_stats();
     std::this_thread::sleep_for(std::chrono::seconds(4));
     const auto stats = m_wb_txrx->get_rx_stats();
     const auto n_foreign_packets = stats.count_p_any - stats.count_p_valid;
-    m_console->debug("Got {} foreign packets {}:{}", n_foreign_packets,
+    m_console->warn("Got {} foreign packets {}:{}", n_foreign_packets,
                      stats.count_p_any, stats.count_p_valid);
     results.push_back(
         AnalyzeResult{(int)channel.frequency, (int)n_foreign_packets});
@@ -1525,9 +1525,9 @@ void WBLink::perform_channel_analyze(int channels_to_scan) {
   for(int i=0;i<results.size();i++){
       ss<<results[i].frequency<<"@"<<results[i].n_foreign_packets<<"\n";
   }
-  m_console->debug("{}",ss.str().c_str());*/
+  m_console->warn("{}",ss.str().c_str());*/
   re_enable_injection_unless_user_passive_mode_enabled();
-  m_console->debug(
+  m_console->warn(
       "Done analyzing, took:{}",
       MyTimeHelper::R(std::chrono::steady_clock::now() - analyze_begin));
   // Go back to the previous frequency
@@ -1553,7 +1553,7 @@ void WBLink::wt_perform_mcs_via_rc_channel_if_enabled() {
   }
   const auto& mcs_from_rc = mcs_from_rc_opt.value();
   if (settings.wb_air_mcs_index != mcs_from_rc) {
-    m_console->debug("RC CHANNEL - changing MCS from {} to {} ",
+    m_console->warn("RC CHANNEL - changing MCS from {} to {} ",
                      settings.wb_air_mcs_index, mcs_from_rc);
     m_settings->unsafe_get_settings().wb_air_mcs_index = mcs_from_rc;
     m_settings->persist();
@@ -1571,7 +1571,7 @@ void WBLink::wt_perform_bw_via_rc_channel_if_enabled() {
   if (!opt_rc_bw.has_value()) return;
   const auto rc_bw = opt_rc_bw.value();
   if (settings.wb_air_tx_channel_width != rc_bw) {
-    m_console->debug("RC CHANNEL - changing BW from {} to {} ",
+    m_console->warn("RC CHANNEL - changing BW from {} to {} ",
                      settings.wb_air_tx_channel_width, rc_bw);
     m_settings->unsafe_get_settings().wb_air_tx_channel_width = rc_bw;
     m_settings->persist();
@@ -1580,7 +1580,7 @@ void WBLink::wt_perform_bw_via_rc_channel_if_enabled() {
 }
 
 void WBLink::update_arming_state(bool armed) {
-  m_console->debug("update arming state, armed: {}", armed);
+  m_console->warn("update arming state, armed: {}", armed);
   // We just update the internal armed / disarmed state and then call
   // apply_tx_power - it will set the right tx power if the user enabled it
   m_is_armed = armed;
@@ -1602,10 +1602,10 @@ void WBLink::wt_gnd_perform_channel_management() {
         air_reported_frequency > 100) {
       if (m_gnd_curr_rx_channel_width != air_reported_channel_width ||
           m_gnd_curr_rx_frequency != air_reported_frequency) {
-        m_console->debug("m_gnd_curr_rx_frequency: {}",
+        m_console->warn("m_gnd_curr_rx_frequency: {}",
                          m_gnd_curr_rx_frequency.load());
-        m_console->debug("air_reported_frequency: {}", air_reported_frequency);
-        m_console->debug("air_reported_channel_width: {}",
+        m_console->warn("air_reported_frequency: {}", air_reported_frequency);
+        m_console->warn("air_reported_channel_width: {}",
                          air_reported_channel_width);
         m_gnd_curr_rx_frequency = air_reported_frequency;
         m_gnd_curr_rx_channel_width = air_reported_channel_width;
@@ -1664,7 +1664,7 @@ void WBLink::on_wifi_card_fatal_error() {
 }
 
 void WBLink::wt_perform_update_thermal_protection() {
-  m_console->debug("thermal_protection, function started");
+  m_console->warn("thermal_protection, function started");
   if (!OHDPlatform::instance().is_x20()) {
     // Only works on x20
     return;

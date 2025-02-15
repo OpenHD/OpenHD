@@ -53,7 +53,7 @@ int main() {
   // and see if messages continue
   const auto start = std::chrono::steady_clock::now();
   while ((std::chrono::steady_clock::now() - start) < std::chrono::minutes(5)) {
-    openhd::log::get_default()->debug(
+    openhd::log::get_default()->warn(
         "Alive:{}", OHDUtil::yes_or_no(udpEndpoint.isAlive()));
     auto heartbeat = MExampleMessage::heartbeat();
     udpEndpoint.sendMessages({heartbeat});

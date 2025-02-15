@@ -346,13 +346,13 @@ int main(int argc, char *argv[]) {
         }
       }
       if (openhd::TerminateHelper::instance().should_terminate()) {
-        m_console->debug("Terminating,reason:{}",
+        m_console->warn("Terminating,reason:{}",
                          openhd::TerminateHelper::instance().terminate_reason());
         break;
       }
     }
     // --- terminate openhd, most likely requested by a developer with sigterm
-    m_console->debug("Terminating openhd");
+    m_console->warn("Terminating openhd");
     openhd::LEDManager::instance().set_status_stopped();
     // Stop any communication between modules, to eliminate any issues created
     // by threads during cleanup
@@ -365,25 +365,25 @@ int main(int argc, char *argv[]) {
     // failures.
 #ifdef ENABLE_AIR
     if (ohd_video_air) {
-      m_console->debug("Terminating ohd_video_air - begin");
+      m_console->warn("Terminating ohd_video_air - begin");
       ohd_video_air.reset();
-      m_console->debug("Terminating ohd_video_air - end");
+      m_console->warn("Terminating ohd_video_air - end");
     }
 #endif
     if (ohd_video_ground) {
-      m_console->debug("Terminating ohd_video_ground- begin");
+      m_console->warn("Terminating ohd_video_ground- begin");
       ohd_video_ground.reset();
-      m_console->debug("Terminating ohd_video_ground - end");
+      m_console->warn("Terminating ohd_video_ground - end");
     }
     if (ohdTelemetry) {
-      m_console->debug("Terminating ohd_telemetry - begin");
+      m_console->warn("Terminating ohd_telemetry - begin");
       ohdTelemetry.reset();
-      m_console->debug("Terminating ohd_telemetry - end");
+      m_console->warn("Terminating ohd_telemetry - end");
     }
     if (ohdInterface) {
-      m_console->debug("Terminating ohd_interface - begin");
+      m_console->warn("Terminating ohd_interface - begin");
       ohdInterface.reset();
-      m_console->debug("Terminating ohd_interface - end");
+      m_console->warn("Terminating ohd_interface - end");
     }
   } catch (std::exception &ex) {
     std::cerr << "Error: " << ex.what() << std::endl;

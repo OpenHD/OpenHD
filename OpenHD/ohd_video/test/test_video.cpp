@@ -66,7 +66,7 @@ int main(int argc, char* argv[]) {
         total_size += fragment->size();
       }
     }
-    // openhd::log::get_default()->debug("total size:{}", total_size);
+    // openhd::log::get_default()->warn("total size:{}", total_size);
     bitrate_debugger.on_packet(total_size);
   };
   auto debug_link = std::make_shared<DummyDebugLink>();

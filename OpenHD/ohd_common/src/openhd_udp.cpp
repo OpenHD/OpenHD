@@ -60,7 +60,7 @@ openhd::UDPForwarder::~UDPForwarder() { close(sockfd); }
 void openhd::UDPForwarder::forwardPacketViaUDP(
     const uint8_t *packet, const std::size_t packetSize) const {
   // send(sockfd,packet,packetSize, MSG_DONTWAIT);
-  // openhd::log::get_default()->debug("Forward {}",packetSize);
+  // openhd::log::get_default()->warn("Forward {}",packetSize);
   const auto ret = sendto(sockfd, packet, packetSize, 0,
                           (const struct sockaddr *)&saddr, sizeof(saddr));
   if (ret < 0 || ret != packetSize) {
@@ -152,7 +152,7 @@ void openhd::UDPReceiver::loopUntilError() {
       }
     }
   }
-  get_console()->debug("UDP end");
+  get_console()->warn("UDP end");
 }
 
 void openhd::UDPReceiver::forwardPacketViaUDP(

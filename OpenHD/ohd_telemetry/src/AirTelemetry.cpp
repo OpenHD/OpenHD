@@ -59,7 +59,7 @@ AirTelemetry::AirTelemetry() : MavlinkSystem(OHD_SYS_ID_AIR) {
         });
   }
   setup_uart();
-  m_console->debug("Created AirTelemetry");
+  m_console->warn("Created AirTelemetry");
 }
 
 AirTelemetry::~AirTelemetry() {}
@@ -93,7 +93,7 @@ void AirTelemetry::send_messages_ground_unit(
 }
 
 void AirTelemetry::on_messages_fc(std::vector<MavlinkMessage>& messages) {
-  // openhd::log::get_default()->debug("on_messages_fc {}",messages.size());
+  // openhd::log::get_default()->warn("on_messages_fc {}",messages.size());
   // debugMavlinkMessage(message.m,"AirTelemetry::onMessageFC");
   //  Note: No OpenHD component ever talks to the FC, FC is completely passed
   //  through
@@ -104,7 +104,7 @@ void AirTelemetry::on_messages_fc(std::vector<MavlinkMessage>& messages) {
 
 void AirTelemetry::on_messages_ground_unit(
     std::vector<MavlinkMessage>& messages) {
-  // m_console->debug("on_messages_ground_unit {}", messages.size());
+  // m_console->warn("on_messages_ground_unit {}", messages.size());
   //   filter out heartbeats from the openhd ground unit,we do not need to send
   //   them to the FC
   std::vector<MavlinkMessage> filtered_messages_fc;
@@ -137,10 +137,10 @@ void AirTelemetry::loop_infinite(bool& terminate,
     if (std::chrono::steady_clock::now() - last_log >= log_intervall) {
       // State debug logging
       last_log = std::chrono::steady_clock::now();
-      // m_console->debug("AirTelemetry::loopInfinite()");
+      // m_console->warn("AirTelemetry::loopInfinite()");
       //  for debugging, check if any of the endpoints is not alive
       if (enableExtendedLogging && m_wb_endpoint) {
-        m_console->debug(m_wb_endpoint->createInfo());
+        m_console->warn(m_wb_endpoint->createInfo());
       }
     }
     // send messages to the ground pi in regular intervals, includes heartbeat.
@@ -156,7 +156,7 @@ void AirTelemetry::loop_infinite(bool& terminate,
     const auto loopDelta = std::chrono::steady_clock::now() - loopBegin;
     if (loopDelta > loop_intervall) {
       // We can't keep up with the wanted loop interval
-      m_console->debug(
+      m_console->warn(
           "Warning AirTelemetry cannot keep up with the wanted loop interval. "
           "Took {}",
           openhd::util::time_readable(loopDelta));
@@ -181,7 +181,7 @@ void AirTelemetry::add_settings_generic(
     const std::vector<openhd::Setting>& settings) {
   std::lock_guard<std::mutex> guard(m_components_lock);
   m_generic_mavlink_param_provider->add_params(settings);
-  m_console->debug("Added parameter component");
+  m_console->warn("Added parameter component");
 }
 
 void AirTelemetry::settings_generic_ready() {
@@ -198,7 +198,7 @@ void AirTelemetry::add_settings_camera_component(
   param_server->set_ready();
   std::lock_guard<std::mutex> guard(m_components_lock);
   m_components.push_back(param_server);
-  m_console->debug("Added camera component");
+  m_console->warn("Added camera component");
 }
 
 std::vector<openhd::Setting> AirTelemetry::get_all_settings() {

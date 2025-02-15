@@ -37,7 +37,7 @@ static std::shared_ptr<std::vector<uint8_t>> gst_copy_buffer(
     GstBuffer* buffer) {
   assert(buffer);
   const auto buff_size = gst_buffer_get_size(buffer);
-  // openhd::log::get_default()->debug("Got buffer size {}", buff_size);
+  // openhd::log::get_default()->warn("Got buffer size {}", buff_size);
   // auto ret = std::make_shared<std::vector<uint8_t>>(buff_size);
   GstMapInfo map;
   gst_buffer_map(buffer, &map, GST_MAP_READ);
@@ -74,7 +74,7 @@ static std::optional<GstBufferX> gst_app_sink_try_pull_sample_and_copy(
 static void gst_debug_buffer(GstBuffer* buffer) {
   assert(buffer);
   const auto now = std::chrono::steady_clock::now().time_since_epoch().count();
-  openhd::log::get_default()->debug(
+  openhd::log::get_default()->warn(
       "Buffer info[offset:{}, offset_end:{} duration:{} pts:{} dts:{} now:{}]",
       buffer->offset, buffer->offset_end, buffer->duration, buffer->pts,
       buffer->dts, now);
@@ -113,15 +113,15 @@ static void gst_debug_sample(GstSample* sample) {
     ss << "    " << str << std::endl;
     g_free(str);
   }
-  openhd::log::get_default()->debug("{}", ss.str());
+  openhd::log::get_default()->warn("{}", ss.str());
 }
 
 static void unref_appsink_element(GstElement* appsink) {
   if (appsink) {
-    openhd::log::get_default()->debug("Unref appsink begin");
+    openhd::log::get_default()->warn("Unref appsink begin");
     gst_object_unref(appsink);
     appsink = nullptr;
-    openhd::log::get_default()->debug("Unref appsink end");
+    openhd::log::get_default()->warn("Unref appsink end");
   }
 }
 

@@ -86,7 +86,7 @@ GroundTelemetry::GroundTelemetry() : MavlinkSystem(OHD_SYS_ID_GROUND) {
           }
         }
       });
-  m_console->debug("Created GroundTelemetry");
+  m_console->warn("Created GroundTelemetry");
 }
 
 GroundTelemetry::~GroundTelemetry() {
@@ -205,13 +205,13 @@ void GroundTelemetry::loop_infinite(bool& terminate,
     const auto loopBegin = std::chrono::steady_clock::now();
     if (std::chrono::steady_clock::now() - last_log >= log_intervall) {
       last_log = std::chrono::steady_clock::now();
-      // m_console->debug("GroundTelemetry::loopInfinite()");
+      // m_console->warn("GroundTelemetry::loopInfinite()");
       //  for debugging, check if any of the endpoints is not alive
       if (enableExtendedLogging && m_wb_endpoint) {
-        m_console->debug(m_wb_endpoint->createInfo());
+        m_console->warn(m_wb_endpoint->createInfo());
       }
       if (enableExtendedLogging && m_gcs_endpoint) {
-        m_console->debug(m_gcs_endpoint->createInfo());
+        m_console->warn(m_gcs_endpoint->createInfo());
       }
     }
     // send messages to the ground station in regular intervals, includes
@@ -227,7 +227,7 @@ void GroundTelemetry::loop_infinite(bool& terminate,
         // exception: timesync
         for (const auto& msg : messages) {
           if (msg.m.msgid == MAVLINK_MSG_ID_TIMESYNC) {
-            m_console->debug("Sending timesync to air");
+            m_console->warn("Sending timesync to air");
             send_messages_air_unit({msg});
           }
         }
@@ -237,7 +237,7 @@ void GroundTelemetry::loop_infinite(bool& terminate,
     if (loopDelta > loop_intervall) {
       // We can't keep up with the wanted loop interval
       // We can't keep up with the wanted loop interval
-      m_console->debug(
+      m_console->warn(
           "Warning GroundTelemetry cannot keep up with the wanted loop "
           "interval. Took {}",
           openhd::util::time_readable(loopDelta));
@@ -265,7 +265,7 @@ void GroundTelemetry::add_settings_generic(
     const std::vector<openhd::Setting>& settings) {
   std::lock_guard<std::mutex> guard(m_components_lock);
   m_generic_mavlink_param_provider->add_params(settings);
-  m_console->debug("Added parameter component");
+  m_console->warn("Added parameter component");
 }
 
 void GroundTelemetry::settings_generic_ready() {
@@ -274,7 +274,7 @@ void GroundTelemetry::settings_generic_ready() {
 
 void GroundTelemetry::add_external_ground_station_ip(
     const openhd::ExternalDevice& ext_device) {
-  m_console->debug("add_external_ground_station_ip {}", ext_device.to_string());
+  m_console->warn("add_external_ground_station_ip {}", ext_device.to_string());
   if (m_gcs_endpoint) {
     m_gcs_endpoint->addAnotherDestIpAddress(ext_device.external_device_ip);
   }
@@ -282,7 +282,7 @@ void GroundTelemetry::add_external_ground_station_ip(
 
 void GroundTelemetry::remove_external_ground_station_ip(
     const openhd::ExternalDevice& ext_device) {
-  m_console->debug("remove_external_ground_station_ip {}",
+  m_console->warn("remove_external_ground_station_ip {}",
                    ext_device.to_string());
   if (m_gcs_endpoint) {
     m_gcs_endpoint->removeAnotherDestIpAddress(ext_device.external_device_ip);
@@ -340,7 +340,7 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
             c_rc_over_joystick_update_rate_hz}});
     auto c_rc_over_joystick_channel_mapping = [this](std::string,
                                                      std::string value) {
-      m_console->debug("Change channel mapping {}", value);
+      m_console->warn("Change channel mapping {}", value);
       const auto parsed = openhd::convert_string_to_channel_mapping(value);
       if (parsed == std::nullopt) {
         m_console->warn("Not a valid channel mapping");
@@ -445,8 +445,8 @@ void GroundTelemetry::disable_joystick() {
     return;
   }
   // Destruction might block, which is not ideal, but hey
-  m_console->debug("Disable joy begin");
+  m_console->warn("Disable joy begin");
   m_rc_joystick_sender = nullptr;
-  m_console->debug("Disable joy end");
+  m_console->warn("Disable joy end");
 }
 #endif

@@ -48,7 +48,7 @@ static void rtp_free(void* /*param*/, void* /*packet*/) {}
 static int rtp_encode_packet(void* param, const void* packet, int bytes,
                              uint32_t timestamp, int flags) {
   auto self = (openhd::RTPHelper*)param;
-  // openhd::log::get_default()->debug(" rtp_encode_packet {} {}
+  // openhd::log::get_default()->warn(" rtp_encode_packet {} {}
   // {}",bytes,timestamp,flags);
   self->on_new_rtp_fragment((const uint8_t*)packet, bytes, timestamp, flags);
   // TODO
@@ -87,12 +87,12 @@ void openhd::RTPHelper::feed_multiple_nalu(const uint8_t* data, int data_len) {
 }
 
 void openhd::RTPHelper::feed_nalu(const uint8_t* data, int data_len) {
-  // m_console->debug("feed_nalu {}", data_len);
+  // m_console->warn("feed_nalu {}", data_len);
   int32_t timestamp = 0;
   timestamp = openhd::util::steady_clock_time_epoch_ms();
   rtp_payload_encode_input(encoder, data, data_len, timestamp);
   // all frames processed
-  // m_console->debug("Done, got {} fragments", m_frame_fragments.size());
+  // m_console->warn("Done, got {} fragments", m_frame_fragments.size());
   if (m_out_cb) {
     m_out_cb(m_frame_fragments);
   }
@@ -101,7 +101,7 @@ void openhd::RTPHelper::feed_nalu(const uint8_t* data, int data_len) {
 
 void openhd::RTPHelper::on_new_rtp_fragment(const uint8_t* data, int data_len,
                                             uint32_t timestamp, int last) {
-  // m_console->debug("on_new_rtp_fragment {} ts:{} last:{}", data_len,
+  // m_console->warn("on_new_rtp_fragment {} ts:{} last:{}", data_len,
   // timestamp,
   //                  last);
   auto shared = std::make_shared<std::vector<uint8_t>>(data, data + data_len);
@@ -114,7 +114,7 @@ void openhd::RTPHelper::set_out_cb(openhd::RTPHelper::OUT_CB cb) {
 
 void openhd::RTPHelper::on_new_split_nalu(const uint8_t* data, int data_len) {
   NALU nalu(data, data_len);
-  // m_console->debug("Got new NAL {}
+  // m_console->warn("Got new NAL {}
   // {}",data_len,nalu.get_nal_unit_type_as_string()); if(nalu.is_sei())return;
   if (m_config_finder.all_config_available(m_is_h265)) {
     if (nalu.is_config()) {
@@ -173,7 +173,7 @@ void openhd::RTPFragmentBuffer::buffer_and_forward(
       m_last_fu_s_idr = false;
     }
   }
-  // m_console->debug("Fragment {} start:{} end:{}
+  // m_console->warn("Fragment {} start:{} end:{}
   // type:{}",m_frame_fragments.size(),
   //                  OHDUtil::yes_or_no(info.is_fu_start),
   //                  OHDUtil::yes_or_no(info.is_fu_end),
@@ -181,7 +181,7 @@ void openhd::RTPFragmentBuffer::buffer_and_forward(
   bool is_last_fragment_of_frame = info.is_fu_end;
   if (m_frame_fragments.size() > 500) {
     // Most likely something wrong with the "find end of frame" workaround
-    m_console->debug("No end of frame found after 1000 fragments");
+    m_console->warn("No end of frame found after 1000 fragments");
     is_last_fragment_of_frame = true;
   }
   if (is_last_fragment_of_frame) {
@@ -199,5 +199,5 @@ void openhd::RTPFragmentBuffer::on_new_rtp_fragmented_frame() {
                                             nullptr,
                                             m_uses_intra_refresh,
                                             is_intra_frame};
-  // m_console->debug("{}",frame.to_string());
+  // m_console->warn("{}",frame.to_string());
 }

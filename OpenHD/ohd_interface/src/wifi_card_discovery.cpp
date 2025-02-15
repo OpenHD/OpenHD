@@ -244,7 +244,7 @@ std::optional<WiFiCard> DWifiCards::process_card(
   /*card.supports_monitor_mode =
       wifi::commandhelper::iw_supports_monitor_mode(card.phy80211_index);
   card.is_openhd_supported = is_openhd_supported(card.type);*/
-  /*openhd::log::get_default()->debug("Card {} reports driver:{}
+  /*openhd::log::get_default()->warn("Card {} reports driver:{}
      supports_2GHz:{} supports_5GHz:{} supports_monitor_mode:{}
      openhd_supported:{}",
                                     card.device_name,card.driver_name,card.supports_2GHz(),card.supports_5GHz(),
@@ -345,7 +345,7 @@ static WiFiCard wait_for_card(const std::string& interface_name) {
       return card.value();
     }
     std::this_thread::sleep_for(std::chrono::seconds(1));
-    openhd::log::get_default()->debug("Waiting for {}", interface_name);
+    openhd::log::get_default()->warn("Waiting for {}", interface_name);
   }
 }
 
@@ -442,7 +442,7 @@ void DWifiCards::main_discover_an_process_wifi_cards(
       if (elapsed > std::chrono::seconds(3)) {
         m_console->warn(message);
       } else {
-        m_console->debug(message);
+        m_console->warn(message);
       }
     }
     std::this_thread::sleep_for(std::chrono::seconds(1));

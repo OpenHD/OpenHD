@@ -68,13 +68,13 @@ bool UDPEndpoint::sendMessagesImpl(
 
 void UDPEndpoint::addAnotherDestIpAddress(const std::string& ip) {
   std::lock_guard<std::mutex> lock(m_sender_mutex);
-  m_console->debug("addAnotherDestIpAddress {}", ip);
+  m_console->warn("addAnotherDestIpAddress {}", ip);
   m_other_dest_ips[ip] = nullptr;
 }
 
 void UDPEndpoint::removeAnotherDestIpAddress(const std::string& ip) {
   std::lock_guard<std::mutex> lock(m_sender_mutex);
-  m_console->debug("removeAnotherDestIpAddress {}", ip);
+  m_console->warn("removeAnotherDestIpAddress {}", ip);
   m_other_dest_ips.erase(ip);
 }
 
@@ -94,6 +94,6 @@ std::vector<std::string> UDPEndpoint::get_all_curr_dest_ips() {
 //      const bool is_from_ground_controll=msg.m.sysid==255 || msg.m.sysid==225;
 //      if(!is_from_ground_controll){
 //        // This can't really be a message from a ground controll application
-//        //m_console->debug("Dropping message");
+//        //m_console->warn("Dropping message");
 //        return;
 //      }

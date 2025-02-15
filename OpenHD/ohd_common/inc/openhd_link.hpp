@@ -149,7 +149,7 @@ class DummyDebugLink : public OHDLink {
     m_console_audio = openhd::log::create_or_get("audio");
   }
   void transmit_telemetry_data(TelemetryTxPacket packet) override {
-    m_console_tele->debug("Got {} telemetry fragments", packet.data->size());
+    m_console_tele->warn("Got {} telemetry fragments", packet.data->size());
   }
   // Called by the camera stream on the air unit only
   // transmit video data via wifibradcast
@@ -160,7 +160,7 @@ class DummyDebugLink : public OHDLink {
     for (const auto& fragment : fragmented_video_frame.rtp_fragments) {
       total_bytes += fragment->size();
     }
-    m_console_video->debug("Got Frame. Fragments:{} total: {}Bytes",
+    m_console_video->warn("Got Frame. Fragments:{} total: {}Bytes",
                            fragmented_video_frame.rtp_fragments.size(),
                            total_bytes);
     if (m_opt_frame_cb) {
@@ -168,7 +168,7 @@ class DummyDebugLink : public OHDLink {
     }
   }
   void transmit_audio_data(const openhd::AudioPacket& audio_packet) override {
-    m_console_audio->debug("Got audio data {}", audio_packet.data->size());
+    m_console_audio->warn("Got audio data {}", audio_packet.data->size());
   }
 
  private:

@@ -30,7 +30,7 @@
 namespace openhd::rpi::hdmi {
 
 static void initialize_resolution(const int width, const int height, int fps) {
-  openhd::log::get_default()->debug("rpi hdmi initialize_resolution {} {} {}",
+  openhd::log::get_default()->warn("rpi hdmi initialize_resolution {} {} {}",
                                     width, height, fps);
   // https://forums.raspberrypi.com/viewtopic.php?f=38&t=281972
   // TODO: Create a script that (Installs ?) the correct timings (file)

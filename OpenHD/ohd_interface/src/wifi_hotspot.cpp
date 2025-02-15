@@ -91,16 +91,16 @@ WifiHotspot::WifiHotspot(OHDProfile profile, WiFiCard wifiCard,
   m_console = openhd::log::create_or_get("wifi_hs");
   // create the connection (no matter if hotspot is enabled) such that we can
   // just enable / disable it by running connection up / down.
-  m_console->debug("begin create hotspot connection");
+  m_console->warn("begin create hotspot connection");
   create_hotspot_connection_file(m_wifi_card, m_profile.is_air,
                                  m_use_5G_channel);
-  m_console->debug("end create hotspot connection");
+  m_console->warn("end create hotspot connection");
 }
 
 WifiHotspot::~WifiHotspot() { util_delete_nm_file(); }
 
 void WifiHotspot::start() {
-  m_console->debug("Starting WIFI hotspot on card {}", m_wifi_card.device_name);
+  m_console->warn("Starting WIFI hotspot on card {}", m_wifi_card.device_name);
   const auto args =
       std::vector<std::string>{"con", "up", OHD_WIFI_HOTSPOT_CONNECTION_NAME};
   OHDUtil::run_command("nmcli", args);
@@ -111,7 +111,7 @@ void WifiHotspot::start() {
 }
 
 void WifiHotspot::stop() {
-  m_console->debug("Stopping wifi hotspot on card {}", m_wifi_card.device_name);
+  m_console->warn("Stopping wifi hotspot on card {}", m_wifi_card.device_name);
   if (!started) return;
   const auto args =
       std::vector<std::string>{"con", "down", OHD_WIFI_HOTSPOT_CONNECTION_NAME};

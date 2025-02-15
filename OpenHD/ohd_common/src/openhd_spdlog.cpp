@@ -165,7 +165,7 @@ void openhd::log::log_to_kernel(const std::string& message) {
 }
 
 void openhd::log::debug_log(const std::string& message) {
-  openhd::log::get_default()->debug(message);
+  openhd::log::get_default()->warn(message);
 }
 void openhd::log::info_log(const std::string& message) {
   openhd::log::get_default()->info(message);

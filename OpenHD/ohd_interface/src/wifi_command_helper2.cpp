@@ -52,7 +52,7 @@ static int error_handler(struct sockaddr_nl *nla, struct nlmsgerr *err,
 
 bool wifi::commandhelper2::set_wifi_up_down(const std::string &device,
                                             bool up) {
-  get_logger()->debug("set_wifi_up_down {} up:{}", device,
+  get_logger()->warn("set_wifi_up_down {} up:{}", device,
                       OHDUtil::yes_or_no(up));
   int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
   assert(sockfd >= 0);
@@ -73,7 +73,7 @@ bool wifi::commandhelper2::set_wifi_up_down(const std::string &device,
 }
 
 bool wifi::commandhelper2::set_wifi_monitor_mode(const std::string &device) {
-  get_logger()->debug("set_wifi_monitor_mode {} ", device);
+  get_logger()->warn("set_wifi_monitor_mode {} ", device);
   // The device must be down to change the mode
   if (!set_wifi_up_down(device, false)) {
     return false;
@@ -118,10 +118,10 @@ bool wifi::commandhelper2::set_wifi_frequency(
     const std::string &device, uint32_t freq_mhz,
     std::optional<uint32_t> channel_width) {
   if (channel_width.has_value()) {
-    get_logger()->debug("set_wifi_frequency {} {}Mhz {}Mhz", device, freq_mhz,
+    get_logger()->warn("set_wifi_frequency {} {}Mhz {}Mhz", device, freq_mhz,
                         channel_width.value());
   } else {
-    get_logger()->debug("set_wifi_frequency {} {}Mhz", device, freq_mhz);
+    get_logger()->warn("set_wifi_frequency {} {}Mhz", device, freq_mhz);
   }
   int err = 1;
   struct nl_cb *cb = nl_cb_alloc(NL_CB_DEFAULT);
@@ -156,7 +156,7 @@ bool wifi::commandhelper2::set_wifi_frequency(
         netlink_channel_width = NL80211_CHAN_WIDTH_40;
         break;
       default:
-        get_logger()->debug("Invalid channel width {}, assuming 20Mhz",
+        get_logger()->warn("Invalid channel width {}, assuming 20Mhz",
                             channel_width_given);
         break;
     }
@@ -182,13 +182,13 @@ bool wifi::commandhelper2::set_wifi_frequency_and_log_result(
     const std::string &device, uint32_t freq_mhz,
     std::optional<uint32_t> channel_width) {
   const bool res = set_wifi_frequency(device, freq_mhz, channel_width);
-  get_logger()->debug("Set {} {}", freq_mhz, res ? "Success" : "Failure");
+  get_logger()->warn("Set {} {}", freq_mhz, res ? "Success" : "Failure");
   return false;
 }
 
 bool wifi::commandhelper2::set_wifi_txpower(const std::string &device,
                                             const uint32_t tx_power_mBm) {
-  get_logger()->debug("set_wifi_txpower {} {} mBm", device, tx_power_mBm);
+  get_logger()->warn("set_wifi_txpower {} {} mBm", device, tx_power_mBm);
   // Create the socket and connect to it.
   struct nl_sock *sckt = nl_socket_alloc();
   genl_connect(sckt);
@@ -223,7 +223,7 @@ nla_put_failure:
 
 bool wifi::commandhelper2::exp_set_wifi_frequency(const std::string &device,
                                                   uint32_t freq_mhz) {
-  openhd::log::get_default()->debug("exp_set_wifi_frequency {} {}", device,
+  openhd::log::get_default()->warn("exp_set_wifi_frequency {} {}", device,
                                     freq_mhz);
   int err = 1;
   struct nl_cb *cb = nl_cb_alloc(NL_CB_DEFAULT);
