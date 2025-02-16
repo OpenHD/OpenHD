@@ -218,7 +218,7 @@ std::string x_platform_type_to_string(int platform_type) {
       return "RADXA RK3588S";
     case X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B:
       return "RADXA RK3588";
-    case X_PLATFORM_TYPE_ROCKCHIP_RV1126_UNDEFINED:
+    case X_PLATFORM_TYPE_ROCKCHIP_RV1126:
       return "RV1126 UNDEFINED";
     case X_PLATFORM_TYPE_ROCKCHIP_RV1103:
       return "RV1103";
