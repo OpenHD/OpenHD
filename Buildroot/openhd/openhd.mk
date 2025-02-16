@@ -1,4 +1,4 @@
-################################################################################
+###################################################################
 # OpenHD
 #
 # Licensed under the GNU General Public License (GPL) Version 3.
@@ -28,7 +28,7 @@ OPENHD_SITE_METHOD = git
 OPENHD_GIT_SUBMODULES = YES
 
 # Set the version to the latest commit of the default branch
-OPENHD_VERSION = 491be55f6da442dacba9f017b0ef23220db7c246
+OPENHD_VERSION = 428a3733d17d1cb51366d4023cfa3625fb4da00a
 
 # Enable Git submodules if the project requires them
 OPENHD_GIT_SUBMODULES = YES
@@ -49,8 +49,9 @@ OPENHD_CONF_OPTS = \
 
 # Install init.d services to target
 define OPENHD_INSTALL_TARGET_CMDS
+    $(info OpenHD Build Directory: $(OPENHD_BUILDDIR))
     $(INSTALL) -d $(TARGET_DIR)/etc/init.d
-    cp -r $(PKG_BUILD_DIR)/Buildroot/init.d/* $(TARGET_DIR)/etc/init.d/
+    cp -r $(OPENHD_BUILDDIR)/../Buildroot/init.d/* $(TARGET_DIR)/etc/init.d/
     chmod +x $(TARGET_DIR)/etc/init.d/*
 endef
 
