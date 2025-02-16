@@ -220,6 +220,10 @@ std::string x_platform_type_to_string(int platform_type) {
       return "RADXA RK3588";
     case X_PLATFORM_TYPE_ROCKCHIP_RV1126_UNDEFINED:
       return "RV1126 UNDEFINED";
+    case X_PLATFORM_TYPE_ROCKCHIP_RV1103_UNDEFINED:
+      return "RV1103";
+    case X_PLATFORM_TYPE_ROCKCHIP_RV1106_UNDEFINED:
+      return "RV1106";
     case X_PLATFORM_TYPE_ALWINNER_X20:
       return "X20";
     case X_PLATFORM_TYPE_OPENIPC_SIGMASTAR_UNDEFINED:
@@ -252,6 +256,8 @@ int get_fec_max_block_size_for_platform() {
   }
   if (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W ||
       platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3 ||
+      platform_type == X_PLATFORM_TYPE_ROCKCHIP_RV1103_UNDEFINED ||
+      platform_type == X_PLATFORM_TYPE_ROCKCHIP_RV1106_UNDEFINED ||
       platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A ||
       platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B) {
     return 20;
