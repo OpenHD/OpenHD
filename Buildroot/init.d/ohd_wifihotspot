@@ -1,130 +1,165 @@
-#!/bin/bash
+#!/bin/sh
 ### BEGIN INIT INFO
 # Provides:          ohd_wifihotspot
 # Required-Start:    $network $remote_fs $syslog
 # Required-Stop:     $network $remote_fs $syslog
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
-# Short-Description: Manage Wi-Fi hotspot using connman
-# Description:       Starts, stops, and connects to networks using connman
+# Short-Description: Manage Wi-Fi hotspot using hostapd
+# Description:       Starts, stops, and connects to networks using hostapd and dnsmasq
 ### END INIT INFO
 
-CONNMANCTL="/usr/bin/connmanctl"
+set -x  # Enable debugging
 
-start2gHotspot() {
-    DEVICE=$1
-    CHANNEL=$2
-    SSID=$3
-    PASSPHRASE=$4
+### Configuration Files
+HOSTAPD_CONF="/etc/hostapd/hostapd.conf"
+DNSMASQ_CONF="/etc/dnsmasq.conf"
+HOSTAPD_PID="/var/run/hostapd.pid"
+DNSMASQ_PID="/var/run/dnsmasq.pid"
 
-    if [[ -z "$DEVICE" || -z "$CHANNEL" || -z "$SSID" || -z "$PASSPHRASE" ]]; then
-        echo "Error: Missing parameters for 2.4 GHz hotspot!"
-        echo "Usage: $0 start2gHotspot <device> <channel> \"SSID\" \"Passphrase\""
-        exit 1
-    fi
-
-    echo "Starting 2.4 GHz Hotspot on $DEVICE, channel $CHANNEL with SSID: $SSID"
-
-    stopHotspot "$DEVICE"
-
-    $CONNMANCTL enable $DEVICE
-    $CONNMANCTL tether $DEVICE on "$SSID" "$PASSPHRASE"
-
-    iw dev "$DEVICE" set channel "$CHANNEL"
-
-    echo "2.4 GHz Hotspot started on $DEVICE, channel $CHANNEL with SSID: $SSID"
+log() {
+    echo "$(date "+%Y-%m-%d %H:%M:%S") - $1"
+    logger "ohd_wifihotspot: $1"
 }
 
-start5gHotspot() {
+error_exit() {
+    log "ERROR: $1"
+    exit 1
+}
+
+ensure_wlan_up() {
+    DEVICE=$1
+
+    # Check if wlan0 exists
+    if ! ip link show "$DEVICE" &>/dev/null; then
+        error_exit "$DEVICE does not exist!"
+    fi
+
+    # Unblock Wi-Fi if it's soft-blocked
+    if command -v rfkill &>/dev/null; then
+        rfkill unblock wifi
+        rfkill unblock all
+    fi
+
+    # Bring wlan0 up
+    ip link set "$DEVICE" up || error_exit "Failed to bring up $DEVICE"
+
+    log "$DEVICE is up and ready."
+}
+
+configure_hostapd() {
     DEVICE=$1
     CHANNEL=$2
     SSID=$3
     PASSPHRASE=$4
 
-    if [[ -z "$DEVICE" || -z "$CHANNEL" || -z "$SSID" || -z "$PASSPHRASE" ]]; then
-        echo "Error: Missing parameters for 5 GHz hotspot!"
-        echo "Usage: $0 start5gHotspot <device> <channel> \"SSID\" \"Passphrase\""
-        exit 1
+    # Determine if we are using 2.4 GHz or 5 GHz
+    if [ "$CHANNEL" -gt 14 ]; then
+        HW_MODE="a"  # 5 GHz mode
+    else
+        HW_MODE="g"  # 2.4 GHz mode
     fi
 
-    echo "Starting 5 GHz Hotspot on $DEVICE, channel $CHANNEL with SSID: $SSID"
+    # Create hostapd config file
+    mkdir -p /etc/hostapd
+    cat > "$HOSTAPD_CONF" <<EOF
+interface=$DEVICE
+driver=nl80211
+ssid=$SSID
+hw_mode=$HW_MODE
+channel=$CHANNEL
+wmm_enabled=1
+auth_algs=1
+wpa=2
+wpa_passphrase=$PASSPHRASE
+wpa_key_mgmt=WPA-PSK
+rsn_pairwise=CCMP
+EOF
+
+    # Extra settings for 5 GHz mode
+    if [ "$HW_MODE" = "a" ]; then
+        cat >> "$HOSTAPD_CONF" <<EOF
+ieee80211n=1
+ieee80211ac=1
+ht_capab=[HT40+]
+vht_capab=[VHT80]
+vht_oper_chwidth=1
+vht_oper_centr_freq_seg0_idx=$(($CHANNEL + 6))
+country_code=US  # Change this to your country
+EOF
+    fi
+}
+
+configure_dnsmasq() {
+    cat > "$DNSMASQ_CONF" <<EOF
+interface=wlan0
+dhcp-range=192.168.1.100,192.168.1.200,12h
+EOF
+}
+
+startHotspot() {
+    DEVICE=$1
+    CHANNEL=$2
+    SSID=$3
+    PASSPHRASE=$4
+
+    log "Starting Hotspot on $DEVICE, channel $CHANNEL, SSID: $SSID"
 
     stopHotspot "$DEVICE"
+    ensure_wlan_up "$DEVICE"
 
-    $CONNMANCTL enable $DEVICE
-    $CONNMANCTL tether $DEVICE on "$SSID" "$PASSPHRASE"
+    configure_hostapd "$DEVICE" "$CHANNEL" "$SSID" "$PASSPHRASE"
+    configure_dnsmasq
 
-    iw dev "$DEVICE" set freq "$((5000 + CHANNEL * 5))"
+    # Start dnsmasq manually
+    dnsmasq -C "$DNSMASQ_CONF" -x "$DNSMASQ_PID" || error_exit "Failed to start dnsmasq"
 
-    echo "5 GHz Hotspot started on $DEVICE, channel $CHANNEL with SSID: $SSID"
+    # Start hostapd manually
+    hostapd -B "$HOSTAPD_CONF" -P "$HOSTAPD_PID" || error_exit "Failed to start hostapd"
+
+    log "Hotspot started successfully on $DEVICE"
 }
 
 stopHotspot() {
     DEVICE=$1
 
-    if [[ -z "$DEVICE" ]]; then
-        echo "Error: Missing device parameter for stopping hotspot!"
-        echo "Usage: $0 stopHotspot <device>"
-        exit 1
+    log "Stopping hotspot on $DEVICE..."
+
+    # Stop hostapd if running
+    if [ -f "$HOSTAPD_PID" ]; then
+        kill "$(cat $HOSTAPD_PID)" && rm -f "$HOSTAPD_PID"
     fi
 
-    echo "Stopping any active hotspot on $DEVICE..."
-    $CONNMANCTL disable "$DEVICE"
-    echo "Hotspot stopped on $DEVICE."
+    # Stop dnsmasq if running
+    if [ -f "$DNSMASQ_PID" ]; then
+        kill "$(cat $DNSMASQ_PID)" && rm -f "$DNSMASQ_PID"
+    fi
+
+    ip link set "$DEVICE" down
+    log "Hotspot stopped on $DEVICE."
 }
 
-connectToNetwork() {
+restartHotspot() {
     DEVICE=$1
-    SSID="$2"
-    PASSPHRASE="$3"
+    SSID=${2:-"Default_SSID"}
+    PASSPHRASE=${3:-"Default_Password"}
 
-    if [[ -z "$DEVICE" || -z "$SSID" || -z "$PASSPHRASE" ]]; then
-        echo "Error: Device, SSID, and passphrase are required to connect to a network."
-        echo "Usage: $0 connectToNetwork <device> \"SSID\" \"Passphrase\""
-        exit 1
-    fi
+    stopHotspot "$DEVICE"
+    startHotspot "$DEVICE" 6 "$SSID" "$PASSPHRASE"
+}
 
-    echo "Scanning for networks on $DEVICE..."
-    $CONNMANCTL scan "$DEVICE"
-
-    echo "Attempting to connect to $SSID on $DEVICE..."
-    NETWORK_SERVICE=$($CONNMANCTL services | grep "$SSID" | awk '{print $3}')
-
-    if [[ -z "$NETWORK_SERVICE" ]]; then
-        echo "Error: Network $SSID not found!"
-        exit 1
-    fi
-
-    echo "Setting passphrase..."
-    $CONNMANCTL config "$NETWORK_SERVICE" --passphrase "$PASSPHRASE"
-
-    echo "Connecting..."
-    $CONNMANCTL connect "$NETWORK_SERVICE"
-
-    echo "Connected to $SSID on $DEVICE"
+usage() {
+    echo "Usage: $0 {startHotspot <device> <channel> \"SSID\" \"Passphrase\" |"
+    echo "          stopHotspot <device> |"
+    echo "          restartHotspot <device> [SSID] [Passphrase] }"
+    exit 1
 }
 
 case "$1" in
-    start2gHotspot)
-        start2gHotspot "$2" "$3" "$4" "$5"
-        ;;
-    start5gHotspot)
-        start5gHotspot "$2" "$3" "$4" "$5"
-        ;;
-    stopHotspot)
-        stopHotspot "$2"
-        ;;
-    connectToNetwork)
-        connectToNetwork "$2" "$3" "$4"
-        ;;
-    restart)
-        stopHotspot "$2"
-        start2gHotspot "$2" 6 "Default_SSID" "Default_Password"
-        ;;
-    *)
-        echo "Usage: $0 {start2gHotspot <device> <channel> \"SSID\" \"Passphrase\"|start5gHotspot <device> <channel> \"SSID\" \"Passphrase\"|stopHotspot <device>|connectToNetwork <device> \"SSID\" \"Passphrase\"|restart <device>}"
-        exit 1
-        ;;
+    startHotspot) startHotspot "$2" "$3" "$4" "$5" ;;
+    stopHotspot) stopHotspot "$2" ;;
+    restartHotspot) restartHotspot "$2" "$3" "$4" ;;
+    *) usage ;;
 esac
 
 exit 0
