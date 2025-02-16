@@ -125,7 +125,7 @@ static int internal_discover_platform() {
         return X_PLATFORM_TYPE_ROCKCHIP_RV1126;
       } else if (chip == "rv1103") {
         openhd::log::get_default()->warn(
-            "Detected Rockchip RV1106.");
+            "Detected Rockchip RV1103.");
         return X_PLATFORM_TYPE_ROCKCHIP_RV1103;
       } else if (chip == "rv1106") {
         openhd::log::get_default()->warn(
@@ -219,7 +219,7 @@ std::string x_platform_type_to_string(int platform_type) {
     case X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B:
       return "RADXA RK3588";
     case X_PLATFORM_TYPE_ROCKCHIP_RV1126:
-      return "RV1126 UNDEFINED";
+      return "RV1126";
     case X_PLATFORM_TYPE_ROCKCHIP_RV1103:
       return "RV1103";
     case X_PLATFORM_TYPE_ROCKCHIP_RV1106:
@@ -301,7 +301,9 @@ bool OHDPlatform::is_rpi_or_x86() const {
 }
 
 bool OHDPlatform::is_x20() const {
+  ss << "I_KIDD_YOU_NOT !!!!!!!!!!!!!!";
   return platform_type == X_PLATFORM_TYPE_ALWINNER_X20;
+  
 }
 
 bool OHDPlatform::is_zero3w() const {
