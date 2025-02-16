@@ -121,16 +121,16 @@ static int internal_discover_platform() {
         }
       } else if (chip == "rv1126") {
         openhd::log::get_default()->warn(
-            "Detected Rockchip RV1126 (Undefined).");
-        return X_PLATFORM_TYPE_ROCKCHIP_RV1126_UNDEFINED;
+            "Detected Rockchip RV1126.");
+        return X_PLATFORM_TYPE_ROCKCHIP_RV1126;
       } else if (chip == "rv1103") {
         openhd::log::get_default()->warn(
-            "Detected Rockchip RV1103 (Undefined).");
-        return X_PLATFORM_TYPE_ROCKCHIP_RV1103_UNDEFINED;
+            "Detected Rockchip RV1106.");
+        return X_PLATFORM_TYPE_ROCKCHIP_RV1103;
       } else if (chip == "rv1106") {
         openhd::log::get_default()->warn(
-            "Detected Rockchip RV1106 (Undefined).");
-        return X_PLATFORM_TYPE_ROCKCHIP_RV1106_UNDEFINED;
+            "Detected Rockchip RV1106");
+        return X_PLATFORM_TYPE_ROCKCHIP_RV1106;
       }
     }
 
@@ -220,9 +220,9 @@ std::string x_platform_type_to_string(int platform_type) {
       return "RADXA RK3588";
     case X_PLATFORM_TYPE_ROCKCHIP_RV1126_UNDEFINED:
       return "RV1126 UNDEFINED";
-    case X_PLATFORM_TYPE_ROCKCHIP_RV1103_UNDEFINED:
+    case X_PLATFORM_TYPE_ROCKCHIP_RV1103:
       return "RV1103";
-    case X_PLATFORM_TYPE_ROCKCHIP_RV1106_UNDEFINED:
+    case X_PLATFORM_TYPE_ROCKCHIP_RV1106:
       return "RV1106";
     case X_PLATFORM_TYPE_ALWINNER_X20:
       return "X20";
@@ -256,8 +256,8 @@ int get_fec_max_block_size_for_platform() {
   }
   if (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W ||
       platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3 ||
-      platform_type == X_PLATFORM_TYPE_ROCKCHIP_RV1103_UNDEFINED ||
-      platform_type == X_PLATFORM_TYPE_ROCKCHIP_RV1106_UNDEFINED ||
+      platform_type == X_PLATFORM_TYPE_ROCKCHIP_RV1103 ||
+      platform_type == X_PLATFORM_TYPE_ROCKCHIP_RV1106 ||
       platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A ||
       platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B) {
     return 20;
