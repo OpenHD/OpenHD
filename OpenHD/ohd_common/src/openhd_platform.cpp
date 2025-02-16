@@ -301,7 +301,6 @@ bool OHDPlatform::is_rpi_or_x86() const {
 }
 
 bool OHDPlatform::is_x20() const {
-  ss << "I_KIDD_YOU_NOT !!!!!!!!!!!!!!";
   return platform_type == X_PLATFORM_TYPE_ALWINNER_X20;
   
 }
