@@ -195,6 +195,7 @@ int main(int argc, char *argv[]) {
     openhd::set_config_file(options.hardware_config_file.value());
   }
   {  // Print all the arguments the OHD main executable is started with
+ bool validLicense=true;
  std::cout << "\033[2J\033[1;1H"; //clear terminal
  std::stringstream ss;
     ss << openhd::get_ohd_version_as_string() << "\n";
@@ -207,7 +208,7 @@ int main(int argc, char *argv[]) {
     ss << " ##     ## ##        ##       ##   ### ##     ## ##     ##\n";
     ss << "  #######  ##        ######## ##    ## ##     ## ######## \n";
     ss << reset;
-    if (options.run_as_air) {
+    if (!validLicense) {
       ss << "----------------------- " << blue << "OpenSource" << reset << " -----------------------\n";
     } else {
       ss << "----------------------- " << green << "Enterprise" << reset << " -----------------------\n";
