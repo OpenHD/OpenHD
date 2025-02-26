@@ -62,7 +62,7 @@ class YLogger {
   }
   void log_message(const std::string& message) {
     if (message.empty()) return;
-    m_console->warn(message);
+    m_console->debug(message);
   }
 };
 

@@ -54,13 +54,13 @@ JoystickReader::JoystickReader() {
   // WARNING: Joystick logging is a bit different than the rest regarding log
   // level
   // m_console->set_level(spdlog::level::warn);
-  m_console->warn("JoystickReader::JoystickReader");
+  m_console->debug("JoystickReader::JoystickReader");
   reset_curr_values();
   m_read_joystick_thread = std::make_unique<std::thread>([this] { loop(); });
 }
 
 JoystickReader::~JoystickReader() {
-  m_console->warn("JoystickReader::~JoystickReader()");
+  m_console->debug("JoystickReader::~JoystickReader()");
   terminate = true;
   m_read_joystick_thread->join();
   m_read_joystick_thread = nullptr;
@@ -93,7 +93,7 @@ void JoystickReader::connect_once_and_read_until_error() {
     SDL_Quit();
     return;
   }
-  m_console->warn("N joysticks: {}", n_joysticks);
+  m_console->debug("N joysticks: {}", n_joysticks);
   js = SDL_JoystickOpen(JOYSTICK_N);
   if (js == nullptr) {
     m_console->warn("Couldn't open desired Joystick: {}", SDL_GetError());
@@ -168,7 +168,7 @@ void JoystickReader::wait_for_events(const int timeout_ms) {
   bool any_new_data = false;
   // wait for at least one event with a timeut
   if (!SDL_WaitEventTimeout(&event, timeout_ms)) {
-    // m_console->warn("Got no event after 100ms");
+    // m_console->debug("Got no event after 100ms");
     return;
   }
   // process this event
@@ -194,7 +194,7 @@ void JoystickReader::wait_for_events(const int timeout_ms) {
       n_polled_events++;
     }
   }
-  // m_console->warn("N polled events:{}",n_polled_events);
+  // m_console->debug("N polled events:{}",n_polled_events);
   if (any_new_data) {
     std::lock_guard<std::mutex> guard(m_curr_values_mutex);
     for (int i = 0; i < m_curr_values.values.size(); i++) {
@@ -211,29 +211,29 @@ int JoystickReader::process_event(void* event1,
   int ret = 0;
   switch (event->type) {
     case SDL_JOYAXISMOTION:
-      m_console->warn("Joystick {}, Axis {} moved to {}", event->jaxis.which,
+      m_console->debug("Joystick {}, Axis {} moved to {}", event->jaxis.which,
                        event->jaxis.axis, event->jaxis.value);
       write_matching_axis(current, event->jaxis.axis, event->jaxis.value);
       ret = 2;
       break;
     case SDL_JOYBUTTONDOWN:
-      m_console->warn("Button down");
+      m_console->debug("Button down");
       write_matching_button(current, event->jbutton.button, false);
       ret = 5;
       break;
     case SDL_JOYBUTTONUP:
-      m_console->warn("Button up");
+      m_console->debug("Button up");
       write_matching_button(current, event->jbutton.button, true);
       ret = 4;
       break;
     case SDL_QUIT:
-      m_console->warn("Got SDL_QUIT");
+      m_console->debug("Got SDL_QUIT");
       ret = -1;
       break;
     default:
       // aparently we sometimes also get mouse / keyboard events from SDL, this
       // is not an issue
-      m_console->warn("Got Unknown SDL event type");
+      m_console->debug("Got Unknown SDL event type");
       ret = 0;
       break;
   }

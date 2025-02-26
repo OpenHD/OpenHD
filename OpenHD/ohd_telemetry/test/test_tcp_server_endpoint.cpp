@@ -31,7 +31,7 @@
 #include "openhd_util.h"
 
 int main() {
-  openhd::log::get_default()->warn("test_tcp_server_endpoint:end");
+  openhd::log::get_default()->debug("test_tcp_server_endpoint:end");
   std::unique_ptr<TCPEndpoint> m_server = std::make_unique<TCPEndpoint>(
       openhd::TCPServer::Config{TCPEndpoint::DEFAULT_PORT});  // 1445
   auto cb = [](const std::vector<MavlinkMessage> messages) {
@@ -46,12 +46,12 @@ int main() {
   const auto start = std::chrono::steady_clock::now();
   while ((std::chrono::steady_clock::now() - start) <
          std::chrono::seconds(30)) {
-    openhd::log::get_default()->warn("Alive:{}",
+    openhd::log::get_default()->debug("Alive:{}",
                                       OHDUtil::yes_or_no(m_server->isAlive()));
     auto heartbeat = MExampleMessage::heartbeat();
     m_server->sendMessages({heartbeat});
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
-  openhd::log::get_default()->warn("test_tcp_server_endpoint: end");
+  openhd::log::get_default()->debug("test_tcp_server_endpoint: end");
   return 0;
 }

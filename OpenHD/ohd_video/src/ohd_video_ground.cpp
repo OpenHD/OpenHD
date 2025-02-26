@@ -39,7 +39,7 @@ OHDVideoGround::OHDVideoGround(std::shared_ptr<OHDLink> link_handle)
   addForwarder("127.0.0.1");
   // See the description in the .config file for more info
   if (openhd::load_config().NW_FORWARD_TO_LOCALHOST_58XX || true) {
-    m_console->warn("Forwarding video to 5800/5801 localhost is enabled");
+    m_console->debug("Forwarding video to 5800/5801 localhost is enabled");
     // Adding forwarder for WebRTC
     m_primary_video_forwarder->addForwarder("127.0.0.1", 5800);
     m_secondary_video_forwarder->addForwarder("127.0.0.1", 5801);
@@ -86,13 +86,13 @@ void OHDVideoGround::removeForwarder(const std::string& client_addr) {
 
 void OHDVideoGround::on_video_data(int stream_index, const uint8_t* data,
                                    int data_len) {
-  // openhd::log::get_default()->warn("on_video_data {}",stream_index);
+  // openhd::log::get_default()->debug("on_video_data {}",stream_index);
   if (stream_index == 0) {
     m_primary_video_forwarder->forwardPacketViaUDP(data, data_len);
   } else if (stream_index == 1) {
     m_secondary_video_forwarder->forwardPacketViaUDP(data, data_len);
   } else {
-    openhd::log::get_default()->warn("Invalid stream index {}", stream_index);
+    openhd::log::get_default()->debug("Invalid stream index {}", stream_index);
   }
 }
 
@@ -114,7 +114,7 @@ void OHDVideoGround::start_stop_forwarding_external_device(
     const bool is_host_self =
         ip_is_host_self(external_device.external_device_ip);
     if (is_host_self) {
-      m_console->warn("Not forwarding video to {}, since self",
+      m_console->debug("Not forwarding video to {}, since self",
                        external_device.external_device_ip);
       return;
     }

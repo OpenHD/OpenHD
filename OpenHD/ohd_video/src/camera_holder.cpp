@@ -317,7 +317,7 @@ void CameraHolder::check_remaining_space_air_recording(bool call_callback) {
   }
 
   if (get_settings().air_recording != AIR_RECORDING_OFF) {
-    openhd::log::get_default()->warn("Disabling air recording");
+    openhd::log::get_default()->debug("Disabling air recording");
     unsafe_get_settings().air_recording = AIR_RECORDING_OFF;
     persist(call_callback);
   }

@@ -69,7 +69,7 @@ static std::string gst_element_get_current_state_as_string(
 static void gst_element_set_set_state_and_log_result(GstElement *element,
                                                      GstState state) {
   auto res = gst_element_set_state(element, state);
-  openhd::log::get_default()->warn("State changed to {} result {}",
+  openhd::log::get_default()->debug("State changed to {} result {}",
                                     gst_element_state_get_name(state),
                                     gst_state_change_return_to_string(res));
 }
@@ -79,22 +79,22 @@ static void gst_element_set_set_state_and_log_result(GstElement *element,
 // and https://github.com/GStreamer/gst-docs/blob/master/examples/bus_example.c
 static gboolean my_bus_callback(GstBus *bus, GstMessage *message,
                                 gpointer user_data) {
-  openhd::log::get_default()->warn("Got gst message [{}]",
+  openhd::log::get_default()->debug("Got gst message [{}]",
                                     GST_MESSAGE_TYPE_NAME(message));
   switch (GST_MESSAGE_TYPE(message)) {
     case GST_MESSAGE_ERROR:
-      openhd::log::get_default()->warn("we received an error!");
+      openhd::log::get_default()->debug("we received an error!");
       // g_main_loop_quit (loop);
       break;
     case GST_MESSAGE_EOS:
-      openhd::log::get_default()->warn("we reached EOS");
+      openhd::log::get_default()->debug("we reached EOS");
       // g_main_loop_quit (loop);
       break;
     case GST_MESSAGE_APPLICATION: {
-      openhd::log::get_default()->warn("Got GST_MESSAGE_APPLICATION");
+      openhd::log::get_default()->debug("Got GST_MESSAGE_APPLICATION");
       if (gst_message_has_name(message, "ExPrerolled")) {
         /* it's our message */
-        openhd::log::get_default()->warn("we are all prerolled, do seek");
+        openhd::log::get_default()->debug("we are all prerolled, do seek");
         /*gst_element_seek (pipeline,
                          1.0, GST_FORMAT_TIME,
                          GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_ACCURATE,
@@ -107,7 +107,7 @@ static gboolean my_bus_callback(GstBus *bus, GstMessage *message,
     }
     // case GST_MESSAGE_STATE_CHANGED:
     default:
-      openhd::log::get_default()->warn("unknown message ");
+      openhd::log::get_default()->debug("unknown message ");
       break;
   }
   return TRUE;
@@ -116,12 +116,12 @@ static gboolean my_bus_callback(GstBus *bus, GstMessage *message,
 static void register_message_cb(GstElement *pipeline) {
   auto bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
   if (bus == nullptr) {
-    openhd::log::get_default()->warn("Cannot get bus");
+    openhd::log::get_default()->debug("Cannot get bus");
     return;
   }
   gst_bus_add_watch(bus, my_bus_callback, NULL);
   gst_object_unref(bus);
-  openhd::log::get_default()->warn("added gst bus watch");
+  openhd::log::get_default()->debug("added gst bus watch");
 }
 
 // From https://github.com/GStreamer/gst-docs/blob/master/examples/bus_example.c

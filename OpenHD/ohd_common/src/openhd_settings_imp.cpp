@@ -105,7 +105,7 @@ void openhd::validate_provided_ids(const std::vector<Setting>& settings) {
 std::function<bool(std::string id, int requested_value)>
 openhd::create_log_only_cb_int() {
   auto cb = [](std::string id, int value) {
-    openhd::log::get_default()->warn("MAVLINK wants to change {} to {}", id,
+    openhd::log::get_default()->debug("MAVLINK wants to change {} to {}", id,
                                       value);
     return true;
   };
@@ -115,7 +115,7 @@ openhd::create_log_only_cb_int() {
 std::function<bool(std::string id, std::string requested_value)>
 openhd::create_log_only_cb_string() {
   auto cb = [](std::string id, std::string value) {
-    openhd::log::get_default()->warn("MAVLINK wants to change {} to {}", id,
+    openhd::log::get_default()->debug("MAVLINK wants to change {} to {}", id,
                                       value);
     return true;
   };

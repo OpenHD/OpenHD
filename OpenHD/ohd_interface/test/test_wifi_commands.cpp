@@ -33,7 +33,7 @@
 static void test_all_supported_frequencies(const WiFiCard& card,
                                            const int channel_width) {
   OHDUtil::run_command("dmesg", {"--clear"});
-  openhd::log::get_default()->warn("test_all_supported_frequencies begin");
+  openhd::log::get_default()->debug("test_all_supported_frequencies begin");
   std::vector<std::pair<int, bool>> results;
   for (auto frequency_mhz : card.get_supported_frequencies_2G_5G()) {
     auto channel = openhd::channel_from_frequency(frequency_mhz).value();
@@ -42,7 +42,7 @@ static void test_all_supported_frequencies(const WiFiCard& card,
     // }
     if (channel_width == 40) {
       if (!channel.is_legal_any_country_40Mhz) {
-        openhd::log::get_default()->warn("Skipping {}, no 40Mhz",
+        openhd::log::get_default()->debug("Skipping {}, no 40Mhz",
                                           frequency_mhz);
         continue;
       }
@@ -59,12 +59,12 @@ static void test_all_supported_frequencies(const WiFiCard& card,
     // Until i fixed the HT40+/- stuff, rtl8812bu driver crashed on some
     // channels, and i was using this util to debug.
     const auto dmesg_content_opt = OHDUtil::run_command_out("dmesg");
-    openhd::log::get_default()->warn("{}", dmesg_content_opt.value_or("None"));
+    openhd::log::get_default()->debug("{}", dmesg_content_opt.value_or("None"));
     OHDUtil::run_command("dmesg", {"--clear"});
     if (dmesg_content_opt.has_value()) {
       const auto& dmesg_content = dmesg_content_opt.value();
       if (OHDUtil::contains(dmesg_content, "Call Trace:")) {
-        openhd::log::get_default()->warn("{}", dmesg_content);
+        openhd::log::get_default()->debug("{}", dmesg_content);
         break;
       }
     }
@@ -73,12 +73,12 @@ static void test_all_supported_frequencies(const WiFiCard& card,
     const int freq = res.first;
     const bool success = res.second;
     if (success) {
-      openhd::log::get_default()->warn("Set {} Success", freq);
+      openhd::log::get_default()->debug("Set {} Success", freq);
     } else {
-      openhd::log::get_default()->warn("Set {} Error", freq);
+      openhd::log::get_default()->debug("Set {} Error", freq);
     }
   }
-  openhd::log::get_default()->warn("test_all_supported_frequencies end");
+  openhd::log::get_default()->debug("test_all_supported_frequencies end");
 }
 
 int main(int argc, char* argv[]) {

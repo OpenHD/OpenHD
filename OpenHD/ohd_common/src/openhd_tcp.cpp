@@ -37,7 +37,7 @@ openhd::TCPServer::TCPServer(const std::string tag,
   assert(m_console);
   m_accept_thread =
       std::make_unique<std::thread>(&TCPServer::loop_accept, this);
-  m_console->warn("created with {}", m_config.port);
+  m_console->debug("created with {}", m_config.port);
 }
 
 openhd::TCPServer::~TCPServer() {
@@ -56,7 +56,7 @@ openhd::TCPServer::~TCPServer() {
     client->rx_loop_thread->join();
     client->rx_loop_thread = nullptr;
   }
-  m_console->warn("TCPEndpoint::~TCPEndpoint() end");
+  m_console->debug("TCPEndpoint::~TCPEndpoint() end");
 }
 
 void openhd::TCPServer::loop_accept() {
@@ -91,13 +91,13 @@ void openhd::TCPServer::loop_accept() {
     const auto accept_result = accept(server_fd, (struct sockaddr*)&sockaddr,
                                       (socklen_t*)&sockaddr_len);
     if (accept_result < 0) {
-      m_console->warn("accept failed");
+      m_console->debug("accept failed");
       close(server_fd);
       return;
     }
     const std::string client_ip = inet_ntoa(sockaddr.sin_addr);
     const int client_port = ntohs(sockaddr.sin_port);
-    m_console->warn("accepted client,sockfd:{}, ip:{}, port:{}", accept_result,
+    m_console->debug("accepted client,sockfd:{}, ip:{}, port:{}", accept_result,
                      client_ip, client_port);
     auto new_client = std::make_shared<ConnectedClient>();
     new_client->sock_fd = accept_result;
@@ -125,7 +125,7 @@ void openhd::TCPServer::send_message_to_all_clients(const uint8_t* data,
                           // disconnected
           MSG_NOSIGNAL;   // otherwise we might crash if the socket disconnects
       if (!send(client->sock_fd, data, data_len, flags)) {
-        m_console->warn("Client {} disconnected (cannot send data)",
+        m_console->debug("Client {} disconnected (cannot send data)",
                          client->ip);
         // Will be disconnected / removed by the accept thread
         client->marked_to_be_removed = true;
@@ -140,12 +140,12 @@ void openhd::TCPServer::ConnectedClient::loop_rx() {
   while (keep_rx_looping) {
     const ssize_t message_length = read(sock_fd, buff->data(), buff->size());
     if (message_length < 0) {
-      console->warn("Read error {} {}", message_length, strerror(errno));
+      console->debug("Read error {} {}", message_length, strerror(errno));
       marked_to_be_removed = true;
       break;
     }
     if (message_length == 0) {
-      console->warn("Client disconnected");
+      console->debug("Client disconnected");
       marked_to_be_removed = true;
       break;
     }

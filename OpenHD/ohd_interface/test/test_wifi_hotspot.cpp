@@ -38,6 +38,6 @@ int main(int argc, char *argv[]) {
   OHDProfile profile{true, "none"};
   WifiHotspot wifiHotspot{profile, wifiCard, openhd::WifiSpace::G2_4};
   OHDUtil::keep_alive_until_sigterm();
-  openhd::log::get_default()->warn("test end");
+  openhd::log::get_default()->debug("test end");
   return 0;
 }

@@ -65,28 +65,28 @@ static std::string create_recording_pipeline(const VideoCodec videoCodec,
 
 static void need_data(GstElement* pipeline, guint size,
                       GstVideoRecorder* self) {
-  openhd::log::get_default()->warn("need_data");
+  openhd::log::get_default()->debug("need_data");
   self->ready_data = true;
 }
 
 static void enough_data(GstElement* pipeline, GstVideoRecorder* self) {
-  openhd::log::get_default()->warn("enough_data");
+  openhd::log::get_default()->debug("enough_data");
   self->ready_data = false;
 }
 
 GstVideoRecorder::GstVideoRecorder() {
   m_console = openhd::log::create_or_get("v_gst_recorder");
   assert(m_console);
-  m_console->warn("GstVideoRecorder");
+  m_console->debug("GstVideoRecorder");
   const auto video_codec = VideoCodec::H264;
   const auto recording_filename =
       openhd::video::create_unused_recording_filename(
           OHDGstHelper::file_suffix_for_video_codec(video_codec));
-  m_console->warn("Using [{}] for recording", recording_filename);
+  m_console->debug("Using [{}] for recording", recording_filename);
 
   const auto pipeline_str =
       create_recording_pipeline(video_codec, recording_filename);
-  m_console->warn("Starting pipeline:[{}]", pipeline_str);
+  m_console->debug("Starting pipeline:[{}]", pipeline_str);
   GError* error = nullptr;
   m_gst_pipeline = gst_parse_launch(pipeline_str.c_str(), &error);
   if (error) {
@@ -134,9 +134,9 @@ void GstVideoRecorder::on_video_data(const uint8_t* data, int data_len) {
   if (ret != GST_FLOW_OK) {
     m_console->warn("Cannot push buffer");
   } else {
-    m_console->warn("Pushed buffer {}", data_len);
+    m_console->debug("Pushed buffer {}", data_len);
   }
-  m_console->warn("Curr n buffers: {}", gst_app_src_get_current_level_buffers(
+  m_console->debug("Curr n buffers: {}", gst_app_src_get_current_level_buffers(
                                              GST_APP_SRC(m_app_src_element)));
   gst_element_set_state(m_gst_pipeline, GST_STATE_PLAYING);
   /*GstBuffer *buffer;
@@ -156,7 +156,7 @@ void GstVideoRecorder::on_video_data(const uint8_t* data, int data_len) {
   if (ret != GST_FLOW_OK) {
     m_console->warn("Cannot push buffer");
   }else{
-    //m_console->warn("Pushed buffer {}",data_len);
+    //m_console->debug("Pushed buffer {}",data_len);
   }*/
 }
 
@@ -167,10 +167,10 @@ void GstVideoRecorder::enqueue_rtp_fragment(
 
 void GstVideoRecorder::start() {
   gst_element_set_state(m_gst_pipeline, GST_STATE_PLAYING);
-  m_console->warn(
+  m_console->debug(
       openhd::gst_element_get_current_state_as_string(m_gst_pipeline));
   std::this_thread::sleep_for(std::chrono::seconds(1));
-  m_console->warn(
+  m_console->debug(
       openhd::gst_element_get_current_state_as_string(m_gst_pipeline));
 }
 
@@ -178,11 +178,11 @@ void GstVideoRecorder::stop_and_cleanup() {
   gst_element_send_event(m_gst_pipeline, gst_event_new_eos());
   openhd::gst_element_set_set_state_and_log_result(m_gst_pipeline,
                                                    GST_STATE_PAUSED);
-  m_console->warn(
+  m_console->debug(
       openhd::gst_element_get_current_state_as_string(m_gst_pipeline));
   openhd::gst_element_set_set_state_and_log_result(m_gst_pipeline,
                                                    GST_STATE_NULL);
-  m_console->warn(
+  m_console->debug(
       openhd::gst_element_get_current_state_as_string(m_gst_pipeline));
   gst_object_unref(m_gst_pipeline);
 }

@@ -49,10 +49,10 @@ void openhd::ArmingStateHelper::unregister_listener(const std::string &tag) {
 void openhd::ArmingStateHelper::update_arming_state_if_changed(bool armed) {
   if (m_is_armed == armed) return;
   m_is_armed = armed;
-  m_console->warn("MAV armed:{}, calling listeners.",
+  m_console->debug("MAV armed:{}, calling listeners.",
                    OHDUtil::yes_or_no(armed));
   for (auto &element : m_cbs) {
-    // m_console->warn("Calling {},begin",element.first);
+    // m_console->debug("Calling {},begin",element.first);
     const auto start = std::chrono::steady_clock::now();
     element.second(armed);
     const auto elapsed = std::chrono::steady_clock::now() - start;
@@ -60,9 +60,9 @@ void openhd::ArmingStateHelper::update_arming_state_if_changed(bool armed) {
       m_console->info("arming state cb took too long {}",
                       openhd::util::verbose_timespan(elapsed));
     }
-    // m_console->warn("Calling {},end",element.first);
+    // m_console->debug("Calling {},end",element.first);
   }
-  m_console->warn("Done calling listeners.");
+  m_console->debug("Done calling listeners.");
 }
 
 openhd::FCRcChannelsHelper &openhd::FCRcChannelsHelper::instance() {

@@ -41,10 +41,10 @@ void openhd::BitrateDebugger::on_packet(int64_t n_bytes) {
     const double bytes_per_s = static_cast<double>(m_bytes) / elapsed_s;
     const double pps = static_cast<double>(m_n_packets) / elapsed_s;
     if (m_debug_pps) {
-      m_console->warn("{} {}", bytes_per_second_to_string(bytes_per_s),
+      m_console->debug("{} {}", bytes_per_second_to_string(bytes_per_s),
                        openhd::pps_to_string(pps));
     } else {
-      m_console->warn("{}", bytes_per_second_to_string(bytes_per_s));
+      m_console->debug("{}", bytes_per_second_to_string(bytes_per_s));
     }
     m_bytes = 0;
     m_n_packets = 0;

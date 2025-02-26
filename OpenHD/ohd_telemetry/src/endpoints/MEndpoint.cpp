@@ -32,7 +32,7 @@ MEndpoint::MEndpoint(std::string tag, bool debug_mavlink_msg_packet_loss)
     : TAG(std::move(tag)),
       m_mavlink_channel(checkoutFreeChannel()),
       m_debug_mavlink_msg_packet_loss(debug_mavlink_msg_packet_loss) {
-  openhd::log::get_default()->warn(
+  openhd::log::get_default()->debug(
       "{} using channel:{} debug_mavlink_msg_packet_los:{}", TAG,
       m_mavlink_channel, m_debug_mavlink_msg_packet_loss);
 }
@@ -42,10 +42,10 @@ void MEndpoint::sendMessages(const std::vector<MavlinkMessage>& messages) {
   m_tx_n_bytes += get_size(messages);
   /*for(const auto& msg: messages){
     if(msg.m.msgid==MAVLINK_MSG_ID_RC_CHANNELS_OVERRIDE){
-      openhd::log::get_default()->warn("Send rc channels override");
+      openhd::log::get_default()->debug("Send rc channels override");
     }
   }*/
-  // openhd::log::create_or_get(TAG)->warn("N messages
+  // openhd::log::create_or_get(TAG)->debug("N messages
   // send:{}",messages.size());
   const auto res = sendMessagesImpl(messages);
   m_n_messages_sent += messages.size();
@@ -104,7 +104,7 @@ void MEndpoint::parseNewData(const uint8_t* data, const int data_len) {
 
 void MEndpoint::onNewMavlinkMessages(std::vector<MavlinkMessage> messages) {
   if (messages.empty()) return;
-  // openhd::log::create_or_get(TAG)->warn("N messages
+  // openhd::log::create_or_get(TAG)->debug("N messages
   // receive:{}",messages.size());
   lastMessage = std::chrono::steady_clock::now();
   m_n_messages_received += messages.size();

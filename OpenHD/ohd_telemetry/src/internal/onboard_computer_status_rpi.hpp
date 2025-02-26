@@ -117,7 +117,7 @@ static bool vcgencmd_get_undervolt() {
   const auto opt_vcgencmd_result =
       OHDUtil::run_command_out(fmt::format("vcgencmd get_throttled"));
   if (!opt_vcgencmd_result.has_value()) {
-    openhd::log::get_default()->warn("Cannot get vcgencmd throttled");
+    openhd::log::get_default()->debug("Cannot get vcgencmd throttled");
     return false;  // we don't know
   }
   const std::string& vcgencmd_result = opt_vcgencmd_result.value();
@@ -128,7 +128,7 @@ static bool vcgencmd_get_undervolt() {
   }
   const long value = value_opt.value();
   const auto undervolt_bit = OHDUtil::get_nth_bit(value_opt.value(), 0);
-  // openhd::log::get_default()->warn("Undervolt {}/{} {:x} bit
+  // openhd::log::get_default()->debug("Undervolt {}/{} {:x} bit
   // set:{}",vcgencmd_result,value,value,undervolt_bit);
   return undervolt_bit;
 }

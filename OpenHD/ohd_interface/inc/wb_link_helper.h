@@ -128,7 +128,7 @@ class ForeignPacketsHelper {
   int get_foreign_packets_per_second() const { return m_pps_current; }
   void update_n_foreign_packets(int n_foreign_packets) {
     assert(n_foreign_packets >= 0);
-    // openhd::log::get_default()->warn("N foreign
+    // openhd::log::get_default()->debug("N foreign
     // packets:{}",n_foreign_packets);
     m_pps_foreign_packets_count += n_foreign_packets;
     const auto elapsed =
@@ -194,7 +194,7 @@ class FrameDropsHelper {
         const auto elapsed = std::chrono::steady_clock::now() - m_last_check;
         m_last_check = std::chrono::steady_clock::now();
         const int dropped_since_last_check = m_frame_drop_counter.exchange(0);
-        m_console->warn(
+        m_console->debug(
             "Dropped {} frames in {} during adjust period (no bitrate "
             "reduction)",
             dropped_since_last_check, MyTimeHelper::R(elapsed));
@@ -208,7 +208,7 @@ class FrameDropsHelper {
       const int dropped_since_last_check = m_frame_drop_counter.exchange(0);
       static constexpr int MAX_DROPPED_FRAMES_ALLOWED = 3;
       if (dropped_since_last_check > MAX_DROPPED_FRAMES_ALLOWED) {
-        m_console->warn("Dropped {} frames during {} delta period",
+        m_console->debug("Dropped {} frames during {} delta period",
                          dropped_since_last_check, MyTimeHelper::R(elapsed));
         return true;
       }

@@ -131,7 +131,7 @@ class LinkActionHandler {
   // called by ohd_interface / wb
   void action_request_bitrate_change_handle(
       LinkBitrateInformation link_bitrate_info) {
-    // openhd::log::get_default()->warn("action_request_bitrate_change_handle
+    // openhd::log::get_default()->debug("action_request_bitrate_change_handle
     // {}", link_bitrate_info_to_string(link_bitrate_info));
     auto tmp = m_action_request_bitrate_change;
     if (tmp) {

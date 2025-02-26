@@ -92,7 +92,7 @@ bool SerialEndpoint::sendMessagesImpl(
 }
 
 bool SerialEndpoint::write_data_serial(const std::vector<uint8_t>& data) {
-  // m_console->warn("Write data serial:{} bytes",data.size());
+  // m_console->debug("Write data serial:{} bytes",data.size());
   if (m_fd == -1) {
     // cannot send data at the time, UART not setup / doesn't exist. Limit
     // message to once per second
@@ -114,8 +114,8 @@ bool SerialEndpoint::write_data_serial(const std::vector<uint8_t>& data) {
         1000.0f;
     m_console->warn("UART sending data took {}ms", send_delta_ms);
   }
-  // m_console->warn("Written {} bytes",send_len);
-  // m_console->warn("{}",MEndpoint::get_tx_rx_stats());
+  // m_console->debug("Written {} bytes",send_len);
+  // m_console->debug("{}",MEndpoint::get_tx_rx_stats());
   if (send_len != data.size()) {
     m_n_failed_writes++;
     const auto elapsed_since_last_log =
@@ -264,7 +264,7 @@ void SerialEndpoint::connect_and_read_loop() {
       std::this_thread::sleep_for(std::chrono::seconds(1));
       continue;
     }
-    m_console->warn("Successfully created UART fd for: {}",
+    m_console->debug("Successfully created UART fd for: {}",
                      m_options.to_string());
     receive_data_until_error();
     // cleanup and start over again
@@ -274,7 +274,7 @@ void SerialEndpoint::connect_and_read_loop() {
 }
 
 void SerialEndpoint::receive_data_until_error() {
-  m_console->warn("receive_data_until_error() begin");
+  m_console->debug("receive_data_until_error() begin");
   // Enough for MTU 1500 bytes.
   uint8_t buffer[2048];
 
@@ -292,7 +292,7 @@ void SerialEndpoint::receive_data_until_error() {
     // (which will lead to a re-start)
     const auto valid = is_serial_fd_still_connected(m_fd);
     if (!valid) {
-      m_console->warn("Exiting serial, not connected");
+      m_console->debug("Exiting serial, not connected");
       return;
     }
     // const auto
@@ -312,7 +312,7 @@ void SerialEndpoint::receive_data_until_error() {
         m_last_log_serial_read_failed = std::chrono::steady_clock::now();
         m_console->warn("{} failed reads - FC connected ?", m_n_failed_reads);
       } else {
-        // m_console->warn("poll probably timeout {}",m_n_failed_reads);
+        // m_console->debug("poll probably timeout {}",m_n_failed_reads);
       }
       continue;
     } else if (pollrc == -1) {
@@ -330,31 +330,31 @@ void SerialEndpoint::receive_data_until_error() {
       m_console->warn("read failure: {} {}", recv_len, GET_ERROR());
     }
   }
-  m_console->warn("receive_data_until_error() end");
+  m_console->debug("receive_data_until_error() end");
 }
 
 void SerialEndpoint::start() {
   std::lock_guard<std::mutex> lock(m_connect_receive_thread_mutex);
-  m_console->warn("start()-begin");
+  m_console->debug("start()-begin");
   if (m_connect_receive_thread != nullptr) {
-    m_console->warn("Already started");
+    m_console->debug("Already started");
     return;
   }
   _stop_requested = false;
   m_connect_receive_thread = std::make_unique<std::thread>(
       &SerialEndpoint::connect_and_read_loop, this);
-  m_console->warn("start()-end");
+  m_console->debug("start()-end");
 }
 
 void SerialEndpoint::stop() {
   std::lock_guard<std::mutex> lock(m_connect_receive_thread_mutex);
-  m_console->warn("stop()-begin");
+  m_console->debug("stop()-begin");
   _stop_requested = true;
   if (m_connect_receive_thread && m_connect_receive_thread->joinable()) {
     m_connect_receive_thread->join();
   }
   m_connect_receive_thread = nullptr;
-  m_console->warn("stop()-end");
+  m_console->debug("stop()-end");
 }
 
 // based on mavsdk and what linux allows setting

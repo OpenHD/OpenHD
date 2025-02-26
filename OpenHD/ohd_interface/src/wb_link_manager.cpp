@@ -194,7 +194,7 @@ void ManagementGround::loop() {
     m_wb_txrx->tx_inject_packet(openhd::MANAGEMENT_RADIO_PORT_GND_TX,
                                 data.data(), data.size(), radiotap_header,
                                 true);
-    // m_console->warn("Sent sensitivity management frame");
+    // m_console->debug("Sent sensitivity management frame");
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
 }

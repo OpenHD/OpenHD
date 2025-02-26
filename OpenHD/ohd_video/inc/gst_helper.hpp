@@ -189,7 +189,7 @@ static std::string createRpicamsrcStream(
   int bitrateBitsPerSecond =
       openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
   if (hdmi_to_csi_workaround_half_bitrate) {
-    openhd::log::get_default()->warn(
+    openhd::log::get_default()->debug(
         "applying hack - reduce bitrate by 2 to get actual correct bitrate");
     bitrateBitsPerSecond = bitrateBitsPerSecond / 2;
   }
@@ -296,7 +296,7 @@ static int rpi_calculate_number_of_mbs_in_a_slice(int frame_height_px,
   int slice_row_mb = frame_mb_rows / n_slices;
   if (frame_mb_rows - n_slices * slice_row_mb)
     slice_row_mb++;  // must round up to avoid extra slice if not evenly divided
-  openhd::log::get_default()->warn(
+  openhd::log::get_default()->debug(
       "frame_height_px:{} n_slices:{} frame_mb_rows:{} slice_row_mb:{}",
       frame_height_px, n_slices, frame_mb_rows, slice_row_mb);
   return slice_row_mb;
@@ -309,7 +309,7 @@ static int rpi_calculate_intra_refresh_period(int frame_width_px,
   mbs /= (16 * 16);
   if (mbs % intra_refresh_period) mbs++;
   mbs /= intra_refresh_period;
-  openhd::log::get_default()->warn("{}x{} intra_refresh_period:{} mbs:{}",
+  openhd::log::get_default()->debug("{}x{} intra_refresh_period:{} mbs:{}",
                                     frame_width_px, frame_height_px,
                                     intra_refresh_period, mbs);
   return mbs;

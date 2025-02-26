@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
              &bitrate_debugger](const openhd::AudioPacket& audioPacket) {
     forwarder.forwardPacketViaUDP(audioPacket.data->data(),
                                   audioPacket.data->size());
-    // openhd::log::get_default()->warn("total size:{}",
+    // openhd::log::get_default()->debug("total size:{}",
     //                                   audioPacket.data->size());
     bitrate_debugger.on_packet(audioPacket.data->size());
   };

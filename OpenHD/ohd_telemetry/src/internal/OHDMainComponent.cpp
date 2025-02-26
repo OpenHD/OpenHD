@@ -57,7 +57,7 @@ OHDMainComponent::OHDMainComponent(uint8_t parent_sys_id, bool runsOnAir)
 OHDMainComponent::~OHDMainComponent() {}
 
 std::vector<MavlinkMessage> OHDMainComponent::generate_mavlink_messages() {
-  // m_console->warn("InternalTelemetry::generate_mavlink_messages()");
+  // m_console->debug("InternalTelemetry::generate_mavlink_messages()");
   std::vector<MavlinkMessage> ret;
   auto opt_heartbeat = create_heartbeat_if_needed();
   if (opt_heartbeat.has_value()) {
@@ -117,7 +117,7 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_messages(
 }
 
 std::vector<MavlinkMessage> OHDMainComponent::generate_mav_wb_stats() {
-  // m_console->warn("OHDMainComponent::generate_mav_wb_stats");
+  // m_console->debug("OHDMainComponent::generate_mav_wb_stats");
   const auto latest_stats =
       openhd::LinkActionHandler::instance().get_link_stats();
   if (!latest_stats.ready) {
@@ -241,7 +241,7 @@ std::optional<MavlinkMessage> OHDMainComponent::handle_timesync_message(
   assert(msg.msgid == MAVLINK_MSG_ID_TIMESYNC);
   mavlink_timesync_t tsync;
   mavlink_msg_timesync_decode(&msg, &tsync);
-  // m_console->warn(
+  // m_console->debug(
   //     "Got timesync message target_system:{} target_component:{} "
   //     "ts1{} tc1{}",
   //     tsync.target_system, tsync.target_component, tsync.ts1, tsync.tc1);
@@ -262,7 +262,7 @@ std::optional<MavlinkMessage> OHDMainComponent::handle_timesync_message(
       handle_timesync_response_self(tsync);
     }
   } else {
-    m_console->warn(
+    m_console->debug(
         "Cannot handle timesync message target_system:{} target_component:{} "
         "ts1{} tc1{}",
         tsync.target_system, tsync.target_component, tsync.ts1, tsync.tc1);
@@ -374,11 +374,11 @@ void OHDMainComponent::process_command_self(
     int source_comp_id, std::vector<MavlinkMessage>& message_buffer) {
   assert(command.target_system == m_sys_id);
   assert(command.target_component == m_comp_id);
-  m_console->warn("Got MAVLINK_MSG_ID_COMMAND_LONG: {} {}", command.command,
+  m_console->debug("Got MAVLINK_MSG_ID_COMMAND_LONG: {} {}", command.command,
                    static_cast<uint32_t>(command.param1));
   if (command.command == MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN) {
     // https://mavlink.io/en/messages/common.html#MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN
-    m_console->warn("Got shutdown command");
+    m_console->debug("Got shutdown command");
     // we are a companion computer, so we use param2 to get the actual action
     const auto action_for_companion = command.param2;
     if (action_for_companion > 0) {
@@ -392,19 +392,19 @@ void OHDMainComponent::process_command_self(
     if (command.param3 == 1) {
       message_buffer.push_back(
           ack_command(source_sys_id, source_comp_id, command.command));
-      m_console->warn("Unimplemented");
+      m_console->debug("Unimplemented");
     }
 
   } else if (command.command == MAV_CMD_REQUEST_MESSAGE) {
     const auto requested_message_id = static_cast<uint32_t>(command.param1);
-    m_console->warn("Someone requested a specific message: {}",
+    m_console->debug("Someone requested a specific message: {}",
                      requested_message_id);
     if (requested_message_id == MAVLINK_MSG_ID_OPENHD_VERSION_MESSAGE) {
       m_console->info("Sent OpenHD version");
       message_buffer.push_back(generate_ohd_version());
     } else if (requested_message_id ==
                MAVLINK_MSG_ID_OPENHD_WIFBROADCAST_SUPPORTED_CHANNELS) {
-      m_console->warn("Supported channels requested");
+      m_console->debug("Supported channels requested");
       if (openhd::LinkActionHandler::instance().wb_get_supported_channels !=
           nullptr) {
         auto channels =
@@ -422,11 +422,11 @@ void OHDMainComponent::process_command_self(
     }
   } else if (command.command == OPENHD_CMD_INITIATE_CHANNEL_SEARCH) {
     if (RUNS_ON_AIR) {
-      m_console->warn("Scan channels is only a feature for ground unit");
+      m_console->debug("Scan channels is only a feature for ground unit");
       return;
     } else {
       const auto channels_to_scan = static_cast<uint32_t>(command.param1);
-      m_console->warn("OPENHD_CMD_INITIATE_CHANNEL_SEARCH {}",
+      m_console->debug("OPENHD_CMD_INITIATE_CHANNEL_SEARCH {}",
                        channels_to_scan);
       bool success = false;
       if (channels_to_scan == 0 || channels_to_scan == 1 ||
@@ -437,7 +437,7 @@ void OHDMainComponent::process_command_self(
           success = openhd::LinkActionHandler::instance().wb_cmd_scan_channels(
               scanChannelsParam);
         }
-        m_console->warn("OPENHD_CMD_INITIATE_CHANNEL_SEARCH result: {}",
+        m_console->debug("OPENHD_CMD_INITIATE_CHANNEL_SEARCH result: {}",
                          success);
       }
       message_buffer.push_back(
@@ -445,11 +445,11 @@ void OHDMainComponent::process_command_self(
     }
   } else if (command.command == OPENHD_CMD_INITIATE_CHANNEL_ANALYZE) {
     if (RUNS_ON_AIR) {
-      m_console->warn("Scan channels is only a feature for ground unit");
+      m_console->debug("Scan channels is only a feature for ground unit");
       return;
     } else {
       const int channels_to_scan = static_cast<uint32_t>(command.param1);
-      m_console->warn("OPENHD_CMD_INITIATE_CHANNEL_ANALYZE {}",
+      m_console->debug("OPENHD_CMD_INITIATE_CHANNEL_ANALYZE {}",
                        channels_to_scan);
       bool success = false;
       if (openhd::LinkActionHandler::instance().wb_cmd_analyze_channels &&
@@ -462,7 +462,7 @@ void OHDMainComponent::process_command_self(
           ack_command(source_sys_id, source_comp_id, command.command, success));
     }
   } else {
-    m_console->warn("Unknown command {}", command.command);
+    m_console->debug("Unknown command {}", command.command);
   }
 }
 
@@ -485,7 +485,7 @@ std::vector<MavlinkMessage> OHDMainComponent::perform_time_synchronisation() {
     MavlinkMessage msg;
     mavlink_msg_timesync_encode(m_sys_id, m_comp_id, &msg.m, &timesync);
     m_last_timesync_request = std::chrono::steady_clock::now();
-    m_console->warn("Sending timesync");
+    m_console->debug("Sending timesync");
     return {msg};
   }
   return {};
@@ -496,7 +496,7 @@ void OHDMainComponent::handle_timesync_response_self(
   const auto now_us = get_time_microseconds();
   const auto round_trip_time_us = now_us - tsync.ts1;
   const auto local_time_offset = now_us + tsync.tc1;
-  m_console->warn(
+  m_console->debug(
       "handle_timesync_response_self, round trip:{}, local_time_offset:{}us",
       openhd::util::time_readable_ns(round_trip_time_us * 1000),
       local_time_offset);
@@ -509,7 +509,7 @@ void OHDMainComponent::handle_timesync_response_self(
       int64_t average_offset =
           m_good_timesync_offset_total / m_good_timesync_offset_count;
       openhd::util::store_air_unit_time_offset_us(average_offset);
-      m_console->warn("Synced time, offset {}", average_offset);
+      m_console->debug("Synced time, offset {}", average_offset);
       m_has_synced_time = true;
     }
   }

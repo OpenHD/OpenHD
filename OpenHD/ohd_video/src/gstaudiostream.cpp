@@ -54,7 +54,7 @@ void GstAudioStream::start_looping() {
 void GstAudioStream::stop_looping() {
   m_keep_looping = false;
   if (m_loop_thread) {
-    m_console->warn("Waiting for loop thread to terminate");
+    m_console->debug("Waiting for loop thread to terminate");
     m_loop_thread->join();
     m_loop_thread = nullptr;
   }
@@ -84,15 +84,15 @@ static std::string rpi_detect_alsasrc_device() {
   }
   const auto& arecord_list_output = opt_arecord_list_output.value();
   if (OHDUtil::contains(arecord_list_output, "card 3: ")) {
-    openhd::log::get_default()->warn("Found audio card 3");
+    openhd::log::get_default()->debug("Found audio card 3");
     return "hw:3,0";  // Probably KMS
   }
   if (OHDUtil::contains(arecord_list_output, "card 2: ")) {
-    openhd::log::get_default()->warn("Found audio card 2");
+    openhd::log::get_default()->debug("Found audio card 2");
     return "hw:2,0";  // Probably FKMS
   }
   if (OHDUtil::contains(arecord_list_output, "card 1:")) {
-    openhd::log::get_default()->warn("Found audio card 1");
+    openhd::log::get_default()->debug("Found audio card 1");
     return "hw:1,0";
   }
   return DEFAULT_ALSASRC_DEVICE;
@@ -143,12 +143,12 @@ std::string GstAudioStream::create_pipeline() {
 }
 
 void GstAudioStream::stream_once() {
-  m_console->warn("GstAudioStream::stream_once");
+  m_console->debug("GstAudioStream::stream_once");
   auto pipeline = create_pipeline();
-  m_console->warn("Pipeline: [{}]", pipeline);
+  m_console->debug("Pipeline: [{}]", pipeline);
   GError* error = nullptr;
   m_gst_pipeline = gst_parse_launch(pipeline.c_str(), &error);
-  m_console->warn("GStreamerStream::setup() end");
+  m_console->debug("GStreamerStream::setup() end");
   if (error) {
     m_console->error("Failed to create pipeline: {}", error->message);
     return;
@@ -157,7 +157,7 @@ void GstAudioStream::stream_once() {
       gst_bin_get_by_name(GST_BIN(m_gst_pipeline), "out_appsink");
   assert(m_app_sink_element);
   const auto ret = gst_element_set_state(m_gst_pipeline, GST_STATE_PLAYING);
-  m_console->warn("State change ret:{}",
+  m_console->debug("State change ret:{}",
                    openhd::gst_state_change_return_to_string(ret));
   const uint64_t timeout_ns =
       std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -195,7 +195,7 @@ void GstAudioStream::stream_once() {
 
 void GstAudioStream::on_audio_packet(
     std::shared_ptr<std::vector<uint8_t>> packet) {
-  // m_console->warn("Got audio packet {}", packet->size());
+  // m_console->debug("Got audio packet {}", packet->size());
   if (m_cb) {
     openhd::AudioPacket audioPacket;
     audioPacket.data = packet;

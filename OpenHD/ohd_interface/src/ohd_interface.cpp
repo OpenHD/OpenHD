@@ -86,12 +86,12 @@ OHDInterface::OHDInterface(OHDProfile profile1)
 
   DWifiCards::main_discover_an_process_wifi_cards(
       config, m_profile, m_console, m_monitor_mode_cards, m_opt_hotspot_card);
-  m_console->warn("monitor_mode card(s):{}",
+  m_console->debug("monitor_mode card(s):{}",
                    debug_cards(m_monitor_mode_cards));
   if (m_opt_hotspot_card.has_value()) {
-    m_console->warn("Hotspot card:{}", m_opt_hotspot_card.value().device_name);
+    m_console->debug("Hotspot card:{}", m_opt_hotspot_card.value().device_name);
   } else {
-    m_console->warn("No WiFi hotspot card");
+    m_console->debug("No WiFi hotspot card");
   }
   // We don't have at least one card for monitor mode, which means we cannot
   // instantiate wb_link (no wifibroadcast connectivity at all)
@@ -146,7 +146,7 @@ OHDInterface::OHDInterface(OHDProfile profile1)
     openhd::ArmingStateHelper::instance().register_listener("ohd_interface_wfi",
                                                             cb);
   }
-  m_console->warn("OHDInterface::created");
+  m_console->debug("OHDInterface::created");
 }
 
 OHDInterface::~OHDInterface() {
@@ -243,7 +243,7 @@ void OHDInterface::generate_keys_from_pw_if_exists_and_delete() {
                   OHDUtil::password_as_hidden_str(pw));  // don't show the pw
     auto keys = wb::generate_keypair_from_bind_phrase(pw);
     if (wb::write_keypair_to_file(keys, openhd::SECURITY_KEYPAIR_FILENAME)) {
-      console->warn("Keypair file successfully written");
+      console->debug("Keypair file successfully written");
       // delete the file
       OHDFilesystemUtil::remove_if_existing(std::string(getConfigBasePath()) +
                                             "password.txt");
@@ -262,7 +262,7 @@ void OHDInterface::generate_keys_from_pw_if_exists_and_delete() {
   auto val = wb::read_keypair_from_file(openhd::SECURITY_KEYPAIR_FILENAME);
   if ((!OHDFilesystemUtil::exists(openhd::SECURITY_KEYPAIR_FILENAME)) ||
       (!val)) {
-    console->warn("Creating txrx.key from default pw (once)");
+    console->debug("Creating txrx.key from default pw (once)");
     auto keys = wb::generate_keypair_from_bind_phrase(wb::DEFAULT_BIND_PHRASE);
     wb::write_keypair_to_file(keys, openhd::SECURITY_KEYPAIR_FILENAME);
   }

@@ -35,7 +35,7 @@ std::string openhd::getOrCreateUnitId() {
   auto unit_id_opt = OHDFilesystemUtil::opt_read_file(get_unit_id_file_path());
   if (unit_id_opt.has_value()) {
     std::string unit_id = unit_id_opt.value();
-    // openhd::log::get_default()->warn("Read unit id:{}",unit_id);
+    // openhd::log::get_default()->debug("Read unit id:{}",unit_id);
     return unit_id;
   }
   // No unit id exists yet - create new one
@@ -50,7 +50,7 @@ std::string openhd::getOrCreateUnitId() {
 }
 
 void openhd::clean_all_settings() {
-  openhd::log::get_default()->warn("clean_all_settings()");
+  openhd::log::get_default()->debug("clean_all_settings()");
   OHDFilesystemUtil::safe_delete_directory(SETTINGS_BASE_PATH);
   generateSettingsDirectoryIfNonExists();
 }
@@ -63,7 +63,7 @@ void openhd::check_currently_running_file_and_write() {
 }
 
 void openhd::remove_currently_running_file() {
-  openhd::log::get_default()->warn(
+  openhd::log::get_default()->debug(
       "OpenHD terminating,removing is running file");
   OHDFilesystemUtil::remove_if_existing(get_openhd_is_running_filename());
 }

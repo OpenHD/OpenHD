@@ -54,12 +54,12 @@ int OHDUtil::run_command(const std::string& command,
                          bool print_debug) {
   const auto command_with_args = create_command_with_args(command, args);
   if (print_debug) {
-    openhd::log::get_default()->warn("run command begin [{}]",
+    openhd::log::get_default()->debug("run command begin [{}]",
                                       command_with_args);
   }
   // https://man7.org/linux/man-pages/man3/system.3.html
   const auto ret = std::system(command_with_args.c_str());
-  // openhd::log::get_default()->warn("return code:{}",ret);
+  // openhd::log::get_default()->debug("return code:{}",ret);
   if (ret < 0) {
     openhd::log::get_default()->warn("Invalid command, return code {}", ret);
   }
@@ -71,7 +71,7 @@ std::optional<std::string> OHDUtil::run_command_out(const std::string& command,
   auto console = openhd::log::get_default();
   try {
     if (debug) {
-      console->warn("run command out begin [{}]", command);
+      console->debug("run command out begin [{}]", command);
     }
     std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command.c_str(), "r"),
                                                   pclose);
@@ -101,7 +101,7 @@ void OHDUtil::keep_alive_until_sigterm() {
   signal(SIGTERM, [](int sig) { quit = true; });
   while (!quit) {
     std::this_thread::sleep_for(std::chrono::seconds(1));
-    openhd::log::get_default()->warn("keep_alive_until_sigterm");
+    openhd::log::get_default()->debug("keep_alive_until_sigterm");
   }
 }
 
@@ -125,7 +125,7 @@ std::string OHDUtil::string_in_between(const std::string& start,
     }
   }
   if (debug) {
-    openhd::log::get_default()->warn("Given:[{}] Result:[{}]", value, matched);
+    openhd::log::get_default()->debug("Given:[{}] Result:[{}]", value, matched);
   }
   return matched;
 }
@@ -240,7 +240,7 @@ bool OHDUtil::check_root(const bool print_debug) {
   const auto uid = getuid();
   const bool root = uid ? false : true;
   if (print_debug) {
-    openhd::log::get_default()->warn("UID is:{} root: {}", uid,
+    openhd::log::get_default()->debug("UID is:{} root: {}", uid,
                                       OHDUtil::yes_or_no(root));
   }
   return root;

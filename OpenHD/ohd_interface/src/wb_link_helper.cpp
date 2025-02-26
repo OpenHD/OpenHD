@@ -41,7 +41,7 @@ bool openhd::wb::all_cards_support_frequency(
   for (const auto& card : m_broadcast_cards) {
     if (!wifi_card_supports_frequency(card, frequency)) {
       if (m_console) {
-        m_console->warn("Card {} doesn't support frequency {}",
+        m_console->debug("Card {} doesn't support frequency {}",
                          card.device_name, frequency);
       }
       return false;
@@ -58,7 +58,7 @@ bool openhd::wb::all_cards_support_frequency_and_channel_width(
     if (!wifi_card_supports_frequency_channel_width(card, frequency,
                                                     channel_width)) {
       if (m_console) {
-        m_console->warn(
+        m_console->debug(
             "Card {} doesn't support frequency/channel width {}:{}",
             card.device_name, frequency, channel_width);
       }
@@ -230,7 +230,7 @@ bool openhd::wb::has_any_non_rtl8812au(const std::vector<WiFiCard>& cards) {
 void openhd::wb::takeover_cards_monitor_mode(
     const std::vector<WiFiCard>& cards,
     std::shared_ptr<spdlog::logger> console) {
-  console->warn("takeover_cards_monitor_mode() begin");
+  console->debug("takeover_cards_monitor_mode() begin");
 
   // Take "ownership" from the system for cards used in monitor mode /
   // wifibroadcast. Depending on the OS, we tell the network manager to ignore
@@ -240,11 +240,11 @@ void openhd::wb::takeover_cards_monitor_mode(
 
   for (const auto& card : cards) {
     if (card.type == WiFiCardType::QUALCOMM) {
-      console->warn("Qualcomm (ath0) card detected: {}", card.device_name);
+      console->debug("Qualcomm (ath0) card detected: {}", card.device_name);
       return;
     }
     if (card.type == WiFiCardType::OPENHD_EMULATED) {
-      console->warn("Skipping emulated card: {}", card.device_name);
+      console->debug("Skipping emulated card: {}", card.device_name);
       emulate = true;
       continue;  // Skip emulated cards
     }
@@ -264,7 +264,7 @@ void openhd::wb::takeover_cards_monitor_mode(
       if (card.type == WiFiCardType::QUALCOMM) {
         // Execute the script to enable monitor mode for Qualcomm cards
         const char* script_path = "/data/misc/wifi/start_monitor";
-        console->warn(
+        console->debug(
             "Running script to set Qualcomm (ath0) card to Monitor Mode: {}",
             script_path);
 
@@ -296,7 +296,7 @@ void openhd::wb::takeover_cards_monitor_mode(
       }
     }
   }
-  console->warn("takeover_cards_monitor_mode() end");
+  console->debug("takeover_cards_monitor_mode() end");
 }
 
 void openhd::wb::giveback_cards_monitor_mode(
@@ -383,7 +383,7 @@ int openhd::wb::calculate_bitrate_for_wifi_config_kbits(
       max_rate_for_current_wifi_config_without_adjust, dev_adjustment_percent);
   if (debug_log) {
     auto m_console = openhd::log::get_default();
-    m_console->warn(
+    m_console->debug(
         "Max rate for {}@{}Mhz MCS:{} dev_adjustment:{} is {} kBit/s",
         frequency_mhz, channel_width_mhz, mcs_index, dev_adjustment_percent,
         max_rate_for_current_wifi_config);
@@ -396,20 +396,20 @@ std::optional<int> openhd::wb::RCChannelHelper::get_mcs_from_rc_channel(
   const auto rc_channels_opt = get_fc_reported_rc_channels();
   if (!rc_channels_opt.has_value()) {
     // No data from the FC yet, do nothing
-    // m_console->warn("No rc channels from RC, MCS via RC unavailable");
+    // m_console->debug("No rc channels from RC, MCS via RC unavailable");
     return std::nullopt;
   }
   const auto& rc_channels = rc_channels_opt.value();
   // check if we are in bounds of array (better be safe than sorry, in case user
   // manually messes up a number)
   if (!(channel_index >= 0 && channel_index < rc_channels.size())) {
-    m_console->warn("Invalid channel index {}", channel_index);
+    m_console->debug("Invalid channel index {}", channel_index);
     return std::nullopt;
   }
   const auto mcs_channel_value_pwm = rc_channels[channel_index];
   // UINT16_MAX means ignore channel
   if (mcs_channel_value_pwm == UINT16_MAX) {
-    m_console->warn("Disabled channel {}: {}", channel_index,
+    m_console->debug("Disabled channel {}: {}", channel_index,
                      mcs_channel_value_pwm);
     return std::nullopt;
   }
@@ -417,7 +417,7 @@ std::optional<int> openhd::wb::RCChannelHelper::get_mcs_from_rc_channel(
   // example, it is quite common for a switch (for example) to be at for example
   // [988 - 2012] us which is why we accept a [900 ... 2100] range here
   if (mcs_channel_value_pwm < 900 || mcs_channel_value_pwm > 2100) {
-    m_console->warn("Invalid channel data on channel {}: {}", channel_index,
+    m_console->debug("Invalid channel data on channel {}: {}", channel_index,
                      mcs_channel_value_pwm);
     // most likely invalid data, discard
     return std::nullopt;
