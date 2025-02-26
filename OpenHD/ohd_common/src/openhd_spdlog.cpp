@@ -58,7 +58,7 @@ class MavlinkTelemetrySink : public spdlog::sinks::base_sink<std::mutex> {
     // thread id etc. msg.raw contains pre formatted log If needed (very likely
     // but not mandatory), the sink formats the message before sending it to its
     // final destination:
-    if (msg.level >= spdlog::level::debug) {
+    if (msg.level >= spdlog::level::warn) {
       // We do not use the formatter here, since we are limited by 50 chars (and
       // the level, for example, is embedded already but not as a string).
       // spdlog::memory_buf_t formatted;
@@ -110,7 +110,7 @@ std::shared_ptr<spdlog::logger> openhd::log::create_or_get(
   if (ret == nullptr) {
     auto created = spdlog::stdout_color_mt(logger_name);
     assert(created);
-    created->set_level(spdlog::level::warn);
+    created->set_level(spdlog::level::debug);
     // Add the sink that sends out warning or higher via UDP
     // created->sinks().push_back(std::make_shared<openhd::log::sink::UdpTelemetrySink>());
     created->sinks().push_back(
