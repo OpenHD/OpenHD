@@ -58,7 +58,7 @@ class MavlinkTelemetrySink : public spdlog::sinks::base_sink<std::mutex> {
     // thread id etc. msg.raw contains pre formatted log If needed (very likely
     // but not mandatory), the sink formats the message before sending it to its
     // final destination:
-    if (msg.level >= spdlog::level::warn) {
+    if (msg.level >= spdlog::level::debug) {
       // We do not use the formatter here, since we are limited by 50 chars (and
       // the level, for example, is embedded already but not as a string).
       // spdlog::memory_buf_t formatted;
