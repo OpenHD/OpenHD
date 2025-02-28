@@ -275,9 +275,9 @@ int main(int argc, char *argv[]) {
       if (!openhd::load_config().GEN_NO_QOPENHD_AUTOSTART &&
           !OHDPlatform::instance().is_x20()) {
         if (!profile.is_air) {
-          OHDUtil::run_command("systemctl", {"--quiet", "start", "qopenhd"});
+          OHDUtil::run_command("systemctl", {"--quiet", "start", "qopenhd", "> /dev/null 2>&1"});
         } else {
-          OHDUtil::run_command("systemctl", {"--quiet", "stop", "qopenhd"});
+          OHDUtil::run_command("systemctl", {"--quiet", "stop", "qopenhd", "> /dev/null 2>&1"});
         }
       }
     }
