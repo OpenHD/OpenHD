@@ -110,7 +110,7 @@ std::shared_ptr<spdlog::logger> openhd::log::create_or_get(
   if (ret == nullptr) {
     auto created = spdlog::stdout_color_mt(logger_name);
     assert(created);
-    if (OHDUtil::file_exists("/tmp/debug.txt")) {
+    if (OHDUtil::exists("/tmp/debug.txt")) {
       created->set_level(spdlog::level::debug);
     }
     created->set_level(spdlog::level::warn);
