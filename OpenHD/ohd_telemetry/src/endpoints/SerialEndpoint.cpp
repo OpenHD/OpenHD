@@ -249,7 +249,7 @@ void SerialEndpoint::connect_and_read_loop() {
   while (!_stop_requested) {
     if (!OHDFilesystemUtil::exists(m_options.linux_filename)) {
       if (!uart_log_warning_once) {
-        m_console->warn("UART not found!");
+        m_console->debug("UART not found!");
         uart_log_warning_once = true;
       }
       std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -431,7 +431,7 @@ std::optional<std::string> serial_openhd_param_to_linux_fd(
     } else if (platform.is_x20() || platform.is_rock()) {
       return "dev/ttyS2";
     } else {
-      openhd::log::get_default()->warn(
+      openhd::log::get_default()->debug(
           "No default serial mapping for this platform");
       // fallback
       return "dev/ttyS2";
