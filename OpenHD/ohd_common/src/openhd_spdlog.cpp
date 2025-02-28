@@ -114,8 +114,9 @@ std::shared_ptr<spdlog::logger> openhd::log::create_or_get(
     assert(created);
     if (OHDFilesystemUtil::exists("/tmp/debug.txt")) {
       created->set_level(spdlog::level::debug);
-    }
-    created->set_level(spdlog::level::warn);
+    } else{
+      created->set_level(spdlog::level::warn);
+    } 
     // Add the sink that sends out warning or higher via UDP
     // created->sinks().push_back(std::make_shared<openhd::log::sink::UdpTelemetrySink>());
     created->sinks().push_back(
