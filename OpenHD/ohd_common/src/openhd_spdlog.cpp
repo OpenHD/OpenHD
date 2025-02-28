@@ -32,6 +32,8 @@
 #include <mutex>
 
 #include "openhd_util.h"
+#include "openhd_util_filesystem.h"
+
 
 static openhd::log::MavlinkLogMessage safe_create(int level,
                                                   const std::string& message) {
@@ -110,7 +112,7 @@ std::shared_ptr<spdlog::logger> openhd::log::create_or_get(
   if (ret == nullptr) {
     auto created = spdlog::stdout_color_mt(logger_name);
     assert(created);
-    if (OHDUtil::exists("/tmp/debug.txt")) {
+    if (OHDFilesystemUtil::exists("/tmp/debug.txt")) {
       created->set_level(spdlog::level::debug);
     }
     created->set_level(spdlog::level::warn);
