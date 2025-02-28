@@ -41,6 +41,8 @@ void openhd::set_config_file(const std::string& config_file_path) {
 static openhd::Config load_or_default() {
   try {
     openhd::Config ret{};
+    if (OHDFilesystemUtil::exists("/usr/local/share/openhd/debug.txt")) {
+
     if (!OHDFilesystemUtil::exists(CONFIG_FILE_PATH)) {
       std::cerr << "WARN: No config file [" << CONFIG_FILE_PATH << "] used!"
                 << std::endl;
@@ -49,7 +51,9 @@ static openhd::Config load_or_default() {
       std::cout << "WARN: Advanced config file [" << CONFIG_FILE_PATH
                 << "] used!" << std::endl;
     }
+}
     inih::INIReader r{CONFIG_FILE_PATH};
+    if (OHDFilesystemUtil::exists("/usr/local/share/openhd/debug.txt")) {
 
     // Parse WiFi configuration
     ret.WIFI_ENABLE_AUTODETECT =
@@ -89,7 +93,6 @@ static openhd::Config load_or_default() {
     std::cout << "DEBUG: TELEMETRY_PORT: " << ret.TELEMETRY_PORT << std::endl;
 
     // Parse Ethernet link Microhard configuration
-    if (OHDFilesystemUtil::exists("/usr/local/share/openhd/debug.txt")) {
     std::cout << "WARN: Parsing Ethernet link Microhard configuration"
               << std::endl;
     ret.DISABLE_MICROHARD_DETECTION =
