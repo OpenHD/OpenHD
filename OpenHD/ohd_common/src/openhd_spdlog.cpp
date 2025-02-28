@@ -31,6 +31,7 @@
 #include <iostream>
 #include <mutex>
 
+#include "config_paths.h"
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"
 
@@ -112,8 +113,9 @@ std::shared_ptr<spdlog::logger> openhd::log::create_or_get(
   if (ret == nullptr) {
     auto created = spdlog::stdout_color_mt(logger_name);
     assert(created);
-    if (OHDFilesystemUtil::exists("/tmp/debug.txt")) {
-      created->set_level(spdlog::level::debug);
+    if (OHDFilesystemUtil::exists(std::string(getConfigBasePath()) +
+    "debug.txt")){   
+    created->set_level(spdlog::level::debug);
     } else{
       created->set_level(spdlog::level::warn);
     } 
