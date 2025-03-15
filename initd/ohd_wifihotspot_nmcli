@@ -1,0 +1,112 @@
+#!/bin/sh
+
+################################################################################
+# OpenHD
+# 
+# Licensed under the GNU General Public License (GPL) Version 3.
+# 
+# This software is provided "as-is," without warranty of any kind, express or 
+# implied, including but not limited to the warranties of merchantability, 
+# fitness for a particular purpose, and non-infringement. For details, see the 
+# full license in the LICENSE file provided with this source code.
+# 
+# Non-Military Use Only:
+# This software and its associated components are explicitly intended for 
+# civilian and non-military purposes. Use in any military or defense 
+# applications is strictly prohibited unless explicitly and individually 
+# licensed otherwise by the OpenHD Team.
+# 
+# Contributors:
+# A full list of contributors can be found at the OpenHD GitHub repository:
+# https://github.com/OpenHD
+# 
+# © OpenHD, All Rights Reserved.
+################################################################################
+
+# Provides:          ohd_wifihotspot
+# Required-Start:    $network $remote_fs $syslog
+# Required-Stop:     $network $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Manage Wi-Fi hotspot using nmcli
+# Description:       Starts, stops, and connects to networks using nmcli
+### END INIT INFO
+
+set -x  # Enable debugging
+
+log_error() {
+    logger "[Hotspot ERROR] $1"
+}
+
+log_warning() {
+    logger "[Hotspot WARNING] $1"
+}
+
+error_exit() {
+    log_error "$1"
+    exit 1
+}
+
+stopHotspot() {
+    DEVICE=$1
+
+    # Check if the device is in AP mode
+    MODE=$(nmcli -t -f DEVICE,TYPE,STATE device status | awk -F: -v dev="$DEVICE" '$1 == dev {print $3}')
+
+    if [ "$MODE" = "connected" ]; then
+        nmcli device disconnect "$DEVICE"
+    else
+        log_warning "No active hotspot found on $DEVICE"
+    fi
+}
+
+startHotspot() {
+    DEVICE=$1
+    CHANNEL=${2:-6}  # Default to channel 6 if not specified
+    SSID=$3
+    PASSPHRASE=$4
+
+    [ -z "$DEVICE" ] && error_exit "Device parameter is missing!"
+    [ -z "$SSID" ] && error_exit "SSID parameter is missing!"
+    [ -z "$PASSPHRASE" ] && error_exit "Passphrase parameter is missing!"
+
+    # Check if device supports AP mode
+    if ! nmcli device show "$DEVICE" | grep -q "GENERAL.TYPE:.*wifi"; then
+        error_exit "$DEVICE is not a Wi-Fi device!"
+    fi
+
+    # Set band based on channel
+    if [ "$CHANNEL" -gt 14 ]; then
+        BAND="a"  # 5 GHz
+    else
+        BAND="bg"  # 2.4 GHz
+    fi
+
+    # Start the hotspot
+    nmcli device wifi hotspot ifname "$DEVICE" ssid "$SSID" password "$PASSPHRASE" band "$BAND" || error_exit "Failed to start hotspot"
+}
+
+restartHotspot() {
+    DEVICE=$1
+    SSID=${2:-"Default_SSID"}
+    PASSPHRASE=${3:-"Default_Password"}
+
+    stopHotspot "$DEVICE"
+    startHotspot "$DEVICE" 6 "$SSID" "$PASSPHRASE"
+}
+
+usage() {
+    echo "Usage: $0 {startHotspot <device> <channel> \"SSID\" \"Passphrase\" |"
+    echo "          stopHotspot <device> |"
+    echo "          restartHotspot <device> [SSID] [Passphrase] }"
+    exit 1
+}
+
+case "$1" in
+    startHotspot) startHotspot "$2" "$3" "$4" "$5" ;;
+    stopHotspot) stopHotspot "$2" ;;
+    restartHotspot) restartHotspot "$2" "$3" "$4" ;;
+    *) usage ;;
+esac
+
+exit 0

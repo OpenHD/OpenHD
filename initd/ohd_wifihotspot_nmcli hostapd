@@ -1,0 +1,11 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          ohd_wifihotspot
+# Required-Start:    $network $remote_fs $syslog
+# Required-Stop:     $network $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Manage Wi-Fi hotspot using nmcli
+# Description:       Starts, stops, and connects to networks using nmcli
+### END INIT INFO
+TODO
