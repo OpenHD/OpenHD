@@ -512,9 +512,9 @@ void GStreamerStream::stream_once() {
     // ANNOYING BUGGED CAMERAS FIX - we restart the pipeline if we don't get a
     // frame from the camera for more than X seconds
     if (std::chrono::steady_clock::now() - m_last_camera_frame >
-        std::chrono::seconds(5)) {
-      m_console->warn("Restarting camera due to no frame after 5 seconds");
-      //m_request_restart = true;
+        std::chrono::seconds(10)) {
+      m_console->warn("Restarting camera due to no frame after 10 seconds");
+      m_request_restart = true;
     }
     // Check if we need to set a new bitrate
     if (currently_applied_bitrate != m_curr_dynamic_bitrate_kbits) {
