@@ -336,6 +336,7 @@ struct XCamera {
         std::vector<ResolutionFramerate> ret;
         ret.push_back(ResolutionFramerate{1280, 720, 60});
         ret.push_back(ResolutionFramerate{1920, 1080, 30});
+        return ret;
       } else {
         return {ResolutionFramerate{1920, 1080, 30}};
       }
