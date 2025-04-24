@@ -49,15 +49,15 @@ static int read_cpu_current_frequency_linux_mhz() {
 int extract_temperature(const std::string& input) {
   auto pos = input.find("temperature:");
   if (pos != std::string::npos) {
-      pos += std::string("temperature:").length();
-      while (pos < input.size() && std::isspace(input[pos])) {
-          ++pos;
-      }
-      auto end = pos;
-      while (end < input.size() && std::isdigit(input[end])) {
-          ++end;
-      }
-      return std::stoi(input.substr(pos, end - pos));
+    pos += std::string("temperature:").length();
+    while (pos < input.size() && std::isspace(input[pos])) {
+      ++pos;
+    }
+    auto end = pos;
+    while (end < input.size() && std::isdigit(input[end])) {
+      ++end;
+    }
+    return std::stoi(input.substr(pos, end - pos));
   }
   return 0;
 }
