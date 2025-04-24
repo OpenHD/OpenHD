@@ -27,6 +27,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <fstream>
 #include <memory>
 
 #include "openhd_platform.h"
@@ -69,10 +70,10 @@ const char* getVideoPath() {
 
   if (OHDFilesystemUtil::exists(FILENAME1)) {
       selectedPath = VIDEO_PATH ? VIDEO_PATH : "/Videos/";
-      OHDFilesystemUtil::remove(FILENAME1);
+      OHDFilesystemUtil::remove_if_existing(FILENAME1);
   } else if (OHDFilesystemUtil::exists(FILENAME2)) {
       selectedPath = VIDEO_PATH ? VIDEO_PATH : "/external/Videos/";
-      OHDFilesystemUtil::remove(FILENAME2);
+      OHDFilesystemUtil::remove_if_existing(FILENAME2);
   } else {
       selectedPath = "/home/openhd/Videos/";
       OHDFilesystemUtil::create_directories(selectedPath);
