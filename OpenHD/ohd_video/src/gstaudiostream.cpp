@@ -174,7 +174,7 @@ void GstAudioStream::stream_once() {
     if (!m_keep_looping) break;
     // Restart in case no data comes in //CURRENTLY DISABLED BECAUSE IT EVEN
     // RESTARTS IF AUDIO IS DISABLED ..
-    if (g_airCameraGenericSettings.enable_audio == 1) {
+    if (g_airCameraGenericSettings.enable_audio != 0) {
       m_console->warn("No Audio data, restarting");
       if (std::chrono::steady_clock::now() - m_last_audio_packet >
           std::chrono::seconds(5)) {
