@@ -199,15 +199,38 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       ohd_encryption = 3;
     }
     int txc_temp = 0;
-    if (OHDFilesystemUtil::exists("/proc/net/rtl88x2eu_ohd/")) {
-      const auto result = OHDFilesystemUtil::getFirstMatchingDirectoryByPrefix(
-          "/proc/net/rtl88x2eu_ohd", "wl");
-      if (result) {
-        std::string wificard_temp =
-            "/proc/net/rtl88x2eu_ohd/" + *result + "/thermal_state";
-        std::string fileContent = OHDFilesystemUtil::read_file(wificard_temp);
-        txc_temp = extract_temperature(fileContent);
+    // Check for presence of rtl88x2eu driver debug interface
+    const std::string rtl88x2eu_proc_dir = "/proc/net/rtl88x2eu_ohd/";
+    if (OHDFilesystemUtil::exists(rtl88x2eu_proc_dir)) {
+      // Look for a subdirectory starting with "wl", e.g., "wl0", which
+      // represents a wifi interface
+      const auto interface_dir_opt =
+          OHDFilesystemUtil::getFirstMatchingDirectoryByPrefix(
+              rtl88x2eu_proc_dir, "wl");
+
+      if (interface_dir_opt.has_value()) {
+        // Construct full path to the thermal state file for the rtl88x2eu
+        // device
+        const std::string thermal_state_file =
+            rtl88x2eu_proc_dir + interface_dir_opt.value() + "/thermal_state";
+
+        // Read the file contents
+        const std::string thermal_content =
+            OHDFilesystemUtil::read_file(thermal_state_file);
+
+        // Extract the temperature (e.g., "temperature: 48")
+        txc_temp = extract_temperature(thermal_content);
+
+        openhd::log::get_default()->debug(
+            "rtl88x2eu thermal state: '{}', parsed temp: {}", thermal_content,
+            txc_temp);
+      } else {
+        openhd::log::get_default()->warn(
+            "No rtl88x2eu wifi interface found under '{}'", rtl88x2eu_proc_dir);
       }
+    } else {
+      openhd::log::get_default()->debug(
+          "rtl88x2eu debug directory '{}' not found", rtl88x2eu_proc_dir);
     }
     if (OHDPlatform::instance().is_rpi()) {
       curr_temperature_core =

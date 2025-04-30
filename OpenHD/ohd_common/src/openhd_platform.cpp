@@ -47,7 +47,7 @@ static int internal_discover_platform() {
   if (OHDFilesystemUtil::exists("/proc/device-tree/model")) {
     const std::string model_content =
         OHDFilesystemUtil::read_file("/proc/device-tree/model");
-    if (OHDUtil::contains_after_uppercase(model_content, "MX8")) {
+    if (OHDUtil::contains_after_uppercase(model_content, "ORQA")) {
       openhd::log::get_default()->warn("Detected Willy platform.");
       return X_PLATFORM_TYPE_WILLY;
     }
