@@ -6,6 +6,7 @@ on:
       - "2.6-evo"
       - "dev-release"
       - "release"
+      - "willy"
 
 jobs:
   build:

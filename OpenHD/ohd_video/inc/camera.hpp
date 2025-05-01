@@ -104,6 +104,8 @@ static constexpr int X_CAM_TYPE_X20_HDZERO_RUNCAM_V2 = 72;
 static constexpr int X_CAM_TYPE_X20_HDZERO_RUNCAM_V3 = 73;
 static constexpr int X_CAM_TYPE_X20_HDZERO_RUNCAM_NANO_90 = 74;
 static constexpr int X_CAM_TYPE_X20_OHD_Jaguar = 75;
+static constexpr int X_CAM_TYPE_X21_OHD_Jaguar = 76;
+
 // ... 9 reserved for future use
 //
 // ROCK 5 starts here
@@ -132,8 +134,13 @@ static constexpr int X_CAM_TYPE_ROCK_3_VEYE = 97;
 static constexpr int X_CAM_TYPE_NVIDIA_XAVIER_IMX577 = 101;
 // OpenIPC specific starts here
 static constexpr int X_CAM_TYPE_OPENIPC_GENERIC = 110;
+// Qualcomm specific starts here
 static constexpr int X_CAM_TYPE_QC_IMX577 = 120;
 static constexpr int X_CAM_TYPE_QC_OV9282 = 121;
+// Projects are here
+static constexpr int X_CAM_TYPE_WILLY_HORNET = 122;
+static constexpr int X_CAM_TYPE_WILLY_JAGUAR = 123;
+static constexpr int X_CAM_TYPE_WILLY_REKINDLE = 124;
 
 //
 // ... rest is reserved for future use
@@ -211,6 +218,8 @@ static std::string x_cam_type_to_string(int camera_type) {
       return "X20_HDZERO_RUNCAM_NANO";
     case X_CAM_TYPE_X20_OHD_Jaguar:
       return "X20_OHD_Jaguar";
+    case X_CAM_TYPE_X21_OHD_Jaguar:
+      return "X21_OHD_Jaguar";
     // All the rock begin
     case X_CAM_TYPE_ROCK_5_HDMI_IN:
       return "ROCK_5_HDMI_IN";
@@ -287,11 +296,11 @@ struct XCamera {
   bool requires_rpi_libcamera_pipeline() const {
     return camera_type >= 30 && camera_type < 60;
   }
-  bool requires_rpi_veye_pipeline() const {
-    return camera_type >= 60 && camera_type < 70;
-  }
   bool requires_x20_cedar_pipeline() const {
     return camera_type >= 70 && camera_type < 80;
+  }
+  bool requires_rpi_veye_pipeline() const {
+    return camera_type >= 60 && camera_type < 70;
   }
   bool x20_supports_basic_iq_params() const {
     return requires_x20_cedar_pipeline() &&
@@ -302,6 +311,9 @@ struct XCamera {
   }
   bool requires_rockchip3_mpp_pipeline() const {
     return camera_type >= 90 && camera_type < 100;
+  }
+  bool requires_willy_pipeline() const {
+    return camera_type >= 122 && camera_type < 124;
   }
   std::string cam_type_as_verbose_string() const {
     return x_cam_type_to_string(camera_type);
@@ -327,6 +339,7 @@ struct XCamera {
         std::vector<ResolutionFramerate> ret;
         ret.push_back(ResolutionFramerate{1280, 720, 60});
         ret.push_back(ResolutionFramerate{1920, 1080, 30});
+        return ret;
       } else {
         return {ResolutionFramerate{1920, 1080, 30}};
       }
@@ -334,12 +347,16 @@ struct XCamera {
     } else if (requires_x20_cedar_pipeline()) {
       // also easy, 720p60 only (for now)
       return {ResolutionFramerate{1280, 720, 60}};
+    } else if (requires_willy_pipeline()) {
+      // also easy, 720p60 only (for now)
+      return {ResolutionFramerate{960, 720, 120}};
     } else if (camera_type == X_CAM_TYPE_USB_INFIRAY) {
       return {ResolutionFramerate{384, 292, 25}};
     } else if (camera_type == X_CAM_TYPE_USB_INFIRAY_T2) {
       std::vector<ResolutionFramerate> ret;
       ret.push_back(ResolutionFramerate{256, 192, 25});
       ret.push_back(ResolutionFramerate{0, 0, 0});
+      return ret;
     } else if (camera_type == X_CAM_TYPE_USB_INFIRAY_P2_PRO) {
       return {ResolutionFramerate{256, 192, 25}};
     } else if (camera_type == X_CAM_TYPE_USB_INFIRAY_X2) {
@@ -546,10 +563,26 @@ struct XCamera {
       // correct specs still missing
       ret.push_back(ResolutionFramerate{1280, 720, 30});
       return ret;
+    } else if (camera_type == X_CAM_TYPE_WILLY_HORNET) {
+      std::vector<ResolutionFramerate> ret;
+      // correct specs still missing
+      ret.push_back(ResolutionFramerate{960, 720, 120});
+      return ret;
+    } else if (camera_type == X_CAM_TYPE_WILLY_JAGUAR) {
+      std::vector<ResolutionFramerate> ret;
+      // correct specs still missing
+      ret.push_back(ResolutionFramerate{1280, 720, 120});
+      return ret;
+    } else if (camera_type == X_CAM_TYPE_WILLY_REKINDLE) {
+      std::vector<ResolutionFramerate> ret;
+      // correct specs still missing
+      ret.push_back(ResolutionFramerate{1280, 720, 60});
+      return ret;
+    } else {
+      // Not mapped yet
+      // return something that might work or might not work
+      return {ResolutionFramerate{640, 480, 30}};
     }
-    // Not mapped yet
-    // return something that might work or might not work
-    return {ResolutionFramerate{640, 480, 30}};
   }
   // We default to the last supported resolution
   [[nodiscard]] ResolutionFramerate get_default_resolution_fps() const {
@@ -564,7 +597,9 @@ static bool is_rpi_csi_camera(int cam_type) {
 static bool is_rock_csi_camera(int cam_type) {
   return cam_type >= 80 && cam_type <= 99;
 }
-
+static bool is_willy_csi_camera(int cam_type) {
+  return cam_type >= 122 && cam_type <= 124;
+}
 static bool is_usb_camera(int cam_type) {
   return cam_type >= 10 && cam_type < 19;
 }
@@ -731,11 +766,15 @@ static std::vector<ManufacturerForPlatform> get_camera_choices_for_platform(
         MANUFACTURER_USB,
         MANUFACTURER_DEBUG};
   } else if (platform_type == X_PLATFORM_TYPE_ALWINNER_X20) {
+    std::vector<CameraNameAndType> runcam_cameras{
+        CameraNameAndType{"OpenHD Jaguar", X_CAM_TYPE_X21_OHD_Jaguar},
+    };
+  } else if (platform_type == X_PLATFORM_TYPE_ALWINNER_X20) {
     // On the X20, we have auto detection of the camera type,
     // But we still populate the UI like for platforms where the user has to
     // select the cam type.
     std::vector<CameraNameAndType> generic_cameras{
-        CameraNameAndType{"GENERIC", X_CAM_TYPE_X20_HDZERO_GENERIC},
+        CameraNameAndType{"GENERIC", X_PLATFORM_TYPE_ROCKCHIP_RV1126},
     };
     std::vector<CameraNameAndType> runcam_cameras{
         CameraNameAndType{"RUNCAM V1", X_CAM_TYPE_X20_HDZERO_RUNCAM_V1},
@@ -800,6 +839,15 @@ static std::vector<ManufacturerForPlatform> get_camera_choices_for_platform(
     return std::vector<ManufacturerForPlatform>{
         ManufacturerForPlatform{"LEOPARD", nvidia_leopard_csi_cameras},
         MANUFACTURER_USB, MANUFACTURER_DEBUG};
+  } else if (platform_type == X_PLATFORM_TYPE_WILLY) {
+    std::vector<CameraNameAndType> willy_cameras{
+        CameraNameAndType{"HORNET", X_CAM_TYPE_WILLY_HORNET},
+        CameraNameAndType{"JAGUAR", X_CAM_TYPE_WILLY_JAGUAR},
+        CameraNameAndType{"REKINDLE", X_CAM_TYPE_WILLY_REKINDLE},
+    };
+    return std::vector<ManufacturerForPlatform>{
+        ManufacturerForPlatform{"WILLY", willy_cameras}, MANUFACTURER_USB,
+        MANUFACTURER_DEBUG};
   }
   return std::vector<ManufacturerForPlatform>{MANUFACTURER_DEBUG};
 }

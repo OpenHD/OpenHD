@@ -86,7 +86,7 @@ AirCameraGenericSettings AirCameraGenericSettingsHolder::create_default()
               X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W) ||
              (OHDPlatform::instance().platform_type ==
               X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3)) {
-    ret.primary_camera_type = X_CAM_TYPE_ROCK_3_HDMI_IN;
+    ret.primary_camera_type = X_CAM_TYPE_ROCK_3_IMX462;
   } else if (OHDPlatform::instance().platform_type ==
              X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A) {
     ret.primary_camera_type = X_CAM_TYPE_ROCK_5_IMX462;
@@ -102,6 +102,8 @@ AirCameraGenericSettings AirCameraGenericSettingsHolder::create_default()
   } else if (OHDPlatform::instance().platform_type ==
              X_PLATFORM_TYPE_QUALCOMM_QRB5165) {
     ret.primary_camera_type = X_CAM_TYPE_QC_IMX577;
+  } else if (OHDPlatform::instance().platform_type == X_PLATFORM_TYPE_WILLY) {
+    ret.primary_camera_type = X_CAM_TYPE_WILLY_HORNET;
   }
 
   return ret;

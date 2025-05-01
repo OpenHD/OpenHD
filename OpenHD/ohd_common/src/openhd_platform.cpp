@@ -44,6 +44,14 @@ static constexpr auto QUALCOMM_BOARDID_PATH = "/proc/device-tree/model";
 static int internal_discover_platform() {
   openhd::log::get_default()->warn("OpenHD Platform Discovery started!");
 
+  if (OHDFilesystemUtil::exists("/proc/device-tree/model")) {
+    const std::string model_content =
+        OHDFilesystemUtil::read_file("/proc/device-tree/model");
+    if (OHDUtil::contains_after_uppercase(model_content, "ORQA")) {
+      openhd::log::get_default()->warn("Detected Willy platform.");
+      return X_PLATFORM_TYPE_WILLY;
+    }
+  }
   if (OHDFilesystemUtil::exists(ALLWINNER_BOARDID_PATH)) {
     openhd::log::get_default()->warn("Detected Allwinner platform (X20).");
     return X_PLATFORM_TYPE_ALWINNER_X20;
@@ -120,16 +128,13 @@ static int internal_discover_platform() {
           return X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W;
         }
       } else if (chip == "rv1126") {
-        openhd::log::get_default()->warn(
-            "Detected Rockchip RV1126.");
+        openhd::log::get_default()->warn("Detected Rockchip RV1126.");
         return X_PLATFORM_TYPE_ROCKCHIP_RV1126;
       } else if (chip == "rv1103") {
-        openhd::log::get_default()->warn(
-            "Detected Rockchip RV1103.");
+        openhd::log::get_default()->warn("Detected Rockchip RV1103.");
         return X_PLATFORM_TYPE_ROCKCHIP_RV1103;
       } else if (chip == "rv1106") {
-        openhd::log::get_default()->warn(
-            "Detected Rockchip RV1106");
+        openhd::log::get_default()->warn("Detected Rockchip RV1106");
         return X_PLATFORM_TYPE_ROCKCHIP_RV1106;
       }
     }
@@ -224,6 +229,8 @@ std::string x_platform_type_to_string(int platform_type) {
       return "RV1103";
     case X_PLATFORM_TYPE_ROCKCHIP_RV1106:
       return "RV1106";
+    case X_PLATFORM_TYPE_WILLY:
+      return "Willy";
     case X_PLATFORM_TYPE_ALWINNER_X20:
       return "X20";
     case X_PLATFORM_TYPE_OPENIPC_SIGMASTAR_UNDEFINED:
@@ -268,6 +275,9 @@ int get_fec_max_block_size_for_platform() {
   if (platform_type == X_PLATFORM_TYPE_NVIDIA_XAVIER) {
     return 50;
   }
+  if (platform_type == X_PLATFORM_TYPE_WILLY) {
+    return 50;
+  }
   if (platform_type == X_PLATFORM_TYPE_QUALCOMM_QRB5165 ||
       platform_type == X_PLATFORM_TYPE_QUALCOMM_QCS405) {
     return 50;
@@ -302,7 +312,10 @@ bool OHDPlatform::is_rpi_or_x86() const {
 
 bool OHDPlatform::is_x20() const {
   return platform_type == X_PLATFORM_TYPE_ALWINNER_X20;
-  
+}
+
+bool OHDPlatform::is_willy() const {
+  return platform_type == X_PLATFORM_TYPE_WILLY;
 }
 
 bool OHDPlatform::is_zero3w() const {

@@ -26,6 +26,7 @@
 #include <csignal>
 #include <cstdlib>
 #include <cstring>
+#include <fstream>
 #include <iostream>
 #include <memory>
 
@@ -48,17 +49,44 @@ const char* getConfigBasePath() {
 }
 
 const char* getVideoPath() {
-  const auto FILENAME_VIDEO_EXTERNAL = "/Videos/external_video_part.txt";
-  const auto FILENAME_VIDEO_EXTERNAL_X20 =
-      "/external/Videos/external_video_part.txt";
-  if (OHDFilesystemUtil::exists(FILENAME_VIDEO_EXTERNAL)) {
-    return VIDEO_PATH ? VIDEO_PATH : "/Videos/";
-  } else if (OHDFilesystemUtil::exists(FILENAME_VIDEO_EXTERNAL_X20)) {
-    return VIDEO_PATH ? VIDEO_PATH : "/external/Videos/";
-  } else {
-    OHDFilesystemUtil::create_directories("/home/openhd/Videos/");
-    return "/home/openhd/Videos/";
+  static std::string cachedPath;
+  static const char* CACHE_FILE = "/usr/local/share/openhd/recording.txt";
+  static const char* FILENAME1 = "/Videos/external_video_part.txt";
+  static const char* FILENAME2 = "/external/Videos/external_video_part.txt";
+
+  if (!cachedPath.empty()) {
+    return cachedPath.c_str();
   }
+
+  if (OHDFilesystemUtil::exists(CACHE_FILE)) {
+    std::ifstream infile(CACHE_FILE);
+    if (infile) {
+      std::getline(infile, cachedPath);
+      return cachedPath.c_str();
+    }
+  }
+
+  const char* selectedPath = nullptr;
+
+  if (OHDFilesystemUtil::exists(FILENAME1)) {
+    selectedPath = VIDEO_PATH ? VIDEO_PATH : "/Videos/";
+    OHDFilesystemUtil::remove_if_existing(FILENAME1);
+  } else if (OHDFilesystemUtil::exists(FILENAME2)) {
+    selectedPath = VIDEO_PATH ? VIDEO_PATH : "/external/Videos/";
+    OHDFilesystemUtil::remove_if_existing(FILENAME2);
+  } else {
+    selectedPath = "/home/openhd/Videos/";
+    OHDFilesystemUtil::create_directories(selectedPath);
+  }
+
+  cachedPath = selectedPath;
+  OHDFilesystemUtil::create_directories("/usr/local/share/openhd/");
+  std::ofstream outfile(CACHE_FILE);
+  if (outfile) {
+    outfile << cachedPath;
+  }
+
+  return cachedPath.c_str();
 }
 
 void setConfigBasePath(const char* path) {

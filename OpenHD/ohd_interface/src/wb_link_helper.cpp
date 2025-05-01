@@ -148,7 +148,7 @@ void openhd::wb::set_tx_power_for_all_cards(
       }
 
       openhd::log::get_default()->debug("Tx power mW: {} mBm: {}", tx_power_mw,
-                                       tx_power_mbm);
+                                        tx_power_mbm);
     }
   }
 }

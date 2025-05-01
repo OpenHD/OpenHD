@@ -630,6 +630,24 @@ static std::string createAllwinnerStream(const CameraSettings& settings) {
 }
 
 /**
+ * For WILLY Cameras
+ */
+static std::string create_willy_camera1_stream(const int device_index,
+                                               const CameraSettings& settings) {
+  std::stringstream ss;
+  const int bps = (settings.h26x_bitrate_kbits * 0.8);
+  const int rotation = get_rotation_degree_qcom(settings);
+  ss << fmt::format("v4l2src device=/dev/video3 ! ");
+  ss << fmt::format(
+      "video/x-raw,width=960,height=720,framerate=120/1,format=NV12 ! ");
+  ss << "vpuenc_h264 ";
+  ss << "bitrate=" << bps << " ";
+  ss << "! ";
+
+  return ss.str();
+}
+
+/**
  * For Qualcomm Cameras
  */
 static std::string create_qualcomm_camera1_stream(

@@ -106,7 +106,7 @@ std::string GStreamerStream::create_source_encode_pipeline(
       std::string(getConfigBasePath()) + "hdmi_v4l2.txt");
 
   openhd::log::get_default()->debug("RPI_HDMI_TO_CSI_USE_V4l2: {}",
-                                   RPI_HDMI_TO_CSI_USE_V4l2);
+                                    RPI_HDMI_TO_CSI_USE_V4l2);
 
   if (OHDPlatform::instance().is_x20()) {
     openhd::log::get_default()->debug(
@@ -134,14 +134,16 @@ std::string GStreamerStream::create_source_encode_pipeline(
           -1, setting, cam_holder.requires_half_bitrate_workaround());
     }
   } else if (camera.requires_rpi_libcamera_pipeline()) {
-    openhd::log::get_default()->debug("Camera requires RPI Libcamera pipeline.");
+    openhd::log::get_default()->debug(
+        "Camera requires RPI Libcamera pipeline.");
     pipeline << OHDGstHelper::createLibcamerasrcStream(setting);
   } else if (camera.requires_rpi_veye_pipeline()) {
     openhd::log::get_default()->debug("Camera requires RPI Veye pipeline.");
     auto bus = "/dev/video0";
     pipeline << OHDGstHelper::create_veye_vl2_stream(setting, bus);
   } else if (camera.requires_rockchip3_mpp_pipeline()) {
-    openhd::log::get_default()->debug("Camera requires Rockchip3 MPP pipeline.");
+    openhd::log::get_default()->debug(
+        "Camera requires Rockchip3 MPP pipeline.");
     if (camera.camera_type == X_CAM_TYPE_ROCK_3_HDMI_IN) {
       openhd::log::get_default()->warn("Using Rockchip HDMI stream.");
       pipeline << OHDGstHelper::createRockchipHDMIStream(setting);
@@ -159,7 +161,8 @@ std::string GStreamerStream::create_source_encode_pipeline(
                                                         setting);
     }
   } else if (camera.requires_rockchip5_mpp_pipeline()) {
-    openhd::log::get_default()->debug("Camera requires Rockchip5 MPP pipeline.");
+    openhd::log::get_default()->debug(
+        "Camera requires Rockchip5 MPP pipeline.");
     if (camera.camera_type == X_CAM_TYPE_ROCK_5_HDMI_IN) {
       openhd::log::get_default()->warn("Using Rockchip HDMI stream.");
       pipeline << OHDGstHelper::createRockchipHDMIStream(setting);
@@ -173,6 +176,9 @@ std::string GStreamerStream::create_source_encode_pipeline(
   } else if (camera.requires_x20_cedar_pipeline()) {
     openhd::log::get_default()->debug("Camera requires X20 Cedar pipeline.");
     pipeline << OHDGstHelper::createAllwinnerStream(setting);
+  } else if (camera.requires_willy_pipeline()) {
+    openhd::log::get_default()->debug("Camera requires Willy pipeline.");
+    pipeline << OHDGstHelper::create_willy_camera1_stream(3, setting);
   } else if (is_usb_camera(camera.camera_type)) {
     openhd::log::get_default()->warn("Detected USB camera.");
     const auto v4l2_device_name =
@@ -197,6 +203,9 @@ std::string GStreamerStream::create_source_encode_pipeline(
   } else if (camera.camera_type == X_CAM_TYPE_QC_IMX577) {
     openhd::log::get_default()->warn("Using Qualcomm IMX577 camera type.");
     pipeline << OHDGstHelper::create_qualcomm_camera1_stream(0, setting);
+  } else if (camera.camera_type == X_CAM_TYPE_WILLY_HORNET) {
+    openhd::log::get_default()->warn("Using WILLY HORNET camera type.");
+    pipeline << OHDGstHelper::create_willy_camera1_stream(0, setting);
   } else {
     openhd::log::get_default()->warn("UNKNOWN CAMERA TYPE");
     pipeline << "ERROR";
