@@ -164,6 +164,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
     // normal stuff
     int8_t curr_temperature_core = 0;
     int8_t curr_temperature_txc = 0;
+    int txc_temp = 1;
     int curr_clock_cpu = 0;
     int curr_clock_isp = 0;
     int curr_clock_h264 = 0;
@@ -198,7 +199,6 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
     } else {
       ohd_encryption = 3;
     }
-    int txc_temp = 0;
     // Check for presence of rtl88x2eu driver debug interface
     const std::string rtl88x2eu_proc_dir = "/proc/net/rtl88x2eu_ohd/";
     if (OHDFilesystemUtil::exists(rtl88x2eu_proc_dir)) {
@@ -218,19 +218,9 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
         const std::string thermal_content =
             OHDFilesystemUtil::read_file(thermal_state_file);
 
-        // Extract the temperature (e.g., "temperature: 48")
         txc_temp = extract_temperature(thermal_content);
-
-        openhd::log::get_default()->debug(
-            "rtl88x2eu thermal state: '{}', parsed temp: {}", thermal_content,
-            txc_temp);
-      } else {
-        openhd::log::get_default()->warn(
-            "No rtl88x2eu wifi interface found under '{}'", rtl88x2eu_proc_dir);
+        curr_temperature_txc = static_cast<int8_t>(txc_temp);
       }
-    } else {
-      openhd::log::get_default()->debug(
-          "rtl88x2eu debug directory '{}' not found", rtl88x2eu_proc_dir);
     }
     if (OHDPlatform::instance().is_rpi()) {
       curr_temperature_core =
