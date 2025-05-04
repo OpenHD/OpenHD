@@ -27,6 +27,8 @@
 #include "onboard_computer_status_rpi.hpp"
 #include "openhd_spdlog_include.h"
 #include "openhd_util_filesystem.h"
+#include <set>
+
 
 // INA219 stuff
 constexpr float SHUNT_OHMS = 0.1f;
@@ -204,47 +206,42 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
     if (OHDFilesystemUtil::exists(rtl88x2eu_proc_dir)) {
       const auto interface_dirs =
           OHDFilesystemUtil::getAllMatchingDirectoriesByPrefix(rtl88x2eu_proc_dir, "wl");
-
-          size_t iface_index = 0;
-          for (const auto& iface : interface_dirs) {
-            if (iface_index > 1) break;  // Only handle two Wi-Fi cards
-
-            const std::string thermal_state_file = rtl88x2eu_proc_dir + iface + "/thermal_state";
-
-            std::set<std::string> seen_ifaces;
-size_t iface_index = 0;
-
-for (const auto& iface : interface_dirs) {
-  if (iface_index > 1) break;  // Only take first two valid, distinct entries
-
-  // Skip duplicates (just in case)
-  if (seen_ifaces.find(iface) != seen_ifaces.end()) {
-    continue;
-  }
-  seen_ifaces.insert(iface);
-
-  const std::string thermal_state_file = rtl88x2eu_proc_dir + iface + "/thermal_state";
-
-  if (OHDFilesystemUtil::exists(thermal_state_file)) {
-    const std::string thermal_content = OHDFilesystemUtil::read_file(thermal_state_file);
-    int temp = extract_temperature(thermal_content);
-
-    if (temp > 0) {
-      if (iface_index == 0) {
-        m_curr_onboard_computer_status.temperature_core[1] = static_cast<int8_t>(temp);
-        openhd::log::get_default()->info("WiFi card 0 [{}] temperature: {}", iface, temp);
-      } else if (iface_index == 1) {
-        m_curr_onboard_computer_status.temperature_core[2] = static_cast<int8_t>(temp);
-        openhd::log::get_default()->info("WiFi card 1 [{}] temperature: {}", iface, temp);
+    
+      std::set<std::string> seen_ifaces;
+      size_t iface_index = 0;
+    
+      for (const auto& iface : interface_dirs) {
+        if (iface_index > 1) break;
+    
+        if (seen_ifaces.find(iface) != seen_ifaces.end()) {
+          continue;
+        }
+        seen_ifaces.insert(iface);
+    
+        const std::string thermal_state_file = rtl88x2eu_proc_dir + iface + "/thermal_state";
+    
+        if (OHDFilesystemUtil::exists(thermal_state_file)) {
+          const std::string thermal_content = OHDFilesystemUtil::read_file(thermal_state_file);
+          int temp = extract_temperature(thermal_content);
+    
+          if (temp > 0) {
+            if (iface_index == 0) {
+              m_curr_onboard_computer_status.temperature_core[1] = static_cast<int8_t>(temp);
+              openhd::log::get_default()->info("WiFi card 0 [{}] temperature: {}", iface, temp);
+            } else if (iface_index == 1) {
+              m_curr_onboard_computer_status.temperature_core[2] = static_cast<int8_t>(temp);
+              openhd::log::get_default()->info("WiFi card 1 [{}] temperature: {}", iface, temp);
+            }
+          } else {
+            openhd::log::get_default()->warn("Invalid temperature from [{}]: [{}]", iface, thermal_content);
+          }
+    
+          ++iface_index;
+        } else {
+          openhd::log::get_default()->warn("Missing thermal_state for interface [{}]", iface);
+        }
       }
-    } else {
-      openhd::log::get_default()->warn("Invalid temperature from [{}]: [{}]", iface, thermal_content);
-    }
-
-    ++iface_index;
-  } else {
-    openhd::log::get_default()->warn("Missing thermal_state for interface [{}]", iface);
-  }
+    }    
 }
 
         }          
