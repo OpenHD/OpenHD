@@ -202,26 +202,26 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
     // Check for presence of rtl88x2eu driver debug interface
     const std::string rtl88x2eu_proc_dir = "/proc/net/rtl88x2eu_ohd/";
     if (OHDFilesystemUtil::exists(rtl88x2eu_proc_dir)) {
-      // Look for a subdirectory starting with "wl", e.g., "wl0", which
-      // represents a wifi interface
-      const auto interface_dir_opt =
-          OHDFilesystemUtil::getFirstMatchingDirectoryByPrefix(
-              rtl88x2eu_proc_dir, "wl");
+      const auto interface_dirs =
+          OHDFilesystemUtil::getAllMatchingDirectoriesByPrefix(rtl88x2eu_proc_dir, "wl");
 
-      if (interface_dir_opt.has_value()) {
-        // Construct full path to the thermal state file for the rtl88x2eu
-        // device
-        const std::string thermal_state_file =
-            rtl88x2eu_proc_dir + interface_dir_opt.value() + "/thermal_state";
+      for (const auto& iface : interface_dirs) {
+        const std::string thermal_state_file = rtl88x2eu_proc_dir + iface + "/thermal_state";
 
-        // Read the file contents
-        const std::string thermal_content =
-            OHDFilesystemUtil::read_file(thermal_state_file);
+        if (OHDFilesystemUtil::exists(thermal_state_file)) {
+          const std::string thermal_content = OHDFilesystemUtil::read_file(thermal_state_file);
+          int temp = extract_temperature(thermal_content);
 
-        txc_temp = extract_temperature(thermal_content);
-        curr_temperature_txc = static_cast<int8_t>(txc_temp);
+          std::cout << "Interface: " << iface << ", Temperature: " << temp << "°C\n";
+
+          // Optionally update the global current temp
+          if (temp > curr_temperature_txc) {
+            curr_temperature_txc = static_cast<int8_t>(temp);
+          }
+        }
       }
     }
+
     if (OHDPlatform::instance().is_rpi()) {
       curr_temperature_core =
           (int8_t)openhd::onboard::rpi::read_temperature_soc_degree();

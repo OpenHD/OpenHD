@@ -78,6 +78,26 @@ std::optional<std::string> OHDFilesystemUtil::getFirstMatchingDirectoryByPrefix(
   return std::nullopt;
 }
 
+std::vector<std::string> OHDFilesystemUtil::getAllMatchingDirectoriesByPrefix(
+  const std::string &directory, const std::string &prefix) {
+std::vector<std::string> matching_dirs;
+std::filesystem::path dirPath(directory);
+try {
+  for (const auto &entry : std::filesystem::directory_iterator(dirPath)) {
+    if (entry.is_directory()) {
+      const auto dirName = entry.path().filename().string();
+      if (dirName.rfind(prefix, 0) == 0) {  // starts with prefix
+        matching_dirs.push_back(dirName);
+      }
+    }
+  }
+} catch (const std::filesystem::filesystem_error &e) {
+  openhd::log::get_default()->warn("Filesystem error in getAllMatchingDirectoriesByPrefix: {}", e.what());
+}
+return matching_dirs;
+}
+
+
 bool OHDFilesystemUtil::exists(const std::string &file) {
   return std::filesystem::exists(file);
 }
