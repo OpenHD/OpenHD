@@ -165,7 +165,8 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
     int ohd_encryption = 0;
     // normal stuff
     int8_t curr_temperature_core = 0;
-    int8_t curr_temperature_txc = 0;
+    int8_t curr_temperature_txc0 = 0;
+    int8_t curr_temperature_txc1 = 0;
     int txc_temp = 1;
     int curr_clock_cpu = 0;
     int curr_clock_isp = 0;
@@ -226,16 +227,13 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
     
           if (temp > 0) {
             if (iface_index == 0) {
-              m_curr_onboard_computer_status.temperature_core[1] = static_cast<int8_t>(temp);
+              curr_temperature_txc0 = static_cast<int8_t>(temp);
               openhd::log::get_default()->info("WiFi card 0 [{}] temperature: {}", iface, temp);
             } else if (iface_index == 1) {
-              m_curr_onboard_computer_status.temperature_core[2] = static_cast<int8_t>(temp);
+              curr_temperature_txc1 = static_cast<int8_t>(temp);
               openhd::log::get_default()->info("WiFi card 1 [{}] temperature: {}", iface, temp);
             }
-          } else {
-            openhd::log::get_default()->warn("Invalid temperature from [{}]: [{}]", iface, thermal_content);
           }
-    
           ++iface_index;
         } else {
           openhd::log::get_default()->warn("Missing thermal_state for interface [{}]", iface);
@@ -261,7 +259,8 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       const auto cpu_temp = (int8_t)openhd::onboard::readTemperature();
       const auto platform = OHDPlatform::instance();
       curr_temperature_core = cpu_temp;
-      curr_temperature_txc = txc_temp;
+      curr_temperature_txc0 = txc_temp;
+      curr_temperature_txc1 = txc_temp;
       if (platform.is_rock() || platform.platform_type == X_PLATFORM_TYPE_X86) {
         if (OHDFilesystemUtil::exists(
                 "/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq")) {
@@ -274,7 +273,8 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       std::lock_guard<std::mutex> lock(m_curr_onboard_computer_status_mutex);
       m_curr_onboard_computer_status.temperature_core[0] =
           curr_temperature_core;
-      m_curr_onboard_computer_status.temperature_core[1] = curr_temperature_txc;
+      m_curr_onboard_computer_status.temperature_core[1] = curr_temperature_txc0;
+      m_curr_onboard_computer_status.temperature_core[2] = curr_temperature_txc1;
       // temporary, until we have our own message
       m_curr_onboard_computer_status.storage_type[0] = curr_clock_cpu;
       m_curr_onboard_computer_status.storage_type[1] = curr_clock_isp;
