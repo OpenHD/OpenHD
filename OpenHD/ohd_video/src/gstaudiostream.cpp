@@ -173,6 +173,7 @@ void GstAudioStream::stream_once() {
     if (complainOnce = 0) {
       m_console->warn("Audio is disabled");
       complainOnce = 1;
+      return;
     }
     // Quickly terminate if openhd wants to terminate
     if (!m_keep_looping) break;
