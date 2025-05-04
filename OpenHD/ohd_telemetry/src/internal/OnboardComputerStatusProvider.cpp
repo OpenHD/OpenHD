@@ -242,8 +242,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
         }
       }
     }    
-}
-    if (OHDPlatform::instance().is_rpi()) {
+      if (OHDPlatform::instance().is_rpi()) {
       curr_temperature_core =
           (int8_t)openhd::onboard::rpi::read_temperature_soc_degree();
       // temporary, until we have our own message
