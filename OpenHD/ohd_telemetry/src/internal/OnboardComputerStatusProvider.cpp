@@ -228,15 +228,11 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
           if (temp > 0) {
             if (iface_index == 0) {
               curr_temperature_txc0 = static_cast<int8_t>(temp);
-              openhd::log::get_default()->info("WiFi card 0 [{}] temperature: {}", iface, temp);
             } else if (iface_index == 1) {
               curr_temperature_txc1 = static_cast<int8_t>(temp);
-              openhd::log::get_default()->info("WiFi card 1 [{}] temperature: {}", iface, temp);
             }
           }
           ++iface_index;
-        } else {
-          openhd::log::get_default()->warn("Missing thermal_state for interface [{}]", iface);
         }
       }
     }    
