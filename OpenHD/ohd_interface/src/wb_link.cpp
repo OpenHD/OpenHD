@@ -1350,7 +1350,9 @@ void WBLink::perform_channel_scan(
   //   return;
   // }
   //  We only scan 40Mhz, this way we get both 20Mhz and 40Mhz air unit(s)
-  const std::vector<uint16_t> channel_widths_to_scan = {40};
+
+  // add 10mhz scan
+  const std::vector<uint16_t> channel_widths_to_scan = {40, 10};
 
   auto stats_current = openhd::LinkActionHandler::instance().get_link_stats();
   stats_current.gnd_operating_mode.operating_mode = 1;
@@ -1384,7 +1386,7 @@ void WBLink::perform_channel_scan(
       // set new frequency, reset the packet count, sleep, then check if any
       // openhd packets have been received
       const bool freq_success = apply_frequency_and_channel_width(
-          channel.frequency, channel_width, 20);
+          channel.frequency, channel_width, channel_width);
       if (!freq_success) {
         m_console->warn("Cannot scan [{}] {}Mhz@{}Mhz", channel.channel,
                         channel.frequency, channel_width);
@@ -1441,12 +1443,15 @@ void WBLink::perform_channel_scan(
           n_valid_packets, channel.frequency, channel_width,
           air_center_frequency, air_tx_channel_width, packet_loss);
       if (n_valid_packets > 0 && air_center_frequency > 0 &&
-          (air_tx_channel_width == 20 || air_tx_channel_width == 40) &&
+          (air_tx_channel_width == 10 || air_tx_channel_width == 20 ||
+           air_tx_channel_width == 40) &&
           channel.frequency == air_center_frequency) {
         m_console->debug("Found air unit");
         result.frequency = channel.frequency;
         result.channel_width = air_tx_channel_width;
         result.success = true;
+        m_console->debug("Air unit detected: {} MHz @ {} MHz width",
+                         result.frequency, result.channel_width);
         done_early = true;
       }
     }

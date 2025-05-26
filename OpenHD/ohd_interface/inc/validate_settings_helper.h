@@ -50,7 +50,7 @@ static bool is_valid_frequency_5G(uint32_t frequency) {
 }
 
 static bool is_valid_channel_width(uint32_t channel_width) {
-  return channel_width == 20 || channel_width == 40;
+  return channel_width == 10 || channel_width == 20 || channel_width == 40;
 }
 
 static bool is_valid_mcs_index(uint32_t mcs_index) {

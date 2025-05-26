@@ -208,7 +208,7 @@ std::string GStreamerStream::create_source_encode_pipeline(
     pipeline << OHDGstHelper::create_willy_camera1_stream(0, setting);
   } else {
     openhd::log::get_default()->warn("UNKNOWN CAMERA TYPE");
-    pipeline << "ERROR";
+    pipeline << OHDGstHelper::createDummyStreamX(setting);
   }
 
   openhd::log::get_default()->debug("Pipeline created: {}", pipeline.str());

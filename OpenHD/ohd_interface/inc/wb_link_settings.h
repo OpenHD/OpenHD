@@ -90,7 +90,7 @@ struct WBLinkSettings {
   // NOTE: Only stored on air, gnd automatically applies 40Mhz bwidth when air
   // reports (management frame(s))
   uint32_t wb_air_tx_channel_width =
-      DEFAULT_CHANNEL_WIDTH;  // 20 or 40 mhz bandwidth
+      DEFAULT_CHANNEL_WIDTH;  // 10 or 20 or 40 mhz bandwidth
   // MCS index used during injection - only used by air unit, since ground
   // always sends with MCS0
   uint32_t wb_air_mcs_index = DEFAULT_MCS_INDEX;
