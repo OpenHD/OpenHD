@@ -374,10 +374,25 @@ bool wifi::commandhelper::openhd_driver_set_frequency_and_channel_width(
   } else {
     dummy_frequency = use_40mhz ? (use_ht40_plus ? 5180 : 5200) : 5180;
   }
-  const std::string bw_mode =
-      channel_width == 20 ? "HT20" : (use_ht40_plus ? "HT40+" : "HT40-");
-  wifi::commandhelper::iw_set_frequency_and_channel_width2(
-      device, dummy_frequency, bw_mode, true);
+  if (channel_width == 10 && type == WiFiCardType::OPENHD_RTL_88X2EU) {
+    // Special handling for 10MHz on RTL88X2EU
+    openhd::log::get_default()->info(
+        "Using special 10MHz iw set command for 88x2eu: wlan={} chan={} "
+        "width=10MHZ",
+        device, channel.channel);
+    const std::string cmd =
+        fmt::format("iw {} set channel {} 10MHZ", device, channel.channel);
+    int ret = std::system(cmd.c_str());
+    if (ret != 0) {
+      openhd::log::get_default()->error("Failed to run: {}", cmd);
+    }
+  } else {
+    // Standard bandwidth logic
+    const std::string bw_mode =
+        channel_width == 20 ? "HT20" : (use_ht40_plus ? "HT40+" : "HT40-");
+    wifi::commandhelper::iw_set_frequency_and_channel_width2(
+        device, dummy_frequency, bw_mode, true);
+  }
   return true;
 }
 
