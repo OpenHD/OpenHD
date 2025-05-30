@@ -229,8 +229,12 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
             "No rtl88x2eu wifi interface found under '{}'", rtl88x2eu_proc_dir);
       }
     } else {
-      openhd::log::get_default()->debug(
-          "rtl88x2eu debug directory '{}' not found", rtl88x2eu_proc_dir);
+      static bool Once = false;
+      if(!Once)
+      {
+        Once = true;
+        openhd::log::get_default()->debug("rtl88x2eu debug directory '{}' not found", rtl88x2eu_proc_dir);
+      }
     }
     if (OHDPlatform::instance().is_rpi()) {
       curr_temperature_core =

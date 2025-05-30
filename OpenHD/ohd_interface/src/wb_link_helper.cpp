@@ -384,8 +384,8 @@ int openhd::wb::calculate_bitrate_for_wifi_config_kbits(
   if (debug_log) {
     auto m_console = openhd::log::get_default();
     m_console->debug(
-        "Max rate for {}@{}Mhz MCS:{} dev_adjustment:{} is {} kBit/s",
-        frequency_mhz, channel_width_mhz, mcs_index, dev_adjustment_percent,
+        "Max rate for {}@{}Mhz MCS:{} max {} dev_adjustment:{} is {} kBit/s",
+        frequency_mhz, channel_width_mhz, mcs_index, max_rate_for_current_wifi_config_without_adjust, dev_adjustment_percent,
         max_rate_for_current_wifi_config);
   }
   return max_rate_for_current_wifi_config;

@@ -70,7 +70,7 @@ OHDVideoAir::OHDVideoAir(std::vector<XCamera> cameras,
   for (auto& camera : camera_holders) {
     configure(camera);
   }
-  if (m_generic_settings->get_settings().enable_audio != OPENHD_AUDIO_DISABLE) {
+  if (m_generic_settings->get_settings().enable_audio == 1) {
     m_audio_stream = std::make_unique<GstAudioStream>();
     auto audio_cb = [this](const openhd::AudioPacket& audioPacket) {
       on_audio_data(audioPacket);

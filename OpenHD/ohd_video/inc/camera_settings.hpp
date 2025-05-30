@@ -110,6 +110,7 @@ struct CameraSettings {
   int h26x_num_slices = 0;
   // enable/disable recording to file
   int air_recording = AIR_RECORDING_OFF;
+  int mtu_packet_len = 1440;
   //
   // Below are params that most often only affect the ISP, not the encoder
   //

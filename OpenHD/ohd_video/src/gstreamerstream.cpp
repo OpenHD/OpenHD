@@ -251,7 +251,7 @@ void GStreamerStream::setup() {
     /*pipeline_content << "video/x-h264,stream-format=byte-stream ! ";
     pipeline_content << OHDGstHelper::createOutputAppSink();*/
   } else {
-    const int rtp_fragment_size = 1440;
+    const int rtp_fragment_size = setting.mtu_packet_len;
     m_console->debug("Using {} for rtp fragmentation", rtp_fragment_size);
     pipeline_content << OHDGstHelper::create_parse_and_rtp_packetize(
         setting.streamed_video_format.videoCodec, rtp_fragment_size);
@@ -645,6 +645,7 @@ void GStreamerStream::on_new_rtp_frame_fragment(
     is_last_fragment_of_frame = true;
   }
   if (is_last_fragment_of_frame) {
+    //m_console->debug("end of frame, {} fragments", m_frame_fragments.size());
     on_new_rtp_fragmented_frame();
     m_frame_fragments.resize(0);
     m_last_fu_s_idr = false;

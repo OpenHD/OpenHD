@@ -55,14 +55,21 @@ const char* getVideoPath() {
   static const char* FILENAME2 = "/external/Videos/external_video_part.txt";
 
   if (!cachedPath.empty()) {
-    return cachedPath.c_str();
+    if(OHDFilesystemUtil::exists(cachedPath.c_str()))
+    {
+      return cachedPath.c_str();
+    }
   }
 
   if (OHDFilesystemUtil::exists(CACHE_FILE)) {
     std::ifstream infile(CACHE_FILE);
     if (infile) {
       std::getline(infile, cachedPath);
-      return cachedPath.c_str();
+
+      if(OHDFilesystemUtil::exists(cachedPath.c_str()))
+      {
+        return cachedPath.c_str();
+      }
     }
   }
 
