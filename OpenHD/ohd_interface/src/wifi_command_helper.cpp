@@ -386,6 +386,18 @@ bool wifi::commandhelper::openhd_driver_set_frequency_and_channel_width(
     if (ret != 0) {
       openhd::log::get_default()->error("Failed to run: {}", cmd);
     }
+    if (channel_width == 40 && type == WiFiCardType::OPENHD_RTL_88X2EU) {
+      // Special handling for 40MHz on RTL88X2EU
+      openhd::log::get_default()->info(
+          "Using special 40MHz iw set command for 88x2eu: wlan={} chan={} "
+          "width=40MHZ",
+          device, channel.channel);
+      const std::string cmd =
+          fmt::format("iw {} set channel {} 80MHZ", device, channel.channel);
+      int ret = std::system(cmd.c_str());
+      if (ret != 0) {
+        openhd::log::get_default()->error("Failed to run: {}", cmd);
+      }
   } else {
     // Standard bandwidth logic
     const std::string bw_mode =
