@@ -503,7 +503,7 @@ void GStreamerStream::stream_once() {
   // change(s)
   const uint64_t timeout_ns =
       std::chrono::duration_cast<std::chrono::nanoseconds>(
-          std::chrono::milliseconds(40))
+          std::chrono::nanoseconds(1000000 * 40))
           .count();
   // For 'bugged camera restart' fix
   std::chrono::steady_clock::time_point m_last_camera_frame =
