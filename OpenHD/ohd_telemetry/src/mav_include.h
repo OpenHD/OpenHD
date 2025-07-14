@@ -26,7 +26,7 @@
 
 extern "C" {
 // NOTE: Make sure to include the openhd mavlink flavour, otherwise the custom
-// messages won't bw parsed.
+// messages won't be parsed.
 #include <openhd/mavlink.h>
 }
 
