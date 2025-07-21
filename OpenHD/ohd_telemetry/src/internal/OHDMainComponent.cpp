@@ -23,6 +23,8 @@
 
 #include "OHDMainComponent.h"
 
+#include <fmt/format.h>
+
 #include <iostream>
 #include <openhd_global_constants.hpp>
 #include <utility>
@@ -32,6 +34,7 @@
 #include "openhd_config.h"
 #include "openhd_reboot_util.h"
 #include "openhd_spdlog_include.h"
+#include "openhd_util_filesystem.h"
 #include "openhd_util_time.h"
 
 OHDMainComponent::OHDMainComponent(uint8_t parent_sys_id, bool runsOnAir)
@@ -90,6 +93,14 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_messages(
       case MAVLINK_MSG_ID_COMMAND_LONG: {
         mavlink_command_long_t command;
         mavlink_msg_command_long_decode(&msg.m, &command);
+        if (OHDFilesystemUtil::exists("/usr/local/share/openhd/debug.txt")) {
+          openhd::log::log_via_mavlink(
+              static_cast<int>(openhd::log::STATUS_LEVEL::DEBUG),
+              fmt::format("CMD_LONG {} {} {} {} {} {} {} {}", command.command,
+                          command.param1, command.param2, command.param3,
+                          command.param4, command.param5, command.param6,
+                          command.param7));
+        }
         if (command.target_system == m_sys_id &&
             command.target_component == m_comp_id) {
           process_command_self(command, msg.m.sysid, msg.m.compid, ret);
@@ -232,6 +243,11 @@ MavlinkMessage OHDMainComponent::ack_command(const uint8_t source_sys_id,
   const auto result = success ? MAV_RESULT_ACCEPTED : MAV_RESULT_UNSUPPORTED;
   mavlink_msg_command_ack_pack(m_sys_id, m_comp_id, &ret.m, command_id, result,
                                255, 0, source_sys_id, source_comp_id);
+  if (OHDFilesystemUtil::exists("/usr/local/share/openhd/debug.txt")) {
+    openhd::log::log_via_mavlink(
+        static_cast<int>(openhd::log::STATUS_LEVEL::DEBUG),
+        fmt::format("CMD_ACK {} {}", command_id, success));
+  }
   return ret;
 }
 
