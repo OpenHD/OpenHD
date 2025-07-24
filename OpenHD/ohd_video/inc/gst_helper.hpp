@@ -655,7 +655,6 @@ static std::string create_willy_camera1_stream(const int device_index,
       ss << "qp-min=" << qp_min << " ";
       ss << "qp-max=" << qp_max << " ";
       ss << "stream-multislice=" << num_slices << " ";
-      ss << "! video/x-h264,stream-format=byte-stream,alignment=nal ! ";
       break;
 
     case VideoCodec::H265:
@@ -665,7 +664,6 @@ static std::string create_willy_camera1_stream(const int device_index,
       ss << "qp-min=" << qp_min << " ";
       ss << "qp-max=" << qp_max << " ";
       ss << "stream-multislice=" << num_slices << " ";
-      ss << "! video/x-h265,variant=itu ! ";
       break;
 
     default:
