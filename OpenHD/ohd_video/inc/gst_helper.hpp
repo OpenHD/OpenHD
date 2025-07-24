@@ -654,7 +654,7 @@ static int nxp_calculate_number_of_mbs_in_a_slice(int frame_height_px, int n_sli
   return slice_row_mb;
 }
 
-static std::string createIMXEncoderPipeline(const CameraSettings& settings) {
+static std::string create_willy_camera1_stream(const CameraSettings& settings) {
   std::stringstream ss;
 
   const int bitrate_kbps = settings.h26x_bitrate_kbits;
