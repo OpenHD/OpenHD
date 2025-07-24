@@ -654,31 +654,35 @@ static int nxp_calculate_number_of_mbs_in_a_slice(int frame_height_px, int n_sli
   return slice_row_mb;
 }
 
-static std::string create_willy_camera1_stream(const int device_index,
-                                               const CameraSettings& settings) {
+static std::string createIMXEncoderPipeline(const CameraSettings& settings) {
   std::stringstream ss;
-  const int bps = static_cast<int>(settings.h26x_bitrate_kbits * 800);
-  const bool use_slicing = settings.h26x_num_slices >= 2;
 
-  std::string slicing_str;
-  if (use_slicing) {
-    const int mbs_per_slice = nxp_calculate_number_of_mbs_in_a_slice(
-        settings.streamed_video_format.height, settings.h26x_num_slices);
-    slicing_str = fmt::format(",number_of_mbs_in_a_slice={}", mbs_per_slice);
+  const int bitrate_kbps = settings.h26x_bitrate_kbits;
+  const int qp_min = settings.qp_min;
+  const int qp_max = settings.qp_max;
+  const int gop_size = settings.h26x_keyframe_interval;
+  const int num_slices = std::max(settings.h26x_num_slices, 1);
+
+  if (settings.streamed_video_format.videoCodec == VideoCodec::H264) {
+    ss << "vpuenc_h264 ";
+    ss << "bitrate=" << bitrate_kbps << " ";
+    ss << "gop-size=" << gop_size << " ";
+    ss << "qp-min=" << qp_min << " ";
+    ss << "qp-max=" << qp_max << " ";
+    ss << "stream-multislice=" << num_slices << " ";
+    ss << "! video/x-h264,stream-format=byte-stream,alignment=nal ! ";
+  } else if (settings.streamed_video_format.videoCodec == VideoCodec::H265) {
+    ss << "vpuenc_hevc ";
+    ss << "bitrate=" << bitrate_kbps << " ";
+    ss << "gop-size=" << gop_size << " ";
+    ss << "qp-min=" << qp_min << " ";
+    ss << "qp-max=" << qp_max << " ";
+    ss << "stream-multislice=" << num_slices << " ";
+    ss << "! video/x-h265,variant=itu ! ";
+  } else {
+    openhd::log::get_default()->error("IMX platform: unsupported codec selected");
+    return "";
   }
-
-  ss << fmt::format("v4l2src device=/dev/video3 ! ");
-  ss << fmt::format(
-      "video/x-raw,width=960,height=720,framerate=120/1,format=NV12 ! ");
-
-  ss << fmt::format("v4l2h264enc extra-controls=\"controls,"
-                    "h264_profile=1,"
-                    "repeat_sequence_header=1,"
-                    "video_bitrate_mode=1,"
-                    "video_bitrate={}{}\" ! ",
-                    bps, slicing_str);
-
-  ss << "video/x-h264,profile=constrained-baseline ! ";
 
   return ss.str();
 }
