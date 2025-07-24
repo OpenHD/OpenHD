@@ -654,15 +654,18 @@ static int nxp_calculate_number_of_mbs_in_a_slice(int frame_height_px, int n_sli
   return slice_row_mb;
 }
 
-static std::string create_willy_camera1_stream(const CameraSettings& settings) {
+static std::string create_willy_camera1_stream(const int device_index,
+                                               const CameraSettings& settings) {
   std::stringstream ss;
+  const int bps = static_cast<int>(settings.h26x_bitrate_kbits * 800);
+  const bool use_slicing = settings.h26x_num_slices >= 2;
 
-  const int bitrate_kbps = settings.h26x_bitrate_kbits;
-  const int qp_min = settings.qp_min;
-  const int qp_max = settings.qp_max;
-  const int gop_size = settings.h26x_keyframe_interval;
-  const int num_slices = std::max(settings.h26x_num_slices, 1);
-
+  std::string slicing_str;
+  if (use_slicing) {
+    const int mbs_per_slice = nxp_calculate_number_of_mbs_in_a_slice(
+        settings.streamed_video_format.height, settings.h26x_num_slices);
+    slicing_str = fmt::format(",number_of_mbs_in_a_slice={}", mbs_per_slice);
+  }
   if (settings.streamed_video_format.videoCodec == VideoCodec::H264) {
     ss << "vpuenc_h264 ";
     ss << "bitrate=" << bitrate_kbps << " ";
@@ -683,7 +686,6 @@ static std::string create_willy_camera1_stream(const CameraSettings& settings) {
     openhd::log::get_default()->error("IMX platform: unsupported codec selected");
     return "";
   }
-
   return ss.str();
 }
 
