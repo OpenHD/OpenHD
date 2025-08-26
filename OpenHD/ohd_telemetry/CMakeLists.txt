@@ -26,6 +26,15 @@ else()
     message(STATUS "SDL Features (Joystick) will be unavailable!")
 endif()
 
+# Link com pigpio
+find_library(PIGPIO_LIB pigpio)
+if (PIGPIO_LIB)
+    message(STATUS "Found pigpio library")
+    target_link_libraries(OHDTelemetryLib PRIVATE pigpio)
+else()
+    message(FATAL_ERROR "pigpio library not found! Install it using 'sudo apt install libpigpio-dev'")
+endif()
+
 SET(sources
     "src/endpoints/MEndpoint.cpp"
     "src/endpoints/MEndpoint.h"
@@ -93,6 +102,8 @@ SET(sources
     "src/MavlinkComponent.h"
     "src/OHDTelemetry.cpp"
     "src/OHDTelemetry.h"
+    src/dcmotors/RaspberryPiRoverMotors.cpp
+    src/dcmotors/RaspberryPiRoverMotors.h
     src/gpio_control/RaspberryPiGPIOControl.cpp
     src/gpio_control/RaspberryPiGPIOControl.h
     src/gpio_control/RaspberryPiGPIOControlSettings.h
