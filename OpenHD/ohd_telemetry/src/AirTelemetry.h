@@ -37,6 +37,7 @@
 #include "endpoints/TCPEndpoint.h"
 #include "endpoints/WBEndpoint.h"
 #include "gpio_control/RaspberryPiGPIOControl.h"
+#include "dcmotors/RaspberryPiRoverMotors.h"
 #include "mavsdk_temporary/XMavlinkParamProvider.h"
 #include "openhd_action_handler.h"
 #include "openhd_link.hpp"
@@ -114,6 +115,8 @@ class AirTelemetry : public MavlinkSystem {
   // rpi only, allow changing gpios via settings
   std::unique_ptr<openhd::telemetry::rpi::GPIOControl> m_opt_gpio_control =
       nullptr;
+  std::unique_ptr<openhd::telemetry::rpi::RaspberryPiRoverMotors>
+      m_opt_motor_control;
   std::shared_ptr<spdlog::logger> m_console;
   // EXP - always on TCP mavlink server
   std::unique_ptr<TCPEndpoint> m_tcp_server = nullptr;
