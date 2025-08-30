@@ -136,6 +136,9 @@ static int internal_discover_platform() {
       } else if (chip == "rv1106") {
         openhd::log::get_default()->warn("Detected Rockchip RV1106");
         return X_PLATFORM_TYPE_ROCKCHIP_RV1106;
+      } else if (chip == "rk3506") {
+        openhd::log::get_default()->warn("Detected Luckfox Lyra");
+        return X_PLATFORM_TYPE_LUCKFOX_LYRA;
       }
     }
 
