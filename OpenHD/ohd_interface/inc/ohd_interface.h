@@ -57,7 +57,7 @@ class OHDInterface {
    * @param opt_action_handler r.n used to propagate rate control from wb_link
    * to ohd_video
    */
-  explicit OHDInterface(OHDProfile profile);
+  explicit OHDInterface(OHDProfile profile, bool disable_wifi_hotspot = false);
   OHDInterface(const OHDInterface&) = delete;
   OHDInterface(const OHDInterface&&) = delete;
   ~OHDInterface();
@@ -90,6 +90,7 @@ class OHDInterface {
   std::shared_ptr<EthernetLink> m_ethernet_link;
   std::vector<WiFiCard> m_monitor_mode_cards{};
   std::optional<WiFiCard> m_opt_hotspot_card = std::nullopt;
+  const bool m_disable_wifi_hotspot;
   NetworkingSettingsHolder m_nw_settings;
 };
 
