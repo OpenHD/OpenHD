@@ -206,6 +206,9 @@ std::string GStreamerStream::create_source_encode_pipeline(
   } else if (camera.camera_type == X_CAM_TYPE_WILLY_HORNET) {
     openhd::log::get_default()->warn("Using WILLY HORNET camera type.");
     pipeline << OHDGstHelper::create_willy_camera1_stream(0, setting);
+ } else if (camera.camera_type == X_CAM_TYPE_ROCKCHIP_RV) {
+    openhd::log::get_default()->warn("Using Rockchip RV camera type.");
+    pipeline << OHDGstHelper::createRv1106Stream(setting);
   } else {
     openhd::log::get_default()->warn("UNKNOWN CAMERA TYPE");
     pipeline << OHDGstHelper::createDummyStreamX(setting);

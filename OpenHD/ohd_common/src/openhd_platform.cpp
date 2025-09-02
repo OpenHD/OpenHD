@@ -361,3 +361,7 @@ bool OHDPlatform::is_uvx_mod() const {
 bool OHDPlatform::is_qrb5165() const {
   return platform_type == X_PLATFORM_TYPE_QUALCOMM_QRB5165;
 }
+
+bool OHDPlatform::is_luckfox_pico() const {
+  return platform_type == X_PLATFORM_TYPE_ROCKCHIP_RV1106 || platform_type == X_PLATFORM_TYPE_ROCKCHIP_RV1103;
+}

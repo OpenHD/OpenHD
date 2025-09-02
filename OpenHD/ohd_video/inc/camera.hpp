@@ -141,6 +141,9 @@ static constexpr int X_CAM_TYPE_QC_OV9282 = 121;
 static constexpr int X_CAM_TYPE_WILLY_HORNET = 122;
 static constexpr int X_CAM_TYPE_WILLY_JAGUAR = 123;
 static constexpr int X_CAM_TYPE_WILLY_REKINDLE = 124;
+// Rockchip RV (so far all supported cams run through the same pipline,
+// with no input from OpenHD)
+static constexpr int X_CAM_TYPE_ROCKCHIP_RV = 125;
 
 //
 // ... rest is reserved for future use
@@ -263,6 +266,8 @@ static std::string x_cam_type_to_string(int camera_type) {
       return "CORETRONIC IMX577";
     case X_CAM_TYPE_QC_OV9282:
       return "CORETRONIC OV9282";
+    case X_CAM_TYPE_ROCKCHIP_RV:
+      return "Rockchip RV";
     default:
       break;
   }
@@ -315,6 +320,9 @@ struct XCamera {
   bool requires_willy_pipeline() const {
     return camera_type >= 122 && camera_type < 124;
   }
+  bool requires_rockchip_rv_pipeline() const {
+    return camera_type == 125;
+  }
   std::string cam_type_as_verbose_string() const {
     return x_cam_type_to_string(camera_type);
   }
@@ -357,6 +365,8 @@ struct XCamera {
       ret.push_back(ResolutionFramerate{256, 192, 25});
       ret.push_back(ResolutionFramerate{0, 0, 0});
       return ret;
+    } else if (requires_rockchip_rv_pipeline()) {
+      return {ResolutionFramerate{1280, 720, 25}};
     } else if (camera_type == X_CAM_TYPE_USB_INFIRAY_P2_PRO) {
       return {ResolutionFramerate{256, 192, 25}};
     } else if (camera_type == X_CAM_TYPE_USB_INFIRAY_X2) {

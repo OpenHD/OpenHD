@@ -105,6 +105,8 @@ struct OHDPlatform {
   bool is_qcs405() const;
   bool is_willy() const;
   bool is_uvx_mod() const;
+  // Luckfox Pico
+  bool is_luckfox_pico() const;
 };
 
 // We need to differentiate between rpi 4 and other pi's to use the right fec
