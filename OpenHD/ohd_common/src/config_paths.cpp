@@ -43,6 +43,8 @@ const char* getConfigBasePath() {
     return "/config/openhd/";
   } else if (platform_debug.is_x20()) {
     return "/config/openhd/";
+  } else if (platform_debug.is_luckfox_pico()) {
+    return "/config/openhd/";
   } else {
     return "/boot/openhd/";
   }
