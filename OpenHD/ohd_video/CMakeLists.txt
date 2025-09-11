@@ -46,6 +46,7 @@ if(ENABLE_AIR)
             src/camerastream.cpp
             src/camera_discovery.cpp
             src/gstreamerstream.cpp
+            src/mpp_stream.cpp
             src/ohd_video_air.cpp
             src/rtp_eof_helper.cpp
             src/camera_holder.cpp

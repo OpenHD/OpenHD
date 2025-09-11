@@ -47,6 +47,11 @@ struct AirCameraGenericSettings {
   // Audio can be enabled, in which case gstreamer hopefully picks up the right
   // audio source via autoaudiosrc
   int enable_audio = OPENHD_AUDIO_DISABLE;
+  // Enable experimental gstreamer-less video streaming using the
+  // Rockchip MPP encoder. When enabled, OpenHD will spawn an external
+  // MPP based encoder instead of constructing a gstreamer pipeline.
+  // This is currently only supported on Rockchip based boards.
+  bool use_mpp_video = false;
 };
 
 static bool is_valid_dualcam_primary_video_allocated_bandwidth(

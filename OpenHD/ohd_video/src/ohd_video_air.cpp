@@ -28,6 +28,7 @@
 #include "camera_discovery.h"
 #include "gstaudiostream.h"
 #include "gstreamerstream.h"
+#include "mpp_stream.h"
 #include "nalu/fragment_helper.h"
 #include "openhd_config.h"
 #include "openhd_reboot_util.h"
@@ -119,12 +120,18 @@ void OHDVideoAir::configure(
              const openhd::FragmentedVideoFrame& fragmented_video_frame) {
         this->on_video_data(stream_index, fragmented_video_frame);
       };
-  // R.N we use gstreamer for pretty much everything
-  // But this might change in the future
-  m_console->debug("GStreamerStream for Camera index:{}", camera.index);
-  auto stream = std::make_shared<GStreamerStream>(camera_holder, frame_cb);
-  stream->start_looping();
-  m_camera_streams.push_back(stream);
+  if (m_generic_settings->get_settings().use_mpp_video) {
+    m_console->debug("MPPStream for Camera index:{}", camera.index);
+    auto stream = std::make_shared<MPPStream>(camera_holder, frame_cb);
+    stream->start_looping();
+    m_camera_streams.push_back(stream);
+  } else {
+    // Default: gstreamer based pipeline
+    m_console->debug("GStreamerStream for Camera index:{}", camera.index);
+    auto stream = std::make_shared<GStreamerStream>(camera_holder, frame_cb);
+    stream->start_looping();
+    m_camera_streams.push_back(stream);
+  }
 }
 
 std::array<std::vector<openhd::Setting>, 2>
