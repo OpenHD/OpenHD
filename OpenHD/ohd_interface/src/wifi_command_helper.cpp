@@ -29,19 +29,29 @@
  #include "openhd_spdlog.h"
  #include "openhd_spdlog_include.h"
  #include "openhd_util.h"
- #include "openhd_util_filesystem.h"
- #include "wifi_channel.h"
+#include "openhd_util_filesystem.h"
+#include "wifi_channel.h"
+
+namespace {
+bool iw_not_found_logged = false;
+bool rfkill_not_found_logged = false;
+}
+
+static std::shared_ptr<spdlog::logger> get_logger() {
+  return openhd::log::create_or_get("w_helper");
+}
  
- static std::shared_ptr<spdlog::logger> get_logger() {
-   return openhd::log::create_or_get("w_helper");
- }
- 
- bool wifi::commandhelper::rfkill_unblock_all() {
-   get_logger()->info("rfkill_unblock_all");
-   std::vector<std::string> args{"unblock", "all"};
-   bool success = OHDUtil::run_command("rfkill", args);
-   return success;
- }
+bool wifi::commandhelper::rfkill_unblock_all() {
+  get_logger()->info("rfkill_unblock_all");
+  std::vector<std::string> args{"unblock", "all", ">/dev/null 2>&1"};
+  const int ret = OHDUtil::run_command("rfkill", args);
+  const bool success = (ret == 0);
+  if (!success && !rfkill_not_found_logged) {
+    get_logger()->debug("rfkill command not found, using alternative methode");
+    rfkill_not_found_logged = true;
+  }
+  return success;
+}
  
  bool wifi::commandhelper::ip_link_set_card_state(const std::string &device,
                                                   bool up) {
@@ -239,15 +249,19 @@
  
  std::vector<uint32_t> wifi::commandhelper::iw_get_supported_frequencies(
      const int phy_index, const std::vector<uint32_t> &frequencies_mhz_to_try) {
-   const std::string command = fmt::format("iw phy phy{} info", phy_index);
-   const auto res_op = OHDUtil::run_command_out(command);
-   if (!res_op.has_value()) {
-     openhd::log::get_default()->warn("get_supported_channels for phy{} failed",
-                                      phy_index);
-     // If this fails, we assume we can do all channels - to not limit the valid
-     // inputs by mistake
-     return frequencies_mhz_to_try;
-   }
+  const std::string command =
+      fmt::format("iw phy phy{} info 2>/dev/null", phy_index);
+  const auto res_op = OHDUtil::run_command_out(command);
+  if (!res_op.has_value()) {
+    if (!iw_not_found_logged) {
+      openhd::log::get_default()->debug(
+          "iw command not found, using alternative methode");
+      iw_not_found_logged = true;
+    }
+    // If this fails, we assume we can do all channels - to not limit the valid
+    // inputs by mistake
+    return frequencies_mhz_to_try;
+  }
    const auto &res = res_op.value();
    // We need to look for lines that have the given frequency and NOT a disabled
    // at the end
@@ -269,13 +283,17 @@
  wifi::commandhelper::iw_get_supported_frequency_bands(
      const std::string &device) {
    wifi::commandhelper::SupportedFrequencyBand ret{false, false};
-   const std::string command = "iwlist " + device + " frequency";
-   const auto res_op = OHDUtil::run_command_out(command);
-   if (!res_op.has_value()) {
-     openhd::log::get_default()->warn(
-         "iw_get_supported_frequency_bands for {} failed", device);
-     return {true, true};
-   }
+  const std::string command =
+      "iwlist " + device + " frequency 2>/dev/null";
+  const auto res_op = OHDUtil::run_command_out(command);
+  if (!res_op.has_value()) {
+    if (!iw_not_found_logged) {
+      openhd::log::get_default()->debug(
+          "iw command not found, using alternative methode");
+      iw_not_found_logged = true;
+    }
+    return {true, true};
+  }
    const auto &res = res_op.value();
    if (res.find("5.") != std::string::npos) {
      ret.supports_any_5G = true;
@@ -287,16 +305,17 @@
  }
  
  bool wifi::commandhelper::iw_supports_monitor_mode(int phy_index) {
-   const std::string command =
-       "iw phy phy" + std::to_string(phy_index) + " info";
-   const auto res_opt = OHDUtil::run_command_out(command);
-   if (!res_opt.has_value()) {
-     openhd::log::get_default()->warn(
-         "iw_supports_monitor_mode for phy{} failed,assuming can do monitor "
-         "mode",
-         phy_index);
-     return true;
-   }
+  const std::string command =
+      "iw phy phy" + std::to_string(phy_index) + " info 2>/dev/null";
+  const auto res_opt = OHDUtil::run_command_out(command);
+  if (!res_opt.has_value()) {
+    if (!iw_not_found_logged) {
+      openhd::log::get_default()->debug(
+          "iw command not found, using alternative methode");
+      iw_not_found_logged = true;
+    }
+    return true;
+  }
    return OHDUtil::contains(res_opt.value(), "* monitor");
  }
  
