@@ -52,7 +52,8 @@ std::string OHDUtil::to_uppercase(std::string input) {
 int OHDUtil::run_command(const std::string& command,
                          const std::vector<std::string>& args,
                          bool print_debug) {
-  const auto command_with_args = create_command_with_args(command, args);
+  auto command_with_args =
+      create_command_with_args(command, args) + " >/dev/null 2>&1";
   if (print_debug) {
     openhd::log::get_default()->debug("run command begin [{}]",
                                       command_with_args);
