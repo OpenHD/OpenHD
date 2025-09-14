@@ -52,17 +52,17 @@ std::string OHDUtil::to_uppercase(std::string input) {
 int OHDUtil::run_command(const std::string& command,
                          const std::vector<std::string>& args,
                          bool print_debug) {
-  auto command_with_args =
-      create_command_with_args(command, args) + " >/dev/null 2>&1";
+  auto command_with_args = create_command_with_args(command, args);
+  auto command_with_redirect = command_with_args + " >/dev/null 2>&1";
   if (print_debug) {
-    openhd::log::get_default()->debug("run command begin [{}]",
-                                      command_with_args);
+    openhd::log::get_default()->info("run command begin [{}]",
+                                     command_with_args);
   }
   // https://man7.org/linux/man-pages/man3/system.3.html
-  const auto ret = std::system(command_with_args.c_str());
-  // openhd::log::get_default()->debug("return code:{}",ret);
-  if (ret < 0) {
-    openhd::log::get_default()->warn("Invalid command, return code {}", ret);
+  const auto ret = std::system(command_with_redirect.c_str());
+  if (ret != 0) {
+    openhd::log::get_default()->warn("command [{}] failed with code {}",
+                                     command_with_args, ret);
   }
   return ret;
 }
