@@ -56,8 +56,8 @@ static int internal_discover_platform() {
     const std::string model_content =
         OHDFilesystemUtil::read_file("/proc/device-tree/model");
     if (OHDUtil::contains_after_uppercase(model_content, "MX93")) {
-      openhd::log::get_default()->warn("Detected UXV platform.");
-      return X_PLATFORM_TYPE_WILLY;
+      openhd::log::get_default()->warn("Detected UVX Mod platform.");
+      return X_PLATFORM_TYPE_UVX_MOD;
     }
   }
   if (OHDFilesystemUtil::exists(ALLWINNER_BOARDID_PATH)) {
@@ -242,6 +242,8 @@ std::string x_platform_type_to_string(int platform_type) {
       return "RV1106";
     case X_PLATFORM_TYPE_WILLY:
       return "Willy";
+    case X_PLATFORM_TYPE_UVX_MOD:
+      return "UVX_MOD";
     case X_PLATFORM_TYPE_ALWINNER_X20:
       return "X20";
     case X_PLATFORM_TYPE_OPENIPC_SIGMASTAR_UNDEFINED:
@@ -286,7 +288,8 @@ int get_fec_max_block_size_for_platform() {
   if (platform_type == X_PLATFORM_TYPE_NVIDIA_XAVIER) {
     return 50;
   }
-  if (platform_type == X_PLATFORM_TYPE_WILLY) {
+  if (platform_type == X_PLATFORM_TYPE_WILLY ||
+      platform_type == X_PLATFORM_TYPE_UVX_MOD) {
     return 50;
   }
   if (platform_type == X_PLATFORM_TYPE_QUALCOMM_QRB5165 ||
