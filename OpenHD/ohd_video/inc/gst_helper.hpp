@@ -724,7 +724,7 @@ static std::string createRv1106Stream(const CameraSettings& settings) {
       settings.streamed_video_format.width,
       settings.streamed_video_format.height,
       settings.streamed_video_format.framerate);
-  ss << fmt::format("rkmpih264enc bitrate={} ! ", settings.h26x_bitrate_kbits);
+  ss << fmt::format("rkmpih264enc name=rkmpih264enc bitrate={} ! ", settings.h26x_bitrate_kbits);
   return ss.str();
 }
 

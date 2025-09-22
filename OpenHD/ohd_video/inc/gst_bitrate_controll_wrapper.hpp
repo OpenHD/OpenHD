@@ -72,13 +72,14 @@ get_dynamic_bitrate_control_element_in_pipeline(
     ret.takes_kbit = true;
   } else if (camera.requires_rockchip_rv_pipeline()) {
     // We can change bitrate dynamically
+     openhd::log::get_default()->debug("hi from camera.requires_rockchip_rv_pipeline");
     ret.encoder = gst_bin_get_by_name(GST_BIN(gst_pipeline), "rkmpih264enc");
     ret.property_name = "bitrate";
     ret.takes_kbit = true;
   }
   if (ret.encoder == nullptr) {
     openhd::log::get_default()->debug(
-        "Cannot find dynamic bitrate control element for camera {}",
+        "Cannot1 find dynamic bitrate control element for camera {}",
         camera.cam_type_as_verbose_string());
     return std::nullopt;
   }
