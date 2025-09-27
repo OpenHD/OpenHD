@@ -300,22 +300,22 @@
    return OHDUtil::contains(res_opt.value(), "* monitor");
  }
  
- static char *OPENHD_DRIVER_RTL8812AU_CHANNEL_OVERRIDE =
-     "/sys/module/88XXau_ohd/parameters/openhd_override_channel";
- static char *OPENHD_DRIVER_RTL8812AU_TX_POWER_INDEX_OVERRIDE =
-     "/sys/module/88XXau_ohd/parameters/openhd_override_tx_power_index";
- static char *OPENHD_DRIVER_RTL88xxBU_CHANNEL_OVERRIDE =
-     "/sys/module/88x2bu_ohd/parameters/openhd_override_channel";
- static char *OPENHD_DRIVER_RTL88xxBU_TX_POWER_MW_OVERRIDE =
-     "/sys/module/88x2bu_ohd/parameters/openhd_override_tx_power_mbm";
- static char *OPENHD_DRIVER_RTL88xxCU_CHANNEL_OVERRIDE =
-     "/sys/module/88x2cu_ohd/parameters/openhd_override_channel";
- static char *OPENHD_DRIVER_RTL88xxCU_TX_POWER_MW_OVERRIDE =
-     "/sys/module/88x2cu_ohd/parameters/openhd_override_tx_power_mbm";
- static char *OPENHD_DRIVER_RTL88xxEU_CHANNEL_OVERRIDE =
-     "/sys/module/88x2eu_ohd/parameters/openhd_override_channel";
- static char *OPENHD_DRIVER_RTL88xxEU_TX_POWER_MW_OVERRIDE =
-     "/sys/module/88x2eu_ohd/parameters/openhd_override_tx_power_mbm";
+static constexpr char OPENHD_DRIVER_RTL8812AU_CHANNEL_OVERRIDE[] =
+    "/sys/module/88XXau_ohd/parameters/openhd_override_channel";
+static constexpr char OPENHD_DRIVER_RTL8812AU_TX_POWER_INDEX_OVERRIDE[] =
+    "/sys/module/88XXau_ohd/parameters/openhd_override_tx_power_index";
+static constexpr char OPENHD_DRIVER_RTL88xxBU_CHANNEL_OVERRIDE[] =
+    "/sys/module/88x2bu_ohd/parameters/openhd_override_channel";
+static constexpr char OPENHD_DRIVER_RTL88xxBU_TX_POWER_MW_OVERRIDE[] =
+    "/sys/module/88x2bu_ohd/parameters/openhd_override_tx_power_mbm";
+static constexpr char OPENHD_DRIVER_RTL88xxCU_CHANNEL_OVERRIDE[] =
+    "/sys/module/88x2cu_ohd/parameters/openhd_override_channel";
+static constexpr char OPENHD_DRIVER_RTL88xxCU_TX_POWER_MW_OVERRIDE[] =
+    "/sys/module/88x2cu_ohd/parameters/openhd_override_tx_power_mbm";
+static constexpr char OPENHD_DRIVER_RTL88xxEU_CHANNEL_OVERRIDE[] =
+    "/sys/module/88x2eu_ohd/parameters/openhd_override_channel";
+static constexpr char OPENHD_DRIVER_RTL88xxEU_TX_POWER_MW_OVERRIDE[] =
+    "/sys/module/88x2eu_ohd/parameters/openhd_override_tx_power_mbm";
  
  bool wifi::commandhelper::openhd_driver_set_frequency_and_channel_width(
      WiFiCardType type, const std::string &device, uint32_t freq_mhz,
@@ -331,7 +331,7 @@
        "openhd_driver_set_frequency_and_channel_width wanted:{}@{}Mhz, using "
        "channel override:{}",
        freq_mhz, channel_width, rtl8812au_channel);
-   char *CHANNEL_OVERRIDE_FILENAME;
+   const char *CHANNEL_OVERRIDE_FILENAME = nullptr;
    switch (type) {
      case (WiFiCardType::OPENHD_RTL_88X2AU):
        CHANNEL_OVERRIDE_FILENAME = OPENHD_DRIVER_RTL8812AU_CHANNEL_OVERRIDE;
@@ -349,6 +349,10 @@
        openhd::log::get_default()->error(
            "INVALID DRIVER TYPE; CHANNEL WON'T WORK");
        break;
+   }
+
+   if (CHANNEL_OVERRIDE_FILENAME == nullptr) {
+     return false;
    }
  
    if (!OHDFilesystemUtil::exists(CHANNEL_OVERRIDE_FILENAME)) {
@@ -415,7 +419,7 @@
  bool wifi::commandhelper::openhd_driver_set_tx_power(WiFiCardType type,
                                                       const std::string &device,
                                                       uint32_t tx_power_mBm) {
-   char *TXPOWER_OVERRIDE_FILENAME;
+   const char *TXPOWER_OVERRIDE_FILENAME = nullptr;
    switch (type) {
      case (WiFiCardType::OPENHD_RTL_88X2AU):
        TXPOWER_OVERRIDE_FILENAME =
@@ -434,6 +438,10 @@
        openhd::log::get_default()->error(
            "INVALID DRIVER TYPE; TX POWER WON'T WORK");
        break;
+   }
+
+   if (TXPOWER_OVERRIDE_FILENAME == nullptr) {
+     return false;
    }
  
    if (!OHDFilesystemUtil::exists(TXPOWER_OVERRIDE_FILENAME)) {
