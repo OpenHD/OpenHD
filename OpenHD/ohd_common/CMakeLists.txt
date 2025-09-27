@@ -72,7 +72,10 @@ set(sources
     "src/openhd_util_time.cpp"
     "src/openhd_bitrate.cpp"
     "src/openhd_thermal.cpp"
+    "src/plugins/plugin_manager.c"
 )
+
+set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/src/plugins/plugin_manager.c" PROPERTIES LANGUAGE CXX)
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
 
