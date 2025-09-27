@@ -80,6 +80,10 @@ source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
 # Target configuration
 #----------------------------------------------------------------------------------------------------------------------
 target_sources(OHDCommonLib PRIVATE ${sources})
+target_sources(OHDCommonLib
+    PUBLIC
+        "${CMAKE_CURRENT_SOURCE_DIR}/inc/openhd_plugins.h"
+)
 target_include_directories(OHDCommonLib PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc/>")
 
 set_target_properties(OHDCommonLib PROPERTIES
