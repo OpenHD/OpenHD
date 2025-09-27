@@ -12,7 +12,7 @@ extern "C" {
 
 struct openhd_loaded_plugin {
     void *dl_handle;
-    struct openhd_plugin *instance;
+    struct openhd_plugin_context *instance;
     struct openhd_plugin_info info;
     struct openhd_plugin_vtable vtable;
     bool initialized;

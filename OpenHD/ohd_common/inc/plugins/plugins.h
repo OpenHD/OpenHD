@@ -46,6 +46,18 @@ typedef struct openhd_plugin_context *(*openhd_plugin_init_fn)(void *host_contex
 // Shuts down a previously initialized plugin instance and releases resources.
 typedef void (*openhd_plugin_shutdown_fn)(struct openhd_plugin_context *context);
 
+// Generic dispatch table shared by all plugins. Individual plugin categories may extend the
+// payload with additional type-specific data (for example encryption related entry points).
+struct openhd_plugin_vtable {
+    openhd_plugin_shutdown_fn shutdown;  // Mandatory shutdown callback for the plugin instance.
+    void *payload;                       // Optional pointer to category specific dispatch tables.
+};
+
+// Optional callback exposed by plugins that want to provide a richer dispatch table. The function
+// is expected to populate the supplied vtable structure and return true on success.
+typedef bool (*openhd_plugin_query_vtable_fn)(struct openhd_plugin_context *context,
+                                              struct openhd_plugin_vtable *out_vtable);
+
 // Aggregates exported entry points and optional payloads for type-specific data.
 struct openhd_plugin_exports {
     openhd_plugin_get_info_fn get_info;   // Retrieves static plugin information.
