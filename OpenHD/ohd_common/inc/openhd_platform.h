@@ -74,7 +74,6 @@ static constexpr int X_PLATFORM_TYPE_QUALCOMM_QCS405 = 47;
 static constexpr int X_PLATFORM_TYPE_WILLY = 51;
 static constexpr int X_PLATFORM_TYPE_UVX_MOD = 52;
 
-
 std::string x_platform_type_to_string(int platform_type);
 
 // Depends on single threaded CPU performance & weather NEON is available

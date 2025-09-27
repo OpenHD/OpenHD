@@ -632,23 +632,24 @@ static std::string createAllwinnerStream(const CameraSettings& settings) {
 /**
  * For WILLY Cameras
  */
-static int nxp_calculate_number_of_mbs_in_a_slice(int frame_height_px, int n_slices) {
-  if (n_slices < 2)
-    return 0;
+static int nxp_calculate_number_of_mbs_in_a_slice(int frame_height_px,
+                                                  int n_slices) {
+  if (n_slices < 2) return 0;
 
   int frame_mb_rows = (frame_height_px + 15) / 16;
   if (n_slices > frame_mb_rows) {
     openhd::log::get_default()->warn(
-        "Too many slices requested: frame_mb_rows={}, n_slices={}", frame_mb_rows, n_slices);
+        "Too many slices requested: frame_mb_rows={}, n_slices={}",
+        frame_mb_rows, n_slices);
     return frame_mb_rows;
   }
 
   int slice_row_mb = frame_mb_rows / n_slices;
-  if (frame_mb_rows % n_slices)
-    slice_row_mb++;
+  if (frame_mb_rows % n_slices) slice_row_mb++;
 
   openhd::log::get_default()->debug(
-      "NXP slice calculation -> frame_height_px={}, n_slices={}, frame_mb_rows={}, mbs_per_slice={}",
+      "NXP slice calculation -> frame_height_px={}, n_slices={}, "
+      "frame_mb_rows={}, mbs_per_slice={}",
       frame_height_px, n_slices, frame_mb_rows, slice_row_mb);
 
   return slice_row_mb;
@@ -671,12 +672,13 @@ static std::string create_willy_camera1_stream(const int device_index,
   ss << fmt::format(
       "video/x-raw,width=960,height=720,framerate=120/1,format=NV12 ! ");
 
-  ss << fmt::format("v4l2h264enc extra-controls=\"controls,"
-                    "h264_profile=1,"
-                    "repeat_sequence_header=1,"
-                    "video_bitrate_mode=1,"
-                    "video_bitrate={}{}\" ! ",
-                    bps, slicing_str);
+  ss << fmt::format(
+      "v4l2h264enc extra-controls=\"controls,"
+      "h264_profile=1,"
+      "repeat_sequence_header=1,"
+      "video_bitrate_mode=1,"
+      "video_bitrate={}{}\" ! ",
+      bps, slicing_str);
 
   ss << "video/x-h264,profile=constrained-baseline ! ";
 
