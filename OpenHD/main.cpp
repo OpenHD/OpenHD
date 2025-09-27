@@ -34,6 +34,8 @@
 #include <iostream>
 #include <memory>
 #include <cstdlib>
+#include <optional>
+#include <sstream>
 
 #include "openhd_buttons.h"
 #include "openhd_global_constants.hpp"
