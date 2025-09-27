@@ -195,7 +195,7 @@ bool openhd_plugin_manager_load(struct openhd_plugin_manager *mgr, const char *f
         return false;
     }
 
-    struct openhd_plugin *instance = symbols.init(host_context);
+    struct openhd_plugin_context *instance = symbols.init(host_context);
     if (!instance) {
         // TODO: Replace with OpenHD logging when available.
         dlclose(handle);
