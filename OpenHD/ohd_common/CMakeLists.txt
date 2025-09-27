@@ -85,7 +85,7 @@ source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
 target_sources(OHDCommonLib PRIVATE ${sources})
 target_sources(OHDCommonLib
     PUBLIC
-        "${CMAKE_CURRENT_SOURCE_DIR}/inc/openhd_plugins.h"
+        "${CMAKE_CURRENT_SOURCE_DIR}/inc/plugins/plugins.h"
 )
 target_include_directories(OHDCommonLib PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc/>")
 
