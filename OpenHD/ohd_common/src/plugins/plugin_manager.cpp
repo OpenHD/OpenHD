@@ -157,6 +157,9 @@ void openhd_plugin_manager_shutdown(struct openhd_plugin_manager *mgr) {
   mgr->search_paths = NULL;
   mgr->search_path_count = 0;
   mgr->search_path_capacity = 0;
+  mgr->encryption_cache_index = 0;
+  mgr->encryption_cache_valid = false;
+  mgr->encryption_vtable_cache = NULL;
 }
 
 bool openhd_plugin_manager_add_search_path(struct openhd_plugin_manager *mgr,
@@ -248,7 +251,13 @@ bool openhd_plugin_manager_load(struct openhd_plugin_manager *mgr,
   slot->initialized = true;
   slot->load_failed = false;
 
+  size_t slot_index = mgr->plugin_count;
   mgr->plugin_count += 1;
+  if (slot->info.type == OPENHD_PLUGIN_TYPE_ENCRYPTION) {
+    mgr->encryption_cache_valid = true;
+    mgr->encryption_cache_index = slot_index;
+    mgr->encryption_vtable_cache = &mgr->plugins[slot_index].vtable;
+  }
   return true;
 }
 
@@ -279,4 +288,36 @@ struct openhd_loaded_plugin *openhd_plugin_manager_get_by_type(
   }
 
   return NULL;
+}
+
+const struct openhd_plugin_vtable *openhd_plugin_manager_get_encryption_vtable(
+    struct openhd_plugin_manager *mgr) {
+  if (!mgr) {
+    return NULL;
+  }
+
+  if (mgr->encryption_cache_valid) {
+    if (mgr->encryption_cache_index < mgr->plugin_count) {
+      struct openhd_loaded_plugin *plugin =
+          &mgr->plugins[mgr->encryption_cache_index];
+      if (plugin->initialized &&
+          plugin->info.type == OPENHD_PLUGIN_TYPE_ENCRYPTION) {
+        mgr->encryption_vtable_cache = &plugin->vtable;
+        return mgr->encryption_vtable_cache;
+      }
+    }
+    mgr->encryption_cache_valid = false;
+    mgr->encryption_vtable_cache = NULL;
+  }
+
+  struct openhd_loaded_plugin *plugin =
+      openhd_plugin_manager_get_by_type(mgr, OPENHD_PLUGIN_TYPE_ENCRYPTION);
+  if (!plugin) {
+    return NULL;
+  }
+
+  mgr->encryption_cache_valid = true;
+  mgr->encryption_cache_index = (size_t)(plugin - mgr->plugins);
+  mgr->encryption_vtable_cache = &mgr->plugins[mgr->encryption_cache_index].vtable;
+  return mgr->encryption_vtable_cache;
 }

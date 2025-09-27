@@ -30,19 +30,151 @@
 #endif  // ENABLE_AIR
 #include <ohd_video_ground.h>
 
+#include <algorithm>
 #include <csignal>
+#include <cstdlib>
 #include <iostream>
 #include <memory>
-#include <cstdlib>
+#include <optional>
+#include <sstream>
+#include <string>
+#include <sys/stat.h>
+#include <vector>
 
+#include "config_paths.h"
 #include "openhd_buttons.h"
+#include "openhd_config.h"
 #include "openhd_global_constants.hpp"
 #include "openhd_platform.h"
 #include "openhd_profile.h"
 #include "openhd_spdlog.h"
 #include "openhd_temporary_air_or_ground.h"
-#include "openhd_config.h"
-#include "config_paths.h"
+#include "plugins/plugin_manager.h"
+
+namespace {
+
+constexpr const char *kEncryptionPluginFilename = "openhd-encryption.so";
+
+[[maybe_unused]] bool g_encryption_plugin_loaded = false;
+[[maybe_unused]] const struct openhd_plugin_vtable *g_encryption_vtable =
+    nullptr;
+
+std::string join_path(const std::string &lhs, const std::string &rhs) {
+  if (lhs.empty()) {
+    return rhs;
+  }
+  if (lhs.back() == '/') {
+    return lhs + rhs;
+  }
+  return lhs + "/" + rhs;
+}
+
+bool is_regular_file(const std::string &path) {
+  struct stat sb {};
+  return stat(path.c_str(), &sb) == 0 && S_ISREG(sb.st_mode);
+}
+
+std::string expand_user_path(const std::string &path) {
+  if (path.empty() || path.front() != '~') {
+    return path;
+  }
+  const char *home = getenv("HOME");
+  if (!home || home[0] == '\0') {
+    return path;
+  }
+  if (path.size() == 1) {
+    return std::string(home);
+  }
+  if (path[1] == '/') {
+    return std::string(home) + path.substr(1);
+  }
+  return path;
+}
+
+std::vector<std::string> resolve_plugin_paths(
+    const std::vector<std::string> &raw_paths) {
+  std::vector<std::string> resolved;
+  resolved.reserve(raw_paths.size());
+  for (const auto &entry : raw_paths) {
+    std::string expanded = expand_user_path(entry);
+    if (expanded.empty()) {
+      continue;
+    }
+    if (std::find(resolved.begin(), resolved.end(), expanded) !=
+        resolved.end()) {
+      continue;
+    }
+    resolved.emplace_back(expanded);
+  }
+  return resolved;
+}
+
+void register_plugin_search_paths(struct openhd_plugin_manager *mgr,
+                                  const std::vector<std::string> &paths) {
+  if (!mgr) {
+    return;
+  }
+  for (const auto &path : paths) {
+    if (openhd_plugin_manager_add_search_path(mgr, path.c_str())) {
+      openhd::log::debug_log("Registered plugin search path: " + path);
+    } else {
+      openhd::log::warning_log("Failed to register plugin search path: " +
+                               path);
+    }
+  }
+}
+
+struct EncryptionPluginState {
+  bool loaded = false;
+  std::string resolved_path;
+  const struct openhd_plugin_vtable *vtable = nullptr;
+};
+
+EncryptionPluginState attempt_load_encryption_plugins(
+    struct openhd_plugin_manager *mgr,
+    const std::vector<std::string> &search_paths) {
+  EncryptionPluginState state{};
+  g_encryption_plugin_loaded = false;
+  g_encryption_vtable = nullptr;
+  if (!mgr) {
+    openhd::log::warning_log(
+        "Plugin manager unavailable; encryption support disabled.");
+    return state;
+  }
+
+  openhd::log::debug_log("Searching for encryption plugins...");
+
+  for (const auto &directory : search_paths) {
+    if (directory.empty()) {
+      continue;
+    }
+    const std::string candidate =
+        join_path(directory, kEncryptionPluginFilename);
+    if (!is_regular_file(candidate)) {
+      openhd::log::debug_log(
+          "No encryption plugin found at " + candidate + ".");
+      continue;
+    }
+    if (openhd_plugin_manager_load(mgr, candidate.c_str(), nullptr)) {
+      g_encryption_plugin_loaded = true;
+      g_encryption_vtable =
+          openhd_plugin_manager_get_encryption_vtable(mgr);
+      state.loaded = true;
+      state.resolved_path = candidate;
+      state.vtable = g_encryption_vtable;
+      openhd::log::info_log("Loaded encryption plugin: " + candidate);
+      return state;
+    }
+    openhd::log::warning_log("Failed to load encryption plugin: " +
+                             candidate);
+  }
+
+  openhd::log::debug_log(
+      "Encryption plugin unavailable; continuing without encryption.");
+  return state;
+}
+
+}  // namespace
 
 // |-------------------------------------------------------------------------------|
 // |                         OpenHD core executable | | Weather you run as air
@@ -54,7 +186,7 @@
 
 // A few run time options, only for development. Way more configuration (during
 // development) can be done by using the hardware.config file
-static const char optstr[] = "?:agcwor:h:";
+static const char optstr[] = "?:agcwor:h:p:";
 static const struct option long_options[] = {
     {"air", no_argument, nullptr, 'a'},
     {"ground", no_argument, nullptr, 'g'},
@@ -63,6 +195,7 @@ static const struct option long_options[] = {
     {"no-hotspot", no_argument, nullptr, 'o'},
     {"run-time-seconds", required_argument, nullptr, 'r'},
     {"hardware-config-file", required_argument, nullptr, 'h'},
+    {"plugin-path", required_argument, nullptr, 'p'},
     {nullptr, 0, nullptr, 0},
 };
     const std::string red = "\033[31m";
@@ -80,6 +213,7 @@ struct OHDRunOptions {
   // the default location (and default values if no file exists at the default
   // location) is used
   std::optional<std::string> hardware_config_file;
+  std::vector<std::string> plugin_search_paths;
 };
 
 static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
@@ -88,6 +222,17 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
   // If this value gets set, we assume a developer is working on OpenHD and skip
   // the discovery via file(s).
   std::optional<bool> commandline_air = std::nullopt;
+  auto add_plugin_path = [&](const std::string &path) {
+    if (path.empty()) {
+      return;
+    }
+    if (std::find(ret.plugin_search_paths.begin(),
+                  ret.plugin_search_paths.end(), path) !=
+        ret.plugin_search_paths.end()) {
+      return;
+    }
+    ret.plugin_search_paths.emplace_back(path);
+  };
   while ((c = getopt_long(argc, argv, optstr, long_options, NULL)) != -1) {
     const char *tmp_optarg = optarg;
     switch (c) {
@@ -122,6 +267,9 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
       case 'h':
         ret.hardware_config_file = tmp_optarg;
         break;
+      case 'p':
+        add_plugin_path(tmp_optarg ? std::string(tmp_optarg) : std::string());
+        break;
       case '?':
       default: {
         std::stringstream ss;
@@ -137,6 +285,7 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
               "infinite),for debugging] \n";
         ss << "--hardware-config-file -h [specify path to hardware.config "
               "file]\n";
+        ss << "--plugin-path -p  [add an extra plugin search directory]\n";
         ss << "Use hardware.conf for more configuration\n";
         std::cout << ss.str() << std::flush;
       }
@@ -187,6 +336,8 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
     ret.run_as_air = false;
   }
 #endif
+  add_plugin_path("/usr/lib/openhd/plugins");
+  add_plugin_path("~/.local/lib/openhd/plugins");
   return ret;
 }
 
@@ -197,6 +348,21 @@ int main(int argc, char *argv[]) {
       std::exit(0);
   }
   const OHDRunOptions options = parse_run_parameters(argc, argv);
+  struct openhd_plugin_manager plugin_manager;
+  bool plugin_manager_initialized = false;
+  auto shutdown_plugin_manager = [&]() {
+    if (plugin_manager_initialized) {
+      openhd_plugin_manager_shutdown(&plugin_manager);
+      plugin_manager_initialized = false;
+    }
+  };
+  const auto resolved_plugin_paths =
+      resolve_plugin_paths(options.plugin_search_paths);
+  openhd_plugin_manager_init(&plugin_manager);
+  plugin_manager_initialized = true;
+  register_plugin_search_paths(&plugin_manager, resolved_plugin_paths);
+  [[maybe_unused]] const auto encryption_plugin_state =
+      attempt_load_encryption_plugins(&plugin_manager, resolved_plugin_paths);
   if (options.hardware_config_file.has_value()) {
     openhd::set_config_file(options.hardware_config_file.value());
   }
@@ -399,11 +565,14 @@ auto ohdInterface =
     }
   } catch (std::exception &ex) {
     std::cerr << "Error: " << ex.what() << std::endl;
+    shutdown_plugin_manager();
     exit(1);
   } catch (...) {
     std::cerr << "Unknown exception occurred" << std::endl;
+    shutdown_plugin_manager();
     exit(1);
   }
+  shutdown_plugin_manager();
   openhd::remove_currently_running_file();
   return 0;
 }

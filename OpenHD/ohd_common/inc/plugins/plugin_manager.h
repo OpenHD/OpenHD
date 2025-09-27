@@ -26,6 +26,9 @@ struct openhd_plugin_manager {
   char **search_paths;
   size_t search_path_count;
   size_t search_path_capacity;
+  size_t encryption_cache_index;
+  bool encryption_cache_valid;
+  const struct openhd_plugin_vtable *encryption_vtable_cache;
 };
 
 typedef bool (*openhd_plugin_iterate_fn)(struct openhd_loaded_plugin *plugin,
@@ -45,6 +48,9 @@ void openhd_plugin_manager_foreach(struct openhd_plugin_manager *mgr,
 
 struct openhd_loaded_plugin *openhd_plugin_manager_get_by_type(
     struct openhd_plugin_manager *mgr, enum openhd_plugin_type type);
+
+const struct openhd_plugin_vtable *openhd_plugin_manager_get_encryption_vtable(
+    struct openhd_plugin_manager *mgr);
 
 #ifdef __cplusplus
 }
