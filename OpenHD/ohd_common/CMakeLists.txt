@@ -18,6 +18,8 @@ add_compile_options(-Wno-psabi)
 add_library(OHDCommonLib STATIC) # Initialized below
 add_library(OHDCommonLib::OHDCommonLib ALIAS OHDCommonLib)
 
+set_target_properties(OHDCommonLib PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
 #----------------------------------------------------------------------------------------------------------------------
 # Explicitly link stdc++fs for GCC 8.x compatibility with std::filesystem
 #----------------------------------------------------------------------------------------------------------------------
