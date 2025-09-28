@@ -49,6 +49,7 @@
 #include "openhd_temporary_air_or_ground.h"
 #include "openhd_config.h"
 #include "config_paths.h"
+#include "AirTelemetryPluginHost.h"
 #include "plugins/plugin_manager.h"
 
 namespace {
@@ -70,7 +71,8 @@ std::vector<std::filesystem::path> collect_plugin_directories() {
 }
 
 bool load_plugins(struct openhd_plugin_manager *manager,
-                  const std::shared_ptr<spdlog::logger> &logger) {
+                  const std::shared_ptr<spdlog::logger> &logger,
+                  void *host_context) {
   if (!manager) {
     return false;
   }
@@ -105,7 +107,7 @@ bool load_plugins(struct openhd_plugin_manager *manager,
     return false;
   }
 
-  const bool loaded_any = openhd_plugin_manager_load_all(manager, nullptr);
+  const bool loaded_any = openhd_plugin_manager_load_all(manager, host_context);
 
   if (!logger) {
     return loaded_any;
@@ -350,7 +352,12 @@ int main(int argc, char *argv[]) {
     openhd_plugin_manager_shutdown(&plugin_manager);
   };
 
-  load_plugins(&plugin_manager, m_console);
+  openhd::telemetry::AirTelemetryPluginHost &telemetry_plugin_host =
+      openhd::telemetry::AirTelemetryPluginHost::instance();
+  openhd_plugin_host_context plugin_host_context{};
+  plugin_host_context.air_telemetry = telemetry_plugin_host.c_interface();
+
+  load_plugins(&plugin_manager, m_console, &plugin_host_context);
 
   // not guaranteed, but better than nothing, check if openhd is already running
   // (kinda) and print warning if yes.

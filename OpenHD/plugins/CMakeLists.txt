@@ -1,1 +1,2 @@
 add_subdirectory(dummy_plugin)
+add_subdirectory(rpi_rover_motors)
