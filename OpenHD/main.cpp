@@ -37,6 +37,7 @@
 #include <cstdlib>
 #include <optional>
 #include <sstream>
+#include <string>
 #include <system_error>
 #include <vector>
 
@@ -68,44 +69,67 @@ std::vector<std::filesystem::path> collect_plugin_directories() {
   return directories;
 }
 
-bool load_dummy_plugin(struct openhd_plugin_manager *manager,
-                       const std::shared_ptr<spdlog::logger> &logger) {
+bool load_plugins(struct openhd_plugin_manager *manager,
+                  const std::shared_ptr<spdlog::logger> &logger) {
   if (!manager) {
     return false;
   }
 
   const auto directories = collect_plugin_directories();
-  bool loaded = false;
+  bool added_search_path = false;
   for (const auto &directory : directories) {
     if (directory.empty()) {
       continue;
     }
     std::error_code dir_ec;
-    if (!std::filesystem::exists(directory, dir_ec)) {
-      continue;
-    }
-    std::filesystem::path candidate = directory / OPENHD_DUMMY_PLUGIN_FILENAME;
-    std::error_code candidate_ec;
-    if (!std::filesystem::exists(candidate, candidate_ec)) {
-      continue;
-    }
-    const auto candidate_str = candidate.string();
-    if (openhd_plugin_manager_load(manager, candidate_str.c_str(), nullptr)) {
+    if (!std::filesystem::exists(directory, dir_ec) ||
+        !std::filesystem::is_directory(directory, dir_ec)) {
       if (logger) {
-        logger->debug("Loaded dummy plugin from {}", candidate_str);
+        logger->debug("Skipping plugin directory {}", directory.string());
       }
-      loaded = true;
-      break;
+      continue;
     }
-    if (logger) {
-      logger->warn("Failed to load dummy plugin from {}", candidate_str);
+    const auto dir_str = directory.string();
+    if (openhd_plugin_manager_add_search_path(manager, dir_str.c_str())) {
+      added_search_path = true;
+      if (logger) {
+        logger->debug("Added plugin search path {}", dir_str);
+      }
     }
   }
 
-  if (!loaded && logger) {
-    logger->debug("Dummy plugin was not loaded");
+  if (!added_search_path) {
+    if (logger) {
+      logger->debug("No plugin directories available");
+    }
+    return false;
   }
-  return loaded;
+
+  const bool loaded_any = openhd_plugin_manager_load_all(manager, nullptr);
+
+  if (!logger) {
+    return loaded_any;
+  }
+
+  if (loaded_any) {
+    logger->info("Loaded {} plugin(s)", manager->plugin_count);
+    openhd_plugin_manager_foreach(
+        manager,
+        [](struct openhd_loaded_plugin *plugin, void *userdata) {
+          auto *log = static_cast<spdlog::logger *>(userdata);
+          if (!plugin || !plugin->initialized || !log) {
+            return true;
+          }
+          const char *name = plugin->info.name ? plugin->info.name : "<unnamed>";
+          log->debug("Loaded plugin '{}'", name);
+          return true;
+        },
+        logger.get());
+  } else {
+    logger->debug("No plugins were loaded from the plugin directories");
+  }
+
+  return loaded_any;
 }
 
 }  // namespace
@@ -326,7 +350,7 @@ int main(int argc, char *argv[]) {
     openhd_plugin_manager_shutdown(&plugin_manager);
   };
 
-  load_dummy_plugin(&plugin_manager, m_console);
+  load_plugins(&plugin_manager, m_console);
 
   // not guaranteed, but better than nothing, check if openhd is already running
   // (kinda) and print warning if yes.
