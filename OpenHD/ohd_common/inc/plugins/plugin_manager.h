@@ -40,6 +40,9 @@ bool openhd_plugin_manager_add_search_path(struct openhd_plugin_manager *mgr,
 bool openhd_plugin_manager_load(struct openhd_plugin_manager *mgr,
                                 const char *file_path, void *host_context);
 
+bool openhd_plugin_manager_load_all(struct openhd_plugin_manager *mgr,
+                                    void *host_context);
+
 void openhd_plugin_manager_foreach(struct openhd_plugin_manager *mgr,
                                    openhd_plugin_iterate_fn fn, void *userdata);
 
