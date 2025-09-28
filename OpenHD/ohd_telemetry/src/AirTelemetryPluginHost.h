@@ -27,9 +27,8 @@
 #include <utility>
 #include <vector>
 
+#include "mav_include.h"
 #include "plugins/air_telemetry_host.h"
-
-struct mavlink_rc_channels_override_t;
 
 namespace openhd::telemetry {
 
