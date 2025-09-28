@@ -36,17 +36,14 @@ struct openhd_rc_channels_override {
 };
 
 typedef void (*openhd_rc_channels_override_cb)(
-    const struct openhd_rc_channels_override *override_data,
-    void *user_data);
+    const struct openhd_rc_channels_override *override_data, void *user_data);
 
 struct openhd_air_telemetry_host_interface {
   void *context;
   void (*register_rc_override_callback)(
-      void *context, void *user_data,
-      openhd_rc_channels_override_cb callback);
+      void *context, void *user_data, openhd_rc_channels_override_cb callback);
   void (*unregister_rc_override_callback)(
-      void *context, void *user_data,
-      openhd_rc_channels_override_cb callback);
+      void *context, void *user_data, openhd_rc_channels_override_cb callback);
 };
 
 struct openhd_plugin_host_context {

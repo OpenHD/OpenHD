@@ -39,14 +39,16 @@ AirTelemetryPluginHost &AirTelemetryPluginHost::instance() {
 
 AirTelemetryPluginHost::AirTelemetryPluginHost() {
   interface_.context = this;
-  interface_.register_rc_override_callback = &AirTelemetryPluginHost::register_listener_c;
-  interface_.unregister_rc_override_callback = &AirTelemetryPluginHost::unregister_listener_c;
+  interface_.register_rc_override_callback =
+      &AirTelemetryPluginHost::register_listener_c;
+  interface_.unregister_rc_override_callback =
+      &AirTelemetryPluginHost::unregister_listener_c;
 }
 
 AirTelemetryPluginHost::~AirTelemetryPluginHost() = default;
 
-const openhd_air_telemetry_host_interface *
-AirTelemetryPluginHost::c_interface() const {
+const openhd_air_telemetry_host_interface *AirTelemetryPluginHost::c_interface()
+    const {
   return &interface_;
 }
 

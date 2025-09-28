@@ -41,9 +41,9 @@ bool has_shared_library_extension(const std::filesystem::path &path) {
   const auto tail = filename.substr(filename.size() - suffix.size());
   std::string lower_tail;
   lower_tail.resize(tail.size());
-  std::transform(tail.begin(), tail.end(), lower_tail.begin(), [](unsigned char c) {
-    return static_cast<char>(std::tolower(c));
-  });
+  std::transform(
+      tail.begin(), tail.end(), lower_tail.begin(),
+      [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
   return lower_tail == suffix;
 #elif defined(__APPLE__)
   static const char *const kSuffixes[] = {".dylib", ".so"};

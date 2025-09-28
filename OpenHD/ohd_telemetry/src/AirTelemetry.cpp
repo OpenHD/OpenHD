@@ -118,8 +118,8 @@ void AirTelemetry::on_messages_ground_unit(
     if (static_cast<int>(m.msgid) == MAVLINK_MSG_ID_RC_CHANNELS_OVERRIDE) {
       mavlink_rc_channels_override_t rc_override{};
       mavlink_msg_rc_channels_override_decode(&m, &rc_override);
-      openhd::telemetry::AirTelemetryPluginHost::instance()
-          .notify_rc_override(rc_override);
+      openhd::telemetry::AirTelemetryPluginHost::instance().notify_rc_override(
+          rc_override);
     }
   }
   send_messages_fc(filtered_messages_fc);
