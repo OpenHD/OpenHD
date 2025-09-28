@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.16.3)
 project(OpenHD)
 
+include(GNUInstallDirs)
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
@@ -25,6 +27,7 @@ add_subdirectory(ohd_common EXCLUDE_FROM_ALL)
 add_subdirectory(ohd_interface EXCLUDE_FROM_ALL)
 add_subdirectory(ohd_telemetry EXCLUDE_FROM_ALL)
 add_subdirectory(ohd_video EXCLUDE_FROM_ALL)
+add_subdirectory(plugins)
 
 # Suppress specific warnings
 add_compile_options(-Wno-address-of-packed-member -Wno-cast-align)
@@ -42,6 +45,15 @@ endif()
 
 # Link the libraries
 target_link_libraries(openhd PRIVATE OHDInterfaceLib OHDVideoLib OHDTelemetryLib OHDCommonLib)
+
+set(OPENHD_PLUGIN_BUILD_DIR "${CMAKE_BINARY_DIR}/plugins")
+set(OPENHD_PLUGIN_INSTALL_DIR "${CMAKE_INSTALL_FULL_LIBDIR}/openhd/plugins")
+set(OPENHD_DUMMY_PLUGIN_FILENAME "${CMAKE_SHARED_LIBRARY_PREFIX}openhd_dummy_plugin${CMAKE_SHARED_LIBRARY_SUFFIX}")
+
+target_compile_definitions(openhd PRIVATE
+    OPENHD_BUILTIN_PLUGIN_DIR="${OPENHD_PLUGIN_BUILD_DIR}"
+    OPENHD_INSTALL_PLUGIN_DIR="${OPENHD_PLUGIN_INSTALL_DIR}"
+    OPENHD_DUMMY_PLUGIN_FILENAME="${OPENHD_DUMMY_PLUGIN_FILENAME}")
 
 # Check if libatomic is needed and available
 include(CheckLibraryExists)

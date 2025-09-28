@@ -31,11 +31,14 @@
 #include <ohd_video_ground.h>
 
 #include <csignal>
+#include <filesystem>
 #include <iostream>
 #include <memory>
 #include <cstdlib>
 #include <optional>
 #include <sstream>
+#include <system_error>
+#include <vector>
 
 #include "openhd_buttons.h"
 #include "openhd_global_constants.hpp"
@@ -45,6 +48,67 @@
 #include "openhd_temporary_air_or_ground.h"
 #include "openhd_config.h"
 #include "config_paths.h"
+#include "plugins/plugin_manager.h"
+
+namespace {
+
+std::vector<std::filesystem::path> collect_plugin_directories() {
+  std::vector<std::filesystem::path> directories;
+  if (const char *env = std::getenv("OPENHD_PLUGIN_DIR")) {
+    if (*env != '\0') {
+      directories.emplace_back(env);
+    }
+  }
+#ifdef OPENHD_BUILTIN_PLUGIN_DIR
+  directories.emplace_back(std::filesystem::path(OPENHD_BUILTIN_PLUGIN_DIR));
+#endif
+#ifdef OPENHD_INSTALL_PLUGIN_DIR
+  directories.emplace_back(std::filesystem::path(OPENHD_INSTALL_PLUGIN_DIR));
+#endif
+  return directories;
+}
+
+bool load_dummy_plugin(struct openhd_plugin_manager *manager,
+                       const std::shared_ptr<spdlog::logger> &logger) {
+  if (!manager) {
+    return false;
+  }
+
+  const auto directories = collect_plugin_directories();
+  bool loaded = false;
+  for (const auto &directory : directories) {
+    if (directory.empty()) {
+      continue;
+    }
+    std::error_code dir_ec;
+    if (!std::filesystem::exists(directory, dir_ec)) {
+      continue;
+    }
+    std::filesystem::path candidate = directory / OPENHD_DUMMY_PLUGIN_FILENAME;
+    std::error_code candidate_ec;
+    if (!std::filesystem::exists(candidate, candidate_ec)) {
+      continue;
+    }
+    const auto candidate_str = candidate.string();
+    if (openhd_plugin_manager_load(manager, candidate_str.c_str(), nullptr)) {
+      if (logger) {
+        logger->debug("Loaded dummy plugin from {}", candidate_str);
+      }
+      loaded = true;
+      break;
+    }
+    if (logger) {
+      logger->warn("Failed to load dummy plugin from {}", candidate_str);
+    }
+  }
+
+  if (!loaded && logger) {
+    logger->debug("Dummy plugin was not loaded");
+  }
+  return loaded;
+}
+
+}  // namespace
 
 // |-------------------------------------------------------------------------------|
 // |                         OpenHD core executable | | Weather you run as air
@@ -256,6 +320,14 @@ int main(int argc, char *argv[]) {
       openhd::log::create_or_get("main");
   assert(m_console);
 
+  struct openhd_plugin_manager plugin_manager;
+  openhd_plugin_manager_init(&plugin_manager);
+  const auto shutdown_plugins = [&plugin_manager]() {
+    openhd_plugin_manager_shutdown(&plugin_manager);
+  };
+
+  load_dummy_plugin(&plugin_manager, m_console);
+
   // not guaranteed, but better than nothing, check if openhd is already running
   // (kinda) and print warning if yes.
   openhd::check_currently_running_file_and_write();
@@ -401,11 +473,14 @@ auto ohdInterface =
     }
   } catch (std::exception &ex) {
     std::cerr << "Error: " << ex.what() << std::endl;
+    shutdown_plugins();
     exit(1);
   } catch (...) {
     std::cerr << "Unknown exception occurred" << std::endl;
+    shutdown_plugins();
     exit(1);
   }
+  shutdown_plugins();
   openhd::remove_currently_running_file();
   return 0;
 }
