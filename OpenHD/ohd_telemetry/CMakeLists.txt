@@ -85,6 +85,8 @@ SET(sources
 
     "src/AirTelemetry.cpp"
     "src/AirTelemetry.h"
+    "src/AirTelemetryPluginHost.cpp"
+    "src/AirTelemetryPluginHost.h"
     "src/AirTelemetrySettings.h"
     "src/GroundTelemetry.cpp"
     "src/GroundTelemetry.h"
