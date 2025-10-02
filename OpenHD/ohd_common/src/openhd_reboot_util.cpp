@@ -48,10 +48,13 @@ void openhd::reboot::systemctl_power(bool shutdownOnly) {
   if (shutdownOnly) {
     // Some Images don't allow soft restarts or reboots when a netork is
     // connected
+    // And some platforms dont use systemd, hence no systemctl
     if ((OHDPlatform::instance().platform_type ==
          X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W) ||
         (OHDPlatform::instance().platform_type ==
-         X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3)) {
+         X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3) ||
+        (OHDPlatform::instance().platform_type ==
+         X_PLATFORM_TYPE_ROCKCHIP_RV1106)) {
       command_shutdown();
     } else {
       systemctl_shutdown();
@@ -60,7 +63,9 @@ void openhd::reboot::systemctl_power(bool shutdownOnly) {
     if ((OHDPlatform::instance().platform_type ==
          X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W) ||
         (OHDPlatform::instance().platform_type ==
-         X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3)) {
+         X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3) ||
+        (OHDPlatform::instance().platform_type ==
+         X_PLATFORM_TYPE_ROCKCHIP_RV1106)) {
       command_reboot();
     } else {
       systemctl_reboot();
