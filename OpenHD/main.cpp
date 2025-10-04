@@ -100,7 +100,7 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
           if (optarg != nullptr) {
             ret.openhd_uart_telemetry_device = optarg;
           } else {
-            ret.openhd_uart_telemetry_device = "/dev/serial1";
+            ret.openhd_uart_telemetry_device = "DEFAULT";
           }
         }
         break;
@@ -148,7 +148,7 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
         ss << "--hardware-config-file -h [specify path to hardware.config "
               "file]\n";
         ss << "--openhd_uart_telemetry [optional serial device, default "
-              "/dev/serial1] \n";
+              "platform-specific mapping] \n";
         ss << "Use hardware.conf for more configuration\n";
         std::cout << ss.str() << std::flush;
       }
