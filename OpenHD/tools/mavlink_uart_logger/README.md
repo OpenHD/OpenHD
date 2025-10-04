@@ -21,6 +21,7 @@ This will produce the `mavlink_uart_logger` executable inside the `build` direct
 * `--output` is optional. When set, the decoded messages are appended to the given file.
 * `--sysid`/`--compid` specify the IDs used for locally generated messages.
 * `--target-sys`/`--target-comp` specify the destination of outgoing commands.
+* `--transmit` enables a background mode that periodically emits random OpenHD MAVLink messages (which are also listed in the UI).
 
 While running, the TUI updates each time a MAVLink message is received. Use the following shortcuts:
 
@@ -29,6 +30,7 @@ While running, the TUI updates each time a MAVLink message is received. Use the 
 | `h` | Send a MAVLink heartbeat |
 | `p` | Send a MAVLink ping |
 | `r` | Send a `MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN` command |
+| `t` | Immediately send a random OpenHD telemetry message |
 | `q` | Quit the debugger |
 
 The status line at the top reports the outcome of the most recent command and whether logging is enabled.

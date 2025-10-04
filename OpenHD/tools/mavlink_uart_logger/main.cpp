@@ -9,6 +9,7 @@
 #include <iomanip>
 #include <iostream>
 #include <map>
+#include <random>
 #include <optional>
 #include <sstream>
 #include <ctime>
@@ -19,6 +20,8 @@
 #include <unistd.h>
 #include <vector>
 #include <filesystem>
+#include <deque>
+#include <functional>
 
 #include <ncurses.h>
 
@@ -70,7 +73,8 @@ std::optional<speed_t> baudrate_to_constant(int baudrate) {
 void print_usage(const char *program) {
     std::cerr << "Usage: " << program
               << " [--device <path>] [--baud <baudrate>] [--output <file>]"
-              << " [--sysid <id> --compid <id> --target-sys <id> --target-comp <id>]" << std::endl;
+              << " [--sysid <id> --compid <id> --target-sys <id> --target-comp <id>]"
+              << " [--transmit]" << std::endl;
     std::cerr << "Defaults: baud=115200, device=/dev/serialX (first available)" << std::endl;
 }
 
@@ -237,6 +241,104 @@ std::vector<uint32_t> collect_msgids(const std::map<MessageKey, MessageEntry> &m
     return std::vector<uint32_t>(msgids.begin(), msgids.end());
 }
 
+void record_message(const mavlink_message_t &message, const std::string &timestamp,
+                    const std::string &name, const std::string &payload_hex,
+                    std::map<MessageKey, MessageEntry> &messages, std::ofstream *output) {
+    const MessageKey key = make_message_key(message.sysid, message.compid, message.msgid);
+    auto &entry = messages[key];
+    entry.name = name;
+    entry.count++;
+    entry.last_timestamp = timestamp;
+    entry.payload_hex = payload_hex;
+    entry.sysid = message.sysid;
+    entry.compid = message.compid;
+    entry.len = message.len;
+    entry.msgid = message.msgid;
+
+    if (output && output->is_open()) {
+        *output << timestamp << ", msgid=" << message.msgid << ", name=" << name
+                << ", sys=" << static_cast<int>(message.sysid)
+                << ", comp=" << static_cast<int>(message.compid)
+                << ", len=" << static_cast<int>(message.len)
+                << ", payload=" << payload_hex << '\n';
+        output->flush();
+    }
+}
+
+struct GeneratedMessage {
+    mavlink_message_t message;
+    std::string description;
+};
+
+GeneratedMessage generate_random_openhd_message(std::mt19937 &rng, uint8_t sysid, uint8_t compid) {
+    using MessageGenerator = std::function<GeneratedMessage(std::mt19937 &, uint8_t, uint8_t)>;
+
+    static const std::vector<MessageGenerator> generators = {
+        [](std::mt19937 &rng, uint8_t sysid, uint8_t compid) {
+            std::uniform_int_distribution<int> version_dist(0, 5);
+            std::uniform_int_distribution<int> release_dist(0, 3);
+            mavlink_message_t msg{};
+            const uint8_t major = static_cast<uint8_t>(version_dist(rng) + 1);
+            const uint8_t minor = static_cast<uint8_t>(version_dist(rng));
+            const uint8_t patch = static_cast<uint8_t>(version_dist(rng));
+            const uint8_t release_type = static_cast<uint8_t>(release_dist(rng));
+            const uint8_t dummy = 0;
+            mavlink_msg_openhd_version_message_pack(sysid, compid, &msg, major, minor, patch, release_type, dummy);
+            std::ostringstream oss;
+            oss << "openhd_version_message major=" << static_cast<int>(major)
+                << " minor=" << static_cast<int>(minor)
+                << " patch=" << static_cast<int>(patch)
+                << " release=" << static_cast<int>(release_type);
+            return GeneratedMessage{msg, oss.str()};
+        },
+        [](std::mt19937 &rng, uint8_t sysid, uint8_t compid) {
+            std::uniform_int_distribution<int> platform_dist(0, 4);
+            std::uniform_int_distribution<int> devices_dist(0, 6);
+            std::uniform_int_distribution<int> hotspot_state_dist(0, 2);
+            std::uniform_int_distribution<int> ethernet_state_dist(0, 2);
+            std::uniform_int_distribution<int> freq_dist(2400, 5900);
+            mavlink_message_t msg{};
+            const uint8_t platform = static_cast<uint8_t>(platform_dist(rng));
+            const uint8_t devices = static_cast<uint8_t>(devices_dist(rng));
+            const uint8_t hotspot = static_cast<uint8_t>(hotspot_state_dist(rng));
+            const uint16_t freq = static_cast<uint16_t>(freq_dist(rng));
+            const uint8_t ethernet = static_cast<uint8_t>(ethernet_state_dist(rng));
+            const uint8_t dummy0 = 0;
+            const int32_t dummy1 = 0;
+            const int32_t dummy2 = 0;
+            mavlink_msg_openhd_sys_status1_pack(sysid, compid, &msg, platform, devices, hotspot, freq, ethernet, dummy0, dummy1,
+                                                dummy2);
+            std::ostringstream oss;
+            oss << "openhd_sys_status1 platform=" << static_cast<int>(platform)
+                << " devices=" << static_cast<int>(devices)
+                << " wifi_state=" << static_cast<int>(hotspot)
+                << " freq=" << freq
+                << " ethernet=" << static_cast<int>(ethernet);
+            return GeneratedMessage{msg, oss.str()};
+        },
+        [](std::mt19937 &rng, uint8_t sysid, uint8_t compid) {
+            std::uniform_int_distribution<int> mode_dist(0, 2);
+            std::bernoulli_distribution passive_dist(0.3);
+            std::uniform_int_distribution<int> dummy0_dist(0, 1000);
+            mavlink_message_t msg{};
+            const uint8_t mode = static_cast<uint8_t>(mode_dist(rng));
+            const int8_t passive = static_cast<int8_t>(passive_dist(rng) ? 1 : 0);
+            const uint16_t dummy0 = static_cast<uint16_t>(dummy0_dist(rng));
+            const int32_t dummy1 = 0;
+            const int32_t dummy2 = 0;
+            mavlink_msg_openhd_wifbroadcast_gnd_operating_mode_pack(sysid, compid, &msg, mode, passive, dummy0, dummy1, dummy2);
+            std::ostringstream oss;
+            oss << "openhd_wifbroadcast_gnd_operating_mode mode=" << static_cast<int>(mode)
+                << " passive=" << static_cast<int>(passive)
+                << " dummy0=" << dummy0;
+            return GeneratedMessage{msg, oss.str()};
+        }
+    };
+
+    std::uniform_int_distribution<std::size_t> selector(0, generators.size() - 1);
+    return generators[selector(rng)](rng, sysid, compid);
+}
+
 int render_table(int start_row, int max_y, int max_x, const std::string &title,
                  const std::vector<const MessageEntry *> &entries) {
     if (start_row >= max_y) {
@@ -352,7 +454,8 @@ bool send_ping(int fd, uint8_t sysid, uint8_t compid, uint8_t target_sys, uint8_
 
 void render_ui(const std::string &device_path, int baudrate,
                const std::map<MessageKey, MessageEntry> &messages, const std::string &output_path,
-               const std::string &status_message, const FilterState &filter) {
+               const std::string &status_message, const FilterState &filter, bool transmit_mode,
+               const std::deque<std::string> &transmit_log) {
     erase();
 
     int max_y = 0;
@@ -361,17 +464,30 @@ void render_ui(const std::string &device_path, int baudrate,
 
     mvprintw(0, 0, "MAVLink UART Debugger - device: %s @ %d baud", device_path.c_str(), baudrate);
     mvprintw(1, 0, "Logging to: %s", output_path.empty() ? "<disabled>" : output_path.c_str());
-    mvprintw(2, 0, "Controls: q=quit | h=send heartbeat | r=send reboot command | p=send ping");
-    mvprintw(3, 0, "Status: %s", status_message.c_str());
-    mvprintw(4, 0, "Filter controls: s=cycle sysid | c=cycle comp | m=cycle message | f=clear filters");
+    mvprintw(2, 0, "Mode: %s", transmit_mode ? "Transmit (random OpenHD messages)" : "Listen");
+    mvprintw(3, 0, "Controls: q=quit | h=send heartbeat | r=send reboot command | p=send ping | t=send random OpenHD message");
+    mvprintw(4, 0, "Status: %s", status_message.c_str());
+    mvprintw(5, 0, "Filter controls: s=cycle sysid | c=cycle comp | m=cycle message | f=clear filters");
 
     const std::string sys_str = filter.sysid ? std::to_string(*filter.sysid) : std::string("All");
     const std::string comp_str = filter.compid ? std::to_string(*filter.compid) : std::string("All");
     const std::string msg_str = filter.msgid ? std::to_string(*filter.msgid) : std::string("All");
-    mvprintw(5, 0, "Active filter: sys=%s comp=%s msg=%s", sys_str.c_str(), comp_str.c_str(),
+    mvprintw(6, 0, "Active filter: sys=%s comp=%s msg=%s", sys_str.c_str(), comp_str.c_str(),
              msg_str.c_str());
 
-    int row = 7;
+    int row = 8;
+    if ((transmit_mode || !transmit_log.empty()) && row < max_y) {
+        mvprintw(row++, 0, "Recent TX messages:");
+        for (const auto &entry : transmit_log) {
+            if (row >= max_y) {
+                break;
+            }
+            mvprintw(row++, 0, "  %s", entry.c_str());
+        }
+        if (row < max_y) {
+            ++row;
+        }
+    }
 
     std::vector<const MessageEntry *> all_entries;
     all_entries.reserve(messages.size());
@@ -439,6 +555,7 @@ int main(int argc, char **argv) {
     constexpr int kDefaultBaudrate = 115200;
     bool device_user_specified = false;
     bool baud_user_specified = false;
+    bool transmit_mode = false;
     uint8_t sysid = 1;
     uint8_t compid = 1;
     uint8_t target_sys = 1;
@@ -462,9 +579,12 @@ int main(int argc, char **argv) {
             target_sys = static_cast<uint8_t>(std::stoi(argv[++i]));
         } else if (arg == "--target-comp" && i + 1 < argc) {
             target_comp = static_cast<uint8_t>(std::stoi(argv[++i]));
+        } else if (arg == "--transmit") {
+            transmit_mode = true;
         } else if (arg == "--help" || arg == "-h") {
             print_usage(argv[0]);
             std::cerr << "Additional options: --sysid <id> --compid <id> --target-sys <id> --target-comp <id>"
+                      << " --transmit"
                       << std::endl;
             return 0;
         } else {
@@ -515,6 +635,7 @@ int main(int argc, char **argv) {
             return 1;
         }
     }
+    std::ofstream *output_ptr = output.is_open() ? &output : nullptr;
 
     std::signal(SIGINT, signal_handler);
     std::signal(SIGTERM, signal_handler);
@@ -528,8 +649,11 @@ int main(int argc, char **argv) {
     mavlink_message_t message{};
     mavlink_status_t status{};
     std::map<MessageKey, MessageEntry> messages;
-    std::string status_message = "Listening...";
+    std::string status_message = transmit_mode ? "Transmit mode active" : "Listening...";
     FilterState filter;
+    std::deque<std::string> transmit_log;
+    std::mt19937 rng{std::random_device{}()};
+    std::uniform_int_distribution<int> transmit_delay_dist(750, 1500);
     if (!device_user_specified || !baud_user_specified) {
         status_message += " (auto:";
         bool need_separator = false;
@@ -548,6 +672,34 @@ int main(int argc, char **argv) {
 
     const auto start_time = std::chrono::steady_clock::now();
     auto last_ui_update = start_time - std::chrono::milliseconds(200);
+    auto next_transmit = start_time;
+    if (transmit_mode) {
+        next_transmit += std::chrono::milliseconds(transmit_delay_dist(rng));
+    }
+
+    auto transmit_random_message = [&](const std::string &origin) {
+        GeneratedMessage generated = generate_random_openhd_message(rng, sysid, compid);
+        const auto timestamp = current_timestamp_string();
+        const auto name = message_name(generated.message);
+        const auto payload_hex = payload_to_hex(generated.message);
+        const bool sent = write_message(fd, generated.message);
+        record_message(generated.message, timestamp, name, payload_hex, messages, output_ptr);
+
+        std::ostringstream oss;
+        oss << timestamp << ' ' << (sent ? "[sent] " : "[failed] ") << generated.description;
+        if (!origin.empty()) {
+            oss << " (" << origin << ')';
+        }
+        transmit_log.push_front(oss.str());
+        if (transmit_log.size() > 10) {
+            transmit_log.pop_back();
+        }
+
+        status_message = (sent ? "Sent " : "Failed to send ") + generated.description;
+        if (!origin.empty()) {
+            status_message += " [" + origin + ']';
+        }
+    };
 
     while (!g_should_exit) {
         uint8_t buffer[256];
@@ -563,34 +715,20 @@ int main(int argc, char **argv) {
                     const auto timestamp = current_timestamp_string();
                     const auto name = message_name(message);
                     const auto payload_hex = payload_to_hex(message);
-
-                    const MessageKey key =
-                        make_message_key(message.sysid, message.compid, message.msgid);
-                    auto &entry = messages[key];
-                    entry.name = name;
-                    entry.count++;
-                    entry.last_timestamp = timestamp;
-                    entry.payload_hex = payload_hex;
-                    entry.sysid = message.sysid;
-                    entry.compid = message.compid;
-                    entry.len = message.len;
-                    entry.msgid = message.msgid;
-
-                    if (output.is_open()) {
-                        output << timestamp << ", msgid=" << message.msgid << ", name=" << name
-                               << ", sys=" << static_cast<int>(message.sysid)
-                               << ", comp=" << static_cast<int>(message.compid)
-                               << ", len=" << static_cast<int>(message.len)
-                               << ", payload=" << payload_hex << '\n';
-                        output.flush();
-                    }
+                    record_message(message, timestamp, name, payload_hex, messages, output_ptr);
                 }
             }
         }
 
         const auto now = std::chrono::steady_clock::now();
+        if (transmit_mode && now >= next_transmit) {
+            transmit_random_message("auto");
+            next_transmit = now + std::chrono::milliseconds(transmit_delay_dist(rng));
+        }
+
         if (now - last_ui_update > std::chrono::milliseconds(100)) {
-            render_ui(device_path, baudrate, messages, output_path, status_message, filter);
+            render_ui(device_path, baudrate, messages, output_path, status_message, filter, transmit_mode,
+                      transmit_log);
             last_ui_update = now;
         }
 
@@ -610,6 +748,12 @@ int main(int argc, char **argv) {
                 status_message = send_ping(fd, sysid, compid, target_sys, target_comp)
                                      ? "Ping sent"
                                      : "Failed to send ping";
+            } else if (ch == 't' || ch == 'T') {
+                transmit_random_message("manual");
+                if (transmit_mode) {
+                    next_transmit = std::chrono::steady_clock::now() +
+                                    std::chrono::milliseconds(transmit_delay_dist(rng));
+                }
             } else if (ch == 's' || ch == 'S') {
                 auto sysids = collect_sysids(messages);
                 if (sysids.empty()) {
@@ -684,7 +828,8 @@ int main(int argc, char **argv) {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
-    render_ui(device_path, baudrate, messages, output_path, status_message, filter);
+    render_ui(device_path, baudrate, messages, output_path, status_message, filter, transmit_mode,
+              transmit_log);
     endwin();
 
     if (output.is_open()) {
