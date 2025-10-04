@@ -96,14 +96,10 @@ class GroundTelemetry : public MavlinkSystem {
   // connected to the Ground Station (For Example QOpenHD)
   void on_messages_ground_station_clients(
       const std::vector<MavlinkMessage>& messages);
-  // called when messages are received via the optional tracker UART
-  void on_messages_tracker(std::vector<MavlinkMessage>& messages);
   // send one or more messages to all clients connected to the ground station,
   // for example QOpenHD
   void send_messages_ground_station_clients(
       const std::vector<MavlinkMessage>& messages);
-  // send one or more messages over the optional tracker UART connection
-  void send_messages_tracker(const std::vector<MavlinkMessage>& messages);
   std::vector<openhd::Setting> get_all_settings();
   void setup_uart();
   void setup_openhd_uart_telemetry();

@@ -125,7 +125,7 @@ void GroundTelemetry::on_messages_air_unit(
           filter_by_source_sys_id(messages, OHD_SYS_ID_FC_BETAFLIGHT);
     }
     if (!msges_from_fc.empty()) {
-      send_messages_tracker(msges_from_fc);
+      m_endpoint_tracker->send_messages_if_enabled(msges_from_fc);
     }
   }
   m_ohd_main_component->check_fc_messages_for_actions(messages);
@@ -176,16 +176,7 @@ void GroundTelemetry::on_messages_ground_station_clients(
     const auto responses = component->process_mavlink_messages(messages);
     // for now, send to the ground station clients only
     send_messages_ground_station_clients(responses);
-    send_messages_tracker(responses);
   }
-}
-
-void GroundTelemetry::on_messages_tracker(
-    std::vector<MavlinkMessage>& messages) {
-  if (messages.empty()) {
-    return;
-  }
-  on_messages_ground_station_clients(messages);
 }
 
 void GroundTelemetry::send_messages_ground_station_clients(
@@ -208,14 +199,6 @@ void GroundTelemetry::send_messages_air_unit(
   if (m_wb_endpoint) {
     m_wb_endpoint->sendMessages(messages);
   }
-}
-
-void GroundTelemetry::send_messages_tracker(
-    const std::vector<MavlinkMessage>& messages) {
-  if (!m_endpoint_tracker) {
-    return;
-  }
-  m_endpoint_tracker->send_messages_if_enabled(messages);
 }
 
 void GroundTelemetry::loop_infinite(bool& terminate,
@@ -246,7 +229,6 @@ void GroundTelemetry::loop_infinite(bool& terminate,
         assert(component);
         const auto messages = component->generate_mavlink_messages();
         send_messages_ground_station_clients(messages);
-        send_messages_tracker(messages);
         // exception: timesync
         for (const auto& msg : messages) {
           if (msg.m.msgid == MAVLINK_MSG_ID_TIMESYNC) {
@@ -424,12 +406,13 @@ void GroundTelemetry::setup_uart() {
     options.linux_filename = uart_linux_fd.value();
     options.baud_rate = m_gnd_settings->get_settings().gnd_uart_baudrate;
     options.flow_control = false;
-    options.enable_reading = true;
-    m_endpoint_tracker->configure(
-        options, "gnd_ser",
-        [this](std::vector<MavlinkMessage> messages) {
-          this->on_messages_tracker(messages);
-        });
+    options.enable_reading = false;
+    m_endpoint_tracker->configure(options, "gnd_ser",
+                                  [this](std::vector<MavlinkMessage> messages) {
+                                    // We ignore any incoming messages here for
+                                    // now, since it is only for mavlink out via
+                                    // serial
+                                  });
   } else {
     m_endpoint_tracker->disable();
   }
