@@ -25,11 +25,40 @@
 
 #include <chrono>
 #include <iostream>
+#include <thread>
 
 #include "mav_helper.h"
 #include "openhd_temporary_air_or_ground.h"
 #include "openhd_util.h"
 #include "openhd_util_time.h"
+
+namespace {
+
+std::vector<MavlinkMessage> create_uart_debug_messages(uint8_t sys_id) {
+  std::vector<MavlinkMessage> messages;
+  messages.reserve(3);
+  messages.push_back(
+      OHDMessages::createHeartbeat(sys_id, MAV_COMP_ID_ONBOARD_COMPUTER));
+
+  constexpr char kStatusText[] = "OpenHD UART link check";
+  MavlinkMessage statustext{};
+  constexpr uint16_t kStatusTextId = 0;
+  constexpr uint8_t kStatusTextChunkSeq = 0;
+  mavlink_msg_statustext_pack(sys_id, MAV_COMP_ID_ONBOARD_COMPUTER,
+                              &statustext.m, MAV_SEVERITY_INFO, kStatusText,
+                              kStatusTextId, kStatusTextChunkSeq);
+  messages.push_back(statustext);
+
+  MavlinkMessage ping{};
+  const uint64_t now = static_cast<uint64_t>(get_time_microseconds());
+  mavlink_msg_ping_pack(sys_id, MAV_COMP_ID_ONBOARD_COMPUTER, &ping.m, now, 0,
+                        0, 0);
+  messages.push_back(ping);
+
+  return messages;
+}
+
+}  // namespace
 
 GroundTelemetry::GroundTelemetry() : MavlinkSystem(OHD_SYS_ID_GROUND) {
   m_console = openhd::log::create_or_get("ground_tele");
@@ -406,22 +435,15 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
 
 void GroundTelemetry::setup_uart() {
   assert(m_gnd_settings);
-  using namespace openhd::telemetry;
-  const auto uart_linux_fd = serial_openhd_param_to_linux_fd(
-      m_gnd_settings->get_settings().gnd_uart_connection_type);
-  if (uart_linux_fd.has_value()) {
-    SerialEndpoint::HWOptions options{};
-    options.linux_filename = uart_linux_fd.value();
-    options.baud_rate = m_gnd_settings->get_settings().gnd_uart_baudrate;
-    options.flow_control = false;
-    options.enable_reading = false;
-    m_endpoint_tracker->configure(options, "gnd_ser",
-                                  [this](std::vector<MavlinkMessage> messages) {
-                                    // We ignore any incoming messages here for
-                                    // now, since it is only for mavlink out via
-                                    // serial
-                                  });
-  } else {
+  if (!m_logged_tracker_uart_disabled_notice) {
+    m_console->info(
+        "Disabling tracker UART output; relying on OpenHD UART telemetry instead");
+    m_logged_tracker_uart_disabled_notice = true;
+  }
+  m_gnd_settings->unsafe_get_settings().gnd_uart_connection_type =
+      openhd::telemetry::ground::UART_CONNECTION_TYPE_DISABLE;
+  m_gnd_settings->persist();
+  if (m_endpoint_tracker) {
     m_endpoint_tracker->disable();
   }
 }
@@ -435,6 +457,7 @@ void GroundTelemetry::setup_openhd_uart_telemetry() {
         "Disabling OpenHD UART telemetry - no valid device configured (value: {})",
         m_gnd_settings->get_settings().openhd_uart_telemetry_connection);
     m_openhd_uart_serial->disable();
+    m_sent_openhd_uart_test_messages = false;
     return;
   }
   m_console->info(
@@ -467,6 +490,7 @@ void GroundTelemetry::setup_openhd_uart_telemetry() {
             forwarded.size());
         on_messages_ground_station_clients(forwarded);
       });
+  send_openhd_uart_test_messages_once();
 }
 
 void GroundTelemetry::configure_openhd_uart_telemetry(
@@ -482,6 +506,24 @@ void GroundTelemetry::configure_openhd_uart_telemetry(
       device_path.value();
   m_gnd_settings->persist();
   setup_openhd_uart_telemetry();
+}
+
+void GroundTelemetry::send_openhd_uart_test_messages_once() {
+  if (m_sent_openhd_uart_test_messages || !m_openhd_uart_serial) {
+    return;
+  }
+  auto messages = create_uart_debug_messages(_sys_id);
+  if (messages.empty()) {
+    return;
+  }
+  m_console->info(
+      "Sending {} MAVLink test message(s) via OpenHD UART telemetry",
+      messages.size());
+  for (int i = 0; i < 3; ++i) {
+    m_openhd_uart_serial->send_messages_if_enabled(messages);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+  m_sent_openhd_uart_test_messages = true;
 }
 
 void GroundTelemetry::set_link_handle(std::shared_ptr<OHDLink> link) {
