@@ -74,7 +74,7 @@ void print_usage(const char *program) {
     std::cerr << "Usage: " << program
               << " [--device <path>] [--baud <baudrate>] [--output <file>]"
               << " [--sysid <id> --compid <id> --target-sys <id> --target-comp <id>]"
-              << " [--transmit] [--dual] [--raw]" << std::endl;
+              << " [--transmit] [--loop] [--raw]" << std::endl;
     std::cerr << "Defaults: baud=115200, device=/dev/serialX (first available)" << std::endl;
 }
 
@@ -464,7 +464,7 @@ bool send_ping(int fd, uint8_t sysid, uint8_t compid, uint8_t target_sys, uint8_
     return write_message(fd, msg);
 }
 
-struct DualStats {
+struct LoopStats {
     uint64_t sent = 0;
     uint64_t received = 0;
     uint64_t matched = 0;
@@ -483,7 +483,7 @@ struct DualStats {
 void render_ui(const std::string &device_path, int baudrate,
                const std::map<MessageKey, MessageEntry> &messages, const std::string &output_path,
                const std::string &status_message, const FilterState &filter, bool transmit_mode,
-               bool dual_mode, const DualStats *dual_stats, const std::deque<std::string> &transmit_log,
+               bool loop_mode, const LoopStats *loop_stats, const std::deque<std::string> &transmit_log,
                bool raw_mode, const std::deque<std::string> &raw_log) {
     erase();
 
@@ -494,8 +494,8 @@ void render_ui(const std::string &device_path, int baudrate,
     mvprintw(0, 0, "MAVLink UART Debugger - device: %s @ %d baud", device_path.c_str(), baudrate);
     mvprintw(1, 0, "Logging to: %s", output_path.empty() ? "<disabled>" : output_path.c_str());
     std::string mode_string;
-    if (dual_mode) {
-        mode_string = "Dual (loopback test)";
+    if (loop_mode) {
+        mode_string = "Loop (loopback test)";
     } else if (transmit_mode) {
         mode_string = "Transmit (random OpenHD messages)";
     } else {
@@ -513,21 +513,21 @@ void render_ui(const std::string &device_path, int baudrate,
              msg_str.c_str());
 
     int row = 8;
-    if (dual_mode && dual_stats && row < max_y) {
+    if (loop_mode && loop_stats && row < max_y) {
         mvprintw(row++, 0,
-                 "Dual stats: sent=%llu received=%llu matched=%llu lost=%llu unexpected=%llu inflight=%zu loss=%.2f%%",
-                 static_cast<unsigned long long>(dual_stats->sent),
-                 static_cast<unsigned long long>(dual_stats->received),
-                 static_cast<unsigned long long>(dual_stats->matched),
-                 static_cast<unsigned long long>(dual_stats->lost),
-                 static_cast<unsigned long long>(dual_stats->unexpected), dual_stats->inflight,
-                 dual_stats->loss_percentage());
+                 "Loop stats: sent=%llu received=%llu matched=%llu lost=%llu unexpected=%llu inflight=%zu loss=%.2f%%",
+                 static_cast<unsigned long long>(loop_stats->sent),
+                 static_cast<unsigned long long>(loop_stats->received),
+                 static_cast<unsigned long long>(loop_stats->matched),
+                 static_cast<unsigned long long>(loop_stats->lost),
+                 static_cast<unsigned long long>(loop_stats->unexpected), loop_stats->inflight,
+                 loop_stats->loss_percentage());
         if (row < max_y) {
             ++row;
         }
     }
 
-    if ((transmit_mode || dual_mode || !transmit_log.empty()) && row < max_y) {
+    if ((transmit_mode || loop_mode || !transmit_log.empty()) && row < max_y) {
         mvprintw(row++, 0, "Recent TX messages:");
         for (const auto &entry : transmit_log) {
             if (row >= max_y) {
@@ -636,7 +636,7 @@ int main(int argc, char **argv) {
     bool device_user_specified = false;
     bool baud_user_specified = false;
     bool transmit_mode = false;
-    bool dual_mode = false;
+    bool loop_mode = false;
     bool raw_mode = false;
     uint8_t sysid = 1;
     uint8_t compid = 1;
@@ -665,12 +665,12 @@ int main(int argc, char **argv) {
             transmit_mode = true;
         } else if (arg == "--raw") {
             raw_mode = true;
-        } else if (arg == "--dual") {
-            dual_mode = true;
+        } else if (arg == "--loop") {
+            loop_mode = true;
         } else if (arg == "--help" || arg == "-h") {
             print_usage(argv[0]);
             std::cerr << "Additional options: --sysid <id> --compid <id> --target-sys <id> --target-comp <id>"
-                      << " --transmit --dual --raw"
+                      << " --transmit --loop --raw"
                       << std::endl;
             return 0;
         } else {
@@ -679,8 +679,8 @@ int main(int argc, char **argv) {
         }
     }
 
-    if (transmit_mode && dual_mode) {
-        std::cerr << "--transmit and --dual cannot be used at the same time" << std::endl;
+    if (transmit_mode && loop_mode) {
+        std::cerr << "--transmit and --loop cannot be used at the same time" << std::endl;
         return 1;
     }
 
@@ -741,15 +741,15 @@ int main(int argc, char **argv) {
     mavlink_status_t status{};
     std::map<MessageKey, MessageEntry> messages;
     std::string status_message;
-    if (dual_mode) {
-        status_message = "Dual mode active";
+    if (loop_mode) {
+        status_message = "Loop mode active";
     } else if (transmit_mode) {
         status_message = "Transmit mode active";
     } else {
         status_message = "Listening...";
     }
     if (raw_mode) {
-        if (dual_mode) {
+        if (loop_mode) {
             status_message += " (raw display enabled)";
         } else {
             status_message += transmit_mode ? " (raw display available in listen mode)" : " (raw display enabled)";
@@ -760,9 +760,9 @@ int main(int argc, char **argv) {
     std::deque<std::string> raw_log;
     std::mt19937 rng{std::random_device{}()};
     std::uniform_int_distribution<int> transmit_delay_dist(750, 1500);
-    DualStats dual_stats;
-    std::map<uint32_t, std::chrono::steady_clock::time_point> dual_inflight;
-    uint32_t dual_sequence = 0;
+    LoopStats loop_stats;
+    std::map<uint32_t, std::chrono::steady_clock::time_point> loop_inflight;
+    uint32_t loop_sequence = 0;
     if (!device_user_specified || !baud_user_specified) {
         status_message += " (auto:";
         bool need_separator = false;
@@ -785,11 +785,11 @@ int main(int argc, char **argv) {
     if (transmit_mode) {
         next_transmit += std::chrono::milliseconds(transmit_delay_dist(rng));
     }
-    const auto dual_interval = std::chrono::milliseconds(250);
-    const auto dual_timeout = std::chrono::milliseconds(1000);
-    auto next_dual_transmit = start_time;
-    if (dual_mode) {
-        next_dual_transmit += dual_interval;
+    const auto loop_interval = std::chrono::milliseconds(250);
+    const auto loop_timeout = std::chrono::milliseconds(1000);
+    auto next_loop_transmit = start_time;
+    if (loop_mode) {
+        next_loop_transmit += loop_interval;
     }
 
     auto transmit_random_message = [&](const std::string &origin) {
@@ -816,8 +816,8 @@ int main(int argc, char **argv) {
         }
     };
 
-    auto send_dual_ping = [&](const std::string &origin) {
-        if (!dual_mode) {
+    auto send_loop_ping = [&](const std::string &origin) {
+        if (!loop_mode) {
             return;
         }
 
@@ -825,13 +825,13 @@ int main(int argc, char **argv) {
         const auto now_us =
             std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
         mavlink_message_t msg{};
-        const uint32_t seq = dual_sequence++;
+        const uint32_t seq = loop_sequence++;
         mavlink_msg_ping_pack(sysid, compid, &msg, now_us, target_sys, target_comp, seq);
         const bool sent = write_message(fd, msg);
 
         const auto timestamp = current_timestamp_string();
         std::ostringstream oss;
-        oss << timestamp << ' ' << (sent ? "[sent] " : "[failed] ") << "dual ping seq=" << seq;
+        oss << timestamp << ' ' << (sent ? "[sent] " : "[failed] ") << "loop ping seq=" << seq;
         if (!origin.empty()) {
             oss << " (" << origin << ')';
         }
@@ -841,12 +841,12 @@ int main(int argc, char **argv) {
         }
 
         if (sent) {
-            dual_inflight[seq] = now;
-            dual_stats.sent++;
-            dual_stats.inflight = dual_inflight.size();
-            status_message = "Sent dual ping seq=" + std::to_string(seq);
+            loop_inflight[seq] = now;
+            loop_stats.sent++;
+            loop_stats.inflight = loop_inflight.size();
+            status_message = "Sent loop ping seq=" + std::to_string(seq);
         } else {
-            status_message = "Failed to send dual ping seq=" + std::to_string(seq);
+            status_message = "Failed to send loop ping seq=" + std::to_string(seq);
         }
     };
 
@@ -881,25 +881,25 @@ int main(int argc, char **argv) {
                     const auto payload_hex = payload_to_hex(message);
                     record_message(message, timestamp, name, payload_hex, messages, output_ptr);
 
-                    if (dual_mode && message.msgid == MAVLINK_MSG_ID_PING) {
-                        dual_stats.received++;
+                    if (loop_mode && message.msgid == MAVLINK_MSG_ID_PING) {
+                        loop_stats.received++;
                         const uint32_t seq = mavlink_msg_ping_get_seq(&message);
-                        auto it = dual_inflight.find(seq);
-                        if (it != dual_inflight.end()) {
-                            dual_stats.matched++;
-                            dual_inflight.erase(it);
-                            status_message = "Dual ping received seq=" + std::to_string(seq);
+                        auto it = loop_inflight.find(seq);
+                        if (it != loop_inflight.end()) {
+                            loop_stats.matched++;
+                            loop_inflight.erase(it);
+                            status_message = "Loop ping received seq=" + std::to_string(seq);
                         } else {
-                            dual_stats.unexpected++;
+                            loop_stats.unexpected++;
                             std::ostringstream oss;
-                            oss << current_timestamp_string() << " [unexpected] dual ping seq=" << seq;
+                            oss << current_timestamp_string() << " [unexpected] loop ping seq=" << seq;
                             transmit_log.push_front(oss.str());
                             if (transmit_log.size() > 10) {
                                 transmit_log.pop_back();
                             }
-                            status_message = "Unexpected dual ping seq=" + std::to_string(seq);
+                            status_message = "Unexpected loop ping seq=" + std::to_string(seq);
                         }
-                        dual_stats.inflight = dual_inflight.size();
+                        loop_stats.inflight = loop_inflight.size();
                     }
                 }
             }
@@ -911,34 +911,34 @@ int main(int argc, char **argv) {
             next_transmit = now + std::chrono::milliseconds(transmit_delay_dist(rng));
         }
 
-        if (dual_mode && now >= next_dual_transmit) {
-            send_dual_ping("auto");
-            next_dual_transmit = now + dual_interval;
+        if (loop_mode && now >= next_loop_transmit) {
+            send_loop_ping("auto");
+            next_loop_transmit = now + loop_interval;
         }
 
-        if (dual_mode) {
-            for (auto it = dual_inflight.begin(); it != dual_inflight.end();) {
-                if (now - it->second > dual_timeout) {
+        if (loop_mode) {
+            for (auto it = loop_inflight.begin(); it != loop_inflight.end();) {
+                if (now - it->second > loop_timeout) {
                     const uint32_t seq = it->first;
-                    dual_stats.lost++;
+                    loop_stats.lost++;
                     std::ostringstream oss;
-                    oss << current_timestamp_string() << " [timeout] dual ping seq=" << seq;
+                    oss << current_timestamp_string() << " [timeout] loop ping seq=" << seq;
                     transmit_log.push_front(oss.str());
                     if (transmit_log.size() > 10) {
                         transmit_log.pop_back();
                     }
-                    status_message = "Dual ping timeout seq=" + std::to_string(seq);
-                    it = dual_inflight.erase(it);
+                    status_message = "Loop ping timeout seq=" + std::to_string(seq);
+                    it = loop_inflight.erase(it);
                 } else {
                     ++it;
                 }
             }
-            dual_stats.inflight = dual_inflight.size();
+            loop_stats.inflight = loop_inflight.size();
         }
 
         if (now - last_ui_update > std::chrono::milliseconds(100)) {
             render_ui(device_path, baudrate, messages, output_path, status_message, filter, transmit_mode,
-                      dual_mode, dual_mode ? &dual_stats : nullptr, transmit_log, raw_mode, raw_log);
+                      loop_mode, loop_mode ? &loop_stats : nullptr, transmit_log, raw_mode, raw_log);
             last_ui_update = now;
         }
 
@@ -959,9 +959,9 @@ int main(int argc, char **argv) {
                                      ? "Ping sent"
                                      : "Failed to send ping";
             } else if (ch == 't' || ch == 'T') {
-                if (dual_mode) {
-                    send_dual_ping("manual");
-                    next_dual_transmit = std::chrono::steady_clock::now() + dual_interval;
+                if (loop_mode) {
+                    send_loop_ping("manual");
+                    next_loop_transmit = std::chrono::steady_clock::now() + loop_interval;
                 } else {
                     transmit_random_message("manual");
                     if (transmit_mode) {
@@ -1043,8 +1043,8 @@ int main(int argc, char **argv) {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
-    render_ui(device_path, baudrate, messages, output_path, status_message, filter, transmit_mode, dual_mode,
-              dual_mode ? &dual_stats : nullptr, transmit_log, raw_mode, raw_log);
+    render_ui(device_path, baudrate, messages, output_path, status_message, filter, transmit_mode, loop_mode,
+              loop_mode ? &loop_stats : nullptr, transmit_log, raw_mode, raw_log);
     endwin();
 
     if (output.is_open()) {
