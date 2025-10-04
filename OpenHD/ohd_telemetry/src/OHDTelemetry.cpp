@@ -95,3 +95,15 @@ void OHDTelemetry::set_link_handle(std::shared_ptr<OHDLink> link) {
     m_ground_telemetry->set_link_handle(link);
   }
 }
+
+void OHDTelemetry::configure_openhd_uart_telemetry(
+    const std::optional<std::string>& device_path) {
+  if (!device_path.has_value()) {
+    return;
+  }
+  if (m_profile.is_air) {
+    m_air_telemetry->configure_openhd_uart_telemetry(device_path);
+  } else {
+    m_ground_telemetry->configure_openhd_uart_telemetry(device_path);
+  }
+}

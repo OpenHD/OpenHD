@@ -42,7 +42,10 @@ struct Settings {
   // This is for outputting FC mavlink data via serial on the ground station
   std::string gnd_uart_connection_type = UART_CONNECTION_TYPE_DISABLE;
   int gnd_uart_baudrate = 115200;
+  std::string openhd_uart_telemetry_connection = UART_CONNECTION_TYPE_DISABLE;
 };
+
+static constexpr auto OPENHD_UART_TELEMETRY_PARAM = "OHD_UART_TLM";
 
 static bool valid_joystick_update_rate(int value) {
   return value >= 1 && value <= 150;

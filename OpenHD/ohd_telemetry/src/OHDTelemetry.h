@@ -25,6 +25,7 @@
 #define OPENHD_OHDTELEMETRY_H
 
 #include <memory>
+#include <optional>
 #include <thread>
 #include <utility>
 
@@ -74,6 +75,8 @@ class OHDTelemetry {
   // and also agnostic weather this link exists or not (since it is already
   // using a lossy link).
   void set_link_handle(std::shared_ptr<OHDLink> link);
+  void configure_openhd_uart_telemetry(
+      const std::optional<std::string>& device_path);
 
  private:
   // only either one of them both is active at a time.

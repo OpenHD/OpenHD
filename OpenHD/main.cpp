@@ -34,6 +34,7 @@
 #include <iostream>
 #include <memory>
 #include <cstdlib>
+#include <optional>
 
 #include "openhd_buttons.h"
 #include "openhd_global_constants.hpp"
@@ -62,6 +63,7 @@ static const struct option long_options[] = {
     {"no-qt-autostart", no_argument, nullptr, 'w'},
     {"run-time-seconds", required_argument, nullptr, 'r'},
     {"hardware-config-file", required_argument, nullptr, 'h'},
+    {"openhd_uart_telemetry", optional_argument, nullptr, 0},
     {nullptr, 0, nullptr, 0},
 };
     const std::string red = "\033[31m";
@@ -78,6 +80,7 @@ struct OHDRunOptions {
   // the default location (and default values if no file exists at the default
   // location) is used
   std::optional<std::string> hardware_config_file;
+  std::optional<std::string> openhd_uart_telemetry_device;
 };
 
 static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
@@ -86,9 +89,22 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
   // If this value gets set, we assume a developer is working on OpenHD and skip
   // the discovery via file(s).
   std::optional<bool> commandline_air = std::nullopt;
-  while ((c = getopt_long(argc, argv, optstr, long_options, NULL)) != -1) {
+  int option_index = 0;
+  while ((c = getopt_long(argc, argv, optstr, long_options, &option_index)) !=
+         -1) {
     const char *tmp_optarg = optarg;
     switch (c) {
+      case 0: {
+        const std::string option_name = long_options[option_index].name;
+        if (option_name == "openhd_uart_telemetry") {
+          if (optarg != nullptr) {
+            ret.openhd_uart_telemetry_device = optarg;
+          } else {
+            ret.openhd_uart_telemetry_device = "/dev/serial1";
+          }
+        }
+        break;
+      }
       case 'a':
         if (commandline_air != std::nullopt) {
           // Already set, e.g. --ground is already used
@@ -131,6 +147,8 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
               "infinite),for debugging] \n";
         ss << "--hardware-config-file -h [specify path to hardware.config "
               "file]\n";
+        ss << "--openhd_uart_telemetry [optional serial device, default "
+              "/dev/serial1] \n";
         ss << "Use hardware.conf for more configuration\n";
         std::cout << ss.str() << std::flush;
       }
@@ -291,6 +309,10 @@ int main(int argc, char *argv[]) {
     // (transmission) it still picks up local log message(s) and forwards them
     // to any ground station clients (e.g. QOpenHD)
     auto ohdTelemetry = std::make_shared<OHDTelemetry>(profile);
+    if (options.openhd_uart_telemetry_device.has_value()) {
+      ohdTelemetry->configure_openhd_uart_telemetry(
+          options.openhd_uart_telemetry_device);
+    }
 
     // Then start ohdInterface, which discovers detected wifi cards and more.
     auto ohdInterface = std::make_shared<OHDInterface>( profile);

@@ -30,7 +30,8 @@ namespace openhd::telemetry::ground {
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Settings, enable_rc_over_joystick,
                                    rc_over_joystick_update_rate_hz,
                                    rc_channel_mapping, gnd_uart_connection_type,
-                                   gnd_uart_baudrate);
+                                   gnd_uart_baudrate,
+                                   openhd_uart_telemetry_connection);
 
 std::optional<Settings>
 openhd::telemetry::ground::SettingsHolder::impl_deserialize(

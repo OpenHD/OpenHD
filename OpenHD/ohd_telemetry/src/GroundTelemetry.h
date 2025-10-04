@@ -24,6 +24,8 @@
 #ifndef OPENHD_TELEMETRY_GROUNDTELEMETRY_H
 #define OPENHD_TELEMETRY_GROUNDTELEMETRY_H
 
+#include <optional>
+
 #include "GroundTelemetrySettings.h"
 #include "endpoints/SerialEndpoint.h"
 #include "endpoints/TCPEndpoint.h"
@@ -82,6 +84,8 @@ class GroundTelemetry : public MavlinkSystem {
    * messages from/to the air unit are just discarded.
    */
   void set_link_handle(std::shared_ptr<OHDLink> link);
+  void configure_openhd_uart_telemetry(
+      const std::optional<std::string>& device_path);
 
  private:
   // called every time one or more messages from the air unit are received
@@ -98,6 +102,7 @@ class GroundTelemetry : public MavlinkSystem {
       const std::vector<MavlinkMessage>& messages);
   std::vector<openhd::Setting> get_all_settings();
   void setup_uart();
+  void setup_openhd_uart_telemetry();
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
   void enable_joystick();
   void disable_joystick();
@@ -109,6 +114,7 @@ class GroundTelemetry : public MavlinkSystem {
   std::unique_ptr<UDPEndpoint> m_gcs_endpoint = nullptr;
   // mavlink out via serial for tracker or similar
   std::unique_ptr<SerialEndpointManager> m_endpoint_tracker = nullptr;
+  std::unique_ptr<SerialEndpointManager> m_openhd_uart_serial = nullptr;
   // EXP - always on TCP mavlink server
   std::unique_ptr<TCPEndpoint> m_tcp_server = nullptr;
   // send/receive data via wb
