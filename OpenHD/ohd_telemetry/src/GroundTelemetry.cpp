@@ -138,6 +138,14 @@ void GroundTelemetry::on_messages_ground_station_clients(
   //  unless they have a target sys id of the ohd ground unit itself
   auto [generic, local_only] =
       split_into_generic_and_local_only(messages, OHD_SYS_ID_GROUND);
+  if (m_openhd_uart_serial && !generic.empty()) {
+    // Forward traffic originating from ground clients to the dedicated OpenHD
+    // UART telemetry endpoint as well. Prior to this we only pushed data that
+    // originated from OpenHD itself (for example air unit messages or
+    // component responses), leaving the UART silent when a GCS injected
+    // MAVLink messages via UDP/TCP.
+    m_openhd_uart_serial->send_messages_if_enabled(generic);
+  }
   for (auto& msg_generic : generic) {
     // In general, since the uplink suffers that much from over-talking by the
     // video from the air unit, send each message twice by default - we do not
