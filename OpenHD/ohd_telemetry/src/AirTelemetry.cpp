@@ -24,12 +24,38 @@
 #include "AirTelemetry.h"
 
 #include <chrono>
+#include <thread>
 
 #include "mav_helper.h"
 #include "mavsdk_temporary/XMavlinkParamProvider.h"
 #include "openhd_temporary_air_or_ground.h"
 #include "openhd_util.h"
 #include "openhd_util_time.h"
+
+namespace {
+
+std::vector<MavlinkMessage> create_uart_debug_messages(uint8_t sys_id) {
+  std::vector<MavlinkMessage> messages;
+  messages.reserve(3);
+  messages.push_back(
+      OHDMessages::createHeartbeat(sys_id, MAV_COMP_ID_ONBOARD_COMPUTER));
+
+  constexpr char kStatusText[] = "OpenHD UART link check";
+  MavlinkMessage statustext{};
+  mavlink_msg_statustext_pack(sys_id, MAV_COMP_ID_ONBOARD_COMPUTER,
+                              &statustext.m, MAV_SEVERITY_INFO, kStatusText);
+  messages.push_back(statustext);
+
+  MavlinkMessage ping{};
+  const uint64_t now = static_cast<uint64_t>(get_time_microseconds());
+  mavlink_msg_ping_pack(sys_id, MAV_COMP_ID_ONBOARD_COMPUTER, &ping.m, now, 0,
+                        0, 0);
+  messages.push_back(ping);
+
+  return messages;
+}
+
+}  // namespace
 
 AirTelemetry::AirTelemetry() : MavlinkSystem(OHD_SYS_ID_AIR) {
   m_console = openhd::log::create_or_get("air_tele");
@@ -292,20 +318,15 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
 // existing uart connection if set.
 void AirTelemetry::setup_uart() {
   assert(m_air_settings);
-  using namespace openhd::telemetry;
-  const auto uart_linux_fd = serial_openhd_param_to_linux_fd(
-      m_air_settings->get_settings().fc_uart_connection_type);
-  if (uart_linux_fd.has_value()) {
-    SerialEndpoint::HWOptions options{};
-    options.linux_filename = uart_linux_fd.value();
-    options.baud_rate = m_air_settings->get_settings().fc_uart_baudrate;
-    options.flow_control = m_air_settings->get_settings().fc_uart_flow_control;
-    options.enable_reading = true;
-    m_fc_serial->configure(options, "fc_ser",
-                           [this](std::vector<MavlinkMessage> messages) {
-                             this->on_messages_fc(messages);
-                           });
-  } else {
+  if (!m_logged_fc_uart_disabled_notice) {
+    m_console->info(
+        "Disabling dedicated FC UART telemetry input; relying on OpenHD UART telemetry instead");
+    m_logged_fc_uart_disabled_notice = true;
+  }
+  m_air_settings->unsafe_get_settings().fc_uart_connection_type =
+      openhd::telemetry::air::UART_CONNECTION_TYPE_DISABLE;
+  m_air_settings->persist();
+  if (m_fc_serial) {
     m_fc_serial->disable();
   }
 }
@@ -320,6 +341,7 @@ void AirTelemetry::setup_openhd_uart_telemetry() {
         "Disabling OpenHD UART telemetry - no valid device configured (value: {})",
         settings.openhd_uart_telemetry_connection);
     m_openhd_uart_serial->disable();
+    m_sent_openhd_uart_test_messages = false;
     return;
   }
   m_console->info(
@@ -353,6 +375,7 @@ void AirTelemetry::setup_openhd_uart_telemetry() {
             forwarded.size());
         this->on_messages_ground_unit(forwarded);
       });
+  send_openhd_uart_test_messages_once();
 }
 
 void AirTelemetry::configure_openhd_uart_telemetry(
@@ -368,6 +391,24 @@ void AirTelemetry::configure_openhd_uart_telemetry(
       device_path.value();
   m_air_settings->persist();
   setup_openhd_uart_telemetry();
+}
+
+void AirTelemetry::send_openhd_uart_test_messages_once() {
+  if (m_sent_openhd_uart_test_messages || !m_openhd_uart_serial) {
+    return;
+  }
+  auto messages = create_uart_debug_messages(_sys_id);
+  if (messages.empty()) {
+    return;
+  }
+  m_console->info(
+      "Sending {} MAVLink test message(s) via OpenHD UART telemetry",
+      messages.size());
+  for (int i = 0; i < 3; ++i) {
+    m_openhd_uart_serial->send_messages_if_enabled(messages);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+  m_sent_openhd_uart_test_messages = true;
 }
 
 void AirTelemetry::set_link_handle(std::shared_ptr<OHDLink> link) {
