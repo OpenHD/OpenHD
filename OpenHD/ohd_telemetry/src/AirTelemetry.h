@@ -104,6 +104,7 @@ class AirTelemetry : public MavlinkSystem {
   std::vector<openhd::Setting> get_all_settings();
   void setup_uart();
   void setup_openhd_uart_telemetry();
+  void send_openhd_uart_test_messages_once();
 
  private:
   std::unique_ptr<openhd::telemetry::air::SettingsHolder> m_air_settings;
@@ -122,6 +123,8 @@ class AirTelemetry : public MavlinkSystem {
   std::shared_ptr<spdlog::logger> m_console;
   // EXP - always on TCP mavlink server
   std::unique_ptr<TCPEndpoint> m_tcp_server = nullptr;
+  bool m_logged_fc_uart_disabled_notice = false;
+  bool m_sent_openhd_uart_test_messages = false;
 };
 
 #endif  // OPENHD_TELEMETRY_AIRTELEMETRY_H

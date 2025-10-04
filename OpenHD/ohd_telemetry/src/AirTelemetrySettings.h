@@ -85,8 +85,10 @@ class SettingsHolder : public openhd::PersistentSettings<Settings> {
   }
   [[nodiscard]] Settings create_default() const override {
     Settings ret{};
-    // Default telemetry serial (for this platform)
-    ret.fc_uart_connection_type = "DEFAULT";
+    // Default to no dedicated FC UART input. The OpenHD UART telemetry bridge
+    // is used instead unless explicitly configured otherwise.
+    ret.fc_uart_connection_type =
+        openhd::telemetry::air::UART_CONNECTION_TYPE_DISABLE;
     return ret;
   }
   std::optional<Settings> impl_deserialize(
