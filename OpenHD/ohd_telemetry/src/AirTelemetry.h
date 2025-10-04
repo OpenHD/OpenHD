@@ -24,8 +24,10 @@
 #ifndef OPENHD_TELEMETRY_AIRTELEMETRY_H
 #define OPENHD_TELEMETRY_AIRTELEMETRY_H
 
+#include <atomic>
 #include <optional>
 #include <string>
+#include <thread>
 
 #include "endpoints/SerialEndpoint.h"
 #include "internal/OHDMainComponent.h"
@@ -104,6 +106,8 @@ class AirTelemetry : public MavlinkSystem {
   std::vector<openhd::Setting> get_all_settings();
   void setup_uart();
   void setup_openhd_uart_telemetry();
+  void start_openhd_uart_heartbeat();
+  void stop_openhd_uart_heartbeat();
 
  private:
   std::unique_ptr<openhd::telemetry::air::SettingsHolder> m_air_settings;
@@ -122,6 +126,8 @@ class AirTelemetry : public MavlinkSystem {
   std::shared_ptr<spdlog::logger> m_console;
   // EXP - always on TCP mavlink server
   std::unique_ptr<TCPEndpoint> m_tcp_server = nullptr;
+  std::unique_ptr<std::thread> m_openhd_uart_heartbeat_thread;
+  std::atomic<bool> m_openhd_uart_heartbeat_stop{false};
 };
 
 #endif  // OPENHD_TELEMETRY_AIRTELEMETRY_H

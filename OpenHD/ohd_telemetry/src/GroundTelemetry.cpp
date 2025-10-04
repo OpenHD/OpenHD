@@ -25,6 +25,7 @@
 
 #include <chrono>
 #include <iostream>
+#include <thread>
 
 #include "mav_helper.h"
 #include "openhd_temporary_air_or_ground.h"
@@ -92,9 +93,9 @@ GroundTelemetry::GroundTelemetry() : MavlinkSystem(OHD_SYS_ID_GROUND) {
 }
 
 GroundTelemetry::~GroundTelemetry() {
+  stop_openhd_uart_heartbeat();
   // first, stop all the endpoints that have their own threads
   m_wb_endpoint = nullptr;
-  m_gcs_endpoint = nullptr;
   if (m_gcs_endpoint) {
     m_gcs_endpoint = nullptr;
   }
@@ -420,6 +421,7 @@ void GroundTelemetry::setup_uart() {
 
 void GroundTelemetry::setup_openhd_uart_telemetry() {
   if (!m_openhd_uart_serial) return;
+  stop_openhd_uart_heartbeat();
   const auto uart_linux_fd = serial_openhd_param_to_linux_fd(
       m_gnd_settings->get_settings().openhd_uart_telemetry_connection);
   if (!uart_linux_fd.has_value()) {
@@ -459,6 +461,49 @@ void GroundTelemetry::setup_openhd_uart_telemetry() {
             forwarded.size());
         on_messages_ground_station_clients(forwarded);
       });
+  start_openhd_uart_heartbeat();
+}
+
+void GroundTelemetry::start_openhd_uart_heartbeat() {
+  if (!m_openhd_uart_serial) return;
+  stop_openhd_uart_heartbeat();
+  m_openhd_uart_heartbeat_stop = false;
+  auto send_heartbeat = [this]() {
+    std::vector<MavlinkMessage> heartbeat{
+        OHDMessages::createHeartbeat(_sys_id, MAV_COMP_ID_ONBOARD_COMPUTER)};
+    m_console->debug("Sending OpenHD UART heartbeat");
+    m_openhd_uart_serial->send_messages_if_enabled(heartbeat);
+  };
+  send_heartbeat();
+  m_openhd_uart_heartbeat_thread = std::make_unique<std::thread>([this, send_heartbeat]() {
+    const auto interval = std::chrono::minutes(1);
+    while (!m_openhd_uart_heartbeat_stop.load()) {
+      auto remaining = interval;
+      const auto sleep_step = std::chrono::seconds(1);
+      while (remaining > std::chrono::milliseconds::zero()) {
+        if (m_openhd_uart_heartbeat_stop.load()) {
+          return;
+        }
+        const auto step = remaining > sleep_step ? sleep_step : remaining;
+        std::this_thread::sleep_for(step);
+        remaining -= step;
+      }
+      if (m_openhd_uart_heartbeat_stop.load()) {
+        return;
+      }
+      send_heartbeat();
+    }
+  });
+}
+
+void GroundTelemetry::stop_openhd_uart_heartbeat() {
+  m_openhd_uart_heartbeat_stop = true;
+  if (m_openhd_uart_heartbeat_thread &&
+      m_openhd_uart_heartbeat_thread->joinable()) {
+    m_openhd_uart_heartbeat_thread->join();
+  }
+  m_openhd_uart_heartbeat_thread.reset();
+  m_openhd_uart_heartbeat_stop = false;
 }
 
 void GroundTelemetry::configure_openhd_uart_telemetry(

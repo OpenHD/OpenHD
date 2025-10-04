@@ -24,7 +24,9 @@
 #ifndef OPENHD_TELEMETRY_GROUNDTELEMETRY_H
 #define OPENHD_TELEMETRY_GROUNDTELEMETRY_H
 
+#include <atomic>
 #include <optional>
+#include <thread>
 
 #include "GroundTelemetrySettings.h"
 #include "endpoints/SerialEndpoint.h"
@@ -103,6 +105,8 @@ class GroundTelemetry : public MavlinkSystem {
   std::vector<openhd::Setting> get_all_settings();
   void setup_uart();
   void setup_openhd_uart_telemetry();
+  void start_openhd_uart_heartbeat();
+  void stop_openhd_uart_heartbeat();
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
   void enable_joystick();
   void disable_joystick();
@@ -127,6 +131,8 @@ class GroundTelemetry : public MavlinkSystem {
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
   std::unique_ptr<RcJoystickSender> m_rc_joystick_sender = nullptr;
 #endif
+  std::unique_ptr<std::thread> m_openhd_uart_heartbeat_thread;
+  std::atomic<bool> m_openhd_uart_heartbeat_stop{false};
 };
 
 #endif  // OPENHD_TELEMETRY_GROUNDTELEMETRY_H
