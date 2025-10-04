@@ -433,7 +433,14 @@ void GroundTelemetry::setup_openhd_uart_telemetry() {
   m_openhd_uart_serial->configure(
       options, "openhd_uart",
       [this](const std::vector<MavlinkMessage> messages) {
-        on_messages_ground_station_clients(messages);
+        auto forwarded = messages;
+        // Present serial traffic as if it originated from this OpenHD instance
+        // to allow external devices to talk using the OpenHD MAVLink identity.
+        for (auto& message : forwarded) {
+          message.m.sysid = _sys_id;
+          message.m.compid = MAV_COMP_ID_ONBOARD_COMPUTER;
+        }
+        on_messages_ground_station_clients(forwarded);
       });
 }
 
