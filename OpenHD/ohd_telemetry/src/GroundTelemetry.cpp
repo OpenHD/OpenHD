@@ -37,6 +37,7 @@ GroundTelemetry::GroundTelemetry() : MavlinkSystem(OHD_SYS_ID_GROUND) {
   m_gnd_settings =
       std::make_unique<openhd::telemetry::ground::SettingsHolder>();
   m_endpoint_tracker = std::make_unique<SerialEndpointManager>();
+  m_openhd_uart_serial = std::make_unique<SerialEndpointManager>();
   m_gcs_endpoint = std::make_unique<UDPEndpoint>(
       "GroundStationUDP", OHD_GROUND_CLIENT_UDP_PORT_OUT,
       OHD_GROUND_CLIENT_UDP_PORT_IN,
@@ -76,6 +77,7 @@ GroundTelemetry::GroundTelemetry() : MavlinkSystem(OHD_SYS_ID_GROUND) {
   m_generic_mavlink_param_provider->add_params(get_all_settings());
   m_components.push_back(m_generic_mavlink_param_provider);
   setup_uart();
+  setup_openhd_uart_telemetry();
   openhd::ExternalDeviceManager::instance().register_listener(
       [this](openhd::ExternalDevice external_device, bool connected) {
         if (!external_device.discovered_by_mavlink_tcp_server) {
@@ -193,6 +195,9 @@ void GroundTelemetry::send_messages_ground_station_clients(
   }
   if (m_tcp_server) {
     m_tcp_server->sendMessages(messages);
+  }
+  if (m_openhd_uart_serial) {
+    m_openhd_uart_serial->send_messages_if_enabled(messages);
   }
 }
 
@@ -393,6 +398,18 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
             m_gnd_settings->get_settings().gnd_uart_connection_type,
             c_gnd_uart_connection_type}});
   }
+  auto c_openhd_uart_conn = [this](std::string, std::string value) {
+    m_gnd_settings->unsafe_get_settings().openhd_uart_telemetry_connection =
+        value;
+    m_gnd_settings->persist();
+    setup_openhd_uart_telemetry();
+    return true;
+  };
+  ret.push_back(openhd::Setting{
+      openhd::telemetry::ground::OPENHD_UART_TELEMETRY_PARAM,
+      openhd::StringSetting{
+          m_gnd_settings->get_settings().openhd_uart_telemetry_connection,
+          c_openhd_uart_conn}});
   openhd::testing::append_dummy_if_empty(ret);
   return ret;
 }
@@ -416,6 +433,38 @@ void GroundTelemetry::setup_uart() {
   } else {
     m_endpoint_tracker->disable();
   }
+}
+
+void GroundTelemetry::setup_openhd_uart_telemetry() {
+  if (!m_openhd_uart_serial) return;
+  const auto uart_linux_fd = serial_openhd_param_to_linux_fd(
+      m_gnd_settings->get_settings().openhd_uart_telemetry_connection);
+  if (!uart_linux_fd.has_value()) {
+    m_openhd_uart_serial->disable();
+    return;
+  }
+  SerialEndpoint::HWOptions options{};
+  options.linux_filename = uart_linux_fd.value();
+  options.baud_rate = 115200;
+  options.enable_reading = true;
+  m_openhd_uart_serial->configure(
+      options, "openhd_uart",
+      [this](const std::vector<MavlinkMessage> messages) {
+        on_messages_ground_station_clients(messages);
+      });
+}
+
+void GroundTelemetry::configure_openhd_uart_telemetry(
+    const std::optional<std::string>& device_path) {
+  if (!device_path.has_value()) {
+    return;
+  }
+  m_console->info("CLI override for OpenHD UART telemetry: {}",
+                  device_path.value());
+  m_gnd_settings->unsafe_get_settings().openhd_uart_telemetry_connection =
+      device_path.value();
+  m_gnd_settings->persist();
+  setup_openhd_uart_telemetry();
 }
 
 void GroundTelemetry::set_link_handle(std::shared_ptr<OHDLink> link) {
