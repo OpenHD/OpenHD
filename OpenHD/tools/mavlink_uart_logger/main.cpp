@@ -74,7 +74,7 @@ void print_usage(const char *program) {
     std::cerr << "Usage: " << program
               << " [--device <path>] [--baud <baudrate>] [--output <file>]"
               << " [--sysid <id> --compid <id> --target-sys <id> --target-comp <id>]"
-              << " [--transmit]" << std::endl;
+              << " [--transmit] [--raw]" << std::endl;
     std::cerr << "Defaults: baud=115200, device=/dev/serialX (first available)" << std::endl;
 }
 
@@ -157,6 +157,18 @@ std::string payload_to_hex(const mavlink_message_t &message) {
     for (uint16_t i = 0; i < message.len; ++i) {
         oss << std::setw(2) << static_cast<int>(payload[i]);
         if (i + 1 != message.len) {
+            oss << ' ';
+        }
+    }
+    return oss.str();
+}
+
+std::string bytes_to_hex(const uint8_t *data, std::size_t len) {
+    std::ostringstream oss;
+    oss << std::hex << std::setfill('0');
+    for (std::size_t i = 0; i < len; ++i) {
+        oss << std::setw(2) << static_cast<int>(data[i]);
+        if (i + 1 != len) {
             oss << ' ';
         }
     }
@@ -455,7 +467,8 @@ bool send_ping(int fd, uint8_t sysid, uint8_t compid, uint8_t target_sys, uint8_
 void render_ui(const std::string &device_path, int baudrate,
                const std::map<MessageKey, MessageEntry> &messages, const std::string &output_path,
                const std::string &status_message, const FilterState &filter, bool transmit_mode,
-               const std::deque<std::string> &transmit_log) {
+               const std::deque<std::string> &transmit_log, bool raw_mode,
+               const std::deque<std::string> &raw_log) {
     erase();
 
     int max_y = 0;
@@ -484,6 +497,35 @@ void render_ui(const std::string &device_path, int baudrate,
             }
             mvprintw(row++, 0, "  %s", entry.c_str());
         }
+        if (row < max_y) {
+            ++row;
+        }
+    }
+
+    if (raw_mode && !transmit_mode && row < max_y) {
+        mvprintw(row++, 0, "Raw RX data:");
+        if (raw_log.empty()) {
+            if (row < max_y) {
+                mvprintw(row++, 0, "  <no data>");
+            }
+        } else {
+            const int available_width = std::max(0, max_x - 2);
+            for (const auto &entry : raw_log) {
+                if (row >= max_y) {
+                    break;
+                }
+                std::string display_entry = entry;
+                if (available_width > 3 && static_cast<int>(display_entry.size()) > available_width) {
+                    display_entry = display_entry.substr(0, available_width - 3) + "...";
+                }
+                mvprintw(row++, 0, "  %s", display_entry.c_str());
+            }
+        }
+        if (row < max_y) {
+            ++row;
+        }
+    } else if (raw_mode && transmit_mode && row < max_y) {
+        mvprintw(row++, 0, "Raw mode enabled (only active while listening)");
         if (row < max_y) {
             ++row;
         }
@@ -556,6 +598,7 @@ int main(int argc, char **argv) {
     bool device_user_specified = false;
     bool baud_user_specified = false;
     bool transmit_mode = false;
+    bool raw_mode = false;
     uint8_t sysid = 1;
     uint8_t compid = 1;
     uint8_t target_sys = 1;
@@ -581,10 +624,12 @@ int main(int argc, char **argv) {
             target_comp = static_cast<uint8_t>(std::stoi(argv[++i]));
         } else if (arg == "--transmit") {
             transmit_mode = true;
+        } else if (arg == "--raw") {
+            raw_mode = true;
         } else if (arg == "--help" || arg == "-h") {
             print_usage(argv[0]);
             std::cerr << "Additional options: --sysid <id> --compid <id> --target-sys <id> --target-comp <id>"
-                      << " --transmit"
+                      << " --transmit --raw"
                       << std::endl;
             return 0;
         } else {
@@ -650,8 +695,12 @@ int main(int argc, char **argv) {
     mavlink_status_t status{};
     std::map<MessageKey, MessageEntry> messages;
     std::string status_message = transmit_mode ? "Transmit mode active" : "Listening...";
+    if (raw_mode) {
+        status_message += transmit_mode ? " (raw display available in listen mode)" : " (raw display enabled)";
+    }
     FilterState filter;
     std::deque<std::string> transmit_log;
+    std::deque<std::string> raw_log;
     std::mt19937 rng{std::random_device{}()};
     std::uniform_int_distribution<int> transmit_delay_dist(750, 1500);
     if (!device_user_specified || !baud_user_specified) {
@@ -710,6 +759,21 @@ int main(int argc, char **argv) {
                 break;
             }
         } else if (nread > 0) {
+            if (raw_mode && !transmit_mode) {
+                const auto timestamp = current_timestamp_string();
+                std::string hex = bytes_to_hex(buffer, static_cast<std::size_t>(nread));
+                constexpr std::size_t kMaxRawEntryLength = 256;
+                if (hex.size() > kMaxRawEntryLength) {
+                    hex = hex.substr(0, kMaxRawEntryLength - 3) + "...";
+                }
+                std::ostringstream oss;
+                oss << timestamp << " [" << nread << " bytes] " << hex;
+                raw_log.push_front(oss.str());
+                constexpr std::size_t kMaxRawEntries = 50;
+                if (raw_log.size() > kMaxRawEntries) {
+                    raw_log.pop_back();
+                }
+            }
             for (ssize_t i = 0; i < nread; ++i) {
                 if (mavlink_parse_char(MAVLINK_COMM_0, buffer[i], &message, &status)) {
                     const auto timestamp = current_timestamp_string();
@@ -728,7 +792,7 @@ int main(int argc, char **argv) {
 
         if (now - last_ui_update > std::chrono::milliseconds(100)) {
             render_ui(device_path, baudrate, messages, output_path, status_message, filter, transmit_mode,
-                      transmit_log);
+                      transmit_log, raw_mode, raw_log);
             last_ui_update = now;
         }
 
@@ -829,7 +893,7 @@ int main(int argc, char **argv) {
     }
 
     render_ui(device_path, baudrate, messages, output_path, status_message, filter, transmit_mode,
-              transmit_log);
+              transmit_log, raw_mode, raw_log);
     endwin();
 
     if (output.is_open()) {
