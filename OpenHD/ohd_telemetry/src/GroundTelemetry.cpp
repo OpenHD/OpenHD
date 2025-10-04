@@ -423,9 +423,15 @@ void GroundTelemetry::setup_openhd_uart_telemetry() {
   const auto uart_linux_fd = serial_openhd_param_to_linux_fd(
       m_gnd_settings->get_settings().openhd_uart_telemetry_connection);
   if (!uart_linux_fd.has_value()) {
+    m_console->info(
+        "Disabling OpenHD UART telemetry - no valid device configured (value: {})",
+        m_gnd_settings->get_settings().openhd_uart_telemetry_connection);
     m_openhd_uart_serial->disable();
     return;
   }
+  m_console->info(
+      "Configuring OpenHD UART telemetry: device={}, baud_rate={}, enable_reading={}",
+      uart_linux_fd.value(), 115200, true);
   SerialEndpoint::HWOptions options{};
   options.linux_filename = uart_linux_fd.value();
   options.baud_rate = 115200;
@@ -433,13 +439,24 @@ void GroundTelemetry::setup_openhd_uart_telemetry() {
   m_openhd_uart_serial->configure(
       options, "openhd_uart",
       [this](const std::vector<MavlinkMessage> messages) {
+        m_console->info("Received {} MAVLink message(s) from OpenHD UART telemetry",
+                        messages.size());
         auto forwarded = messages;
         // Present serial traffic as if it originated from this OpenHD instance
         // to allow external devices to talk using the OpenHD MAVLink identity.
         for (auto& message : forwarded) {
+          const auto msg_id = static_cast<unsigned int>(message.m.msgid);
+          const auto sys_id = static_cast<unsigned int>(_sys_id);
+          const auto comp_id = static_cast<int>(MAV_COMP_ID_ONBOARD_COMPUTER);
+          m_console->info(
+              "Rewriting UART message id={} to sys={} comp={} for forwarding",
+              msg_id, sys_id, comp_id);
           message.m.sysid = _sys_id;
           message.m.compid = MAV_COMP_ID_ONBOARD_COMPUTER;
         }
+        m_console->info(
+            "Forwarding {} MAVLink message(s) from OpenHD UART telemetry to clients",
+            forwarded.size());
         on_messages_ground_station_clients(forwarded);
       });
 }
@@ -447,6 +464,8 @@ void GroundTelemetry::setup_openhd_uart_telemetry() {
 void GroundTelemetry::configure_openhd_uart_telemetry(
     const std::optional<std::string>& device_path) {
   if (!device_path.has_value()) {
+    m_console->info(
+        "configure_openhd_uart_telemetry called without device override; ignoring");
     return;
   }
   m_console->info("CLI override for OpenHD UART telemetry: {}",
