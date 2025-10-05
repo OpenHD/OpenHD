@@ -23,6 +23,7 @@
 #include <filesystem>
 #include <deque>
 #include <functional>
+#include <utility>
 
 #include <ncurses.h>
 
@@ -34,6 +35,10 @@ extern "C" {
 
 namespace {
 volatile std::sig_atomic_t g_should_exit = 0;
+
+constexpr short kHighlightColorPair = 1;
+constexpr short kOpenHDBlueColorSlot = 10;
+bool g_highlight_colors_available = false;
 
 void signal_handler(int) {
     g_should_exit = 1;
@@ -394,6 +399,18 @@ struct MessageEntry {
     uint32_t msgid = 0;
 };
 
+struct NavigationState {
+    bool interactive_mode = false;
+    bool focus_filtered = false;
+    std::size_t selected_all_index = 0;
+    std::size_t selected_filtered_index = 0;
+};
+
+struct TableRenderResult {
+    int next_row = 0;
+    const MessageEntry *highlighted_entry = nullptr;
+};
+
 std::vector<uint8_t> collect_sysids(const std::map<MessageKey, MessageEntry> &messages) {
     std::set<uint8_t> sysids;
     for (const auto &kv : messages) {
@@ -444,6 +461,88 @@ void record_message(const mavlink_message_t &message, const std::string &timesta
                 << ", payload=" << payload_text << '\n';
         output->flush();
     }
+}
+
+std::vector<const MessageEntry *> gather_sorted_entries(const std::map<MessageKey, MessageEntry> &messages) {
+    std::vector<const MessageEntry *> entries;
+    entries.reserve(messages.size());
+    for (const auto &kv : messages) {
+        entries.push_back(&kv.second);
+    }
+
+    std::sort(entries.begin(), entries.end(), [](const auto *lhs, const auto *rhs) {
+        if (lhs->sysid != rhs->sysid) {
+            return lhs->sysid < rhs->sysid;
+        }
+        if (lhs->compid != rhs->compid) {
+            return lhs->compid < rhs->compid;
+        }
+        if (lhs->msgid != rhs->msgid) {
+            return lhs->msgid < rhs->msgid;
+        }
+        return lhs->name < rhs->name;
+    });
+
+    return entries;
+}
+
+std::vector<const MessageEntry *> filter_entries(const std::vector<const MessageEntry *> &entries,
+                                                const FilterState &filter) {
+    std::vector<const MessageEntry *> filtered;
+    filtered.reserve(entries.size());
+    for (const auto *entry : entries) {
+        if (filter.sysid && entry->sysid != *filter.sysid) {
+            continue;
+        }
+        if (filter.compid && entry->compid != *filter.compid) {
+            continue;
+        }
+        if (filter.msgid && entry->msgid != *filter.msgid) {
+            continue;
+        }
+        filtered.push_back(entry);
+    }
+    return filtered;
+}
+
+std::vector<std::string> wrap_text(const std::string &text, int width) {
+    std::vector<std::string> lines;
+    if (width <= 0) {
+        lines.push_back(text);
+        return lines;
+    }
+
+    std::size_t start = 0;
+    const std::size_t length = text.size();
+    while (start < length) {
+        std::size_t end = std::min<std::size_t>(start + static_cast<std::size_t>(width), length);
+        if (end < length) {
+            std::size_t last_space = text.rfind(' ', end - 1);
+            if (last_space != std::string::npos && last_space >= start) {
+                end = last_space + 1;
+            }
+        }
+
+        if (end <= start) {
+            end = std::min<std::size_t>(start + static_cast<std::size_t>(width), length);
+        }
+
+        std::string line = text.substr(start, end - start);
+        while (!line.empty() && line.back() == ' ') {
+            line.pop_back();
+        }
+        lines.push_back(std::move(line));
+        start = end;
+        while (start < length && text[start] == ' ') {
+            ++start;
+        }
+    }
+
+    if (lines.empty()) {
+        lines.emplace_back();
+    }
+
+    return lines;
 }
 
 struct GeneratedMessage {
@@ -520,21 +619,27 @@ GeneratedMessage generate_random_openhd_message(std::mt19937 &rng, uint8_t sysid
     return generators[selector(rng)](rng, sysid, compid);
 }
 
-int render_table(int start_row, int max_y, int max_x, const std::string &title,
-                 const std::vector<const MessageEntry *> &entries) {
+TableRenderResult render_table(int start_row, int max_y, int max_x, const std::string &title,
+                               const std::vector<const MessageEntry *> &entries,
+                               bool interactive_mode, bool has_focus, std::size_t selected_index,
+                               short highlight_pair, bool highlight_enabled) {
+    TableRenderResult result;
+    result.next_row = std::min(start_row, max_y);
     if (start_row >= max_y) {
-        return max_y;
+        return result;
     }
 
     mvprintw(start_row++, 0, "%s", title.c_str());
     if (start_row >= max_y) {
-        return max_y;
+        result.next_row = max_y;
+        return result;
     }
 
     mvprintw(start_row++, 0, "%-5s %-5s %-6s %-20s %-8s %-4s %s", "SYS", "COMP", "MSG", "NAME",
              "COUNT", "LEN", "PAYLOAD");
     if (start_row >= max_y) {
-        return max_y;
+        result.next_row = max_y;
+        return result;
     }
 
     int available_rows = max_y - start_row - 1;
@@ -542,12 +647,29 @@ int render_table(int start_row, int max_y, int max_x, const std::string &title,
         available_rows = 0;
     }
 
+    std::size_t clamped_selected = selected_index;
+    if (!entries.empty()) {
+        if (clamped_selected >= entries.size()) {
+            clamped_selected = entries.size() - 1;
+        }
+    } else {
+        clamped_selected = 0;
+    }
+
+    std::size_t start_index = 0;
+    if (interactive_mode && has_focus && available_rows > 0 && entries.size() > static_cast<std::size_t>(available_rows)) {
+        if (clamped_selected >= static_cast<std::size_t>(available_rows)) {
+            start_index = clamped_selected - static_cast<std::size_t>(available_rows) + 1;
+        }
+    }
+
     int displayed = 0;
-    for (const auto *entry : entries) {
+    for (std::size_t i = start_index; i < entries.size(); ++i) {
         if (displayed >= available_rows) {
             break;
         }
 
+        const auto *entry = entries[i];
         std::string payload = entry->payload_text;
         const int payload_start_col = 5 + 1 + 5 + 1 + 6 + 1 + 20 + 1 + 8 + 1 + 4 + 1;
         const int available_width = std::max(0, max_x - payload_start_col);
@@ -555,11 +677,28 @@ int render_table(int start_row, int max_y, int max_x, const std::string &title,
             payload = payload.substr(0, available_width - 3) + "...";
         }
 
+        const bool highlight_this = interactive_mode && has_focus && i == clamped_selected;
+        if (highlight_this) {
+            attron(A_BOLD);
+            if (highlight_enabled) {
+                attron(COLOR_PAIR(highlight_pair));
+            }
+            result.highlighted_entry = entry;
+        }
+
         mvprintw(start_row + displayed, 0, "%-5u %-5u %-6u %-20s %-8lu %-4u %s",
                  static_cast<unsigned>(entry->sysid), static_cast<unsigned>(entry->compid),
                  static_cast<unsigned>(entry->msgid), entry->name.c_str(),
                  static_cast<unsigned long>(entry->count), static_cast<unsigned>(entry->len),
                  payload.c_str());
+
+        if (highlight_this) {
+            if (highlight_enabled) {
+                attroff(COLOR_PAIR(highlight_pair));
+            }
+            attroff(A_BOLD);
+        }
+
         ++displayed;
     }
 
@@ -574,7 +713,8 @@ int render_table(int start_row, int max_y, int max_x, const std::string &title,
         ++start_row;
     }
 
-    return start_row;
+    result.next_row = start_row;
+    return result;
 }
 
 template <typename T>
@@ -653,7 +793,9 @@ void render_ui(const std::string &device_path, int baudrate,
                const std::map<MessageKey, MessageEntry> &messages, const std::string &output_path,
                const std::string &status_message, const FilterState &filter, bool transmit_mode,
                bool loop_mode, const LoopStats *loop_stats, const std::deque<std::string> &transmit_log,
-               bool raw_mode, const std::deque<std::string> &raw_log) {
+               bool raw_mode, const std::deque<std::string> &raw_log, const NavigationState &nav_state,
+               const std::vector<const MessageEntry *> &all_entries,
+               const std::vector<const MessageEntry *> &filtered_entries) {
     erase();
 
     int max_y = 0;
@@ -674,14 +816,15 @@ void render_ui(const std::string &device_path, int baudrate,
     mvprintw(3, 0, "Controls: q=quit | h=send heartbeat | r=send reboot command | p=send ping | t=send random OpenHD message");
     mvprintw(4, 0, "Status: %s", status_message.c_str());
     mvprintw(5, 0, "Filter controls: s=cycle sysid | c=cycle comp | m=cycle message | f=clear filters");
+    mvprintw(6, 0, "Interactive view: v=toggle | TAB/\u2190/\u2192 switch table | \u2191/\u2193 move selection");
 
     const std::string sys_str = filter.sysid ? std::to_string(*filter.sysid) : std::string("All");
     const std::string comp_str = filter.compid ? std::to_string(*filter.compid) : std::string("All");
     const std::string msg_str = filter.msgid ? std::to_string(*filter.msgid) : std::string("All");
-    mvprintw(6, 0, "Active filter: sys=%s comp=%s msg=%s", sys_str.c_str(), comp_str.c_str(),
+    mvprintw(7, 0, "Active filter: sys=%s comp=%s msg=%s", sys_str.c_str(), comp_str.c_str(),
              msg_str.c_str());
 
-    int row = 8;
+    int row = 9;
     if (loop_mode && loop_stats && row < max_y) {
         mvprintw(row++, 0,
                  "Loop stats: sent=%llu received=%llu matched=%llu lost=%llu unexpected=%llu inflight=%zu loss=%.2f%%",
@@ -738,47 +881,25 @@ void render_ui(const std::string &device_path, int baudrate,
         }
     }
 
-    std::vector<const MessageEntry *> all_entries;
-    all_entries.reserve(messages.size());
-    for (const auto &kv : messages) {
-        all_entries.push_back(&kv.second);
+    const bool all_focus = nav_state.interactive_mode && !nav_state.focus_filtered;
+    const bool filtered_focus = nav_state.interactive_mode && nav_state.focus_filtered;
+
+    std::string all_title = "All Messages";
+    if (all_focus) {
+        all_title += " [active]";
     }
 
-    std::sort(all_entries.begin(), all_entries.end(), [](const auto *lhs, const auto *rhs) {
-        if (lhs->sysid != rhs->sysid) {
-            return lhs->sysid < rhs->sysid;
-        }
-        if (lhs->compid != rhs->compid) {
-            return lhs->compid < rhs->compid;
-        }
-        if (lhs->msgid != rhs->msgid) {
-            return lhs->msgid < rhs->msgid;
-        }
-        return lhs->name < rhs->name;
-    });
-
-    row = render_table(row, max_y, max_x, "All Messages", all_entries);
+    TableRenderResult all_result =
+        render_table(row, max_y, max_x, all_title, all_entries, nav_state.interactive_mode, all_focus,
+                     nav_state.selected_all_index, kHighlightColorPair, g_highlight_colors_available);
+    row = all_result.next_row;
 
     if (row >= max_y) {
         refresh();
         return;
     }
 
-    std::vector<const MessageEntry *> filtered_entries;
-    filtered_entries.reserve(all_entries.size());
-    for (const auto *entry : all_entries) {
-        if (filter.sysid && entry->sysid != *filter.sysid) {
-            continue;
-        }
-        if (filter.compid && entry->compid != *filter.compid) {
-            continue;
-        }
-        if (filter.msgid && entry->msgid != *filter.msgid) {
-            continue;
-        }
-        filtered_entries.push_back(entry);
-    }
-
+    TableRenderResult filtered_result;
     if (!filter.sysid && !filter.compid && !filter.msgid) {
         if (row < max_y) {
             mvprintw(row, 0, "Filtered Messages: (press s/c/m to apply filters)");
@@ -789,7 +910,49 @@ void render_ui(const std::string &device_path, int baudrate,
             }
         }
     } else if (row < max_y) {
-        row = render_table(row, max_y, max_x, "Filtered Messages", filtered_entries);
+        std::string filtered_title = "Filtered Messages";
+        if (filtered_focus) {
+            filtered_title += " [active]";
+        }
+        filtered_result = render_table(row, max_y, max_x, filtered_title, filtered_entries,
+                                       nav_state.interactive_mode, filtered_focus,
+                                       nav_state.selected_filtered_index, kHighlightColorPair,
+                                       g_highlight_colors_available);
+        row = filtered_result.next_row;
+    }
+
+    if (nav_state.interactive_mode && row < max_y) {
+        const MessageEntry *selected_entry = nullptr;
+        if (filtered_focus && filtered_result.highlighted_entry) {
+            selected_entry = filtered_result.highlighted_entry;
+        } else if (all_result.highlighted_entry) {
+            selected_entry = all_result.highlighted_entry;
+        }
+
+        if (selected_entry) {
+            mvprintw(row++, 0,
+                     "Selected message: sys=%u comp=%u msg=%u (%s) count=%lu len=%u",
+                     static_cast<unsigned>(selected_entry->sysid),
+                     static_cast<unsigned>(selected_entry->compid),
+                     static_cast<unsigned>(selected_entry->msgid), selected_entry->name.c_str(),
+                     static_cast<unsigned long>(selected_entry->count),
+                     static_cast<unsigned>(selected_entry->len));
+            if (row < max_y) {
+                mvprintw(row++, 0, "Payload:");
+            }
+            if (row < max_y) {
+                const int wrap_width = std::max(0, max_x - 2);
+                auto wrapped_lines = wrap_text(selected_entry->payload_text, wrap_width);
+                for (const auto &line : wrapped_lines) {
+                    if (row >= max_y) {
+                        break;
+                    }
+                    mvprintw(row++, 2, "%s", line.c_str());
+                }
+            }
+        } else {
+            mvprintw(row++, 0, "Interactive view active: no entry selected");
+        }
     }
 
     refresh();
@@ -906,6 +1069,18 @@ int main(int argc, char **argv) {
     nodelay(stdscr, TRUE);
     keypad(stdscr, TRUE);
 
+    if (has_colors()) {
+        start_color();
+        use_default_colors();
+        short blue_slot = COLOR_BLUE;
+        if (can_change_color() && kOpenHDBlueColorSlot < COLORS) {
+            init_color(kOpenHDBlueColorSlot, 0, 0, 1000);
+            blue_slot = kOpenHDBlueColorSlot;
+        }
+        init_pair(kHighlightColorPair, COLOR_WHITE, blue_slot);
+        g_highlight_colors_available = true;
+    }
+
     mavlink_message_t message{};
     mavlink_status_t status{};
     std::map<MessageKey, MessageEntry> messages;
@@ -925,6 +1100,7 @@ int main(int argc, char **argv) {
         }
     }
     FilterState filter;
+    NavigationState nav_state;
     std::deque<std::string> transmit_log;
     std::deque<std::string> raw_log;
     std::mt19937 rng{std::random_device{}()};
@@ -1105,9 +1281,23 @@ int main(int argc, char **argv) {
             loop_stats.inflight = loop_inflight.size();
         }
 
+        auto all_entries = gather_sorted_entries(messages);
+        auto filtered_entries = filter_entries(all_entries, filter);
+
+        if (nav_state.selected_all_index >= all_entries.size()) {
+            nav_state.selected_all_index = all_entries.empty() ? 0 : all_entries.size() - 1;
+        }
+        if (nav_state.selected_filtered_index >= filtered_entries.size()) {
+            nav_state.selected_filtered_index = filtered_entries.empty() ? 0 : filtered_entries.size() - 1;
+        }
+        if (nav_state.focus_filtered && filtered_entries.empty()) {
+            nav_state.focus_filtered = false;
+        }
+
         if (now - last_ui_update > std::chrono::milliseconds(100)) {
             render_ui(device_path, baudrate, messages, output_path, status_message, filter, transmit_mode,
-                      loop_mode, loop_mode ? &loop_stats : nullptr, transmit_log, raw_mode, raw_log);
+                      loop_mode, loop_mode ? &loop_stats : nullptr, transmit_log, raw_mode, raw_log,
+                      nav_state, all_entries, filtered_entries);
             last_ui_update = now;
         }
 
@@ -1127,6 +1317,17 @@ int main(int argc, char **argv) {
                 status_message = send_ping(fd, sysid, compid, target_sys, target_comp)
                                      ? "Ping sent"
                                      : "Failed to send ping";
+            } else if (ch == 'v' || ch == 'V') {
+                nav_state.interactive_mode = !nav_state.interactive_mode;
+                if (!nav_state.interactive_mode) {
+                    nav_state.focus_filtered = false;
+                } else if (nav_state.focus_filtered && filtered_entries.empty()) {
+                    nav_state.focus_filtered = false;
+                }
+                status_message = nav_state.interactive_mode
+                                     ? "Interactive navigation enabled (use arrow keys)"
+                                     : "Interactive navigation disabled";
+                last_ui_update = now - std::chrono::milliseconds(200);
             } else if (ch == 't' || ch == 'T') {
                 if (loop_mode) {
                     send_loop_ping("manual");
@@ -1206,14 +1407,56 @@ int main(int argc, char **argv) {
                 filter.compid.reset();
                 filter.msgid.reset();
                 status_message = "Filters cleared";
+            } else if (ch == KEY_UP) {
+                if (nav_state.interactive_mode) {
+                    auto &entries = nav_state.focus_filtered ? filtered_entries : all_entries;
+                    auto &index = nav_state.focus_filtered ? nav_state.selected_filtered_index
+                                                           : nav_state.selected_all_index;
+                    if (!entries.empty() && index > 0) {
+                        --index;
+                        last_ui_update = now - std::chrono::milliseconds(200);
+                    }
+                }
+            } else if (ch == KEY_DOWN) {
+                if (nav_state.interactive_mode) {
+                    auto &entries = nav_state.focus_filtered ? filtered_entries : all_entries;
+                    auto &index = nav_state.focus_filtered ? nav_state.selected_filtered_index
+                                                           : nav_state.selected_all_index;
+                    if (!entries.empty() && index + 1 < entries.size()) {
+                        ++index;
+                        last_ui_update = now - std::chrono::milliseconds(200);
+                    }
+                }
+            } else if (ch == KEY_LEFT || ch == KEY_BTAB) {
+                if (nav_state.interactive_mode && nav_state.focus_filtered) {
+                    nav_state.focus_filtered = false;
+                    status_message = "Interactive focus: All Messages";
+                    last_ui_update = now - std::chrono::milliseconds(200);
+                }
+            } else if (ch == KEY_RIGHT || ch == '\t') {
+                if (nav_state.interactive_mode) {
+                    if (filtered_entries.empty()) {
+                        status_message = "No filtered messages available";
+                    } else if (!nav_state.focus_filtered) {
+                        nav_state.focus_filtered = true;
+                        if (nav_state.selected_filtered_index >= filtered_entries.size()) {
+                            nav_state.selected_filtered_index = filtered_entries.size() - 1;
+                        }
+                        status_message = "Interactive focus: Filtered Messages";
+                    }
+                    last_ui_update = now - std::chrono::milliseconds(200);
+                }
             }
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
+    auto final_all_entries = gather_sorted_entries(messages);
+    auto final_filtered_entries = filter_entries(final_all_entries, filter);
     render_ui(device_path, baudrate, messages, output_path, status_message, filter, transmit_mode, loop_mode,
-              loop_mode ? &loop_stats : nullptr, transmit_log, raw_mode, raw_log);
+              loop_mode ? &loop_stats : nullptr, transmit_log, raw_mode, raw_log, nav_state, final_all_entries,
+              final_filtered_entries);
     endwin();
 
     if (output.is_open()) {
