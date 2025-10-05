@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <array>
 #include <arpa/inet.h>
 #include <cctype>
 #include <chrono>
@@ -40,8 +41,15 @@ namespace {
 volatile std::sig_atomic_t g_should_exit = 0;
 
 constexpr short kHighlightColorPair = 1;
+constexpr short kSectionTitleColorPair = 2;
+constexpr short kLabelColorPair = 3;
+constexpr short kDividerColorPair = 4;
 constexpr short kOpenHDBlueColorSlot = 10;
+
 bool g_highlight_colors_available = false;
+bool g_section_title_colors_available = false;
+bool g_label_colors_available = false;
+bool g_divider_colors_available = false;
 
 void signal_handler(int) {
     g_should_exit = 1;
@@ -519,6 +527,19 @@ std::vector<const MessageEntry *> filter_entries(const std::vector<const Message
     return filtered;
 }
 
+std::string trim_to_width(const std::string &text, int width) {
+    if (width <= 0) {
+        return {};
+    }
+    if (static_cast<int>(text.size()) <= width) {
+        return text;
+    }
+    if (width <= 3) {
+        return text.substr(0, static_cast<std::size_t>(width));
+    }
+    return text.substr(0, static_cast<std::size_t>(width - 3)) + "...";
+}
+
 std::vector<std::string> wrap_text(const std::string &text, int width) {
     std::vector<std::string> lines;
     if (width <= 0) {
@@ -643,17 +664,72 @@ TableRenderResult render_table(int start_row, int max_y, int max_x, const std::s
         return result;
     }
 
+    if (g_section_title_colors_available) {
+        attron(COLOR_PAIR(kSectionTitleColorPair));
+    }
+    attron(A_BOLD);
     mvprintw(start_row++, 0, "%s", title.c_str());
+    attroff(A_BOLD);
+    if (g_section_title_colors_available) {
+        attroff(COLOR_PAIR(kSectionTitleColorPair));
+    }
     if (start_row >= max_y) {
         result.next_row = max_y;
         return result;
     }
 
-    mvprintw(start_row++, 0, "%-5s %-5s %-6s %-20s %-8s %-4s %s", "SYS", "COMP", "MSG", "NAME",
-             "COUNT", "LEN", "PAYLOAD");
+    constexpr int kColumnSpacing = 2;
+    const std::array<int, 6> column_widths = {4, 5, 6, 24, 9, 5};
+    const std::array<bool, 6> right_align = {false, false, false, false, true, true};
+    const std::array<const char *, 6> headers = {"SYS", "COMP", "MSG", "NAME", "COUNT", "LEN"};
+
+    int column_x = 0;
+    if (g_label_colors_available) {
+        attron(COLOR_PAIR(kLabelColorPair));
+    }
+    attron(A_BOLD);
+    for (std::size_t i = 0; i < headers.size(); ++i) {
+        if (column_x >= max_x) {
+            break;
+        }
+        const int width = column_widths[i];
+        const int remaining = max_x - column_x;
+        if (remaining <= 0) {
+            break;
+        }
+        const int effective_width = std::min(width, remaining);
+        if (right_align[i]) {
+            mvprintw(start_row, column_x, "%*s", effective_width, headers[i]);
+        } else {
+            mvprintw(start_row, column_x, "%-*s", effective_width, headers[i]);
+        }
+        column_x += width + kColumnSpacing;
+    }
+    attroff(A_BOLD);
+    if (g_label_colors_available) {
+        attroff(COLOR_PAIR(kLabelColorPair));
+    }
+
+    const int payload_start_col = column_x;
+    const int payload_width = std::max(0, max_x - payload_start_col);
+    if (payload_width > 0 && payload_start_col < max_x) {
+        mvprintw(start_row, payload_start_col, "%s", trim_to_width("PAYLOAD", payload_width).c_str());
+    }
+
+    ++start_row;
     if (start_row >= max_y) {
         result.next_row = max_y;
         return result;
+    }
+
+    if (start_row < max_y) {
+        if (g_divider_colors_available) {
+            attron(COLOR_PAIR(kDividerColorPair));
+        }
+        mvhline(start_row++, 0, ACS_HLINE, max_x);
+        if (g_divider_colors_available) {
+            attroff(COLOR_PAIR(kDividerColorPair));
+        }
     }
 
     int available_rows = max_y - start_row - 1;
@@ -671,11 +747,29 @@ TableRenderResult render_table(int start_row, int max_y, int max_x, const std::s
     }
 
     std::size_t start_index = 0;
-    if (interactive_mode && has_focus && available_rows > 0 && entries.size() > static_cast<std::size_t>(available_rows)) {
+    if (interactive_mode && has_focus && available_rows > 0 &&
+        entries.size() > static_cast<std::size_t>(available_rows)) {
         if (clamped_selected >= static_cast<std::size_t>(available_rows)) {
             start_index = clamped_selected - static_cast<std::size_t>(available_rows) + 1;
         }
     }
+
+    auto print_cell = [&](int y, int x, int width, const std::string &value, bool align_right) {
+        if (x >= max_x || width <= 0) {
+            return;
+        }
+        const int remaining = max_x - x;
+        if (remaining <= 0) {
+            return;
+        }
+        const int effective_width = std::min(width, remaining);
+        std::string text = trim_to_width(value, effective_width);
+        if (align_right) {
+            mvprintw(y, x, "%*s", effective_width, text.c_str());
+        } else {
+            mvprintw(y, x, "%-*s", effective_width, text.c_str());
+        }
+    };
 
     int displayed = 0;
     for (std::size_t i = start_index; i < entries.size(); ++i) {
@@ -684,13 +778,6 @@ TableRenderResult render_table(int start_row, int max_y, int max_x, const std::s
         }
 
         const auto *entry = entries[i];
-        std::string payload = entry->payload_text;
-        const int payload_start_col = 5 + 1 + 5 + 1 + 6 + 1 + 20 + 1 + 8 + 1 + 4 + 1;
-        const int available_width = std::max(0, max_x - payload_start_col);
-        if (static_cast<int>(payload.size()) > available_width && available_width > 3) {
-            payload = payload.substr(0, available_width - 3) + "...";
-        }
-
         const bool highlight_this = interactive_mode && has_focus && i == clamped_selected;
         if (highlight_this) {
             attron(A_BOLD);
@@ -700,11 +787,25 @@ TableRenderResult render_table(int start_row, int max_y, int max_x, const std::s
             result.highlighted_entry = entry;
         }
 
-        mvprintw(start_row + displayed, 0, "%-5u %-5u %-6u %-20s %-8lu %-4u %s",
-                 static_cast<unsigned>(entry->sysid), static_cast<unsigned>(entry->compid),
-                 static_cast<unsigned>(entry->msgid), entry->name.c_str(),
-                 static_cast<unsigned long>(entry->count), static_cast<unsigned>(entry->len),
-                 payload.c_str());
+        const std::array<std::string, 6> column_values = {
+            std::to_string(entry->sysid),   std::to_string(entry->compid),
+            std::to_string(entry->msgid),   entry->name,
+            std::to_string(entry->count),   std::to_string(entry->len)};
+
+        int cell_x = 0;
+        const int row_y = start_row + displayed;
+        for (std::size_t col = 0; col < column_values.size(); ++col) {
+            if (cell_x >= max_x) {
+                break;
+            }
+            print_cell(row_y, cell_x, column_widths[col], column_values[col], right_align[col]);
+            cell_x += column_widths[col] + kColumnSpacing;
+        }
+
+        if (payload_width > 0 && cell_x < max_x) {
+            std::string payload_text = trim_to_width(entry->payload_text, payload_width);
+            mvprintw(row_y, cell_x, "%s", payload_text.c_str());
+        }
 
         if (highlight_this) {
             if (highlight_enabled) {
@@ -850,133 +951,215 @@ void render_ui(const std::string &connection_line, const std::string &connection
     getmaxyx(stdscr, max_y, max_x);
 
     int row = 0;
-    attron(A_BOLD);
-    mvprintw(row++, 0, "OpenHD MAVLink Monitor");
-    attroff(A_BOLD);
+
+    auto draw_divider = [&]() {
+        if (row < max_y) {
+            if (g_divider_colors_available) {
+                attron(COLOR_PAIR(kDividerColorPair));
+            }
+            mvhline(row++, 0, ACS_HLINE, max_x);
+            if (g_divider_colors_available) {
+                attroff(COLOR_PAIR(kDividerColorPair));
+            }
+        }
+    };
+
+    auto print_section_title = [&](const std::string &text) {
+        if (row >= max_y) {
+            return;
+        }
+        if (g_section_title_colors_available) {
+            attron(COLOR_PAIR(kSectionTitleColorPair));
+        }
+        attron(A_BOLD);
+        mvprintw(row++, 0, "%s", text.c_str());
+        attroff(A_BOLD);
+        if (g_section_title_colors_available) {
+            attroff(COLOR_PAIR(kSectionTitleColorPair));
+        }
+    };
+
+    const int label_width = 12;
+    auto print_label_value = [&](const std::string &label, const std::string &value) {
+        if (row >= max_y) {
+            return;
+        }
+        std::string label_text = label + ':';
+        std::string trimmed_label = trim_to_width(label_text, label_width);
+        if (g_label_colors_available) {
+            attron(COLOR_PAIR(kLabelColorPair));
+        }
+        attron(A_BOLD);
+        mvprintw(row, 0, "%-*s", label_width, trimmed_label.c_str());
+        attroff(A_BOLD);
+        if (g_label_colors_available) {
+            attroff(COLOR_PAIR(kLabelColorPair));
+        }
+        int value_width = std::max(0, max_x - label_width);
+        std::string trimmed_value = trim_to_width(value, value_width);
+        mvprintw(row++, label_width, "%s", trimmed_value.c_str());
+    };
+
+    auto print_indented_line = [&](const std::string &text, int indent = 2) {
+        if (row >= max_y) {
+            return;
+        }
+        int available = std::max(0, max_x - indent);
+        std::string trimmed = trim_to_width(text, available);
+        mvprintw(row++, indent, "%s", trimmed.c_str());
+    };
+
+    auto begin_section = [&](const std::string &title) {
+        draw_divider();
+        print_section_title(title);
+    };
 
     if (row < max_y) {
-        mvprintw(row++, 0, "%s", connection_line.c_str());
+        if (g_section_title_colors_available) {
+            attron(COLOR_PAIR(kSectionTitleColorPair));
+        }
+        attron(A_BOLD);
+        mvprintw(row++, 0, "OpenHD MAVLink Monitor");
+        attroff(A_BOLD);
+        if (g_section_title_colors_available) {
+            attroff(COLOR_PAIR(kSectionTitleColorPair));
+        }
+    }
+
+    if (row < max_y) {
+        std::string link_value = connection_line;
+        const std::string link_prefix = "Link: ";
+        if (link_value.rfind(link_prefix, 0) == 0) {
+            link_value.erase(0, link_prefix.size());
+        }
+        print_label_value("Link", link_value);
     }
     if (!connection_details.empty() && row < max_y) {
-        mvprintw(row++, 0, "%s", connection_details.c_str());
+        print_label_value("Details", connection_details);
     }
     if (row < max_y) {
-        mvprintw(row++, 0, "Logging: %s", output_path.empty() ? "<disabled>" : output_path.c_str());
+        print_label_value("Logging", output_path.empty() ? "<disabled>" : output_path);
     }
 
-    if (row < max_y) {
-        mvhline(row++, 0, ACS_HLINE, max_x);
-    }
+    begin_section("Controls");
 
-    if (row < max_y) {
-        attron(A_BOLD);
-        mvprintw(row++, 0, "Controls");
-        attroff(A_BOLD);
-    }
+    struct KeyHelpEntry {
+        std::string key;
+        std::string description;
+    };
+    const std::vector<KeyHelpEntry> paired_controls = {
+        {"q", "Quit"},
+        {"h", "Heartbeat"},
+        {"p", "Ping"},
+        {"r", "Reboot"},
+        {"t", "Send test/loop message"},
+        {"s", "Cycle system"},
+        {"c", "Cycle component"},
+        {"m", "Cycle message"},
+        {"f", "Clear filters"},
+    };
 
-    const std::vector<std::string> control_lines = {
-        "q Quit   h Heartbeat   p Ping   r Reboot   t Send test/loop message",
-        "s Cycle system   c Cycle component   m Cycle message   f Clear filters",
-        "Arrow keys navigate lists   Tab/Shift+Tab switch focus   v Toggle view",
-        raw_mode ? "Raw mode active: showing received bytes while idle"
-                  : "Interactive view starts enabled (press 'v' to toggle)"};
+    const int controls_indent = 2;
+    const int available_control_width = std::max(0, max_x - controls_indent);
+    const int control_column_gap = 4;
+    const bool use_two_columns = available_control_width >= 48;
+    const int control_column_width =
+        use_two_columns ? (available_control_width - control_column_gap) / 2 : available_control_width;
 
-    for (const auto &line : control_lines) {
-        if (row >= max_y) {
-            break;
+    if (use_two_columns) {
+        for (std::size_t i = 0; i < paired_controls.size(); i += 2) {
+            if (row >= max_y) {
+                break;
+            }
+            std::string left = paired_controls[i].key + "  " + paired_controls[i].description;
+            std::string left_trim = trim_to_width(left, control_column_width);
+            mvprintw(row, controls_indent, "%s", left_trim.c_str());
+            if (i + 1 < paired_controls.size()) {
+                std::string right = paired_controls[i + 1].key + "  " + paired_controls[i + 1].description;
+                std::string right_trim = trim_to_width(right, control_column_width);
+                mvprintw(row, controls_indent + control_column_width + control_column_gap, "%s",
+                         right_trim.c_str());
+            }
+            ++row;
         }
-        mvprintw(row++, 0, "%s", line.c_str());
+    } else {
+        for (const auto &entry : paired_controls) {
+            print_indented_line(entry.key + "  " + entry.description);
+        }
     }
 
-    if (row < max_y) {
-        mvhline(row++, 0, ACS_HLINE, max_x);
+    const std::vector<std::string> extra_controls = {
+        "Tab/Shift+Tab  Switch focus",
+        "Arrow keys     Navigate lists",
+        raw_mode ? "v  Toggle view (raw mode active: showing received bytes while idle)"
+                 : "v  Toggle view (interactive view starts enabled; press again for raw view)",
+    };
+    for (const auto &line : extra_controls) {
+        print_indented_line(line);
     }
+
+    begin_section("Status");
 
     std::string mode_string;
     if (loop_mode) {
-        mode_string += "Mode: Loop test";
+        mode_string += "Loop test";
         if (transmit_mode) {
             mode_string += " + random TX";
         }
     } else if (transmit_mode) {
-        mode_string += "Mode: Random OpenHD TX";
+        mode_string += "Random OpenHD TX";
     } else {
-        mode_string += "Mode: Listen";
+        mode_string += "Listen";
     }
 
-    if (!mode_string.empty() && row < max_y) {
-        mvprintw(row++, 0, "%s", mode_string.c_str());
-    }
-
-    if (row < max_y) {
-        mvprintw(row++, 0, "Status: %s", status_message.c_str());
-    }
-
+    print_label_value("Mode", mode_string);
+    print_label_value("Status", status_message);
     const std::string sys_str = filter.sysid ? std::to_string(*filter.sysid) : std::string("All");
     const std::string comp_str = filter.compid ? std::to_string(*filter.compid) : std::string("All");
     const std::string msg_str = filter.msgid ? std::to_string(*filter.msgid) : std::string("All");
-    if (row < max_y) {
-        mvprintw(row++, 0, "Active filter: sys=%s comp=%s msg=%s", sys_str.c_str(), comp_str.c_str(), msg_str.c_str());
+    std::ostringstream filter_stream;
+    filter_stream << "SYS=" << sys_str << "  COMP=" << comp_str << "  MSG=" << msg_str;
+    print_label_value("Filter", filter_stream.str());
+
+    if (loop_mode && loop_stats) {
+        begin_section("Loop Stats");
+        std::ostringstream stats_stream;
+        stats_stream << "sent=" << static_cast<unsigned long long>(loop_stats->sent)
+                     << "  received=" << static_cast<unsigned long long>(loop_stats->received)
+                     << "  matched=" << static_cast<unsigned long long>(loop_stats->matched)
+                     << "  lost=" << static_cast<unsigned long long>(loop_stats->lost)
+                     << "  unexpected=" << static_cast<unsigned long long>(loop_stats->unexpected)
+                     << "  inflight=" << loop_stats->inflight
+                     << "  loss=" << std::fixed << std::setprecision(2) << loop_stats->loss_percentage() << '%';
+        print_indented_line(stats_stream.str());
     }
 
-    if (row < max_y) {
-        mvhline(row++, 0, ACS_HLINE, max_x);
-    }
-
-    if (loop_mode && loop_stats && row < max_y) {
-        mvprintw(row++, 0,
-                 "Loop stats: sent=%llu received=%llu matched=%llu lost=%llu unexpected=%llu inflight=%zu loss=%.2f%%",
-                 static_cast<unsigned long long>(loop_stats->sent),
-                 static_cast<unsigned long long>(loop_stats->received),
-                 static_cast<unsigned long long>(loop_stats->matched),
-                 static_cast<unsigned long long>(loop_stats->lost),
-                 static_cast<unsigned long long>(loop_stats->unexpected), loop_stats->inflight,
-                 loop_stats->loss_percentage());
-        if (row < max_y) {
-            ++row;
-        }
-    }
-
-    if ((transmit_mode || loop_mode || !transmit_log.empty()) && row < max_y) {
-        mvprintw(row++, 0, "Recent TX messages:");
-        for (const auto &entry : transmit_log) {
-            if (row >= max_y) {
-                break;
-            }
-            mvprintw(row++, 0, "  %s", entry.c_str());
-        }
-        if (row < max_y) {
-            ++row;
-        }
-    }
-
-    if (raw_mode && !transmit_mode && row < max_y) {
-        mvprintw(row++, 0, "Raw RX data:");
-        if (raw_log.empty()) {
-            if (row < max_y) {
-                mvprintw(row++, 0, "  <no data>");
-            }
+    if (transmit_mode || loop_mode || !transmit_log.empty()) {
+        begin_section("Recent TX Messages");
+        if (transmit_log.empty()) {
+            print_indented_line("<none yet>");
         } else {
-            const int available_width = std::max(0, max_x - 2);
-            for (const auto &entry : raw_log) {
-                if (row >= max_y) {
-                    break;
-                }
-                std::string display_entry = entry;
-                if (available_width > 3 && static_cast<int>(display_entry.size()) > available_width) {
-                    display_entry = display_entry.substr(0, available_width - 3) + "...";
-                }
-                mvprintw(row++, 0, "  %s", display_entry.c_str());
+            for (const auto &entry : transmit_log) {
+                print_indented_line(entry);
             }
         }
-        if (row < max_y) {
-            ++row;
+    }
+
+    if (raw_mode) {
+        begin_section("Raw RX Data");
+        if (transmit_mode) {
+            print_indented_line("Raw mode enabled (only active while listening)");
+        } else if (raw_log.empty()) {
+            print_indented_line("<no data>");
+        } else {
+            for (const auto &entry : raw_log) {
+                print_indented_line(entry);
+            }
         }
-    } else if (raw_mode && transmit_mode && row < max_y) {
-        mvprintw(row++, 0, "Raw mode enabled (only active while listening)");
-        if (row < max_y) {
-            ++row;
-        }
+    }
+
+    if (row < max_y) {
+        draw_divider();
     }
 
     const bool all_focus = nav_state.interactive_mode && !nav_state.focus_filtered;
@@ -997,17 +1180,18 @@ void render_ui(const std::string &connection_line, const std::string &connection
         return;
     }
 
-    TableRenderResult filtered_result;
+    if (row < max_y) {
+        draw_divider();
+    }
+
+    TableRenderResult filtered_result{};
     if (!filter.sysid && !filter.compid && !filter.msgid) {
+        print_section_title("Filtered Messages");
+        print_indented_line("No active filters. Press s/c/m to apply filters.");
         if (row < max_y) {
-            mvprintw(row, 0, "Filtered Messages: (press s/c/m to apply filters)");
-            if (row + 1 < max_y) {
-                row += 2;
-            } else {
-                row = max_y;
-            }
+            ++row;
         }
-    } else if (row < max_y) {
+    } else {
         std::string filtered_title = "Filtered Messages";
         if (filtered_focus) {
             filtered_title += " [active]";
@@ -1020,6 +1204,9 @@ void render_ui(const std::string &connection_line, const std::string &connection
     }
 
     if (nav_state.interactive_mode && row < max_y) {
+        draw_divider();
+        print_section_title("Selected Message");
+
         const MessageEntry *selected_entry = nullptr;
         if (filtered_focus && filtered_result.highlighted_entry) {
             selected_entry = filtered_result.highlighted_entry;
@@ -1028,28 +1215,29 @@ void render_ui(const std::string &connection_line, const std::string &connection
         }
 
         if (selected_entry) {
-            mvprintw(row++, 0,
-                     "Selected message: sys=%u comp=%u msg=%u (%s) count=%lu len=%u",
-                     static_cast<unsigned>(selected_entry->sysid),
-                     static_cast<unsigned>(selected_entry->compid),
-                     static_cast<unsigned>(selected_entry->msgid), selected_entry->name.c_str(),
-                     static_cast<unsigned long>(selected_entry->count),
-                     static_cast<unsigned>(selected_entry->len));
-            if (row < max_y) {
-                mvprintw(row++, 0, "Payload:");
-            }
-            if (row < max_y) {
-                const int wrap_width = std::max(0, max_x - 2);
-                auto wrapped_lines = wrap_text(selected_entry->payload_text, wrap_width);
-                for (const auto &line : wrapped_lines) {
-                    if (row >= max_y) {
-                        break;
-                    }
-                    mvprintw(row++, 2, "%s", line.c_str());
+            std::ostringstream summary;
+            summary << "SYS=" << static_cast<unsigned>(selected_entry->sysid)
+                    << "  COMP=" << static_cast<unsigned>(selected_entry->compid)
+                    << "  MSG=" << static_cast<unsigned>(selected_entry->msgid) << " (" << selected_entry->name
+                    << ')';
+            print_indented_line(summary.str());
+
+            std::ostringstream detail;
+            detail << "COUNT=" << static_cast<unsigned long long>(selected_entry->count)
+                   << "  LEN=" << static_cast<unsigned>(selected_entry->len);
+            print_indented_line(detail.str());
+
+            print_indented_line("Payload:");
+            const int wrap_width = std::max(0, max_x - 4);
+            auto wrapped_lines = wrap_text(selected_entry->payload_text, wrap_width);
+            for (const auto &line : wrapped_lines) {
+                if (row >= max_y) {
+                    break;
                 }
+                mvprintw(row++, 4, "%s", line.c_str());
             }
         } else {
-            mvprintw(row++, 0, "Interactive view active: no entry selected");
+            print_indented_line("Interactive view active: no entry selected");
         }
     }
 
@@ -1256,6 +1444,12 @@ int main(int argc, char **argv) {
         }
         init_pair(kHighlightColorPair, COLOR_WHITE, blue_slot);
         g_highlight_colors_available = true;
+        init_pair(kSectionTitleColorPair, COLOR_CYAN, -1);
+        g_section_title_colors_available = true;
+        init_pair(kLabelColorPair, COLOR_YELLOW, -1);
+        g_label_colors_available = true;
+        init_pair(kDividerColorPair, COLOR_BLUE, -1);
+        g_divider_colors_available = true;
     }
 
     mavlink_message_t message{};
