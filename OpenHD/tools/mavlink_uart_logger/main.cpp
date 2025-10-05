@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cctype>
 #include <chrono>
 #include <csignal>
 #include <cstdint>
@@ -178,6 +179,161 @@ std::string payload_to_hex(const mavlink_message_t &message) {
     return oss.str();
 }
 
+std::size_t field_type_size(mavlink_message_type_t type) {
+    switch (type) {
+    case MAVLINK_TYPE_CHAR:
+    case MAVLINK_TYPE_UINT8_T:
+    case MAVLINK_TYPE_INT8_T:
+        return 1;
+    case MAVLINK_TYPE_UINT16_T:
+    case MAVLINK_TYPE_INT16_T:
+        return 2;
+    case MAVLINK_TYPE_UINT32_T:
+    case MAVLINK_TYPE_INT32_T:
+    case MAVLINK_TYPE_FLOAT:
+        return 4;
+    case MAVLINK_TYPE_UINT64_T:
+    case MAVLINK_TYPE_INT64_T:
+    case MAVLINK_TYPE_DOUBLE:
+        return 8;
+    default:
+        return 0;
+    }
+}
+
+template <typename T>
+T read_scalar(const uint8_t *data) {
+    T value{};
+    std::memcpy(&value, data, sizeof(T));
+    return value;
+}
+
+std::string format_scalar(mavlink_message_type_t type, const uint8_t *data) {
+    std::ostringstream value_stream;
+    value_stream << std::dec;
+    switch (type) {
+    case MAVLINK_TYPE_CHAR: {
+        const char c = read_scalar<char>(data);
+        const unsigned char uc = static_cast<unsigned char>(c);
+        if (std::isprint(uc)) {
+            value_stream << '\'' << c << '\'';
+        } else {
+            value_stream << static_cast<int>(uc);
+        }
+        break;
+    }
+    case MAVLINK_TYPE_UINT8_T:
+        value_stream << static_cast<unsigned int>(read_scalar<uint8_t>(data));
+        break;
+    case MAVLINK_TYPE_INT8_T:
+        value_stream << static_cast<int>(read_scalar<int8_t>(data));
+        break;
+    case MAVLINK_TYPE_UINT16_T:
+        value_stream << read_scalar<uint16_t>(data);
+        break;
+    case MAVLINK_TYPE_INT16_T:
+        value_stream << read_scalar<int16_t>(data);
+        break;
+    case MAVLINK_TYPE_UINT32_T:
+        value_stream << read_scalar<uint32_t>(data);
+        break;
+    case MAVLINK_TYPE_INT32_T:
+        value_stream << read_scalar<int32_t>(data);
+        break;
+    case MAVLINK_TYPE_UINT64_T:
+        value_stream << read_scalar<uint64_t>(data);
+        break;
+    case MAVLINK_TYPE_INT64_T:
+        value_stream << read_scalar<int64_t>(data);
+        break;
+    case MAVLINK_TYPE_FLOAT:
+        value_stream << read_scalar<float>(data);
+        break;
+    case MAVLINK_TYPE_DOUBLE:
+        value_stream << read_scalar<double>(data);
+        break;
+    default:
+        value_stream << '?';
+        break;
+    }
+    return value_stream.str();
+}
+
+std::string decode_payload(const mavlink_message_t &message) {
+    const mavlink_message_info_t *info = mavlink_get_message_info(&message);
+    if (!info || info->num_fields == 0) {
+        return payload_to_hex(message);
+    }
+
+    const auto *payload = reinterpret_cast<const uint8_t *>(message.payload64);
+    std::ostringstream oss;
+    bool has_field_output = false;
+
+    for (unsigned int i = 0; i < info->num_fields; ++i) {
+        const auto &field = info->fields[i];
+        const std::size_t element_size = field_type_size(field.type);
+        if (element_size == 0) {
+            continue;
+        }
+
+        if (has_field_output) {
+            oss << ", ";
+        }
+        has_field_output = true;
+
+        oss << field.name << '=';
+
+        if (field.wire_offset >= message.len) {
+            oss << "<missing>";
+            continue;
+        }
+
+        const uint8_t *field_ptr = payload + field.wire_offset;
+        const std::size_t available_bytes = message.len - field.wire_offset;
+
+        if (field.array_length > 0) {
+            if (field.type == MAVLINK_TYPE_CHAR) {
+                const std::size_t max_len = std::min<std::size_t>(field.array_length, available_bytes);
+                std::string value(reinterpret_cast<const char *>(field_ptr), max_len);
+                const auto null_pos = value.find('\0');
+                if (null_pos != std::string::npos) {
+                    value.resize(null_pos);
+                }
+                oss << '"' << value << '"';
+            } else {
+                const std::size_t max_count = available_bytes / element_size;
+                const std::size_t count = std::min<std::size_t>(field.array_length, max_count);
+                oss << '[';
+                for (std::size_t idx = 0; idx < count; ++idx) {
+                    if (idx > 0) {
+                        oss << ", ";
+                    }
+                    oss << format_scalar(field.type, field_ptr + idx * element_size);
+                }
+                if (count < field.array_length) {
+                    if (count > 0) {
+                        oss << ", ";
+                    }
+                    oss << "...";
+                }
+                oss << ']';
+            }
+        } else {
+            if (available_bytes < element_size) {
+                oss << "<truncated>";
+            } else {
+                oss << format_scalar(field.type, field_ptr);
+            }
+        }
+    }
+
+    if (!has_field_output) {
+        return payload_to_hex(message);
+    }
+
+    return oss.str();
+}
+
 std::string bytes_to_hex(const uint8_t *data, std::size_t len) {
     std::ostringstream oss;
     oss << std::hex << std::setfill('0');
@@ -231,8 +387,7 @@ struct FilterState {
 struct MessageEntry {
     uint64_t count = 0;
     std::string name;
-    std::string last_timestamp;
-    std::string payload_hex;
+    std::string payload_text;
     uint8_t sysid = 0;
     uint8_t compid = 0;
     uint8_t len = 0;
@@ -269,14 +424,13 @@ std::vector<uint32_t> collect_msgids(const std::map<MessageKey, MessageEntry> &m
 }
 
 void record_message(const mavlink_message_t &message, const std::string &timestamp,
-                    const std::string &name, const std::string &payload_hex,
+                    const std::string &name, const std::string &payload_text,
                     std::map<MessageKey, MessageEntry> &messages, std::ofstream *output) {
     const MessageKey key = make_message_key(message.sysid, message.compid, message.msgid);
     auto &entry = messages[key];
     entry.name = name;
     entry.count++;
-    entry.last_timestamp = timestamp;
-    entry.payload_hex = payload_hex;
+    entry.payload_text = payload_text;
     entry.sysid = message.sysid;
     entry.compid = message.compid;
     entry.len = message.len;
@@ -287,7 +441,7 @@ void record_message(const mavlink_message_t &message, const std::string &timesta
                 << ", sys=" << static_cast<int>(message.sysid)
                 << ", comp=" << static_cast<int>(message.compid)
                 << ", len=" << static_cast<int>(message.len)
-                << ", payload=" << payload_hex << '\n';
+                << ", payload=" << payload_text << '\n';
         output->flush();
     }
 }
@@ -377,8 +531,8 @@ int render_table(int start_row, int max_y, int max_x, const std::string &title,
         return max_y;
     }
 
-    mvprintw(start_row++, 0, "%-5s %-5s %-6s %-20s %-8s %-4s %-27s %s", "SYS", "COMP", "MSG", "NAME",
-             "COUNT", "LEN", "LAST UPDATE", "PAYLOAD (hex)");
+    mvprintw(start_row++, 0, "%-5s %-5s %-6s %-20s %-8s %-4s %s", "SYS", "COMP", "MSG", "NAME",
+             "COUNT", "LEN", "PAYLOAD");
     if (start_row >= max_y) {
         return max_y;
     }
@@ -394,18 +548,18 @@ int render_table(int start_row, int max_y, int max_x, const std::string &title,
             break;
         }
 
-        std::string payload = entry->payload_hex;
-        const int payload_start_col = 5 + 1 + 5 + 1 + 6 + 1 + 20 + 1 + 8 + 1 + 4 + 1 + 27 + 1;
+        std::string payload = entry->payload_text;
+        const int payload_start_col = 5 + 1 + 5 + 1 + 6 + 1 + 20 + 1 + 8 + 1 + 4 + 1;
         const int available_width = std::max(0, max_x - payload_start_col);
         if (static_cast<int>(payload.size()) > available_width && available_width > 3) {
             payload = payload.substr(0, available_width - 3) + "...";
         }
 
-        mvprintw(start_row + displayed, 0, "%-5u %-5u %-6u %-20s %-8lu %-4u %-27s %s",
+        mvprintw(start_row + displayed, 0, "%-5u %-5u %-6u %-20s %-8lu %-4u %s",
                  static_cast<unsigned>(entry->sysid), static_cast<unsigned>(entry->compid),
                  static_cast<unsigned>(entry->msgid), entry->name.c_str(),
                  static_cast<unsigned long>(entry->count), static_cast<unsigned>(entry->len),
-                 entry->last_timestamp.c_str(), payload.c_str());
+                 payload.c_str());
         ++displayed;
     }
 
@@ -811,9 +965,9 @@ int main(int argc, char **argv) {
         GeneratedMessage generated = generate_random_openhd_message(rng, sysid, compid);
         const auto timestamp = current_timestamp_string();
         const auto name = message_name(generated.message);
-        const auto payload_hex = payload_to_hex(generated.message);
+        const auto payload_text = decode_payload(generated.message);
         const bool sent = write_message(fd, generated.message);
-        record_message(generated.message, timestamp, name, payload_hex, messages, output_ptr);
+        record_message(generated.message, timestamp, name, payload_text, messages, output_ptr);
 
         std::ostringstream oss;
         oss << timestamp << ' ' << (sent ? "[sent] " : "[failed] ") << generated.description;
@@ -893,8 +1047,8 @@ int main(int argc, char **argv) {
                 if (mavlink_parse_char(MAVLINK_COMM_0, buffer[i], &message, &status)) {
                     const auto timestamp = current_timestamp_string();
                     const auto name = message_name(message);
-                    const auto payload_hex = payload_to_hex(message);
-                    record_message(message, timestamp, name, payload_hex, messages, output_ptr);
+                    const auto payload_text = decode_payload(message);
+                    record_message(message, timestamp, name, payload_text, messages, output_ptr);
 
                     if (loop_mode && message.msgid == MAVLINK_MSG_ID_PING) {
                         loop_stats.received++;
