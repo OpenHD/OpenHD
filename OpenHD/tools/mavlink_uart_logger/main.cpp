@@ -1,29 +1,32 @@
 #include <algorithm>
+#include <arpa/inet.h>
 #include <cctype>
 #include <chrono>
 #include <csignal>
 #include <cstdint>
 #include <cstring>
 #include <cerrno>
+#include <deque>
+#include <filesystem>
 #include <fcntl.h>
 #include <fstream>
+#include <functional>
 #include <iomanip>
 #include <iostream>
 #include <map>
-#include <random>
+#include <netinet/in.h>
 #include <optional>
+#include <random>
+#include <set>
 #include <sstream>
 #include <ctime>
-#include <set>
 #include <string>
+#include <sys/socket.h>
 #include <termios.h>
 #include <thread>
 #include <unistd.h>
-#include <vector>
-#include <filesystem>
-#include <deque>
-#include <functional>
 #include <utility>
+#include <vector>
 
 #include <ncurses.h>
 
@@ -43,6 +46,16 @@ bool g_highlight_colors_available = false;
 void signal_handler(int) {
     g_should_exit = 1;
 }
+
+enum class TransportMode { Serial, UDP };
+
+struct Transport {
+    TransportMode mode = TransportMode::Serial;
+    int fd = -1;
+    sockaddr_in udp_default_destination{};
+    bool udp_has_default_destination = false;
+    std::optional<sockaddr_in> udp_last_sender;
+};
 
 std::optional<speed_t> baudrate_to_constant(int baudrate) {
     static const std::map<int, speed_t> kBaudrateMap = {
@@ -79,9 +92,10 @@ std::optional<speed_t> baudrate_to_constant(int baudrate) {
 void print_usage(const char *program) {
     std::cerr << "Usage: " << program
               << " [--device <path>] [--baud <baudrate>] [--output <file>]"
+              << " [--udp [port]]"
               << " [--sysid <id> --compid <id> --target-sys <id> --target-comp <id>]"
               << " [--transmit] [--loop] [--raw]" << std::endl;
-    std::cerr << "Defaults: baud=115200, device=/dev/serialX (first available)" << std::endl;
+    std::cerr << "Defaults: baud=115200, device=/dev/serialX (first available), UDP port=5920" << std::endl;
 }
 
 std::optional<std::string> find_default_serial_device() {
@@ -739,38 +753,71 @@ std::optional<T> cycle_optional(const std::vector<T> &values, const std::optiona
     return *it;
 }
 
-bool write_message(int fd, const mavlink_message_t &message) {
-    uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
-    const auto length = mavlink_msg_to_send_buffer(buffer, &message);
-    ssize_t written = ::write(fd, buffer, length);
-    return written == static_cast<ssize_t>(length);
+ssize_t transport_read(Transport &transport, uint8_t *buffer, std::size_t length) {
+    if (transport.mode == TransportMode::Serial) {
+        return ::read(transport.fd, buffer, length);
+    }
+
+    sockaddr_in sender{};
+    socklen_t sender_len = sizeof(sender);
+    ssize_t received = ::recvfrom(transport.fd, buffer, length, 0, reinterpret_cast<sockaddr *>(&sender), &sender_len);
+    if (received >= 0) {
+        transport.udp_last_sender = sender;
+    }
+    return received;
 }
 
-bool send_heartbeat(int fd, uint8_t sysid, uint8_t compid, uint8_t target_sys, uint8_t target_comp) {
+bool transport_write(Transport &transport, const uint8_t *buffer, std::size_t length) {
+    if (transport.mode == TransportMode::Serial) {
+        ssize_t written = ::write(transport.fd, buffer, length);
+        return written == static_cast<ssize_t>(length);
+    }
+
+    sockaddr_in destination{};
+    if (transport.udp_last_sender.has_value()) {
+        destination = *transport.udp_last_sender;
+    } else if (transport.udp_has_default_destination) {
+        destination = transport.udp_default_destination;
+    } else {
+        return false;
+    }
+
+    ssize_t sent = ::sendto(transport.fd, buffer, length, 0, reinterpret_cast<const sockaddr *>(&destination),
+                            sizeof(destination));
+    return sent == static_cast<ssize_t>(length);
+}
+
+bool write_message(Transport &transport, const mavlink_message_t &message) {
+    uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
+    const auto length = mavlink_msg_to_send_buffer(buffer, &message);
+    return transport_write(transport, buffer, length);
+}
+
+bool send_heartbeat(Transport &transport, uint8_t sysid, uint8_t compid, uint8_t target_sys, uint8_t target_comp) {
     (void)target_sys;
     (void)target_comp;
     mavlink_message_t msg{};
     mavlink_msg_heartbeat_pack(sysid, compid, &msg, MAV_TYPE_GENERIC, MAV_AUTOPILOT_INVALID,
                                MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, 0, MAV_STATE_ACTIVE);
-    return write_message(fd, msg);
+    return write_message(transport, msg);
 }
 
-bool send_reboot(int fd, uint8_t sysid, uint8_t compid, uint8_t target_sys, uint8_t target_comp) {
+bool send_reboot(Transport &transport, uint8_t sysid, uint8_t compid, uint8_t target_sys, uint8_t target_comp) {
     mavlink_message_t msg{};
     constexpr float kParam1RebootAutopilot = 1.0f;
     mavlink_msg_command_long_pack(sysid, compid, &msg, target_sys, target_comp,
                                   MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 0, kParam1RebootAutopilot,
                                   0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
-    return write_message(fd, msg);
+    return write_message(transport, msg);
 }
 
-bool send_ping(int fd, uint8_t sysid, uint8_t compid, uint8_t target_sys, uint8_t target_comp) {
+bool send_ping(Transport &transport, uint8_t sysid, uint8_t compid, uint8_t target_sys, uint8_t target_comp) {
     static uint32_t sequence = 0;
     mavlink_message_t msg{};
     const auto now = std::chrono::duration_cast<std::chrono::microseconds>(
         std::chrono::steady_clock::now().time_since_epoch());
     mavlink_msg_ping_pack(sysid, compid, &msg, now.count(), target_sys, target_comp, sequence++);
-    return write_message(fd, msg);
+    return write_message(transport, msg);
 }
 
 struct LoopStats {
@@ -789,7 +836,7 @@ struct LoopStats {
     }
 };
 
-void render_ui(const std::string &device_path, int baudrate,
+void render_ui(const std::string &connection_line, const std::string &connection_details,
                const std::map<MessageKey, MessageEntry> &messages, const std::string &output_path,
                const std::string &status_message, const FilterState &filter, bool transmit_mode,
                bool loop_mode, const LoopStats *loop_stats, const std::deque<std::string> &transmit_log,
@@ -802,29 +849,80 @@ void render_ui(const std::string &device_path, int baudrate,
     int max_x = 0;
     getmaxyx(stdscr, max_y, max_x);
 
-    mvprintw(0, 0, "MAVLink UART Debugger - device: %s @ %d baud", device_path.c_str(), baudrate);
-    mvprintw(1, 0, "Logging to: %s", output_path.empty() ? "<disabled>" : output_path.c_str());
+    int row = 0;
+    attron(A_BOLD);
+    mvprintw(row++, 0, "OpenHD MAVLink Monitor");
+    attroff(A_BOLD);
+
+    if (row < max_y) {
+        mvprintw(row++, 0, "%s", connection_line.c_str());
+    }
+    if (!connection_details.empty() && row < max_y) {
+        mvprintw(row++, 0, "%s", connection_details.c_str());
+    }
+    if (row < max_y) {
+        mvprintw(row++, 0, "Logging: %s", output_path.empty() ? "<disabled>" : output_path.c_str());
+    }
+
+    if (row < max_y) {
+        mvhline(row++, 0, ACS_HLINE, max_x);
+    }
+
+    if (row < max_y) {
+        attron(A_BOLD);
+        mvprintw(row++, 0, "Controls");
+        attroff(A_BOLD);
+    }
+
+    const std::vector<std::string> control_lines = {
+        "q Quit   h Heartbeat   p Ping   r Reboot   t Send test/loop message",
+        "s Cycle system   c Cycle component   m Cycle message   f Clear filters",
+        "Arrow keys navigate lists   Tab/Shift+Tab switch focus   v Toggle view",
+        raw_mode ? "Raw mode active: showing received bytes while idle"
+                  : "Interactive view starts enabled (press 'v' to toggle)"};
+
+    for (const auto &line : control_lines) {
+        if (row >= max_y) {
+            break;
+        }
+        mvprintw(row++, 0, "%s", line.c_str());
+    }
+
+    if (row < max_y) {
+        mvhline(row++, 0, ACS_HLINE, max_x);
+    }
+
     std::string mode_string;
     if (loop_mode) {
-        mode_string = "Loop (loopback test)";
+        mode_string += "Mode: Loop test";
+        if (transmit_mode) {
+            mode_string += " + random TX";
+        }
     } else if (transmit_mode) {
-        mode_string = "Transmit (random OpenHD messages)";
+        mode_string += "Mode: Random OpenHD TX";
     } else {
-        mode_string = "Listen";
+        mode_string += "Mode: Listen";
     }
-    mvprintw(2, 0, "Mode: %s", mode_string.c_str());
-    mvprintw(3, 0, "Controls: q=quit | h=send heartbeat | r=send reboot command | p=send ping | t=send random OpenHD message");
-    mvprintw(4, 0, "Status: %s", status_message.c_str());
-    mvprintw(5, 0, "Filter controls: s=cycle sysid | c=cycle comp | m=cycle message | f=clear filters");
-    mvprintw(6, 0, "Interactive view: v=toggle | TAB/\u2190/\u2192 switch table | \u2191/\u2193 move selection");
+
+    if (!mode_string.empty() && row < max_y) {
+        mvprintw(row++, 0, "%s", mode_string.c_str());
+    }
+
+    if (row < max_y) {
+        mvprintw(row++, 0, "Status: %s", status_message.c_str());
+    }
 
     const std::string sys_str = filter.sysid ? std::to_string(*filter.sysid) : std::string("All");
     const std::string comp_str = filter.compid ? std::to_string(*filter.compid) : std::string("All");
     const std::string msg_str = filter.msgid ? std::to_string(*filter.msgid) : std::string("All");
-    mvprintw(7, 0, "Active filter: sys=%s comp=%s msg=%s", sys_str.c_str(), comp_str.c_str(),
-             msg_str.c_str());
+    if (row < max_y) {
+        mvprintw(row++, 0, "Active filter: sys=%s comp=%s msg=%s", sys_str.c_str(), comp_str.c_str(), msg_str.c_str());
+    }
 
-    int row = 9;
+    if (row < max_y) {
+        mvhline(row++, 0, ACS_HLINE, max_x);
+    }
+
     if (loop_mode && loop_stats && row < max_y) {
         mvprintw(row++, 0,
                  "Loop stats: sent=%llu received=%llu matched=%llu lost=%llu unexpected=%llu inflight=%zu loss=%.2f%%",
@@ -970,6 +1068,8 @@ int main(int argc, char **argv) {
     bool transmit_mode = false;
     bool loop_mode = false;
     bool raw_mode = false;
+    bool use_udp = false;
+    int udp_port = 5920;
     uint8_t sysid = 1;
     uint8_t compid = 1;
     uint8_t target_sys = 1;
@@ -999,10 +1099,15 @@ int main(int argc, char **argv) {
             raw_mode = true;
         } else if (arg == "--loop") {
             loop_mode = true;
+        } else if (arg == "--udp") {
+            use_udp = true;
+            if (i + 1 < argc && argv[i + 1][0] != '-') {
+                udp_port = std::stoi(argv[++i]);
+            }
         } else if (arg == "--help" || arg == "-h") {
             print_usage(argv[0]);
             std::cerr << "Additional options: --sysid <id> --compid <id> --target-sys <id> --target-comp <id>"
-                      << " --transmit --loop --raw"
+                      << " --transmit --loop --raw --udp [port]"
                       << std::endl;
             return 0;
         } else {
@@ -1016,37 +1121,107 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    if (device_path.empty()) {
-        if (auto detected_device = find_default_serial_device()) {
-            device_path = *detected_device;
-            std::cerr << "No device specified, using " << device_path << std::endl;
-        } else {
-            std::cerr << "No device specified and unable to find a /dev/serialX or /dev/ttySX device" << std::endl;
-            print_usage(argv[0]);
+    if (use_udp && (udp_port <= 0 || udp_port > 65535)) {
+        std::cerr << "Invalid UDP port: " << udp_port << std::endl;
+        return 1;
+    }
+
+    Transport transport;
+    std::string connection_line;
+    std::string connection_details;
+
+    if (use_udp) {
+        if (device_user_specified || baud_user_specified) {
+            std::cerr << "Warning: --device/--baud ignored when using --udp" << std::endl;
+        }
+
+        transport.mode = TransportMode::UDP;
+        transport.fd = ::socket(AF_INET, SOCK_DGRAM, 0);
+        if (transport.fd < 0) {
+            perror("socket");
             return 1;
         }
-    }
 
-    if (baudrate == 0) {
-        baudrate = kDefaultBaudrate;
-        std::cerr << "No baudrate specified, defaulting to " << kDefaultBaudrate << std::endl;
-    }
+        int reuse = 1;
+        if (setsockopt(transport.fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
+            perror("setsockopt");
+        }
 
-    auto speed_constant = baudrate_to_constant(baudrate);
-    if (!speed_constant.has_value()) {
-        std::cerr << "Unsupported baudrate: " << baudrate << std::endl;
-        return 1;
-    }
+        sockaddr_in bind_addr{};
+        bind_addr.sin_family = AF_INET;
+        bind_addr.sin_port = htons(static_cast<uint16_t>(udp_port));
+        if (inet_pton(AF_INET, "127.0.0.1", &bind_addr.sin_addr) != 1) {
+            std::cerr << "Failed to parse localhost address" << std::endl;
+            ::close(transport.fd);
+            return 1;
+        }
 
-    int fd = ::open(device_path.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
-    if (fd < 0) {
-        perror("open");
-        return 1;
-    }
+        if (bind(transport.fd, reinterpret_cast<sockaddr *>(&bind_addr), sizeof(bind_addr)) < 0) {
+            perror("bind");
+            ::close(transport.fd);
+            return 1;
+        }
 
-    if (!configure_serial(fd, *speed_constant)) {
-        ::close(fd);
-        return 1;
+        int flags = fcntl(transport.fd, F_GETFL, 0);
+        if (flags >= 0) {
+            (void)fcntl(transport.fd, F_SETFL, flags | O_NONBLOCK);
+        }
+
+        transport.udp_default_destination = bind_addr;
+        transport.udp_has_default_destination = false;
+
+        connection_line = "Link: UDP 127.0.0.1:" + std::to_string(udp_port) + " (listening)";
+        connection_details = "Bind address: 127.0.0.1, replies once traffic is seen";
+        std::cerr << "UDP mode: listening on 127.0.0.1:" << udp_port << std::endl;
+    } else {
+        if (device_path.empty()) {
+            if (auto detected_device = find_default_serial_device()) {
+                device_path = *detected_device;
+                std::cerr << "No device specified, using " << device_path << std::endl;
+            } else {
+                std::cerr << "No device specified and unable to find a /dev/serialX or /dev/ttySX device" << std::endl;
+                print_usage(argv[0]);
+                return 1;
+            }
+        }
+
+        if (baudrate == 0) {
+            baudrate = kDefaultBaudrate;
+            std::cerr << "No baudrate specified, defaulting to " << kDefaultBaudrate << std::endl;
+        }
+
+        auto speed_constant = baudrate_to_constant(baudrate);
+        if (!speed_constant.has_value()) {
+            std::cerr << "Unsupported baudrate: " << baudrate << std::endl;
+            return 1;
+        }
+
+        transport.mode = TransportMode::Serial;
+        transport.fd = ::open(device_path.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
+        if (transport.fd < 0) {
+            perror("open");
+            return 1;
+        }
+
+        if (!configure_serial(transport.fd, *speed_constant)) {
+            ::close(transport.fd);
+            return 1;
+        }
+
+        connection_line = "Link: Serial " + device_path + " @ " + std::to_string(baudrate) + " baud";
+        if (!device_user_specified || !baud_user_specified) {
+            std::string details = "Auto-detected";
+            if (!device_user_specified && !baud_user_specified) {
+                details += " device & baud";
+            } else if (!device_user_specified) {
+                details += " device";
+            } else {
+                details += " baud";
+            }
+            connection_details = details;
+        } else {
+            connection_details = "Manual serial configuration";
+        }
     }
 
     std::ofstream output;
@@ -1054,7 +1229,9 @@ int main(int argc, char **argv) {
         output.open(output_path, std::ios::out | std::ios::app);
         if (!output.is_open()) {
             std::cerr << "Failed to open output file: " << output_path << std::endl;
-            ::close(fd);
+            if (transport.fd >= 0) {
+                ::close(transport.fd);
+            }
             return 1;
         }
     }
@@ -1090,17 +1267,53 @@ int main(int argc, char **argv) {
     } else if (transmit_mode) {
         status_message = "Transmit mode active";
     } else {
-        status_message = "Listening...";
+        status_message = use_udp ? "Listening on UDP" : "Listening";
     }
+
+    bool appended_detail = false;
+    auto append_detail = [&](const std::string &detail) {
+        if (!appended_detail) {
+            status_message += " (";
+            appended_detail = true;
+        } else {
+            status_message += ", ";
+        }
+        status_message += detail;
+    };
+
+    if (use_udp) {
+        append_detail("UDP 127.0.0.1:" + std::to_string(udp_port));
+    } else if (!device_user_specified || !baud_user_specified) {
+        std::string auto_detail = "auto:";
+        bool need_sep = false;
+        if (!device_user_specified) {
+            auto_detail += " device=" + device_path;
+            need_sep = true;
+        }
+        if (!baud_user_specified) {
+            if (need_sep) {
+                auto_detail += ',';
+            }
+            auto_detail += " baud=" + std::to_string(baudrate);
+        }
+        append_detail(auto_detail);
+    }
+
     if (raw_mode) {
         if (loop_mode) {
-            status_message += " (raw display enabled)";
+            append_detail("raw display enabled");
         } else {
-            status_message += transmit_mode ? " (raw display available in listen mode)" : " (raw display enabled)";
+            append_detail(transmit_mode ? "raw display available in listen mode" : "raw display enabled");
         }
     }
+
+    if (appended_detail) {
+        status_message += ')';
+    }
+
     FilterState filter;
     NavigationState nav_state;
+    nav_state.interactive_mode = true;
     std::deque<std::string> transmit_log;
     std::deque<std::string> raw_log;
     std::mt19937 rng{std::random_device{}()};
@@ -1108,21 +1321,6 @@ int main(int argc, char **argv) {
     LoopStats loop_stats;
     std::map<uint32_t, std::chrono::steady_clock::time_point> loop_inflight;
     uint32_t loop_sequence = 0;
-    if (!device_user_specified || !baud_user_specified) {
-        status_message += " (auto:";
-        bool need_separator = false;
-        if (!device_user_specified) {
-            status_message += " device=" + device_path;
-            need_separator = true;
-        }
-        if (!baud_user_specified) {
-            if (need_separator) {
-                status_message += ',';
-            }
-            status_message += " baud=" + std::to_string(baudrate);
-        }
-        status_message += ')';
-    }
 
     const auto start_time = std::chrono::steady_clock::now();
     auto last_ui_update = start_time - std::chrono::milliseconds(200);
@@ -1142,7 +1340,7 @@ int main(int argc, char **argv) {
         const auto timestamp = current_timestamp_string();
         const auto name = message_name(generated.message);
         const auto payload_text = decode_payload(generated.message);
-        const bool sent = write_message(fd, generated.message);
+        const bool sent = write_message(transport, generated.message);
         record_message(generated.message, timestamp, name, payload_text, messages, output_ptr);
 
         std::ostringstream oss;
@@ -1172,7 +1370,7 @@ int main(int argc, char **argv) {
         mavlink_message_t msg{};
         const uint32_t seq = loop_sequence++;
         mavlink_msg_ping_pack(sysid, compid, &msg, now_us, target_sys, target_comp, seq);
-        const bool sent = write_message(fd, msg);
+        const bool sent = write_message(transport, msg);
 
         const auto timestamp = current_timestamp_string();
         std::ostringstream oss;
@@ -1197,7 +1395,7 @@ int main(int argc, char **argv) {
 
     while (!g_should_exit) {
         uint8_t buffer[256];
-        ssize_t nread = ::read(fd, buffer, sizeof(buffer));
+        ssize_t nread = transport_read(transport, buffer, sizeof(buffer));
         if (nread < 0) {
             if (errno != EAGAIN && errno != EWOULDBLOCK) {
                 status_message = std::string("read error: ") + std::strerror(errno);
@@ -1295,9 +1493,9 @@ int main(int argc, char **argv) {
         }
 
         if (now - last_ui_update > std::chrono::milliseconds(100)) {
-            render_ui(device_path, baudrate, messages, output_path, status_message, filter, transmit_mode,
-                      loop_mode, loop_mode ? &loop_stats : nullptr, transmit_log, raw_mode, raw_log,
-                      nav_state, all_entries, filtered_entries);
+            render_ui(connection_line, connection_details, messages, output_path, status_message, filter,
+                      transmit_mode, loop_mode, loop_mode ? &loop_stats : nullptr, transmit_log, raw_mode,
+                      raw_log, nav_state, all_entries, filtered_entries);
             last_ui_update = now;
         }
 
@@ -1306,15 +1504,15 @@ int main(int argc, char **argv) {
             if (ch == 'q' || ch == 'Q') {
                 g_should_exit = 1;
             } else if (ch == 'h' || ch == 'H') {
-                status_message = send_heartbeat(fd, sysid, compid, target_sys, target_comp)
+                status_message = send_heartbeat(transport, sysid, compid, target_sys, target_comp)
                                      ? "Heartbeat sent"
                                      : "Failed to send heartbeat";
             } else if (ch == 'r' || ch == 'R') {
-                status_message = send_reboot(fd, sysid, compid, target_sys, target_comp)
+                status_message = send_reboot(transport, sysid, compid, target_sys, target_comp)
                                      ? "Reboot command sent"
                                      : "Failed to send reboot command";
             } else if (ch == 'p' || ch == 'P') {
-                status_message = send_ping(fd, sysid, compid, target_sys, target_comp)
+                status_message = send_ping(transport, sysid, compid, target_sys, target_comp)
                                      ? "Ping sent"
                                      : "Failed to send ping";
             } else if (ch == 'v' || ch == 'V') {
@@ -1454,15 +1652,17 @@ int main(int argc, char **argv) {
 
     auto final_all_entries = gather_sorted_entries(messages);
     auto final_filtered_entries = filter_entries(final_all_entries, filter);
-    render_ui(device_path, baudrate, messages, output_path, status_message, filter, transmit_mode, loop_mode,
-              loop_mode ? &loop_stats : nullptr, transmit_log, raw_mode, raw_log, nav_state, final_all_entries,
-              final_filtered_entries);
+    render_ui(connection_line, connection_details, messages, output_path, status_message, filter,
+              transmit_mode, loop_mode, loop_mode ? &loop_stats : nullptr, transmit_log, raw_mode, raw_log,
+              nav_state, final_all_entries, final_filtered_entries);
     endwin();
 
     if (output.is_open()) {
         output.flush();
     }
 
-    ::close(fd);
+    if (transport.fd >= 0) {
+        ::close(transport.fd);
+    }
     return 0;
 }
