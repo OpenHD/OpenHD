@@ -87,7 +87,8 @@ std::optional<std::string> find_default_serial_device() {
         return std::nullopt;
     }
 
-    std::vector<fs::path> candidates;
+    std::vector<fs::path> serial_candidates;
+    std::vector<fs::path> ttyS_candidates;
     for (const auto &entry : fs::directory_iterator(dev_dir, ec)) {
         if (ec) {
             break;
@@ -95,7 +96,7 @@ std::optional<std::string> find_default_serial_device() {
 
         const auto &path = entry.path();
         const auto filename = path.filename().string();
-        if (filename.rfind("serial", 0) != 0) {
+        if (filename.rfind("serial", 0) != 0 && filename.rfind("ttyS", 0) != 0) {
             continue;
         }
 
@@ -113,15 +114,29 @@ std::optional<std::string> find_default_serial_device() {
             continue;
         }
 
-        candidates.push_back(path);
+        if (filename.rfind("serial", 0) == 0) {
+            serial_candidates.push_back(path);
+        } else if (filename.rfind("ttyS", 0) == 0) {
+            ttyS_candidates.push_back(path);
+        }
     }
 
-    if (ec || candidates.empty()) {
+    if (ec) {
         return std::nullopt;
     }
 
-    std::sort(candidates.begin(), candidates.end());
-    return candidates.front().string();
+    auto sort_and_pick = [](std::vector<fs::path> &paths) -> std::optional<std::string> {
+        if (paths.empty()) {
+            return std::nullopt;
+        }
+        std::sort(paths.begin(), paths.end());
+        return paths.front().string();
+    };
+
+    if (auto result = sort_and_pick(serial_candidates)) {
+        return result;
+    }
+    return sort_and_pick(ttyS_candidates);
 }
 
 bool configure_serial(int fd, speed_t speed_constant) {
@@ -689,7 +704,7 @@ int main(int argc, char **argv) {
             device_path = *detected_device;
             std::cerr << "No device specified, using " << device_path << std::endl;
         } else {
-            std::cerr << "No device specified and unable to find a /dev/serialX device" << std::endl;
+            std::cerr << "No device specified and unable to find a /dev/serialX or /dev/ttySX device" << std::endl;
             print_usage(argv[0]);
             return 1;
         }

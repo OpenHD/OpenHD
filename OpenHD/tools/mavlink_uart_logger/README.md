@@ -38,6 +38,6 @@ While running, the TUI updates each time a MAVLink message is received. Use the 
 
 The status line at the top reports the outcome of the most recent command and whether logging is enabled. When `--loop` is active,
 an additional counter shows the number of ping packets sent, matched, lost and unexpected, giving a quick view of link health.
-All modes, including `--loop`, automatically pick the first `/dev/serialX` device they can find and a baud rate of 115200 when
-those options are not specified explicitly.
+All modes, including `--loop`, automatically pick the first `/dev/serialX` device they can find (falling back to `/dev/ttySX`
+when needed) and a baud rate of 115200 when those options are not specified explicitly.
 When `--raw` is active, an additional panel displays the latest UART bytes in hexadecimal order whenever the tool is receiving.
