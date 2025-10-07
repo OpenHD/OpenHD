@@ -23,6 +23,8 @@
 
 #include "openhd_bitrate.h"
 
+#include <cassert>
+
 openhd::BitrateDebugger::BitrateDebugger(std::string tag, bool debug_pps)
     : m_debug_pps(debug_pps) {
   m_console = openhd::log::create_or_get(tag);

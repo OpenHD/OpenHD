@@ -28,6 +28,8 @@
 #include "openhd_spdlog.h"
 #include "openhd_util.h"
 
+#include <cassert>
+
 openhd::ExternalDeviceManager::ExternalDeviceManager() {
   // Here one can manually declare any IP addresses openhd should forward video
   // / telemetry to
