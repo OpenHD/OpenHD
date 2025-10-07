@@ -24,6 +24,7 @@
 #include "openhd_udp.h"
 
 #include <arpa/inet.h>
+#include <spdlog/spdlog.h>
 #include <unistd.h>
 
 #include <algorithm>
