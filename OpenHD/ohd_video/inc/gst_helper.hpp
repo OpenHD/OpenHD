@@ -717,14 +717,18 @@ static std::string create_qualcomm_camera1_stream(
  */
 static std::string createRv1106Stream(const CameraSettings& settings) {
   std::stringstream ss;
-  assert(settings.streamed_video_format.videoCodec == VideoCodec::H264);
+
   ss << fmt::format("rkvisrc ! ");
   ss << fmt::format(
       "video/x-raw, format=NV12, width={}, height={}, framerate={}/1 ! ",
       settings.streamed_video_format.width,
       settings.streamed_video_format.height,
       settings.streamed_video_format.framerate);
-  ss << fmt::format("rkmpih264enc name=rkmpih264enc bitrate={} ! ", settings.h26x_bitrate_kbits);
+  ss << fmt::format("rkmpih264enc name=rkmpih264enc bitrate={}", settings.h26x_bitrate_kbits);
+  if (settings.streamed_video_format.videoCodec == VideoCodec::H265) {
+    ss << fmt::format(" codec=h265");
+  }
+  ss << fmt::format(" ! ");
   return ss.str();
 }
 
