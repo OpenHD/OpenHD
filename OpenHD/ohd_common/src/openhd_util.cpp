@@ -24,6 +24,7 @@
 #include "openhd_util.h"
 
 #include <arpa/inet.h>
+#include <spdlog/spdlog.h>
 #include <unistd.h>
 
 #include <cctype>

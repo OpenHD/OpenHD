@@ -25,6 +25,7 @@
 
 #include <arpa/inet.h>
 #include <errno.h>
+#include <spdlog/spdlog.h>
 #include <unistd.h>
 
 #include <cassert>

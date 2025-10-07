@@ -28,6 +28,8 @@
 #include "openhd_spdlog.h"
 #include "openhd_util.h"
 
+#include <spdlog/spdlog.h>
+
 #include <cassert>
 
 openhd::ExternalDeviceManager::ExternalDeviceManager() {

@@ -29,6 +29,8 @@
 #include "openhd_spdlog.h"
 #include "openhd_util.h"
 
+#include <spdlog/spdlog.h>
+
 openhd::AsyncHandle::AsyncHandle() {
   m_watchdog_run = true;
   m_watchdog_thread =

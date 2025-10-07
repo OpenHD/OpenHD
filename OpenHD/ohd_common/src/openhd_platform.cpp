@@ -28,6 +28,8 @@
 #include <regex>
 #include <set>
 
+#include <spdlog/spdlog.h>
+
 #include "openhd_spdlog.h"
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"

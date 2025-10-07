@@ -23,6 +23,8 @@
 
 #include "openhd_bitrate.h"
 
+#include <spdlog/spdlog.h>
+
 #include <cassert>
 
 openhd::BitrateDebugger::BitrateDebugger(std::string tag, bool debug_pps)
