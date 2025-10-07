@@ -23,6 +23,7 @@
 
 #include "openhd_util_time.h"
 
+#include <mutex>
 #include <sstream>
 
 std::string openhd::util::verbose_timespan(

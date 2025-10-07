@@ -26,6 +26,7 @@
 
 #include <deque>
 #include <thread>
+#include <string>
 
 #include "openhd_spdlog.h"
 

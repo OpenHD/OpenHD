@@ -24,8 +24,10 @@
 #include "openhd_tcp.h"
 
 #include <arpa/inet.h>
+#include <errno.h>
 #include <unistd.h>
 
+#include <cassert>
 #include <csignal>
 #include <queue>
 #include <utility>

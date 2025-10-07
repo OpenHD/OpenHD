@@ -25,6 +25,8 @@
 
 #include "openhd_util_time.h"
 
+#include <cassert>
+
 openhd::ArmingStateHelper &openhd::ArmingStateHelper::instance() {
   static openhd::ArmingStateHelper instance;
   return instance;

@@ -23,6 +23,7 @@
 
 #include "openhd_util_async.h"
 
+#include <algorithm>
 #include <utility>
 
 #include "openhd_spdlog.h"
