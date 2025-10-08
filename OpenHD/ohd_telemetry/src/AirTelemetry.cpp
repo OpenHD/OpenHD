@@ -27,6 +27,7 @@
 
 #include "mav_helper.h"
 #include "mavsdk_temporary/XMavlinkParamProvider.h"
+#include "openhd_telemetry_recorder.h"
 #include "openhd_temporary_air_or_ground.h"
 #include "openhd_util.h"
 #include "openhd_util_time.h"
@@ -103,6 +104,17 @@ void AirTelemetry::on_messages_fc(std::vector<MavlinkMessage>& messages) {
   //  Note: No OpenHD component ever talks to the FC, FC is completely passed
   //  through
   // debugMavlinkMessages(messages,"FC");
+  if (!messages.empty()) {
+    auto& recorder = openhd::TelemetryRecorder::instance();
+    for (const auto& msg : messages) {
+      const mavlink_message_t& mav_msg = msg.m;
+      const auto* payload =
+          reinterpret_cast<const uint8_t*>(_MAV_PAYLOAD(&mav_msg));
+      recorder.record_fc_mavlink_message(mav_msg.sysid, mav_msg.compid,
+                                         mav_msg.msgid, mav_msg.seq, payload,
+                                         mav_msg.len);
+    }
+  }
   send_messages_ground_unit(messages);
   m_ohd_main_component->check_fc_messages_for_actions(messages);
 }

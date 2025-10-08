@@ -25,10 +25,14 @@
 #define OPENHD_OPENHD_OHD_COMMON_OPENHD_TELEMETRY_RECORDER_H_
 
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <fstream>
 #include <memory>
 #include <mutex>
 #include <string>
+
+#include <nlohmann/json.hpp>
 
 #include "openhd_link_statistics.hpp"
 
@@ -49,6 +53,9 @@ class TelemetryRecorder {
   static TelemetryRecorder& instance();
 
   void record(const link_statistics::StatsAirGround& stats);
+  void record_fc_mavlink_message(uint8_t sysid, uint8_t compid, uint32_t msgid,
+                                 uint8_t sequence, const uint8_t* payload,
+                                 std::size_t payload_length);
 
  private:
   [[nodiscard]] std::string create_filename_timestamp(
@@ -56,9 +63,12 @@ class TelemetryRecorder {
   [[nodiscard]] std::string create_entry_timestamp(
       std::chrono::system_clock::time_point tp) const;
   void ensure_stream_is_ready();
-  [[nodiscard]] std::string stats_to_json_string(
+  [[nodiscard]] nlohmann::json stats_to_json(
       const link_statistics::StatsAirGround& stats,
       const std::string& timestamp) const;
+  [[nodiscard]] std::string bytes_to_hex(const uint8_t* data,
+                                         std::size_t length) const;
+  void write_json_line(const nlohmann::json& json_line);
 
   std::mutex m_mutex;
   std::ofstream m_stream;
