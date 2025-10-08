@@ -258,11 +258,12 @@ void TelemetryRecorder::ensure_stream_is_ready() {
   }
 }
 
-std::string TelemetryRecorder::stats_to_json_string(
+nlohmann::json TelemetryRecorder::stats_to_json(
     const link_statistics::StatsAirGround& stats,
     const std::string& timestamp) const {
   nlohmann::json j;
   j["timestamp"] = timestamp;
+  j["type"] = "link_stats";
   j["is_air"] = stats.is_air;
   j["ready"] = stats.ready;
   j["monitor_mode_link"] = monitor_link_to_json(stats.monitor_mode_link);
@@ -289,7 +290,7 @@ std::string TelemetryRecorder::stats_to_json_string(
   j["gnd_fec_performance"] = video_ground_fec_to_json(stats.gnd_fec_performance);
   j["gnd_operating_mode"] = ground_operating_mode_to_json(stats.gnd_operating_mode);
 
-  return j.dump();
+  return j;
 }
 
 void TelemetryRecorder::record(const link_statistics::StatsAirGround& stats) {
@@ -298,14 +299,51 @@ void TelemetryRecorder::record(const link_statistics::StatsAirGround& stats) {
   }
   const auto now = std::chrono::system_clock::now();
   const auto timestamp = create_entry_timestamp(now);
-  const auto json_line = stats_to_json_string(stats, timestamp);
+  const auto json_line = stats_to_json(stats, timestamp);
+  write_json_line(json_line);
+}
+
+std::string TelemetryRecorder::bytes_to_hex(const uint8_t* data,
+                                           std::size_t length) const {
+  if (data == nullptr || length == 0) {
+    return "";
+  }
+  static constexpr char HEX_DIGITS[] = "0123456789ABCDEF";
+  std::string hex;
+  hex.reserve(length * 2);
+  for (std::size_t i = 0; i < length; ++i) {
+    const auto value = data[i];
+    hex.push_back(HEX_DIGITS[(value >> 4) & 0x0F]);
+    hex.push_back(HEX_DIGITS[value & 0x0F]);
+  }
+  return hex;
+}
+
+void TelemetryRecorder::write_json_line(const nlohmann::json& json_line) {
   std::lock_guard<std::mutex> lock(m_mutex);
   ensure_stream_is_ready();
   if (!m_stream_ready || !m_stream.is_open()) {
     return;
   }
-  m_stream << json_line << '\n';
+  m_stream << json_line.dump() << '\n';
   m_stream.flush();
+}
+
+void TelemetryRecorder::record_fc_mavlink_message(
+    uint8_t sysid, uint8_t compid, uint32_t msgid, uint8_t sequence,
+    const uint8_t* payload, std::size_t payload_length) {
+  const auto now = std::chrono::system_clock::now();
+  const auto timestamp = create_entry_timestamp(now);
+  nlohmann::json entry;
+  entry["timestamp"] = timestamp;
+  entry["type"] = "fc_mavlink";
+  entry["sysid"] = sysid;
+  entry["compid"] = compid;
+  entry["msgid"] = msgid;
+  entry["sequence"] = sequence;
+  entry["payload_length"] = payload_length;
+  entry["payload_hex"] = bytes_to_hex(payload, payload_length);
+  write_json_line(entry);
 }
 
 }  // namespace openhd
