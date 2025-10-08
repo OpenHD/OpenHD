@@ -32,6 +32,7 @@
 #include <utility>
 
 #include "openhd_link_statistics.hpp"
+#include "openhd_telemetry_recorder.h"
 #include "openhd_spdlog.h"
 #include "openhd_util.h"
 
@@ -246,8 +247,13 @@ class LinkActionHandler {
 
  public:
   void update_link_stats(openhd::link_statistics::StatsAirGround stats) {
-    std::lock_guard<std::mutex> guard(m_last_link_stats_mutex);
-    m_last_link_stats = std::move(stats);
+    {
+      std::lock_guard<std::mutex> guard(m_last_link_stats_mutex);
+      m_last_link_stats = stats;
+    }
+    if (stats.ready) {
+      openhd::TelemetryRecorder::instance().record(stats);
+    }
   }
   openhd::link_statistics::StatsAirGround get_link_stats() {
     std::lock_guard<std::mutex> guard(m_last_link_stats_mutex);
