@@ -729,6 +729,12 @@ static std::string createRv1106Stream(const CameraSettings& settings) {
     ss << fmt::format(" codec=h265");
   }
   ss << " rotation=" << settings.camera_rotation_degree;
+  if (requires_hflip(settings)) {
+    ss << " hflip=1";
+  }
+  if (requires_vflip(settings)) {
+    ss << " vflip=1";
+  }
   ss << fmt::format(" ! ");
   return ss.str();
 }
