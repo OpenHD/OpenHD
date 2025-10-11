@@ -227,6 +227,7 @@ class WBLink : public OHDLink {
   bool m_rate_adjustment_frequency_changed = false;
   // bitrate we recommend to the encoder / camera(s)
   int m_recommended_video_bitrate_kbits = 0;
+  std::atomic<int> m_last_announced_bitrate_kbits = -1;
   std::atomic<int> m_curr_n_rate_adjustments = 0;
   // Set to true when armed, disarmed by default
   // Used to differentiate between different tx power levels when armed /

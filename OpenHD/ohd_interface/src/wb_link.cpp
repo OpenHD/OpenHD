@@ -1208,6 +1208,21 @@ void WBLink::recommend_bitrate_to_encoder(int recommended_video_bitrate_kbits) {
       m_console->debug("No action handler,cannot recommend bitrate to camera");
       return;
   }*/
+  if (recommended_video_bitrate_kbits <= 0) {
+    m_console->warn("Ignoring invalid bitrate recommendation: {} kBit/s",
+                    recommended_video_bitrate_kbits);
+    return;
+  }
+  const auto previous =
+      m_last_announced_bitrate_kbits.exchange(recommended_video_bitrate_kbits);
+  if (previous != recommended_video_bitrate_kbits) {
+    m_console->debug("Recommending encoder bitrate {} kBit/s (previous: {})",
+                     recommended_video_bitrate_kbits,
+                     previous < 0 ? 0 : previous);
+  } else {
+    m_console->trace("Recommending unchanged encoder bitrate {} kBit/s",
+                     recommended_video_bitrate_kbits);
+  }
   openhd::LinkActionHandler::LinkBitrateInformation lb{};
   lb.recommended_encoder_bitrate_kbits = recommended_video_bitrate_kbits;
   openhd::LinkActionHandler::instance().action_request_bitrate_change_handle(
