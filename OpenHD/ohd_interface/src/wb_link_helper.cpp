@@ -377,8 +377,15 @@ int openhd::wb::calculate_bitrate_for_wifi_config_kbits(
   // taking mcs index, channel width, ... into account
   const auto wifi_space = openhd::get_space_from_frequency(frequency_mhz);
   const int max_rate_for_current_wifi_config_without_adjust =
-      get_max_rate_possible(card, wifi_space, mcs_index,
-                            channel_width_mhz == 40);
+      get_max_rate_possible(card, wifi_space, mcs_index, channel_width_mhz);
+  if (channel_width_mhz != 10 && channel_width_mhz != 20 &&
+      channel_width_mhz != 40) {
+    auto m_console = openhd::log::get_default();
+    m_console->warn(
+        "Unsupported channel width {}MHz for rate calculation, defaulting to {} "
+        "kBit/s",
+        channel_width_mhz, max_rate_for_current_wifi_config_without_adjust);
+  }
   const int max_rate_for_current_wifi_config = multiply_by_perc(
       max_rate_for_current_wifi_config_without_adjust, dev_adjustment_percent);
   if (debug_log) {
