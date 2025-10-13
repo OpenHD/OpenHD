@@ -1390,6 +1390,13 @@ void WBLink::perform_channel_scan(
     if (done_early) break;
     // and all possible channel widths (20 or 40Mhz only right now)
     for (const auto& channel_width : channel_widths_to_scan) {
+      const auto requested_channel_width = channel_width;
+      auto scan_channel_width = channel_width;
+      if (requested_channel_width == 80) {
+        m_console->warn(
+            "80Mhz channel width requested during scan, downgrading to 40Mhz");
+        scan_channel_width = 40;
+      }
       // Return early in some cases (e.g. when we have a low loss and are quite
       // certain about a frequency)
       if (done_early) break;
@@ -1401,15 +1408,15 @@ void WBLink::perform_channel_scan(
       // set new frequency, reset the packet count, sleep, then check if any
       // openhd packets have been received
       const bool freq_success = apply_frequency_and_channel_width(
-          channel.frequency, channel_width, channel_width);
+          channel.frequency, scan_channel_width, scan_channel_width);
       if (!freq_success) {
         m_console->warn("Cannot scan [{}] {}Mhz@{}Mhz", channel.channel,
-                        channel.frequency, channel_width);
+                        channel.frequency, scan_channel_width);
         continue;
       }
       openhd::LinkActionHandler::ScanChannelsProgress tmp{};
       tmp.channel_mhz = (int)channel.frequency;
-      tmp.channel_width_mhz = channel_width;
+      tmp.channel_width_mhz = scan_channel_width;
       tmp.success = false;
       tmp.progress =
           OHDUtil::calculate_progress_perc(i, (int)channels_to_scan.size());
@@ -1419,7 +1426,7 @@ void WBLink::perform_channel_scan(
       // sleeep a bit - some cards /drivers might need time switching
       std::this_thread::sleep_for(std::chrono::milliseconds(200));
       m_console->debug("Scanning [{}] {}Mhz@{}Mhz", channel.channel,
-                       channel.frequency, channel_width);
+                       channel.frequency, scan_channel_width);
       reset_all_rx_stats();
       m_management_gnd->m_air_reported_curr_frequency = -1;
       m_management_gnd->m_air_reported_curr_channel_width = -1;
@@ -1455,7 +1462,7 @@ void WBLink::perform_channel_scan(
           m_management_gnd->m_air_reported_curr_channel_width;
       m_console->debug(
           "Got {} packets on {}@{} air_reports:[{}@{}] with loss {}%",
-          n_valid_packets, channel.frequency, channel_width,
+          n_valid_packets, channel.frequency, scan_channel_width,
           air_center_frequency, air_tx_channel_width, packet_loss);
       if (n_valid_packets > 0 && air_center_frequency > 0 &&
           (air_tx_channel_width == 10 || air_tx_channel_width == 20 ||
