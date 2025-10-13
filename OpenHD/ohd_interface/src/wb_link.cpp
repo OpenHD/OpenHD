@@ -1364,10 +1364,15 @@ void WBLink::perform_channel_scan(
   //   m_console->warn("No channel_widths to scan, return early");
   //   return;
   // }
-  //  We only scan 40Mhz, this way we get both 20Mhz and 40Mhz air unit(s)
-
-  // add 10mhz scan
-  const std::vector<uint16_t> channel_widths_to_scan = {40, 10};
+  // We primarily scan at 40Mhz since this allows detecting both 20Mhz and
+  // 40Mhz air units. Only devices based on the rtl8812eu chipset can also make
+  // use of 10Mhz and 80Mhz operation during a scan - for all other chipsets we
+  // skip those channel widths to avoid unnecessary tuning attempts.
+  std::vector<uint16_t> channel_widths_to_scan{40};
+  if (card.is_rtl88x2eu()) {
+    channel_widths_to_scan.push_back(10);
+    channel_widths_to_scan.push_back(80);
+  }
 
   auto stats_current = openhd::LinkActionHandler::instance().get_link_stats();
   stats_current.gnd_operating_mode.operating_mode = 1;
