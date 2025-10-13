@@ -1384,99 +1384,127 @@ void WBLink::perform_channel_scan(
     int channel_width = 0;
   };
   ScanResult result{false, 0, 0};
-  // Note: We intentionally do not modify the persistent settings here
-  m_console->debug(
-      "Channel scan N channels to scan:{} N channel widths to scan:{}",
-      channels_to_scan.size(), channel_widths_to_scan.size());
-  bool done_early = false;
-  // We need to loop through all possible channels
-  for (int i = 0; i < channels_to_scan.size(); i++) {
-    const auto& channel = channels_to_scan[i];
-    if (done_early) break;
-    // and all possible channel widths (20 or 40Mhz only right now)
-    for (const auto& channel_width : channel_widths_to_scan) {
-      // Return early in some cases (e.g. when we have a low loss and are quite
-      // certain about a frequency)
+  bool passive_mode_enabled = false;
+  auto handle_scan_exception = [&](const std::string& reason) {
+    m_console->error("Channel scan failed: {}", reason);
+    if (passive_mode_enabled) {
+      re_enable_injection_unless_user_passive_mode_enabled();
+      passive_mode_enabled = false;
+    }
+    m_console->warn("Channel scan failure, restore local settings");
+    apply_frequency_and_channel_width_from_settings();
+    openhd::LinkActionHandler::ScanChannelsProgress tmp{};
+    tmp.channel_mhz = 0;
+    tmp.channel_width_mhz = 0;
+    tmp.success = false;
+    tmp.progress = 100;
+    openhd::LinkActionHandler::instance().add_scan_channels_progress(tmp);
+  };
+  try {
+    // Note: We intentionally do not modify the persistent settings here
+    m_console->debug(
+        "Channel scan N channels to scan:{} N channel widths to scan:{}",
+        channels_to_scan.size(), channel_widths_to_scan.size());
+    bool done_early = false;
+    // We need to loop through all possible channels
+    for (int i = 0; i < channels_to_scan.size(); i++) {
+      const auto& channel = channels_to_scan[i];
       if (done_early) break;
-      // Skip channels / frequencies the card doesn't support anyways
-      if (!openhd::wb::any_card_support_frequency(
-              channel.frequency, m_broadcast_cards, m_console)) {
-        continue;
-      }
-      // set new frequency, reset the packet count, sleep, then check if any
-      // openhd packets have been received
-      const bool freq_success = apply_frequency_and_channel_width(
-          channel.frequency, channel_width, channel_width);
-      if (!freq_success) {
-        m_console->warn("Cannot scan [{}] {}Mhz@{}Mhz", channel.channel,
-                        channel.frequency, channel_width);
-        continue;
-      }
-      openhd::LinkActionHandler::ScanChannelsProgress tmp{};
-      tmp.channel_mhz = (int)channel.frequency;
-      tmp.channel_width_mhz = channel_width;
-      tmp.success = false;
-      tmp.progress =
-          OHDUtil::calculate_progress_perc(i, (int)channels_to_scan.size());
-      openhd::LinkActionHandler::instance().add_scan_channels_progress(tmp);
-      // Disable injection during scan
-      m_wb_txrx->set_passive_mode(true);
-      // sleeep a bit - some cards /drivers might need time switching
-      std::this_thread::sleep_for(std::chrono::milliseconds(200));
-      m_console->debug("Scanning [{}] {}Mhz@{}Mhz", channel.channel,
-                       channel.frequency, channel_width);
-      reset_all_rx_stats();
-      m_management_gnd->m_air_reported_curr_frequency = -1;
-      m_management_gnd->m_air_reported_curr_channel_width = -1;
-      std::this_thread::sleep_for(std::chrono::seconds(2));
-      const auto n_likely_openhd_packets =
-          m_wb_txrx->get_rx_stats().curr_n_likely_openhd_packets;
-      // If we got what looks to be openhd packets, sleep a bit more such that
-      // we can reliably get a management frame
-      if (n_likely_openhd_packets > 0) {
-        m_console->debug("Got {} likely openhd packets, sleep a bit more",
-                         n_likely_openhd_packets);
-        const auto begin_long_listen = std::chrono::steady_clock::now();
-        while (std::chrono::steady_clock::now() - begin_long_listen <
-               std::chrono::seconds(5)) {
-          const int air_center_frequency =
-              m_management_gnd->m_air_reported_curr_frequency;
-          const int air_tx_channel_width =
-              m_management_gnd->m_air_reported_curr_channel_width;
-          const bool has_received_management =
-              air_center_frequency > 0 && air_tx_channel_width > 0;
-          if (has_received_management) {
-            break;
+      // and all possible channel widths (20 or 40Mhz only right now)
+      for (const auto& channel_width : channel_widths_to_scan) {
+        // Return early in some cases (e.g. when we have a low loss and are quite
+        // certain about a frequency)
+        if (done_early) break;
+        // Skip channels / frequencies the card doesn't support anyways
+        if (!openhd::wb::any_card_support_frequency(
+                channel.frequency, m_broadcast_cards, m_console)) {
+          continue;
+        }
+        // set new frequency, reset the packet count, sleep, then check if any
+        // openhd packets have been received
+        const bool freq_success = apply_frequency_and_channel_width(
+            channel.frequency, channel_width, channel_width);
+        if (!freq_success) {
+          m_console->warn("Cannot scan [{}] {}Mhz@{}Mhz", channel.channel,
+                          channel.frequency, channel_width);
+          continue;
+        }
+        openhd::LinkActionHandler::ScanChannelsProgress tmp{};
+        tmp.channel_mhz = (int)channel.frequency;
+        tmp.channel_width_mhz = channel_width;
+        tmp.success = false;
+        tmp.progress =
+            OHDUtil::calculate_progress_perc(i, (int)channels_to_scan.size());
+        openhd::LinkActionHandler::instance().add_scan_channels_progress(tmp);
+        // Disable injection during scan
+        m_wb_txrx->set_passive_mode(true);
+        passive_mode_enabled = true;
+        // sleeep a bit - some cards /drivers might need time switching
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        m_console->debug("Scanning [{}] {}Mhz@{}Mhz", channel.channel,
+                         channel.frequency, channel_width);
+        reset_all_rx_stats();
+        m_management_gnd->m_air_reported_curr_frequency = -1;
+        m_management_gnd->m_air_reported_curr_channel_width = -1;
+        std::this_thread::sleep_for(std::chrono::seconds(2));
+        const auto n_likely_openhd_packets =
+            m_wb_txrx->get_rx_stats().curr_n_likely_openhd_packets;
+        // If we got what looks to be openhd packets, sleep a bit more such that
+        // we can reliably get a management frame
+        if (n_likely_openhd_packets > 0) {
+          m_console->debug("Got {} likely openhd packets, sleep a bit more",
+                           n_likely_openhd_packets);
+          const auto begin_long_listen = std::chrono::steady_clock::now();
+          while (std::chrono::steady_clock::now() - begin_long_listen <
+                 std::chrono::seconds(5)) {
+            const int air_center_frequency =
+                m_management_gnd->m_air_reported_curr_frequency;
+            const int air_tx_channel_width =
+                m_management_gnd->m_air_reported_curr_channel_width;
+            const bool has_received_management =
+                air_center_frequency > 0 && air_tx_channel_width > 0;
+            if (has_received_management) {
+              break;
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
           }
-          std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+        const auto packet_loss =
+            m_wb_txrx->get_rx_stats().curr_lowest_packet_loss;
+        const auto n_valid_packets = m_wb_txrx->get_rx_stats().count_p_valid;
+        const int air_center_frequency =
+            m_management_gnd->m_air_reported_curr_frequency;
+        const int air_tx_channel_width =
+            m_management_gnd->m_air_reported_curr_channel_width;
+        m_console->debug(
+            "Got {} packets on {}@{} air_reports:[{}@{}] with loss {}%",
+            n_valid_packets, channel.frequency, channel_width,
+            air_center_frequency, air_tx_channel_width, packet_loss);
+        if (n_valid_packets > 0 && air_center_frequency > 0 &&
+            (air_tx_channel_width == 10 || air_tx_channel_width == 20 ||
+             air_tx_channel_width == 40) &&
+            channel.frequency == air_center_frequency) {
+          m_console->debug("Found air unit");
+          result.frequency = channel.frequency;
+          result.channel_width = air_tx_channel_width;
+          result.success = true;
+          m_console->debug("Air unit detected: {} MHz @ {} MHz width",
+                           result.frequency, result.channel_width);
+          done_early = true;
         }
       }
-      const auto packet_loss =
-          m_wb_txrx->get_rx_stats().curr_lowest_packet_loss;
-      const auto n_valid_packets = m_wb_txrx->get_rx_stats().count_p_valid;
-      const int air_center_frequency =
-          m_management_gnd->m_air_reported_curr_frequency;
-      const int air_tx_channel_width =
-          m_management_gnd->m_air_reported_curr_channel_width;
-      m_console->debug(
-          "Got {} packets on {}@{} air_reports:[{}@{}] with loss {}%",
-          n_valid_packets, channel.frequency, channel_width,
-          air_center_frequency, air_tx_channel_width, packet_loss);
-      if (n_valid_packets > 0 && air_center_frequency > 0 &&
-          (air_tx_channel_width == 10 || air_tx_channel_width == 20 ||
-           air_tx_channel_width == 40) &&
-          channel.frequency == air_center_frequency) {
-        m_console->debug("Found air unit");
-        result.frequency = channel.frequency;
-        result.channel_width = air_tx_channel_width;
-        result.success = true;
-        m_console->debug("Air unit detected: {} MHz @ {} MHz width",
-                         result.frequency, result.channel_width);
-        done_early = true;
-      }
     }
+    if (passive_mode_enabled) {
+      re_enable_injection_unless_user_passive_mode_enabled();
+      passive_mode_enabled = false;
+    }
+  } catch (const std::exception& e) {
+    handle_scan_exception(e.what());
+    return;
+  } catch (...) {
+    handle_scan_exception("unknown exception");
+    return;
   }
-  re_enable_injection_unless_user_passive_mode_enabled();
   if (!result.success) {
     m_console->warn("Channel scan failure, restore local settings");
     apply_frequency_and_channel_width_from_settings();

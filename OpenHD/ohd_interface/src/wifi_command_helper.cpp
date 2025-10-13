@@ -60,13 +60,13 @@
  }
  
  // use_ht40_plus: Only in 40Mhz mode
- static std::string channel_width_as_iw_string(uint32_t channel_width,
-                                               bool use_ht40_plus = true) {
-   if (channel_width == 5) {
-     return "5MHz";
-   } else if (channel_width == 10) {
-     return "10Mhz";
-   } else if (channel_width == 20) {
+static std::string channel_width_as_iw_string(uint32_t channel_width,
+                                              bool use_ht40_plus = true) {
+  if (channel_width == 5) {
+    return "5MHz";
+  } else if (channel_width == 10) {
+    return "10Mhz";
+  } else if (channel_width == 20) {
      return "HT20";
    } else if (channel_width == 40) {
      return use_ht40_plus ? "HT40+" : "HT40-";
@@ -104,9 +104,42 @@
    // Generic logic for other devices
    const std::string iw_channel_width =
        channel_width_as_iw_string(channel_width);
-   return iw_set_frequency_and_channel_width2(device, freq_mhz,
+  return iw_set_frequency_and_channel_width2(device, freq_mhz,
                                               iw_channel_width);
- }
+}
+
+static bool try_set_rtl88x2eu_monitor_override(const std::string &device,
+                                               uint32_t freq_mhz,
+                                               uint32_t channel_width) {
+  const std::string monitor_override_path =
+      fmt::format("/proc/net/rtl88x2eu_ohd/{}/monitor_chan_override", device);
+  if (!OHDFilesystemUtil::exists(monitor_override_path)) {
+    openhd::log::get_default()->debug(
+        "rtl88x2eu monitor override file [{}] missing", monitor_override_path);
+    return false;
+  }
+
+  if (!(channel_width == 10 || channel_width == 20 || channel_width == 40 ||
+        channel_width == 80)) {
+    openhd::log::get_default()->warn(
+        "rtl88x2eu monitor override unsupported bandwidth {}", channel_width);
+    return false;
+  }
+
+  const auto channel_opt = openhd::channel_from_frequency(freq_mhz);
+  if (!channel_opt.has_value()) {
+    openhd::log::get_default()->warn(
+        "rtl88x2eu monitor override cannot map frequency {}", freq_mhz);
+    return false;
+  }
+  const auto channel_value = channel_opt->channel;
+  const std::string content =
+      fmt::format("{} {}\n", channel_value, channel_width);
+  openhd::log::get_default()->debug(
+      "rtl88x2eu monitor override {} -> {}", monitor_override_path, content);
+  OHDFilesystemUtil::write_file(monitor_override_path, content);
+  return true;
+}
  
  bool wifi::commandhelper::iw_set_frequency_and_channel_width2(
      const std::string &device, uint32_t freq_mhz, const std::string &ht_mode,
@@ -317,100 +350,116 @@
  static char *OPENHD_DRIVER_RTL88xxEU_TX_POWER_MW_OVERRIDE =
      "/sys/module/88x2eu_ohd/parameters/openhd_override_tx_power_mbm";
  
- bool wifi::commandhelper::openhd_driver_set_frequency_and_channel_width(
-     WiFiCardType type, const std::string &device, uint32_t freq_mhz,
-     uint32_t channel_width) {
-   const auto channel_opt = openhd::channel_from_frequency(freq_mhz);
-   if (!channel_opt.has_value()) {
-     openhd::log::get_default()->warn("Cannot find channel {}Mhz", freq_mhz);
-   }
-   const auto channel =
-       channel_opt.value_or(openhd::channel_from_frequency(5100).value());
-   const std::string rtl8812au_channel = fmt::format("{}", channel.channel);
-   openhd::log::get_default()->debug(
-       "openhd_driver_set_frequency_and_channel_width wanted:{}@{}Mhz, using "
-       "channel override:{}",
-       freq_mhz, channel_width, rtl8812au_channel);
-   char *CHANNEL_OVERRIDE_FILENAME;
-   switch (type) {
-     case (WiFiCardType::OPENHD_RTL_88X2AU):
-       CHANNEL_OVERRIDE_FILENAME = OPENHD_DRIVER_RTL8812AU_CHANNEL_OVERRIDE;
-       break;
-     case (WiFiCardType::OPENHD_RTL_88X2BU):
-       CHANNEL_OVERRIDE_FILENAME = OPENHD_DRIVER_RTL88xxBU_CHANNEL_OVERRIDE;
-       break;
-     case (WiFiCardType::OPENHD_RTL_88X2CU):
-       CHANNEL_OVERRIDE_FILENAME = OPENHD_DRIVER_RTL88xxCU_CHANNEL_OVERRIDE;
-       break;
-     case (WiFiCardType::OPENHD_RTL_88X2EU):
-       CHANNEL_OVERRIDE_FILENAME = OPENHD_DRIVER_RTL88xxEU_CHANNEL_OVERRIDE;
-       break;
-     default:
-       openhd::log::get_default()->error(
-           "INVALID DRIVER TYPE; CHANNEL WON'T WORK");
-       break;
-   }
- 
-   if (!OHDFilesystemUtil::exists(CHANNEL_OVERRIDE_FILENAME)) {
-     openhd::log::get_default()->error(
-         "YOU ARE USING THE WRONG DRIVER; CHANNEL WON'T WORK");
-     // hope this works
-     wifi::commandhelper::iw_set_frequency_and_channel_width(device, freq_mhz,
-                                                             channel_width);
-     return true;
-   }
-   // /etc/modprobe.d
-   // options 88XXau_ohd openhd_override_channel=165
-   // openhd_override_channel_width=1 rmmod 88XXau_ohd
-   OHDFilesystemUtil::write_file(CHANNEL_OVERRIDE_FILENAME, rtl8812au_channel);
-   // Override stuff is set, now we just change to a channel that is always okay
-   // in crda such that the method is called - ! the actually applied channel
-   // will be the overridden one !
-   const bool use_40mhz = channel_width == 40;
-   const bool use_ht40_plus = channel.in_40Mhz_ht40_plus;  // only in 40Mhz mode
-   int dummy_frequency = -1;
-   if (channel.space == openhd::WifiSpace::G2_4) {
-     dummy_frequency = use_40mhz ? (use_ht40_plus ? 2412 : 2432) : 2412;
-   } else {
-     dummy_frequency = use_40mhz ? (use_ht40_plus ? 5180 : 5200) : 5180;
-   }
-   if (channel_width == 10 && type == WiFiCardType::OPENHD_RTL_88X2EU) {
-     // Special handling for 10MHz on RTL88X2EU
-     openhd::log::get_default()->info(
-         "Using special 10MHz iw set command for 88x2eu: wlan={} chan={} "
-         "width=10MHZ",
-         device, channel.channel);
-     const std::string cmd =
-         fmt::format("iw {} set channel {} 10MHZ", device, channel.channel);
-     int ret = std::system(cmd.c_str());
-     if (ret != 0) {
-       openhd::log::get_default()->error("Failed to run: {}", cmd);
-     }
-   } else if (channel_width == 40 && type == WiFiCardType::OPENHD_RTL_88X2EU) {
-     // Special handling for 40MHz on RTL88X2EU
-     openhd::log::get_default()->info(
-         "Using special 40MHz iw set command for 88x2eu: wlan={} chan={} "
-         "width=40MHZ",
-         device, channel.channel);
-     const std::string cmd =
-         fmt::format("iw {} set channel {} 80MHZ", device, channel.channel);
-     int ret = std::system(cmd.c_str());
-     if (ret != 0) {
-       openhd::log::get_default()->error("Failed to run: {}", cmd);
-     }
-   } else {
-     // Standard bandwidth logic
-     const std::string bw_mode =
-         channel_width == 20 ? "HT20" : (use_ht40_plus ? "HT40+" : "HT40-");
-     wifi::commandhelper::iw_set_frequency_and_channel_width2(
-         device, dummy_frequency, bw_mode, true);
-     openhd::log::get_default()->info(
-          "Using normal 40MHz iw set command for: wlan={} chan={} "
-          "width=40MHZ",
-          device, channel.channel);
-   }
-   return true;
- }
+bool wifi::commandhelper::openhd_driver_set_frequency_and_channel_width(
+    WiFiCardType type, const std::string &device, uint32_t freq_mhz,
+    uint32_t channel_width) {
+  const auto channel_opt = openhd::channel_from_frequency(freq_mhz);
+  if (!channel_opt.has_value()) {
+    openhd::log::get_default()->warn("Cannot find channel {}Mhz", freq_mhz);
+  }
+  const auto channel =
+      channel_opt.value_or(openhd::channel_from_frequency(5100).value());
+  const std::string rtl8812au_channel = fmt::format("{}", channel.channel);
+  openhd::log::get_default()->debug(
+      "openhd_driver_set_frequency_and_channel_width wanted:{}@{}Mhz, using "
+      "channel override:{}",
+      freq_mhz, channel_width, rtl8812au_channel);
+
+  if (type == WiFiCardType::OPENHD_RTL_88X2EU) {
+    const bool monitor_success =
+        try_set_rtl88x2eu_monitor_override(device, freq_mhz, channel_width);
+    if (!monitor_success) {
+      openhd::log::get_default()->warn(
+          "rtl88x2eu monitor override failed for {}@{}Mhz", freq_mhz,
+          channel_width);
+    }
+  }
+
+  char *CHANNEL_OVERRIDE_FILENAME = nullptr;
+  switch (type) {
+    case (WiFiCardType::OPENHD_RTL_88X2AU):
+      CHANNEL_OVERRIDE_FILENAME = OPENHD_DRIVER_RTL8812AU_CHANNEL_OVERRIDE;
+      break;
+    case (WiFiCardType::OPENHD_RTL_88X2BU):
+      CHANNEL_OVERRIDE_FILENAME = OPENHD_DRIVER_RTL88xxBU_CHANNEL_OVERRIDE;
+      break;
+    case (WiFiCardType::OPENHD_RTL_88X2CU):
+      CHANNEL_OVERRIDE_FILENAME = OPENHD_DRIVER_RTL88xxCU_CHANNEL_OVERRIDE;
+      break;
+    case (WiFiCardType::OPENHD_RTL_88X2EU):
+      CHANNEL_OVERRIDE_FILENAME = OPENHD_DRIVER_RTL88xxEU_CHANNEL_OVERRIDE;
+      break;
+    default:
+      openhd::log::get_default()->error(
+          "INVALID DRIVER TYPE; CHANNEL WON'T WORK");
+      return false;
+  }
+
+  bool success = true;
+  if (!OHDFilesystemUtil::exists(CHANNEL_OVERRIDE_FILENAME)) {
+    openhd::log::get_default()->error(
+        "YOU ARE USING THE WRONG DRIVER; CHANNEL WON'T WORK");
+    const bool fallback = wifi::commandhelper::iw_set_frequency_and_channel_width(
+        device, freq_mhz, channel_width);
+    return fallback;
+  }
+  // /etc/modprobe.d
+  // options 88XXau_ohd openhd_override_channel=165
+  // openhd_override_channel_width=1 rmmod 88XXau_ohd
+  OHDFilesystemUtil::write_file(CHANNEL_OVERRIDE_FILENAME, rtl8812au_channel);
+  // Override stuff is set, now we just change to a channel that is always okay
+  // in crda such that the method is called - ! the actually applied channel
+  // will be the overridden one !
+  const bool use_40mhz = channel_width == 40;
+  const bool use_ht40_plus = channel.in_40Mhz_ht40_plus;  // only in 40Mhz mode
+  int dummy_frequency = -1;
+  if (channel.space == openhd::WifiSpace::G2_4) {
+    dummy_frequency = use_40mhz ? (use_ht40_plus ? 2412 : 2432) : 2412;
+  } else {
+    dummy_frequency = use_40mhz ? (use_ht40_plus ? 5180 : 5200) : 5180;
+  }
+  if (channel_width == 10 && type == WiFiCardType::OPENHD_RTL_88X2EU) {
+    // Special handling for 10MHz on RTL88X2EU
+    openhd::log::get_default()->info(
+        "Using special 10MHz iw set command for 88x2eu: wlan={} chan={} "
+        "width=10MHZ",
+        device, channel.channel);
+    const std::string cmd =
+        fmt::format("iw {} set channel {} 10MHZ", device, channel.channel);
+    int ret = std::system(cmd.c_str());
+    if (ret != 0) {
+      openhd::log::get_default()->error("Failed to run: {}", cmd);
+      success = false;
+    }
+  } else if (channel_width == 40 && type == WiFiCardType::OPENHD_RTL_88X2EU) {
+    // Special handling for 40MHz on RTL88X2EU
+    openhd::log::get_default()->info(
+        "Using special 40MHz iw set command for 88x2eu: wlan={} chan={} "
+        "width=40MHZ",
+        device, channel.channel);
+    const std::string cmd =
+        fmt::format("iw {} set channel {} 80MHZ", device, channel.channel);
+    int ret = std::system(cmd.c_str());
+    if (ret != 0) {
+      openhd::log::get_default()->error("Failed to run: {}", cmd);
+      success = false;
+    }
+  } else {
+    // Standard bandwidth logic
+    const std::string bw_mode =
+        channel_width == 20 ? "HT20" : (use_ht40_plus ? "HT40+" : "HT40-");
+    const bool iw_success = wifi::commandhelper::iw_set_frequency_and_channel_width2(
+        device, dummy_frequency, bw_mode, true);
+    if (!iw_success) {
+      success = false;
+    }
+    openhd::log::get_default()->info(
+        "Using normal 40MHz iw set command for: wlan={} chan={} "
+        "width=40MHZ",
+        device, channel.channel);
+  }
+  return success;
+}
  
  bool wifi::commandhelper::openhd_driver_set_tx_power(WiFiCardType type,
                                                       const std::string &device,
