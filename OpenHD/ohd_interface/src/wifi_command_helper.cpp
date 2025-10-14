@@ -374,41 +374,17 @@ static constexpr char OPENHD_DRIVER_RTL88xxEU_TX_POWER_MW_OVERRIDE[] =
    } else {
      dummy_frequency = use_40mhz ? (use_ht40_plus ? 5180 : 5200) : 5180;
    }
-   if (channel_width == 10 && type == WiFiCardType::OPENHD_RTL_88X2EU) {
-     // Special handling for 10MHz on RTL88X2EU
+   std::string bw_mode =
+       channel_width_as_iw_string(channel_width, use_ht40_plus);
+   if (type == WiFiCardType::OPENHD_RTL_88X2EU && channel_width == 40) {
+     // rtl88x2eu still requires issuing an 80MHz request when 40MHz is desired
+     bw_mode = "80MHZ";
      openhd::log::get_default()->info(
-         "Using special 10MHz iw set command for 88x2eu: wlan={} chan={} "
-         "width=10MHZ",
+         "rtl88x2eu requested 40MHz, issuing iw 80MHz command: wlan={} chan={}",
          device, channel.channel);
-     const std::string cmd =
-         fmt::format("iw {} set channel {} 10MHZ", device, channel.channel);
-     int ret = std::system(cmd.c_str());
-     if (ret != 0) {
-       openhd::log::get_default()->error("Failed to run: {}", cmd);
-     }
-   } else if (channel_width == 40 && type == WiFiCardType::OPENHD_RTL_88X2EU) {
-     // Special handling for 40MHz on RTL88X2EU
-     openhd::log::get_default()->info(
-         "Using special 40MHz iw set command for 88x2eu: wlan={} chan={} "
-         "width=40MHZ",
-         device, channel.channel);
-     const std::string cmd =
-         fmt::format("iw {} set channel {} 80MHZ", device, channel.channel);
-     int ret = std::system(cmd.c_str());
-     if (ret != 0) {
-       openhd::log::get_default()->error("Failed to run: {}", cmd);
-     }
-   } else {
-     // Standard bandwidth logic
-     const std::string bw_mode =
-         channel_width == 20 ? "HT20" : (use_ht40_plus ? "HT40+" : "HT40-");
-     wifi::commandhelper::iw_set_frequency_and_channel_width2(
-         device, dummy_frequency, bw_mode, true);
-     openhd::log::get_default()->info(
-          "Using normal 40MHz iw set command for: wlan={} chan={} "
-          "width=40MHZ",
-          device, channel.channel);
    }
+   wifi::commandhelper::iw_set_frequency_and_channel_width2(
+       device, dummy_frequency, bw_mode, true);
    return true;
  }
  
