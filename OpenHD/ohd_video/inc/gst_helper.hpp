@@ -718,6 +718,12 @@ static std::string create_qualcomm_camera1_stream(
 static std::string createRv1106Stream(const CameraSettings& settings) {
   std::stringstream ss;
 
+  // HACK: Set right cam mode manually
+  if  (settings.streamed_video_format.width > 1296 || settings.streamed_video_format.height > 968)
+    OHDUtil::run_command("media-ctl -d /dev/media0 -V \"'m00_b_mis5001 4-0031':0 [fmt:SGRBG10_1X10/2592x1944]\"", {});
+  else
+    OHDUtil::run_command("media-ctl -d /dev/media0 -V \"'m00_b_mis5001 4-0031':0 [fmt:SGRBG10_1X10/1296x968]\"", {});
+
   ss << fmt::format("rkvisrc ! ");
   ss << fmt::format(
       "video/x-raw, format=NV12, width={}, height={}, framerate={}/1 ! ",
