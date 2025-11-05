@@ -29,6 +29,7 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <filesystem>
 
 #include "openhd_platform.h"
 #include "openhd_util_filesystem.h"
@@ -50,6 +51,26 @@ const char* getConfigBasePath() {
   }
 }
 
+bool checkIsDirectory(std::string path)
+{
+    if(!path.empty())
+    {
+          std::filesystem::path fs_path(path);
+          if (std::filesystem::exists(fs_path) && std::filesystem::is_directory(fs_path)) {
+              return true;
+          }
+          else
+          {
+              std::cerr << "Error: Path is not a valid, existing directory: " << path << "\n";
+          }
+    }
+  else
+  {
+      std::cerr << "Error: Path empty\n";
+  }
+    return false;
+}
+
 const char* getVideoPath() {
   static std::string cachedPath;
   static const char* CACHE_FILE = "/usr/local/share/openhd/recording.txt";
@@ -64,7 +85,10 @@ const char* getVideoPath() {
     std::ifstream infile(CACHE_FILE);
     if (infile) {
       std::getline(infile, cachedPath);
-      return cachedPath.c_str();
+      if(checkIsDirectory(cachedPath))
+      {
+          return cachedPath.c_str();
+      }
     }
   }
 

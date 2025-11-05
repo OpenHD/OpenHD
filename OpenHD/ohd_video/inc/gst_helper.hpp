@@ -724,7 +724,7 @@ static std::string createRv1106Stream(const CameraSettings& settings) {
   else
     OHDUtil::run_command("media-ctl -d /dev/media0 -V \"'m00_b_mis5001 4-0031':0 [fmt:SGRBG10_1X10/1296x968]\"", {});
 
-  ss << fmt::format("rkvisrc ! ");
+  ss << fmt::format("rkvisrc do-timestamp=1 ! ");
   ss << fmt::format(
       "video/x-raw, format=NV12, width={}, height={}, framerate={}/1 ! ",
       settings.streamed_video_format.width,
