@@ -104,6 +104,8 @@ AirCameraGenericSettings AirCameraGenericSettingsHolder::create_default()
     ret.primary_camera_type = X_CAM_TYPE_QC_IMX577;
   } else if (OHDPlatform::instance().platform_type == X_PLATFORM_TYPE_WILLY) {
     ret.primary_camera_type = X_CAM_TYPE_WILLY_HORNET;
+  } else if (OHDPlatform::instance().platform_type == X_PLATFORM_TYPE_ROCKCHIP_RV1126) {
+    ret.primary_camera_type = X_CAM_TYPE_ROCKCHIP_RV1126;
   }
 
   return ret;

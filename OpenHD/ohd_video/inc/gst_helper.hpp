@@ -712,6 +712,22 @@ static std::string create_qualcomm_camera1_stream(
   return ss.str();
 }
 
+/**
+ * For mpph264enc Rockchips (rv1126 and more?)
+ */
+
+static std::string createMpph264encStream(const CameraSettings& settings) {
+  std::stringstream ss;
+  assert(settings.streamed_video_format.videoCodec == VideoCodec::H264);
+  ss << fmt::format("v4l2src device=/dev/video0 io-mode=4 ! ");
+  ss << fmt::format(
+      "video/x-raw, format=NV12, width={}, height={}, framerate={}/1 ! ",
+      settings.streamed_video_format.width,
+      settings.streamed_video_format.height,
+      settings.streamed_video_format.framerate);
+  ss << fmt::format("mpph264enc bps={} gop={} ! ", openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits), settings.h26x_keyframe_interval);
+  return ss.str();
+}
 // Camera quirks, omit arguments when set to 0 - some cameras refuse to work
 // even though the correct width, height or fps is given
 static std::string gst_v4l2_width_height_fps_unless_omit(

@@ -141,8 +141,12 @@ static constexpr int X_CAM_TYPE_QC_OV9282 = 121;
 static constexpr int X_CAM_TYPE_WILLY_HORNET = 122;
 static constexpr int X_CAM_TYPE_WILLY_JAGUAR = 123;
 static constexpr int X_CAM_TYPE_WILLY_REKINDLE = 124;
+// .... 10 reserved for future use
 
-//
+// Generic cam (ehen 1 cam is used for any physical cam)
+static constexpr int X_CAM_TYPE_ROCKCHIP_RV1106 = 134;
+static constexpr int X_CAM_TYPE_ROCKCHIP_RV1126 = 135;
+
 // ... rest is reserved for future use
 // no camera, only exists to have a default value for secondary camera (which is
 // disabled by default). NOTE: The primary camera cannot be disabled !
@@ -263,6 +267,8 @@ static std::string x_cam_type_to_string(int camera_type) {
       return "CORETRONIC IMX577";
     case X_CAM_TYPE_QC_OV9282:
       return "CORETRONIC OV9282";
+    case X_CAM_TYPE_ROCKCHIP_RV1126:
+      return "Rockchip RV1126";
     default:
       break;
   }
@@ -315,6 +321,9 @@ struct XCamera {
   bool requires_willy_pipeline() const {
     return camera_type >= 122 && camera_type < 124;
   }
+  bool requires_rv1126_pipline() const {
+    return camera_type == 135;
+  }
   std::string cam_type_as_verbose_string() const {
     return x_cam_type_to_string(camera_type);
   }
@@ -350,6 +359,8 @@ struct XCamera {
     } else if (requires_willy_pipeline()) {
       // also easy, 720p60 only (for now)
       return {ResolutionFramerate{960, 720, 120}};
+    } else if (camera_type == requires_rv1126_pipline()) {
+      return {ResolutionFramerate{1920, 1080, 60}};
     } else if (camera_type == X_CAM_TYPE_USB_INFIRAY) {
       return {ResolutionFramerate{384, 292, 25}};
     } else if (camera_type == X_CAM_TYPE_USB_INFIRAY_T2) {
