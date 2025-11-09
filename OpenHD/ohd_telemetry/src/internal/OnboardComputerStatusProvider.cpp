@@ -239,6 +239,8 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
         }
       }
     }
+    curr_temperature_txc0 = txc_temp;
+    curr_temperature_txc1 = txc_temp;
     if (OHDPlatform::instance().is_rpi()) {
       curr_temperature_core =
           (int8_t)openhd::onboard::rpi::read_temperature_soc_degree();
@@ -257,9 +259,6 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
     } else {
       const auto cpu_temp = (int8_t)openhd::onboard::readTemperature();
       const auto platform = OHDPlatform::instance();
-      curr_temperature_core = cpu_temp;
-      curr_temperature_txc0 = txc_temp;
-      curr_temperature_txc1 = txc_temp;
       if (platform.is_rock() || platform.platform_type == X_PLATFORM_TYPE_X86) {
         if (OHDFilesystemUtil::exists(
                 "/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq")) {

@@ -65,6 +65,9 @@ static void initialize_led_file_cache() {
     led_file_cache["/sys/class/leds/openhd-x20dev:green:usr/brightness"] =
         OHDFilesystemUtil::exists(
             "/sys/class/leds/openhd-x20dev:green:usr/brightness");
+  } else if (OHDPlatform::instance().is_uvx_mod()) {
+    led_file_cache["/sys/class/leds/Heartbeat/brightness"] =
+        OHDFilesystemUtil::exists("/sys/class/leds/Heartbeat/brightness");
   }
 }
 
@@ -72,7 +75,8 @@ static void toggle_led(const std::string &filename, const bool on) {
   // Check if the file exists using the cache
   if (led_file_cache.find(filename) != led_file_cache.end() &&
       led_file_cache[filename]) {
-    const auto content = on ? "1" : "0";
+    const bool active_low = OHDPlatform::instance().is_uvx_mod();
+    const auto content = (on != active_low) ? "1" : "0";
     OHDFilesystemUtil::write_file(filename, content);
   }
 }
@@ -86,6 +90,8 @@ static void toggle_secondary_led(const bool on) {
     toggle_led("/sys/class/leds/user-led2/brightness", on);
   } else if (OHDPlatform::instance().is_x20()) {
     toggle_led("/sys/class/leds/openhd-x20dev:red:usr/brightness", on);
+  } else if (OHDPlatform::instance().is_uvx_mod()) {
+    toggle_led("/sys/class/leds/Heartbeat/brightness", on);
   }
 }
 
@@ -102,6 +108,8 @@ static void toggle_primary_led(const bool on) {
     toggle_led("/sys/class/leds/mmc0::/brightness", on);
   } else if (OHDPlatform::instance().is_x20()) {
     toggle_led("/sys/class/leds/openhd-x20dev:green:usr/brightness", on);
+  } else if (OHDPlatform::instance().is_uvx_mod()) {
+    toggle_led("/sys/class/leds/Heartbeat/brightness", on);
   }
 }
 
@@ -164,7 +172,9 @@ openhd::LEDManager::LEDManager()
     : m_loading_thread(nullptr),
       m_running(false),
       m_has_error(false),
-      m_is_loading(false) {}
+      m_is_loading(false) {
+  initialize_led_file_cache();
+}
 
 openhd::LEDManager::~LEDManager() { stop_loading_thread(); }
 

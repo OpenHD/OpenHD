@@ -1075,6 +1075,12 @@ void WBLink::wt_update_statistics() {
     card_stats.rx_noise_adapter = rf_rx_stats.adapter.noise_dbm;
     card_stats.rx_rssi_1 = rf_rx_stats.antenna1.rssi_dbm;
     card_stats.rx_rssi_2 = rf_rx_stats.antenna2.rssi_dbm;
+    card_stats.rx_noise_antenna1 = rf_rx_stats.antenna1.noise_dbm;
+    card_stats.rx_noise_antenna2 = rf_rx_stats.antenna2.noise_dbm;
+    card_stats.rx_signal_quality_antenna1 =
+        rf_rx_stats.antenna1.card_signal_quality_perc;
+    card_stats.rx_signal_quality_antenna2 =
+        rf_rx_stats.antenna2.card_signal_quality_perc;
     card_stats.count_p_received = rxStatsCard.count_p_valid;
     card_stats.count_p_injected = 0;
     card_stats.curr_rx_packet_loss_perc = rxStatsCard.curr_packet_loss;
