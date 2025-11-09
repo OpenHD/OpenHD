@@ -62,9 +62,8 @@ bool is_microhard_device_present() {
   return false;
 }
 
-OHDInterface::OHDInterface(OHDProfile profile1, bool disable_wifi_hotspot)
-    : m_profile(std::move(profile1)),
-      m_disable_wifi_hotspot(disable_wifi_hotspot) {
+OHDInterface::OHDInterface(OHDProfile profile1)
+    : m_profile(std::move(profile1)) {
   m_console = openhd::log::create_or_get("interface");
   assert(m_console);
   m_monitor_mode_cards = {};
@@ -126,7 +125,7 @@ OHDInterface::OHDInterface(OHDProfile profile1, bool disable_wifi_hotspot)
     // m_nw_settings.get_settings().ethernet_operating_mode
   }
   // Wi-Fi hotspot functionality if possible.
-    if (!m_disable_wifi_hotspot && m_opt_hotspot_card.has_value()) {
+  if (m_opt_hotspot_card.has_value()) {
     if (WiFiClient::create_if_enabled()) {
       // Wifi client active
     } else {
