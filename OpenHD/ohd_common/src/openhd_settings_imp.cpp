@@ -28,6 +28,8 @@
 #include <map>
 #include <sstream>
 
+#include <spdlog/spdlog.h>
+
 #include "openhd_spdlog.h"
 
 std::vector<openhd::Setting> openhd::testing::create_dummy_camera_settings() {

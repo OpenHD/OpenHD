@@ -25,6 +25,7 @@
 
 #include <openhd_spdlog.h>
 #include <openhd_util.h>
+#include <spdlog/spdlog.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 

@@ -25,6 +25,8 @@
 
 #include <thread>
 
+#include <spdlog/spdlog.h>
+
 #include "openhd_platform.h"
 #include "openhd_spdlog.h"
 #include "openhd_util.h"

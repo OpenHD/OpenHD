@@ -24,10 +24,12 @@
 #include "openhd_util.h"
 
 #include <arpa/inet.h>
+#include <spdlog/spdlog.h>
 #include <unistd.h>
 
 #include <cctype>
 #include <chrono>
+#include <cmath>
 #include <csignal>
 #include <cstdlib>
 #include <optional>
