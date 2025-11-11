@@ -2,12 +2,32 @@
 set -euo pipefail
 
 if [[ $# -lt 1 ]]; then
-  echo "Usage: $0 <sdk-root>" >&2
+  echo "Usage: $0 <sdk-root> [poco-archive]" >&2
   exit 1
 fi
 
 sdk_root="$1"
 shift || true
+
+make_absolute_path() {
+  local path="$1"
+  if [[ "$path" == /* ]]; then
+    printf '%s\n' "$path"
+  else
+    printf '%s/%s\n' "$(pwd)" "$path"
+  fi
+}
+
+sdk_root="$(make_absolute_path "$sdk_root")"
+
+output_archive="${1:-}"
+if [[ -n "$output_archive" ]]; then
+  shift || true
+else
+  output_archive="$sdk_root/poco-libraries.zip"
+fi
+
+output_archive="$(make_absolute_path "$output_archive")"
 
 if [[ ! -d "$sdk_root" ]]; then
   echo "SDK root '$sdk_root' does not exist" >&2
@@ -35,6 +55,46 @@ download() {
   local url="$1"
   local destination="$2"
   curl --fail --location --retry 5 --output "$destination" "$url"
+}
+
+package_poco_libs() {
+  if ! command -v zip >/dev/null 2>&1; then
+    echo "zip command not found; unable to package Poco libraries" >&2
+    exit 1
+  fi
+
+  local archive="$1"
+  local lib_dir="$SDKTARGETSYSROOT/usr/lib"
+  if [[ ! -d "$lib_dir" ]]; then
+    echo "Poco library directory '$lib_dir' does not exist" >&2
+    exit 1
+  fi
+
+  local libs=()
+  while IFS= read -r -d '' lib; do
+    libs+=("$lib")
+  done < <(find "$lib_dir" -maxdepth 1 \
+    \( -name 'libPoco*.so*' -o -name 'libPoco*.a' \) -print0)
+
+  if [[ ${#libs[@]} -eq 0 ]]; then
+    echo "No Poco libraries were found in '$lib_dir'" >&2
+    exit 1
+  fi
+
+  local staging_dir="$work_dir/poco_libs"
+  rm -rf "$staging_dir"
+  mkdir -p "$staging_dir"
+
+  for lib in "${libs[@]}"; do
+    cp -a "$lib" "$staging_dir/"
+  done
+
+  mkdir -p "$(dirname "$archive")"
+  rm -f "$archive"
+  pushd "$staging_dir" >/dev/null
+  zip -9 -r "$archive" ./* >/dev/null
+  popd >/dev/null
+  echo "Packaged Poco libraries into $archive"
 }
 
 build_libsodium() {
@@ -102,3 +162,4 @@ build_poco() {
 
 build_libsodium
 build_poco
+package_poco_libs "$output_archive"

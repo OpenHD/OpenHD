@@ -32,7 +32,8 @@ jobs:
             automake \
             libtool \
             curl \
-            xz-utils
+            xz-utils \
+            zip
 
       - name: Retrieve Orqa SDK installer
         run: |
@@ -51,9 +52,10 @@ jobs:
       - name: Bootstrap SDK dependencies
         env:
           SDK_INSTALL_DIR: ${{ runner.temp }}/orqa-sdk
+          POCO_ARCHIVE: ${{ runner.temp }}/poco-libraries.zip
         run: |
           set -euo pipefail
-          OpenHD/scripts/setup_orqa_sdk.sh "$SDK_INSTALL_DIR"
+          OpenHD/scripts/setup_orqa_sdk.sh "$SDK_INSTALL_DIR" "$POCO_ARCHIVE"
 
       - name: Configure OpenHD (Release)
         env:
@@ -76,3 +78,9 @@ jobs:
         with:
           name: openhd-aarch64
           path: build-sdk/openhd
+
+      - name: Upload Poco libraries archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: poco-libraries
+          path: ${{ runner.temp }}/poco-libraries.zip
