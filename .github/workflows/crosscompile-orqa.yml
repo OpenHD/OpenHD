@@ -53,9 +53,10 @@ jobs:
         env:
           SDK_INSTALL_DIR: ${{ runner.temp }}/orqa-sdk
           POCO_ARCHIVE: ${{ runner.temp }}/poco-libraries.zip
+          LIBSODIUM_ARCHIVE: ${{ runner.temp }}/libsodium-libraries.zip
         run: |
           set -euo pipefail
-          OpenHD/scripts/setup_orqa_sdk.sh "$SDK_INSTALL_DIR" "$POCO_ARCHIVE"
+          OpenHD/scripts/setup_orqa_sdk.sh "$SDK_INSTALL_DIR" "$POCO_ARCHIVE" "$LIBSODIUM_ARCHIVE"
 
       - name: Configure OpenHD (Release)
         env:
@@ -84,3 +85,9 @@ jobs:
         with:
           name: poco-libraries
           path: ${{ runner.temp }}/poco-libraries.zip
+
+      - name: Upload libsodium libraries archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: libsodium-libraries
+          path: ${{ runner.temp }}/libsodium-libraries.zip

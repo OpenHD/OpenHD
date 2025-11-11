@@ -2,7 +2,7 @@
 set -euo pipefail
 
 if [[ $# -lt 1 ]]; then
-  echo "Usage: $0 <sdk-root> [poco-archive]" >&2
+  echo "Usage: $0 <sdk-root> [poco-archive] [libsodium-archive]" >&2
   exit 1
 fi
 
@@ -28,6 +28,15 @@ else
 fi
 
 output_archive="$(make_absolute_path "$output_archive")"
+
+libsodium_archive="${1:-}"
+if [[ -n "$libsodium_archive" ]]; then
+  shift || true
+else
+  libsodium_archive="$sdk_root/libsodium-libraries.zip"
+fi
+
+libsodium_archive="$(make_absolute_path "$libsodium_archive")"
 
 if [[ ! -d "$sdk_root" ]]; then
   echo "SDK root '$sdk_root' does not exist" >&2
@@ -57,11 +66,21 @@ download() {
   curl --fail --location --retry 5 --output "$destination" "$url"
 }
 
-package_poco_libs() {
-  if ! command -v zip >/dev/null 2>&1; then
-    echo "zip command not found; unable to package Poco libraries" >&2
+ensure_zip_available() {
+  local zip_cmd
+  if ! zip_cmd="$(command -v zip 2>/dev/null)"; then
+    echo "zip command not found; unable to package libraries" >&2
     exit 1
   fi
+
+  if [[ ! -x "$zip_cmd" ]]; then
+    echo "zip command is not executable" >&2
+    exit 1
+  fi
+}
+
+package_poco_libs() {
+  ensure_zip_available
 
   local archive="$1"
   local lib_dir="$SDKTARGETSYSROOT/usr/lib"
@@ -95,6 +114,43 @@ package_poco_libs() {
   zip -9 -r "$archive" ./* >/dev/null
   popd >/dev/null
   echo "Packaged Poco libraries into $archive"
+}
+
+package_libsodium_libs() {
+  ensure_zip_available
+
+  local archive="$1"
+  local lib_dir="$SDKTARGETSYSROOT/usr/lib"
+  if [[ ! -d "$lib_dir" ]]; then
+    echo "libsodium library directory '$lib_dir' does not exist" >&2
+    exit 1
+  fi
+
+  local libs=()
+  while IFS= read -r -d '' lib; do
+    libs+=("$lib")
+  done < <(find "$lib_dir" -maxdepth 1 \
+    \( -name 'libsodium*.so*' -o -name 'libsodium*.a' \) -print0)
+
+  if [[ ${#libs[@]} -eq 0 ]]; then
+    echo "No libsodium libraries were found in '$lib_dir'" >&2
+    exit 1
+  fi
+
+  local staging_dir="$work_dir/libsodium_libs"
+  rm -rf "$staging_dir"
+  mkdir -p "$staging_dir"
+
+  for lib in "${libs[@]}"; do
+    cp -a "$lib" "$staging_dir/"
+  done
+
+  mkdir -p "$(dirname "$archive")"
+  rm -f "$archive"
+  pushd "$staging_dir" >/dev/null
+  zip -9 -r "$archive" ./* >/dev/null
+  popd >/dev/null
+  echo "Packaged libsodium libraries into $archive"
 }
 
 build_libsodium() {
@@ -163,3 +219,4 @@ build_poco() {
 build_libsodium
 build_poco
 package_poco_libs "$output_archive"
+package_libsodium_libs "$libsodium_archive"
