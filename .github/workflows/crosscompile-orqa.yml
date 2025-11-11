@@ -1,0 +1,82 @@
+name: Cross-compile OpenHD with Orqa SDK
+
+on:
+  workflow_dispatch:
+    inputs:
+      sdk-installer-url:
+        description: URL to download the Orqa SDK installer script. Leave empty to use a repository-provided script.
+        required: false
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    env:
+      SDK_INSTALL_DIR: ${{ runner.temp }}/orqa-sdk
+      SDK_INSTALLER_URL: ${{ github.event.inputs.sdk-installer-url }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            ninja-build \
+            pkg-config \
+            autoconf \
+            automake \
+            libtool \
+            curl \
+            xz-utils
+
+      - name: Retrieve Orqa SDK installer
+        run: |
+          set -euo pipefail
+          installer_path="${GITHUB_WORKSPACE}/OpenHD/SDK-DTK_GCB_working_usb_and_88x2eu.sh"
+          url="${SDK_INSTALLER_URL:-}"
+          if [[ -n "$url" ]]; then
+            echo "Downloading SDK installer from $url"
+            curl --fail --location --retry 5 --output "$installer_path" "$url"
+          fi
+          if [[ ! -f "$installer_path" ]]; then
+            echo "SDK installer was not found at $installer_path" >&2
+            echo "Provide the script in the repository or set the sdk-installer-url workflow input." >&2
+            exit 1
+          fi
+
+      - name: Install Orqa SDK
+        run: |
+          set -euo pipefail
+          mkdir -p "$SDK_INSTALL_DIR"
+          sh OpenHD/SDK-DTK_GCB_working_usb_and_88x2eu.sh -y -d "$SDK_INSTALL_DIR"
+
+      - name: Bootstrap SDK dependencies
+        run: |
+          set -euo pipefail
+          OpenHD/scripts/setup_orqa_sdk.sh "$SDK_INSTALL_DIR"
+
+      - name: Configure OpenHD (Release)
+        run: |
+          set -euo pipefail
+          source "$SDK_INSTALL_DIR/environment-setup-armv8a-poky-linux"
+          cmake -S OpenHD -B build-sdk -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build OpenHD
+        run: |
+          set -euo pipefail
+          source "$SDK_INSTALL_DIR/environment-setup-armv8a-poky-linux"
+          cmake --build build-sdk --parallel
+
+      - name: Package cross-compiled binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: openhd-aarch64
+          path: build-sdk/openhd
