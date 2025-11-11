@@ -51,6 +51,7 @@ target_link_libraries(OHDCommonLib PUBLIC Threads::Threads)
 # Sources
 #----------------------------------------------------------------------------------------------------------------------
 set(sources
+    "src/config_paths.cpp"
     "src/openhd_util.cpp"
     "src/openhd_util_filesystem.cpp"
     "src/openhd_settings_persistent.cpp"
