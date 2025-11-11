@@ -67,6 +67,7 @@ static int readTemperature() {
 // Also, I am pretty sure we can use -bn1 - top should report from "the last
 // refresh."
 static std::optional<int> read_cpuload_once_blocking() {
+    
   auto res_opt = OHDUtil::run_command_out(
       R"lit(top -bn1 | grep -i '^%cpu')lit");  // ???? cat /proc/loadavg
   // The result from that should look like this: %Cpu(s): 31,0 us,  2,0 sy,  0,0
@@ -74,28 +75,48 @@ static std::optional<int> read_cpuload_once_blocking() {
   // are after - "time spent in the kernel idle handler" from that, we can
   // deduce the usage
   if (!res_opt.has_value()) {
-    return std::nullopt;
+            std::cout<<"no cpu info";
+            return std::nullopt;
   }
-  const std::string res = res_opt.value();
-  // std::cout<<"read_cpuload_once_blocking res:{"<<res<<"}\n";
-  std::smatch result;
-  const std::regex r1{"ni,(.*) id"};
-  auto res1 = std::regex_search(res, result, r1);
-  if (!res1 || result.size() < 1) {
-    return std::nullopt;
+  else
+  {
+      const std::string res = res_opt.value();
+      // std::cout<<"read_cpuload_once_blocking res:{"<<res<<"}\n";
+      std::smatch result;
+      const std::regex r1{"ni,(.*) id"};
+    
+      auto res1 = std::regex_search(res, result, r1);
+      if (!res1 || result.size() < 1) {
+          res_opt = OHDUtil::run_command_out(
+          R"lit(top -bn1 | grep -i '^cpu')lit"); // CPU:   0% usr  10% sys   0% nic  90% idle   0% io   0% irq   0% sirq
+          //std::cout<<"read_cpuload_once_blocking res:{"<<res_opt.value()<<"}\n";
+          const std::string res = res_opt.value();
+          // std::cout<<"read_cpuload_once_blocking res:{"<<res<<"}\n";
+          std::smatch result;
+          const std::regex r1{"(\\d+)%.idle"};
+          auto res1 = std::regex_search(res, result, r1);
+          if (!res1 || result.size() < 1) {
+            return std::nullopt;
+          }
+          const std::string intermediate1 = result[0];
+          const auto cpu_idle_perc = std::atof(intermediate1.c_str());
+          //std::cout<<"cpu_idle_perc:{"<<cpu_idle_perc<<"}, int = " <<intermediate1 << "\n";
+          const auto cpu_idle_perc_int = static_cast<int>(lround(cpu_idle_perc));
+          return 100 - cpu_idle_perc_int;
+      }
+      const std::string intermediate1 = result[0];
+      // std::cout<<"Intermediate:{"<<intermediate1<<"}\n";
+      if (intermediate1.length() < 3) {
+        return std::nullopt;
+      }
+      std::regex begin("ni,");
+      const auto intermediate2 = std::regex_replace(intermediate1, begin, "");
+      // std::cout<<"Intermediate2:{"<<intermediate2<<"}\n";
+      const auto cpu_idle_perc = std::atof(intermediate2.c_str());
+      // std::cout<<"cpu_idle_perc:{"<<cpu_idle_perc<<"}\n";
+      const auto cpu_idle_perc_int = static_cast<int>(lround(cpu_idle_perc));
+      return 100 - cpu_idle_perc_int;
   }
-  const std::string intermediate1 = result[0];
-  // std::cout<<"Intermediate:{"<<intermediate1<<"}\n";
-  if (intermediate1.length() < 3) {
-    return std::nullopt;
-  }
-  std::regex begin("ni,");
-  const auto intermediate2 = std::regex_replace(intermediate1, begin, "");
-  // std::cout<<"Intermediate2:{"<<intermediate2<<"}\n";
-  const auto cpu_idle_perc = std::atof(intermediate2.c_str());
-  // std::cout<<"cpu_idle_perc:{"<<cpu_idle_perc<<"}\n";
-  const auto cpu_idle_perc_int = static_cast<int>(lround(cpu_idle_perc));
-  return 100 - cpu_idle_perc_int;
 }
 
 // Taken from ChatGPT
