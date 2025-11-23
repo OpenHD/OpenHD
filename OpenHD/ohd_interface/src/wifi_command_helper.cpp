@@ -376,13 +376,17 @@ static constexpr char OPENHD_DRIVER_RTL88xxEU_TX_POWER_MW_OVERRIDE[] =
    }
    std::string bw_mode =
        channel_width_as_iw_string(channel_width, use_ht40_plus);
-   if (type == WiFiCardType::OPENHD_RTL_88X2EU && channel_width == 40) {
-     // rtl88x2eu still requires issuing an 80MHz request when 40MHz is desired
-     bw_mode = "80MHZ";
-     openhd::log::get_default()->info(
-         "rtl88x2eu requested 40MHz, issuing iw 80MHz command: wlan={} chan={}",
-         device, channel.channel);
-   }
+  if ((type == WiFiCardType::OPENHD_RTL_88X2EU ||
+       type == WiFiCardType::OPENHD_RTL_88X2CU) &&
+      channel_width == 40) {
+    // rtl88x2eu / rtl88x2cu still require issuing an 80MHz request when 40MHz
+    // is desired
+    bw_mode = "80MHZ";
+    openhd::log::get_default()->info(
+        "{} requested 40MHz, issuing iw 80MHz command: wlan={} chan={}",
+        type == WiFiCardType::OPENHD_RTL_88X2EU ? "rtl88x2eu" : "rtl88x2cu",
+        device, channel.channel);
+  }
    wifi::commandhelper::iw_set_frequency_and_channel_width2(
        device, dummy_frequency, bw_mode, true);
    return true;
