@@ -237,6 +237,40 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       }
     }
 
+    // rtl88x2cu driver temp readout
+    const std::string rtl88x2cu_proc_dir = "/proc/net/rtl88x2cu_ohd/";
+    if (OHDFilesystemUtil::exists(rtl88x2cu_proc_dir)) {
+      const auto interface_dirs =
+          OHDFilesystemUtil::getAllMatchingDirectoriesByPrefix(
+              rtl88x2cu_proc_dir, "wl");
+
+      std::set<std::string> seen_ifaces;
+      size_t iface_index = 0;
+
+      for (const auto& iface : interface_dirs) {
+        if (iface_index > 1) break;
+        if (seen_ifaces.find(iface) != seen_ifaces.end()) continue;
+        seen_ifaces.insert(iface);
+
+        const std::string thermal_state_file =
+            rtl88x2cu_proc_dir + iface + "/thermal_state";
+
+        if (OHDFilesystemUtil::exists(thermal_state_file)) {
+          const std::string thermal_content =
+              OHDFilesystemUtil::read_file(thermal_state_file);
+          int temp = extract_temperature(thermal_content);
+
+          if (temp != 0) {
+            if (iface_index == 0)
+              curr_temperature_txc0 = static_cast<int8_t>(temp);
+            else if (iface_index == 1)
+              curr_temperature_txc1 = static_cast<int8_t>(temp);
+          }
+          ++iface_index;
+        }
+      }
+    }
+
     if (OHDPlatform::instance().is_rpi()) {
       curr_temperature_core =
           (int8_t)openhd::onboard::rpi::read_temperature_soc_degree();
