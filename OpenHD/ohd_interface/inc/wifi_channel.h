@@ -24,9 +24,12 @@
 #ifndef OPENHD_OPENHD_OHD_INTERFACE_INC_WIFI_CHANNEL_H_
 #define OPENHD_OPENHD_OHD_INTERFACE_INC_WIFI_CHANNEL_H_
 
+#include <algorithm>
 #include <cstdint>
 #include <sstream>
 #include <vector>
+
+#include <unordered_set>
 
 #include "openhd_spdlog.h"
 
@@ -223,6 +226,23 @@ static std::vector<WifiChannel> get_channels_5G_legal_at_least_one_country() {
     }
   }
   return ret;
+}
+// Some drivers (like 88x2bu) cannot handle explicitly illegal frequencies.
+// Filter out the frequencies that are known to be problematic for those cards
+// while still exposing all channels that are legal in at least one country.
+static std::vector<WifiChannel>
+get_channels_5G_legal_at_least_one_country_without_illegal() {
+  static const std::unordered_set<uint32_t> illegal_frequencies{
+      5080, 5100, 5120, 5140, 5160, 5885, 5905, 5925, 5945,
+      5965, 5985, 6005, 6025, 6045, 6065, 6085,
+  };
+  auto channels = get_channels_5G_legal_at_least_one_country();
+  channels.erase(
+      std::remove_if(channels.begin(), channels.end(), [](const auto& channel) {
+        return illegal_frequencies.count(channel.frequency) > 0;
+      }),
+      channels.end());
+  return channels;
 }
 // Returns all Wi-Fi channels 2.4G that are legal in at least one country
 static std::vector<WifiChannel> get_channels_2G_legal_at_least_one_country() {

@@ -223,7 +223,6 @@ std::optional<WiFiCard> DWifiCards::process_card(
   // RTL8812AU - since the openhd driver change, it reliably supports all wifi
   // frequencies, no matter what CRDA has to say
   if (card.type == WiFiCardType::OPENHD_RTL_88X2AU ||
-      card.type == WiFiCardType::OPENHD_RTL_88X2BU ||
       card.type == WiFiCardType::OPENHD_RTL_88X2CU ||
       card.type == WiFiCardType::OPENHD_RTL_88X2EU ||
       card.type == WiFiCardType::OPENHD_RTL_8852BU) {
@@ -231,6 +230,11 @@ std::optional<WiFiCard> DWifiCards::process_card(
         openhd::get_channels_2G_legal_at_least_one_country());
     card.supported_frequencies_5G = openhd::get_all_channel_frequencies(
         openhd::get_channels_5G_legal_at_least_one_country());
+  } else if (card.type == WiFiCardType::OPENHD_RTL_88X2BU) {
+    card.supported_frequencies_2G = openhd::get_all_channel_frequencies(
+        openhd::get_channels_2G_legal_at_least_one_country());
+    card.supported_frequencies_5G = openhd::get_all_channel_frequencies(
+        openhd::get_channels_5G_legal_at_least_one_country_without_illegal());
   } else {
     // Ask CRDA
     card.supported_frequencies_2G =
