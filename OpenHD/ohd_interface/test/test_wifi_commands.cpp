@@ -51,7 +51,7 @@ static void test_all_supported_frequencies(const WiFiCard& card,
     // success=wifi::commandhelper::iw_set_frequency_and_channel_width(card.device_name,frequency_mhz,20);
     const auto success =
         openhd::wb::set_frequency_and_channel_width_for_all_cards(
-            frequency_mhz, channel_width, {card});
+            frequency_mhz, channel_width, {card}, true);
     results.emplace_back(frequency_mhz, success);
     // Weird, otherwise we might get error resource busy
     std::this_thread::sleep_for(std::chrono::seconds(5));

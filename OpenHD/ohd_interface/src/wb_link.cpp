@@ -562,7 +562,7 @@ bool WBLink::apply_frequency_and_channel_width(int frequency,
   std::this_thread::sleep_for(std::chrono::milliseconds(
       100));  // Dirty - wait for any tx packets to drain
   const auto res = openhd::wb::set_frequency_and_channel_width_for_all_cards(
-      frequency, channel_width_rx, m_broadcast_cards);
+      frequency, channel_width_rx, m_broadcast_cards, m_profile.is_air);
   m_tx_header_1->update_channel_width(channel_width_tx);
   m_wb_txrx->tx_reset_stats();
   m_wb_txrx->rx_reset_stats();

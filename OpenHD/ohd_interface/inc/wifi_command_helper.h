@@ -123,7 +123,8 @@ bool iw_supports_monitor_mode(int phy_index);
 bool openhd_driver_set_frequency_and_channel_width(WiFiCardType type,
                                                    const std::string& device,
                                                    uint32_t freq_mhz,
-                                                   uint32_t channel_width);
+                                                   uint32_t channel_width,
+                                                   bool is_air_unit);
 
 // RTL8812bu driver only so far
 bool openhd_driver_set_tx_power(WiFiCardType type, const std::string& device,
