@@ -23,7 +23,7 @@
 
 #include "openhd_naming.h"
 
-#include <fmt/core.h>
+#include <spdlog/fmt/fmt.h>
 
 #include "config_paths.h"
 #include "openhd_util.h"
