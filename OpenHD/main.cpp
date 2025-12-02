@@ -31,10 +31,13 @@
 #include <ohd_video_ground.h>
 
 #include <csignal>
+#include <cerrno>
+#include <cstring>
 #include <exception>
 #include <iostream>
 #include <memory>
 #include <cstdlib>
+#include <unistd.h>
 
 #include "openhd_buttons.h"
 #include "openhd_global_constants.hpp"
@@ -195,10 +198,20 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
 
 static void set_unit_hostname(const bool run_as_air) {
   const auto hostname = openhd::naming::build_unit_name(run_as_air);
-  // Update the runtime hostname for the current session
-  const auto hostname_result = OHDUtil::run_command("hostname", {hostname}, false);
-  if (hostname_result != 0) {
-    std::cerr << "Failed to set hostname to " << hostname << std::endl;
+  // Update the runtime hostname for the current session using the POSIX API
+  const auto sethostname_result = sethostname(hostname.c_str(), hostname.size());
+  if (sethostname_result != 0) {
+    const auto errno_copy = errno;
+    // Fallback to the hostname utility if the syscall fails (for example on
+    // platforms without CAP_SYS_ADMIN at runtime)
+    const auto hostname_result =
+        OHDUtil::run_command("hostname", {hostname}, false);
+    if (hostname_result != 0) {
+      std::cerr << "Failed to set hostname to " << hostname
+                << " using sethostname(): " << std::strerror(errno_copy)
+                << "; fallback command exit code " << hostname_result
+                << std::endl;
+    }
   }
   // Persist hostname for subsequent reboots
   try {
