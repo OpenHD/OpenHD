@@ -86,6 +86,7 @@ static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX462 = 43;
 static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX327 = 44;
 static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX290 = 45;
 static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX462_LOWLIGHT_MINI = 46;
+static constexpr int X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX662 = 47;
 // ... 13 reserved for future use
 static constexpr int X_CAM_TYPE_RPI_V4L2_VEYE_2MP = 60;
 static constexpr int X_CAM_TYPE_RPI_V4L2_VEYE_CSIMX307 = 61;
@@ -197,6 +198,8 @@ static std::string x_cam_type_to_string(int camera_type) {
       return "ARDUCAM_IMX290";
     case X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX462_LOWLIGHT_MINI:
       return "ARDUCAM_IMX462_LOWLIGHT_MINI";
+    case X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX662:
+      return "ARDUCAM_IMX662";
     case X_CAM_TYPE_RPI_V4L2_VEYE_2MP:
       return "VEYE_2MP";
     case X_CAM_TYPE_RPI_V4L2_VEYE_CSIMX307:
@@ -410,6 +413,9 @@ struct XCamera {
       } else if (camera_type == X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX327) {
         ret.push_back(ResolutionFramerate{640, 480, 60});
         ret.push_back(ResolutionFramerate{896, 504, 60});
+        ret.push_back(ResolutionFramerate{1280, 720, 60});
+        ret.push_back(ResolutionFramerate{1920, 1080, 30});
+      } else if (camera_type == X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX662) {
         ret.push_back(ResolutionFramerate{1280, 720, 60});
         ret.push_back(ResolutionFramerate{1920, 1080, 30});
       } else if (camera_type == X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V1_OV5647) {
@@ -743,7 +749,8 @@ static std::vector<ManufacturerForPlatform> get_camera_choices_for_platform(
         CameraNameAndType{"IMX462", 43},
         CameraNameAndType{"IMX327", 44},
         CameraNameAndType{"IMX290", 45},
-        CameraNameAndType{"IMX462_LOWLIGHT_MINI", 46}};
+        CameraNameAndType{"IMX462_LOWLIGHT_MINI", 46},
+        CameraNameAndType{"IMX662", 47}};
     std::vector<CameraNameAndType> veye_cameras{
         CameraNameAndType{"2MP", 60},
         CameraNameAndType{"CSIMX307", 61},

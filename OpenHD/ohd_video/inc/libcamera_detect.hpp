@@ -55,6 +55,9 @@ static std::string get_sensor_name_from_cam_id(const std::string& cam_id) {
   } else if (OHDUtil::contains(cam_id, "imx230")) {
     // arducam
     ret = "imx230";
+  } else if (OHDUtil::contains(cam_id, "imx662")) {
+    // arducam
+    ret = "imx662";
   } else if (OHDUtil::contains_after_uppercase(cam_id, "AR0234")) {
     ret = "AR0234";
   } else if (OHDUtil::contains_after_uppercase(cam_id, "AR1820HS")) {
