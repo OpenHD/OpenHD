@@ -31,6 +31,9 @@
 #include <ohd_video_ground.h>
 
 #include <csignal>
+#include <cerrno>
+#include <cstring>
+#include <exception>
 #include <iostream>
 #include <memory>
 #include <cstdlib>
@@ -43,6 +46,8 @@
 #include "openhd_spdlog.h"
 #include "openhd_temporary_air_or_ground.h"
 #include "openhd_config.h"
+#include "openhd_naming.h"
+#include "openhd_util_filesystem.h"
 #include "config_paths.h"
 
 // |-------------------------------------------------------------------------------|
@@ -55,12 +60,13 @@
 
 // A few run time options, only for development. Way more configuration (during
 // development) can be done by using the hardware.config file
-static const char optstr[] = "?:agcwr:h:";
+static const char optstr[] = "?:agcwor:h:";
 static const struct option long_options[] = {
     {"air", no_argument, nullptr, 'a'},
     {"ground", no_argument, nullptr, 'g'},
     {"clean-start", no_argument, nullptr, 'c'},
     {"no-qt-autostart", no_argument, nullptr, 'w'},
+    {"no-hotspot", no_argument, nullptr, 'o'},
     {"run-time-seconds", required_argument, nullptr, 'r'},
     {"hardware-config-file", required_argument, nullptr, 'h'},
     {"openhd_uart_telemetry", optional_argument, nullptr, 0},
@@ -75,6 +81,7 @@ struct OHDRunOptions {
   bool run_as_air = false;
   bool reset_all_settings = false;
   bool no_qopenhd_autostart=false;
+  bool no_hotspot=false;
   int run_time_seconds = -1;  //-1= infinite, only usefully for debugging
   // Specify the hardware.config file, otherwise,
   // the default location (and default values if no file exists at the default
@@ -127,6 +134,9 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
       case 'w':
         ret.no_qopenhd_autostart = true;
         break;
+      case 'o':
+        ret.no_hotspot = true;
+        break;
       case 'r':
         ret.run_time_seconds = atoi(tmp_optarg);
         break;
@@ -143,6 +153,7 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
         ss << "--clean-start -c  [Wipe all persistent settings OpenHD has "
               "written, can fix any boot issues when switching hw around] \n";
         ss << "--no-qt-autostart [disable auto start of QOpenHD on ground] \n";
+        ss << "--no-hotspot      [disable WiFi hotspot on ground] \n";
         ss << "--run-time-seconds -r [Manually specify run time (default "
               "infinite),for debugging] \n";
         ss << "--hardware-config-file -h [specify path to hardware.config "
@@ -202,6 +213,31 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
   return ret;
 }
 
+static void set_unit_hostname(const bool run_as_air) {
+  const auto hostname = openhd::naming::build_unit_name(run_as_air);
+  // Update the runtime hostname for the current session using the POSIX API
+  const auto sethostname_result = sethostname(hostname.c_str(), hostname.size());
+  if (sethostname_result != 0) {
+    const auto errno_copy = errno;
+    // Fallback to the hostname utility if the syscall fails (for example on
+    // platforms without CAP_SYS_ADMIN at runtime)
+    const auto hostname_result =
+        OHDUtil::run_command("hostname", {hostname}, false);
+    if (hostname_result != 0) {
+      std::cerr << "Failed to set hostname to " << hostname
+                << " using sethostname(): " << std::strerror(errno_copy)
+                << "; fallback command exit code " << hostname_result
+                << std::endl;
+    }
+  }
+  // Persist hostname for subsequent reboots
+  try {
+    OHDFilesystemUtil::write_file("/etc/hostname", hostname + "\n");
+  } catch (const std::exception& ex) {
+    std::cerr << "Failed to persist hostname: " << ex.what() << std::endl;
+  }
+}
+
 int main(int argc, char *argv[]) {
   // OpenHD needs to be run as root!
   OHDUtil::terminate_if_not_root();
@@ -212,6 +248,7 @@ int main(int argc, char *argv[]) {
   if (options.hardware_config_file.has_value()) {
     openhd::set_config_file(options.hardware_config_file.value());
   }
+  set_unit_hostname(options.run_as_air);
   {  // Print all the arguments the OHD main executable is started with
  bool validLicense=false;
  if (OHDFilesystemUtil::exists("/usr/local/share/openhd/license")) {
@@ -315,7 +352,8 @@ int main(int argc, char *argv[]) {
     }
 
     // Then start ohdInterface, which discovers detected wifi cards and more.
-    auto ohdInterface = std::make_shared<OHDInterface>( profile);
+auto ohdInterface =
+    std::make_shared<OHDInterface>(profile, options.no_hotspot);
 
     // Telemetry allows changing all settings (even from other modules)
     ohdTelemetry->add_settings_generic(ohdInterface->get_all_settings());

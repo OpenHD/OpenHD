@@ -48,18 +48,25 @@ static int read_cpu_current_frequency_linux_mhz() {
   if (!value.has_value()) return -1;
   return value.value() / 1000;
 }
+
 int extract_temperature(const std::string& input) {
   auto pos = input.find("temperature:");
   if (pos != std::string::npos) {
     pos += std::string("temperature:").length();
-    while (pos < input.size() && std::isspace(input[pos])) {
+    while (pos < input.size() &&
+           std::isspace(static_cast<unsigned char>(input[pos]))) {
       ++pos;
     }
+    bool neg = (pos < input.size() && input[pos] == '-');
+    if (neg) ++pos;
     auto end = pos;
-    while (end < input.size() && std::isdigit(input[end])) {
+    while (end < input.size() &&
+           std::isdigit(static_cast<unsigned char>(input[end]))) {
       ++end;
     }
-    return std::stoi(input.substr(pos, end - pos));
+    if (end == pos) return 0;
+    int v = std::stoi(input.substr(pos, end - pos));
+    return neg ? -v : v;
   }
   return 0;
 }
@@ -78,6 +85,7 @@ static int read_battery_percentage_linux() {
   }
   return -1;
 }
+
 static int read_battery_charging_linux() {
   const std::string filepaths[] = {"/sys/class/power_supply/BAT1/status",
                                    "/sys/class/power_supply/BAT0/status"};
@@ -99,6 +107,7 @@ static int read_battery_charging_linux() {
   }
   return -1;  // No battery status file found
 }
+
 OnboardComputerStatusProvider::OnboardComputerStatusProvider(bool enable)
     : m_enable(enable), m_ina_219(SHUNT_OHMS, MAX_EXPECTED_AMPS) {
   ina219_log_warning_once(0);
@@ -134,13 +143,9 @@ void OnboardComputerStatusProvider::calculate_cpu_usage_until_terminate() {
     const auto value = openhd::onboard::read_cpuload_once_blocking();
     const auto read_time = std::chrono::steady_clock::now() - before;
     if (value.has_value()) {
-      // lock mutex and write out
       std::lock_guard<std::mutex> lock(m_curr_onboard_computer_status_mutex);
       m_curr_onboard_computer_status.cpu_cores[0] = value.value();
     }
-    // std::cout<<"Took:"<<std::chrono::duration_cast<std::chrono::milliseconds>(read_time).count()<<"\n";
-    //  top can block up to X seconds, but in case it doesn't make sure we don't
-    //  neccessarily waste cpu here
     const auto minimum_delay = std::chrono::seconds(1);
     if (read_time < minimum_delay) {
       std::this_thread::sleep_for((minimum_delay - read_time));
@@ -150,10 +155,7 @@ void OnboardComputerStatusProvider::calculate_cpu_usage_until_terminate() {
 
 void OnboardComputerStatusProvider::calculate_other_until_terminate() {
   while (!terminate) {
-    // We always sleep for 1 second
-    // just to make sure to not hog too much cpu here.
     std::this_thread::sleep_for(std::chrono::seconds(1));
-    // microhard link
     int microhard_enabled = 21;
     int microhard_rssi = 22;
     int microhard_tx_pwr = 24;
@@ -163,11 +165,9 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
     int microhard_noise = 28;
     int microhard_snr = 29;
     int ohd_encryption = 0;
-    // normal stuff
     int8_t curr_temperature_core = 0;
     int8_t curr_temperature_txc0 = 0;
     int8_t curr_temperature_txc1 = 0;
-    int txc_temp = 0;
     int curr_clock_cpu = 0;
     int curr_clock_isp = 0;
     int curr_clock_h264 = 0;
@@ -181,12 +181,13 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
         static_cast<uint8_t>(OHDPlatform::instance().platform_type);
     const auto curr_ram_usage =
         openhd::onboard::calculate_memory_usage_percent();
+
     ina219_log_warning_once(curr_ina219_voltage);
     if (!m_ina_219.has_any_error) {
       float voltage = roundf(m_ina_219.voltage() * 1000);
       float current = roundf(m_ina_219.current() * 1000) / 1000;
-      curr_ina219_voltage = voltage;
-      curr_ina219_current = current;
+      curr_ina219_voltage = static_cast<int>(voltage);
+      curr_ina219_current = static_cast<int>(current);
     } else if (OHDFilesystemUtil::exists(
                    "/sys/class/power_supply/BAT1/capacity") ||
                OHDFilesystemUtil::exists(
@@ -197,12 +198,14 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       curr_ina219_voltage = -1;
       curr_ina219_current = -1;
     }
+
     if (OHDFilesystemUtil::exists("/boot/openhd/hidden.txt")) {
       ohd_encryption = 1;
     } else {
       ohd_encryption = 3;
     }
-    // Check for presence of rtl88x2eu driver debug interface
+
+    // rtl88x2eu driver temp readout
     const std::string rtl88x2eu_proc_dir = "/proc/net/rtl88x2eu_ohd/";
     if (OHDFilesystemUtil::exists(rtl88x2eu_proc_dir)) {
       const auto interface_dirs =
@@ -214,10 +217,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
 
       for (const auto& iface : interface_dirs) {
         if (iface_index > 1) break;
-
-        if (seen_ifaces.find(iface) != seen_ifaces.end()) {
-          continue;
-        }
+        if (seen_ifaces.find(iface) != seen_ifaces.end()) continue;
         seen_ifaces.insert(iface);
 
         const std::string thermal_state_file =
@@ -228,21 +228,54 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
               OHDFilesystemUtil::read_file(thermal_state_file);
           int temp = extract_temperature(thermal_content);
 
-          if (temp > 0) {
-            if (iface_index == 0) {
+          if (temp != 0) {
+            if (iface_index == 0)
               curr_temperature_txc0 = static_cast<int8_t>(temp);
-            } else if (iface_index == 1) {
+            else if (iface_index == 1)
               curr_temperature_txc1 = static_cast<int8_t>(temp);
-            }
           }
           ++iface_index;
         }
       }
     }
+
+    // rtl88x2cu driver temp readout
+    const std::string rtl88x2cu_proc_dir = "/proc/net/rtl88x2cu_ohd/";
+    if (OHDFilesystemUtil::exists(rtl88x2cu_proc_dir)) {
+      const auto interface_dirs =
+          OHDFilesystemUtil::getAllMatchingDirectoriesByPrefix(
+              rtl88x2cu_proc_dir, "wl");
+
+      std::set<std::string> seen_ifaces;
+      size_t iface_index = 0;
+
+      for (const auto& iface : interface_dirs) {
+        if (iface_index > 1) break;
+        if (seen_ifaces.find(iface) != seen_ifaces.end()) continue;
+        seen_ifaces.insert(iface);
+
+        const std::string thermal_state_file =
+            rtl88x2cu_proc_dir + iface + "/thermal_state";
+
+        if (OHDFilesystemUtil::exists(thermal_state_file)) {
+          const std::string thermal_content =
+              OHDFilesystemUtil::read_file(thermal_state_file);
+          int temp = extract_temperature(thermal_content);
+
+          if (temp != 0) {
+            if (iface_index == 0)
+              curr_temperature_txc0 = static_cast<int8_t>(temp);
+            else if (iface_index == 1)
+              curr_temperature_txc1 = static_cast<int8_t>(temp);
+          }
+          ++iface_index;
+        }
+      }
+    }
+
     if (OHDPlatform::instance().is_rpi()) {
       curr_temperature_core =
           (int8_t)openhd::onboard::rpi::read_temperature_soc_degree();
-      // temporary, until we have our own message
       curr_clock_cpu = openhd::onboard::rpi::read_curr_frequency_mhz(
           openhd::onboard::rpi::VCGENCMD_CLOCK_CPU);
       curr_clock_isp = openhd::onboard::rpi::read_curr_frequency_mhz(
@@ -256,10 +289,8 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       curr_rpi_undervolt = openhd::onboard::rpi::vcgencmd_get_undervolt();
     } else {
       const auto cpu_temp = (int8_t)openhd::onboard::readTemperature();
-      const auto platform = OHDPlatform::instance();
       curr_temperature_core = cpu_temp;
-      curr_temperature_txc0 = txc_temp;
-      curr_temperature_txc1 = txc_temp;
+      const auto platform = OHDPlatform::instance();
       if (platform.is_rock() || platform.platform_type == X_PLATFORM_TYPE_X86) {
         if (OHDFilesystemUtil::exists(
                 "/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq")) {
@@ -267,8 +298,8 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
         }
       }
     }
+
     {
-      // lock mutex and write out
       std::lock_guard<std::mutex> lock(m_curr_onboard_computer_status_mutex);
       m_curr_onboard_computer_status.temperature_core[0] =
           curr_temperature_core;
@@ -276,7 +307,6 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
           curr_temperature_txc0;
       m_curr_onboard_computer_status.temperature_core[2] =
           curr_temperature_txc1;
-      // temporary, until we have our own message
       m_curr_onboard_computer_status.storage_type[0] = curr_clock_cpu;
       m_curr_onboard_computer_status.storage_type[1] = curr_clock_isp;
       m_curr_onboard_computer_status.storage_type[2] = curr_clock_h264;
@@ -292,14 +322,11 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       m_curr_onboard_computer_status.link_rx_rate[4] = microhard_freq;
       m_curr_onboard_computer_status.link_rx_rate[5] = microhard_noise;
       m_curr_onboard_computer_status.link_rx_rate[6] = microhard_snr;
-      // openhd status message
-      m_curr_onboard_computer_status.link_type[0] =
-          ohd_platform;                                 // ohd_platform;
-      m_curr_onboard_computer_status.link_type[1] = 0;  // ohd_wifi;
-      m_curr_onboard_computer_status.link_type[2] = 0;  // ohd_cam;
-      m_curr_onboard_computer_status.link_type[3] = 0;  // ohd_ident;
-      m_curr_onboard_computer_status.link_type[4] =
-          ohd_encryption;  // ohd_encryption;
+      m_curr_onboard_computer_status.link_type[0] = ohd_platform;
+      m_curr_onboard_computer_status.link_type[1] = 0;
+      m_curr_onboard_computer_status.link_type[2] = 0;
+      m_curr_onboard_computer_status.link_type[3] = 0;
+      m_curr_onboard_computer_status.link_type[4] = ohd_encryption;
       m_curr_onboard_computer_status.ram_usage =
           static_cast<uint32_t>(curr_ram_usage.ram_usage_perc);
       m_curr_onboard_computer_status.ram_total = curr_ram_usage.ram_total_mb;

@@ -632,53 +632,104 @@ static std::string createAllwinnerStream(const CameraSettings& settings) {
 /**
  * For WILLY Cameras
  */
-static int nxp_calculate_number_of_mbs_in_a_slice(int frame_height_px, int n_slices) {
-  if (n_slices < 2)
-    return 0;
+static int nxp_calculate_number_of_mbs_in_a_slice(int frame_height_px,
+                                                  int n_slices) {
+  if (n_slices < 2) return 0;
 
   int frame_mb_rows = (frame_height_px + 15) / 16;
   if (n_slices > frame_mb_rows) {
     openhd::log::get_default()->warn(
-        "Too many slices requested: frame_mb_rows={}, n_slices={}", frame_mb_rows, n_slices);
+        "Too many slices requested: frame_mb_rows={}, n_slices={}",
+        frame_mb_rows, n_slices);
     return frame_mb_rows;
   }
 
   int slice_row_mb = frame_mb_rows / n_slices;
-  if (frame_mb_rows % n_slices)
-    slice_row_mb++;
+  if (frame_mb_rows % n_slices) slice_row_mb++;
 
   openhd::log::get_default()->debug(
-      "NXP slice calculation -> frame_height_px={}, n_slices={}, frame_mb_rows={}, mbs_per_slice={}",
+      "NXP slice calculation -> frame_height_px={}, n_slices={}, "
+      "frame_mb_rows={}, mbs_per_slice={}",
       frame_height_px, n_slices, frame_mb_rows, slice_row_mb);
 
   return slice_row_mb;
 }
 
+// For Future use - currently not working with linux 5.15
+// static std::string create_willy_camera1_stream(const int device_index,
+//                                                const CameraSettings&
+//                                                settings) {
+//   std::stringstream ss;
+//   const int bps = static_cast<int>(settings.h26x_bitrate_kbits * 800);
+//   const bool use_slicing = settings.h26x_num_slices >= 2;
+
+//   std::string slicing_str;
+//   if (use_slicing) {
+//     const int mbs_per_slice = nxp_calculate_number_of_mbs_in_a_slice(
+//         settings.streamed_video_format.height, settings.h26x_num_slices);
+//     slicing_str = fmt::format(",number_of_mbs_in_a_slice={}", mbs_per_slice);
+//   }
+
+//   ss << fmt::format("v4l2src device=/dev/video2 ! ");
+//   ss << fmt::format(
+//       "video/x-raw,width=960,height=720,framerate=120/1,format=NV12 ! ");
+
+//   ss << fmt::format("v4l2h264enc extra-controls=\"controls,"
+//                     "h264_profile=1,"
+//                     "repeat_sequence_header=1,"
+//                     "video_bitrate_mode=1,"
+//                     "video_bitrate={}{}\" ! ",
+//                     bps, slicing_str);
+
+//   ss << "video/x-h264,profile=constrained-baseline ! ";
+
+//   return ss.str();
+// }
+
 static std::string create_willy_camera1_stream(const int device_index,
                                                const CameraSettings& settings) {
-  std::stringstream ss;
-  const int bps = static_cast<int>(settings.h26x_bitrate_kbits * 800);
-  const bool use_slicing = settings.h26x_num_slices >= 2;
+  using namespace openhd;
 
-  std::string slicing_str;
-  if (use_slicing) {
-    const int mbs_per_slice = nxp_calculate_number_of_mbs_in_a_slice(
-        settings.streamed_video_format.height, settings.h26x_num_slices);
-    slicing_str = fmt::format(",number_of_mbs_in_a_slice={}", mbs_per_slice);
-  }
+  // Target encode size/fps (fallbacks if settings are zero)
+  int target_w = settings.streamed_video_format.width > 0
+                     ? settings.streamed_video_format.width
+                     : 1280;
+  int target_h = settings.streamed_video_format.height > 0
+                     ? settings.streamed_video_format.height
+                     : 720;
+  int target_fps = settings.streamed_video_format.framerate > 0
+                       ? settings.streamed_video_format.framerate
+                       : 120;
 
-  ss << fmt::format("v4l2src device=/dev/video3 ! ");
-  ss << fmt::format(
-      "video/x-raw,width=960,height=720,framerate=120/1,format=NV12 ! ");
+  // Keep encoder-friendly alignment
+  target_w = ALIGN_UP(target_w, 16);
+  target_h = ALIGN_UP(target_h, 16);
 
-  ss << fmt::format("v4l2h264enc extra-controls=\"controls,"
-                    "h264_profile=1,"
-                    "repeat_sequence_header=1,"
-                    "video_bitrate_mode=1,"
-                    "video_bitrate={}{}\" ! ",
-                    bps, slicing_str);
+  // VPU bitrate expects bits/s on this stack
+  const int bps = settings.h26x_bitrate_kbits;
 
-  ss << "video/x-h264,profile=constrained-baseline ! ";
+  // Select encoder by codec (both NXP plugins use same knobs here)
+  const bool use_h264 =
+      (settings.streamed_video_format.videoCodec == VideoCodec::H264);
+  const char* enc_name = use_h264 ? "vpuenc_h264" : "vpuenc_h265";
+
+  std::ostringstream ss;
+  // Source: WILLY camera path is YUY2 952x720 @120; dmabuf from v4l2src into
+  // g2d
+  ss << "v4l2src io-mode=dmabuf device=/dev/video" << device_index << " ! "
+     << "video/x-raw,format=YUY2,width=960,height=720,framerate=120/"
+        "1,interlace-mode=progressive ! "
+     << "queue max-size-buffers=1 leaky=downstream ! "
+     << "imxvideoconvert_g2d ! ";
+
+  // Convert + scale to encoder target; RGBx is known-good on this BSP
+  ss << "video/x-raw,format=RGBx,width=" << target_w << ",height=" << target_h
+     << " ! "
+     << "queue max-size-buffers=1 leaky=downstream ! ";
+
+  // Hardware encoder
+  ss << enc_name << " gop-size=" << settings.h26x_keyframe_interval
+     << " bitrate=" << bps << " ! ";
 
   return ss.str();
 }

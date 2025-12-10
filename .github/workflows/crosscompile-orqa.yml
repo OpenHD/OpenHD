@@ -1,0 +1,93 @@
+name: Cross-compile OpenHD with Orqa SDK
+
+on:
+  workflow_dispatch:
+    inputs:
+      sdk-installer-url:
+        required: false
+  push:
+    branches:
+      - dev-release
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    env:
+      DOWNLOAD_KEY: ${{ secrets.DOWNLOAD_KEY }}
+      DOWNLOAD_URL: ${{ secrets.DOWNLOAD_URL }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            ninja-build \
+            pkg-config \
+            autoconf \
+            automake \
+            libtool \
+            curl \
+            xz-utils \
+            zip
+
+      - name: Retrieve Orqa SDK installer
+        run: |
+          set -euo pipefail
+          curl -# -u "${DOWNLOAD_KEY}" -O "${DOWNLOAD_URL}"
+          mv SDK-DTK_GCB_working_usb_and_88x2eu.sh OpenHD/SDK-DTK_GCB_working_usb_and_88x2eu.sh
+
+      - name: Install Orqa SDK
+        env:
+          SDK_INSTALL_DIR: ${{ runner.temp }}/orqa-sdk
+        run: |
+          set -euo pipefail
+          mkdir -p "$SDK_INSTALL_DIR"
+          sh OpenHD/SDK-DTK_GCB_working_usb_and_88x2eu.sh -y -d "$SDK_INSTALL_DIR"
+
+      - name: Bootstrap SDK dependencies
+        env:
+          SDK_INSTALL_DIR: ${{ runner.temp }}/orqa-sdk
+          POCO_ARCHIVE: ${{ runner.temp }}/poco-libraries.zip
+          LIBSODIUM_ARCHIVE: ${{ runner.temp }}/libsodium-libraries.zip
+        run: |
+          set -euo pipefail
+          OpenHD/scripts/setup_orqa_sdk.sh "$SDK_INSTALL_DIR" "$POCO_ARCHIVE" "$LIBSODIUM_ARCHIVE"
+
+      - name: Configure OpenHD (Release)
+        env:
+          SDK_INSTALL_DIR: ${{ runner.temp }}/orqa-sdk
+        run: |
+          set -euo pipefail
+          source "$SDK_INSTALL_DIR/environment-setup-armv8a-poky-linux"
+          cmake -S OpenHD -B build-sdk -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build OpenHD
+        env:
+          SDK_INSTALL_DIR: ${{ runner.temp }}/orqa-sdk
+        run: |
+          set -euo pipefail
+          source "$SDK_INSTALL_DIR/environment-setup-armv8a-poky-linux"
+          cmake --build build-sdk --parallel
+
+      - name: Package cross-compiled binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: openhd-aarch64
+          path: build-sdk/openhd
+
+      - name: Upload Poco libraries archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: poco-libraries
+          path: ${{ runner.temp }}/poco-libraries.zip
+
+      - name: Upload libsodium libraries archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: libsodium-libraries
+          path: ${{ runner.temp }}/libsodium-libraries.zip

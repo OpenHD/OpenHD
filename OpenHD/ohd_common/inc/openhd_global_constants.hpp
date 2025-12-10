@@ -60,8 +60,8 @@ static_assert(VIDEO_GROUND_VIDEO_STREAM_1_UDP !=
               "Must be different");
 
 static constexpr uint8_t MAJOR_VERSION = 2;
-static constexpr uint8_t MINOR_VERSION = 6;
-static constexpr uint8_t PATCH_VERSION = 4;
+static constexpr uint8_t MINOR_VERSION = 7;
+static constexpr uint8_t PATCH_VERSION = 0;
 static constexpr uint8_t RELEASE_TYPE = 0;
 static std::string ohd_version_as_string(uint8_t major, uint8_t minor,
                                          uint8_t patch, uint8_t release_type) {

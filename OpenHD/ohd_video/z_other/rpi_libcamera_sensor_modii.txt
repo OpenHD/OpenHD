@@ -4,6 +4,7 @@ IMX708 skymaster hdr
                              2304x1296 [56.03 fps - (0, 0)/4608x2592 crop]
                              4608x2592 [14.35 fps - (0, 0)/4608x2592 crop]
 IMX462
+IMX662
 IMX477
 IMX219
 openhd@openhd:~/OpenHD/OpenHD/build_debug $ sudo libcamera-hello --list-cameras

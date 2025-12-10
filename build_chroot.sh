@@ -27,6 +27,13 @@
 # Ensure /tmp has correct permissions
 chmod 1777 /tmp || { echo "Failed to set permissions on /tmp"; exit 1; }
 
+# Disable stale bullseye-backports entries that now 404
+if grep -Rq "bullseye-backports" /etc/apt/sources.list /etc/apt/sources.list.d 2>/dev/null; then
+    for source_file in /etc/apt/sources.list /etc/apt/sources.list.d/*.list; do
+        [[ -f "$source_file" ]] && sed -i '/bullseye-backports/s/^/#/' "$source_file"
+    done
+fi
+
 # Update package lists and install necessary packages as root
 su -c "apt-get update --fix-missing && apt-get install -y sudo" || { echo "Failed to update and install sudo"; exit 1; }
 

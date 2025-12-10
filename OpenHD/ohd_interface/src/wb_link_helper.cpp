@@ -82,7 +82,7 @@ bool openhd::wb::any_card_support_frequency(
 
 bool openhd::wb::set_frequency_and_channel_width_for_all_cards(
     uint32_t frequency, uint32_t channel_width,
-    const std::vector<WiFiCard>& m_broadcast_cards) {
+    const std::vector<WiFiCard>& m_broadcast_cards, bool is_air_unit) {
   bool ret = true;  // Initialize return value to true
   for (const auto& card : m_broadcast_cards) {
     // Skip emulated cards
@@ -97,7 +97,7 @@ bool openhd::wb::set_frequency_and_channel_width_for_all_cards(
         card.type == WiFiCardType::OPENHD_RTL_88X2EU ||
         card.type == WiFiCardType::OPENHD_RTL_8852BU) {
       wifi::commandhelper::openhd_driver_set_frequency_and_channel_width(
-          card.type, card.device_name, frequency, channel_width);
+          card.type, card.device_name, frequency, channel_width, is_air_unit);
     } else {
       // Handle other card types with a different function
       const bool success =
@@ -377,8 +377,16 @@ int openhd::wb::calculate_bitrate_for_wifi_config_kbits(
   // taking mcs index, channel width, ... into account
   const auto wifi_space = openhd::get_space_from_frequency(frequency_mhz);
   const int max_rate_for_current_wifi_config_without_adjust =
-      get_max_rate_possible(card, wifi_space, mcs_index,
-                            channel_width_mhz == 40);
+      get_max_rate_possible(card, wifi_space, mcs_index, channel_width_mhz);
+  if (channel_width_mhz != 10 && channel_width_mhz != 20 &&
+      channel_width_mhz != 40) {
+    auto m_console = openhd::log::get_default();
+    m_console->warn(
+        "Unsupported channel width {}MHz for rate calculation, defaulting to "
+        "{} "
+        "kBit/s",
+        channel_width_mhz, max_rate_for_current_wifi_config_without_adjust);
+  }
   const int max_rate_for_current_wifi_config = multiply_by_perc(
       max_rate_for_current_wifi_config_without_adjust, dev_adjustment_percent);
   if (debug_log) {

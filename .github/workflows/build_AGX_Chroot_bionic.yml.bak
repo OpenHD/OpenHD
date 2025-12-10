@@ -3,7 +3,7 @@ name: Build NVIDA (AGX) online
 on:
   push:
    branches:
-      - "2.6-evo"
+      - "2.7-evo"
       - "dev-release"
       - "release"
 
