@@ -27,6 +27,7 @@
 
 #include "mav_helper.h"
 #include "mavsdk_temporary/XMavlinkParamProvider.h"
+#include "openhd_telemetry_recorder.h"
 #include "openhd_temporary_air_or_ground.h"
 #include "openhd_util.h"
 #include "openhd_util_time.h"
@@ -36,6 +37,7 @@ AirTelemetry::AirTelemetry() : MavlinkSystem(OHD_SYS_ID_AIR) {
   assert(m_console);
   m_air_settings = std::make_unique<openhd::telemetry::air::SettingsHolder>();
   m_fc_serial = std::make_unique<SerialEndpointManager>();
+  m_openhd_uart_serial = std::make_unique<SerialEndpointManager>();
   m_ohd_main_component = std::make_shared<OHDMainComponent>(_sys_id, true);
   m_components.push_back(m_ohd_main_component);
   //
@@ -59,6 +61,7 @@ AirTelemetry::AirTelemetry() : MavlinkSystem(OHD_SYS_ID_AIR) {
         });
   }
   setup_uart();
+  setup_openhd_uart_telemetry();
   m_console->debug("Created AirTelemetry");
 }
 
@@ -90,6 +93,9 @@ void AirTelemetry::send_messages_ground_unit(
   if (m_tcp_server) {
     m_tcp_server->sendMessages(messages);
   }
+  if (m_openhd_uart_serial) {
+    m_openhd_uart_serial->send_messages_if_enabled(messages);
+  }
 }
 
 void AirTelemetry::on_messages_fc(std::vector<MavlinkMessage>& messages) {
@@ -98,6 +104,17 @@ void AirTelemetry::on_messages_fc(std::vector<MavlinkMessage>& messages) {
   //  Note: No OpenHD component ever talks to the FC, FC is completely passed
   //  through
   // debugMavlinkMessages(messages,"FC");
+  if (!messages.empty()) {
+    auto& recorder = openhd::TelemetryRecorder::instance();
+    for (const auto& msg : messages) {
+      const mavlink_message_t& mav_msg = msg.m;
+      const auto* payload =
+          reinterpret_cast<const uint8_t*>(_MAV_PAYLOAD(&mav_msg));
+      recorder.record_fc_mavlink_message(mav_msg.sysid, mav_msg.compid,
+                                         mav_msg.msgid, mav_msg.seq, payload,
+                                         mav_msg.len);
+    }
+  }
   send_messages_ground_unit(messages);
   m_ohd_main_component->check_fc_messages_for_actions(messages);
 }
@@ -233,6 +250,13 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
     m_air_settings->persist(false);
     return true;
   };
+  auto c_openhd_uart_conn = [this](std::string, std::string value) {
+    m_air_settings->unsafe_get_settings().openhd_uart_telemetry_connection =
+        value;
+    m_air_settings->persist();
+    setup_openhd_uart_telemetry();
+    return true;
+  };
   ret.push_back(openhd::Setting{
       air::FC_UART_CONNECTION_TYPE,
       openhd::StringSetting{
@@ -253,6 +277,11 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
       openhd::IntSetting{
           static_cast<int>(m_air_settings->get_settings().fc_battery_n_cells),
           c_fc_battery_n_cells}});
+  ret.push_back(openhd::Setting{
+      air::OPENHD_UART_TELEMETRY_PARAM,
+      openhd::StringSetting{
+          m_air_settings->get_settings().openhd_uart_telemetry_connection,
+          c_openhd_uart_conn}});
   // and this allows an advanced user to change its air unit to a ground unit
   // only expose this setting if OpenHD uses the file workaround to figure out
   // air or ground.
@@ -291,6 +320,40 @@ void AirTelemetry::setup_uart() {
   } else {
     m_fc_serial->disable();
   }
+}
+
+void AirTelemetry::setup_openhd_uart_telemetry() {
+  if (!m_openhd_uart_serial) return;
+  const auto& settings = m_air_settings->get_settings();
+  const auto uart_linux_fd = serial_openhd_param_to_linux_fd(
+      settings.openhd_uart_telemetry_connection);
+  if (!uart_linux_fd.has_value()) {
+    m_openhd_uart_serial->disable();
+    return;
+  }
+  SerialEndpoint::HWOptions options{};
+  options.linux_filename = uart_linux_fd.value();
+  options.baud_rate = 115200;
+  options.enable_reading = true;
+  m_openhd_uart_serial->configure(
+      options, "openhd_uart",
+      [this](const std::vector<MavlinkMessage> messages) {
+        auto copy = messages;
+        this->on_messages_ground_unit(copy);
+      });
+}
+
+void AirTelemetry::configure_openhd_uart_telemetry(
+    const std::optional<std::string>& device_path) {
+  if (!device_path.has_value()) {
+    return;
+  }
+  m_console->info("CLI override for OpenHD UART telemetry: {}",
+                  device_path.value());
+  m_air_settings->unsafe_get_settings().openhd_uart_telemetry_connection =
+      device_path.value();
+  m_air_settings->persist();
+  setup_openhd_uart_telemetry();
 }
 
 void AirTelemetry::set_link_handle(std::shared_ptr<OHDLink> link) {

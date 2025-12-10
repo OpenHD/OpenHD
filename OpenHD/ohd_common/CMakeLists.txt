@@ -63,6 +63,7 @@ set(sources
     "src/openhd_util_async.cpp"
     "src/openhd_external_device.cpp"
     "src/openhd_action_handler.cpp"
+    "src/openhd_telemetry_recorder.cpp"
     "src/openhd_udp.cpp"
     "src/openhd_tcp.cpp"
     "src/openhd_led.cpp"

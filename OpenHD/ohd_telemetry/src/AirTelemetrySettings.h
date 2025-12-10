@@ -61,6 +61,7 @@ struct Settings {
   // DANG ardupilot why do we have to make this an extra param ...
   // 0 means not configured (do not use)
   int fc_battery_n_cells = 0;
+  std::string openhd_uart_telemetry_connection = UART_CONNECTION_TYPE_DISABLE;
 };
 
 // 16 chars limit !
@@ -68,6 +69,7 @@ static constexpr auto FC_UART_CONNECTION_TYPE = "FC_UART_CONN";
 static constexpr auto FC_UART_BAUD_RATE = "FC_UART_BAUD";
 static constexpr auto FC_UART_FLOW_CONTROL = "FC_UART_FLWCTL";
 static constexpr auto FC_BATT_N_CELLS = "FC_BATT_N_CELLS";
+static constexpr auto OPENHD_UART_TELEMETRY_PARAM = "OHD_UART_TLM";
 
 class SettingsHolder : public openhd::PersistentSettings<Settings> {
  public:

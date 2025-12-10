@@ -24,6 +24,7 @@
 #ifndef OPENHD_TELEMETRY_AIRTELEMETRY_H
 #define OPENHD_TELEMETRY_AIRTELEMETRY_H
 
+#include <optional>
 #include <string>
 
 #include "endpoints/SerialEndpoint.h"
@@ -85,6 +86,8 @@ class AirTelemetry : public MavlinkSystem {
    * messages from/to the ground unit are just discarded.
    */
   void set_link_handle(std::shared_ptr<OHDLink> link);
+  void configure_openhd_uart_telemetry(
+      const std::optional<std::string>& device_path);
 
  private:
   // send a mavlink message to the flight controller connected to the air unit
@@ -100,10 +103,12 @@ class AirTelemetry : public MavlinkSystem {
   // R.N only on air, and only FC uart settings
   std::vector<openhd::Setting> get_all_settings();
   void setup_uart();
+  void setup_openhd_uart_telemetry();
 
  private:
   std::unique_ptr<openhd::telemetry::air::SettingsHolder> m_air_settings;
   std::unique_ptr<SerialEndpointManager> m_fc_serial;
+  std::unique_ptr<SerialEndpointManager> m_openhd_uart_serial;
   // send/receive data via wb
   std::unique_ptr<WBEndpoint> m_wb_endpoint;
   // shared because we also push it onto our components list
