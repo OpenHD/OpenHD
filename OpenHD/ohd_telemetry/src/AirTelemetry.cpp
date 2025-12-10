@@ -221,8 +221,20 @@ void AirTelemetry::add_settings_camera_component(
 std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
   std::vector<openhd::Setting> ret{};
   using namespace openhd::telemetry;
-  auto c_fc_uart_connection_type = [this](std::string, std::string value) {
+  auto uart_conflicts = [](const std::string& lhs, const std::string& rhs) {
+    return !lhs.empty() && !rhs.empty() && lhs == rhs;
+  };
+  auto c_fc_uart_connection_type = [this, uart_conflicts](std::string,
+                                                         std::string value) {
     // We just accept anything
+    if (uart_conflicts(value,
+                       m_air_settings->get_settings()
+                           .openhd_uart_telemetry_connection)) {
+      m_console->warn("FC UART and OpenHD UART telemetry cannot use the same "
+                      "device ({}), rejecting change",
+                      value);
+      return false;
+    }
     m_air_settings->unsafe_get_settings().fc_uart_connection_type = value;
     m_air_settings->persist();
     setup_uart();
@@ -250,7 +262,13 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
     m_air_settings->persist(false);
     return true;
   };
-  auto c_openhd_uart_conn = [this](std::string, std::string value) {
+  auto c_openhd_uart_conn = [this, uart_conflicts](std::string,
+                                                  std::string value) {
+    if (uart_conflicts(m_air_settings->get_settings().fc_uart_connection_type,
+                       value)) {
+      m_console->warn("OpenHD UART telemetry cannot reuse the FC UART ({})", value);
+      return false;
+    }
     m_air_settings->unsafe_get_settings().openhd_uart_telemetry_connection =
         value;
     m_air_settings->persist();
@@ -346,6 +364,13 @@ void AirTelemetry::setup_openhd_uart_telemetry() {
 void AirTelemetry::configure_openhd_uart_telemetry(
     const std::optional<std::string>& device_path) {
   if (!device_path.has_value()) {
+    return;
+  }
+  if (device_path.value() ==
+      m_air_settings->get_settings().fc_uart_connection_type) {
+    m_console->warn("OpenHD UART telemetry device {} conflicts with FC UART, "
+                    "ignoring override",
+                    device_path.value());
     return;
   }
   m_console->info("CLI override for OpenHD UART telemetry: {}",

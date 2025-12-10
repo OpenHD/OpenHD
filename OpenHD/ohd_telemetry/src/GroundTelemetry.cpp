@@ -314,6 +314,9 @@ void GroundTelemetry::remove_external_ground_station_ip(
 
 std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
   std::vector<openhd::Setting> ret{};
+  auto uart_conflicts = [](const std::string& lhs, const std::string& rhs) {
+    return !lhs.empty() && !rhs.empty() && lhs == rhs;
+  };
   // and this allows an advanced user to change its air unit to a ground unit
   // only expose this setting if OpenHD uses the file workaround to figure out
   // air or ground.
@@ -383,9 +386,17 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
   }
 #endif
   if (true) {
-    auto c_gnd_uart_connection_type = [this](std::string, std::string value) {
+    auto c_gnd_uart_connection_type = [this, uart_conflicts](std::string,
+                                                             std::string value) {
       if (!value.empty() && !OHDFilesystemUtil::exists(value)) {
         m_console->warn("{} is not a valid serial", value);
+      }
+      if (uart_conflicts(value, m_gnd_settings->get_settings()
+                                    .openhd_uart_telemetry_connection)) {
+        m_console->warn(
+            "Ground tracker UART cannot reuse the OpenHD UART telemetry device "
+            "({})", value);
+        return false;
       }
       m_gnd_settings->unsafe_get_settings().gnd_uart_connection_type = value;
       m_gnd_settings->persist();
@@ -398,7 +409,15 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
             m_gnd_settings->get_settings().gnd_uart_connection_type,
             c_gnd_uart_connection_type}});
   }
-  auto c_openhd_uart_conn = [this](std::string, std::string value) {
+  auto c_openhd_uart_conn = [this, uart_conflicts](std::string,
+                                                  std::string value) {
+    if (uart_conflicts(m_gnd_settings->get_settings().gnd_uart_connection_type,
+                       value)) {
+      m_console->warn(
+          "OpenHD UART telemetry cannot use the tracker UART device ({})",
+          value);
+      return false;
+    }
     m_gnd_settings->unsafe_get_settings().openhd_uart_telemetry_connection =
         value;
     m_gnd_settings->persist();
@@ -457,6 +476,14 @@ void GroundTelemetry::setup_openhd_uart_telemetry() {
 void GroundTelemetry::configure_openhd_uart_telemetry(
     const std::optional<std::string>& device_path) {
   if (!device_path.has_value()) {
+    return;
+  }
+  if (device_path.value() ==
+      m_gnd_settings->get_settings().gnd_uart_connection_type) {
+    m_console->warn(
+        "OpenHD UART telemetry device {} conflicts with tracker UART, ignoring "
+        "override",
+        device_path.value());
     return;
   }
   m_console->info("CLI override for OpenHD UART telemetry: {}",
