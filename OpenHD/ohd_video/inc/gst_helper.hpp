@@ -818,6 +818,18 @@ static std::string createV4l2SrcRawAndSwEncodeStream(
  * @param videoCodec the video codec to create the rtp for.
  * @return the gstreamer pipeline part.
  */
+static std::string create_caps_nal(const VideoCodec& videoCodec,
+                                   bool alignment_nal) {
+  if (videoCodec == VideoCodec::H264) {
+    if (alignment_nal) {
+      return "video/x-h264,stream-format=byte-stream,alignment=nal ! ";
+    } else {
+      return "video/x-h264,stream-format=byte-stream,alignment=au ! ";
+    }
+  }
+  return "video/x-h265, stream-format=\"byte-stream\" ! ";
+}
+
 static std::string create_parse_and_rtp_packetize(
     const VideoCodec videoCodec, int rtp_fragment_size = 1024) {
   std::stringstream ss;
@@ -832,18 +844,6 @@ static std::string create_queue_and_parse(const VideoCodec videoCodec) {
   ss << "queue ! ";
   ss << create_parse_for_codec(videoCodec);
   return ss.str();
-}
-
-static std::string create_caps_nal(const VideoCodec& videoCodec,
-                                   bool alignment_nal) {
-  if (videoCodec == VideoCodec::H264) {
-    if (alignment_nal) {
-      return "video/x-h264,stream-format=byte-stream,alignment=nal ! ";
-    } else {
-      return "video/x-h264,stream-format=byte-stream,alignment=au ! ";
-    }
-  }
-  return "video/x-h265, stream-format=\"byte-stream\" ! ";
 }
 
 /**
