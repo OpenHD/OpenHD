@@ -124,7 +124,7 @@ static std::string create_rtp_packetize_for_codec(const VideoCodec codec,
   if (codec == VideoCodec::H264)
     return fmt::format("rtph264pay mtu={} pt=96 config-interval=-1 ! ", mtu);
   if (codec == VideoCodec::H265)
-    return fmt::format("rtph265pay mtu={} ! ", mtu);
+    return fmt::format("rtph265pay mtu={} config-interval=-1 ! ", mtu);
   assert(false);
   return "";
 }
