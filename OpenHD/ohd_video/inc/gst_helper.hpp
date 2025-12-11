@@ -122,9 +122,9 @@ static std::string gst_create_rtp_caps(const VideoCodec& videoCodec) {
 static std::string create_rtp_packetize_for_codec(const VideoCodec codec,
                                                   const uint32_t mtu) {
   if (codec == VideoCodec::H264)
-    return fmt::format("rtph264pay mtu={} ! ", mtu);
+    return fmt::format("rtph264pay mtu={} pt=96 config-interval=-1 ! ", mtu);
   if (codec == VideoCodec::H265)
-    return fmt::format("rtph265pay mtu={} ! ", mtu);
+    return fmt::format("rtph265pay mtu={} config-interval=-1 ! ", mtu);
   assert(false);
   return "";
 }
@@ -616,8 +616,6 @@ static std::string createAllwinnerCsiStream(const CameraSettings& settings,
   ss << "queue max-size-buffers=4 leaky=downstream ! ";
   ss << "omxh264videoenc target-bitrate=" << bitrate_bits_per_second
      << " control-rate=constant ! ";
-  // Keep SPS / PPS inserted regularly for downstream compatibility
-  ss << "h264parse config-interval=1 ! ";
   return ss.str();
 }
 
@@ -820,21 +818,6 @@ static std::string createV4l2SrcRawAndSwEncodeStream(
  * @param videoCodec the video codec to create the rtp for.
  * @return the gstreamer pipeline part.
  */
-static std::string create_parse_and_rtp_packetize(
-    const VideoCodec videoCodec, int rtp_fragment_size = 1024) {
-  std::stringstream ss;
-  ss << "queue ! ";
-  ss << create_parse_for_codec(videoCodec);
-  ss << create_rtp_packetize_for_codec(videoCodec, rtp_fragment_size);
-  return ss.str();
-}
-static std::string create_queue_and_parse(const VideoCodec videoCodec) {
-  std::stringstream ss;
-  ss << "queue ! ";
-  ss << create_parse_for_codec(videoCodec);
-  return ss.str();
-}
-
 static std::string create_caps_nal(const VideoCodec& videoCodec,
                                    bool alignment_nal) {
   if (videoCodec == VideoCodec::H264) {
@@ -845,6 +828,22 @@ static std::string create_caps_nal(const VideoCodec& videoCodec,
     }
   }
   return "video/x-h265, stream-format=\"byte-stream\" ! ";
+}
+
+static std::string create_parse_and_rtp_packetize(
+    const VideoCodec videoCodec, int rtp_fragment_size = 1024) {
+  std::stringstream ss;
+  ss << "queue ! ";
+  ss << create_parse_for_codec(videoCodec);
+  ss << create_caps_nal(videoCodec, true);
+  ss << create_rtp_packetize_for_codec(videoCodec, rtp_fragment_size);
+  return ss.str();
+}
+static std::string create_queue_and_parse(const VideoCodec videoCodec) {
+  std::stringstream ss;
+  ss << "queue ! ";
+  ss << create_parse_for_codec(videoCodec);
+  return ss.str();
 }
 
 /**
