@@ -106,6 +106,9 @@ static constexpr int X_CAM_TYPE_X20_HDZERO_RUNCAM_V3 = 73;
 static constexpr int X_CAM_TYPE_X20_HDZERO_RUNCAM_NANO_90 = 74;
 static constexpr int X_CAM_TYPE_X20_OHD_Jaguar = 75;
 static constexpr int X_CAM_TYPE_X21_OHD_Jaguar = 76;
+static constexpr int X_CAM_TYPE_A733_IMX415 = 77;
+static constexpr int X_CAM_TYPE_A733_IMX219 = 78;
+static constexpr int X_CAM_TYPE_A733_IMX214 = 79;
 
 // ... 9 reserved for future use
 //
@@ -223,6 +226,12 @@ static std::string x_cam_type_to_string(int camera_type) {
       return "X20_OHD_Jaguar";
     case X_CAM_TYPE_X21_OHD_Jaguar:
       return "X21_OHD_Jaguar";
+    case X_CAM_TYPE_A733_IMX415:
+      return "A733_IMX415";
+    case X_CAM_TYPE_A733_IMX219:
+      return "A733_IMX219";
+    case X_CAM_TYPE_A733_IMX214:
+      return "A733_IMX214";
     // All the rock begin
     case X_CAM_TYPE_ROCK_5_HDMI_IN:
       return "ROCK_5_HDMI_IN";
@@ -300,8 +309,9 @@ struct XCamera {
     return camera_type >= 30 && camera_type < 60;
   }
   bool requires_x20_cedar_pipeline() const {
-    return camera_type >= 70 && camera_type < 80;
+    return camera_type >= 70 && camera_type < 77;
   }
+  bool requires_a733_pipeline() const { return camera_type >= 77 && camera_type < 80; }
   bool requires_rpi_veye_pipeline() const {
     return camera_type >= 60 && camera_type < 70;
   }
@@ -350,6 +360,11 @@ struct XCamera {
     } else if (requires_x20_cedar_pipeline()) {
       // also easy, 720p60 only (for now)
       return {ResolutionFramerate{1280, 720, 60}};
+    } else if (requires_a733_pipeline()) {
+      std::vector<ResolutionFramerate> ret;
+      ret.push_back(ResolutionFramerate{1280, 720, 60});
+      ret.push_back(ResolutionFramerate{1920, 1080, 30});
+      return ret;
     } else if (requires_willy_pipeline()) {
       // also easy, 720p60 only (for now)
       return {ResolutionFramerate{960, 720, 120}};
@@ -794,6 +809,15 @@ static std::vector<ManufacturerForPlatform> get_camera_choices_for_platform(
     return std::vector<ManufacturerForPlatform>{
         ManufacturerForPlatform{"HDZERO", generic_cameras},
         ManufacturerForPlatform{"RUNCAM", runcam_cameras}};
+  } else if (platform_type == X_PLATFORM_TYPE_ALWINNER_CUBIE_A7Z) {
+    std::vector<CameraNameAndType> allwinner_cameras{
+        CameraNameAndType{"IMX415", X_CAM_TYPE_A733_IMX415},
+        CameraNameAndType{"IMX219", X_CAM_TYPE_A733_IMX219},
+        CameraNameAndType{"IMX214", X_CAM_TYPE_A733_IMX214},
+    };
+    return std::vector<ManufacturerForPlatform>{
+        ManufacturerForPlatform{"ALLWINNER", allwinner_cameras},
+        MANUFACTURER_USB, MANUFACTURER_DEBUG};
   } else if ((platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W) ||
              (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3)) {
     std::vector<CameraNameAndType> arducam_cameras{

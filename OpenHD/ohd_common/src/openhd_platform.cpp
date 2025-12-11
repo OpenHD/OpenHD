@@ -61,6 +61,17 @@ static int internal_discover_platform() {
     }
   }
   if (OHDFilesystemUtil::exists(ALLWINNER_BOARDID_PATH)) {
+    if (OHDFilesystemUtil::exists("/proc/device-tree/model")) {
+      const std::string model_content =
+          OHDFilesystemUtil::read_file("/proc/device-tree/model");
+      if (OHDUtil::contains_after_uppercase(model_content, "SUN60IW2") ||
+          OHDUtil::contains_after_uppercase(model_content, "A733") ||
+          OHDUtil::contains_after_uppercase(model_content, "CUBIE-A7Z")) {
+        openhd::log::get_default()->warn(
+            "Detected Allwinner platform (A733/CUBIE-A7Z).");
+        return X_PLATFORM_TYPE_ALWINNER_CUBIE_A7Z;
+      }
+    }
     openhd::log::get_default()->warn("Detected Allwinner platform (X20).");
     return X_PLATFORM_TYPE_ALWINNER_X20;
   }
@@ -246,6 +257,8 @@ std::string x_platform_type_to_string(int platform_type) {
       return "UVX_MOD";
     case X_PLATFORM_TYPE_ALWINNER_X20:
       return "X20";
+    case X_PLATFORM_TYPE_ALWINNER_CUBIE_A7Z:
+      return "A733";
     case X_PLATFORM_TYPE_OPENIPC_SIGMASTAR_UNDEFINED:
       return "OPENIPC SIGMASTAR";
     case X_PLATFORM_TYPE_NVIDIA_XAVIER:
@@ -282,7 +295,8 @@ int get_fec_max_block_size_for_platform() {
       platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B) {
     return 20;
   }
-  if (platform_type == X_PLATFORM_TYPE_ALWINNER_X20) {
+  if (platform_type == X_PLATFORM_TYPE_ALWINNER_X20 ||
+      platform_type == X_PLATFORM_TYPE_ALWINNER_CUBIE_A7Z) {
     return 20;
   }
   if (platform_type == X_PLATFORM_TYPE_NVIDIA_XAVIER) {
@@ -326,6 +340,10 @@ bool OHDPlatform::is_rpi_or_x86() const {
 
 bool OHDPlatform::is_x20() const {
   return platform_type == X_PLATFORM_TYPE_ALWINNER_X20;
+}
+
+bool OHDPlatform::is_a733() const {
+  return platform_type == X_PLATFORM_TYPE_ALWINNER_CUBIE_A7Z;
 }
 
 bool OHDPlatform::is_willy() const {

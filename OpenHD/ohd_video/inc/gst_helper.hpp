@@ -619,6 +619,24 @@ static std::string createAllwinnerEncoderPipeline(
   return ss.str();
 }
 
+static std::string createAllwinnerCsiStream(const CameraSettings& settings,
+                                            const int sensor_id) {
+  const int width = settings.streamed_video_format.width > 0
+                        ? settings.streamed_video_format.width
+                        : 1280;
+  const int height = settings.streamed_video_format.height > 0
+                         ? settings.streamed_video_format.height
+                         : 720;
+  const int framerate = settings.streamed_video_format.framerate > 0
+                            ? settings.streamed_video_format.framerate
+                            : 30;
+
+  std::stringstream ss;
+  ss << createAllwinnerSensorPipeline(sensor_id, width, height, framerate);
+  ss << createAllwinnerEncoderPipeline(settings);
+  return ss.str();
+}
+
 /**
  * Create a encoded stream for the allwinner, which is fully hardware
  * accelerated
