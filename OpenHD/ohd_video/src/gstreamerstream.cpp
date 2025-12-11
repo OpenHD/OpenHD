@@ -179,7 +179,7 @@ std::string GStreamerStream::create_source_encode_pipeline(
   } else if (camera.requires_a733_pipeline()) {
     openhd::log::get_default()->debug(
         "Camera requires Allwinner A733 CSI pipeline.");
-    const int sensor_id = 0;
+    const int sensor_id = 1;
     pipeline << OHDGstHelper::createAllwinnerCsiStream(setting, sensor_id);
   } else if (camera.requires_willy_pipeline()) {
     openhd::log::get_default()->debug("Camera requires Willy pipeline.");
