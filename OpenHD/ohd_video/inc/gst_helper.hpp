@@ -616,10 +616,10 @@ static std::string createAllwinnerCsiStream(const CameraSettings& settings,
   ss << "queue max-size-buffers=4 leaky=downstream ! ";
   ss << "omxh264videoenc target-bitrate=" << bitrate_bits_per_second
      << " control-rate=constant ! ";
-  // do NOT add h264parse here – the common tail will handle parse + RTP
+  // Keep SPS / PPS inserted regularly for downstream compatibility
+  ss << "h264parse config-interval=1 ! ";
   return ss.str();
 }
-
 
 // using cedar (closed source) HW acceleration.
 static std::string createAllwinnerEncoderPipeline(
