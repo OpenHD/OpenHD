@@ -260,11 +260,17 @@ void GStreamerStream::setup() {
     /*pipeline_content << "video/x-h264,stream-format=byte-stream ! ";
     pipeline_content << OHDGstHelper::createOutputAppSink();*/
   } else {
-    const int rtp_fragment_size = 1440;
-    m_console->debug("Using {} for rtp fragmentation", rtp_fragment_size);
-    pipeline_content << OHDGstHelper::create_parse_and_rtp_packetize(
-        setting.streamed_video_format.videoCodec, rtp_fragment_size);
-    pipeline_content << OHDGstHelper::createOutputAppSink();
+    if (camera.requires_a733_pipeline()) {
+      pipeline_content <<
+          "video/x-h264,stream-format=byte-stream,alignment=au ! ";
+      pipeline_content << OHDGstHelper::createOutputAppSink();
+    } else {
+      const int rtp_fragment_size = 1440;
+      m_console->debug("Using {} for rtp fragmentation", rtp_fragment_size);
+      pipeline_content << OHDGstHelper::create_parse_and_rtp_packetize(
+          setting.streamed_video_format.videoCodec, rtp_fragment_size);
+      pipeline_content << OHDGstHelper::createOutputAppSink();
+    }
   }
   if (ADD_RECORDING_TO_PIPELINE) {
     const auto recording_filename =
