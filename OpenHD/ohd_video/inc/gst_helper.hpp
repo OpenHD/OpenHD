@@ -591,34 +591,6 @@ static std::string createRockchipCSIStream(int v4l2_filenumber,
   return ss.str();
 }
 
-/**
- * Creates stream for Allwinner camera (v4l2)
- * @param sensor_id sensor id
- * OBSOLETE !
- */
-static std::string createAllwinnerSensorPipeline(const int sensor_id,
-                                                 const int width,
-                                                 const int height,
-                                                 const int framerate) {
-  std::stringstream ss;
-  ss << "v4l2src device=/dev/video" << sensor_id << " ! ";
-  ss << "video/x-raw,pixelformat=NV12,";
-  ss << "width=" << width << ", ";
-  ss << "height=" << height << ", ";
-  ss << "framerate=" << framerate << "/1 ! ";
-  return ss.str();
-}
-
-// using cedar (closed source) HW acceleration.
-static std::string createAllwinnerEncoderPipeline(
-    const CameraSettings& settings) {
-  std::stringstream ss;
-  assert(settings.streamed_video_format.videoCodec == VideoCodec::H264);
-  ss << "sunxisrc name=sunxisrc bitrate=" << settings.h26x_bitrate_kbits
-     << " keyint=" << settings.h26x_keyframe_interval << " ! ";
-  return ss.str();
-}
-
 static std::string createAllwinnerCsiStream(const CameraSettings& settings,
                                             const int sensor_id) {
   const int width = settings.streamed_video_format.width > 0
@@ -631,9 +603,31 @@ static std::string createAllwinnerCsiStream(const CameraSettings& settings,
                             ? settings.streamed_video_format.framerate
                             : 30;
 
+  const int bitrate_bits_per_second =
+      openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
+
   std::stringstream ss;
-  ss << createAllwinnerSensorPipeline(sensor_id, width, height, framerate);
-  ss << createAllwinnerEncoderPipeline(settings);
+  ss << fmt::format(
+      "v4l2src device=/dev/video{} io-mode=mmap do-timestamp=true ! ",
+      sensor_id);
+  ss << fmt::format(
+      "video/x-raw,format=NV12,width={},height={},framerate={}/1 ! ", width,
+      height, framerate);
+  ss << "queue max-size-buffers=4 leaky=downstream ! ";
+  ss << "omxh264videoenc target-bitrate=" << bitrate_bits_per_second
+     << " control-rate=constant ! ";
+  // Keep SPS / PPS inserted regularly for downstream compatibility
+  ss << "h264parse config-interval=1 ! ";
+  return ss.str();
+}
+
+// using cedar (closed source) HW acceleration.
+static std::string createAllwinnerEncoderPipeline(
+    const CameraSettings& settings) {
+  std::stringstream ss;
+  assert(settings.streamed_video_format.videoCodec == VideoCodec::H264);
+  ss << "sunxisrc name=sunxisrc bitrate=" << settings.h26x_bitrate_kbits
+     << " keyint=" << settings.h26x_keyframe_interval << " ! ";
   return ss.str();
 }
 
