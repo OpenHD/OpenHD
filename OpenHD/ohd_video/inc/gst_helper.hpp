@@ -751,6 +751,24 @@ static int nxp_calculate_intra_refresh_mbs(int width, int height,
 }
 }  // namespace
 
+static bool nxp_v4l2_set_cbr_bitrate_kbits(int bitrate_kbits) {
+  NxpV4L2ControlSession ctrl(kNxpV4L2EncoderDevice);
+  if (!ctrl.valid()) return false;
+
+  const auto bitrate_bits_per_second =
+      openhd::kbits_to_bits_per_second(bitrate_kbits);
+
+  bool ok = true;
+  ok &= ctrl.set_menu(V4L2_CID_MPEG_VIDEO_BITRATE_MODE,
+                      V4L2_MPEG_VIDEO_BITRATE_MODE_CBR,
+                      "video_bitrate_mode");
+  ok &= ctrl.set_int(V4L2_CID_MPEG_VIDEO_BITRATE, bitrate_bits_per_second,
+                     "video_bitrate");
+  ok &= ctrl.set_int(V4L2_CID_MPEG_VIDEO_FRAME_RC_ENABLE, 1,
+                     "frame_level_rate_control_enable");
+  return ok;
+}
+
 static std::string create_nxp_imx8_v4l2_stream(
     const CameraSettings& settings, int device_index = 3) {
   const int width = settings.streamed_video_format.width > 0
