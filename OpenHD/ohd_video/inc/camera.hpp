@@ -142,9 +142,9 @@ static constexpr int X_CAM_TYPE_OPENIPC_GENERIC = 110;
 static constexpr int X_CAM_TYPE_QC_IMX577 = 120;
 static constexpr int X_CAM_TYPE_QC_OV9282 = 121;
 // Projects are here
-static constexpr int X_CAM_TYPE_WILLY_HORNET = 122;
-static constexpr int X_CAM_TYPE_WILLY_JAGUAR = 123;
-static constexpr int X_CAM_TYPE_WILLY_REKINDLE = 124;
+static constexpr int X_CAM_TYPE_ORQA_HORNET = 122;
+static constexpr int X_CAM_TYPE_ORQA_JAGUAR = 123;
+static constexpr int X_CAM_TYPE_ORQA_REKINDLE = 124;
 
 //
 // ... rest is reserved for future use
@@ -275,6 +275,12 @@ static std::string x_cam_type_to_string(int camera_type) {
       return "CORETRONIC IMX577";
     case X_CAM_TYPE_QC_OV9282:
       return "CORETRONIC OV9282";
+    case X_CAM_TYPE_ORQA_HORNET:
+      return "ORQA_HORNET";
+    case X_CAM_TYPE_ORQA_JAGUAR:
+      return "ORQA_JAGUAR";
+    case X_CAM_TYPE_ORQA_REKINDLE:
+      return "ORQA_REKINDLE";
     default:
       break;
   }
@@ -325,7 +331,7 @@ struct XCamera {
   bool requires_rockchip3_mpp_pipeline() const {
     return camera_type >= 90 && camera_type < 100;
   }
-  bool requires_willy_pipeline() const {
+  bool requires_orqa_pipeline() const {
     return camera_type >= 122 && camera_type < 124;
   }
   std::string cam_type_as_verbose_string() const {
@@ -365,7 +371,7 @@ struct XCamera {
       ret.push_back(ResolutionFramerate{1280, 720, 60});
       ret.push_back(ResolutionFramerate{1920, 1080, 30});
       return ret;
-    } else if (requires_willy_pipeline()) {
+    } else if (requires_orqa_pipeline()) {
       // also easy, 720p60 only (for now)
       return {ResolutionFramerate{960, 720, 120}};
     } else if (camera_type == X_CAM_TYPE_USB_INFIRAY) {
@@ -584,17 +590,17 @@ struct XCamera {
       // correct specs still missing
       ret.push_back(ResolutionFramerate{1280, 720, 30});
       return ret;
-    } else if (camera_type == X_CAM_TYPE_WILLY_HORNET) {
+    } else if (camera_type == X_CAM_TYPE_ORQA_HORNET) {
       std::vector<ResolutionFramerate> ret;
       // correct specs still missing
       ret.push_back(ResolutionFramerate{960, 720, 120});
       return ret;
-    } else if (camera_type == X_CAM_TYPE_WILLY_JAGUAR) {
+    } else if (camera_type == X_CAM_TYPE_ORQA_JAGUAR) {
       std::vector<ResolutionFramerate> ret;
       // correct specs still missing
       ret.push_back(ResolutionFramerate{1280, 720, 120});
       return ret;
-    } else if (camera_type == X_CAM_TYPE_WILLY_REKINDLE) {
+    } else if (camera_type == X_CAM_TYPE_ORQA_REKINDLE) {
       std::vector<ResolutionFramerate> ret;
       // correct specs still missing
       ret.push_back(ResolutionFramerate{1280, 720, 60});
@@ -618,7 +624,7 @@ static bool is_rpi_csi_camera(int cam_type) {
 static bool is_rock_csi_camera(int cam_type) {
   return cam_type >= 80 && cam_type <= 99;
 }
-static bool is_willy_csi_camera(int cam_type) {
+static bool is_orqa_csi_camera(int cam_type) {
   return cam_type >= 122 && cam_type <= 124;
 }
 static bool is_usb_camera(int cam_type) {
@@ -870,14 +876,14 @@ static std::vector<ManufacturerForPlatform> get_camera_choices_for_platform(
     return std::vector<ManufacturerForPlatform>{
         ManufacturerForPlatform{"LEOPARD", nvidia_leopard_csi_cameras},
         MANUFACTURER_USB, MANUFACTURER_DEBUG};
-  } else if (platform_type == X_PLATFORM_TYPE_WILLY) {
-    std::vector<CameraNameAndType> willy_cameras{
-        CameraNameAndType{"HORNET", X_CAM_TYPE_WILLY_HORNET},
-        CameraNameAndType{"JAGUAR", X_CAM_TYPE_WILLY_JAGUAR},
-        CameraNameAndType{"REKINDLE", X_CAM_TYPE_WILLY_REKINDLE},
+  } else if (platform_type == X_PLATFORM_TYPE_ORQA) {
+    std::vector<CameraNameAndType> orqa_cameras{
+        CameraNameAndType{"HORNET", X_CAM_TYPE_ORQA_HORNET},
+        CameraNameAndType{"JAGUAR", X_CAM_TYPE_ORQA_JAGUAR},
+        CameraNameAndType{"REKINDLE", X_CAM_TYPE_ORQA_REKINDLE},
     };
     return std::vector<ManufacturerForPlatform>{
-        ManufacturerForPlatform{"WILLY", willy_cameras}, MANUFACTURER_USB,
+        ManufacturerForPlatform{"ORQA", orqa_cameras}, MANUFACTURER_USB,
         MANUFACTURER_DEBUG};
   }
   return std::vector<ManufacturerForPlatform>{MANUFACTURER_DEBUG};

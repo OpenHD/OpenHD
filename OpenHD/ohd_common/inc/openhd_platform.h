@@ -71,7 +71,7 @@ static constexpr int X_PLATFORM_TYPE_QUALCOMM_QRB5165 = 46;
 static constexpr int X_PLATFORM_TYPE_QUALCOMM_QCS405 = 47;
 
 // Numbers 51..60 are reserved for Enterprise Customers
-static constexpr int X_PLATFORM_TYPE_WILLY = 51;
+static constexpr int X_PLATFORM_TYPE_ORQA = 51;
 static constexpr int X_PLATFORM_TYPE_UVX_MOD = 52;
 
 std::string x_platform_type_to_string(int platform_type);
@@ -103,7 +103,7 @@ struct OHDPlatform {
   // qualcomm
   bool is_qrb5165() const;
   bool is_qcs405() const;
-  bool is_willy() const;
+  bool is_orqa() const;
   bool is_uvx_mod() const;
 };
 

@@ -642,7 +642,7 @@ static std::string createAllwinnerStream(const CameraSettings& settings) {
 }
 
 /**
- * For WILLY Cameras
+ * For ORQA Cameras
  */
 static int nxp_calculate_number_of_mbs_in_a_slice(int frame_height_px,
                                                   int n_slices) {
@@ -668,9 +668,9 @@ static int nxp_calculate_number_of_mbs_in_a_slice(int frame_height_px,
 }
 
 // For Future use - currently not working with linux 5.15
-// static std::string create_willy_camera1_stream(const int device_index,
-//                                                const CameraSettings&
-//                                                settings) {
+// static std::string create_orqa_camera1_stream(const int device_index,
+//                                               const CameraSettings&
+//                                               settings) {
 //   std::stringstream ss;
 //   const int bps = static_cast<int>(settings.h26x_bitrate_kbits * 800);
 //   const bool use_slicing = settings.h26x_num_slices >= 2;
@@ -698,8 +698,8 @@ static int nxp_calculate_number_of_mbs_in_a_slice(int frame_height_px,
 //   return ss.str();
 // }
 
-static std::string create_willy_camera1_stream(const int device_index,
-                                               const CameraSettings& settings) {
+static std::string create_orqa_camera1_stream(const int device_index,
+                                              const CameraSettings& settings) {
   using namespace openhd;
 
   // Target encode size/fps (fallbacks if settings are zero)
@@ -726,7 +726,7 @@ static std::string create_willy_camera1_stream(const int device_index,
   const char* enc_name = use_h264 ? "vpuenc_h264" : "vpuenc_h265";
 
   std::ostringstream ss;
-  // Source: WILLY camera path is YUY2 952x720 @120; dmabuf from v4l2src into
+  // Source: ORQA camera path is YUY2 952x720 @120; dmabuf from v4l2src into
   // g2d
   ss << "v4l2src io-mode=dmabuf device=/dev/video" << device_index << " ! "
      << "video/x-raw,format=YUY2,width=960,height=720,framerate=120/"

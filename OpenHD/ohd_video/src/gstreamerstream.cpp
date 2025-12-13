@@ -182,9 +182,9 @@ std::string GStreamerStream::create_source_encode_pipeline(
     // On the A733 platform the CSI input is exposed as /dev/video1
     const int sensor_id = 1;
     pipeline << OHDGstHelper::createAllwinnerCsiStream(setting, sensor_id);
-  } else if (camera.requires_willy_pipeline()) {
-    openhd::log::get_default()->debug("Camera requires Willy pipeline.");
-    pipeline << OHDGstHelper::create_willy_camera1_stream(2, setting);
+  } else if (camera.requires_orqa_pipeline()) {
+    openhd::log::get_default()->debug("Camera requires ORQA pipeline.");
+    pipeline << OHDGstHelper::create_orqa_camera1_stream(2, setting);
   } else if (is_usb_camera(camera.camera_type)) {
     openhd::log::get_default()->warn("Detected USB camera.");
     const auto v4l2_device_name =
@@ -209,9 +209,9 @@ std::string GStreamerStream::create_source_encode_pipeline(
   } else if (camera.camera_type == X_CAM_TYPE_QC_IMX577) {
     openhd::log::get_default()->warn("Using Qualcomm IMX577 camera type.");
     pipeline << OHDGstHelper::create_qualcomm_camera1_stream(0, setting);
-  } else if (camera.camera_type == X_CAM_TYPE_WILLY_HORNET) {
-    openhd::log::get_default()->warn("Using WILLY HORNET camera type.");
-    pipeline << OHDGstHelper::create_willy_camera1_stream(0, setting);
+  } else if (camera.camera_type == X_CAM_TYPE_ORQA_HORNET) {
+    openhd::log::get_default()->warn("Using ORQA HORNET camera type.");
+    pipeline << OHDGstHelper::create_orqa_camera1_stream(0, setting);
   } else {
     openhd::log::get_default()->warn("UNKNOWN CAMERA TYPE");
     pipeline << OHDGstHelper::createDummyStreamX(setting);

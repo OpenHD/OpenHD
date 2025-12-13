@@ -48,8 +48,8 @@ static int internal_discover_platform() {
     const std::string model_content =
         OHDFilesystemUtil::read_file("/proc/device-tree/model");
     if (OHDUtil::contains_after_uppercase(model_content, "ORQA")) {
-      openhd::log::get_default()->warn("Detected Willy platform.");
-      return X_PLATFORM_TYPE_WILLY;
+      openhd::log::get_default()->warn("Detected ORQA platform.");
+      return X_PLATFORM_TYPE_ORQA;
     }
   }
   if (OHDFilesystemUtil::exists("/proc/device-tree/model")) {
@@ -251,8 +251,8 @@ std::string x_platform_type_to_string(int platform_type) {
       return "RV1103";
     case X_PLATFORM_TYPE_ROCKCHIP_RV1106:
       return "RV1106";
-    case X_PLATFORM_TYPE_WILLY:
-      return "Willy";
+    case X_PLATFORM_TYPE_ORQA:
+      return "ORQA";
     case X_PLATFORM_TYPE_UVX_MOD:
       return "UVX_MOD";
     case X_PLATFORM_TYPE_ALWINNER_X20:
@@ -302,7 +302,7 @@ int get_fec_max_block_size_for_platform() {
   if (platform_type == X_PLATFORM_TYPE_NVIDIA_XAVIER) {
     return 50;
   }
-  if (platform_type == X_PLATFORM_TYPE_WILLY ||
+  if (platform_type == X_PLATFORM_TYPE_ORQA ||
       platform_type == X_PLATFORM_TYPE_UVX_MOD) {
     return 50;
   }
@@ -346,8 +346,8 @@ bool OHDPlatform::is_a733() const {
   return platform_type == X_PLATFORM_TYPE_ALWINNER_CUBIE_A7Z;
 }
 
-bool OHDPlatform::is_willy() const {
-  return platform_type == X_PLATFORM_TYPE_WILLY;
+bool OHDPlatform::is_orqa() const {
+  return platform_type == X_PLATFORM_TYPE_ORQA;
 }
 
 bool OHDPlatform::is_zero3w() const {
