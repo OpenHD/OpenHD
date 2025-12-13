@@ -26,8 +26,20 @@
 
 #include <gst/gst.h>
 
+#include <cerrno>
+#include <cstdlib>
+#include <fcntl.h>
+#include <linux/v4l2-controls.h>
+#include <linux/videodev2.h>
+#include <optional>
 #include <sstream>
 #include <string>
+#include <sys/ioctl.h>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
+#include <unistd.h>
 
 #include "camera_settings.hpp"
 #include "libcamera_iq_helper.h"
@@ -591,6 +603,154 @@ static std::string createRockchipCSIStream(int v4l2_filenumber,
   return ss.str();
 }
 
+namespace {
+constexpr auto kNxpV4L2EncoderDevice = "/dev/video0";
+
+struct V4L2ControlLogState {
+  std::unordered_map<uint32_t, bool> support_cache{};
+  std::unordered_set<uint32_t> unsupported_logged{};
+  std::unordered_set<uint64_t> failure_logged{};
+  std::unordered_map<uint32_t, int32_t> last_values{};
+};
+
+static V4L2ControlLogState& nxp_v4l2_log_state() {
+  static V4L2ControlLogState state;
+  return state;
+}
+
+static uint64_t nxp_ctrl_failure_key(uint32_t cid, int err) {
+  return (static_cast<uint64_t>(cid) << 32) |
+         static_cast<uint32_t>(std::abs(err));
+}
+
+static bool v4l2_ctrl_is_supported(int fd, uint32_t cid,
+                                   const char* name = nullptr) {
+  auto& state = nxp_v4l2_log_state();
+  const auto cached = state.support_cache.find(cid);
+  if (cached != state.support_cache.end()) {
+    return cached->second;
+  }
+
+  v4l2_queryctrl query{};
+  query.id = cid;
+  const bool supported = ioctl(fd, VIDIOC_QUERYCTRL, &query) == 0;
+  state.support_cache[cid] = supported;
+  if (!supported && !state.unsupported_logged.count(cid)) {
+    state.unsupported_logged.insert(cid);
+    if (name) {
+      openhd::log::get_default()->warn(
+          "NXP V4L2: control {}/{} not supported", name, cid);
+    } else {
+      openhd::log::get_default()->warn(
+          "NXP V4L2: control {} not supported", cid);
+    }
+  }
+  return supported;
+}
+
+static bool nxp_ctrl_log_failure_once(uint32_t cid, int32_t value,
+                                      const char* name, int err) {
+  auto& state = nxp_v4l2_log_state();
+  const auto key = nxp_ctrl_failure_key(cid, err);
+  if (state.failure_logged.count(key)) {
+    return false;
+  }
+  state.failure_logged.insert(key);
+  openhd::log::get_default()->warn(
+      "NXP V4L2: failed to set {}={} ({})", name, value, err);
+  return true;
+}
+
+static bool v4l2_ctrl_set_int(int fd, uint32_t cid, int32_t value,
+                              const char* name) {
+  auto& state = nxp_v4l2_log_state();
+  if (!v4l2_ctrl_is_supported(fd, cid, name)) return false;
+  auto last_it = state.last_values.find(cid);
+  if (last_it != state.last_values.end() && last_it->second == value) {
+    return true;
+  }
+
+  v4l2_control ctrl{};
+  ctrl.id = cid;
+  ctrl.value = value;
+  if (ioctl(fd, VIDIOC_S_CTRL, &ctrl) != 0) {
+    nxp_ctrl_log_failure_once(cid, value, name, errno);
+    return false;
+  }
+  state.last_values[cid] = value;
+  openhd::log::get_default()->debug("NXP V4L2: set {}={} (cid={})", name,
+                                    value, cid);
+  return true;
+}
+
+static bool v4l2_ctrl_set_menu(int fd, uint32_t cid, int32_t value,
+                               const char* name) {
+  return v4l2_ctrl_set_int(fd, cid, value, name);
+}
+
+static bool v4l2_ctrl_press_button(int fd, uint32_t cid, const char* name) {
+  return v4l2_ctrl_set_int(fd, cid, 1, name);
+}
+
+class NxpV4L2ControlSession {
+ public:
+  explicit NxpV4L2ControlSession(const std::string& device_path)
+      : m_fd(open(device_path.c_str(), O_RDWR)) {
+    if (m_fd < 0) {
+      openhd::log::get_default()->warn(
+          "NXP V4L2: failed to open {} ({})", device_path, errno);
+    }
+  }
+
+  ~NxpV4L2ControlSession() {
+    if (m_fd >= 0) close(m_fd);
+  }
+
+  [[nodiscard]] bool valid() const { return m_fd >= 0; }
+
+  bool set_int(uint32_t cid, int32_t value, const char* name) const {
+    if (!valid()) return false;
+    return v4l2_ctrl_set_int(m_fd, cid, value, name);
+  }
+
+  bool set_menu(uint32_t cid, int32_t value, const char* name) const {
+    if (!valid()) return false;
+    return v4l2_ctrl_set_menu(m_fd, cid, value, name);
+  }
+
+  bool press_button(uint32_t cid, const char* name) const {
+    if (!valid()) return false;
+    return v4l2_ctrl_press_button(m_fd, cid, name);
+  }
+
+  bool is_supported(uint32_t cid, const char* name = nullptr) const {
+    if (!valid()) return false;
+    return v4l2_ctrl_is_supported(m_fd, cid, name);
+  }
+
+ private:
+  int m_fd{ -1 };
+};
+
+[[maybe_unused]] static void nxp_force_keyframe_now(
+    const std::string& device_path) {
+  NxpV4L2ControlSession ctrl(device_path);
+  ctrl.press_button(V4L2_CID_MPEG_VIDEO_FORCE_KEY_FRAME, "force_key_frame");
+}
+
+static int nxp_calculate_intra_refresh_mbs(int width, int height,
+                                           int period_frames) {
+  if (period_frames <= 0) return 0;
+  const int mb_w = (width + 15) / 16;
+  const int mb_h = (height + 15) / 16;
+  const int total_mbs = mb_w * mb_h;
+  int mbs_per_frame = (total_mbs + period_frames - 1) / period_frames;
+  if (mbs_per_frame < 1) mbs_per_frame = 1;
+  if (mbs_per_frame > total_mbs) mbs_per_frame = total_mbs;
+  return mbs_per_frame;
+}
+}  // namespace
+
 static std::string create_nxp_imx8_v4l2_stream(
     const CameraSettings& settings, int device_index = 3) {
   const int width = settings.streamed_video_format.width > 0
@@ -603,11 +763,59 @@ static std::string create_nxp_imx8_v4l2_stream(
                             ? settings.streamed_video_format.framerate
                             : 30;
 
-  const bool use_h264 = settings.streamed_video_format.videoCodec == VideoCodec::H264;
-  const auto iframe_control = use_h264 ? "h264_i_frame_period" : "h265_i_frame_period";
+  const bool use_h264 =
+      settings.streamed_video_format.videoCodec == VideoCodec::H264;
   const auto encoder_name = use_h264 ? "v4l2h264enc" : "v4l2h265enc";
   const auto bitrate_bits_per_second =
       openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
+
+  NxpV4L2ControlSession ctrl(kNxpV4L2EncoderDevice);
+
+  if (ctrl.valid()) {
+    ctrl.set_menu(V4L2_CID_MPEG_VIDEO_BITRATE_MODE,
+                  V4L2_MPEG_VIDEO_BITRATE_MODE_CBR, "video_bitrate_mode");
+    ctrl.set_int(V4L2_CID_MPEG_VIDEO_BITRATE, bitrate_bits_per_second,
+                 "video_bitrate");
+    ctrl.set_int(V4L2_CID_MPEG_VIDEO_FRAME_RC_ENABLE, 1,
+                 "frame_level_rate_control_enable");
+
+    const int gop_size = settings.h26x_keyframe_interval;
+    if (gop_size > 0) {
+      if (ctrl.set_int(V4L2_CID_MPEG_VIDEO_GOP_SIZE, gop_size,
+                       "video_gop_size")) {
+        openhd::log::get_default()->info("NXP V4L2: GOP set to {}", gop_size);
+      }
+    } else {
+      openhd::log::get_default()->debug(
+          "NXP V4L2: using driver default GOP (keyframe interval={})", gop_size);
+    }
+
+    const int cir_period_frames =
+        settings.h26x_intra_refresh_type == -1 ? 0 : settings.h26x_keyframe_interval;
+    const int cir_mbs =
+        nxp_calculate_intra_refresh_mbs(width, height, cir_period_frames);
+    if (ctrl.is_supported(V4L2_CID_MPEG_VIDEO_CYCLIC_INTRA_REFRESH_MB,
+                          "number_of_intra_refresh_mbs")) {
+      if (cir_mbs <= 0) {
+        ctrl.set_int(V4L2_CID_MPEG_VIDEO_CYCLIC_INTRA_REFRESH_MB, 0,
+                     "number_of_intra_refresh_mbs");
+        openhd::log::get_default()->info("NXP V4L2: CIR disabled");
+      } else {
+        if (ctrl.set_int(V4L2_CID_MPEG_VIDEO_CYCLIC_INTRA_REFRESH_MB, cir_mbs,
+                         "number_of_intra_refresh_mbs")) {
+          openhd::log::get_default()->info(
+              "NXP V4L2: CIR enabled period={} -> {} MB/frame", cir_period_frames,
+              cir_mbs);
+        }
+      }
+    }
+
+    ctrl.set_int(V4L2_CID_MPEG_VIDEO_REPEAT_SEQ_HEADER, 1,
+                 "repeat_sequence_header");
+    ctrl.set_menu(V4L2_CID_MPEG_VIDEO_HEADER_MODE,
+                  V4L2_MPEG_VIDEO_HEADER_MODE_JOINED_WITH_1ST_FRAME,
+                  "sequence_header_mode");
+  }
 
   std::stringstream ss;
   ss << fmt::format(
@@ -616,9 +824,7 @@ static std::string create_nxp_imx8_v4l2_stream(
       device_index, width, height, framerate);
   ss << "queue max-size-buffers=4 leaky=downstream ! ";
   ss << fmt::format(
-      "{} extra-controls=\\\"controls,video_bitrate={},{}={}\\\" ! ",
-      encoder_name, bitrate_bits_per_second, iframe_control,
-      settings.h26x_keyframe_interval);
+      "{} ! ", encoder_name);
   return ss.str();
 }
 
