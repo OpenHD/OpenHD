@@ -53,6 +53,7 @@ if(ENABLE_AIR)
             src/validate_settings.cpp
             src/usb_thermal_cam_helper.cpp
             src/gstaudiostream.cpp
+            src/nxp_v4l2_helper.cpp
     )
 
     pkg_search_module(GST REQUIRED
