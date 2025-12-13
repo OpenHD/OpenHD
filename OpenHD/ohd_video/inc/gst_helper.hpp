@@ -30,7 +30,9 @@
 #include <string>
 
 #include "camera_settings.hpp"
+#include "kernel_version.h"
 #include "libcamera_iq_helper.h"
+#include "nxp_v4l2_helper.h"
 #include "openhd_bitrate.h"
 #include "openhd_platform.h"
 #include "openhd_spdlog.h"
@@ -696,6 +698,51 @@ static int nxp_calculate_number_of_mbs_in_a_slice(int frame_height_px,
 //   return ss.str();
 // }
 
+static std::string create_willy_source_and_convert(const int device_index,
+                                                   int target_w, int target_h) {
+  std::ostringstream ss;
+  ss << "v4l2src io-mode=dmabuf device=/dev/video" << device_index << " ! "
+     << "video/x-raw,format=YUY2,width=960,height=720,framerate=120/"
+        "1,interlace-mode=progressive ! "
+     << "queue max-size-buffers=1 leaky=downstream ! "
+     << "imxvideoconvert_g2d ! "
+     << "video/x-raw,format=RGBx,width=" << target_w << ",height=" << target_h
+     << " ! "
+     << "queue max-size-buffers=1 leaky=downstream ! ";
+  return ss.str();
+}
+
+static std::string create_willy_vpuenc_stream(const int device_index,
+                                              const CameraSettings& settings,
+                                              int target_w, int target_h) {
+  const bool use_h264 =
+      (settings.streamed_video_format.videoCodec == VideoCodec::H264);
+  const char* enc_name = use_h264 ? "vpuenc_h264" : "vpuenc_h265";
+  const int bps = settings.h26x_bitrate_kbits;
+
+  std::ostringstream ss;
+  ss << create_willy_source_and_convert(device_index, target_w, target_h);
+  ss << enc_name << " gop-size=" << settings.h26x_keyframe_interval
+     << " bitrate=" << bps << " ! ";
+  return ss.str();
+}
+
+static std::string create_willy_v4l2_encoder_stream(
+    const int device_index, const CameraSettings& settings, int target_w,
+    int target_h, const openhd::nxp::NxpEncoderNode& encoder_node) {
+  const bool use_h264 =
+      (settings.streamed_video_format.videoCodec == VideoCodec::H264);
+  const char* enc_name = use_h264 ? "v4l2h264enc" : "v4l2h265enc";
+  const auto bitrate_bps =
+      openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
+
+  std::ostringstream ss;
+  ss << create_willy_source_and_convert(device_index, target_w, target_h);
+  ss << enc_name << " device=" << encoder_node.device_path
+     << " bitrate=" << bitrate_bps << " ! ";
+  return ss.str();
+}
+
 static std::string create_willy_camera1_stream(const int device_index,
                                                const CameraSettings& settings) {
   using namespace openhd;
@@ -707,41 +754,36 @@ static std::string create_willy_camera1_stream(const int device_index,
   int target_h = settings.streamed_video_format.height > 0
                      ? settings.streamed_video_format.height
                      : 720;
-  int target_fps = settings.streamed_video_format.framerate > 0
-                       ? settings.streamed_video_format.framerate
-                       : 120;
 
   // Keep encoder-friendly alignment
   target_w = ALIGN_UP(target_w, 16);
   target_h = ALIGN_UP(target_h, 16);
 
-  // VPU bitrate expects bits/s on this stack
-  const int bps = settings.h26x_bitrate_kbits;
+  // Prefer the new V4L2 pipeline on Linux 6.x when available.
+  const bool prefer_v4l2 = openhd::is_kernel_major(6);
+  if (prefer_v4l2) {
+    const bool needs_hevc =
+        settings.streamed_video_format.videoCodec == VideoCodec::H265;
+    auto encoder_node = nxp::find_v4l2_encoder_node(needs_hevc);
+    if (encoder_node.has_value()) {
+      const int intra_period_frames =
+          settings.h26x_intra_refresh_type != -1
+              ? settings.h26x_keyframe_interval
+              : 0;
+      nxp::log_cir_examples(openhd::log::get_default());
+      nxp::set_cyclic_intra_refresh(encoder_node.value(), target_w, target_h,
+                                    intra_period_frames,
+                                    openhd::log::get_default());
+      return create_willy_v4l2_encoder_stream(device_index, settings, target_w,
+                                              target_h, encoder_node.value());
+    }
+    openhd::log::get_default()->warn(
+        "NXP V4L2 encoder not found, using proprietary pipeline");
+  }
 
-  // Select encoder by codec (both NXP plugins use same knobs here)
-  const bool use_h264 =
-      (settings.streamed_video_format.videoCodec == VideoCodec::H264);
-  const char* enc_name = use_h264 ? "vpuenc_h264" : "vpuenc_h265";
-
-  std::ostringstream ss;
-  // Source: WILLY camera path is YUY2 952x720 @120; dmabuf from v4l2src into
-  // g2d
-  ss << "v4l2src io-mode=dmabuf device=/dev/video" << device_index << " ! "
-     << "video/x-raw,format=YUY2,width=960,height=720,framerate=120/"
-        "1,interlace-mode=progressive ! "
-     << "queue max-size-buffers=1 leaky=downstream ! "
-     << "imxvideoconvert_g2d ! ";
-
-  // Convert + scale to encoder target; RGBx is known-good on this BSP
-  ss << "video/x-raw,format=RGBx,width=" << target_w << ",height=" << target_h
-     << " ! "
-     << "queue max-size-buffers=1 leaky=downstream ! ";
-
-  // Hardware encoder
-  ss << enc_name << " gop-size=" << settings.h26x_keyframe_interval
-     << " bitrate=" << bps << " ! ";
-
-  return ss.str();
+  // Fall back to proprietary encoder (Linux 5.x stack).
+  return create_willy_vpuenc_stream(device_index, settings, target_w,
+                                    target_h);
 }
 
 /**

@@ -68,6 +68,7 @@ set(sources
     "src/openhd_tcp.cpp"
     "src/openhd_led.cpp"
     "src/openhd_buttons.cpp"
+    "src/kernel_version.cpp"
     "src/openhd_settings_imp.cpp"
     "src/openhd_settings_directories.cpp"
     "src/openhd_settings_persistent.cpp"
