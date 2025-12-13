@@ -592,7 +592,7 @@ static std::string createRockchipCSIStream(int v4l2_filenumber,
 }
 
 static std::string create_nxp_imx8_v4l2_stream(
-    const CameraSettings& settings, int device_index = 0) {
+    const CameraSettings& settings, int device_index = 3) {
   const int width = settings.streamed_video_format.width > 0
                         ? settings.streamed_video_format.width
                         : 1280;
