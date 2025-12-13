@@ -591,6 +591,37 @@ static std::string createRockchipCSIStream(int v4l2_filenumber,
   return ss.str();
 }
 
+static std::string create_nxp_imx8_v4l2_stream(
+    const CameraSettings& settings, int device_index = 0) {
+  const int width = settings.streamed_video_format.width > 0
+                        ? settings.streamed_video_format.width
+                        : 1280;
+  const int height = settings.streamed_video_format.height > 0
+                         ? settings.streamed_video_format.height
+                         : 720;
+  const int framerate = settings.streamed_video_format.framerate > 0
+                            ? settings.streamed_video_format.framerate
+                            : 30;
+
+  const bool use_h264 = settings.streamed_video_format.videoCodec == VideoCodec::H264;
+  const auto iframe_control = use_h264 ? "h264_i_frame_period" : "h265_i_frame_period";
+  const auto encoder_name = use_h264 ? "v4l2h264enc" : "v4l2h265enc";
+  const auto bitrate_bits_per_second =
+      openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
+
+  std::stringstream ss;
+  ss << fmt::format(
+      "v4l2src device=/dev/video{} io-mode=dmabuf do-timestamp=true ! "
+      "video/x-raw,format=NV12,width={},height={},framerate={}/1 ! ",
+      device_index, width, height, framerate);
+  ss << "queue max-size-buffers=4 leaky=downstream ! ";
+  ss << fmt::format(
+      "{} extra-controls=\\\"controls,video_bitrate={},{}={}\\\" ! ",
+      encoder_name, bitrate_bits_per_second, iframe_control,
+      settings.h26x_keyframe_interval);
+  return ss.str();
+}
+
 static std::string createAllwinnerCsiStream(const CameraSettings& settings,
                                             const int sensor_id) {
   const int width = settings.streamed_video_format.width > 0

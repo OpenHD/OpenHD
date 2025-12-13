@@ -70,6 +70,9 @@ static constexpr int X_PLATFORM_TYPE_NVIDIA_XAVIER = 40;
 static constexpr int X_PLATFORM_TYPE_QUALCOMM_QRB5165 = 46;
 static constexpr int X_PLATFORM_TYPE_QUALCOMM_QCS405 = 47;
 
+// Numbers 61..65 are reserved for NXP
+static constexpr int X_PLATFORM_TYPE_NXP_IMX8 = 61;
+
 // Numbers 51..60 are reserved for Enterprise Customers
 static constexpr int X_PLATFORM_TYPE_ORQA = 51;
 static constexpr int X_PLATFORM_TYPE_UVX_MOD = 52;

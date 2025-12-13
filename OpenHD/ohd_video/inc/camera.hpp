@@ -145,6 +145,8 @@ static constexpr int X_CAM_TYPE_QC_OV9282 = 121;
 static constexpr int X_CAM_TYPE_ORQA_HORNET = 122;
 static constexpr int X_CAM_TYPE_ORQA_JAGUAR = 123;
 static constexpr int X_CAM_TYPE_ORQA_REKINDLE = 124;
+// NXP specific starts here
+static constexpr int X_CAM_TYPE_NXP_IMX8_V4L2 = 130;
 
 //
 // ... rest is reserved for future use
@@ -281,6 +283,8 @@ static std::string x_cam_type_to_string(int camera_type) {
       return "ORQA_JAGUAR";
     case X_CAM_TYPE_ORQA_REKINDLE:
       return "ORQA_REKINDLE";
+    case X_CAM_TYPE_NXP_IMX8_V4L2:
+      return "NXP_IMX8_V4L2";
     default:
       break;
   }
@@ -334,6 +338,9 @@ struct XCamera {
   bool requires_orqa_pipeline() const {
     return camera_type >= 122 && camera_type < 124;
   }
+  bool requires_nxp_imx8_v4l2_pipeline() const {
+    return camera_type >= 130 && camera_type < 140;
+  }
   std::string cam_type_as_verbose_string() const {
     return x_cam_type_to_string(camera_type);
   }
@@ -374,6 +381,11 @@ struct XCamera {
     } else if (requires_orqa_pipeline()) {
       // also easy, 720p60 only (for now)
       return {ResolutionFramerate{960, 720, 120}};
+    } else if (requires_nxp_imx8_v4l2_pipeline()) {
+      std::vector<ResolutionFramerate> ret;
+      ret.push_back(ResolutionFramerate{1280, 720, 60});
+      ret.push_back(ResolutionFramerate{1920, 1080, 30});
+      return ret;
     } else if (camera_type == X_CAM_TYPE_USB_INFIRAY) {
       return {ResolutionFramerate{384, 292, 25}};
     } else if (camera_type == X_CAM_TYPE_USB_INFIRAY_T2) {
@@ -884,6 +896,13 @@ static std::vector<ManufacturerForPlatform> get_camera_choices_for_platform(
     };
     return std::vector<ManufacturerForPlatform>{
         ManufacturerForPlatform{"ORQA", orqa_cameras}, MANUFACTURER_USB,
+        MANUFACTURER_DEBUG};
+  } else if (platform_type == X_PLATFORM_TYPE_NXP_IMX8) {
+    std::vector<CameraNameAndType> nxp_cameras{
+        CameraNameAndType{"V4L2 CSI", X_CAM_TYPE_NXP_IMX8_V4L2},
+    };
+    return std::vector<ManufacturerForPlatform>{
+        ManufacturerForPlatform{"NXP", nxp_cameras}, MANUFACTURER_USB,
         MANUFACTURER_DEBUG};
   }
   return std::vector<ManufacturerForPlatform>{MANUFACTURER_DEBUG};

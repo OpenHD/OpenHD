@@ -185,6 +185,10 @@ std::string GStreamerStream::create_source_encode_pipeline(
   } else if (camera.requires_orqa_pipeline()) {
     openhd::log::get_default()->debug("Camera requires ORQA pipeline.");
     pipeline << OHDGstHelper::create_orqa_camera1_stream(2, setting);
+  } else if (camera.requires_nxp_imx8_v4l2_pipeline()) {
+    openhd::log::get_default()->debug(
+        "Camera requires NXP i.MX8 V4L2 pipeline.");
+    pipeline << OHDGstHelper::create_nxp_imx8_v4l2_stream(setting);
   } else if (is_usb_camera(camera.camera_type)) {
     openhd::log::get_default()->warn("Detected USB camera.");
     const auto v4l2_device_name =

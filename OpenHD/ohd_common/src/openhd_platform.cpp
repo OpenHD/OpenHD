@@ -106,10 +106,16 @@ static int internal_discover_platform() {
   }
 
   if (OHDFilesystemUtil::exists(DEVICE_TREE_COMPATIBLE_PATH)) {
-    openhd::log::get_default()->warn("Checking for Rockchip platforms...");
+    openhd::log::get_default()->warn("Checking device tree compatible...");
 
     const std::string compatible_content =
         OHDFilesystemUtil::read_file(DEVICE_TREE_COMPATIBLE_PATH);
+    if (OHDUtil::contains_after_uppercase(compatible_content, "IMX8")) {
+      openhd::log::get_default()->warn("Detected NXP i.MX8 platform.");
+      return X_PLATFORM_TYPE_NXP_IMX8;
+    }
+
+    openhd::log::get_default()->warn("Checking for Rockchip platforms...");
     const std::string device_tree_model =
         OHDFilesystemUtil::read_file("/proc/device-tree/model");
     std::regex r("rockchip,(r[kv][0-9]+)");
@@ -267,6 +273,8 @@ std::string x_platform_type_to_string(int platform_type) {
       return "QUALCOMM_QCS405";
     case X_PLATFORM_TYPE_QUALCOMM_QRB5165:
       return "QUALCOMM_QRB5165";
+    case X_PLATFORM_TYPE_NXP_IMX8:
+      return "NXP_IMX8";
     default:
       std::stringstream ss;
       ss << "ERR-UNDEFINED{" << platform_type << "}";
