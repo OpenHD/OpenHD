@@ -87,6 +87,12 @@ OHDVideoAir::OHDVideoAir(std::vector<XCamera> cameras,
       [this](openhd::LinkActionHandler::LinkBitrateInformation lb) {
         this->handle_change_bitrate_request(lb);
       });
+  openhd::LinkActionHandler::instance().action_request_keyframe_register(
+      [this]() {
+        for (auto& stream : m_camera_streams) {
+          if (stream) stream->request_keyframe();
+        }
+      });
   auto cb_armed = [this](bool armed) { this->update_arming_state(armed); };
   openhd::ArmingStateHelper::instance().register_listener("ohd_video_air",
                                                           cb_armed);
@@ -104,6 +110,8 @@ OHDVideoAir::OHDVideoAir(std::vector<XCamera> cameras,
 OHDVideoAir::~OHDVideoAir() {
   openhd::ArmingStateHelper::instance().unregister_listener("ohd_video_air");
   openhd::LinkActionHandler::instance().action_request_bitrate_change_register(
+      nullptr);
+  openhd::LinkActionHandler::instance().action_request_keyframe_register(
       nullptr);
   // Stop all the camera stream(s)
   m_camera_streams.resize(0);

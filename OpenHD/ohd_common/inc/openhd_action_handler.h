@@ -129,6 +129,15 @@ class LinkActionHandler {
     m_action_request_bitrate_change =
         std::make_shared<ACTION_REQUEST_BITRATE_CHANGE>(cb);
   }
+  typedef std::function<void()> ACTION_REQUEST_KEYFRAME;
+  void action_request_keyframe_register(
+      const ACTION_REQUEST_KEYFRAME& cb) {
+    if (cb == nullptr) {
+      m_action_request_keyframe = nullptr;
+      return;
+    }
+    m_action_request_keyframe = std::make_shared<ACTION_REQUEST_KEYFRAME>(cb);
+  }
   // called by ohd_interface / wb
   void action_request_bitrate_change_handle(
       LinkBitrateInformation link_bitrate_info) {
@@ -140,6 +149,13 @@ class LinkActionHandler {
       // The cb will update setting the global atomic value for cam1 / cam2
       // accordingly
       cb(link_bitrate_info);
+    }
+  }
+  void action_request_keyframe_handle() {
+    auto tmp = m_action_request_keyframe;
+    if (tmp) {
+      auto& cb = *tmp;
+      cb();
     }
   }
 
@@ -156,6 +172,7 @@ class LinkActionHandler {
   // Cleanup, set all lambdas that handle things to nullptr
   void disable_all_callables() {
     action_request_bitrate_change_register(nullptr);
+    action_request_keyframe_register(nullptr);
     wb_cmd_scan_channels = nullptr;
     wb_cmd_analyze_channels = nullptr;
     wb_get_supported_channels = nullptr;
@@ -165,6 +182,8 @@ class LinkActionHandler {
   // By using shared_ptr to wrap the stored the cb we are semi thread-safe
   std::shared_ptr<ACTION_REQUEST_BITRATE_CHANGE>
       m_action_request_bitrate_change = nullptr;
+  std::shared_ptr<ACTION_REQUEST_KEYFRAME> m_action_request_keyframe =
+      nullptr;
   std::shared_ptr<openhd::link_statistics::STATS_CALLBACK>
       m_link_statistics_callback = nullptr;
 

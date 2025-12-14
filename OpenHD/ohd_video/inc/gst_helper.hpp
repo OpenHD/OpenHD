@@ -38,6 +38,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
+#include <mutex>
 #include <vector>
 #include <unistd.h>
 
@@ -606,6 +607,40 @@ static std::string createRockchipCSIStream(int v4l2_filenumber,
 namespace {
 constexpr auto kNxpV4L2EncoderDevice = "/dev/video0";
 
+// Track the currently streaming NXP V4L2 encoder FD so we can issue controls
+// without restarting the pipeline. This is intentionally NXP-only because the
+// control set (and the fact that the encoder is exposed as a V4L2 device) is
+// specific to the i.MX8 stack.
+std::mutex g_nxp_encoder_fd_mutex;
+int g_nxp_encoder_fd = -1;
+
+static int nxp_get_tracked_encoder_fd() {
+  std::lock_guard<std::mutex> lock(g_nxp_encoder_fd_mutex);
+  return g_nxp_encoder_fd;
+}
+
+static int nxp_open_and_track_encoder_fd(const std::string& device_path) {
+  std::lock_guard<std::mutex> lock(g_nxp_encoder_fd_mutex);
+  if (g_nxp_encoder_fd >= 0) return g_nxp_encoder_fd;
+  g_nxp_encoder_fd = open(device_path.c_str(), O_RDWR);
+  if (g_nxp_encoder_fd >= 0) {
+    openhd::log::get_default()->info("NXP V4L2: tracking encoder fd {} for {}",
+                                     g_nxp_encoder_fd, device_path);
+  } else {
+    openhd::log::get_default()->warn(
+        "NXP V4L2: failed to open {} ({})", device_path, errno);
+  }
+  return g_nxp_encoder_fd;
+}
+
+static void nxp_release_tracked_encoder_fd() {
+  std::lock_guard<std::mutex> lock(g_nxp_encoder_fd_mutex);
+  if (g_nxp_encoder_fd >= 0) {
+    close(g_nxp_encoder_fd);
+    g_nxp_encoder_fd = -1;
+  }
+}
+
 struct V4L2ControlLogState {
   std::unordered_map<uint32_t, bool> support_cache{};
   std::unordered_set<uint32_t> unsupported_logged{};
@@ -694,8 +729,14 @@ static bool v4l2_ctrl_press_button(int fd, uint32_t cid, const char* name) {
 
 class NxpV4L2ControlSession {
  public:
-  explicit NxpV4L2ControlSession(const std::string& device_path)
-      : m_fd(open(device_path.c_str(), O_RDWR)) {
+  explicit NxpV4L2ControlSession(const std::string& device_path,
+                                 bool track_active_encoder_fd = false)
+      : m_fd(-1), m_owns_fd(!track_active_encoder_fd) {
+    if (track_active_encoder_fd) {
+      m_fd = nxp_open_and_track_encoder_fd(device_path);
+    } else {
+      m_fd = open(device_path.c_str(), O_RDWR);
+    }
     if (m_fd < 0) {
       openhd::log::get_default()->warn(
           "NXP V4L2: failed to open {} ({})", device_path, errno);
@@ -703,7 +744,7 @@ class NxpV4L2ControlSession {
   }
 
   ~NxpV4L2ControlSession() {
-    if (m_fd >= 0) close(m_fd);
+    if (m_fd >= 0 && m_owns_fd) close(m_fd);
   }
 
   [[nodiscard]] bool valid() const { return m_fd >= 0; }
@@ -723,19 +764,51 @@ class NxpV4L2ControlSession {
     return v4l2_ctrl_press_button(m_fd, cid, name);
   }
 
-  bool is_supported(uint32_t cid, const char* name = nullptr) const {
+ bool is_supported(uint32_t cid, const char* name = nullptr) const {
     if (!valid()) return false;
     return v4l2_ctrl_is_supported(m_fd, cid, name);
   }
 
  private:
   int m_fd{ -1 };
+  bool m_owns_fd{true};
 };
 
 [[maybe_unused]] static void nxp_force_keyframe_now(
     const std::string& device_path) {
   NxpV4L2ControlSession ctrl(device_path);
   ctrl.press_button(V4L2_CID_MPEG_VIDEO_FORCE_KEY_FRAME, "force_key_frame");
+}
+
+static void nxp_clear_cached_ctrl_value(uint32_t cid) {
+  auto& state = nxp_v4l2_log_state();
+  state.last_values.erase(cid);
+}
+
+static bool nxp_set_bitrate(uint32_t bitrate_bps) {
+  const int fd = nxp_open_and_track_encoder_fd(kNxpV4L2EncoderDevice);
+  if (fd < 0) return false;
+  return v4l2_ctrl_set_int(fd, V4L2_CID_MPEG_VIDEO_BITRATE, bitrate_bps,
+                           "video_bitrate");
+}
+
+static bool nxp_force_idr() {
+  const int fd = nxp_open_and_track_encoder_fd(kNxpV4L2EncoderDevice);
+  if (fd < 0) return false;
+
+  nxp_clear_cached_ctrl_value(V4L2_CID_MPEG_VIDEO_FORCE_FRAME_TYPE);
+  nxp_clear_cached_ctrl_value(V4L2_CID_MPEG_VIDEO_FORCE_KEY_FRAME);
+
+  if (v4l2_ctrl_is_supported(fd, V4L2_CID_MPEG_VIDEO_FORCE_FRAME_TYPE,
+                              "force_frame_type")) {
+    if (v4l2_ctrl_set_menu(fd, V4L2_CID_MPEG_VIDEO_FORCE_FRAME_TYPE,
+                           V4L2_MPEG_VIDEO_FORCE_FRAME_TYPE_IDR,
+                           "force_frame_type")) {
+      return true;
+    }
+  }
+  return v4l2_ctrl_press_button(fd, V4L2_CID_MPEG_VIDEO_FORCE_KEY_FRAME,
+                                "force_key_frame");
 }
 
 static int nxp_calculate_intra_refresh_mbs(int width, int height,
@@ -752,7 +825,7 @@ static int nxp_calculate_intra_refresh_mbs(int width, int height,
 }  // namespace
 
 static bool nxp_v4l2_set_cbr_bitrate_kbits(int bitrate_kbits) {
-  NxpV4L2ControlSession ctrl(kNxpV4L2EncoderDevice);
+  NxpV4L2ControlSession ctrl(kNxpV4L2EncoderDevice, true);
   if (!ctrl.valid()) return false;
 
   const auto bitrate_bits_per_second =
@@ -762,8 +835,7 @@ static bool nxp_v4l2_set_cbr_bitrate_kbits(int bitrate_kbits) {
   ok &= ctrl.set_menu(V4L2_CID_MPEG_VIDEO_BITRATE_MODE,
                       V4L2_MPEG_VIDEO_BITRATE_MODE_CBR,
                       "video_bitrate_mode");
-  ok &= ctrl.set_int(V4L2_CID_MPEG_VIDEO_BITRATE, bitrate_bits_per_second,
-                     "video_bitrate");
+  ok &= nxp_set_bitrate(bitrate_bits_per_second);
   ok &= ctrl.set_int(V4L2_CID_MPEG_VIDEO_FRAME_RC_ENABLE, 1,
                      "frame_level_rate_control_enable");
   return ok;
@@ -787,7 +859,7 @@ static std::string create_nxp_imx8_v4l2_stream(
   const auto bitrate_bits_per_second =
       openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
 
-  NxpV4L2ControlSession ctrl(kNxpV4L2EncoderDevice);
+  NxpV4L2ControlSession ctrl(kNxpV4L2EncoderDevice, true);
 
   if (ctrl.valid()) {
     ctrl.set_menu(V4L2_CID_MPEG_VIDEO_BITRATE_MODE,
