@@ -90,6 +90,10 @@ class CameraStream {
    * interface method properly, e.g leave it empty.
    */
   virtual void handle_update_arming_state(bool armed) = 0;
+  // Optional force-IDR/keyframe request coming from the link layer.
+  // Default implementation is a no-op for pipelines that do not expose
+  // runtime keyframe injection.
+  virtual void request_keyframe() {}
 
  public:
   std::shared_ptr<CameraHolder> m_camera_holder;
