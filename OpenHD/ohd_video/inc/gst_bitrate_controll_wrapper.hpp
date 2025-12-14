@@ -83,7 +83,7 @@ get_dynamic_bitrate_control_element_in_pipeline(
     ret.set_bitrate_kbits = [](int bitrate_kbits) {
       return OHDGstHelper::nxp_v4l2_set_cbr_bitrate_kbits(bitrate_kbits);
     };
-    ret.cleanup = []() {};
+    ret.cleanup = []() { nxp_release_tracked_encoder_fd(); };
   }
   if (ret.encoder == nullptr && !ret.set_bitrate_kbits) {
     openhd::log::get_default()->debug(
