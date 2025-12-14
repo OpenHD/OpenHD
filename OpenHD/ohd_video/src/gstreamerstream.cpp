@@ -448,6 +448,16 @@ void GStreamerStream::handle_update_arming_state(bool armed) {
   }
 }
 
+void GStreamerStream::request_keyframe() {
+  const auto camera = m_camera_holder->get_camera();
+  if (camera.requires_nxp_imx8_v4l2_pipeline()) {
+    if (!OHDGstHelper::request_nxp_force_idr()) {
+      m_console->warn(
+          "NXP V4L2: failed to request IDR on active encoder fd");
+    }
+  }
+}
+
 void GStreamerStream::loop_infinite() {
   while (m_keep_looping) {
     try {
