@@ -796,9 +796,13 @@ static bool nxp_force_idr() {
   const int fd = nxp_open_and_track_encoder_fd(kNxpV4L2EncoderDevice);
   if (fd < 0) return false;
 
+#ifdef V4L2_CID_MPEG_VIDEO_FORCE_FRAME_TYPE
   nxp_clear_cached_ctrl_value(V4L2_CID_MPEG_VIDEO_FORCE_FRAME_TYPE);
+#endif
   nxp_clear_cached_ctrl_value(V4L2_CID_MPEG_VIDEO_FORCE_KEY_FRAME);
 
+#if defined(V4L2_CID_MPEG_VIDEO_FORCE_FRAME_TYPE) && \
+    defined(V4L2_MPEG_VIDEO_FORCE_FRAME_TYPE_IDR)
   if (v4l2_ctrl_is_supported(fd, V4L2_CID_MPEG_VIDEO_FORCE_FRAME_TYPE,
                               "force_frame_type")) {
     if (v4l2_ctrl_set_menu(fd, V4L2_CID_MPEG_VIDEO_FORCE_FRAME_TYPE,
@@ -807,6 +811,7 @@ static bool nxp_force_idr() {
       return true;
     }
   }
+#endif
   return v4l2_ctrl_press_button(fd, V4L2_CID_MPEG_VIDEO_FORCE_KEY_FRAME,
                                 "force_key_frame");
 }
@@ -823,6 +828,10 @@ static int nxp_calculate_intra_refresh_mbs(int width, int height,
   return mbs_per_frame;
 }
 }  // namespace
+
+inline void release_nxp_tracked_encoder_fd() {
+  nxp_release_tracked_encoder_fd();
+}
 
 static bool nxp_v4l2_set_cbr_bitrate_kbits(int bitrate_kbits) {
   NxpV4L2ControlSession ctrl(kNxpV4L2EncoderDevice, true);
