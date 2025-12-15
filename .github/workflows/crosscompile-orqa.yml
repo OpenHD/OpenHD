@@ -75,19 +75,19 @@ jobs:
           cmake --build build-sdk --parallel
 
       - name: Package cross-compiled binary
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: openhd-aarch64
           path: build-sdk/openhd
 
       - name: Upload Poco libraries archive
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: poco-libraries
           path: ${{ runner.temp }}/poco-libraries.zip
 
       - name: Upload libsodium libraries archive
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: libsodium-libraries
           path: ${{ runner.temp }}/libsodium-libraries.zip

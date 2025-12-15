@@ -55,7 +55,7 @@ jobs:
           cp -r /opt/OpenHD-ChrootCompiler/out/* .
 
       - name: Upload to Github
-        uses: 'actions/upload-artifact@v4'
+        uses: 'actions/upload-artifact@v6'
         with:
           name: "OpenHD"
           path: |
