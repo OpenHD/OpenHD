@@ -604,10 +604,16 @@ static std::string create_nxp_imx8_v4l2_stream(
                             : 30;
 
   const bool use_h264 = settings.streamed_video_format.videoCodec == VideoCodec::H264;
-  const auto iframe_control = use_h264 ? "h264_i_frame_period" : "h265_i_frame_period";
-  const auto encoder_name = use_h264 ? "v4l2h264enc" : "v4l2h265enc";
-  const auto bitrate_bits_per_second =
-      openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
+  const auto encoder_name = use_h264 ? "imxvpuenc_h264" : "imxvpuenc_h265";
+  const int keyframe_interval =
+      settings.h26x_keyframe_interval > 0 ? settings.h26x_keyframe_interval
+                                          : DEFAULT_KEYFRAME_INTERVAL;
+  const bool use_intra_refresh =
+      settings.h26x_intra_refresh_type != -1 && keyframe_interval > 0;
+  const int intra_refresh_mbs =
+      use_intra_refresh
+          ? rpi_calculate_intra_refresh_period(width, height, keyframe_interval)
+          : 0;
 
   std::stringstream ss;
   ss << fmt::format(
@@ -615,10 +621,12 @@ static std::string create_nxp_imx8_v4l2_stream(
       "video/x-raw,format=NV12,width={},height={},framerate={}/1 ! ",
       device_index, width, height, framerate);
   ss << "queue max-size-buffers=4 leaky=downstream ! ";
-  ss << fmt::format(
-      "{} extra-controls=\\\"controls,video_bitrate={},{}={}\\\" ! ",
-      encoder_name, bitrate_bits_per_second, iframe_control,
-      settings.h26x_keyframe_interval);
+  ss << fmt::format("{} bitrate={} gop-size={} enable-aud=true ", encoder_name,
+                    settings.h26x_bitrate_kbits, keyframe_interval);
+  if (use_intra_refresh) {
+    ss << fmt::format("intra-refresh={} ", intra_refresh_mbs);
+  }
+  ss << "! ";
   return ss.str();
 }
 
