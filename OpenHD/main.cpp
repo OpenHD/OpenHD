@@ -26,7 +26,9 @@
 #include <getopt.h>
 #include <ohd_interface.h>
 #ifdef ENABLE_AIR
+#include <camera.hpp>
 #include <ohd_video_air.h>
+#include <ohd_video_air_generic_settings.h>
 #endif  // ENABLE_AIR
 #include <ohd_video_ground.h>
 
@@ -249,47 +251,6 @@ int main(int argc, char *argv[]) {
     openhd::set_config_file(options.hardware_config_file.value());
   }
   set_unit_hostname(options.run_as_air);
-  {  // Print all the arguments the OHD main executable is started with
- bool validLicense=false;
- if (OHDFilesystemUtil::exists("/usr/local/share/openhd/license")) {
-  validLicense=true;
- }
- std::cout << "\033[2J\033[1;1H"; //clear terminal
- std::stringstream ss;
-    ss << openhd::get_ohd_version_as_string() << "\n";
-    ss << "\n";
-    ss << blue;
-    ss << "  #######  ########  ######## ##    ## ##     ## ######## \n";
-    ss << " ##     ## ##     ## ##       ###   ## ##     ## ##     ##\n";
-    ss << " ##     ## ##     ## ##       ####  ## ##     ## ##     ##\n";
-    ss << " ##     ## ########  ######   ## ## ## ######### ##     ##\n";
-    ss << " ##     ## ##        ##       ##  #### ##     ## ##     ##\n";
-    ss << " ##     ## ##        ##       ##   ### ##     ## ##     ##\n";
-    ss << "  #######  ##        ######## ##    ## ##     ## ######## \n";
-    ss << reset;
-    if (!validLicense) {
-      ss << "----------------------- " << blue << "OpenSource" << reset << " -----------------------\n";
-    } else {
-      ss << "----------------------- " << green << "Enterprise" << reset << " -----------------------\n";
-    }
-    ss << "\n";
-
-    if (options.run_as_air) {
-        ss << "----------------------- " << green << "Air Unit" << reset << " -----------------------\n";
-    } else {
-        ss << "----------------------- " << red << "Ground Unit" << reset << " ----------------------\n";
-    }
-
-    if (options.reset_all_settings) {
-        ss << red << "Reset Settings" << reset << "\n";
-    }
-    ss << "\n";
-
-    // ss << "Git info:Branch:" << git_Branch() << " SHA:" << git_CommitSHA1() << " Dirty:" << OHDUtil::yes_or_no(git_AnyUncommittedChanges()) << "\n";
-    std::cout << ss.str() << std::flush;
-    // openhd::debug_config();
-    // OHDInterface::print_internal_fec_optimization_method();
-}
   // Create the folder structure
   openhd::generateSettingsDirectoryIfNonExists();
   const auto platform = OHDPlatform::instance();
@@ -321,6 +282,66 @@ int main(int argc, char *argv[]) {
     // But if we are air, we have at least one camera, sw if no camera was found
     const auto profile = DProfile::discover(options.run_as_air);
     write_profile_manifest(profile);
+
+    {  // Print all the arguments the OHD main executable is started with
+      bool validLicense = false;
+      if (OHDFilesystemUtil::exists("/usr/local/share/openhd/license")) {
+        validLicense = true;
+      }
+      std::cout << "\033[2J\033[1;1H";  // clear terminal
+      std::stringstream ss;
+      ss << openhd::get_ohd_version_as_string() << "\n";
+      ss << "Built: " << __DATE__ << " " << __TIME__ << "\n";
+      ss << "Platform: "
+         << x_platform_type_to_string(platform.platform_type) << "\n";
+#ifdef ENABLE_AIR
+      std::string camera_info = "N/A";
+      if (profile.is_air) {
+        AirCameraGenericSettingsHolder camera_settings;
+        camera_info =
+            x_cam_type_to_string(
+                camera_settings.get_settings().primary_camera_type);
+      }
+      ss << "Camera: " << camera_info << "\n";
+#endif
+      ss << "\n";
+      ss << blue;
+      ss << "  #######  ########  ######## ##    ## ##     ## ######## \n";
+      ss << " ##     ## ##     ## ##       ###   ## ##     ## ##     ##\n";
+      ss << " ##     ## ##     ## ##       ####  ## ##     ## ##     ##\n";
+      ss << " ##     ## ########  ######   ## ## ## ######### ##     ##\n";
+      ss << " ##     ## ##        ##       ##  #### ##     ## ##     ##\n";
+      ss << " ##     ## ##        ##       ##   ### ##     ## ##     ##\n";
+      ss << "  #######  ##        ######## ##    ## ##     ## ######## \n";
+      ss << reset;
+      if (!validLicense) {
+        ss << "----------------------- " << blue << "OpenSource" << reset
+           << " -----------------------\n";
+      } else {
+        ss << "----------------------- " << green << "Enterprise" << reset
+           << " -----------------------\n";
+      }
+      ss << "\n";
+
+      if (options.run_as_air) {
+        ss << "----------------------- " << green << "Air Unit" << reset
+           << " -----------------------\n";
+      } else {
+        ss << "----------------------- " << red << "Ground Unit" << reset
+           << " ----------------------\n";
+      }
+
+      if (options.reset_all_settings) {
+        ss << red << "Reset Settings" << reset << "\n";
+      }
+      ss << "\n";
+
+      // ss << "Git info:Branch:" << git_Branch() << " SHA:" << git_CommitSHA1()
+      // << " Dirty:" << OHDUtil::yes_or_no(git_AnyUncommittedChanges()) << "\n";
+      std::cout << ss.str() << std::flush;
+      // openhd::debug_config();
+      // OHDInterface::print_internal_fec_optimization_method();
+    }
 
     // we need to start QOpenHD when we are running as ground, or stop / disable
     // it when we are running as air. can be disabled for development purposes.
