@@ -118,6 +118,12 @@ class CameraHolder :
     persist();
     return true;
   }
+  bool set_nxp_enable_aud(int value) {
+    if (!openhd::validate_yes_or_no(value)) return false;
+    unsafe_get_settings().nxp_enable_aud = static_cast<bool>(value);
+    persist();
+    return true;
+  }
   bool set_openhd_flip(int value) {
     if (!(value >= OPENHD_FLIP_NONE &&
           value <= OPENHD_FLIP_VERTICAL_AND_HORIZONTAL))
