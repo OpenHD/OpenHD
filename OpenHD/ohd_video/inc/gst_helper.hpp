@@ -608,7 +608,9 @@ static std::string create_nxp_imx8_v4l2_stream(
   const int keyframe_interval =
       settings.h26x_keyframe_interval > 0 ? settings.h26x_keyframe_interval
                                           : DEFAULT_KEYFRAME_INTERVAL;
-  const bool use_intra_refresh =
+  // Intra refresh currently supported only for H.264 on this encoder.
+  // Disable for H.265 to avoid unsupported configuration (see upstream issues).
+  const bool use_intra_refresh = use_h264 &&
       settings.h26x_intra_refresh_type != -1 && keyframe_interval > 0;
   const int intra_refresh_mbs =
       use_intra_refresh
@@ -621,8 +623,10 @@ static std::string create_nxp_imx8_v4l2_stream(
       "video/x-raw,format=NV12,width={},height={},framerate={}/1 ! ",
       device_index, width, height, framerate);
   ss << "queue max-size-buffers=4 leaky=downstream ! ";
-  ss << fmt::format("{} bitrate={} gop-size={} enable-aud=true ", encoder_name,
-                    settings.h26x_bitrate_kbits, keyframe_interval);
+  const std::string aud_parameter = use_h264 ? " enable-aud=true" : "";
+  ss << fmt::format("{} bitrate={} gop-size={}{} ", encoder_name,
+                    settings.h26x_bitrate_kbits, keyframe_interval,
+                    aud_parameter);
   if (use_intra_refresh) {
     ss << fmt::format("intra-refresh={} ", intra_refresh_mbs);
   }
