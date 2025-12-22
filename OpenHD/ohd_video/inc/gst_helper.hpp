@@ -621,8 +621,10 @@ static std::string create_nxp_imx8_v4l2_stream(
       "video/x-raw,format=NV12,width={},height={},framerate={}/1 ! ",
       device_index, width, height, framerate);
   ss << "queue max-size-buffers=4 leaky=downstream ! ";
-  ss << fmt::format("{} bitrate={} gop-size={} enable-aud=true ", encoder_name,
-                    settings.h26x_bitrate_kbits, keyframe_interval);
+  const std::string aud_parameter = use_h264 ? " enable-aud=true" : "";
+  ss << fmt::format("{} bitrate={} gop-size={}{} ", encoder_name,
+                    settings.h26x_bitrate_kbits, keyframe_interval,
+                    aud_parameter);
   if (use_intra_refresh) {
     ss << fmt::format("intra-refresh={} ", intra_refresh_mbs);
   }
