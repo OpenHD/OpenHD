@@ -37,7 +37,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(VideoFormat, videoCodec, width, height,
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
     CameraSettings, enable_streaming, streamed_video_format, h26x_bitrate_kbits,
     h26x_keyframe_interval, h26x_intra_refresh_type, h26x_num_slices,
-    air_recording, camera_rotation_degree, openhd_flip, openhd_brightness,
+    nxp_enable_aud, air_recording, camera_rotation_degree, openhd_flip, openhd_brightness,
     openhd_sharpness, openhd_saturation, openhd_contrast,
     // rpi libcamera specific IQ params begin
     rpi_libcamera_ev_value, rpi_libcamera_denoise_index,
@@ -87,6 +87,15 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
         openhd::IntSetting{
             video_codec_to_int(get_settings().streamed_video_format.videoCodec),
             c_codec}});
+  }
+  if (m_camera.requires_nxp_imx8_v4l2_pipeline()) {
+    auto c_nxp_aud = [this](std::string, int value) {
+      return set_nxp_enable_aud(value);
+    };
+    ret.push_back(openhd::Setting{
+        "NXP_ENABLE_AUD",
+        openhd::IntSetting{static_cast<int>(get_settings().nxp_enable_aud),
+                           c_nxp_aud}});
   }
   {
     // Supported by all cameras, since it has actually nothing to do with the

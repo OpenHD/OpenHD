@@ -108,6 +108,8 @@ struct CameraSettings {
   // N of slices. Not supported on all hardware (none to be exact unless the
   // cisco sw encoder) as of now 0 == frame slicing off
   int h26x_num_slices = 0;
+  // Whether to emit Access Unit Delimiters in the NXP VPU pipeline (h264 only)
+  bool nxp_enable_aud = true;
   // enable/disable recording to file
   int air_recording = AIR_RECORDING_OFF;
   //
