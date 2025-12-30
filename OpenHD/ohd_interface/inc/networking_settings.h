@@ -25,6 +25,7 @@
 #define OPENHD_OPENHD_OHD_INTERFACE_INC_NETWORKING_SETTINGS_H_
 
 #include <cstdint>
+#include <string>
 
 #include "openhd_settings_directories.h"
 #include "openhd_settings_persistent.h"
@@ -34,6 +35,10 @@
 static constexpr auto WIFI_HOTSPOT_AUTO = 0;
 static constexpr auto WIFI_HOTSPOT_ALWAYS_OFF = 1;
 static constexpr auto WIFI_HOTSPOT_ALWAYS_ON = 2;
+// Wifi operating mode (exposed via mavlink)
+static constexpr auto WIFI_MODE_OFF = 0;
+static constexpr auto WIFI_MODE_HOTSPOT = 1;
+static constexpr auto WIFI_MODE_CLIENT = 2;
 
 // OpenHD does not touch the ethernet
 static constexpr auto ETHERNET_OPERATING_MODE_UNTOUCHED = 0;
@@ -47,14 +52,26 @@ static constexpr auto ETHERNET_OPERATING_MODE_EXTERNAL_DEVICE = 2;
 
 // Networking related settings, separate from wb_link
 struct NetworkingSettings {
+  // wifi mode exposed via mavlink (OFF / HOTSPOT / CONNECT)
+  int wifi_operating_mode = WIFI_MODE_HOTSPOT;
   // Only used if a wifi hotspot card has been found
   int wifi_hotspot_mode = WIFI_HOTSPOT_AUTO;
+  // Optional override for which interface is used for hotspot mode
+  std::string wifi_hotspot_interface_override;
+  // Optional interface used for wifi client mode
+  std::string wifi_client_interface;
+  std::string wifi_client_ssid;
+  std::string wifi_client_password;
   // Ethernet operating mode (changes networking,might require reboot)
   int ethernet_operating_mode = ETHERNET_OPERATING_MODE_UNTOUCHED;
 };
 
 static bool is_valid_wifi_hotspot_mode(int mode) {
   return mode == 0 || mode == 1 || mode == 2;
+}
+static bool is_valid_wifi_operating_mode(int mode) {
+  return mode == WIFI_MODE_OFF || mode == WIFI_MODE_HOTSPOT ||
+         mode == WIFI_MODE_CLIENT;
 }
 
 class NetworkingSettingsHolder
