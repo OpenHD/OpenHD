@@ -26,7 +26,9 @@
 
 #include <optional>
 #include <string>
+#include <memory>
 
+#include "openhd_spdlog.h"
 #include "wifi_card.h"
 
 /**
@@ -36,6 +38,10 @@
 class WiFiClient {
  public:
   static bool create_if_enabled();
+  static bool connect(const std::string& interface_name,
+                      const std::string& ssid, const std::string& password,
+                      std::shared_ptr<spdlog::logger> console);
+  static void disconnect(std::shared_ptr<spdlog::logger> console);
 };
 
 #endif  // OPENHD_WIFI_CLIENT_H

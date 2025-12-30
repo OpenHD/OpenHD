@@ -26,6 +26,8 @@
 
 #include <memory>
 #include <utility>
+#include <vector>
+#include <optional>
 
 #include "ethernet_manager.h"
 #include "networking_settings.h"
@@ -77,6 +79,16 @@ class OHDInterface {
   std::shared_ptr<OHDLink> get_link_handle();
 
  private:
+  void apply_wifi_operating_mode();
+  void refresh_discovered_wifi_cards();
+  std::optional<WiFiCard> find_card_by_name(const std::string& name) const;
+  bool is_monitor_mode_card(const std::string& name) const;
+  std::optional<WiFiCard> get_configured_hotspot_card();
+  std::optional<WiFiCard> get_configured_client_card();
+  void recreate_wifi_hotspot_if_needed();
+  void stop_wifi_client();
+  bool start_wifi_client();
+  std::string describe_wifi_interfaces();
   void update_wifi_hotspot_enable();
 
  private:
@@ -90,6 +102,10 @@ class OHDInterface {
   std::shared_ptr<EthernetLink> m_ethernet_link;
   std::vector<WiFiCard> m_monitor_mode_cards{};
   std::optional<WiFiCard> m_opt_hotspot_card = std::nullopt;
+  std::vector<WiFiCard> m_discovered_wifi_cards{};
+  std::string m_current_hotspot_card_name;
+  std::string m_active_wifi_client_card;
+  bool m_wifi_client_active = false;
   const bool m_disable_wifi_hotspot;
   NetworkingSettingsHolder m_nw_settings;
 };
