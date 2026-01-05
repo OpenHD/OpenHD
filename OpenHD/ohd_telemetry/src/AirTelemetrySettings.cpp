@@ -30,7 +30,13 @@ namespace openhd::telemetry::air {
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Settings, fc_uart_connection_type,
                                    fc_uart_baudrate, fc_uart_flow_control,
                                    fc_battery_n_cells,
-                                   openhd_uart_telemetry_connection);
+                                   openhd_uart_telemetry_connection,
+                                   openhd_uart_telemetry_enabled,
+                                   openhd_uart_telemetry_baudrate,
+                                   openhd_uart_telemetry_flow_control,
+                                   openhd_uart_priority_rc,
+                                   openhd_uart_priority_openhd,
+                                   openhd_uart_priority_fc);
 
 std::optional<Settings> SettingsHolder::impl_deserialize(
     const std::string &file_as_string) const {

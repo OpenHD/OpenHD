@@ -12,6 +12,25 @@ An endpoint (under src/endpoints) receives and/ or transmits a continuous mavlin
 4) tcp - for creating a mavlink server on the ground / air, can also be used by GCS, not preferred but
    usefully in some networking situations.
 
+### UART roles and configuration
+OpenHD exposes every UART over MAVLink so that wiring choices are documented and configurable without
+rebuilding the image:
+
+- **Air unit**
+  - **Flight controller telemetry (RX/TX):** `FC_UART_CONN`, `FC_UART_BAUD`, `FC_UART_FLWCTL` remain the primary knobs.
+  - **OpenHD telemetry UART (RX/TX):** gate the link with `OHD_UART_EN`, select the device via `OHD_UART_TLM`
+    (for example `/dev/serial1`), and tune `OHD_UART_BAUD` / `OHD_UART_FLW`. Message buckets are prioritised via
+    `UART_PRI_RC`, `UART_PRI_OHD`, and `UART_PRI_FC` (RC/control traffic highest by default, OpenHD mid, FC lowest).
+
+- **Ground unit**
+  - **Tracker output (TX only):** `TRACKER_UART_OUT` chooses the port, `TRACK_UART_BAUD` and `TRACK_UART_FLOW`
+    control bandwidth/flow-control. Reading is intentionally disabled for this port to match one-way tracker wiring.
+  - **OpenHD telemetry UART (RX/TX):** mirror the air-side parameters (`OHD_UART_EN`, `OHD_UART_TLM`,
+    `OHD_UART_BAUD`, `OHD_UART_FLW`, plus the three `UART_PRI_*` settings) so both sides can be aligned from a GCS.
+
+UART telemetry frames are de-duplicated against traffic that already arrived via wifibroadcast using
+`sysid/compid/msgid/seq` so consumers do not see duplicate MAVLink messages when multiple links are active.
+
 ## OHDMainComponent (Component)
 Used by both the air and ground unit implementation, generates fire-and-forget mavlink statistics
 
@@ -74,4 +93,3 @@ station itself, but rather on another device (for example a smartphone connected
 arises from the necessity to route the messages over another network. For this, we probably should go with TCP, but the
 TCPEndpoint still needs some work. The corresponding endpoint in QOpenHD can be found
 here: https://github.com/OpenHD/QOpenHD/blob/consti-test/app/telemetry/OHDConnection.h
-

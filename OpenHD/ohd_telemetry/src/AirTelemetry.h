@@ -29,6 +29,8 @@
 
 #include "endpoints/SerialEndpoint.h"
 #include "internal/OHDMainComponent.h"
+#include "internal/UartDeduplicator.h"
+#include "internal/UartPrioritizer.h"
 #include "openhd_link_statistics.hpp"
 #include "openhd_platform.h"
 #include "openhd_settings_imp.h"
@@ -101,6 +103,7 @@ class AirTelemetry : public MavlinkSystem {
   // called every time one or more messages from the ground unit are received
   void on_messages_ground_unit(std::vector<MavlinkMessage>& messages);
   // R.N only on air, and only FC uart settings
+  [[nodiscard]] UartPriorityProfile get_openhd_uart_priority_profile() const;
   std::vector<openhd::Setting> get_all_settings();
   void setup_uart();
   void setup_openhd_uart_telemetry();
@@ -113,6 +116,8 @@ class AirTelemetry : public MavlinkSystem {
   std::unique_ptr<WBEndpoint> m_wb_endpoint;
   // shared because we also push it onto our components list
   std::shared_ptr<OHDMainComponent> m_ohd_main_component;
+  UartDeduplicator m_uart_deduplicator;
+  UartPrioritizer m_uart_prioritizer;
   std::mutex m_components_lock;
   std::vector<std::shared_ptr<MavlinkComponent>> m_components;
   std::shared_ptr<XMavlinkParamProvider> m_generic_mavlink_param_provider;

@@ -33,7 +33,6 @@
 #include "networking_settings.h"
 #include "openhd_action_handler.h"
 #include "openhd_external_device.h"
-#include "openhd_led.h"
 #include "openhd_link.hpp"
 #include "openhd_platform.h"
 #include "openhd_profile.h"
@@ -77,6 +76,11 @@ class OHDInterface {
   // Agnostic of the link, even though r.n we only have a wifibroadcast
   // implementation (but this might change).
   std::shared_ptr<OHDLink> get_link_handle();
+  // Whether we detected any functional primary link implementation
+  // (WiFi/microhard/ethernet).
+  bool has_primary_link() const;
+  // Whether we have at least one real monitor-mode WiFi card (not emulated).
+  bool has_real_monitor_mode_cards() const;
 
  private:
   void apply_wifi_operating_mode();

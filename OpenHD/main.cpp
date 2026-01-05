@@ -37,14 +37,17 @@
 #include <cstring>
 #include <exception>
 #include <iostream>
+#include <algorithm>
 #include <memory>
 #include <cstdlib>
 #include <optional>
+#include <vector>
 
 #include "openhd_buttons.h"
 #include "openhd_global_constants.hpp"
 #include "openhd_platform.h"
 #include "openhd_profile.h"
+#include "openhd_sock.h"
 #include "openhd_spdlog.h"
 #include "openhd_temporary_air_or_ground.h"
 #include "openhd_config.h"
@@ -246,6 +249,8 @@ int main(int argc, char *argv[]) {
   if (OHDFilesystemUtil::exists("/run/openhd/hold.pid")) {
       std::exit(0);
   }
+  auto& reporter = openhd::Reporter::instance();
+  reporter.report(openhd::State::Booting);
   const OHDRunOptions options = parse_run_parameters(argc, argv);
   if (options.hardware_config_file.has_value()) {
     openhd::set_config_file(options.hardware_config_file.value());
@@ -254,7 +259,7 @@ int main(int argc, char *argv[]) {
   // Create the folder structure
   openhd::generateSettingsDirectoryIfNonExists();
   const auto platform = OHDPlatform::instance();
-  openhd::LEDManager::instance().set_status_loading();
+  reporter.report(openhd::State::Starting);
   // Generate the keys and delete pw if needed
   OHDInterface::generate_keys_from_pw_if_exists_and_delete();
   // Parse the program arguments
@@ -270,6 +275,7 @@ int main(int argc, char *argv[]) {
 
   // Create and link all the OpenHD modules.
   try {
+    std::vector<std::string> startup_errors;
     // This results in fresh default values for all modules (e.g. interface,
     // telemetry, video)
     if (options.reset_all_settings) {
@@ -373,8 +379,19 @@ int main(int argc, char *argv[]) {
     }
 
     // Then start ohdInterface, which discovers detected wifi cards and more.
-auto ohdInterface =
-    std::make_shared<OHDInterface>(profile, options.no_hotspot);
+    auto ohdInterface =
+        std::make_shared<OHDInterface>(profile, options.no_hotspot);
+    if (!ohdInterface->has_real_monitor_mode_cards()) {
+      const std::string no_wifi_card_message =
+          "No openhd wifibroadcast card found";
+      startup_errors.push_back(no_wifi_card_message);
+    }
+    if (!ohdInterface->has_primary_link()) {
+      const std::string no_link_message =
+          "No functional link detected (WiFi/Microhard/Ethernet)";
+      startup_errors.push_back(no_link_message);
+      reporter.report_status("no_link", no_link_message, 10000);
+    }
 
     // Telemetry allows changing all settings (even from other modules)
     ohdTelemetry->add_settings_generic(ohdInterface->get_all_settings());
@@ -389,6 +406,16 @@ auto ohdInterface =
     std::unique_ptr<OHDVideoAir> ohd_video_air = nullptr;
     if (profile.is_air) {
       auto cameras = OHDVideoAir::discover_cameras();
+      const bool using_dummy_camera = std::any_of(
+          cameras.begin(), cameras.end(),
+          [](const XCamera& camera) {
+            return camera.camera_type == X_CAM_TYPE_DUMMY_SW;
+          });
+      if (using_dummy_camera) {
+        const std::string dummy_camera_message =
+            "No physical camera detected; using dummy camera configuration";
+        startup_errors.push_back(dummy_camera_message);
+      }
       ohd_video_air = std::make_unique<OHDVideoAir>(
           cameras, ohdInterface->get_link_handle());
       // First add camera specific settings (primary & secondary camera)
@@ -404,8 +431,20 @@ auto ohdInterface =
     ohdTelemetry->settings_generic_ready();
     // now telemetry can send / receive data via wifibroadcast
     ohdTelemetry->set_link_handle(ohdInterface->get_link_handle());
-    std::cout << green << "OpenHD was successfully started." << reset << std::endl;
-    openhd::LEDManager::instance().set_status_okay();
+    if (startup_errors.empty()) {
+      std::cout << green << "OpenHD was successfully started." << reset
+                << std::endl;
+      reporter.report(openhd::State::Ready);
+    } else {
+      const auto combined_errors =
+          fmt::format("{}", fmt::join(startup_errors, "; "));
+      std::cout << red << "OpenHD started with errors:" << reset << std::endl;
+      for (const auto& error_message : startup_errors) {
+        std::cout << red << " - " << error_message << reset << std::endl;
+        m_console->error("Startup issue: {}", error_message);
+      }
+      reporter.report(openhd::State::Error, combined_errors, 3000);
+    }
     // run forever, everything has its own threads. Note that the only way to
     // break out basically is when one of the modules encounters an exception.
     static bool quit = false;
@@ -439,7 +478,7 @@ auto ohdInterface =
     }
     // --- terminate openhd, most likely requested by a developer with sigterm
     m_console->debug("Terminating openhd");
-    openhd::LEDManager::instance().set_status_stopped();
+    reporter.report(openhd::State::Stopped);
     // Stop any communication between modules, to eliminate any issues created
     // by threads during cleanup
     openhd::LinkActionHandler::instance().disable_all_callables();
@@ -473,9 +512,11 @@ auto ohdInterface =
     }
   } catch (std::exception &ex) {
     std::cerr << "Error: " << ex.what() << std::endl;
+    reporter.report(openhd::State::Error);
     exit(1);
   } catch (...) {
     std::cerr << "Unknown exception occurred" << std::endl;
+    reporter.report(openhd::State::Error);
     exit(1);
   }
   openhd::remove_currently_running_file();

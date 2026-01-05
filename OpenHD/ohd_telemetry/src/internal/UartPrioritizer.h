@@ -21,27 +21,30 @@
  * © OpenHD, All Rights Reserved.
  ******************************************************************************/
 
-#include <chrono>
-#include <iostream>
-#include <thread>
+#ifndef OPENHD_OPENHD_OHD_TELEMETRY_SRC_INTERNAL_UARTPRIORITIZER_H_
+#define OPENHD_OPENHD_OHD_TELEMETRY_SRC_INTERNAL_UARTPRIORITIZER_H_
 
-#include "openhd_led.h"
-#include "openhd_util.h"
+#include <vector>
 
-int main(int argc, char *argv[]) {
-  while (true) {
-    std::cout << "Set LEDs off" << std::endl;
-    openhd::LEDManager::instance().set_red_led_status(
-        openhd::LEDManager::STATUS_OFF);
-    openhd::LEDManager::instance().set_green_led_status(
-        openhd::LEDManager::STATUS_OFF);
-    std::this_thread::sleep_for(std::chrono::seconds(3));
-    std::cout << "Set LEDs ON" << std::endl;
-    openhd::LEDManager::instance().set_red_led_status(
-        openhd::LEDManager::STATUS_ON);
-    openhd::LEDManager::instance().set_green_led_status(
-        openhd::LEDManager::STATUS_ON);
+#include "mav_include.h"
 
-    std::this_thread::sleep_for(std::chrono::seconds(3));
-  }
-}
+struct UartPriorityProfile {
+  int rc_priority = 3;
+  int openhd_priority = 2;
+  int flight_controller_priority = 1;
+  int default_priority = 0;
+};
+
+class UartPrioritizer {
+ public:
+  static bool valid_priority_value(int value);
+  std::vector<MavlinkMessage> sort_by_priority(
+      const std::vector<MavlinkMessage>& messages,
+      const UartPriorityProfile& profile) const;
+
+ private:
+  static int determine_priority(const MavlinkMessage& message,
+                                const UartPriorityProfile& profile);
+};
+
+#endif  // OPENHD_OPENHD_OHD_TELEMETRY_SRC_INTERNAL_UARTPRIORITIZER_H_
