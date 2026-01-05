@@ -42,10 +42,25 @@ struct Settings {
   // This is for outputting FC mavlink data via serial on the ground station
   std::string gnd_uart_connection_type = UART_CONNECTION_TYPE_DISABLE;
   int gnd_uart_baudrate = 115200;
+  bool gnd_uart_flow_control = false;
   std::string openhd_uart_telemetry_connection = UART_CONNECTION_TYPE_DISABLE;
+  bool openhd_uart_telemetry_enabled = true;
+  int openhd_uart_telemetry_baudrate = 115200;
+  bool openhd_uart_telemetry_flow_control = false;
+  int openhd_uart_priority_rc = 3;
+  int openhd_uart_priority_openhd = 2;
+  int openhd_uart_priority_fc = 1;
 };
 
 static constexpr auto OPENHD_UART_TELEMETRY_PARAM = "OHD_UART_TLM";
+static constexpr auto OPENHD_UART_TELEMETRY_ENABLE_PARAM = "OHD_UART_EN";
+static constexpr auto OPENHD_UART_TELEMETRY_BAUD_PARAM = "OHD_UART_BAUD";
+static constexpr auto OPENHD_UART_TELEMETRY_FLOW_PARAM = "OHD_UART_FLW";
+static constexpr auto OPENHD_UART_PRIORITY_RC_PARAM = "UART_PRI_RC";
+static constexpr auto OPENHD_UART_PRIORITY_OHD_PARAM = "UART_PRI_OHD";
+static constexpr auto OPENHD_UART_PRIORITY_FC_PARAM = "UART_PRI_FC";
+static constexpr auto TRACKER_UART_BAUD_PARAM = "TRACK_UART_BAUD";
+static constexpr auto TRACKER_UART_FLOW_PARAM = "TRACK_UART_FLOW";
 
 static bool valid_joystick_update_rate(int value) {
   return value >= 1 && value <= 150;
