@@ -197,7 +197,9 @@ void GroundTelemetry::send_messages_ground_station_clients(
     m_tcp_server->sendMessages(messages);
   }
   if (m_openhd_uart_serial) {
-    m_openhd_uart_serial->send_messages_if_enabled(messages);
+    const auto prioritized_messages = m_uart_prioritizer.sort_by_priority(
+        messages, get_openhd_uart_priority_profile());
+    m_openhd_uart_serial->send_messages_if_enabled(prioritized_messages);
   }
 }
 
@@ -312,6 +314,15 @@ void GroundTelemetry::remove_external_ground_station_ip(
   }
 }
 
+UartPriorityProfile GroundTelemetry::get_openhd_uart_priority_profile() const {
+  const auto& settings = m_gnd_settings->get_settings();
+  UartPriorityProfile profile{};
+  profile.rc_priority = settings.openhd_uart_priority_rc;
+  profile.openhd_priority = settings.openhd_uart_priority_openhd;
+  profile.flight_controller_priority = settings.openhd_uart_priority_fc;
+  return profile;
+}
+
 std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
   std::vector<openhd::Setting> ret{};
   // and this allows an advanced user to change its air unit to a ground unit
@@ -392,11 +403,35 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
       setup_uart();
       return true;
     };
+    auto c_gnd_uart_baudrate = [this](std::string, int value) {
+      if (!SerialEndpoint::is_valid_linux_baudrate(value)) return false;
+      m_gnd_settings->unsafe_get_settings().gnd_uart_baudrate = value;
+      m_gnd_settings->persist();
+      setup_uart();
+      return true;
+    };
+    auto c_gnd_uart_flow = [this](std::string, int value) {
+      if (!openhd::validate_yes_or_no(value)) return false;
+      m_gnd_settings->unsafe_get_settings().gnd_uart_flow_control = value;
+      m_gnd_settings->persist();
+      setup_uart();
+      return true;
+    };
     ret.push_back(openhd::Setting{
         "TRACKER_UART_OUT",
         openhd::StringSetting{
             m_gnd_settings->get_settings().gnd_uart_connection_type,
             c_gnd_uart_connection_type}});
+    ret.push_back(openhd::Setting{
+        openhd::telemetry::ground::TRACKER_UART_BAUD_PARAM,
+        openhd::IntSetting{
+            static_cast<int>(m_gnd_settings->get_settings().gnd_uart_baudrate),
+            c_gnd_uart_baudrate}});
+    ret.push_back(openhd::Setting{
+        openhd::telemetry::ground::TRACKER_UART_FLOW_PARAM,
+        openhd::IntSetting{
+            static_cast<int>(m_gnd_settings->get_settings().gnd_uart_flow_control),
+            c_gnd_uart_flow}});
   }
   auto c_openhd_uart_conn = [this](std::string, std::string value) {
     m_gnd_settings->unsafe_get_settings().openhd_uart_telemetry_connection =
@@ -405,11 +440,86 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
     setup_openhd_uart_telemetry();
     return true;
   };
+  auto c_openhd_uart_enable = [this](std::string, int value) {
+    if (!openhd::validate_yes_or_no(value)) return false;
+    m_gnd_settings->unsafe_get_settings().openhd_uart_telemetry_enabled = value;
+    m_gnd_settings->persist();
+    setup_openhd_uart_telemetry();
+    return true;
+  };
+  auto c_openhd_uart_baud = [this](std::string, int value) {
+    if (!SerialEndpoint::is_valid_linux_baudrate(value)) return false;
+    m_gnd_settings->unsafe_get_settings().openhd_uart_telemetry_baudrate =
+        value;
+    m_gnd_settings->persist();
+    setup_openhd_uart_telemetry();
+    return true;
+  };
+  auto c_openhd_uart_flow = [this](std::string, int value) {
+    if (!openhd::validate_yes_or_no(value)) return false;
+    m_gnd_settings->unsafe_get_settings().openhd_uart_telemetry_flow_control =
+        value;
+    m_gnd_settings->persist();
+    setup_openhd_uart_telemetry();
+    return true;
+  };
+  auto c_openhd_uart_prio_rc = [this](std::string, int value) {
+    if (!UartPrioritizer::valid_priority_value(value)) return false;
+    m_gnd_settings->unsafe_get_settings().openhd_uart_priority_rc = value;
+    m_gnd_settings->persist(false);
+    return true;
+  };
+  auto c_openhd_uart_prio_ohd = [this](std::string, int value) {
+    if (!UartPrioritizer::valid_priority_value(value)) return false;
+    m_gnd_settings->unsafe_get_settings().openhd_uart_priority_openhd = value;
+    m_gnd_settings->persist(false);
+    return true;
+  };
+  auto c_openhd_uart_prio_fc = [this](std::string, int value) {
+    if (!UartPrioritizer::valid_priority_value(value)) return false;
+    m_gnd_settings->unsafe_get_settings().openhd_uart_priority_fc = value;
+    m_gnd_settings->persist(false);
+    return true;
+  };
   ret.push_back(openhd::Setting{
       openhd::telemetry::ground::OPENHD_UART_TELEMETRY_PARAM,
       openhd::StringSetting{
           m_gnd_settings->get_settings().openhd_uart_telemetry_connection,
           c_openhd_uart_conn}});
+  ret.push_back(openhd::Setting{
+      openhd::telemetry::ground::OPENHD_UART_TELEMETRY_ENABLE_PARAM,
+      openhd::IntSetting{
+          static_cast<int>(
+              m_gnd_settings->get_settings().openhd_uart_telemetry_enabled),
+          c_openhd_uart_enable}});
+  ret.push_back(openhd::Setting{
+      openhd::telemetry::ground::OPENHD_UART_TELEMETRY_BAUD_PARAM,
+      openhd::IntSetting{
+          static_cast<int>(
+              m_gnd_settings->get_settings().openhd_uart_telemetry_baudrate),
+          c_openhd_uart_baud}});
+  ret.push_back(openhd::Setting{
+      openhd::telemetry::ground::OPENHD_UART_TELEMETRY_FLOW_PARAM,
+      openhd::IntSetting{
+          static_cast<int>(
+              m_gnd_settings->get_settings().openhd_uart_telemetry_flow_control),
+          c_openhd_uart_flow}});
+  ret.push_back(openhd::Setting{
+      openhd::telemetry::ground::OPENHD_UART_PRIORITY_RC_PARAM,
+      openhd::IntSetting{
+          static_cast<int>(m_gnd_settings->get_settings().openhd_uart_priority_rc),
+          c_openhd_uart_prio_rc}});
+  ret.push_back(openhd::Setting{
+      openhd::telemetry::ground::OPENHD_UART_PRIORITY_OHD_PARAM,
+      openhd::IntSetting{
+          static_cast<int>(
+              m_gnd_settings->get_settings().openhd_uart_priority_openhd),
+          c_openhd_uart_prio_ohd}});
+  ret.push_back(openhd::Setting{
+      openhd::telemetry::ground::OPENHD_UART_PRIORITY_FC_PARAM,
+      openhd::IntSetting{
+          static_cast<int>(m_gnd_settings->get_settings().openhd_uart_priority_fc),
+          c_openhd_uart_prio_fc}});
   openhd::testing::append_dummy_if_empty(ret);
   return ret;
 }
@@ -423,8 +533,8 @@ void GroundTelemetry::setup_uart() {
     SerialEndpoint::HWOptions options{};
     options.linux_filename = uart_linux_fd.value();
     options.baud_rate = m_gnd_settings->get_settings().gnd_uart_baudrate;
-    options.flow_control = false;
-    options.enable_reading = true;
+    options.flow_control = m_gnd_settings->get_settings().gnd_uart_flow_control;
+    options.enable_reading = false;
     m_endpoint_tracker->configure(
         options, "gnd_ser",
         [this](std::vector<MavlinkMessage> messages) {
@@ -437,20 +547,28 @@ void GroundTelemetry::setup_uart() {
 
 void GroundTelemetry::setup_openhd_uart_telemetry() {
   if (!m_openhd_uart_serial) return;
+  const auto& settings = m_gnd_settings->get_settings();
+  if (!settings.openhd_uart_telemetry_enabled) {
+    m_openhd_uart_serial->disable();
+    return;
+  }
   const auto uart_linux_fd = serial_openhd_param_to_linux_fd(
-      m_gnd_settings->get_settings().openhd_uart_telemetry_connection);
+      settings.openhd_uart_telemetry_connection);
   if (!uart_linux_fd.has_value()) {
     m_openhd_uart_serial->disable();
     return;
   }
   SerialEndpoint::HWOptions options{};
   options.linux_filename = uart_linux_fd.value();
-  options.baud_rate = 115200;
+  options.baud_rate = settings.openhd_uart_telemetry_baudrate;
+  options.flow_control = settings.openhd_uart_telemetry_flow_control;
   options.enable_reading = true;
   m_openhd_uart_serial->configure(
       options, "openhd_uart",
       [this](const std::vector<MavlinkMessage> messages) {
-        on_messages_ground_station_clients(messages);
+        auto filtered = m_uart_deduplicator.filter_and_mark(messages);
+        if (filtered.empty()) return;
+        on_messages_ground_station_clients(filtered);
       });
 }
 
@@ -463,6 +581,7 @@ void GroundTelemetry::configure_openhd_uart_telemetry(
                   device_path.value());
   m_gnd_settings->unsafe_get_settings().openhd_uart_telemetry_connection =
       device_path.value();
+  m_gnd_settings->unsafe_get_settings().openhd_uart_telemetry_enabled = true;
   m_gnd_settings->persist();
   setup_openhd_uart_telemetry();
 }
@@ -472,7 +591,10 @@ void GroundTelemetry::set_link_handle(std::shared_ptr<OHDLink> link) {
   assert(m_wb_endpoint == nullptr);
   m_wb_endpoint = std::make_unique<WBEndpoint>(link, "wb_tx");
   m_wb_endpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
-    on_messages_air_unit(messages);
+    auto filtered = m_uart_deduplicator.filter_and_mark(messages);
+    if (!filtered.empty()) {
+      on_messages_air_unit(filtered);
+    }
   });
 }
 

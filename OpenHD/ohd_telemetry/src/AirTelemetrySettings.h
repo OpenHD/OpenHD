@@ -62,6 +62,12 @@ struct Settings {
   // 0 means not configured (do not use)
   int fc_battery_n_cells = 0;
   std::string openhd_uart_telemetry_connection = UART_CONNECTION_TYPE_DISABLE;
+  bool openhd_uart_telemetry_enabled = true;
+  int openhd_uart_telemetry_baudrate = DEFAULT_UART_BAUDRATE;
+  bool openhd_uart_telemetry_flow_control = false;
+  int openhd_uart_priority_rc = 3;
+  int openhd_uart_priority_openhd = 2;
+  int openhd_uart_priority_fc = 1;
 };
 
 // 16 chars limit !
@@ -70,6 +76,12 @@ static constexpr auto FC_UART_BAUD_RATE = "FC_UART_BAUD";
 static constexpr auto FC_UART_FLOW_CONTROL = "FC_UART_FLWCTL";
 static constexpr auto FC_BATT_N_CELLS = "FC_BATT_N_CELLS";
 static constexpr auto OPENHD_UART_TELEMETRY_PARAM = "OHD_UART_TLM";
+static constexpr auto OPENHD_UART_TELEMETRY_ENABLE_PARAM = "OHD_UART_EN";
+static constexpr auto OPENHD_UART_TELEMETRY_BAUD_PARAM = "OHD_UART_BAUD";
+static constexpr auto OPENHD_UART_TELEMETRY_FLOW_PARAM = "OHD_UART_FLW";
+static constexpr auto OPENHD_UART_PRIORITY_RC_PARAM = "UART_PRI_RC";
+static constexpr auto OPENHD_UART_PRIORITY_OHD_PARAM = "UART_PRI_OHD";
+static constexpr auto OPENHD_UART_PRIORITY_FC_PARAM = "UART_PRI_FC";
 
 class SettingsHolder : public openhd::PersistentSettings<Settings> {
  public:

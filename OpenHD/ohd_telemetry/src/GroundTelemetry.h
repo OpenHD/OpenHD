@@ -32,6 +32,8 @@
 #include "endpoints/UDPEndpoint.h"
 #include "endpoints/WBEndpoint.h"
 #include "internal/OHDMainComponent.h"
+#include "internal/UartDeduplicator.h"
+#include "internal/UartPrioritizer.h"
 #include "mavsdk_temporary/XMavlinkParamProvider.h"
 #include "openhd_action_handler.h"
 #include "openhd_external_device.h"
@@ -107,6 +109,7 @@ class GroundTelemetry : public MavlinkSystem {
   std::vector<openhd::Setting> get_all_settings();
   void setup_uart();
   void setup_openhd_uart_telemetry();
+  [[nodiscard]] UartPriorityProfile get_openhd_uart_priority_profile() const;
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
   void enable_joystick();
   void disable_joystick();
@@ -123,6 +126,8 @@ class GroundTelemetry : public MavlinkSystem {
   std::unique_ptr<TCPEndpoint> m_tcp_server = nullptr;
   // send/receive data via wb
   std::unique_ptr<WBEndpoint> m_wb_endpoint;
+  UartDeduplicator m_uart_deduplicator;
+  UartPrioritizer m_uart_prioritizer;
   std::shared_ptr<OHDMainComponent> m_ohd_main_component;
   std::mutex m_components_lock;
   std::vector<std::shared_ptr<MavlinkComponent>> m_components;
