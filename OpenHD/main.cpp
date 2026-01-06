@@ -37,6 +37,7 @@
 #include <cstring>
 #include <exception>
 #include <iostream>
+#include <algorithm>
 #include <memory>
 #include <cstdlib>
 #include <optional>
@@ -392,6 +393,17 @@ auto ohdInterface =
     std::unique_ptr<OHDVideoAir> ohd_video_air = nullptr;
     if (profile.is_air) {
       auto cameras = OHDVideoAir::discover_cameras();
+      const bool using_dummy_camera = std::any_of(
+          cameras.begin(), cameras.end(),
+          [](const XCamera& camera) {
+            return camera.camera_type == X_CAM_TYPE_DUMMY_SW;
+          });
+      if (using_dummy_camera) {
+        indicator_reporter.report_status_message(
+            "dummy_camera",
+            "Using dummy camera configuration - no physical camera detected",
+            1, 10000);
+      }
       ohd_video_air = std::make_unique<OHDVideoAir>(
           cameras, ohdInterface->get_link_handle());
       // First add camera specific settings (primary & secondary camera)

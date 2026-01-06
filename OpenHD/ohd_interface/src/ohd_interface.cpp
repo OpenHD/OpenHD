@@ -106,6 +106,8 @@ OHDInterface::OHDInterface(OHDProfile profile1, bool disable_wifi_hotspot)
         "Cannot start ohd_interface, no wifi card for monitor mode");
     const std::string message_for_user = "No WiFi card found, please reboot";
     m_console->warn(message_for_user);
+    openhd::IndicatorReporter::instance().report_status_message(
+        "no_wifi_card", "No WiFi card found for monitor mode", 2, 10000);
     openhd::IndicatorReporter::instance().report_state(
         openhd::IndicatorState::Error, 2);
     // TODO reason what to do. We do not support dynamically adding wifi cards
