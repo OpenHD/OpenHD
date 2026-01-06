@@ -457,6 +457,11 @@ std::shared_ptr<OHDLink> OHDInterface::get_link_handle() {
   return nullptr;
 }
 
+bool OHDInterface::has_primary_link() const {
+  return static_cast<bool>(m_wb_link) || static_cast<bool>(m_microhard_link) ||
+         static_cast<bool>(m_ethernet_link);
+}
+
 void OHDInterface::generate_keys_from_pw_if_exists_and_delete() {
   // Make sure this stupid sodium init has been called
   if (sodium_init() == -1) {

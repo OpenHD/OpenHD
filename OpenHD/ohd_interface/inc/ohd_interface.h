@@ -76,6 +76,9 @@ class OHDInterface {
   // Agnostic of the link, even though r.n we only have a wifibroadcast
   // implementation (but this might change).
   std::shared_ptr<OHDLink> get_link_handle();
+  // Whether we detected any functional primary link implementation
+  // (WiFi/microhard/ethernet).
+  bool has_primary_link() const;
 
  private:
   void apply_wifi_operating_mode();
