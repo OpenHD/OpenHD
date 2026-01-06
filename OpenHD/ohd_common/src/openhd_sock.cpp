@@ -231,12 +231,11 @@ bool IndicatorReporter::send_payload(const std::string& serialized_payload) {
 
 void IndicatorReporter::send_pending_now() {
   std::optional<IndicatorStatus> status_copy;
-  std::unique_lock<std::mutex> lock(m_mutex);
-  const bool should_send = prepare_send_locked(status_copy);
-  if (!should_send) {
-    return;
+  {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    status_copy = m_status;
+    m_pending_send = false;
   }
-  lock.unlock();
   if (status_copy.has_value()) {
     send_state(status_copy.value());
   } else {
