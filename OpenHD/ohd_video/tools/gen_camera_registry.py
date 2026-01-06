@@ -335,6 +335,10 @@ def render_header(
     lines.append("}  // namespace camera_registry")
     lines.append("}  // namespace openhd")
     lines.append("")
+    for entry in camera_types:
+        key = entry["key"]
+        lines.append(f"using openhd::camera_registry::{key};")
+    lines.append("")
     return "\n".join(lines)
 
 
