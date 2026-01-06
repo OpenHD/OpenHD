@@ -31,6 +31,8 @@
 
 #include <cerrno>
 #include <cstring>
+#include <filesystem>
+#include <iostream>
 #include <memory>
 #include <string>
 
@@ -43,6 +45,10 @@ std::shared_ptr<spdlog::logger> indicator_logger() {
   static std::shared_ptr<spdlog::logger> logger =
       openhd::log::create_or_get("indicator");
   return logger;
+}
+
+void print_to_screen(const std::string& message) {
+  std::cout << "[OpenHD status] " << message << std::endl;
 }
 
 }  // namespace
@@ -142,6 +148,9 @@ void IndicatorReporter::send_state(const IndicatorStatus& status) {
   payload["state"] = state_to_string(status.state);
   payload["severity"] = status.severity;
   payload["ttl_ms"] = status.ttl_ms;
+  print_to_screen("indicator.set state=" + state_to_string(status.state) +
+                  " severity=" + std::to_string(status.severity) +
+                  " ttl_ms=" + std::to_string(status.ttl_ms));
   auto serialized = payload.dump();
   serialized.push_back('\n');
   send_payload(serialized);
@@ -152,6 +161,7 @@ void IndicatorReporter::send_clear() {
   nlohmann::json payload;
   payload["type"] = "indicator.clear";
   payload["source"] = "openhd";
+  print_to_screen("indicator.clear");
   auto serialized = payload.dump();
   serialized.push_back('\n');
   send_payload(serialized);
@@ -164,54 +174,102 @@ bool IndicatorReporter::send_payload(const std::string& serialized_payload) {
     indicator_logger()->debug("indicator socket path too long: {}", path);
     return false;
   }
-  const int fd = ::socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
-  if (fd < 0) {
-    indicator_logger()->debug("indicator socket creation failed: {}", strerror(errno));
-    return false;
+  std::error_code ec;
+  const auto parent = std::filesystem::path(path).parent_path();
+  if (!parent.empty()) {
+    std::filesystem::create_directories(parent, ec);
+    if (ec) {
+      indicator_logger()->debug("unable to create indicator socket dir {}: {}",
+                                parent.string(), ec.message());
+    }
   }
 
-  int flags = fcntl(fd, F_GETFL, 0);
-  if (flags != -1) {
-    fcntl(fd, F_SETFL, flags | O_NONBLOCK);
-  }
+  auto send_stream = [&]() -> bool {
+    const int fd = ::socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
+    if (fd < 0) {
+      indicator_logger()->debug("indicator stream socket creation failed: {}",
+                                strerror(errno));
+      return false;
+    }
 
-  sockaddr_un addr {};
-  addr.sun_family = AF_UNIX;
-  std::strncpy(addr.sun_path, path.c_str(), sizeof(addr.sun_path) - 1);
+    int flags = fcntl(fd, F_GETFL, 0);
+    if (flags != -1) {
+      fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+    }
 
-  int result = ::connect(fd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr));
-  if (result < 0 && errno == EINPROGRESS) {
-    pollfd pfd{};
-    pfd.fd = fd;
-    pfd.events = POLLOUT;
-    result = ::poll(&pfd, 1, 100);
-    if (result > 0) {
-      int socket_error = 0;
-      socklen_t len = sizeof(socket_error);
-      if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &socket_error, &len) < 0 ||
-          socket_error != 0) {
+    sockaddr_un addr {};
+    addr.sun_family = AF_UNIX;
+    std::strncpy(addr.sun_path, path.c_str(), sizeof(addr.sun_path) - 1);
+
+    int result =
+        ::connect(fd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr));
+    if (result < 0 && errno == EINPROGRESS) {
+      pollfd pfd{};
+      pfd.fd = fd;
+      pfd.events = POLLOUT;
+      result = ::poll(&pfd, 1, 200);
+      if (result > 0) {
+        int socket_error = 0;
+        socklen_t len = sizeof(socket_error);
+        if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &socket_error, &len) < 0 ||
+            socket_error != 0) {
+          indicator_logger()->debug(
+              "indicator stream socket connect failed: {}", strerror(socket_error));
+          close(fd);
+          return false;
+        }
+      } else {
+        indicator_logger()->debug("indicator stream socket connect poll failed");
         close(fd);
         return false;
       }
-    } else {
+    } else if (result < 0) {
+      indicator_logger()->debug("indicator stream socket connect error: {}",
+                                strerror(errno));
       close(fd);
       return false;
     }
-  } else if (result < 0) {
-    close(fd);
-    return false;
-  }
 
-  const ssize_t bytes_sent =
-      ::send(fd, serialized_payload.data(), serialized_payload.size(),
-             MSG_NOSIGNAL);
-  close(fd);
-  if (bytes_sent != static_cast<ssize_t>(serialized_payload.size())) {
-    indicator_logger()->debug("indicator send failed, sent {} of {}", bytes_sent,
-                              serialized_payload.size());
-    return false;
+    const ssize_t bytes_sent =
+        ::send(fd, serialized_payload.data(), serialized_payload.size(),
+               MSG_NOSIGNAL);
+    close(fd);
+    if (bytes_sent != static_cast<ssize_t>(serialized_payload.size())) {
+      indicator_logger()->debug("indicator stream send failed, sent {} of {}",
+                                bytes_sent, serialized_payload.size());
+      return false;
+    }
+    return true;
+  };
+
+  auto send_datagram = [&]() -> bool {
+    const int fd = ::socket(AF_UNIX, SOCK_DGRAM | SOCK_CLOEXEC, 0);
+    if (fd < 0) {
+      indicator_logger()->debug("indicator dgram socket creation failed: {}",
+                                strerror(errno));
+      return false;
+    }
+    sockaddr_un addr {};
+    addr.sun_family = AF_UNIX;
+    std::strncpy(addr.sun_path, path.c_str(), sizeof(addr.sun_path) - 1);
+    const ssize_t bytes_sent =
+        ::sendto(fd, serialized_payload.data(), serialized_payload.size(), 0,
+                 reinterpret_cast<sockaddr*>(&addr), sizeof(addr));
+    close(fd);
+    if (bytes_sent != static_cast<ssize_t>(serialized_payload.size())) {
+      indicator_logger()->debug("indicator dgram send failed, sent {} of {}",
+                                bytes_sent, serialized_payload.size());
+      return false;
+    }
+    return true;
+  };
+
+  if (send_stream()) {
+    return true;
   }
-  return true;
+  indicator_logger()->warn(
+      "indicator stream socket send failed, retrying via datagram");
+  return send_datagram();
 }
 
 std::string IndicatorReporter::state_to_string(IndicatorState state) {
