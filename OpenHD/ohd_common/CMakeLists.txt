@@ -66,7 +66,7 @@ set(sources
     "src/openhd_telemetry_recorder.cpp"
     "src/openhd_udp.cpp"
     "src/openhd_tcp.cpp"
-    "src/openhd_indicator_reporter.cpp"
+    "src/openhd_sock.cpp"
     "src/openhd_buttons.cpp"
     "src/openhd_settings_imp.cpp"
     "src/openhd_settings_directories.cpp"

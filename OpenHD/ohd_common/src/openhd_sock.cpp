@@ -21,16 +21,16 @@
  * © OpenHD, All Rights Reserved.
  ******************************************************************************/
 
-#include "openhd_indicator_reporter.h"
+#include "openhd_sock.h"
 
-#include <fcntl.h>
-#include <poll.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
 
 #include <cerrno>
 #include <cstring>
+#include <filesystem>
+#include <iostream>
 #include <memory>
 #include <string>
 
@@ -39,10 +39,33 @@
 
 namespace {
 
+constexpr const char* kSocketPath = "/run/openhd/openhd_sys.sock";
+
 std::shared_ptr<spdlog::logger> indicator_logger() {
   static std::shared_ptr<spdlog::logger> logger =
       openhd::log::create_or_get("indicator");
   return logger;
+}
+
+void print_to_screen(const std::string& message) {
+  std::cout << "[OpenHD status] " << message << std::endl;
+}
+
+bool write_all(int fd, const void* data, size_t len) {
+  const auto* ptr = static_cast<const char*>(data);
+  size_t remaining = len;
+  while (remaining > 0) {
+    const ssize_t written = ::send(fd, ptr, remaining, MSG_NOSIGNAL);
+    if (written < 0) {
+      if (errno == EINTR) {
+        continue;
+      }
+      return false;
+    }
+    ptr += written;
+    remaining -= static_cast<size_t>(written);
+  }
+  return true;
 }
 
 }  // namespace
@@ -142,6 +165,9 @@ void IndicatorReporter::send_state(const IndicatorStatus& status) {
   payload["state"] = state_to_string(status.state);
   payload["severity"] = status.severity;
   payload["ttl_ms"] = status.ttl_ms;
+  print_to_screen("indicator.set state=" + state_to_string(status.state) +
+                  " severity=" + std::to_string(status.severity) +
+                  " ttl_ms=" + std::to_string(status.ttl_ms));
   auto serialized = payload.dump();
   serialized.push_back('\n');
   send_payload(serialized);
@@ -152,6 +178,7 @@ void IndicatorReporter::send_clear() {
   nlohmann::json payload;
   payload["type"] = "indicator.clear";
   payload["source"] = "openhd";
+  print_to_screen("indicator.clear");
   auto serialized = payload.dump();
   serialized.push_back('\n');
   send_payload(serialized);
@@ -164,51 +191,41 @@ bool IndicatorReporter::send_payload(const std::string& serialized_payload) {
     indicator_logger()->debug("indicator socket path too long: {}", path);
     return false;
   }
-  const int fd = ::socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
-  if (fd < 0) {
-    indicator_logger()->debug("indicator socket creation failed: {}", strerror(errno));
-    return false;
+  std::error_code ec;
+  const auto parent = std::filesystem::path(path).parent_path();
+  if (!parent.empty()) {
+    std::filesystem::create_directories(parent, ec);
+    if (ec) {
+      indicator_logger()->debug("unable to create indicator socket dir {}: {}",
+                                parent.string(), ec.message());
+    }
   }
 
-  int flags = fcntl(fd, F_GETFL, 0);
-  if (flags != -1) {
-    fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+  // The status reader listens with a blocking AF_UNIX/STREAM server. Use a
+  // simple blocking connect/write loop for maximum compatibility.
+  const int fd = ::socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
+  if (fd < 0) {
+    indicator_logger()->debug("indicator socket creation failed: {}",
+                              strerror(errno));
+    return false;
   }
 
   sockaddr_un addr {};
   addr.sun_family = AF_UNIX;
   std::strncpy(addr.sun_path, path.c_str(), sizeof(addr.sun_path) - 1);
 
-  int result = ::connect(fd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr));
-  if (result < 0 && errno == EINPROGRESS) {
-    pollfd pfd{};
-    pfd.fd = fd;
-    pfd.events = POLLOUT;
-    result = ::poll(&pfd, 1, 100);
-    if (result > 0) {
-      int socket_error = 0;
-      socklen_t len = sizeof(socket_error);
-      if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &socket_error, &len) < 0 ||
-          socket_error != 0) {
-        close(fd);
-        return false;
-      }
-    } else {
-      close(fd);
-      return false;
-    }
-  } else if (result < 0) {
+  if (::connect(fd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
+    indicator_logger()->debug("indicator socket connect failed: {}",
+                              strerror(errno));
     close(fd);
     return false;
   }
 
-  const ssize_t bytes_sent =
-      ::send(fd, serialized_payload.data(), serialized_payload.size(),
-             MSG_NOSIGNAL);
+  const bool sent_ok =
+      write_all(fd, serialized_payload.data(), serialized_payload.size());
   close(fd);
-  if (bytes_sent != static_cast<ssize_t>(serialized_payload.size())) {
-    indicator_logger()->debug("indicator send failed, sent {} of {}", bytes_sent,
-                              serialized_payload.size());
+  if (!sent_ok) {
+    indicator_logger()->debug("indicator send failed: {}", strerror(errno));
     return false;
   }
   return true;
@@ -232,8 +249,6 @@ std::string IndicatorReporter::state_to_string(IndicatorState state) {
   return "UNKNOWN";
 }
 
-std::string IndicatorReporter::socket_path() {
-  return "/run/openhd/openhd_sys.sock";
-}
+std::string IndicatorReporter::socket_path() { return kSocketPath; }
 
 }  // namespace openhd
