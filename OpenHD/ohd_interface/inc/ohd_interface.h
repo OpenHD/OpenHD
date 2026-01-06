@@ -33,7 +33,6 @@
 #include "networking_settings.h"
 #include "openhd_action_handler.h"
 #include "openhd_external_device.h"
-#include "openhd_led.h"
 #include "openhd_link.hpp"
 #include "openhd_platform.h"
 #include "openhd_profile.h"

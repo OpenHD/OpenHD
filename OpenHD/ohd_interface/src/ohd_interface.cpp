@@ -36,6 +36,7 @@
 #include "microhard_link.h"
 #include "openhd_config.h"
 #include "openhd_global_constants.hpp"
+#include "openhd_indicator_reporter.h"
 #include "openhd_util_filesystem.h"
 #include "wb_link.h"
 // Helper function to execute a shell command and return the output
@@ -105,7 +106,8 @@ OHDInterface::OHDInterface(OHDProfile profile1, bool disable_wifi_hotspot)
         "Cannot start ohd_interface, no wifi card for monitor mode");
     const std::string message_for_user = "No WiFi card found, please reboot";
     m_console->warn(message_for_user);
-    openhd::LEDManager::instance().set_status_error();
+    openhd::IndicatorReporter::instance().report_state(
+        openhd::IndicatorState::Error, 2);
     // TODO reason what to do. We do not support dynamically adding wifi cards
     // at run time, so somehow we need to signal to the user that something is
     // completely wrong. However, as an Ground pi, we can still run QOpenHD and
