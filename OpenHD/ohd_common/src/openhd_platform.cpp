@@ -25,18 +25,63 @@
 
 #include <sstream>
 
+#include "include_json.hpp"
+#include "openhd_settings_directories.h"
 #include "openhd_sock.h"
 #include "openhd_spdlog.h"
+#include "openhd_util_filesystem.h"
 
-static int request_platform_from_sysutils() {
+namespace {
+
+const char* platform_cache_path() {
+  static const std::string path =
+      std::string(openhd::SETTINGS_BASE_PATH) + "platform.json";
+  return path.c_str();
+}
+
+std::optional<int> read_cached_platform_type() {
+  if (!OHDFilesystemUtil::exists(platform_cache_path())) {
+    return std::nullopt;
+  }
+  const auto content =
+      OHDFilesystemUtil::opt_read_file(platform_cache_path(), false);
+  if (!content.has_value()) {
+    return std::nullopt;
+  }
+  auto parsed = nlohmann::json::parse(content.value(), nullptr, false);
+  if (parsed.is_discarded() || !parsed.contains("platform_type")) {
+    return std::nullopt;
+  }
+  if (!parsed["platform_type"].is_number_integer()) {
+    return std::nullopt;
+  }
+  return parsed["platform_type"].get<int>();
+}
+
+void write_cached_platform_type(int platform_type) {
+  openhd::generateSettingsDirectoryIfNonExists();
+  nlohmann::json payload;
+  payload["platform_type"] = platform_type;
+  payload["platform_name"] = x_platform_type_to_string(platform_type);
+  OHDFilesystemUtil::write_file(platform_cache_path(), payload.dump(2));
+}
+
+int request_platform_from_sysutils() {
+  auto cached = read_cached_platform_type();
+  if (cached.has_value()) {
+    return cached.value();
+  }
   auto platform_opt = openhd::request_platform_type();
   if (!platform_opt.has_value()) {
     openhd::log::get_default()->warn(
         "Platform request from sysutils failed, defaulting to UNKNOWN.");
     return X_PLATFORM_TYPE_UNKNOWN;
   }
+  write_cached_platform_type(platform_opt.value());
   return platform_opt.value();
 }
+
+}  // namespace
 
 std::string x_platform_type_to_string(int platform_type) {
   switch (platform_type) {
