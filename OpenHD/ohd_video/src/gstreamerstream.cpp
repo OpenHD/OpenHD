@@ -42,6 +42,7 @@
 #include "openhd_sock.h"
 #include "openhd_rtp.h"
 #include "openhd_util.h"
+#include "spdlog/fmt/bundled/format.h"
 #include "rpi_hdmi_to_csi_v4l2_helper.h"
 #include "rtp_eof_helper.h"
 #include "x20_cam_helper.h"

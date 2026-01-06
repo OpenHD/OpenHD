@@ -41,9 +41,9 @@ namespace {
 
 constexpr const char* kSocketPath = "/run/openhd/openhd_sys.sock";
 
-std::shared_ptr<spdlog::logger> indicator_logger() {
+std::shared_ptr<spdlog::logger> openhd_sock_logger() {
   static std::shared_ptr<spdlog::logger> logger =
-      openhd::log::create_or_get("indicator");
+      openhd::log::create_or_get("openhd_sock");
   return logger;
 }
 
@@ -204,7 +204,7 @@ void IndicatorReporter::send_clear() {
 bool IndicatorReporter::send_payload(const std::string& serialized_payload) {
   const auto path = socket_path();
   if (path.size() >= sizeof(sockaddr_un::sun_path)) {
-    indicator_logger()->debug("indicator socket path too long: {}", path);
+    openhd_sock_logger()->debug("indicator socket path too long: {}", path);
     return false;
   }
   std::error_code ec;
@@ -212,8 +212,9 @@ bool IndicatorReporter::send_payload(const std::string& serialized_payload) {
   if (!parent.empty()) {
     std::filesystem::create_directories(parent, ec);
     if (ec) {
-      indicator_logger()->debug("unable to create indicator socket dir {}: {}",
-                                parent.string(), ec.message());
+      openhd_sock_logger()->debug(
+          "unable to create indicator socket dir {}: {}", parent.string(),
+          ec.message());
     }
   }
 
@@ -221,8 +222,8 @@ bool IndicatorReporter::send_payload(const std::string& serialized_payload) {
   // simple blocking connect/write loop for maximum compatibility.
   const int fd = ::socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
   if (fd < 0) {
-    indicator_logger()->debug("indicator socket creation failed: {}",
-                              strerror(errno));
+    openhd_sock_logger()->debug("indicator socket creation failed: {}",
+                                strerror(errno));
     return false;
   }
 
@@ -231,8 +232,8 @@ bool IndicatorReporter::send_payload(const std::string& serialized_payload) {
   std::strncpy(addr.sun_path, path.c_str(), sizeof(addr.sun_path) - 1);
 
   if (::connect(fd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
-    indicator_logger()->debug("indicator socket connect failed: {}",
-                              strerror(errno));
+    openhd_sock_logger()->debug("indicator socket connect failed: {}",
+                                strerror(errno));
     close(fd);
     return false;
   }
@@ -241,7 +242,7 @@ bool IndicatorReporter::send_payload(const std::string& serialized_payload) {
       write_all(fd, serialized_payload.data(), serialized_payload.size());
   close(fd);
   if (!sent_ok) {
-    indicator_logger()->debug("indicator send failed: {}", strerror(errno));
+    openhd_sock_logger()->debug("indicator send failed: {}", strerror(errno));
     return false;
   }
   return true;
