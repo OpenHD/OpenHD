@@ -47,10 +47,6 @@ std::shared_ptr<spdlog::logger> indicator_logger() {
   return logger;
 }
 
-void print_to_screen(const std::string& message) {
-  std::cout << "[OpenHD status] " << message << std::endl;
-}
-
 bool write_all(int fd, const void* data, size_t len) {
   const auto* ptr = static_cast<const char*>(data);
   size_t remaining = len;
@@ -81,7 +77,7 @@ IndicatorReporter::IndicatorReporter()
     : m_pending_send(false),
       m_shutdown(false),
       m_last_sent(std::chrono::steady_clock::time_point::min()),
-      m_refresh_interval(std::chrono::milliseconds(2000)),
+      m_refresh_interval(std::chrono::hours(24)),
       m_worker(&IndicatorReporter::worker_loop, this) {}
 
 IndicatorReporter::~IndicatorReporter() {
@@ -163,9 +159,6 @@ void IndicatorReporter::send_state(const IndicatorStatus& status) {
   payload["state"] = state_to_string(status.state);
   payload["severity"] = status.severity;
   payload["ttl_ms"] = status.ttl_ms;
-  print_to_screen("indicator.set state=" + state_to_string(status.state) +
-                  " severity=" + std::to_string(status.severity) +
-                  " ttl_ms=" + std::to_string(status.ttl_ms));
   auto serialized = payload.dump();
   serialized.push_back('\n');
   send_payload(serialized);
@@ -176,7 +169,6 @@ void IndicatorReporter::send_clear() {
   nlohmann::json payload;
   payload["type"] = "indicator.clear";
   payload["source"] = "openhd";
-  print_to_screen("indicator.clear");
   auto serialized = payload.dump();
   serialized.push_back('\n');
   send_payload(serialized);
@@ -245,10 +237,7 @@ void IndicatorReporter::send_pending_now() {
 
 bool IndicatorReporter::prepare_send_locked(
     std::optional<IndicatorStatus>& status_copy) {
-  const auto now = std::chrono::steady_clock::now();
-  const bool should_refresh = m_status.has_value() &&
-                              now - m_last_sent >= m_refresh_interval;
-  bool should_send = m_pending_send || should_refresh;
+  bool should_send = m_pending_send;
   m_pending_send = false;
   status_copy = m_status;
   return should_send;
