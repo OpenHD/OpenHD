@@ -41,6 +41,8 @@
 #include <memory>
 #include <cstdlib>
 #include <optional>
+#include <vector>
+#include <fmt/format.h>
 
 #include "openhd_buttons.h"
 #include "openhd_global_constants.hpp"
@@ -274,6 +276,7 @@ int main(int argc, char *argv[]) {
 
   // Create and link all the OpenHD modules.
   try {
+    std::vector<std::string> startup_errors;
     // This results in fresh default values for all modules (e.g. interface,
     // telemetry, video)
     if (options.reset_all_settings) {
@@ -377,8 +380,15 @@ int main(int argc, char *argv[]) {
     }
 
     // Then start ohdInterface, which discovers detected wifi cards and more.
-auto ohdInterface =
-    std::make_shared<OHDInterface>(profile, options.no_hotspot);
+    auto ohdInterface =
+        std::make_shared<OHDInterface>(profile, options.no_hotspot);
+    if (!ohdInterface->has_primary_link()) {
+      const std::string no_link_message =
+          "No functional link detected (WiFi/Microhard/Ethernet)";
+      startup_errors.push_back(no_link_message);
+      indicator_reporter.report_status_message("no_link", no_link_message, 2,
+                                               10000);
+    }
 
     // Telemetry allows changing all settings (even from other modules)
     ohdTelemetry->add_settings_generic(ohdInterface->get_all_settings());
@@ -399,10 +409,11 @@ auto ohdInterface =
             return camera.camera_type == X_CAM_TYPE_DUMMY_SW;
           });
       if (using_dummy_camera) {
+        const std::string dummy_camera_message =
+            "No physical camera detected; using dummy camera configuration";
         indicator_reporter.report_status_message(
-            "dummy_camera",
-            "Using dummy camera configuration - no physical camera detected",
-            1, 10000);
+            "dummy_camera", dummy_camera_message, 2, 10000);
+        startup_errors.push_back(dummy_camera_message);
       }
       ohd_video_air = std::make_unique<OHDVideoAir>(
           cameras, ohdInterface->get_link_handle());
@@ -419,8 +430,21 @@ auto ohdInterface =
     ohdTelemetry->settings_generic_ready();
     // now telemetry can send / receive data via wifibroadcast
     ohdTelemetry->set_link_handle(ohdInterface->get_link_handle());
-    std::cout << green << "OpenHD was successfully started." << reset << std::endl;
-    indicator_reporter.report_state(openhd::IndicatorState::Ready, 0);
+    if (startup_errors.empty()) {
+      std::cout << green << "OpenHD was successfully started." << reset
+                << std::endl;
+      indicator_reporter.report_state(openhd::IndicatorState::Ready, 0);
+    } else {
+      const auto combined_errors =
+          fmt::format("{}", fmt::join(startup_errors, "; "));
+      std::cout << red << "OpenHD started with errors:" << reset << std::endl;
+      for (const auto& error_message : startup_errors) {
+        std::cout << red << " - " << error_message << reset << std::endl;
+        m_console->error("Startup issue: {}", error_message);
+      }
+      indicator_reporter.report_state(openhd::IndicatorState::Error, 2,
+                                      combined_errors);
+    }
     // run forever, everything has its own threads. Note that the only way to
     // break out basically is when one of the modules encounters an exception.
     static bool quit = false;

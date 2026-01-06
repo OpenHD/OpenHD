@@ -47,8 +47,8 @@ class IndicatorReporter {
  public:
   static IndicatorReporter& instance();
 
-  void report_state(IndicatorState state, int severity = 0,
-                    int ttl_ms = 3000);
+  void report_state(IndicatorState state, int severity = 0, int ttl_ms = 3000,
+                    const std::string& message = "");
   void report_status_message(const std::string& code,
                              const std::string& message, int severity = 0,
                              int ttl_ms = 3000);
@@ -64,6 +64,7 @@ class IndicatorReporter {
     IndicatorState state;
     int severity;
     int ttl_ms;
+    std::string message;
   };
 
   void worker_loop();

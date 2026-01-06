@@ -93,13 +93,14 @@ IndicatorReporter::~IndicatorReporter() {
 }
 
 void IndicatorReporter::report_state(IndicatorState state, int severity,
-                                     int ttl_ms) {
-  IndicatorStatus new_status{state, severity, ttl_ms};
+                                     int ttl_ms, const std::string& message) {
+  IndicatorStatus new_status{state, severity, ttl_ms, message};
   {
     std::lock_guard<std::mutex> lock(m_mutex);
     if (m_status.has_value() && m_status->state == new_status.state &&
         m_status->severity == new_status.severity &&
-        m_status->ttl_ms == new_status.ttl_ms) {
+        m_status->ttl_ms == new_status.ttl_ms &&
+        m_status->message == new_status.message) {
       const auto now = std::chrono::steady_clock::now();
       if (now - m_last_sent < m_refresh_interval) {
         return;
@@ -179,12 +180,21 @@ void IndicatorReporter::worker_loop() {
 }
 
 void IndicatorReporter::send_state(const IndicatorStatus& status) {
+  const auto state_string = state_to_string(status.state);
+  if (state_string == "UNKNOWN") {
+    openhd_sock_logger()->warn(
+        "Skipping indicator state update: unknown state value {}", status.state);
+    return;
+  }
   nlohmann::json payload;
   payload["type"] = "indicator.set";
   payload["source"] = "openhd";
-  payload["state"] = state_to_string(status.state);
+  payload["state"] = state_string;
   payload["severity"] = status.severity;
   payload["ttl_ms"] = status.ttl_ms;
+  if (!status.message.empty()) {
+    payload["message"] = status.message;
+  }
   auto serialized = payload.dump();
   serialized.push_back('\n');
   send_payload(serialized);
