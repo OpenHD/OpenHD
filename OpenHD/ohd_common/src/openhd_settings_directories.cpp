@@ -24,6 +24,7 @@
 #include "openhd_settings_directories.h"
 
 #include <cassert>
+#include <filesystem>
 #include <utility>
 
 #include "openhd_spdlog.h"
@@ -51,7 +52,22 @@ std::string openhd::getOrCreateUnitId() {
 
 void openhd::clean_all_settings() {
   openhd::log::get_default()->debug("clean_all_settings()");
-  OHDFilesystemUtil::safe_delete_directory(SETTINGS_BASE_PATH);
+  const std::string base_path = SETTINGS_BASE_PATH;
+  const std::string sysutils_dir = base_path + "SysUtils";
+  std::error_code ec;
+  if (OHDFilesystemUtil::exists(base_path)) {
+    for (const auto& entry :
+         std::filesystem::directory_iterator(base_path, ec)) {
+      if (ec) {
+        break;
+      }
+      const auto path = entry.path();
+      if (path == sysutils_dir) {
+        continue;
+      }
+      std::filesystem::remove_all(path, ec);
+    }
+  }
   generateSettingsDirectoryIfNonExists();
 }
 
