@@ -34,6 +34,7 @@
 #include <utility>
 
 #include "openhd_platform.h"
+#include "openhd_sock.h"
 #include "openhd_spdlog_include.h"
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"
@@ -295,6 +296,12 @@ void SerialEndpoint::receive_data_until_error() {
       m_n_failed_reads++;
       if (!warned_once && m_options.enable_reading) {
         m_console->warn("{} failed reads - FC connected ?", m_n_failed_reads);
+        if (TAG == "fc_ser") {
+          openhd::IndicatorReporter::instance().report_status_message(
+              "no_air_telemetry",
+              "No telemetry received from flight controller over UART", 2,
+              10000);
+        }
         warned_once = true;
       }
       continue;

@@ -25,6 +25,7 @@
 
 #include <gst/gst.h>
 
+#include <fmt/format.h>
 #include <iostream>
 #include <utility>
 #include <vector>
@@ -38,6 +39,7 @@
 #include "nalu/CodecConfigFinder.hpp"
 #include "nalu/fragment_helper.h"
 #include "nalu/nalu_helper.h"
+#include "openhd_sock.h"
 #include "openhd_rtp.h"
 #include "openhd_util.h"
 #include "rpi_hdmi_to_csi_v4l2_helper.h"
@@ -540,6 +542,11 @@ void GStreamerStream::stream_once() {
     if (std::chrono::steady_clock::now() - m_last_camera_frame >
         std::chrono::seconds(10)) {
       m_console->warn("Restarting camera due to no frame after 10 seconds");
+      openhd::IndicatorReporter::instance().report_status_message(
+          "camera_no_frames",
+          fmt::format("No frames received from camera {}",
+                      m_camera_holder->get_camera().index),
+          2, 10000);
       m_request_restart = true;
     }
     // Check if we need to set a new bitrate

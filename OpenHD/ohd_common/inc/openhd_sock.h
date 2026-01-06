@@ -30,6 +30,7 @@
 #include <optional>
 #include <string>
 #include <thread>
+#include <unordered_map>
 
 namespace openhd {
 
@@ -48,6 +49,9 @@ class IndicatorReporter {
 
   void report_state(IndicatorState state, int severity = 0,
                     int ttl_ms = 3000);
+  void report_status_message(const std::string& code,
+                             const std::string& message, int severity = 0,
+                             int ttl_ms = 3000);
   void clear();
 
  private:
@@ -78,7 +82,10 @@ class IndicatorReporter {
   bool m_shutdown;
   std::chrono::steady_clock::time_point m_last_sent;
   const std::chrono::milliseconds m_refresh_interval;
+  const std::chrono::milliseconds m_status_message_refresh_interval;
   std::thread m_worker;
+  std::unordered_map<std::string, std::chrono::steady_clock::time_point>
+      m_last_status_messages;
 };
 
 }  // namespace openhd
