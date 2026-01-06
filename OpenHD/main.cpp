@@ -45,7 +45,7 @@
 #include "openhd_global_constants.hpp"
 #include "openhd_platform.h"
 #include "openhd_profile.h"
-#include "openhd_indicator_reporter.h"
+#include "openhd_sock.h"
 #include "openhd_spdlog.h"
 #include "openhd_temporary_air_or_ground.h"
 #include "openhd_config.h"

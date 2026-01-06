@@ -21,8 +21,8 @@
  * © OpenHD, All Rights Reserved.
  ******************************************************************************/
 
-#ifndef OPENHD_INDICATOR_REPORTER_H
-#define OPENHD_INDICATOR_REPORTER_H
+#ifndef OPENHD_SOCK_H
+#define OPENHD_SOCK_H
 
 #include <chrono>
 #include <condition_variable>
@@ -81,4 +81,4 @@ class IndicatorReporter {
 
 }  // namespace openhd
 
-#endif  // OPENHD_INDICATOR_REPORTER_H
+#endif  // OPENHD_SOCK_H

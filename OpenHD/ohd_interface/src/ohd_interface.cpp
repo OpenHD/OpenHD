@@ -36,7 +36,7 @@
 #include "microhard_link.h"
 #include "openhd_config.h"
 #include "openhd_global_constants.hpp"
-#include "openhd_indicator_reporter.h"
+#include "openhd_sock.h"
 #include "openhd_util_filesystem.h"
 #include "wb_link.h"
 // Helper function to execute a shell command and return the output
