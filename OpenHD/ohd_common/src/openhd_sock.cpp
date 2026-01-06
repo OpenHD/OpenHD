@@ -112,6 +112,7 @@ void IndicatorReporter::report_state(IndicatorState state, int severity,
     m_pending_send = true;
   }
   m_condition.notify_one();
+  send_pending_now();
 }
 
 void IndicatorReporter::clear() {
@@ -121,6 +122,7 @@ void IndicatorReporter::clear() {
     m_pending_send = true;
   }
   m_condition.notify_one();
+  send_pending_now();
 }
 
 void IndicatorReporter::worker_loop() {
@@ -139,12 +141,8 @@ void IndicatorReporter::worker_loop() {
     if (m_shutdown) {
       return;
     }
-    const auto now = std::chrono::steady_clock::now();
-    const bool should_refresh = m_status.has_value() &&
-                                now - m_last_sent >= m_refresh_interval;
-    bool should_send = m_pending_send || should_refresh;
-    m_pending_send = false;
-    auto status_copy = m_status;
+    std::optional<IndicatorStatus> status_copy;
+    const bool should_send = prepare_send_locked(status_copy);
     lock.unlock();
 
     if (!should_send) {
@@ -229,6 +227,32 @@ bool IndicatorReporter::send_payload(const std::string& serialized_payload) {
     return false;
   }
   return true;
+}
+
+void IndicatorReporter::send_pending_now() {
+  std::optional<IndicatorStatus> status_copy;
+  std::unique_lock<std::mutex> lock(m_mutex);
+  const bool should_send = prepare_send_locked(status_copy);
+  if (!should_send) {
+    return;
+  }
+  lock.unlock();
+  if (status_copy.has_value()) {
+    send_state(status_copy.value());
+  } else {
+    send_clear();
+  }
+}
+
+bool IndicatorReporter::prepare_send_locked(
+    std::optional<IndicatorStatus>& status_copy) {
+  const auto now = std::chrono::steady_clock::now();
+  const bool should_refresh = m_status.has_value() &&
+                              now - m_last_sent >= m_refresh_interval;
+  bool should_send = m_pending_send || should_refresh;
+  m_pending_send = false;
+  status_copy = m_status;
+  return should_send;
 }
 
 std::string IndicatorReporter::state_to_string(IndicatorState state) {

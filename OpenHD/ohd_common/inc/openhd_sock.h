@@ -66,6 +66,8 @@ class IndicatorReporter {
   void send_state(const IndicatorStatus& status);
   void send_clear();
   bool send_payload(const std::string& serialized_payload);
+  void send_pending_now();
+  bool prepare_send_locked(std::optional<IndicatorStatus>& status_copy);
   static std::string state_to_string(IndicatorState state);
   static std::string socket_path();
 
