@@ -25,7 +25,6 @@
 
 #include <gst/gst.h>
 
-#include <fmt/format.h>
 #include <iostream>
 #include <utility>
 #include <vector>
