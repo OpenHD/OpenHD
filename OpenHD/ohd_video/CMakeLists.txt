@@ -12,6 +12,26 @@ option(ENABLE_AIR "Enable air support" ON)
 option(ENABLE_USB_CAMERAS "USB cameras support" ON)
 find_package(PkgConfig REQUIRED)
 
+find_program(PYTHON_EXECUTABLE NAMES python3 python)
+if(NOT PYTHON_EXECUTABLE)
+    message(FATAL_ERROR "python3 or python is required to generate camera registry")
+endif()
+
+set(CAMERA_REGISTRY_JSON ${CMAKE_CURRENT_SOURCE_DIR}/misc/camera_registry.json)
+set(GENERATED_CAMERA_REGISTRY_HEADER ${CMAKE_CURRENT_BINARY_DIR}/camera_registry_generated.h)
+
+add_custom_command(
+    OUTPUT ${GENERATED_CAMERA_REGISTRY_HEADER}
+    COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/gen_camera_registry.py
+            --input ${CAMERA_REGISTRY_JSON}
+            --output ${GENERATED_CAMERA_REGISTRY_HEADER}
+    DEPENDS ${CAMERA_REGISTRY_JSON} ${CMAKE_CURRENT_SOURCE_DIR}/tools/gen_camera_registry.py
+    COMMENT "Generating camera registry from JSON"
+    VERBATIM
+)
+
+add_custom_target(generate_camera_registry DEPENDS ${GENERATED_CAMERA_REGISTRY_HEADER})
+
 add_library(OHDVideoLib STATIC
         inc/rpi_hdmi_to_csi_v4l2_helper.h
         src/openhd_rtp.cpp
@@ -111,6 +131,7 @@ endif ()
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
 target_sources(OHDVideoLib PRIVATE ${sources})
 target_include_directories(OHDVideoLib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/inc)
+target_include_directories(OHDVideoLib PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(OHDVideoLib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/librtp/inc)
 
 target_link_libraries(OHDVideoLib PUBLIC OHDCommonLib)
@@ -120,6 +141,8 @@ target_compile_options(OHDVideoLib PRIVATE -Wno-packed-bitfield-compat)
 
 find_package(Threads REQUIRED)
 target_link_libraries(OHDVideoLib PUBLIC Threads::Threads)
+
+add_dependencies(OHDVideoLib generate_camera_registry)
 
 # Executables for testing manually, note that some might need to run after discovery
 add_executable(test_video test/test_video.cpp)

@@ -1,0 +1,839 @@
+{
+  "camera_types": [
+    {
+      "key": "X_CAM_TYPE_DUMMY_SW",
+      "id": 0,
+      "name": "DUMMY",
+      "ui_label": "Dummy (debug)",
+      "resolutions": [
+        {"width": 640, "height": 480, "fps": 30},
+        {"width": 1280, "height": 720, "fps": 30},
+        {"width": 1280, "height": 720, "fps": 60}
+      ]
+    },
+    {"key": "X_CAM_TYPE_EXTERNAL", "id": 2, "name": "EXTERNAL", "ui_label": "External (DEV)"},
+    {"key": "X_CAM_TYPE_EXTERNAL_IP", "id": 3, "name": "EXTERNAL_IP", "ui_label": "External IP (DEV)"},
+    {
+      "key": "X_CAM_TYPE_DEVELOPMENT_FILESRC",
+      "id": 4,
+      "name": "DEV_FILESRC",
+      "ui_label": "DEV Filecamera",
+      "resolutions": [
+        {"width": 848, "height": 480, "fps": 60},
+        {"width": 1280, "height": 720, "fps": 60},
+        {"width": 1920, "height": 1080, "fps": 60}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_USB_GENERIC",
+      "id": 10,
+      "name": "USB",
+      "ui_label": "EXP USB GENERIC",
+      "resolutions": [
+        {"width": 640, "height": 480, "fps": 30},
+        {"width": 0, "height": 0, "fps": 0}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_USB_INFIRAY",
+      "id": 11,
+      "name": "INFIRAY",
+      "ui_label": "INFIRAY USB",
+      "resolutions": [
+        {"width": 384, "height": 292, "fps": 25}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_USB_INFIRAY_T2",
+      "id": 12,
+      "name": "INFIRAY_T2",
+      "ui_label": "INFIRAY USB T2",
+      "resolutions": [
+        {"width": 256, "height": 192, "fps": 25},
+        {"width": 0, "height": 0, "fps": 0}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_USB_INFIRAY_X2",
+      "id": 13,
+      "name": "INFIRAY_X2",
+      "ui_label": "INFIRAY USB X2",
+      "resolutions": [
+        {"width": 384, "height": 292, "fps": 50}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_USB_INFIRAY_P2_PRO",
+      "id": 14,
+      "name": "INFIRAY_P2_PRO",
+      "ui_label": "INFIRAY USB P2 Pro",
+      "resolutions": [
+        {"width": 256, "height": 192, "fps": 25}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_USB_FLIR_VUE",
+      "id": 15,
+      "name": "FLIR VUE",
+      "ui_label": "FLIR_VUE",
+      "resolutions": [
+        {"width": 640, "height": 512, "fps": 30}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_USB_FLIR_BOSON",
+      "id": 16,
+      "name": "FLIR BOSON",
+      "ui_label": "FLIR_BOSON",
+      "resolutions": [
+        {"width": 640, "height": 512, "fps": 60}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI",
+      "id": 20,
+      "name": "MMAL_HDMI",
+      "ui_label": "GENERIC HDMI to CSI",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 30},
+        {"width": 1920, "height": 1080, "fps": 25},
+        {"width": 1280, "height": 720, "fps": 60}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V1_OV5647",
+      "id": 30,
+      "name": "RPIF_V1_OV5647",
+      "ui_label": "V1 OV5647",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 30},
+        {"width": 1920, "height": 1080, "fps": 30}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V2_IMX219",
+      "id": 31,
+      "name": "RPIF_V2_IMX219",
+      "ui_label": "V2 IMX219",
+      "resolutions": [
+        {"width": 640, "height": 480, "fps": 47},
+        {"width": 896, "height": 504, "fps": 47},
+        {"width": 1280, "height": 720, "fps": 47},
+        {"width": 1920, "height": 1080, "fps": 30}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V3_IMX708",
+      "id": 32,
+      "name": "RPIF_V3_IMX708",
+      "ui_label": "V3 IMX708",
+      "resolutions": [
+        {"width": 640, "height": 480, "fps": 60},
+        {"width": 896, "height": 504, "fps": 60},
+        {"width": 1280, "height": 720, "fps": 60},
+        {"width": 1920, "height": 1080, "fps": 30}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_RPI_LIBCAMERA_RPIF_HQ_IMX477",
+      "id": 33,
+      "name": "RPIF_HQ_IMX477",
+      "ui_label": "HQ IMX477",
+      "resolutions": [
+        {"width": 640, "height": 480, "fps": 50},
+        {"width": 896, "height": 504, "fps": 50},
+        {"width": 1280, "height": 720, "fps": 50},
+        {"width": 1920, "height": 1080, "fps": 30}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_SKYMASTERHDR_IMX708",
+      "id": 40,
+      "name": "ARDUCAM_SKYMASTERHDR",
+      "ui_label": "SKYMASTERHDR",
+      "resolutions": [
+        {"width": 640, "height": 480, "fps": 60},
+        {"width": 896, "height": 504, "fps": 60},
+        {"width": 1280, "height": 720, "fps": 60},
+        {"width": 1920, "height": 1080, "fps": 30}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_SKYVISIONPRO_IMX519",
+      "id": 41,
+      "name": "ARDUCAM_SKYVISIONPRO",
+      "ui_label": "SKYVISIONPRO",
+      "resolutions": [
+        {"width": 640, "height": 480, "fps": 60},
+        {"width": 896, "height": 504, "fps": 60},
+        {"width": 1280, "height": 720, "fps": 60},
+        {"width": 1920, "height": 1080, "fps": 30}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX477M",
+      "id": 42,
+      "name": "ARDUCAM_IMX477M",
+      "ui_label": "IMX477m",
+      "resolutions": [
+        {"width": 640, "height": 480, "fps": 50},
+        {"width": 896, "height": 504, "fps": 50},
+        {"width": 1280, "height": 720, "fps": 50},
+        {"width": 1920, "height": 1080, "fps": 30}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX462",
+      "id": 43,
+      "name": "ARDUCAM_IMX462",
+      "ui_label": "IMX462",
+      "resolutions": [
+        {"width": 640, "height": 480, "fps": 60},
+        {"width": 896, "height": 504, "fps": 30},
+        {"width": 896, "height": 504, "fps": 60},
+        {"width": 1280, "height": 720, "fps": 30},
+        {"width": 1280, "height": 720, "fps": 60},
+        {"width": 1920, "height": 1080, "fps": 30}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX327",
+      "id": 44,
+      "name": "ARDUCAM_IMX327",
+      "ui_label": "IMX327",
+      "resolutions": [
+        {"width": 640, "height": 480, "fps": 60},
+        {"width": 896, "height": 504, "fps": 60},
+        {"width": 1280, "height": 720, "fps": 60},
+        {"width": 1920, "height": 1080, "fps": 30}
+      ]
+    },
+    {"key": "X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX290", "id": 45, "name": "ARDUCAM_IMX290", "ui_label": "IMX290"},
+    {
+      "key": "X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX462_LOWLIGHT_MINI",
+      "id": 46,
+      "name": "ARDUCAM_IMX462_LOWLIGHT_MINI",
+      "ui_label": "IMX462_LOWLIGHT_MINI",
+      "resolutions": [
+        {"width": 640, "height": 480, "fps": 60},
+        {"width": 896, "height": 504, "fps": 30},
+        {"width": 896, "height": 504, "fps": 60},
+        {"width": 1280, "height": 720, "fps": 30},
+        {"width": 1280, "height": 720, "fps": 60},
+        {"width": 1920, "height": 1080, "fps": 30}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX662",
+      "id": 47,
+      "name": "ARDUCAM_IMX662",
+      "ui_label": "IMX662",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 60},
+        {"width": 1920, "height": 1080, "fps": 30}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_RPI_V4L2_VEYE_2MP",
+      "id": 60,
+      "name": "VEYE_2MP",
+      "ui_label": "2MP",
+      "resolutions": [
+        {"width": 1920, "height": 1080, "fps": 30}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_RPI_V4L2_VEYE_CSIMX307",
+      "id": 61,
+      "name": "VEYE_IMX307",
+      "ui_label": "CSIMX307",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 60},
+        {"width": 1920, "height": 1080, "fps": 30}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_RPI_V4L2_VEYE_CSSC132",
+      "id": 62,
+      "name": "VEYE_CSSC132",
+      "ui_label": "CSSC132",
+      "resolutions": [
+        {"width": 1920, "height": 1080, "fps": 30}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_RPI_V4L2_VEYE_MVCAM",
+      "id": 63,
+      "name": "VEYE_MVCAM",
+      "ui_label": "MVCAM",
+      "resolutions": [
+        {"width": 1920, "height": 1080, "fps": 30}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_X20_HDZERO_GENERIC",
+      "id": 70,
+      "name": "X20_HDZERO_GENERIC",
+      "ui_label": "GENERIC",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 60}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_X20_HDZERO_RUNCAM_V1",
+      "id": 71,
+      "name": "X20_HDZERO_RUNCAM_V1",
+      "ui_label": "RUNCAM V1",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 60}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_X20_HDZERO_RUNCAM_V2",
+      "id": 72,
+      "name": "X20_HDZERO_RUNCAM_V2",
+      "ui_label": "RUNCAM V2",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 60}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_X20_HDZERO_RUNCAM_V3",
+      "id": 73,
+      "name": "X20_HDZERO_RUNCAM_V3",
+      "ui_label": "RUNCAM V3",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 60}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_X20_HDZERO_RUNCAM_NANO_90",
+      "id": 74,
+      "name": "X20_HDZERO_RUNCAM_NANO",
+      "ui_label": "RUNCAM NANO 90",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 60}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_X20_OHD_Jaguar",
+      "id": 75,
+      "name": "X20_OHD_Jaguar",
+      "ui_label": "OpenHD Jaguar",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 60}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_X21_OHD_Jaguar",
+      "id": 76,
+      "name": "X21_OHD_Jaguar",
+      "ui_label": "OpenHD Jaguar",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 60}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_A733_IMX415",
+      "id": 77,
+      "name": "A733_IMX415",
+      "ui_label": "IMX415",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 60},
+        {"width": 1920, "height": 1080, "fps": 30}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_A733_IMX219",
+      "id": 78,
+      "name": "A733_IMX219",
+      "ui_label": "IMX219",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 60},
+        {"width": 1920, "height": 1080, "fps": 30}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_A733_IMX214",
+      "id": 79,
+      "name": "A733_IMX214",
+      "ui_label": "IMX214",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 60},
+        {"width": 1920, "height": 1080, "fps": 30}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_ROCK_5_HDMI_IN",
+      "id": 80,
+      "name": "ROCK_5_HDMI_IN",
+      "ui_label": "HDMI IN",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 30},
+        {"width": 1280, "height": 720, "fps": 60},
+        {"width": 1920, "height": 1080, "fps": 30},
+        {"width": 1920, "height": 1080, "fps": 60},
+        {"width": 3840, "height": 2160, "fps": 30},
+        {"width": 3840, "height": 2160, "fps": 60}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_ROCK_5_OV5647",
+      "id": 81,
+      "name": "ROCK_5_OV5647",
+      "ui_label": "OV5647",
+      "resolutions": [
+        {"width": 640, "height": 480, "fps": 60},
+        {"width": 1280, "height": 720, "fps": 30},
+        {"width": 1920, "height": 1080, "fps": 30}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_ROCK_5_IMX219",
+      "id": 82,
+      "name": "ROCK_5_IMX219",
+      "ui_label": "IMX219",
+      "resolutions": [
+        {"width": 640, "height": 480, "fps": 30},
+        {"width": 848, "height": 480, "fps": 30},
+        {"width": 1280, "height": 720, "fps": 30},
+        {"width": 1920, "height": 1080, "fps": 30}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_ROCK_5_IMX708",
+      "id": 83,
+      "name": "ROCK_5_IMX708",
+      "ui_label": "IMX708",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 30},
+        {"width": 1280, "height": 720, "fps": 60},
+        {"width": 1920, "height": 1080, "fps": 60},
+        {"width": 4608, "height": 2592, "fps": 14}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_ROCK_5_IMX462",
+      "id": 84,
+      "name": "ROCK_5_IMX462",
+      "ui_label": "IMX462",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 30},
+        {"width": 1280, "height": 720, "fps": 60},
+        {"width": 1920, "height": 1080, "fps": 30},
+        {"width": 1920, "height": 1080, "fps": 60}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_ROCK_5_IMX415",
+      "id": 85,
+      "name": "ROCK_5_IMX415",
+      "ui_label": "IMX415",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 30},
+        {"width": 1280, "height": 720, "fps": 30},
+        {"width": 1920, "height": 1080, "fps": 30},
+        {"width": 3864, "height": 2192, "fps": 30}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_ROCK_5_IMX477",
+      "id": 86,
+      "name": "ROCK_5_IMX415",
+      "ui_label": "IMX477",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 60},
+        {"width": 1920, "height": 1080, "fps": 60},
+        {"width": 3840, "height": 2160, "fps": 20},
+        {"width": 4056, "height": 3040, "fps": 10}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_ROCK_5_IMX519",
+      "id": 87,
+      "name": "ROCK_5_IMX415",
+      "ui_label": "IMX519",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 60},
+        {"width": 1920, "height": 1080, "fps": 60},
+        {"width": 3840, "height": 2160, "fps": 20},
+        {"width": 4056, "height": 3040, "fps": 9}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_ROCK_5_OHD_Jaguar",
+      "id": 88,
+      "name": "ROCK_5_OHD_Jaguar",
+      "ui_label": "OpenHD Jaguar",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 120},
+        {"width": 1920, "height": 1080, "fps": 100},
+        {"width": 3840, "height": 2160, "fps": 90}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_ROCK_3_HDMI_IN",
+      "id": 90,
+      "name": "ROCK_3_HDMI_IN",
+      "ui_label": "HDMI IN",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 30},
+        {"width": 1280, "height": 720, "fps": 60}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_ROCK_3_OV5647",
+      "id": 91,
+      "name": "ROCK_3_OV5647",
+      "ui_label": "OV5647",
+      "resolutions": [
+        {"width": 640, "height": 480, "fps": 60},
+        {"width": 1280, "height": 720, "fps": 30},
+        {"width": 1920, "height": 1080, "fps": 30}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_ROCK_3_IMX219",
+      "id": 92,
+      "name": "ROCK_3_IMX219",
+      "ui_label": "IMX219",
+      "resolutions": [
+        {"width": 640, "height": 480, "fps": 30},
+        {"width": 848, "height": 480, "fps": 30},
+        {"width": 1280, "height": 720, "fps": 30},
+        {"width": 1920, "height": 1080, "fps": 30}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_ROCK_3_IMX708",
+      "id": 93,
+      "name": "ROCK_3_IMX708",
+      "ui_label": "IMX708",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 30},
+        {"width": 1280, "height": 720, "fps": 60},
+        {"width": 1920, "height": 1080, "fps": 60}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_ROCK_3_IMX462",
+      "id": 94,
+      "name": "ROCK_3_IMX462",
+      "ui_label": "IMX462",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 60},
+        {"width": 1280, "height": 720, "fps": 30},
+        {"width": 1920, "height": 1080, "fps": 30},
+        {"width": 1920, "height": 1080, "fps": 60}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_ROCK_3_IMX519",
+      "id": 95,
+      "name": "ROCK_3_IMX519",
+      "ui_label": "IMX519",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 60},
+        {"width": 1280, "height": 720, "fps": 30},
+        {"width": 1920, "height": 1080, "fps": 30},
+        {"width": 1920, "height": 1080, "fps": 60}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_ROCK_3_OHD_Jaguar",
+      "id": 96,
+      "name": "ROCK_3_OHD_Jaguar",
+      "ui_label": "OpenHD Jaguar",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 60},
+        {"width": 1280, "height": 720, "fps": 120},
+        {"width": 1920, "height": 1080, "fps": 60},
+        {"width": 1920, "height": 1080, "fps": 100}
+      ]
+    },
+    {"key": "X_CAM_TYPE_ROCK_3_VEYE", "id": 97, "name": "ROCK_3_VEYE"},
+    {
+      "key": "X_CAM_TYPE_NVIDIA_XAVIER_IMX577",
+      "id": 101,
+      "name": "XAVIER_IMX577",
+      "ui_label": "IMX577",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 60},
+        {"width": 1920, "height": 1080, "fps": 60}
+      ]
+    },
+    {"key": "X_CAM_TYPE_OPENIPC_GENERIC", "id": 110, "name": "OPENIPC_X"},
+    {
+      "key": "X_CAM_TYPE_QC_IMX577",
+      "id": 120,
+      "name": "CORETRONIC IMX577",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 30},
+        {"width": 1920, "height": 1080, "fps": 30}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_QC_OV9282",
+      "id": 121,
+      "name": "CORETRONIC OV9282",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 30}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_ORQA_HORNET",
+      "id": 122,
+      "name": "ORQA_HORNET",
+      "ui_label": "HORNET",
+      "resolutions": [
+        {"width": 960, "height": 720, "fps": 120}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_ORQA_JAGUAR",
+      "id": 123,
+      "name": "ORQA_JAGUAR",
+      "ui_label": "JAGUAR",
+      "resolutions": [
+        {"width": 960, "height": 720, "fps": 120}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_ORQA_REKINDLE",
+      "id": 124,
+      "name": "ORQA_REKINDLE",
+      "ui_label": "REKINDLE",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 60}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_NXP_IMX8_V4L2",
+      "id": 130,
+      "name": "NXP_IMX8_V4L2",
+      "ui_label": "V4L2 CSI",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 60},
+        {"width": 1920, "height": 1080, "fps": 30}
+      ]
+    },
+    {"key": "X_CAM_TYPE_DISABLED", "id": 255, "name": "DISABLED", "ui_label": "DISABLE"}
+  ],
+  "manufacturer_groups": [
+    {
+      "key": "USB",
+      "name": "USB",
+      "cameras": [
+        "X_CAM_TYPE_USB_INFIRAY",
+        "X_CAM_TYPE_USB_INFIRAY_T2",
+        "X_CAM_TYPE_USB_INFIRAY_P2_PRO",
+        "X_CAM_TYPE_USB_INFIRAY_X2",
+        "X_CAM_TYPE_USB_FLIR_VUE",
+        "X_CAM_TYPE_USB_FLIR_BOSON",
+        "X_CAM_TYPE_USB_GENERIC"
+      ]
+    },
+    {
+      "key": "DEBUG",
+      "name": "DEV/DEBUG",
+      "cameras": [
+        "X_CAM_TYPE_DUMMY_SW",
+        "X_CAM_TYPE_EXTERNAL",
+        "X_CAM_TYPE_DEVELOPMENT_FILESRC"
+      ]
+    },
+    {
+      "key": "DISABLE",
+      "name": "DISABLE",
+      "cameras": [
+        "X_CAM_TYPE_DISABLED"
+      ]
+    },
+    {
+      "key": "RPI_ARDUCAM",
+      "name": "ARDUCAM",
+      "cameras": [
+        "X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_SKYMASTERHDR_IMX708",
+        "X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_SKYVISIONPRO_IMX519",
+        "X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX477M",
+        "X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX462",
+        "X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX327",
+        "X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX290",
+        "X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX462_LOWLIGHT_MINI",
+        "X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX662"
+      ]
+    },
+    {
+      "key": "RPI_VEYE",
+      "name": "VEYE",
+      "cameras": [
+        "X_CAM_TYPE_RPI_V4L2_VEYE_2MP",
+        "X_CAM_TYPE_RPI_V4L2_VEYE_CSIMX307",
+        "X_CAM_TYPE_RPI_V4L2_VEYE_CSSC132",
+        "X_CAM_TYPE_RPI_V4L2_VEYE_MVCAM"
+      ]
+    },
+    {
+      "key": "RPI_RPIF",
+      "name": "RPI FOUNDATION",
+      "cameras": [
+        "X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V1_OV5647",
+        "X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V2_IMX219",
+        "X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V3_IMX708",
+        "X_CAM_TYPE_RPI_LIBCAMERA_RPIF_HQ_IMX477"
+      ]
+    },
+    {
+      "key": "RPI_HDMI",
+      "name": "HDMI TO CSI",
+      "cameras": [
+        "X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI"
+      ]
+    },
+    {
+      "key": "X20_HDZERO",
+      "name": "HDZERO",
+      "cameras": [
+        "X_CAM_TYPE_X20_HDZERO_GENERIC"
+      ]
+    },
+    {
+      "key": "X20_RUNCAM",
+      "name": "RUNCAM",
+      "cameras": [
+        "X_CAM_TYPE_X20_HDZERO_RUNCAM_V1",
+        "X_CAM_TYPE_X20_HDZERO_RUNCAM_V2",
+        "X_CAM_TYPE_X20_HDZERO_RUNCAM_V3",
+        "X_CAM_TYPE_X20_HDZERO_RUNCAM_NANO_90",
+        "X_CAM_TYPE_X20_OHD_Jaguar"
+      ]
+    },
+    {
+      "key": "A733_ALLWINNER",
+      "name": "ALLWINNER",
+      "cameras": [
+        "X_CAM_TYPE_A733_IMX415",
+        "X_CAM_TYPE_A733_IMX219",
+        "X_CAM_TYPE_A733_IMX214"
+      ]
+    },
+    {
+      "key": "ROCK3_ARDUCAM",
+      "name": "Arducam",
+      "cameras": [
+        "X_CAM_TYPE_ROCK_3_IMX462",
+        "X_CAM_TYPE_ROCK_3_IMX519",
+        "X_CAM_TYPE_ROCK_3_IMX708",
+        "X_CAM_TYPE_ROCK_3_OHD_Jaguar"
+      ]
+    },
+    {
+      "key": "ROCK5_A_GENERIC",
+      "name": "Generic",
+      "cameras": [
+        "X_CAM_TYPE_ROCK_5_IMX415",
+        "X_CAM_TYPE_ROCK_5_IMX462",
+        "X_CAM_TYPE_ROCK_5_IMX477",
+        "X_CAM_TYPE_ROCK_5_IMX519",
+        "X_CAM_TYPE_ROCK_5_OV5647",
+        "X_CAM_TYPE_ROCK_5_IMX219",
+        "X_CAM_TYPE_ROCK_5_IMX708",
+        "X_CAM_TYPE_ROCK_5_OHD_Jaguar"
+      ]
+    },
+    {
+      "key": "ROCK5_B_GENERIC",
+      "name": "Generic",
+      "cameras": [
+        "X_CAM_TYPE_ROCK_5_HDMI_IN",
+        "X_CAM_TYPE_ROCK_5_IMX415",
+        "X_CAM_TYPE_ROCK_5_IMX462",
+        "X_CAM_TYPE_ROCK_5_IMX477",
+        "X_CAM_TYPE_ROCK_5_IMX519",
+        "X_CAM_TYPE_ROCK_5_OV5647",
+        "X_CAM_TYPE_ROCK_5_IMX219",
+        "X_CAM_TYPE_ROCK_5_IMX708",
+        "X_CAM_TYPE_ROCK_5_OHD_Jaguar"
+      ]
+    },
+    {
+      "key": "NVIDIA_LEOPARD",
+      "name": "LEOPARD",
+      "cameras": [
+        "X_CAM_TYPE_NVIDIA_XAVIER_IMX577"
+      ]
+    },
+    {
+      "key": "ORQA",
+      "name": "ORQA",
+      "cameras": [
+        "X_CAM_TYPE_ORQA_HORNET",
+        "X_CAM_TYPE_ORQA_JAGUAR",
+        "X_CAM_TYPE_ORQA_REKINDLE"
+      ]
+    },
+    {
+      "key": "NXP",
+      "name": "NXP",
+      "cameras": [
+        "X_CAM_TYPE_NXP_IMX8_V4L2"
+      ]
+    }
+  ],
+  "platform_choices": [
+    {
+      "platform": "X_PLATFORM_TYPE_RPI_OLD",
+      "manufacturers": ["RPI_ARDUCAM", "RPI_VEYE", "RPI_RPIF", "RPI_HDMI", "USB", "DEBUG"]
+    },
+    {
+      "platform": "X_PLATFORM_TYPE_RPI_4",
+      "manufacturers": ["RPI_ARDUCAM", "RPI_VEYE", "RPI_RPIF", "RPI_HDMI", "USB", "DEBUG"]
+    },
+    {
+      "platform": "X_PLATFORM_TYPE_RPI_CM4",
+      "manufacturers": ["RPI_ARDUCAM", "RPI_VEYE", "RPI_RPIF", "RPI_HDMI", "USB", "DEBUG"]
+    },
+    {
+      "platform": "X_PLATFORM_TYPE_ALWINNER_X20",
+      "manufacturers": ["X20_HDZERO", "X20_RUNCAM"]
+    },
+    {
+      "platform": "X_PLATFORM_TYPE_ALWINNER_CUBIE_A7Z",
+      "manufacturers": ["A733_ALLWINNER", "USB", "DEBUG"]
+    },
+    {
+      "platform": "X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W",
+      "manufacturers": ["ROCK3_ARDUCAM", "USB", "DEBUG"]
+    },
+    {
+      "platform": "X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3",
+      "manufacturers": ["ROCK3_ARDUCAM", "USB", "DEBUG"]
+    },
+    {
+      "platform": "X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A",
+      "manufacturers": ["ROCK5_A_GENERIC", "USB", "DEBUG"]
+    },
+    {
+      "platform": "X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B",
+      "manufacturers": ["ROCK5_B_GENERIC", "USB", "DEBUG"]
+    },
+    {
+      "platform": "X_PLATFORM_TYPE_X86",
+      "manufacturers": ["USB", "DEBUG"]
+    },
+    {
+      "platform": "X_PLATFORM_TYPE_NVIDIA_XAVIER",
+      "manufacturers": ["NVIDIA_LEOPARD", "USB", "DEBUG"]
+    },
+    {
+      "platform": "X_PLATFORM_TYPE_ORQA",
+      "manufacturers": ["ORQA", "USB", "DEBUG"]
+    },
+    {
+      "platform": "X_PLATFORM_TYPE_NXP_IMX8",
+      "manufacturers": ["NXP", "USB", "DEBUG"]
+    }
+  ],
+  "secondary_choices": ["DISABLE", "USB", "DEBUG"],
+  "fallback_choices": ["DEBUG"]
+}
