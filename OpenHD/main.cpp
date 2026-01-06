@@ -42,7 +42,6 @@
 #include <cstdlib>
 #include <optional>
 #include <vector>
-#include <fmt/format.h>
 
 #include "openhd_buttons.h"
 #include "openhd_global_constants.hpp"
