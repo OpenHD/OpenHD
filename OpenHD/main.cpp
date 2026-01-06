@@ -45,6 +45,7 @@
 #include "openhd_global_constants.hpp"
 #include "openhd_platform.h"
 #include "openhd_profile.h"
+#include "openhd_indicator_reporter.h"
 #include "openhd_spdlog.h"
 #include "openhd_temporary_air_or_ground.h"
 #include "openhd_config.h"
@@ -246,6 +247,8 @@ int main(int argc, char *argv[]) {
   if (OHDFilesystemUtil::exists("/run/openhd/hold.pid")) {
       std::exit(0);
   }
+  auto& indicator_reporter = openhd::IndicatorReporter::instance();
+  indicator_reporter.report_state(openhd::IndicatorState::Booting, 0);
   const OHDRunOptions options = parse_run_parameters(argc, argv);
   if (options.hardware_config_file.has_value()) {
     openhd::set_config_file(options.hardware_config_file.value());
@@ -254,7 +257,7 @@ int main(int argc, char *argv[]) {
   // Create the folder structure
   openhd::generateSettingsDirectoryIfNonExists();
   const auto platform = OHDPlatform::instance();
-  openhd::LEDManager::instance().set_status_loading();
+  indicator_reporter.report_state(openhd::IndicatorState::Starting, 0);
   // Generate the keys and delete pw if needed
   OHDInterface::generate_keys_from_pw_if_exists_and_delete();
   // Parse the program arguments
@@ -405,7 +408,7 @@ auto ohdInterface =
     // now telemetry can send / receive data via wifibroadcast
     ohdTelemetry->set_link_handle(ohdInterface->get_link_handle());
     std::cout << green << "OpenHD was successfully started." << reset << std::endl;
-    openhd::LEDManager::instance().set_status_okay();
+    indicator_reporter.report_state(openhd::IndicatorState::Ready, 0);
     // run forever, everything has its own threads. Note that the only way to
     // break out basically is when one of the modules encounters an exception.
     static bool quit = false;
@@ -439,7 +442,7 @@ auto ohdInterface =
     }
     // --- terminate openhd, most likely requested by a developer with sigterm
     m_console->debug("Terminating openhd");
-    openhd::LEDManager::instance().set_status_stopped();
+    indicator_reporter.report_state(openhd::IndicatorState::Stopped, 0);
     // Stop any communication between modules, to eliminate any issues created
     // by threads during cleanup
     openhd::LinkActionHandler::instance().disable_all_callables();
@@ -473,9 +476,11 @@ auto ohdInterface =
     }
   } catch (std::exception &ex) {
     std::cerr << "Error: " << ex.what() << std::endl;
+    indicator_reporter.report_state(openhd::IndicatorState::Error, 2);
     exit(1);
   } catch (...) {
     std::cerr << "Unknown exception occurred" << std::endl;
+    indicator_reporter.report_state(openhd::IndicatorState::Error, 2);
     exit(1);
   }
   openhd::remove_currently_running_file();

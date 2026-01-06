@@ -66,7 +66,7 @@ set(sources
     "src/openhd_telemetry_recorder.cpp"
     "src/openhd_udp.cpp"
     "src/openhd_tcp.cpp"
-    "src/openhd_led.cpp"
+    "src/openhd_indicator_reporter.cpp"
     "src/openhd_buttons.cpp"
     "src/openhd_settings_imp.cpp"
     "src/openhd_settings_directories.cpp"
@@ -106,9 +106,6 @@ add_executable(test_logging test/test_logging.cpp)
 target_link_libraries(test_logging OHDCommonLib)
 
 # Not part of the main interface but useful for debugging
-add_executable(test_led test/test_led.cpp)
-target_link_libraries(test_led OHDCommonLib)
-
 add_executable(test_openhd_async test/test_openhd_async.cpp)
 target_link_libraries(test_openhd_async OHDCommonLib)
 
