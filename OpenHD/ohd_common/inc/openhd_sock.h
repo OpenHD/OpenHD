@@ -90,6 +90,24 @@ class Reporter {
 std::optional<int> request_platform_type(
     std::chrono::milliseconds timeout = std::chrono::seconds(1));
 
+struct SysutilSettings {
+  bool has_reset = false;
+  bool reset_requested = false;
+  bool has_run_mode = false;
+  bool run_as_air = false;
+};
+
+struct SysutilSettingsUpdate {
+  std::optional<bool> reset_requested;
+  std::optional<bool> run_as_air;
+};
+
+std::optional<SysutilSettings> request_sysutil_settings(
+    std::chrono::milliseconds timeout = std::chrono::seconds(1));
+bool update_sysutil_settings(
+    const SysutilSettingsUpdate& update,
+    std::chrono::milliseconds timeout = std::chrono::seconds(1));
+
 }  // namespace openhd
 
 #endif  // OPENHD_SOCK_H

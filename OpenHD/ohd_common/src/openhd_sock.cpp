@@ -413,4 +413,159 @@ std::optional<int> request_platform_type(std::chrono::milliseconds timeout) {
   return parsed["platform_type"].get<int>();
 }
 
+std::optional<SysutilSettings> request_sysutil_settings(
+    std::chrono::milliseconds timeout) {
+  nlohmann::json request;
+  request["type"] = "sysutil.settings.request";
+  auto serialized = request.dump();
+  serialized.push_back('\n');
+
+  if (strlen(kSocketPath) >= sizeof(sockaddr_un::sun_path)) {
+    openhd_sock_logger()->debug("settings socket path too long: {}",
+                                kSocketPath);
+    return std::nullopt;
+  }
+
+  const int fd = ::socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
+  if (fd < 0) {
+    openhd_sock_logger()->debug("settings socket creation failed: {}",
+                                strerror(errno));
+    return std::nullopt;
+  }
+
+  sockaddr_un addr {};
+  addr.sun_family = AF_UNIX;
+  std::strncpy(addr.sun_path, kSocketPath, sizeof(addr.sun_path) - 1);
+
+  if (::connect(fd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
+    openhd_sock_logger()->debug("settings socket connect failed: {}",
+                                strerror(errno));
+    ::close(fd);
+    return std::nullopt;
+  }
+
+  const bool sent_ok = write_all(fd, serialized.data(), serialized.size());
+  if (!sent_ok) {
+    openhd_sock_logger()->debug("settings request send failed: {}",
+                                strerror(errno));
+    ::close(fd);
+    return std::nullopt;
+  }
+
+  auto line_opt = read_line_with_timeout(fd, timeout);
+  ::close(fd);
+  if (!line_opt.has_value()) {
+    openhd_sock_logger()->debug("settings response timed out");
+    return std::nullopt;
+  }
+
+  auto parsed = nlohmann::json::parse(*line_opt, nullptr, false);
+  if (parsed.is_discarded()) {
+    openhd_sock_logger()->debug("settings response parse failed");
+    return std::nullopt;
+  }
+  if (!parsed.contains("type") ||
+      parsed.value("type", "") != "sysutil.settings.response") {
+    openhd_sock_logger()->debug("unexpected settings response payload");
+    return std::nullopt;
+  }
+  if (parsed.contains("ok") && !parsed.value("ok", true)) {
+    openhd_sock_logger()->debug("settings response reported failure");
+    return std::nullopt;
+  }
+
+  SysutilSettings settings{};
+  if (parsed.contains("reset_requested")) {
+    settings.reset_requested = parsed.value("reset_requested", false);
+    settings.has_reset = parsed.value("has_reset", true);
+  } else {
+    settings.has_reset = parsed.value("has_reset", false);
+  }
+
+  const auto run_mode = parsed.value("run_mode", "");
+  if (run_mode == "air" || run_mode == "ground") {
+    settings.run_as_air = (run_mode == "air");
+    settings.has_run_mode = parsed.value("has_run_mode", true);
+  } else {
+    settings.has_run_mode = parsed.value("has_run_mode", false);
+  }
+
+  return settings;
+}
+
+bool update_sysutil_settings(const SysutilSettingsUpdate& update,
+                             std::chrono::milliseconds timeout) {
+  if (!update.reset_requested.has_value() &&
+      !update.run_as_air.has_value()) {
+    return true;
+  }
+
+  nlohmann::json request;
+  request["type"] = "sysutil.settings.update";
+  if (update.reset_requested.has_value()) {
+    request["reset_requested"] = update.reset_requested.value();
+  }
+  if (update.run_as_air.has_value()) {
+    request["run_mode"] = update.run_as_air.value() ? "air" : "ground";
+  }
+  auto serialized = request.dump();
+  serialized.push_back('\n');
+
+  if (strlen(kSocketPath) >= sizeof(sockaddr_un::sun_path)) {
+    openhd_sock_logger()->debug("settings socket path too long: {}",
+                                kSocketPath);
+    return false;
+  }
+
+  const int fd = ::socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
+  if (fd < 0) {
+    openhd_sock_logger()->debug("settings socket creation failed: {}",
+                                strerror(errno));
+    return false;
+  }
+
+  sockaddr_un addr {};
+  addr.sun_family = AF_UNIX;
+  std::strncpy(addr.sun_path, kSocketPath, sizeof(addr.sun_path) - 1);
+
+  if (::connect(fd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
+    openhd_sock_logger()->debug("settings socket connect failed: {}",
+                                strerror(errno));
+    ::close(fd);
+    return false;
+  }
+
+  const bool sent_ok = write_all(fd, serialized.data(), serialized.size());
+  if (!sent_ok) {
+    openhd_sock_logger()->debug("settings update send failed: {}",
+                                strerror(errno));
+    ::close(fd);
+    return false;
+  }
+
+  auto line_opt = read_line_with_timeout(fd, timeout);
+  ::close(fd);
+  if (!line_opt.has_value()) {
+    openhd_sock_logger()->debug("settings update response timed out");
+    return false;
+  }
+
+  auto parsed = nlohmann::json::parse(*line_opt, nullptr, false);
+  if (parsed.is_discarded()) {
+    openhd_sock_logger()->debug("settings update response parse failed");
+    return false;
+  }
+  if (!parsed.contains("type") ||
+      parsed.value("type", "") != "sysutil.settings.update.response") {
+    openhd_sock_logger()->debug("unexpected settings update response payload");
+    return false;
+  }
+  if (parsed.contains("ok") && !parsed.value("ok", true)) {
+    openhd_sock_logger()->debug("settings update response reported failure");
+    return false;
+  }
+
+  return true;
+}
+
 }  // namespace openhd

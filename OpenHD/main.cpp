@@ -85,6 +85,7 @@ static const struct option long_options[] = {
 struct OHDRunOptions {
   bool run_as_air = false;
   bool reset_all_settings = false;
+  bool reset_from_sysutil = false;
   bool no_qopenhd_autostart=false;
   bool no_hotspot=false;
   int run_time_seconds = -1;  //-1= infinite, only usefully for debugging
@@ -171,42 +172,35 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
         exit(1);
     }
   }
+  const auto sysutil_settings = openhd::request_sysutil_settings();
+  if (sysutil_settings.has_value() && sysutil_settings->has_reset &&
+      sysutil_settings->reset_requested) {
+    ret.reset_all_settings = true;
+    ret.reset_from_sysutil = true;
+  }
   if (commandline_air == std::nullopt) {
     // command line parameters not used, use the file(s) for detection (default
     // for normal OpenHD images) The logs/checks here are just to help
     // developer(s) avoid common misconfigurations
-    const bool file_run_as_ground_exists = openhd::tmp::file_ground_exists();
-    const bool file_run_as_air_exists = openhd::tmp::file_air_exists();
+    const bool has_run_mode =
+        sysutil_settings.has_value() && sysutil_settings->has_run_mode;
+    const bool run_as_air =
+        has_run_mode && sysutil_settings->run_as_air;
     bool error = false;
-    if (file_run_as_air_exists &&
-        file_run_as_ground_exists) {  // both files exist
+    if (!has_run_mode) {  // no sysutils setting exists
       // Just run as ground
       ret.run_as_air = false;
       error = true;
-    }
-    if (!file_run_as_air_exists &&
-        !file_run_as_ground_exists) {  // no file exists
-      // Just run as ground
-      ret.run_as_air = false;
-      error = true;
-    }
-    if (!error) {
-      if (!file_run_as_air_exists) {
-        ret.run_as_air = false;
-      } else {
-        ret.run_as_air = true;
-      }
+    } else {
+      ret.run_as_air = run_as_air;
     }
   } else {
     // command line parameters used, just validate they are not mis-configured
     assert(commandline_air.has_value());
     ret.run_as_air = commandline_air.value();
-  }
-  // If this file exists, delete all openhd settings resulting in default
-  // value(s)
-    const auto filePathReset = std::string(getConfigBasePath())+ "reset.txt";
-  if (OHDUtil::file_exists_and_delete(filePathReset.c_str())) {
-    ret.reset_all_settings = true;
+    openhd::SysutilSettingsUpdate update{};
+    update.run_as_air = ret.run_as_air;
+    (void)openhd::update_sysutil_settings(update);
   }
 #ifndef ENABLE_AIR
   if (ret.run_as_air) {
@@ -278,11 +272,19 @@ int main(int argc, char *argv[]) {
     std::vector<std::string> startup_errors;
     // This results in fresh default values for all modules (e.g. interface,
     // telemetry, video)
+    bool reset_performed = false;
     if (options.reset_all_settings) {
       openhd::clean_all_settings();
+      reset_performed = true;
     }
     if (openhd::ButtonManager::instance().user_wants_reset_openhd_core()) {
       openhd::clean_all_settings();
+      reset_performed = true;
+    }
+    if (options.reset_from_sysutil && reset_performed) {
+      openhd::SysutilSettingsUpdate update{};
+      update.reset_requested = false;
+      (void)openhd::update_sysutil_settings(update);
     }
     // Profile no longer depends on n discovered cameras,
     // But if we are air, we have at least one camera, sw if no camera was found

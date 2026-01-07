@@ -5,6 +5,7 @@
 # exclude everything that is created by intellij when you open this repository
 .idea
 
+OpenHD-SysUtils
 OpenHD/build
 OpenHD/build_debug
 OpenHD/build_release

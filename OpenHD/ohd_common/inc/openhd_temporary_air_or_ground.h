@@ -29,6 +29,7 @@
 #include <string>
 
 #include "config_paths.h"
+#include "openhd_sock.h"
 #include "openhd_util_filesystem.h"
 
 namespace openhd::tmp {
@@ -39,12 +40,28 @@ const auto FILENAME_GROUND = std::string(getConfigBasePath()) + "ground.txt";
 const auto FILENAME_ETHERNET =
     std::string(getConfigBasePath()) + "ethernet.txt";
 
+static std::optional<bool> get_sysutil_run_as_air() {
+  const auto settings_opt = openhd::request_sysutil_settings();
+  if (!settings_opt.has_value() || !settings_opt->has_run_mode) {
+    return std::nullopt;
+  }
+  return settings_opt->run_as_air;
+}
+
+static bool set_sysutil_run_mode(bool run_as_air) {
+  openhd::SysutilSettingsUpdate update{};
+  update.run_as_air = run_as_air;
+  return openhd::update_sysutil_settings(update);
+}
+
 static bool file_air_exists() {
-  return OHDFilesystemUtil::exists(FILENAME_AIR);
+  const auto run_as_air = get_sysutil_run_as_air();
+  return run_as_air.has_value() && run_as_air.value();
 }
 
 static bool file_ground_exists() {
-  return OHDFilesystemUtil::exists(FILENAME_GROUND);
+  const auto run_as_air = get_sysutil_run_as_air();
+  return run_as_air.has_value() && !run_as_air.value();
 }
 
 static bool file_ethernet_exists() {
@@ -52,12 +69,10 @@ static bool file_ethernet_exists() {
 }
 
 static bool file_air_or_ground_exists() {
-  return file_air_exists() || file_ground_exists();
+  return get_sysutil_run_as_air().has_value();
 }
 
 static void delete_any_file_air_or_ground() {
-  OHDFilesystemUtil::remove_if_existing(FILENAME_AIR);
-  OHDFilesystemUtil::remove_if_existing(FILENAME_GROUND);
 }
 
 static void delete_file_ethernet() {
@@ -65,13 +80,11 @@ static void delete_file_ethernet() {
 }
 
 static void write_file_air() {
-  OHDFilesystemUtil::create_directories(std::string(getConfigBasePath()));
-  OHDFilesystemUtil::write_file(openhd::tmp::FILENAME_AIR, " ");
+  (void)set_sysutil_run_mode(true);
 }
 
 static void write_file_ground() {
-  OHDFilesystemUtil::create_directories(std::string(getConfigBasePath()));
-  OHDFilesystemUtil::write_file(openhd::tmp::FILENAME_GROUND, " ");
+  (void)set_sysutil_run_mode(false);
 }
 
 // Structure for Ethernet configuration
@@ -143,16 +156,7 @@ static void delete_all_config_files() {
 static bool handle_telemetry_change(int value) {
   // 0==ground, 1==air, other: undefined (rejected)
   if (!(value == 0 || value == 1)) return false;
-  if (value == 0) {
-    // change to ground mode. Remove any existing file(s) if there are any
-    openhd::tmp::delete_any_file_air_or_ground();
-    openhd::tmp::write_file_ground();
-  } else {
-    // change to air mode. Remove any existing file(s) if there are any
-    openhd::tmp::delete_any_file_air_or_ground();
-    openhd::tmp::write_file_air();
-  }
-  return true;
+  return set_sysutil_run_mode(value == 1);
 }
 
 }  // namespace openhd::tmp
