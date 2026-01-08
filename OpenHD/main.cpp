@@ -33,8 +33,6 @@
 #include <ohd_video_ground.h>
 
 #include <csignal>
-#include <cerrno>
-#include <cstring>
 #include <exception>
 #include <iostream>
 #include <algorithm>
@@ -51,7 +49,6 @@
 #include "openhd_spdlog.h"
 #include "openhd_temporary_air_or_ground.h"
 #include "openhd_config.h"
-#include "openhd_naming.h"
 #include "openhd_util_filesystem.h"
 #include "config_paths.h"
 
@@ -212,31 +209,6 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
   return ret;
 }
 
-static void set_unit_hostname(const bool run_as_air) {
-  const auto hostname = openhd::naming::build_unit_name(run_as_air);
-  // Update the runtime hostname for the current session using the POSIX API
-  const auto sethostname_result = sethostname(hostname.c_str(), hostname.size());
-  if (sethostname_result != 0) {
-    const auto errno_copy = errno;
-    // Fallback to the hostname utility if the syscall fails (for example on
-    // platforms without CAP_SYS_ADMIN at runtime)
-    const auto hostname_result =
-        OHDUtil::run_command("hostname", {hostname}, false);
-    if (hostname_result != 0) {
-      std::cerr << "Failed to set hostname to " << hostname
-                << " using sethostname(): " << std::strerror(errno_copy)
-                << "; fallback command exit code " << hostname_result
-                << std::endl;
-    }
-  }
-  // Persist hostname for subsequent reboots
-  try {
-    OHDFilesystemUtil::write_file("/etc/hostname", hostname + "\n");
-  } catch (const std::exception& ex) {
-    std::cerr << "Failed to persist hostname: " << ex.what() << std::endl;
-  }
-}
-
 int main(int argc, char *argv[]) {
   // OpenHD needs to be run as root!
   OHDUtil::terminate_if_not_root();
@@ -249,7 +221,6 @@ int main(int argc, char *argv[]) {
   if (options.hardware_config_file.has_value()) {
     openhd::set_config_file(options.hardware_config_file.value());
   }
-  set_unit_hostname(options.run_as_air);
   // Create the folder structure
   openhd::generateSettingsDirectoryIfNonExists();
   const auto platform = OHDPlatform::instance();
