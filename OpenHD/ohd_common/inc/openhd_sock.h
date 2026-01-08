@@ -93,12 +93,15 @@ std::optional<int> request_platform_type(
 struct SysutilSettings {
   bool has_reset = false;
   bool reset_requested = false;
+  bool has_camera_type = false;
+  int camera_type = 0;
   bool has_run_mode = false;
   bool run_as_air = false;
 };
 
 struct SysutilSettingsUpdate {
   std::optional<bool> reset_requested;
+  std::optional<int> camera_type;
   std::optional<bool> run_as_air;
 };
 

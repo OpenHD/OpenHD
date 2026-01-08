@@ -482,6 +482,13 @@ std::optional<SysutilSettings> request_sysutil_settings(
     settings.has_reset = parsed.value("has_reset", false);
   }
 
+  if (parsed.contains("camera_type")) {
+    settings.camera_type = parsed.value("camera_type", 0);
+    settings.has_camera_type = parsed.value("has_camera_type", true);
+  } else {
+    settings.has_camera_type = parsed.value("has_camera_type", false);
+  }
+
   const auto run_mode = parsed.value("run_mode", "");
   if (run_mode == "air" || run_mode == "ground") {
     settings.run_as_air = (run_mode == "air");
@@ -504,6 +511,9 @@ bool update_sysutil_settings(const SysutilSettingsUpdate& update,
   request["type"] = "sysutil.settings.update";
   if (update.reset_requested.has_value()) {
     request["reset_requested"] = update.reset_requested.value();
+  }
+  if (update.camera_type.has_value()) {
+    request["camera_type"] = update.camera_type.value();
   }
   if (update.run_as_air.has_value()) {
     request["run_mode"] = update.run_as_air.value() ? "air" : "ground";

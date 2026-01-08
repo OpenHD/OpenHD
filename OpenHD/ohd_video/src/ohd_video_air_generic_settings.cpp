@@ -24,9 +24,9 @@
 #include "ohd_video_air_generic_settings.h"
 
 #include "camera.hpp"
-#include "config_paths.h"
 #include "include_json.hpp"
 #include "openhd_platform.h"
+#include "openhd_sock.h"
 #include "openhd_spdlog_include.h"
 #include "openhd_util.h"
 #include "x20_cam_helper.h"
@@ -50,25 +50,22 @@ std::string AirCameraGenericSettingsHolder::imp_serialize(
   return tmp.dump(4);
 }
 
-// The image writer writes the cam type to here
-static const auto IMAGE_WRITER_CAM_FILENAME =
-    std::string(getConfigBasePath()) + "camera1.txt";
-static int rpi_get_default_primary_cam_type() {
-  // The image writer writes the cam type to
-  const auto opt_content =
-      OHDFilesystemUtil::opt_read_file(IMAGE_WRITER_CAM_FILENAME);
-  if (opt_content.has_value()) {
-    openhd::log::get_default()->debug("Using[{}] from image writer",
-                                      opt_content.value());
-    const auto opt_value_as_int = OHDUtil::string_to_int(opt_content.value());
-    if (opt_value_as_int.has_value()) {
-      const int primary_cam_type = opt_value_as_int.value();
-      openhd::log::get_default()->debug("Got from image writer: {}",
-                                        x_cam_type_to_string(primary_cam_type));
-      return primary_cam_type;
-    }
+static std::optional<int> get_sysutil_camera_type() {
+  const auto settings_opt = openhd::request_sysutil_settings();
+  if (!settings_opt.has_value() || !settings_opt->has_camera_type) {
+    return std::nullopt;
   }
-  openhd::log::get_default()->debug("No image writer default, using MMAL");
+  return settings_opt->camera_type;
+}
+
+static int rpi_get_default_primary_cam_type() {
+  const auto sysutil_cam = get_sysutil_camera_type();
+  if (sysutil_cam.has_value()) {
+    openhd::log::get_default()->debug("Using sysutils camera type: {}",
+                                      x_cam_type_to_string(sysutil_cam.value()));
+    return sysutil_cam.value();
+  }
+  openhd::log::get_default()->debug("No sysutils camera override, using MMAL");
   return X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI;
 }
 
@@ -77,6 +74,12 @@ AirCameraGenericSettings AirCameraGenericSettingsHolder::create_default()
   AirCameraGenericSettings ret{};
   ret.primary_camera_type = X_CAM_TYPE_DUMMY_SW;
   ret.secondary_camera_type = X_CAM_TYPE_DISABLED;
+
+  const auto sysutil_cam = get_sysutil_camera_type();
+  if (sysutil_cam.has_value()) {
+    ret.primary_camera_type = sysutil_cam.value();
+    return ret;
+  }
 
   if (OHDPlatform::instance().is_rpi()) {
     ret.primary_camera_type = rpi_get_default_primary_cam_type();
