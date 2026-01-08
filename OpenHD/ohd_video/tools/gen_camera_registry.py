@@ -370,7 +370,8 @@ def main() -> int:
         fallback_choices,
         camera_by_key,
     )
-    Path(args.output).write_text(header, encoding="utf-8", newline="\n")
+    with open(args.output, "w", encoding="utf-8", newline="\n") as output_file:
+        output_file.write(header)
     return 0
 
 
