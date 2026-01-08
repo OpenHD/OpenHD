@@ -62,14 +62,15 @@
 
 // A few run time options, only for development. Way more configuration (during
 // development) can be done by using the hardware.config file
-static const char optstr[] = "?:agcwor:h:";
+static const char optstr[] = "?:agcwort:h:";
 static const struct option long_options[] = {
     {"air", no_argument, nullptr, 'a'},
     {"ground", no_argument, nullptr, 'g'},
     {"clean-start", no_argument, nullptr, 'c'},
     {"no-qt-autostart", no_argument, nullptr, 'w'},
     {"no-hotspot", no_argument, nullptr, 'o'},
-    {"run-time-seconds", required_argument, nullptr, 'r'},
+    {"record-only", no_argument, nullptr, 'r'},
+    {"run-time-seconds", required_argument, nullptr, 't'},
     {"hardware-config-file", required_argument, nullptr, 'h'},
     {"openhd_uart_telemetry", optional_argument, nullptr, 0},
     {nullptr, 0, nullptr, 0},
@@ -83,6 +84,7 @@ struct OHDRunOptions {
   bool run_as_air = false;
   bool reset_all_settings = false;
   bool reset_from_sysutil = false;
+  bool record_only = false;
   bool no_qopenhd_autostart=false;
   bool no_hotspot=false;
   int run_time_seconds = -1;  //-1= infinite, only usefully for debugging
@@ -141,6 +143,14 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
         ret.no_hotspot = true;
         break;
       case 'r':
+        if (commandline_air != std::nullopt && commandline_air.value() == false) {
+          std::cerr << "Record-only requires air mode\n";
+          exit(1);
+        }
+        commandline_air = true;
+        ret.record_only = true;
+        break;
+      case 't':
         ret.run_time_seconds = atoi(tmp_optarg);
         break;
       case 'h':
@@ -157,7 +167,8 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
               "written, can fix any boot issues when switching hw around] \n";
         ss << "--no-qt-autostart [disable auto start of QOpenHD on ground] \n";
         ss << "--no-hotspot      [disable WiFi hotspot on ground] \n";
-        ss << "--run-time-seconds -r [Manually specify run time (default "
+        ss << "--record-only -r  [Record video without streaming it] \n";
+        ss << "--run-time-seconds -t [Manually specify run time (default "
               "infinite),for debugging] \n";
         ss << "--hardware-config-file -h [specify path to hardware.config "
               "file]\n";
@@ -183,6 +194,8 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
         sysutil_settings.has_value() && sysutil_settings->has_run_mode;
     const bool run_as_air =
         has_run_mode && sysutil_settings->run_as_air;
+    const bool run_record_only =
+        has_run_mode && sysutil_settings->run_record_only;
     bool error = false;
     if (!has_run_mode) {  // no sysutils setting exists
       // Just run as ground
@@ -190,13 +203,18 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
       error = true;
     } else {
       ret.run_as_air = run_as_air;
+      ret.record_only = run_record_only;
     }
   } else {
     // command line parameters used, just validate they are not mis-configured
     assert(commandline_air.has_value());
     ret.run_as_air = commandline_air.value();
     openhd::SysutilSettingsUpdate update{};
-    update.run_as_air = ret.run_as_air;
+    if (ret.record_only) {
+      update.run_mode = "record";
+    } else {
+      update.run_as_air = ret.run_as_air;
+    }
     (void)openhd::update_sysutil_settings(update);
   }
 #ifndef ENABLE_AIR
@@ -390,7 +408,7 @@ int main(int argc, char *argv[]) {
         startup_errors.push_back(dummy_camera_message);
       }
       ohd_video_air = std::make_unique<OHDVideoAir>(
-          cameras, ohdInterface->get_link_handle());
+          cameras, ohdInterface->get_link_handle(), options.record_only);
       // First add camera specific settings (primary & secondary camera)
       auto settings_components = ohd_video_air->get_all_camera_settings();
       ohdTelemetry->add_settings_camera_component(0, settings_components[0]);

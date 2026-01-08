@@ -55,7 +55,8 @@ class OHDVideoAir {
    * wb) link between air and ground
    */
   OHDVideoAir(std::vector<XCamera> cameras,
-              std::shared_ptr<OHDLink> link_handle);
+              std::shared_ptr<OHDLink> link_handle,
+              bool record_only = false);
   ~OHDVideoAir();
   OHDVideoAir(const OHDVideoAir&) = delete;
   OHDVideoAir(const OHDVideoAir&&) = delete;
@@ -80,6 +81,7 @@ class OHDVideoAir {
   std::shared_ptr<OHDLink> m_link_handle;
   // r.n only for multi camera support
   std::unique_ptr<AirCameraGenericSettingsHolder> m_generic_settings;
+  const bool m_record_only;
 
  private:
   // Add a CameraStream for a discovered camera.

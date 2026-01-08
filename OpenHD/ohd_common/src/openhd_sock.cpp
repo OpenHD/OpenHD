@@ -490,8 +490,9 @@ std::optional<SysutilSettings> request_sysutil_settings(
   }
 
   const auto run_mode = parsed.value("run_mode", "");
-  if (run_mode == "air" || run_mode == "ground") {
-    settings.run_as_air = (run_mode == "air");
+  if (run_mode == "air" || run_mode == "ground" || run_mode == "record") {
+    settings.run_as_air = (run_mode == "air" || run_mode == "record");
+    settings.run_record_only = (run_mode == "record");
     settings.has_run_mode = parsed.value("has_run_mode", true);
   } else {
     settings.has_run_mode = parsed.value("has_run_mode", false);
@@ -503,7 +504,9 @@ std::optional<SysutilSettings> request_sysutil_settings(
 bool update_sysutil_settings(const SysutilSettingsUpdate& update,
                              std::chrono::milliseconds timeout) {
   if (!update.reset_requested.has_value() &&
-      !update.run_as_air.has_value()) {
+      !update.camera_type.has_value() &&
+      !update.run_as_air.has_value() &&
+      !update.run_mode.has_value()) {
     return true;
   }
 
@@ -515,7 +518,9 @@ bool update_sysutil_settings(const SysutilSettingsUpdate& update,
   if (update.camera_type.has_value()) {
     request["camera_type"] = update.camera_type.value();
   }
-  if (update.run_as_air.has_value()) {
+  if (update.run_mode.has_value()) {
+    request["run_mode"] = update.run_mode.value();
+  } else if (update.run_as_air.has_value()) {
     request["run_mode"] = update.run_as_air.value() ? "air" : "ground";
   }
   auto serialized = request.dump();

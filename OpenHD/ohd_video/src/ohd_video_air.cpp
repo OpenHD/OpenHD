@@ -26,6 +26,7 @@
 #include <utility>
 
 #include "camera_discovery.h"
+#include "camera_enums.hpp"
 #include "gstaudiostream.h"
 #include "gstreamerstream.h"
 #include "nalu/fragment_helper.h"
@@ -33,8 +34,10 @@
 #include "openhd_reboot_util.h"
 
 OHDVideoAir::OHDVideoAir(std::vector<XCamera> cameras,
-                         std::shared_ptr<OHDLink> link)
-    : m_link_handle(std::move(link)) {
+                         std::shared_ptr<OHDLink> link,
+                         bool record_only)
+    : m_link_handle(std::move(link)),
+      m_record_only(record_only) {
   m_console = openhd::log::create_or_get("v_air");
   assert(m_console);
   assert(!cameras.empty());
@@ -66,11 +69,20 @@ OHDVideoAir::OHDVideoAir(std::vector<XCamera> cameras,
   for (const auto& camera : cameras) {
     camera_holders.emplace_back(std::make_unique<CameraHolder>(camera));
   }
+  if (m_record_only) {
+    for (auto& camera_holder : camera_holders) {
+      if (!camera_holder->set_air_recording(AIR_RECORDING_ON)) {
+        m_console->warn("Record-only: unable to enable recording for camera {}",
+                        camera_holder->get_camera().index);
+      }
+    }
+  }
   assert(camera_holders.size() <= MAX_N_CAMERAS);
   for (auto& camera : camera_holders) {
     configure(camera);
   }
-  if (m_generic_settings->get_settings().enable_audio != OPENHD_AUDIO_DISABLE) {
+  if (!m_record_only &&
+      m_generic_settings->get_settings().enable_audio != OPENHD_AUDIO_DISABLE) {
     m_audio_stream = std::make_unique<GstAudioStream>();
     auto audio_cb = [this](const openhd::AudioPacket& audioPacket) {
       on_audio_data(audioPacket);
@@ -91,10 +103,12 @@ OHDVideoAir::OHDVideoAir(std::vector<XCamera> cameras,
   openhd::ArmingStateHelper::instance().register_listener("ohd_video_air",
                                                           cb_armed);
   // On air, we start forwarding video (UDP) to all connected external device(s)
-  openhd::ExternalDeviceManager::instance().register_listener(
-      [this](openhd::ExternalDevice external_device, bool connected) {
-        start_stop_forwarding_external_device(external_device, connected);
-      });
+  if (!m_record_only) {
+    openhd::ExternalDeviceManager::instance().register_listener(
+        [this](openhd::ExternalDevice external_device, bool connected) {
+          start_stop_forwarding_external_device(external_device, connected);
+        });
+  }
   // In case any non-demuxed recordings exists (e.g. due to a openhd crash,
   // unsafe shutdown,...)
   // GstRecordingDemuxer::instance().demux_all_remaining_mkv_files_async();
@@ -261,6 +275,9 @@ void OHDVideoAir::start_stop_forwarding_external_device(
 void OHDVideoAir::on_video_data(
     int stream_index,
     const openhd::FragmentedVideoFrame& fragmented_video_frame) {
+  if (m_record_only) {
+    return;
+  }
   // m_console->debug("Got data {}
   // {}",stream_index,fragmented_video_frame.rtp_fragments.size());
   if (!(stream_index == 0 || stream_index == 1)) {
@@ -290,6 +307,9 @@ void OHDVideoAir::on_video_data(
 }
 
 void OHDVideoAir::on_audio_data(const openhd::AudioPacket& audio_packet) {
+  if (m_record_only) {
+    return;
+  }
   if (m_link_handle) {
     m_link_handle->transmit_audio_data(audio_packet);
   }

@@ -97,12 +97,14 @@ struct SysutilSettings {
   int camera_type = 0;
   bool has_run_mode = false;
   bool run_as_air = false;
+  bool run_record_only = false;
 };
 
 struct SysutilSettingsUpdate {
   std::optional<bool> reset_requested;
   std::optional<int> camera_type;
   std::optional<bool> run_as_air;
+  std::optional<std::string> run_mode;
 };
 
 std::optional<SysutilSettings> request_sysutil_settings(
