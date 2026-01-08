@@ -217,6 +217,10 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
     }
     (void)openhd::update_sysutil_settings(update);
   }
+  if (ret.record_only) {
+    ret.no_hotspot = true;
+    ret.no_qopenhd_autostart = true;
+  }
 #ifndef ENABLE_AIR
   if (ret.run_as_air) {
     std::cerr << "NOTE: COMPILED WITH GROUND ONLY SUPPORT,RUNNING AS GND"
@@ -320,7 +324,10 @@ int main(int argc, char *argv[]) {
       }
       ss << "\n";
 
-      if (options.run_as_air) {
+      if (options.record_only) {
+        ss << "--------------------- " << green << "Record Mode" << reset
+           << " ---------------------\n";
+      } else if (options.run_as_air) {
         ss << "----------------------- " << green << "Air Unit" << reset
            << " -----------------------\n";
       } else {
@@ -344,7 +351,7 @@ int main(int argc, char *argv[]) {
     // it when we are running as air. can be disabled for development purposes.
     // On x20, we do not have qopenhd installed (we run as air only) so we can
     // skip this step
-    if(!options.no_qopenhd_autostart){
+    if (!options.no_qopenhd_autostart) {
       if (!openhd::load_config().GEN_NO_QOPENHD_AUTOSTART &&
           !OHDPlatform::instance().is_x20()) {
         if (!profile.is_air) {
@@ -363,29 +370,36 @@ int main(int argc, char *argv[]) {
     // We start ohd_telemetry as early as possible, since even without a link
     // (transmission) it still picks up local log message(s) and forwards them
     // to any ground station clients (e.g. QOpenHD)
-    auto ohdTelemetry = std::make_shared<OHDTelemetry>(profile);
-    if (options.openhd_uart_telemetry_device.has_value()) {
-      ohdTelemetry->configure_openhd_uart_telemetry(
-          options.openhd_uart_telemetry_device);
+    std::shared_ptr<OHDTelemetry> ohdTelemetry = nullptr;
+    if (!options.record_only) {
+      ohdTelemetry = std::make_shared<OHDTelemetry>(profile);
+      if (options.openhd_uart_telemetry_device.has_value()) {
+        ohdTelemetry->configure_openhd_uart_telemetry(
+            options.openhd_uart_telemetry_device);
+      }
     }
 
     // Then start ohdInterface, which discovers detected wifi cards and more.
-    auto ohdInterface =
-        std::make_shared<OHDInterface>(profile, options.no_hotspot);
-    if (!ohdInterface->has_real_monitor_mode_cards()) {
-      const std::string no_wifi_card_message =
-          "No openhd wifibroadcast card found";
-      startup_errors.push_back(no_wifi_card_message);
-    }
-    if (!ohdInterface->has_primary_link()) {
-      const std::string no_link_message =
-          "No functional link detected (WiFi/Microhard/Ethernet)";
-      startup_errors.push_back(no_link_message);
-      reporter.report_status("no_link", no_link_message, 10000);
-    }
+    std::shared_ptr<OHDInterface> ohdInterface = nullptr;
+    if (!options.record_only) {
+      ohdInterface = std::make_shared<OHDInterface>(profile, options.no_hotspot);
+      if (!ohdInterface->has_real_monitor_mode_cards()) {
+        const std::string no_wifi_card_message =
+            "No openhd wifibroadcast card found";
+        startup_errors.push_back(no_wifi_card_message);
+      }
+      if (!ohdInterface->has_primary_link()) {
+        const std::string no_link_message =
+            "No functional link detected (WiFi/Microhard/Ethernet)";
+        startup_errors.push_back(no_link_message);
+        reporter.report_status("no_link", no_link_message, 10000);
+      }
 
-    // Telemetry allows changing all settings (even from other modules)
-    ohdTelemetry->add_settings_generic(ohdInterface->get_all_settings());
+      // Telemetry allows changing all settings (even from other modules)
+      if (ohdTelemetry) {
+        ohdTelemetry->add_settings_generic(ohdInterface->get_all_settings());
+      }
+    }
 
     // either one is active, depending on air or ground
     std::unique_ptr<OHDVideoGround> ohd_video_ground = nullptr;
@@ -407,21 +421,31 @@ int main(int argc, char *argv[]) {
             "No physical camera detected; using dummy camera configuration";
         startup_errors.push_back(dummy_camera_message);
       }
+      std::shared_ptr<OHDLink> link_handle = nullptr;
+      if (ohdInterface) {
+        link_handle = ohdInterface->get_link_handle();
+      }
       ohd_video_air = std::make_unique<OHDVideoAir>(
-          cameras, ohdInterface->get_link_handle(), options.record_only);
-      // First add camera specific settings (primary & secondary camera)
-      auto settings_components = ohd_video_air->get_all_camera_settings();
-      ohdTelemetry->add_settings_camera_component(0, settings_components[0]);
-      ohdTelemetry->add_settings_camera_component(1, settings_components[1]);
-      // Then the rest
-      ohdTelemetry->add_settings_generic(ohd_video_air->get_generic_settings());
+          cameras, link_handle, options.record_only);
+      if (ohdTelemetry) {
+        // First add camera specific settings (primary & secondary camera)
+        auto settings_components = ohd_video_air->get_all_camera_settings();
+        ohdTelemetry->add_settings_camera_component(0, settings_components[0]);
+        ohdTelemetry->add_settings_camera_component(1, settings_components[1]);
+        // Then the rest
+        ohdTelemetry->add_settings_generic(ohd_video_air->get_generic_settings());
+      }
     }
 #endif  // ENABLE_AIR
     // We do not add any more settings to ohd telemetry - the param set(s) are
     // complete
-    ohdTelemetry->settings_generic_ready();
-    // now telemetry can send / receive data via wifibroadcast
-    ohdTelemetry->set_link_handle(ohdInterface->get_link_handle());
+    if (ohdTelemetry) {
+      ohdTelemetry->settings_generic_ready();
+      // now telemetry can send / receive data via wifibroadcast
+      if (ohdInterface) {
+        ohdTelemetry->set_link_handle(ohdInterface->get_link_handle());
+      }
+    }
     if (startup_errors.empty()) {
       std::cout << green << "OpenHD was successfully started." << reset
                 << std::endl;
