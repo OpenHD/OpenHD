@@ -106,8 +106,9 @@ class WBLink : public OHDLink {
   // synchronization due to 20Mhz management packets
   bool request_set_air_tx_channel_width(int channel_width);
   // TX power can be set for both air / ground independently.
-  bool request_set_tx_power_mw(int new_tx_power_mw, bool armed);
-  bool request_set_tx_power_rtl8812au(int tx_power_index_override, bool armed);
+  bool request_set_tx_power_mw(int card_idx, int new_tx_power_mw, bool armed);
+  bool request_set_tx_power_rtl8812au(int card_idx, int tx_power_index_override,
+                                      bool armed);
   // MCS index can be changed on air (user can control the rate with it).
   bool request_set_air_mcs_index(int mcs_index);
   // These do not "break" the bidirectional connectivity and therefore

@@ -41,7 +41,24 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
 
 std::optional<WBLinkSettings> openhd::WBLinkSettingsHolder::impl_deserialize(
     const std::string &file_as_string) const {
-  return openhd_json_parse<WBLinkSettings>(file_as_string);
+  auto opt = openhd_json_parse<WBLinkSettings>(file_as_string);
+  if (opt.has_value()) {
+    auto &s = opt.value();
+    // Migration: If we loaded a legacy config, the vectors might be empty.
+    // Populate them from the legacy single values (which are also loaded).
+    if (s.wb_tx_power_mw_per_card.empty()) {
+      for (int i = 0; i < MAX_WIFI_CARDS; i++) {
+        s.wb_tx_power_mw_per_card.push_back(s.wb_tx_power_milli_watt);
+        s.wb_tx_power_mw_armed_per_card.push_back(
+            s.wb_tx_power_milli_watt_armed);
+        s.wb_tx_power_idx_per_card.push_back(
+            s.wb_rtl8812au_tx_pwr_idx_override);
+        s.wb_tx_power_idx_armed_per_card.push_back(
+            s.wb_rtl8812au_tx_pwr_idx_override_armed);
+      }
+    }
+  }
+  return opt;
 }
 
 std::string WBLinkSettingsHolder::imp_serialize(
