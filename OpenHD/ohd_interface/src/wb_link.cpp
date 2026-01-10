@@ -55,8 +55,7 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
   m_frame_drop_helper.set_console(m_console);
   m_console->info("Broadcast cards:{}", debug_cards(m_broadcast_cards));
   // sanity checks
-  if (m_broadcast_cards.empty() ||
-      (m_profile.is_air && m_broadcast_cards.size() > 1)) {
+  if (m_broadcast_cards.empty()) {
     // NOTE: Here we crash, since it would be a programmer(s) error
     // Air needs exactly one wifi card
     // ground supports rx diversity, therefore can have more than one card
@@ -158,6 +157,8 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
   m_wb_txrx->m_fatal_error_cb = [this](int error) {
     on_wifi_card_fatal_error();
   };
+  m_wb_txrx->set_enable_redundant_tx(
+      m_settings->unsafe_get_settings().wb_enable_redundant_tx);
   auto dummy = m_wb_txrx->get_dummy_link();
   if (dummy) {
     dummy->set_drop_mode(DIRTY_emulate_drop_mode);
@@ -829,6 +830,18 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
                 openhd::IntSetting{(int)settings.wb_enable_listen_only_mode,
                                    cb_passive}});
   }
+  {
+    auto cb_redundant = [this](std::string, int value) {
+      if (!validate_yes_or_no(value)) return false;
+      m_settings->unsafe_get_settings().wb_enable_redundant_tx = value;
+      m_settings->persist();
+      m_wb_txrx->set_enable_redundant_tx(value);
+      return true;
+    };
+    ret.push_back(Setting{
+        openhd::WB_ENABLE_REDUNDANT_TX,
+        openhd::IntSetting{(int)settings.wb_enable_redundant_tx, cb_redundant}});
+  }
   const bool any_card_supports_stbc_ldpc_sgi =
       openhd::wb::any_card_supports_stbc_ldpc_sgi(m_broadcast_cards);
   // These 3 are only supported / known to work on rtl8812au (yet), therefore
@@ -919,20 +932,56 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
                            cb_wb_tx_power_milli_watt_armed}});
   }
 
-  // Legacy support or global overriding?
-  // The old "TX_POWER_MW" settings are now effectively aliases for the 0th card or removed?
-  // Removing them might break QOpenHD if it expects them.
-  // But if we have duplicate IDs, it's bad.
-  // The old IDs were "TX_POWER_MW" etc.
-  // I will keep the old IDs pointing to Card 0 for backward compatibility if needed,
-  // OR just remove them and expect the user to use the new ones.
-  // User asked to "modify openhd so that both cards have their own settings".
-  // This implies breaking change or evolution.
-  // I'll assume new QOpenHD or user knows what they are doing with mavlink console.
-  // I will NOT add the old ones to avoid confusion, unless I alias them.
-  // Let's add them as aliases to card 0, but only if they don't conflict with card 0's new name.
-  // Card 0 new name: TX_POWER_MW_0. Old name: TX_POWER_MW.
-  // I'll just stick to the new names.
+  // Restore legacy settings as global overrides to maintain GCS compatibility
+  if (openhd::wb::has_any_rtl8812au(m_broadcast_cards)) {
+    auto cb_wb_rtl8812au_tx_pwr_idx_override = [this](std::string, int value) {
+      bool success = true;
+      for (int i = 0; i < MAX_WIFI_CARDS; i++) {
+        if (!request_set_tx_power_rtl8812au(i, value, false)) success = false;
+      }
+      return success;
+    };
+    ret.push_back(openhd::Setting{
+        WB_RTL8812AU_TX_PWR_IDX_OVERRIDE,
+        openhd::IntSetting{(int)settings.wb_tx_power_idx_per_card.at(0),
+                           cb_wb_rtl8812au_tx_pwr_idx_override}});
+    auto cb_wb_rtl8812au_tx_pwr_idx_armed = [this](std::string, int value) {
+      bool success = true;
+      for (int i = 0; i < MAX_WIFI_CARDS; i++) {
+        if (!request_set_tx_power_rtl8812au(i, value, true)) success = false;
+      }
+      return success;
+    };
+    ret.push_back(openhd::Setting{
+        WB_RTL8812AU_TX_PWR_IDX_ARMED,
+        openhd::IntSetting{(int)settings.wb_tx_power_idx_armed_per_card.at(0),
+                           cb_wb_rtl8812au_tx_pwr_idx_armed}});
+  }
+  if (openhd::wb::has_any_non_rtl8812au(m_broadcast_cards)) {
+    auto cb_wb_tx_power_milli_watt = [this](std::string, int value) {
+      bool success = true;
+      for (int i = 0; i < MAX_WIFI_CARDS; i++) {
+        if (!request_set_tx_power_mw(i, value, false)) success = false;
+      }
+      return success;
+    };
+    auto change_tx_power = openhd::IntSetting{
+        (int)settings.wb_tx_power_mw_per_card.at(0), cb_wb_tx_power_milli_watt};
+    ret.push_back(Setting{WB_TX_POWER_MILLI_WATT, change_tx_power});
+    auto cb_wb_tx_power_milli_watt_armed = [this](std::string, int value) {
+      bool success = true;
+      for (int i = 0; i < MAX_WIFI_CARDS; i++) {
+        if (!request_set_tx_power_mw(i, value, true)) success = false;
+      }
+      return success;
+    };
+    auto change_tx_power_armed = openhd::IntSetting{
+        (int)settings.wb_tx_power_mw_armed_per_card.at(0),
+        cb_wb_tx_power_milli_watt_armed};
+    ret.push_back(
+        Setting{WB_TX_POWER_MILLI_WATT_ARMED, change_tx_power_armed});
+  }
+
   openhd::validate_provided_ids(ret);
   return ret;
 }
