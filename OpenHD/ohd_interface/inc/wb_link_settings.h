@@ -85,6 +85,8 @@ static constexpr uint32_t DEFAULT_MAX_FEC_BLK_SIZE = -1;
 static constexpr auto WB_MCS_INDEX_VIA_RC_CHANNEL_OFF = 0;
 static constexpr auto WB_BW_VIA_RC_CHANNEL_OFF = 0;
 
+static constexpr auto MAX_WIFI_CARDS = 4;
+
 struct WBLinkSettings {
   uint32_t wb_frequency;  // writen once 2.4 or 5 is known
   // NOTE: Only stored on air, gnd automatically applies 40Mhz bwidth when air
@@ -113,6 +115,12 @@ struct WBLinkSettings {
   // applied when armed
   uint32_t wb_rtl8812au_tx_pwr_idx_override_armed =
       RTL8812AU_TX_POWER_INDEX_ARMED_DISABLED;
+  // Per-card settings
+  std::vector<int> wb_tx_power_mw_per_card;
+  std::vector<int> wb_tx_power_mw_armed_per_card;
+  std::vector<int> wb_tx_power_idx_per_card;
+  std::vector<int> wb_tx_power_idx_armed_per_card;
+
   uint32_t wb_video_fec_percentage = DEFAULT_WB_VIDEO_FEC_PERCENTAGE;
   // decrease this value when there is a lot of pollution on your channel, and
   // you consistently get tx errors even though variable bitrate is working

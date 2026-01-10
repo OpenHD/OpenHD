@@ -32,6 +32,8 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
     wb_enable_stbc, wb_enable_ldpc, wb_enable_short_guard,
     wb_tx_power_milli_watt, wb_tx_power_milli_watt_armed,
     wb_rtl8812au_tx_pwr_idx_override, wb_rtl8812au_tx_pwr_idx_override_armed,
+    wb_tx_power_mw_per_card, wb_tx_power_mw_armed_per_card,
+    wb_tx_power_idx_per_card, wb_tx_power_idx_armed_per_card,
     wb_video_fec_percentage, wb_video_rate_for_mcs_adjustment_percent,
     wb_max_fec_block_size, wb_mcs_index_via_rc_channel, wb_bw_via_rc_channel,
     enable_wb_video_variable_bitrate, wb_enable_listen_only_mode,
@@ -76,6 +78,16 @@ WBLinkSettings create_default_wb_stream_settings(
     settings.wb_enable_stbc = true;
     settings.wb_enable_ldpc = true;
     // There are no single Antenna 88x2eu cards
+  }
+  for (int i = 0; i < MAX_WIFI_CARDS; i++) {
+    settings.wb_tx_power_mw_per_card.push_back(
+        settings.wb_tx_power_milli_watt);
+    settings.wb_tx_power_mw_armed_per_card.push_back(
+        settings.wb_tx_power_milli_watt_armed);
+    settings.wb_tx_power_idx_per_card.push_back(
+        settings.wb_rtl8812au_tx_pwr_idx_override);
+    settings.wb_tx_power_idx_armed_per_card.push_back(
+        settings.wb_rtl8812au_tx_pwr_idx_override_armed);
   }
   return settings;
 }

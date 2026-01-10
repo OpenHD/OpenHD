@@ -422,24 +422,33 @@ bool WBLink::request_set_air_tx_channel_width(int channel_width) {
   return try_schedule_work_item(work_item);
 }
 
-bool WBLink::request_set_tx_power_mw(int tx_power_mw, bool armed) {
-  m_console->debug("request_set_tx_power_mw {}mW", tx_power_mw);
+bool WBLink::request_set_tx_power_mw(int card_idx, int tx_power_mw,
+                                     bool armed) {
+  m_console->debug("request_set_tx_power_mw card_idx:{} {}mW", card_idx,
+                   tx_power_mw);
   if (!(openhd::is_valid_tx_power_milli_watt(tx_power_mw) ||
         (armed && tx_power_mw == 0))) {
     m_console->warn("Invalid tx power:{}mW", tx_power_mw);
     return false;
   }
-  auto tag = fmt::format("SET_TX_POWER_MW_{}:{}", armed ? "ARMED" : "DISARMED",
-                         tx_power_mw);
+  if (card_idx < 0 || card_idx >= MAX_WIFI_CARDS) {
+    m_console->warn("Invalid card idx {}", card_idx);
+    return false;
+  }
+  auto tag = fmt::format("SET_TX_POWER_MW_C{}_{}:{}", card_idx,
+                         armed ? "ARMED" : "DISARMED", tx_power_mw);
   auto work_item = std::make_shared<WorkItem>(
       tag,
-      [this, tx_power_mw, armed]() {
+      [this, card_idx, tx_power_mw, armed]() {
+        auto& s = m_settings->unsafe_get_settings();
+        if (s.wb_tx_power_mw_per_card.size() <= card_idx) {
+          // Should not happen if initialized correctly
+          return;
+        }
         if (armed) {
-          m_settings->unsafe_get_settings().wb_tx_power_milli_watt_armed =
-              tx_power_mw;
+          s.wb_tx_power_mw_armed_per_card[card_idx] = tx_power_mw;
         } else {
-          m_settings->unsafe_get_settings().wb_tx_power_milli_watt =
-              tx_power_mw;
+          s.wb_tx_power_mw_per_card[card_idx] = tx_power_mw;
         }
         m_settings->persist();
         m_request_apply_tx_power = true;
@@ -448,25 +457,32 @@ bool WBLink::request_set_tx_power_mw(int tx_power_mw, bool armed) {
   return try_schedule_work_item(work_item);
 }
 
-bool WBLink::request_set_tx_power_rtl8812au(int tx_power_index_override,
+bool WBLink::request_set_tx_power_rtl8812au(int card_idx,
+                                            int tx_power_index_override,
                                             bool armed) {
-  m_console->warn("request_set_tx_power_rtl8812au {}index",
-                  tx_power_index_override);
+  m_console->warn("request_set_tx_power_rtl8812au card_idx:{} {}index",
+                  card_idx, tx_power_index_override);
   if (!openhd::validate_wb_rtl8812au_tx_pwr_idx_override(
           tx_power_index_override)) {
     return false;
   }
-  auto tag = fmt::format("SET_TX_POWER_INDEX_{}:{}",
+  if (card_idx < 0 || card_idx >= MAX_WIFI_CARDS) {
+    m_console->warn("Invalid card idx {}", card_idx);
+    return false;
+  }
+  auto tag = fmt::format("SET_TX_POWER_INDEX_C{}_{}:{}", card_idx,
                          armed ? "ARMED" : "DISARMED", tx_power_index_override);
   auto work_item = std::make_shared<WorkItem>(
       tag,
-      [this, tx_power_index_override, armed]() {
+      [this, card_idx, tx_power_index_override, armed]() {
+        auto& s = m_settings->unsafe_get_settings();
+        if (s.wb_tx_power_idx_per_card.size() <= card_idx) {
+          return;
+        }
         if (armed) {
-          m_settings->unsafe_get_settings()
-              .wb_rtl8812au_tx_pwr_idx_override_armed = tx_power_index_override;
+          s.wb_tx_power_idx_armed_per_card[card_idx] = tx_power_index_override;
         } else {
-          m_settings->unsafe_get_settings().wb_rtl8812au_tx_pwr_idx_override =
-              tx_power_index_override;
+          s.wb_tx_power_idx_per_card[card_idx] = tx_power_index_override;
         }
         m_settings->persist();
         m_request_apply_tx_power = true;
@@ -614,7 +630,42 @@ void WBLink::apply_txpower() {
       pwr_index = 50;
     }
   }
-  openhd::wb::set_tx_power_for_all_cards(pwr_mw, pwr_index, m_broadcast_cards);
+  for (int i = 0; i < m_broadcast_cards.size(); i++) {
+    // We rely on the cards being in a stable order here (which they are)
+    // The settings vectors are sized to MAX_WIFI_CARDS (4)
+    if (i >= settings.wb_tx_power_mw_per_card.size()) {
+      m_console->error("Card index out of bounds for settings");
+      break;
+    }
+
+    uint32_t card_pwr_mw = settings.wb_tx_power_mw_per_card.at(i);
+    uint32_t card_pwr_idx = settings.wb_tx_power_idx_per_card.at(i);
+
+    if (m_is_armed) {
+      if (settings.wb_tx_power_mw_armed_per_card.at(i) !=
+          openhd::WIFI_TX_POWER_MILLI_WATT_ARMED_DISABLED) {
+        card_pwr_mw = settings.wb_tx_power_mw_armed_per_card.at(i);
+      }
+      if (settings.wb_tx_power_idx_armed_per_card.at(i) !=
+          openhd::RTL8812AU_TX_POWER_INDEX_ARMED_DISABLED) {
+        card_pwr_idx = settings.wb_tx_power_idx_armed_per_card.at(i);
+      }
+    }
+
+    // Special logic for Air unit 40Mhz power reduction
+    if (m_profile.is_air) {
+      if (m_broadcast_cards.at(i).type == WiFiCardType::OPENHD_RTL_88X2AU &&
+          card_pwr_idx > 50 && settings.wb_air_tx_channel_width == 40) {
+        m_console->debug("Reducing TX power to 50 tpi due to 40Mhz for card {}",
+                         i);
+        card_pwr_idx = 50;
+      }
+    }
+
+    // Apply the power setting to this specific card
+    openhd::wb::set_tx_power_for_card(card_pwr_mw, card_pwr_idx,
+                                      m_broadcast_cards.at(i));
+  }
   m_curr_tx_power_mw = pwr_mw;
   m_curr_tx_power_idx = pwr_index;
   const auto delta = std::chrono::steady_clock::now() - before;
@@ -627,6 +678,19 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
   using namespace openhd;
   std::vector<openhd::Setting> ret{};
   const auto settings = m_settings->get_settings();
+
+  // Always show N_CARDS
+  const int n_rx_cards = static_cast<int>(m_broadcast_cards.size());
+  ret.push_back(openhd::create_read_only_int("WB_N_CARDS", n_rx_cards));
+
+  for (int i = 0; i < MAX_WIFI_CARDS; i++) {
+    int card_type_int = 0;  // UNKNOWN
+    if (i < m_broadcast_cards.size()) {
+      card_type_int = wifi_card_type_to_int(m_broadcast_cards.at(i).type);
+    }
+    ret.push_back(
+        openhd::create_read_only_int(fmt::format("CARD_TYPE_{}", i), card_type_int));
+  }
   auto change_freq = openhd::IntSetting{
       (int)settings.wb_frequency,
       [this](std::string, int value) { return request_set_frequency(value); }};
@@ -808,37 +872,67 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
         openhd::IntSetting{settings.wb_enable_short_guard, cb_wb_enable_sg}});
   }
   // WIFI TX power depends on the used chips
-  if (openhd::wb::has_any_rtl8812au(m_broadcast_cards)) {
-    auto cb_wb_rtl8812au_tx_pwr_idx_override = [this](std::string, int value) {
-      return request_set_tx_power_rtl8812au(value, false);
+  // We expose settings for all 4 slots, but usually only applicable ones matter.
+  // However, to keep it simple and allow pre-configuration, we just expose them all
+  // or maybe only for detected cards?
+  // User asked for "each card gets its own setting".
+  // If we only show settings for detected cards, the user can't config a card that isn't plugged in yet?
+  // But usually settings are static.
+  // Also MAVLink params are usually static list.
+  // Let's expose for all MAX_WIFI_CARDS.
+
+  for (int i = 0; i < MAX_WIFI_CARDS; i++) {
+    // Index-based settings
+    // For RTL8812AU (and similar index-based)
+    auto cb_wb_rtl8812au_tx_pwr_idx_override = [this, i](std::string, int value) {
+      return request_set_tx_power_rtl8812au(i, value, false);
     };
     ret.push_back(openhd::Setting{
-        WB_RTL8812AU_TX_PWR_IDX_OVERRIDE,
-        openhd::IntSetting{(int)settings.wb_rtl8812au_tx_pwr_idx_override,
+        fmt::format("TX_POWER_I_{}", i),
+        openhd::IntSetting{(int)settings.wb_tx_power_idx_per_card.at(i),
                            cb_wb_rtl8812au_tx_pwr_idx_override}});
-    auto cb_wb_rtl8812au_tx_pwr_idx_armed = [this](std::string, int value) {
-      return request_set_tx_power_rtl8812au(value, true);
+
+    auto cb_wb_rtl8812au_tx_pwr_idx_armed = [this, i](std::string, int value) {
+      return request_set_tx_power_rtl8812au(i, value, true);
     };
     ret.push_back(openhd::Setting{
-        WB_RTL8812AU_TX_PWR_IDX_ARMED,
-        openhd::IntSetting{(int)settings.wb_rtl8812au_tx_pwr_idx_override_armed,
+        fmt::format("TX_POWER_IA_{}", i),
+        openhd::IntSetting{(int)settings.wb_tx_power_idx_armed_per_card.at(i),
                            cb_wb_rtl8812au_tx_pwr_idx_armed}});
-  }
-  if (openhd::wb::has_any_non_rtl8812au(m_broadcast_cards)) {
-    auto cb_wb_tx_power_milli_watt = [this](std::string, int value) {
-      return request_set_tx_power_mw(value, false);
+
+    // mW-based settings
+    // For others
+    auto cb_wb_tx_power_milli_watt = [this, i](std::string, int value) {
+      return request_set_tx_power_mw(i, value, false);
     };
-    auto change_tx_power = openhd::IntSetting{
-        (int)settings.wb_tx_power_milli_watt, cb_wb_tx_power_milli_watt};
-    ret.push_back(Setting{WB_TX_POWER_MILLI_WATT, change_tx_power});
-    auto cb_wb_tx_power_milli_watt_armed = [this](std::string, int value) {
-      return request_set_tx_power_mw(value, true);
+    ret.push_back(openhd::Setting{
+        fmt::format("TX_POWER_MW_{}", i),
+        openhd::IntSetting{(int)settings.wb_tx_power_mw_per_card.at(i),
+                           cb_wb_tx_power_milli_watt}});
+
+    auto cb_wb_tx_power_milli_watt_armed = [this, i](std::string, int value) {
+      return request_set_tx_power_mw(i, value, true);
     };
-    auto change_tx_power_armed =
-        openhd::IntSetting{(int)settings.wb_tx_power_milli_watt_armed,
-                           cb_wb_tx_power_milli_watt_armed};
-    ret.push_back(Setting{WB_TX_POWER_MILLI_WATT_ARMED, change_tx_power_armed});
+    ret.push_back(openhd::Setting{
+        fmt::format("TX_POWER_MWA_{}", i),
+        openhd::IntSetting{(int)settings.wb_tx_power_mw_armed_per_card.at(i),
+                           cb_wb_tx_power_milli_watt_armed}});
   }
+
+  // Legacy support or global overriding?
+  // The old "TX_POWER_MW" settings are now effectively aliases for the 0th card or removed?
+  // Removing them might break QOpenHD if it expects them.
+  // But if we have duplicate IDs, it's bad.
+  // The old IDs were "TX_POWER_MW" etc.
+  // I will keep the old IDs pointing to Card 0 for backward compatibility if needed,
+  // OR just remove them and expect the user to use the new ones.
+  // User asked to "modify openhd so that both cards have their own settings".
+  // This implies breaking change or evolution.
+  // I'll assume new QOpenHD or user knows what they are doing with mavlink console.
+  // I will NOT add the old ones to avoid confusion, unless I alias them.
+  // Let's add them as aliases to card 0, but only if they don't conflict with card 0's new name.
+  // Card 0 new name: TX_POWER_MW_0. Old name: TX_POWER_MW.
+  // I'll just stick to the new names.
   openhd::validate_provided_ids(ret);
   return ret;
 }

@@ -111,45 +111,51 @@ bool openhd::wb::set_frequency_and_channel_width_for_all_cards(
   return ret;  // Return the result
 }
 
+void openhd::wb::set_tx_power_for_card(int tx_power_mw,
+                                       int rtl8812au_tx_power_index_override,
+                                       const WiFiCard& card) {
+  if (card.type == WiFiCardType::OPENHD_EMULATED) {
+    return;
+  }
+
+  if (card.type == WiFiCardType::OPENHD_RTL_88X2AU) {
+    openhd::log::get_default()->warn("RTL8812AU tx_pwr_idx_override: {}",
+                                     rtl8812au_tx_power_index_override);
+    wifi::commandhelper::iw_set_tx_power(card.device_name,
+                                         rtl8812au_tx_power_index_override);
+  } else {
+    float adjustment_factor = 1.0f;
+    float adjustment_value = 1.0f;
+    if (card.type == WiFiCardType::OPENHD_RTL_88X2EU) {
+      adjustment_factor = 1.1f;
+      adjustment_value = 1000;
+    }
+    if (card.type == WiFiCardType::QUALCOMM) {
+      adjustment_factor = 1.2f;
+    }
+    const auto tx_power_mbm = openhd::milli_watt_to_mBm(
+        tx_power_mw, adjustment_factor, adjustment_value);
+    if (card.type == WiFiCardType::OPENHD_RTL_88X2BU ||
+        card.type == WiFiCardType::OPENHD_RTL_88X2CU ||
+        card.type == WiFiCardType::OPENHD_RTL_88X2EU ||
+        card.type == WiFiCardType::OPENHD_RTL_8852BU ||
+        card.type == WiFiCardType::QUALCOMM) {
+      wifi::commandhelper::openhd_driver_set_tx_power(card.type,
+                                                      card.device_name, tx_power_mbm);
+    } else {
+      wifi::commandhelper::iw_set_tx_power(card.device_name, tx_power_mbm);
+    }
+
+    openhd::log::get_default()->debug("Tx power mW: {} mBm: {}", tx_power_mw,
+                                      tx_power_mbm);
+  }
+}
+
 void openhd::wb::set_tx_power_for_all_cards(
     int tx_power_mw, int rtl8812au_tx_power_index_override,
     const std::vector<WiFiCard>& m_broadcast_cards) {
   for (const auto& card : m_broadcast_cards) {
-    if (card.type == WiFiCardType::OPENHD_EMULATED) {
-      break;  // Skip further processing for emulated cards
-    }
-
-    if (card.type == WiFiCardType::OPENHD_RTL_88X2AU) {
-      openhd::log::get_default()->warn("RTL8812AU tx_pwr_idx_override: {}",
-                                       rtl8812au_tx_power_index_override);
-      wifi::commandhelper::iw_set_tx_power(card.device_name,
-                                           rtl8812au_tx_power_index_override);
-    } else {
-      float adjustment_factor = 1.0f;
-      float adjustment_value = 1.0f;
-      if (card.type == WiFiCardType::OPENHD_RTL_88X2EU) {
-        adjustment_factor = 1.1f;
-        adjustment_value = 1000;
-      }
-      if (card.type == WiFiCardType::QUALCOMM) {
-        adjustment_factor = 1.2f;
-      }
-      const auto tx_power_mbm = openhd::milli_watt_to_mBm(
-          tx_power_mw, adjustment_factor, adjustment_value);
-      if (card.type == WiFiCardType::OPENHD_RTL_88X2BU ||
-          card.type == WiFiCardType::OPENHD_RTL_88X2CU ||
-          card.type == WiFiCardType::OPENHD_RTL_88X2EU ||
-          card.type == WiFiCardType::OPENHD_RTL_8852BU ||
-          card.type == WiFiCardType::QUALCOMM) {
-        wifi::commandhelper::openhd_driver_set_tx_power(
-            card.type, card.device_name, tx_power_mbm);
-      } else {
-        wifi::commandhelper::iw_set_tx_power(card.device_name, tx_power_mbm);
-      }
-
-      openhd::log::get_default()->debug("Tx power mW: {} mBm: {}", tx_power_mw,
-                                        tx_power_mbm);
-    }
+    set_tx_power_for_card(tx_power_mw, rtl8812au_tx_power_index_override, card);
   }
 }
 
