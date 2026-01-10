@@ -1,0 +1,6 @@
+diff --git a/OpenHD/ohd_interface/lib/wifibroadcast b/OpenHD/ohd_interface/lib/wifibroadcast
+--- a/OpenHD/ohd_interface/lib/wifibroadcast
++++ b/OpenHD/ohd_interface/lib/wifibroadcast
+@@ -1 +1 @@
+-Subproject commit 92b8c6f1421ffa38bae97f51b7e2ad4878b2a053
++Subproject commit 92b8c6f1421ffa38bae97f51b7e2ad4878b2a053-dirty
