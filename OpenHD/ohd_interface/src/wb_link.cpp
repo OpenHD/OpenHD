@@ -432,7 +432,7 @@ bool WBLink::request_set_tx_power_mw(int card_idx, int tx_power_mw,
     m_console->warn("Invalid tx power:{}mW", tx_power_mw);
     return false;
   }
-  if (card_idx < 0 || card_idx >= MAX_WIFI_CARDS) {
+  if (card_idx < 0 || card_idx >= openhd::MAX_WIFI_CARDS) {
     m_console->warn("Invalid card idx {}", card_idx);
     return false;
   }
@@ -467,7 +467,7 @@ bool WBLink::request_set_tx_power_rtl8812au(int card_idx,
           tx_power_index_override)) {
     return false;
   }
-  if (card_idx < 0 || card_idx >= MAX_WIFI_CARDS) {
+  if (card_idx < 0 || card_idx >= openhd::MAX_WIFI_CARDS) {
     m_console->warn("Invalid card idx {}", card_idx);
     return false;
   }
