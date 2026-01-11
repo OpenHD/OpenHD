@@ -203,6 +203,9 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
       // we transmit video
       WBStreamTx::Options options_video_tx{};
       options_video_tx.enable_fec = true;
+      // Enable retransmission if configured
+      options_video_tx.enable_retransmission = m_settings->unsafe_get_settings().wb_enable_retransmission;
+
       // For now, have a fifo of X frame(s) to smooth out extreme edge cases of
       // bitrate overshoot
       // TODO: In ohd_video,  differentiate between "frame" and NALU (nalu can
@@ -841,6 +844,23 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
     ret.push_back(Setting{
         openhd::WB_ENABLE_REDUNDANT_TX,
         openhd::IntSetting{(int)settings.wb_enable_redundant_tx, cb_redundant}});
+  }
+  {
+    // Retransmission
+    auto cb_retransmission = [this](std::string, int value) {
+        if (!validate_yes_or_no(value)) return false;
+        m_settings->unsafe_get_settings().wb_enable_retransmission = value;
+        m_settings->persist();
+        // Changing retransmission at runtime is complex as it requires reconstructing WBStreamTx
+        // For now, we require a reboot for this to take full effect, but we save the setting.
+        // Or we could trigger a restart of video streams, but that's invasive.
+        // Let's assume reboot required or user accepts it applies on next start.
+        return true;
+    };
+    ret.push_back(Setting{
+        openhd::WB_ENABLE_RETRANSMISSION,
+        openhd::IntSetting{(int)settings.wb_enable_retransmission, cb_retransmission}
+    });
   }
   const bool any_card_supports_stbc_ldpc_sgi =
       openhd::wb::any_card_supports_stbc_ldpc_sgi(m_broadcast_cards);

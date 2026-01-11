@@ -146,6 +146,8 @@ struct WBLinkSettings {
   bool wb_dev_air_set_high_retransmit_count = false;
   // Send same package on all connected cards
   bool wb_enable_redundant_tx = false;
+  // Enable ARQ retransmission (standard: disabled)
+  bool wb_enable_retransmission = false;
 };
 
 WBLinkSettings create_default_wb_stream_settings(
@@ -220,6 +222,7 @@ static constexpr auto WB_BW_VIA_RC_CHANNEL = "BW_VIA_RC";
 static constexpr auto WB_PASSIVE_MODE = "WB_PASSIVE_MODE";
 static constexpr auto WB_DEV_AIR_SET_HIGH_RETRANSMIT_COUNT = "DEV_HIGH_RETR";
 static constexpr auto WB_ENABLE_REDUNDANT_TX = "WB_RED_TX";
+static constexpr auto WB_ENABLE_RETRANSMISSION = "WB_ENABLE_RETRA";
 
 }  // namespace openhd
 
