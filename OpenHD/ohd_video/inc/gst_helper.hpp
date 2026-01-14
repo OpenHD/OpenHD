@@ -543,8 +543,8 @@ static std::string createRockchipEncoderPipeline(
   ss << " bps=" << bps_actual;
   ss << " bps-max=" << bps_max;
   ss << " bps-min=" << bps_min;
-  ss << " qp-min=" << settings.qp_min;
-  ss << " qp-max=" << settings.qp_max;
+  ss << " qp-min=" << 2;
+  ss << " qp-max=" << 32;
   ss << " width=" << settings.streamed_video_format.width;
   ss << " height=" << settings.streamed_video_format.height;
 
@@ -725,7 +725,7 @@ static std::string createMpph264encStream(const CameraSettings& settings) {
       settings.streamed_video_format.width,
       settings.streamed_video_format.height,
       settings.streamed_video_format.framerate);
-  ss << fmt::format("mpph264enc bps={} gop={} ! ", openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits), settings.h26x_keyframe_interval);
+  ss << createRockchipEncoderPipeline(settings);
   return ss.str();
 }
 // Camera quirks, omit arguments when set to 0 - some cameras refuse to work
