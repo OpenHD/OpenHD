@@ -148,11 +148,11 @@ OHDVideoAir::get_all_camera_settings() {
     // Changing the cam type is special - it requires a restart of openhd
     // (often also an OS reboot)
     auto cb1 = [this](std::string, int value) {
-      if (OHDPlatform::instance().is_x20()) return false;
+      if (OHDPlatform::instance().is_x20() || OHDPlatform::instance().is_luckfox_pico()) return false;
       return x_set_camera_type(true, value);
     };
     auto cb2 = [this](std::string, int value) {
-      if (OHDPlatform::instance().is_x20()) return false;
+      if (OHDPlatform::instance().is_x20() || OHDPlatform::instance().is_luckfox_pico()) return false;
       return x_set_camera_type(false, value);
     };
     if (i == 0) {

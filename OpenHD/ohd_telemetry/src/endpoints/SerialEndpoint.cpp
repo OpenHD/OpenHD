@@ -416,6 +416,8 @@ std::optional<std::string> serial_openhd_param_to_linux_fd(
       return "/dev/serial0";
     } else if (platform.is_x20() || platform.is_rock()) {
       return "dev/ttyS2";
+    } else if (platform.is_luckfox_pico()) {
+      return "dev/ttyS3";
     } else {
       openhd::log::get_default()->debug(
           "No default serial mapping for this platform");

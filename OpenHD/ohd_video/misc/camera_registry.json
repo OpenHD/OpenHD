@@ -617,6 +617,17 @@
         {"width": 1920, "height": 1080, "fps": 30}
       ]
     },
+    {
+      "key": "X_CAM_TYPE_ROCKCHIP_RV110X",
+      "id": 140,
+      "name": "LUCKFOX_MIS5001",
+      "ui_label": "MIS5001",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 60},
+        {"width": 1296, "height": 968, "fps": 60},
+        {"width": 1920, "height": 1080, "fps": 30}
+      ]
+    },
     {"key": "X_CAM_TYPE_DISABLED", "id": 255, "name": "DISABLED", "ui_label": "DISABLE"}
   ],
   "manufacturer_groups": [
@@ -778,6 +789,13 @@
       "cameras": [
         "X_CAM_TYPE_NXP_IMX8_V4L2"
       ]
+    },
+    {
+      "key": "LUCKFOX",
+      "name": "LUCKFOX",
+      "cameras": [
+        "X_CAM_TYPE_ROCKCHIP_RV110X"
+      ]
     }
   ],
   "platform_choices": [
@@ -832,6 +850,10 @@
     {
       "platform": "X_PLATFORM_TYPE_NXP_IMX8",
       "manufacturers": ["NXP", "USB", "DEBUG"]
+    },
+    {
+      "platform": "X_PLATFORM_TYPE_LUCKFOX_RV110X",
+      "manufacturers": ["LUCKFOX"]
     }
   ],
   "secondary_choices": ["DISABLE", "USB", "DEBUG"],

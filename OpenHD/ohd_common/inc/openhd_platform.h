@@ -51,8 +51,8 @@ static constexpr int X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B = 22;
 static constexpr int X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3 = 24;
 
 static constexpr int X_PLATFORM_TYPE_ROCKCHIP_RV1126 = 23;
-static constexpr int X_PLATFORM_TYPE_ROCKCHIP_RV1106 = 25;
-static constexpr int X_PLATFORM_TYPE_ROCKCHIP_RV1103 = 26;
+static constexpr int X_PLATFORM_TYPE_LUCKFOX_RV110X = 25;
+// 26 used to be X_PLATFORM_TYPE_ROCKCHIP_RV1103, merged with X_PLATFORM_TYPE_LUCKFOX_RV110X now
 static constexpr int X_PLATFORM_TYPE_LUCKFOX_LYRA = 27;
 
 // Numbers 30..35 are reserved for allwinner
@@ -108,6 +108,8 @@ struct OHDPlatform {
   bool is_qcs405() const;
   bool is_orqa() const;
   bool is_uvx_mod() const;
+  // Luckfox Pico
+  bool is_luckfox_pico() const;
 };
 
 // We need to differentiate between rpi 4 and other pi's to use the right fec

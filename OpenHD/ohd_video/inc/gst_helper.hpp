@@ -1127,5 +1127,39 @@ static std::string create_nvidia_xavier_stream(const CameraSettings& settings) {
   return ss.str();
 }
 
+/**
+ * For rkmpih Rockchips (rv1103/1106)
+ */
+
+static std::string createRv1106Stream(const CameraSettings& settings) {
+  std::stringstream ss;
+
+  // HACK: Set right cam mode manually
+  if  (settings.streamed_video_format.width > 1296 || settings.streamed_video_format.height > 968)
+    OHDUtil::run_command("media-ctl -d /dev/media0 -V \"'m00_b_mis5001 4-0031':0 [fmt:SGRBG10_1X10/2592x1944]\"", {});
+  else
+    OHDUtil::run_command("media-ctl -d /dev/media0 -V \"'m00_b_mis5001 4-0031':0 [fmt:SGRBG10_1X10/1296x968]\"", {});
+
+  ss << fmt::format("rkvisrc do-timestamp=1 ! ");
+  ss << fmt::format(
+      "video/x-raw, format=NV12, width={}, height={}, framerate={}/1 ! ",
+      settings.streamed_video_format.width,
+      settings.streamed_video_format.height,
+      settings.streamed_video_format.framerate);
+  ss << fmt::format("rkmpih264enc name=rkmpih264enc bitrate={}", settings.h26x_bitrate_kbits);
+  if (settings.streamed_video_format.videoCodec == VideoCodec::H265) {
+    ss << fmt::format(" codec=h265");
+  }
+  ss << " rotation=" << settings.camera_rotation_degree;
+  if (requires_hflip(settings)) {
+    ss << " hflip=1";
+  }
+  if (requires_vflip(settings)) {
+    ss << " vflip=1";
+  }
+  ss << fmt::format(" ! ");
+  return ss.str();
+}
+
 }  // namespace OHDGstHelper
 #endif  // OPENHD_OHDGSTHELPER_H

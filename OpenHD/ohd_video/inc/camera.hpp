@@ -92,6 +92,9 @@ struct XCamera {
   bool requires_nxp_imx8_v4l2_pipeline() const {
     return camera_type >= 130 && camera_type < 140;
   }
+  bool requires_rockchip_rv_pipeline() const {
+    return camera_type == 140;
+  }
   std::string cam_type_as_verbose_string() const {
     return x_cam_type_to_string(camera_type);
   }

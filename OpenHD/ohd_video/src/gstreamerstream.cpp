@@ -218,6 +218,9 @@ std::string GStreamerStream::create_source_encode_pipeline(
   } else if (camera.camera_type == X_CAM_TYPE_ORQA_HORNET) {
     openhd::log::get_default()->warn("Using ORQA HORNET camera type.");
     pipeline << OHDGstHelper::create_orqa_camera1_stream(0, setting);
+  } else if (camera.camera_type == X_CAM_TYPE_ROCKCHIP_RV110X) {
+    openhd::log::get_default()->warn("Using Rockchip RV camera type.");
+    pipeline << OHDGstHelper::createRv1106Stream(setting);
   } else {
     openhd::log::get_default()->warn("UNKNOWN CAMERA TYPE");
     pipeline << OHDGstHelper::createDummyStreamX(setting);
