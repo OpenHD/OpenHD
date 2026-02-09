@@ -137,7 +137,7 @@ std::string GstAudioStream::create_pipeline() {
   // audioconvert might or might not be needed ...
   // alawenc needs S16LE
   ss << "audioconvert ! ";
-  ss << "audio/x-raw,format=S16LE ! ";
+  ss << "audio/x-raw,format=S16LE,channels=1,rate=8000 ! ";
   ss << "audioresample ! ";  // Might or might not be needed ...
   ss << "alawenc ! rtppcmapay max-ptime=20000000 ! ";
   ss << OHDGstHelper::createOutputAppSink();
@@ -152,47 +152,57 @@ void GstAudioStream::stream_once() {
   GError* error = nullptr;
   m_gst_pipeline = gst_parse_launch(pipeline.c_str(), &error);
   m_console->debug("GStreamerStream::setup() end");
+  
+  // Check both error and null pipeline
   if (error) {
     m_console->error("Failed to create pipeline: {}", error->message);
+    g_error_free(error);
+    return;
+  }
+  if (!m_gst_pipeline) {
+    m_console->error("Failed to create pipeline: pipeline is null");
     return;
   }
   m_app_sink_element =
       gst_bin_get_by_name(GST_BIN(m_gst_pipeline), "out_appsink");
-  assert(m_app_sink_element);
+  if (!m_app_sink_element) {
+    m_console->error("Failed to get appsink element");
+    gst_object_unref(m_gst_pipeline);
+    m_gst_pipeline = nullptr;
+    return;
+  }
+  
   const auto ret = gst_element_set_state(m_gst_pipeline, GST_STATE_PLAYING);
   m_console->debug("State change ret:{}",
                    openhd::gst_state_change_return_to_string(ret));
+  if (ret == GST_STATE_CHANGE_FAILURE) {
+    m_console->error("Failed to set pipeline to PLAYING state");
+    gst_object_unref(m_gst_pipeline);
+    m_gst_pipeline = nullptr;
+    return;
+  }
   const uint64_t timeout_ns =
       std::chrono::duration_cast<std::chrono::nanoseconds>(
           std::chrono::milliseconds(100))
           .count();
   std::chrono::steady_clock::time_point m_last_audio_packet =
       std::chrono::steady_clock::now();
-  // Streaming
-  while (g_airCameraGenericSettings.enable_audio != 1) {
-    if (complainOnce = 0) {
-      m_console->warn("Audio is disabled");
-      complainOnce = 1;
-      return;
-    }
+  // Streaming - keep running while keep_looping is true
+  while (m_keep_looping) {
     // Quickly terminate if openhd wants to terminate
     if (!m_keep_looping) break;
-    // Restart in case no data comes in //CURRENTLY DISABLED BECAUSE IT EVEN
-    // RESTARTS IF AUDIO IS DISABLED ..
-    if (g_airCameraGenericSettings.enable_audio != 1) {
-      if (complainOnce = 0) {
-        m_console->warn("No Audio data, restarting");
-        complainOnce = 1;
-      }
+    
+    auto buffer_x = openhd::gst_app_sink_try_pull_sample_and_copy(
+        m_app_sink_element, timeout_ns);
+    if (buffer_x.has_value()) {
+      on_audio_packet(buffer_x->buffer);
+      m_last_audio_packet = std::chrono::steady_clock::now();
+    } else {
+      // Check if pipeline is dead (no data for 5 seconds)
       if (std::chrono::steady_clock::now() - m_last_audio_packet >
           std::chrono::seconds(5)) {
+        m_console->warn("No audio data for 5 seconds, restarting pipeline");
         break;
-      }
-      auto buffer_x = openhd::gst_app_sink_try_pull_sample_and_copy(
-          m_app_sink_element, timeout_ns);
-      if (buffer_x.has_value()) {
-        on_audio_packet(buffer_x->buffer);
-        m_last_audio_packet = std::chrono::steady_clock::now();
       }
     }
   }
