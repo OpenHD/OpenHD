@@ -96,8 +96,12 @@ bool openhd::wb::set_frequency_and_channel_width_for_all_cards(
         card.type == WiFiCardType::OPENHD_RTL_88X2CU ||
         card.type == WiFiCardType::OPENHD_RTL_88X2EU ||
         card.type == WiFiCardType::OPENHD_RTL_8852BU) {
-      wifi::commandhelper::openhd_driver_set_frequency_and_channel_width(
+      const bool success =
+          wifi::commandhelper::openhd_driver_set_frequency_and_channel_width(
           card.type, card.device_name, frequency, channel_width, is_air_unit);
+      if (!success) {
+        ret = false;
+      }
     } else {
       // Handle other card types with a different function
       const bool success =
