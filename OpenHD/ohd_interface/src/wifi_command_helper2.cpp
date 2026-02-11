@@ -149,6 +149,7 @@ bool wifi::commandhelper2::set_wifi_frequency(
     switch (channel_width_given) {
       case 10:
         netlink_channel_width = NL80211_CHAN_WIDTH_10;
+        break;
       case 20:
         netlink_channel_width = NL80211_CHAN_WIDTH_20;
         break;
@@ -160,7 +161,7 @@ bool wifi::commandhelper2::set_wifi_frequency(
                             channel_width_given);
         break;
     }
-    NLA_PUT_U32(mesg, NL80211_ATTR_CHANNEL_WIDTH, channel_width_given);
+    NLA_PUT_U32(mesg, NL80211_ATTR_CHANNEL_WIDTH, netlink_channel_width);
   }
 
   // Finally send it and receive the amount of bytes sent.
@@ -183,7 +184,7 @@ bool wifi::commandhelper2::set_wifi_frequency_and_log_result(
     std::optional<uint32_t> channel_width) {
   const bool res = set_wifi_frequency(device, freq_mhz, channel_width);
   get_logger()->debug("Set {} {}", freq_mhz, res ? "Success" : "Failure");
-  return false;
+  return res;
 }
 
 bool wifi::commandhelper2::set_wifi_txpower(const std::string &device,

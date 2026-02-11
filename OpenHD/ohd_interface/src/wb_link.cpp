@@ -676,6 +676,7 @@ bool WBLink::apply_frequency_and_channel_width(int frequency,
   const auto res = openhd::wb::set_frequency_and_channel_width_for_all_cards(
       frequency, channel_width_rx, m_broadcast_cards, m_profile.is_air);
   m_tx_header_1->update_channel_width(channel_width_tx);
+  m_tx_header_2->update_channel_width(channel_width_tx);
   m_wb_txrx->tx_reset_stats();
   m_wb_txrx->rx_reset_stats();
   re_enable_injection_unless_user_passive_mode_enabled();
@@ -2107,7 +2108,8 @@ void WBLink::wt_gnd_perform_channel_management() {
         m_management_gnd->m_air_reported_curr_channel_width;
     const int air_reported_frequency =
         m_management_gnd->m_air_reported_curr_frequency;
-    if ((air_reported_channel_width == 20 ||
+    if ((air_reported_channel_width == 10 ||
+         air_reported_channel_width == 20 ||
          air_reported_channel_width == 40) &&
         air_reported_frequency > 100) {
       if (m_gnd_curr_rx_channel_width != air_reported_channel_width ||

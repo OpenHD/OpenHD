@@ -177,7 +177,8 @@ void ManagementGround::on_new_management_packet(const uint8_t *data,
       data[0] == MNGMNT_PACKET_ID_CHANNEL_WIDTH) {
     DataManagementTxBandwidth packet{};
     std::memcpy(&packet, &data[1], data_len - 1);
-    if (packet.bandwidth_mhz == 20 || packet.bandwidth_mhz == 40) {
+    if (packet.bandwidth_mhz == 10 || packet.bandwidth_mhz == 20 ||
+        packet.bandwidth_mhz == 40) {
       m_air_reported_curr_channel_width = packet.bandwidth_mhz;
       m_air_reported_curr_frequency = packet.center_frequency_mhz;
     } else {
