@@ -99,7 +99,12 @@ struct SysutilPowerProfile {
 };
 
 int parse_power_value(const std::string& value) {
-  const auto parsed = OHDUtil::string_to_int(value);
+  std::string trimmed = value;
+  OHDUtil::trim(trimmed);
+  if (trimmed.empty()) {
+    return 0;
+  }
+  const auto parsed = OHDUtil::string_to_int(trimmed);
   if (!parsed.has_value()) {
     return 0;
   }
@@ -108,17 +113,41 @@ int parse_power_value(const std::string& value) {
 
 std::optional<SysutilPowerProfile> to_power_profile(
     const openhd::SysutilWifiCardInfo& card) {
-  const bool has_values = !card.power_lowest.empty() ||
-                          !card.power_low.empty() || !card.power_mid.empty() ||
-                          !card.power_high.empty();
+  const int lowest = parse_power_value(card.power_lowest);
+  const int low = parse_power_value(card.power_low);
+  const int mid = parse_power_value(card.power_mid);
+  const int high = parse_power_value(card.power_high);
+  const int min_value = parse_power_value(card.power_min);
+  const int max_value = parse_power_value(card.power_max);
+  const bool has_values =
+      lowest > 0 || low > 0 || mid > 0 || high > 0 || min_value > 0 ||
+      max_value > 0;
   if (!has_values) {
     return std::nullopt;
   }
   SysutilPowerProfile profile{};
-  profile.lowest = parse_power_value(card.power_lowest);
-  profile.low = parse_power_value(card.power_low);
-  profile.mid = parse_power_value(card.power_mid);
-  profile.high = parse_power_value(card.power_high);
+  profile.lowest = lowest > 0 ? lowest : min_value;
+  profile.low = low;
+  profile.mid = mid;
+  profile.high = high > 0 ? high : max_value;
+  if (profile.low <= 0) {
+    profile.low = profile.lowest;
+  }
+  if (profile.mid <= 0) {
+    if (min_value > 0 && max_value > 0) {
+      profile.mid = (min_value + max_value) / 2;
+    } else if (profile.low > 0) {
+      profile.mid = profile.low;
+    } else if (profile.high > 0) {
+      profile.mid = profile.high;
+    }
+  }
+  if (profile.high <= 0) {
+    profile.high = profile.mid;
+  }
+  if (profile.lowest <= 0) {
+    profile.lowest = profile.low > 0 ? profile.low : profile.mid;
+  }
   profile.mode = OHDUtil::to_uppercase(card.power_mode);
   return profile;
 }
