@@ -1,3 +1,4 @@
 1) OpenHD service: automatically starts (and restarts in case of a crash) the openhd main executable
 2) custom unmanaged camera service: For development / custom camera scripting. By default, does nothing.
     Started by openhd if custom unmanaged camera(s) are selected via sysutils hardware settings
+3) crash dump capture service: stores previous boot logs in /Config/openhd/logs for debugging

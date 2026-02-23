@@ -46,6 +46,33 @@
 #include "spdlog/fmt/bundled/format.h"
 #include "x20_cam_helper.h"
 
+namespace {
+void maybe_configure_nxp_os08a20_isp(const XCamera& camera,
+                                    const CameraSettings& settings) {
+  if (camera.camera_type != X_CAM_TYPE_NXP_IMX8_OS08A20) {
+    return;
+  }
+
+  const int fps = settings.streamed_video_format.framerate;
+  if (fps <= 0) {
+    return;
+  }
+
+  const bool want_60fps = fps >= 60;
+  const int mode = want_60fps ? 60 : 30;
+  static int last_mode = -1;
+  if (last_mode == mode) {
+    return;
+  }
+
+  const char* config = want_60fps ? "os08a20_1080p60" : "os08a20_4k";
+  openhd::log::get_default()->info(
+      "NXP OS08A20: selecting ISP config '{}' for {}fps", config, fps);
+  OHDUtil::run_command("/opt/imx8-isp/bin/run.sh", {"-c", config, "-lm"});
+  last_mode = mode;
+}
+}  // namespace
+
 GStreamerStream::GStreamerStream(std::shared_ptr<CameraHolder> camera_holder,
                                  openhd::ON_ENCODE_FRAME_CB out_cb)
     //: CameraStream(platform, camera_holder, video_udp_port) {
@@ -190,6 +217,7 @@ std::string GStreamerStream::create_source_encode_pipeline(
   } else if (camera.requires_nxp_imx8_v4l2_pipeline()) {
     openhd::log::get_default()->debug(
         "Camera requires NXP i.MX8 V4L2 pipeline.");
+    maybe_configure_nxp_os08a20_isp(camera, setting);
     pipeline << OHDGstHelper::create_nxp_imx8_v4l2_stream(setting);
   } else if (is_usb_camera(camera.camera_type)) {
     openhd::log::get_default()->warn("Detected USB camera.");

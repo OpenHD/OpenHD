@@ -75,6 +75,7 @@
 // A few run time options, only for development. Most configuration is provided
 // via sysutils (and exposed in the WebUI).
 static const char optstr[] = "?:agcort:";
+static constexpr bool kRecordModeEnabled = false;
 static const struct option long_options[] = {
     {"air", no_argument, nullptr, 'a'},
     {"ground", no_argument, nullptr, 'g'},
@@ -360,6 +361,10 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
           exit(1);
         }
         commandline_air = true;
+        if (!kRecordModeEnabled) {
+          std::cerr << "Record-only mode is temporarily disabled; running as air.\n";
+          break;
+        }
         ret.record_only = true;
         break;
       case 't':
@@ -375,7 +380,11 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
         ss << "--clean-start -c  [Wipe all persistent settings OpenHD has "
               "written, can fix any boot issues when switching hw around] \n";
         ss << "--no-hotspot      [disable WiFi hotspot on ground] \n";
-        ss << "--record-only -r  [Record video without streaming it] \n";
+        ss << "--record-only -r  [Record video without streaming it";
+        if (!kRecordModeEnabled) {
+          ss << " (disabled)";
+        }
+        ss << "] \n";
         ss << "--run-time-seconds -t [Manually specify run time (default "
               "infinite),for debugging] \n";
         ss << "--openhd_uart_telemetry [optional serial device, default "
@@ -421,6 +430,10 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
       update.run_as_air = ret.run_as_air;
     }
     (void)openhd::update_sysutil_settings(update);
+  }
+  if (!kRecordModeEnabled && ret.record_only) {
+    std::cerr << "Record-only mode is temporarily disabled; running as air.\n";
+    ret.record_only = false;
   }
   if (ret.record_only) {
     ret.no_hotspot = true;

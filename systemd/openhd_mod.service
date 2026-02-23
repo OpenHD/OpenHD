@@ -29,12 +29,15 @@
 [Unit]
 Description=OpenHD
 After=NetworkManager.service
+StartLimitIntervalSec=60
+StartLimitBurst=3
 
 [Service]
 User=root
 ExecStart=/usr/bin/openhd --no-hotspot
-Restart=always
-RestartSec=3
+Restart=on-failure
+RestartSec=5
+LimitCORE=infinity
 
 [Install]
 WantedBy=multi-user.target

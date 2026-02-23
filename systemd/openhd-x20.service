@@ -29,12 +29,15 @@
 [Unit]
 Description=OpenHD
 After=NetworkManager.service
+StartLimitIntervalSec=60
+StartLimitBurst=3
 
 [Service]
 User=root
 ExecStart=/usr/local/bin/x20/OpenHD_X20
-Restart=always
-RestartSec=3
+Restart=on-failure
+RestartSec=5
+LimitCORE=infinity
 
 
 [Install]

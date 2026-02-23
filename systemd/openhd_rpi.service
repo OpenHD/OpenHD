@@ -29,13 +29,16 @@
 [Unit]
 Description=OpenHD
 After=NetworkManager.service
+StartLimitIntervalSec=60
+StartLimitBurst=3
 
 [Service]
 User=root
 Environment="LIBCAMERA_LOG_LEVELS=*:ERROR"
 ExecStart=/usr/local/bin/openhd
-Restart=always
-RestartSec=3
+Restart=on-failure
+RestartSec=5
+LimitCORE=infinity
 
 StandardInput=tty
 StandardOutput=tty
