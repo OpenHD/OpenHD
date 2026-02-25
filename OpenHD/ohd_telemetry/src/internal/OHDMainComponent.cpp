@@ -207,6 +207,37 @@ static mavlink_message_t create_mavlink_log_message(
   return ret;
 }
 
+static uint32_t parse_scan_channel_widths_param(float param2) {
+  const int raw = static_cast<int>(param2);
+  const uint32_t bit10 = openhd::LinkActionHandler::scan_channel_width_bit(10);
+  const uint32_t bit20 = openhd::LinkActionHandler::scan_channel_width_bit(20);
+  const uint32_t bit40 = openhd::LinkActionHandler::scan_channel_width_bit(40);
+  const uint32_t bit80 = openhd::LinkActionHandler::scan_channel_width_bit(80);
+  const uint32_t allowed = bit10 | bit20 | bit40 | bit80;
+  if (raw <= 0) {
+    return bit20;
+  }
+  if (raw == 1) {
+    // Legacy: "1 bandwidth" meant 20 MHz only.
+    return bit20;
+  }
+  if (raw == 2) {
+    // Legacy: "2 bandwidths" meant 20 + 40 MHz.
+    return bit20 | bit40;
+  }
+  if (raw == 10 || raw == 20 || raw == 40 || raw == 80) {
+    return openhd::LinkActionHandler::scan_channel_width_bit(raw);
+  }
+  // Allow passing an explicit bitmask (future-proof).
+  if (raw > 0 && raw <= 0x0F) {
+    const uint32_t mask = static_cast<uint32_t>(raw) & allowed;
+    if (mask != 0) {
+      return mask;
+    }
+  }
+  return bit20;
+}
+
 std::vector<MavlinkMessage> OHDMainComponent::generateLogMessages() {
   // return m_status_text_accumulator->get_mavlink_messages(m_sys_id,m_comp_id);
   auto messages =
@@ -436,6 +467,8 @@ void OHDMainComponent::process_command_self(
       return;
     } else {
       const auto channels_to_scan = static_cast<uint32_t>(command.param1);
+      const auto channel_widths_mask =
+          parse_scan_channel_widths_param(command.param2);
       m_console->debug("OPENHD_CMD_INITIATE_CHANNEL_SEARCH {}",
                        channels_to_scan);
       bool success = false;
@@ -444,6 +477,7 @@ void OHDMainComponent::process_command_self(
         if (openhd::LinkActionHandler::instance().wb_cmd_scan_channels) {
           openhd::LinkActionHandler::ScanChannelsParam scanChannelsParam{};
           scanChannelsParam.channels_to_scan = channels_to_scan;
+          scanChannelsParam.channel_widths_mask = channel_widths_mask;
           success = openhd::LinkActionHandler::instance().wb_cmd_scan_channels(
               scanChannelsParam);
         }

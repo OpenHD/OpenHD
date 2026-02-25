@@ -46,6 +46,7 @@ static constexpr auto DEFAULT_MCS_INDEX = 2;
 // range for video
 static constexpr auto WB_GND_UPLINK_MCS_INDEX = 0;
 static constexpr auto DEFAULT_CHANNEL_WIDTH = 20;
+static constexpr auto DEFAULT_GND_RX_CHANNEL_WIDTH = 40;
 // Consti10: Stephen used a default tx power of 3100 somewhere (not sure if that
 // ever made it trough though) This value seems a bit high to me, so I am going
 // with a default of "1800" (which should be 18.0 dBm ) Used to be in dBm, but
@@ -95,10 +96,12 @@ static constexpr auto MAX_WIFI_CARDS = 4;
 
 struct WBLinkSettings {
   uint32_t wb_frequency;  // writen once 2.4 or 5 is known
-  // NOTE: Only stored on air, gnd automatically applies 40Mhz bwidth when air
-  // reports (management frame(s))
+  // Air TX channel width. Ground will follow this once it receives management
+  // frames from the air unit.
   uint32_t wb_air_tx_channel_width =
       DEFAULT_CHANNEL_WIDTH;  // 10 or 20 or 40 mhz bandwidth
+  // Ground RX channel width when not yet synchronized with the air unit.
+  uint32_t wb_gnd_rx_channel_width = DEFAULT_GND_RX_CHANNEL_WIDTH;
   // MCS index used during injection - only used by air unit, since ground
   // always sends with MCS0
   uint32_t wb_air_mcs_index = DEFAULT_MCS_INDEX;

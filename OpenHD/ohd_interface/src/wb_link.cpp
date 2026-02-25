@@ -230,6 +230,14 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
   // this fetches the last settings, otherwise creates default ones
   m_settings = std::make_unique<openhd::WBLinkSettingsHolder>(
       m_profile, m_broadcast_cards);
+  if (m_profile.is_ground()) {
+    int init_width =
+        static_cast<int>(m_settings->get_settings().wb_gnd_rx_channel_width);
+    if (!(init_width == 10 || init_width == 20 || init_width == 40)) {
+      init_width = openhd::DEFAULT_GND_RX_CHANNEL_WIDTH;
+    }
+    m_gnd_curr_rx_channel_width = init_width;
+  }
   WBTxRx::Options txrx_options{};
   txrx_options.session_key_packet_interval = SESSION_KEY_PACKETS_INTERVAL;
   txrx_options.use_gnd_identifier = m_profile.is_ground();
@@ -640,6 +648,28 @@ bool WBLink::request_set_air_tx_channel_width(int channel_width) {
   return try_schedule_work_item(work_item);
 }
 
+bool WBLink::request_set_ground_rx_channel_width(int channel_width) {
+  if (m_profile.is_air) {
+    return false;
+  }
+  m_console->debug("request_set_ground_rx_channel_width {}", channel_width);
+  if (!openhd::wb::validate_air_channel_width_change(
+          channel_width, m_broadcast_cards.at(0), m_console)) {
+    return false;
+  }
+  auto work_item = std::make_shared<WorkItem>(
+      fmt::format("SET_GND_CHWIDTH:{}", channel_width),
+      [this, channel_width]() {
+        m_gnd_curr_rx_channel_width = channel_width;
+        m_settings->unsafe_get_settings().wb_gnd_rx_channel_width =
+            channel_width;
+        m_settings->persist();
+        apply_frequency_and_channel_width_from_settings();
+      },
+      std::chrono::steady_clock::now());
+  return try_schedule_work_item(work_item);
+}
+
 bool WBLink::request_set_tx_power_mw(int card_idx, int tx_power_mw,
                                      bool armed) {
   m_console->debug("request_set_tx_power_mw card_idx:{} {}mW", card_idx,
@@ -833,9 +863,8 @@ bool WBLink::apply_frequency_and_channel_width_from_settings() {
     channel_width_tx = static_cast<int>(settings.wb_air_tx_channel_width);
     channel_width_rx = channel_width_tx;
   } else {
-    // GND always uses 20Mhz channel width for uplink, and listens in 40Mhz
-    // unless air reports 20Mhz (in which case we can go down to 20Mhz listen,
-    // which gives us better sensitivity)
+    // GND always uses 20Mhz channel width for uplink, and listens in the
+    // configured RX width until air reports its width.
     channel_width_rx = m_gnd_curr_rx_channel_width;
     channel_width_tx = 20;
   }
@@ -1292,6 +1321,16 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
     ret.push_back(openhd::Setting{
         WB_ENABLE_SHORT_GUARD,
         openhd::IntSetting{settings.wb_enable_short_guard, cb_wb_enable_sg}});
+  } else {
+    auto change_wb_channel_width = openhd::IntSetting{
+        (int)m_gnd_curr_rx_channel_width.load(),
+        [this](std::string, int value) {
+          return request_set_ground_rx_channel_width(value);
+        }};
+    change_wb_channel_width.get_callback = [this]() {
+      return m_gnd_curr_rx_channel_width.load();
+    };
+    ret.push_back(Setting{WB_CHANNEL_WIDTH, change_wb_channel_width});
   }
   // WIFI TX power depends on the used chips
   // We expose settings for all 4 slots, but usually only applicable ones
@@ -2078,9 +2117,34 @@ void WBLink::perform_channel_scan(
   //   m_console->warn("No channel_widths to scan, return early");
   //   return;
   // }
-  // We only scan 20Mhz; management frames are always 20Mhz, then we switch
-  // to the reported air unit width.
-  const std::vector<uint16_t> channel_widths_to_scan = {20};
+  std::vector<uint16_t> channel_widths_to_scan;
+  const auto width_mask = scan_channels_params.channel_widths_mask;
+  if (width_mask != 0) {
+    if (width_mask & openhd::LinkActionHandler::scan_channel_width_bit(10)) {
+      channel_widths_to_scan.push_back(10);
+    }
+    if (width_mask & openhd::LinkActionHandler::scan_channel_width_bit(20)) {
+      channel_widths_to_scan.push_back(20);
+    }
+    if (width_mask & openhd::LinkActionHandler::scan_channel_width_bit(40)) {
+      channel_widths_to_scan.push_back(40);
+    }
+    if (width_mask & openhd::LinkActionHandler::scan_channel_width_bit(80)) {
+      channel_widths_to_scan.push_back(80);
+    }
+  }
+  if (channel_widths_to_scan.empty()) {
+    // We only scan 20Mhz by default; management frames are always 20Mhz,
+    // then we switch to the reported air unit width.
+    channel_widths_to_scan = {20};
+  } else if (std::find(channel_widths_to_scan.begin(),
+                        channel_widths_to_scan.end(),
+                        20) == channel_widths_to_scan.end()) {
+    // Management frames are always 20MHz, ensure we can decode them.
+    channel_widths_to_scan.insert(channel_widths_to_scan.begin(), 20);
+    m_console->debug(
+        "Channel scan added 20MHz to ensure management frame detection");
+  }
 
   auto stats_current = openhd::LinkActionHandler::instance().get_link_stats();
   stats_current.gnd_operating_mode.operating_mode = 1;
@@ -2201,6 +2265,8 @@ void WBLink::perform_channel_scan(
     m_console->debug("Channel scan success, {}@{}Mhz", result.frequency,
                      result.channel_width);
     m_settings->unsafe_get_settings().wb_frequency = result.frequency;
+    m_settings->unsafe_get_settings().wb_gnd_rx_channel_width =
+        result.channel_width;
     m_settings->persist();
     m_gnd_curr_rx_channel_width = result.channel_width;
     apply_frequency_and_channel_width_from_settings();
@@ -2351,6 +2417,8 @@ void WBLink::wt_gnd_perform_channel_management() {
         m_gnd_curr_rx_frequency = air_reported_frequency;
         m_gnd_curr_rx_channel_width = air_reported_channel_width;
         m_settings->unsafe_get_settings().wb_frequency = air_reported_frequency;
+        m_settings->unsafe_get_settings().wb_gnd_rx_channel_width =
+            air_reported_channel_width;
         m_settings->persist(false);
         apply_frequency_and_channel_width(air_reported_frequency,
                                           air_reported_channel_width, 20);

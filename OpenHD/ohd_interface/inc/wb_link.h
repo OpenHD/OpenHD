@@ -120,6 +120,7 @@ class WBLink : public OHDLink {
   bool set_air_max_fec_block_size_for_platform(int value);
   bool set_air_wb_video_rate_for_mcs_adjustment_percent(int value);
   bool set_dev_air_set_high_retransmit_count(int value);
+  bool request_set_ground_rx_channel_width(int channel_width);
   // Initiate channel scan / channel analyze.
   // Those operations run asynchronous until completed, and during this time
   // all other "request_" setting changes are rejected (since the work thread
@@ -257,7 +258,8 @@ class WBLink : public OHDLink {
   std::unique_ptr<ManagementAir> m_management_air = nullptr;
   std::unique_ptr<ManagementGround> m_management_gnd = nullptr;
   // We start on 40Mhz, and go down to 20Mhz if possible
-  std::atomic<int> m_gnd_curr_rx_channel_width = 40;
+  std::atomic<int> m_gnd_curr_rx_channel_width =
+      openhd::DEFAULT_GND_RX_CHANNEL_WIDTH;
   std::atomic<int> m_gnd_curr_rx_frequency = -1;
   // Allows temporarily closing the video input
   std::atomic_bool m_air_close_video_in = false;
