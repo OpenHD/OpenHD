@@ -20,6 +20,7 @@ on:
     branches-ignore:
       - release
       - dev-release
+      - openhd-3.0
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)

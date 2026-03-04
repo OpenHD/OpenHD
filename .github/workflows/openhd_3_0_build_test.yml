@@ -19,6 +19,17 @@ jobs:
           submodules: recursive
           fetch-depth: 0
           token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+      - name: Sync submodules
+        run: |
+          git submodule sync --recursive
+          git submodule update --init --recursive
+          git submodule status --recursive
+      - name: Verify private submodule
+        run: |
+          if [ ! -f OpenHD/ohd_interface/video_crypto_private/CMakeLists.txt ]; then
+            echo "Missing video_crypto_private content. Push the private repo and update the submodule pointer."
+            exit 1
+          fi
       - name: Install Dependencies
         run: |
           sudo mkdir -p /Videos/

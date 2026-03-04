@@ -7,6 +7,8 @@ on:
       - "dev-release"
       - "release"
       - "2.6-mod-qcom"
+   branches-ignore:
+      - "openhd-3.0"
 
 jobs:
   build:
