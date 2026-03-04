@@ -1,0 +1,51 @@
+name: openhd_3_0_build_test
+
+on:
+  push:
+    branches:
+      - openhd-3.0
+  pull_request:
+    branches:
+      - openhd-3.0
+  workflow_dispatch:
+
+jobs:
+  build-and-run-air-ground-test:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+          token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+      - name: Install Dependencies
+        run: |
+          sudo mkdir -p /Videos/
+          sudo apt update
+          sudo apt install -y libsodium-dev
+          sudo ./install_build_dep.sh ubuntu-x86
+      - name: Build private video crypto
+        run: |
+          cd OpenHD/ohd_interface/video_crypto_private
+          cmake -S . -B build
+          cmake --build build
+      - name: Build private video crypto client
+        run: |
+          cd OpenHD/ohd_interface/video_crypto_private/client
+          g++ -std=c++17 client.cpp -lsodium -o ohd_video_crypto_client
+      - name: Build
+        run: |
+          cd OpenHD
+          ./build_cmake.sh
+      - name: Enable dummy wifi card
+        run: |
+          sudo ./OpenHD/ohd_common/copy_config_file.sh
+          sudo sed -i 's/\\(^WIFI_MONITOR_CARD_EMULATE =\\).*/\\1true/' /boot/openhd/hardware.config
+          sudo sed -i 's/\\(^WIFI_MONITOR_CARD_EMULATE =\\).*/\\1true/' /config/openhd/hardware.config
+      - name: Run as air (limited)
+        run: |
+          sudo ./OpenHD/build/openhd -a --run-time-seconds 10
+      - name: Run as ground (limited)
+        run: |
+          sudo ./OpenHD/build/openhd -g --run-time-seconds 10

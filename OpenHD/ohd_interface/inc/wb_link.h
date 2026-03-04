@@ -46,6 +46,7 @@
 #include "wb_link_manager.h"
 #include "wb_link_settings.h"
 #include "wb_link_work_item.hpp"
+#include "video_crypto.h"
 #include "wifi_card.h"
 
 /**
@@ -245,18 +246,20 @@ class WBLink : public OHDLink {
   std::atomic_bool m_request_apply_tx_power = false;
   std::atomic_bool m_request_apply_air_mcs_index = false;
   std::atomic_bool m_request_apply_air_bw = false;
-  std::chrono::steady_clock::time_point m_last_log_bind_phrase_mismatch =
+  std::chrono::steady_clock::time_point m_last_log_key_mismatch =
       std::chrono::steady_clock::now();
   // We store tx power for easy access in stats
   std::atomic<int> m_curr_tx_power_idx = 0;
   std::atomic<int> m_curr_tx_power_mw = 0;
   std::atomic<int> m_last_received_packet_ts_ms =
       openhd::util::steady_clock_time_epoch_ms();
+  std::atomic<bool> m_logged_missing_video_crypto = false;
   std::chrono::steady_clock::time_point m_reset_frequency_time_point =
       std::chrono::steady_clock::now();
   // 40Mhz / 20Mhz link management
   std::unique_ptr<ManagementAir> m_management_air = nullptr;
   std::unique_ptr<ManagementGround> m_management_gnd = nullptr;
+  std::unique_ptr<openhd::VideoCrypto> m_video_crypto = nullptr;
   // We start on 40Mhz, and go down to 20Mhz if possible
   std::atomic<int> m_gnd_curr_rx_channel_width =
       openhd::DEFAULT_GND_RX_CHANNEL_WIDTH;

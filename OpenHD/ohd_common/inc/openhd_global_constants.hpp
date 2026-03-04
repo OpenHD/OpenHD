@@ -83,10 +83,9 @@ static std::string get_ohd_version_as_string() {
                                RELEASE_TYPE);
 }
 
-// This optional file contains an encryption keypair (up/down).
-// It is generated at first boot if the user specifies a pw during flash.
-// If this file does not exist, the default keypair from the default pw (openhd)
-// is generated at run time.
+// This optional file contains a wifibroadcast keypair (up/down).
+// If this file does not exist, wifibroadcast will generate random keys at
+// runtime, which requires a shared keypair on both air and ground to work.
 static constexpr auto SECURITY_KEYPAIR_FILENAME =
     "/usr/local/share/openhd/txrx.key";
 

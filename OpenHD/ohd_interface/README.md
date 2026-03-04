@@ -19,10 +19,7 @@ connection to the FC (even though one could reason UART is a HW interface).
 
 look at the code to find out the ports usw, they should come from openhd-constants.hpp
 
-## Keys
-The purpose of encryption is less about security and more about avoiding packet collisions.
-R.n encryption is mandatory for wifibroadcast, but to make development easier, we just use a default seed
-to create the tx and rx files. We are in the progress in changing that, The OpenHD image writer already allows
-the user to set a bind phrase.
-
-You can use [wifibroadcast repo](https://github.com/openhd/wifibroadcast) to generate a key pair. The keys should be placed in $SETTINGS_BASE_PATH$/interface
+## Video Crypto (.so)
+If `OPENHD_VIDEO_CRYPTO_SO` is set, OpenHD will attempt to load the specified
+shared library on startup. The library is expected to provide:
+`openhd_video_crypto_init(int is_air)` and `openhd_video_crypto_shutdown()`.

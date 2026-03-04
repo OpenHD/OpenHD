@@ -218,6 +218,8 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
   assert(m_console);
   m_frame_drop_helper.set_console(m_console);
   m_console->info("Broadcast cards:{}", debug_cards(m_broadcast_cards));
+  m_video_crypto = std::make_unique<openhd::VideoCrypto>(m_console);
+  m_video_crypto->load(m_profile.is_air);
   // sanity checks
   if (m_broadcast_cards.empty()) {
     // NOTE: Here we crash, since it would be a programmer(s) error
@@ -254,13 +256,39 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
   // txrx_options.debug_encrypt_time= true;
   // txrx_options.debug_packet_gaps= true;
   if (OHDFilesystemUtil::exists(openhd::SECURITY_KEYPAIR_FILENAME)) {
-    txrx_options.secure_keypair =
+    auto keypair_opt =
         wb::read_keypair_from_file(openhd::SECURITY_KEYPAIR_FILENAME);
-    m_console->debug("Using key from file {}",
-                     openhd::SECURITY_KEYPAIR_FILENAME);
+    if (keypair_opt.has_value()) {
+      txrx_options.secure_keypair = keypair_opt;
+      m_console->debug("Using key from file {}",
+                       openhd::SECURITY_KEYPAIR_FILENAME);
+    } else {
+      txrx_options.secure_keypair = std::nullopt;
+      m_console->warn(
+          "Failed to read keypair file {}. "
+          "Wifibroadcast authentication will not work until a valid shared "
+          "keypair is installed on both air and ground units.",
+          openhd::SECURITY_KEYPAIR_FILENAME);
+    }
   } else {
     txrx_options.secure_keypair = std::nullopt;
-    m_console->debug("Using key from default bind phrase");
+    bool loaded_from_crypto = false;
+    if (m_video_crypto && m_video_crypto->is_loaded()) {
+      std::array<uint8_t, wb::KEYPAIR_RAW_SIZE> raw{};
+      if (m_video_crypto->get_wb_keypair(raw.data(), raw.size())) {
+        txrx_options.secure_keypair = wb::KeyPairTxRx::from_raw(raw);
+        loaded_from_crypto = true;
+        m_console->info(
+            "Using keypair from video crypto library (no keypair file found).");
+      }
+    }
+    if (!loaded_from_crypto) {
+      m_console->warn(
+          "No keypair file at {}. "
+          "Wifibroadcast authentication will not work until a shared keypair "
+          "is installed on both air and ground units.",
+          openhd::SECURITY_KEYPAIR_FILENAME);
+    }
   }
   // txrx_options.log_all_received_packets= true;
   // txrx_options.log_all_received_validated_packets= true;
@@ -1788,10 +1816,10 @@ void WBLink::wt_update_statistics() {
   if (m_profile.is_ground()) {
     if (rxStats.likely_mismatching_encryption_key) {
       const auto elapsed =
-          std::chrono::steady_clock::now() - m_last_log_bind_phrase_mismatch;
+          std::chrono::steady_clock::now() - m_last_log_key_mismatch;
       if (elapsed > std::chrono::seconds(3)) {
-        m_console->warn("Bind phrase mismatch");
-        m_last_log_bind_phrase_mismatch = std::chrono::steady_clock::now();
+        m_console->warn("Keypair mismatch");
+        m_last_log_key_mismatch = std::chrono::steady_clock::now();
       }
     }
   }
@@ -2032,7 +2060,16 @@ void WBLink::transmit_video_data(
   }
   // m_console->debug("Got {}",fragmented_video_frame.rtp_fragments.size());
   auto& tx = *m_wb_video_tx_list[stream_index];
-  tx.set_encryption(fragmented_video_frame.enable_ultra_secure_encryption);
+  tx.set_encryption(false);
+  if (fragmented_video_frame.enable_ultra_secure_encryption &&
+      (!m_video_crypto || !m_video_crypto->is_loaded())) {
+    if (!m_logged_missing_video_crypto) {
+      m_console->warn(
+          "Video encryption requested but no crypto library is loaded. "
+          "Set OPENHD_VIDEO_CRYPTO_SO to your .so path.");
+      m_logged_missing_video_crypto = true;
+    }
+  }
   const int max_fec_block_size = get_max_fec_block_size();
   const int fec_perc = m_settings->get_settings().wb_video_fec_percentage;
   int n_dropped_frames = 0;

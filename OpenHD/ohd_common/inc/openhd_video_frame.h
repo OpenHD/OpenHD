@@ -42,10 +42,8 @@ struct FragmentedVideoFrame {
   // CMOS - but r.n no platform supports measurements this deep.
   std::chrono::steady_clock::time_point creation_time =
       std::chrono::steady_clock::now();
-  // OpenHD WB supprts changing encryption on the fly - and r.n no other
-  // implementation exists. For the future: This hints that the link
-  // implementation should encrypt the data as secure as possible even though
-  // that might result in higher CPU load.
+  // Advisory flag: if enabled, the link layer may apply optional external
+  // video encryption.
   bool enable_ultra_secure_encryption = false;
   std::shared_ptr<std::vector<uint8_t>> dirty_frame =
       nullptr;  // replaces fragments

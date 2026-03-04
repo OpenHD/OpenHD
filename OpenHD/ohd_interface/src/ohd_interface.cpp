@@ -590,38 +590,20 @@ void OHDInterface::generate_keys_from_pw_if_exists_and_delete() {
   }
   auto console = openhd::log::get_default();
 
-  if (OHDFilesystemUtil::exists(std::string(getConfigBasePath()) +
-                                "password.txt")) {
-    auto pw = OHDFilesystemUtil::read_file(std::string(getConfigBasePath()) +
-                                           "password.txt");
-    OHDUtil::trim(pw);
-    console->info("Generating key(s) from pw [{}]",
-                  OHDUtil::password_as_hidden_str(pw));  // don't show the pw
-    auto keys = wb::generate_keypair_from_bind_phrase(pw);
-    if (wb::write_keypair_to_file(keys, openhd::SECURITY_KEYPAIR_FILENAME)) {
-      console->debug("Keypair file successfully written");
-      // delete the file
-      OHDFilesystemUtil::remove_if_existing(std::string(getConfigBasePath()) +
-                                            "password.txt");
-      OHDFilesystemUtil::write_file(
-          std::string(getConfigBasePath()) + "hidden.txt",
-          "ThisLinkIsEncrypted");
-      OHDFilesystemUtil::make_file_read_write_everyone(
-          openhd::SECURITY_KEYPAIR_FILENAME);
-    } else {
-      console->error("Cannot write keypair file !");
-      OHDFilesystemUtil::remove_if_existing(openhd::SECURITY_KEYPAIR_FILENAME);
-    }
+  const auto password_path = std::string(getConfigBasePath()) + "password.txt";
+  if (OHDFilesystemUtil::exists(password_path)) {
+    console->warn(
+        "password.txt based key generation is no longer supported. "
+        "Please place a shared keypair at {}",
+        openhd::SECURITY_KEYPAIR_FILENAME);
   }
-  // If no keypair file exists (It was not created from the password.txt file)
-  // we create the txrx.key once (from the default password) such that the boot
-  // up time is sped up on successive boot(s)
-  auto val = wb::read_keypair_from_file(openhd::SECURITY_KEYPAIR_FILENAME);
-  if ((!OHDFilesystemUtil::exists(openhd::SECURITY_KEYPAIR_FILENAME)) ||
-      (!val)) {
-    console->debug("Creating txrx.key from default pw (once)");
-    auto keys = wb::generate_keypair_from_bind_phrase(wb::DEFAULT_BIND_PHRASE);
-    wb::write_keypair_to_file(keys, openhd::SECURITY_KEYPAIR_FILENAME);
+
+  if (!OHDFilesystemUtil::exists(openhd::SECURITY_KEYPAIR_FILENAME)) {
+    console->warn(
+        "No keypair file found at {}. "
+        "Wifibroadcast authentication will not work until a shared keypair "
+        "is installed on both air and ground units.",
+        openhd::SECURITY_KEYPAIR_FILENAME);
   }
 }
 

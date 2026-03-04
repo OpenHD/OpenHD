@@ -24,6 +24,7 @@ set(sources
     src/ohd_interface.cpp
     src/usb_tether_listener.cpp
     src/wb_link.cpp
+    src/video_crypto.cpp
     src/wifi_hotspot.cpp
     src/wb_link_helper.cpp
     src/wifi_command_helper.cpp
@@ -52,6 +53,7 @@ target_link_libraries(OHDInterfaceLib PUBLIC Poco::Foundation Poco::Net)
 
 # Link with other libraries
 target_link_libraries(OHDInterfaceLib PUBLIC OHDCommonLib)
+target_link_libraries(OHDInterfaceLib PUBLIC ${CMAKE_DL_LIBS})
 
 # needed to set wifi cards to monitor mode and more
 # include(cmake/FindLibNL.cmake)

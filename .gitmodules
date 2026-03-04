@@ -10,3 +10,6 @@
 [submodule "OpenHD/ohd_interface/lib/wifibroadcast"]
 	path = OpenHD/ohd_interface/lib/wifibroadcast
 	url = https://github.com/OpenHD/wifibroadcast.git
+[submodule "OpenHD/ohd_interface/video_crypto_private"]
+	path = OpenHD/ohd_interface/video_crypto_private
+	url = https://github.com/OpenHD-Technologies/video_crypto_private
