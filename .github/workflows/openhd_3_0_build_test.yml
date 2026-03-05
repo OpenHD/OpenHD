@@ -55,14 +55,9 @@ jobs:
         run: |
           cd OpenHD
           ./build_cmake.sh
-      - name: Enable dummy wifi card
-        run: |
-          sudo ./OpenHD/ohd_common/copy_config_file.sh
-          sudo sed -i 's/\\(^WIFI_MONITOR_CARD_EMULATE =\\).*/\\1true/' /boot/openhd/hardware.config
-          sudo sed -i 's/\\(^WIFI_MONITOR_CARD_EMULATE =\\).*/\\1true/' /config/openhd/hardware.config
       - name: Run as air (limited)
         run: |
-          sudo ./OpenHD/build/openhd -a --run-time-seconds 10
+          sudo ./OpenHD/build/openhd -a --run-time-seconds 10 --emulate-monitor-card
       - name: Run as ground (limited)
         run: |
-          sudo ./OpenHD/build/openhd -g --run-time-seconds 10
+          sudo ./OpenHD/build/openhd -g --run-time-seconds 10 --emulate-monitor-card

@@ -74,13 +74,14 @@
 
 // A few run time options, only for development. Most configuration is provided
 // via sysutils (and exposed in the WebUI).
-static const char optstr[] = "?:agcort:";
+static const char optstr[] = "?:agcorte:";
 static constexpr bool kRecordModeEnabled = false;
 static const struct option long_options[] = {
     {"air", no_argument, nullptr, 'a'},
     {"ground", no_argument, nullptr, 'g'},
     {"clean-start", no_argument, nullptr, 'c'},
     {"no-hotspot", no_argument, nullptr, 'o'},
+    {"emulate-monitor-card", no_argument, nullptr, 'e'},
     {"record-only", no_argument, nullptr, 'r'},
     {"run-time-seconds", required_argument, nullptr, 't'},
     {"openhd_uart_telemetry", optional_argument, nullptr, 0},
@@ -307,6 +308,7 @@ struct OHDRunOptions {
   bool reset_from_sysutil = false;
   bool record_only = false;
   bool no_hotspot=false;
+  bool emulate_monitor_card = false;
   int run_time_seconds = -1;  //-1= infinite, only usefully for debugging
   std::optional<std::string> openhd_uart_telemetry_device;
 };
@@ -355,6 +357,10 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
       case 'o':
         ret.no_hotspot = true;
         break;
+      case 'e':
+        ret.emulate_monitor_card = true;
+        openhd::set_wifi_monitor_card_emulate_override(true);
+        break;
       case 'r':
         if (commandline_air != std::nullopt && commandline_air.value() == false) {
           std::cerr << "Record-only requires air mode\n";
@@ -385,6 +391,7 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
           ss << " (disabled)";
         }
         ss << "] \n";
+        ss << "--emulate-monitor-card -e [Use a simulated monitor-mode WiFi card] \n";
         ss << "--run-time-seconds -t [Manually specify run time (default "
               "infinite),for debugging] \n";
         ss << "--openhd_uart_telemetry [optional serial device, default "

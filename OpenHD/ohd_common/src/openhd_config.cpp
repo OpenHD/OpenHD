@@ -25,11 +25,13 @@
 
 #include <cctype>
 #include <iostream>
+#include <optional>
 
 #include "openhd_sock.h"
 #include "openhd_util.h"
 
 namespace {
+std::optional<bool> g_wifi_monitor_emulate_override;
 
 std::vector<std::string> split_list(std::string value) {
   if (value.empty()) {
@@ -90,12 +92,20 @@ static openhd::Config load_or_default() {
   ret.MICROHARD_TELEMETRY_PORT = settings.microhard_telemetry_port;
   ret.GEN_ENABLE_LAST_KNOWN_POSITION = settings.gen_enable_last_known_position;
   ret.GEN_RF_METRICS_LEVEL = settings.gen_rf_metrics_level;
+  if (g_wifi_monitor_emulate_override.has_value()) {
+    ret.WIFI_MONITOR_CARD_EMULATE = g_wifi_monitor_emulate_override.value();
+  }
   return ret;
 }
 
 openhd::Config openhd::load_config() {
   static openhd::Config config = load_or_default();
   return config;
+}
+
+void openhd::set_wifi_monitor_card_emulate_override(
+    std::optional<bool> value) {
+  g_wifi_monitor_emulate_override = value;
 }
 
 void openhd::debug_config(const openhd::Config& config) {
