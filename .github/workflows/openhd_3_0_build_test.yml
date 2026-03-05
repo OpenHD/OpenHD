@@ -42,6 +42,27 @@ jobs:
           sudo apt update
           sudo apt install -y libsodium-dev
           sudo ./install_build_dep.sh ubuntu-x86
+      - name: Install and start sysutils (background)
+        run: |
+          curl -1sLf 'https://dl.cloudsmith.io/public/openhd/dev-release/setup.deb.sh' | sudo -E bash
+          sudo apt update
+          sudo apt install -y openhd-sys-utils
+          SYSUTIL_BIN="$(command -v openhd_sys_utils || command -v openhd-sys-utils || true)"
+          if [ -z "$SYSUTIL_BIN" ]; then
+            SYSUTIL_BIN="$(dpkg -L openhd-sys-utils | grep -E '/(sbin|bin)/openhd' | head -n1 || true)"
+          fi
+          if [ -n "$SYSUTIL_BIN" ]; then
+            sudo nohup "$SYSUTIL_BIN" > /tmp/openhd_sysutils.log 2>&1 &
+          else
+            echo "WARNING: sysutils binary not found"
+          fi
+          for i in $(seq 1 20); do
+            if [ -S /run/openhd/openhd_sys.sock ]; then
+              echo "sysutils socket ready"
+              break
+            fi
+            sleep 0.5
+          done
       - name: Build private video crypto
         run: |
           cd OpenHD/ohd_interface/video_crypto_private
