@@ -3,6 +3,8 @@
 #include <cstdlib>
 #include <string>
 
+#include <spdlog/spdlog.h>
+
 #include "openhd_spdlog.h"
 #include "openhd_util_filesystem.h"
 
