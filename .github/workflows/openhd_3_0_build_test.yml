@@ -24,12 +24,18 @@ jobs:
           git submodule sync --recursive
           git submodule update --init --recursive
           git submodule status --recursive
-      - name: Verify private submodule
+      - name: Ensure private submodule content
         run: |
           if [ ! -f OpenHD/ohd_interface/video_crypto_private/CMakeLists.txt ]; then
-            echo "Missing video_crypto_private content. Push the private repo and update the submodule pointer."
+            echo "Submodule content missing, updating to latest main..."
+            git -C OpenHD/ohd_interface/video_crypto_private fetch origin main
+            git -C OpenHD/ohd_interface/video_crypto_private checkout -f origin/main
+          fi
+          if [ ! -f OpenHD/ohd_interface/video_crypto_private/CMakeLists.txt ]; then
+            echo "Missing video_crypto_private content. Ensure the private repo has the files and is accessible."
             exit 1
           fi
+          git -C OpenHD/ohd_interface/video_crypto_private rev-parse HEAD
       - name: Install Dependencies
         run: |
           sudo mkdir -p /Videos/
