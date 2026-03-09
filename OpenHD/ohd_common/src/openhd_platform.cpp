@@ -188,7 +188,7 @@ bool OHDPlatform::is_rpi() const {
 }
 
 bool OHDPlatform::is_rock() const {
-  return platform_type >= 20 && platform_type < 30;
+  return platform_type >= 20 && platform_type < 25;
 }
 
 bool OHDPlatform::is_rpi_or_x86() const {
