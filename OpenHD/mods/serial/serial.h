@@ -1,4 +1,3 @@
-// Serial.hpp
 #pragma once
 #include <string>
 #include <termios.h>

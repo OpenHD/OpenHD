@@ -1,4 +1,3 @@
-// Serial.cpp
 #include "serial.h"
 #include <fcntl.h>
 #include <unistd.h>
