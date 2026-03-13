@@ -31,6 +31,8 @@
 #include "openhd_util.h"
 #include "openhd_util_time.h"
 
+#include "mods/serial/serial.h"
+
 GroundTelemetry::GroundTelemetry() : MavlinkSystem(OHD_SYS_ID_GROUND) {
   m_console = openhd::log::create_or_get("ground_tele");
   assert(m_console);
