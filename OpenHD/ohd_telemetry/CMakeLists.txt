@@ -115,6 +115,7 @@ target_include_directories(OHDTelemetryLib
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>)
 
 target_link_libraries(OHDTelemetryLib PUBLIC OHDCommonLib)
+target_link_libraries(OHDTelemetryLib PUBLIC COHDMods)
 
 # include mavlink (header-only)
 add_library(mavlink INTERFACE)
