@@ -1,5 +1,6 @@
 #include "WalksnailBridge.h"
 #include <iostream>
+#include <chrono>
 
 void WalksnailBridge::setup_bridge()
 {
@@ -25,5 +26,6 @@ void WalksnailBridge::reading_loop()
     while (!m_stop_requested)
     {
         std::cout << "READING LOOP TICK" << std::endl;
+        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 }
