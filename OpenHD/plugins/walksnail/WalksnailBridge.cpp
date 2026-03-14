@@ -11,6 +11,7 @@ void WalksnailBridge::setup_bridge()
     if (!m_walksnail_serial->open())
     {
         std::cout << "Failed to open Walksnail serial" << std::endl;
+        return;
     }
 
     m_stop_requested = false;
