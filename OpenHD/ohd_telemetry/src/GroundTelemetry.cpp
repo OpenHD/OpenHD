@@ -382,6 +382,10 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
 }
 
 void GroundTelemetry::setup_uart() {
+  // Setup walksnail bridge
+  m_walksnail_bridge = std::make_unique<WalksnailBridge>();
+  m_walksnail_bridge->setup_bridge();
+
   assert(m_gnd_settings);
   using namespace openhd::telemetry;
   const auto uart_linux_fd = serial_openhd_param_to_linux_fd(

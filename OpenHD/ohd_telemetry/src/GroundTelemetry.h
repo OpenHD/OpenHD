@@ -42,6 +42,8 @@
 #include "rc/RcJoystickSender.h"
 #endif
 
+#include "plugins/walksnail/WalksnailBridge.h"
+
 /**
  * OpenHD Ground telemetry. Assumes a air instance running on the air pi.
  */
@@ -121,6 +123,8 @@ class GroundTelemetry : public MavlinkSystem {
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
   std::unique_ptr<RcJoystickSender> m_rc_joystick_sender = nullptr;
 #endif
+
+  std::unique_ptr<WalksnailBridge> m_walksnail_bridge = nullptr;
 };
 
 #endif  // OPENHD_TELEMETRY_GROUNDTELEMETRY_H
