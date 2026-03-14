@@ -5,8 +5,8 @@
 void WalksnailBridge::setup_bridge()
 {
     m_walksnail_serial = std::make_unique<Serial>(
-        WALKSNAIL_DEFAULT_UART,
-        WALKSNAIL_DEFAULT_BAUDRATE
+        "/tmp/ttyV0",
+        115200
     );
     if (!m_walksnail_serial->open())
     {
