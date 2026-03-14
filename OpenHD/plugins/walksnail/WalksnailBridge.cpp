@@ -1,10 +1,12 @@
 #include "WalksnailBridge.h"
 #include <iostream>
 
-
 void WalksnailBridge::setup_bridge()
 {
-    m_walksnail_serial = std::make_unique<Serial>();
+    m_walksnail_serial = std::make_unique<Serial>(
+        WALKSNAIL_DEFAULT_UART,
+        WALKSNAIL_DEFAULT_BAUDRATE
+    );
     if (!m_walksnail_serial->open())
     {
         std::cout << "Failed to open Walksnail serial" << std::endl;
