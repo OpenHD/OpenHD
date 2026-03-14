@@ -8,6 +8,6 @@ add_subdirectory(walksnail)
 
 add_library(OHDPlugins::OHDPlugins ALIAS OHDPlugins)
 
-target_include_directories(COHDMods PUBLIC
+target_include_directories(OHDPlugins PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/..
 )
