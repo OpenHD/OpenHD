@@ -8,7 +8,7 @@ add_library(OHDPlugins INTERFACE)
 
 add_subdirectory(walksnail)
 
-target_include_directories(OHDPlugins PUBLIC
+target_include_directories(OHDPlugins INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/..
 )
 
