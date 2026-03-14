@@ -3,7 +3,7 @@
 #include <thread>
 #include <mutex>
 
-#define WALKSNAIL_DEFAULT_UART      '/tmp/ttyV0'
+#define WALKSNAIL_DEFAULT_UART      "/tmp/ttyV0"
 #define WALKSNAIL_DEFAULT_BAUDRATE  115200
 
 class WalksnailBridge
