@@ -8,7 +8,7 @@
 #define WALKSNAIL_DEFAULT_UART      "/tmp/ttyV0"
 #define WALKSNAIL_DEFAULT_BAUDRATE  115200
 
-class WalksnailBridge
+class WalksnailGround
 {
 public:
     void setup_bridge(uint8_t src_sys_id, uint8_t target_sys_id);

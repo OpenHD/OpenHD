@@ -1,9 +1,9 @@
-#include "WalksnailBridge.h"
+#include "WalksnailGround.h"
 #include "WalksnailUtils.h"
 #include <iostream>
 #include <chrono>
 
-void WalksnailBridge::setup_bridge(uint8_t src_sys_id, uint8_t target_sys_id)
+void WalksnailGround::setup_bridge(uint8_t src_sys_id, uint8_t target_sys_id)
 {
     m_src_sys_id = src_sys_id;
     m_target_sys_id = target_sys_id;
@@ -21,12 +21,12 @@ void WalksnailBridge::setup_bridge(uint8_t src_sys_id, uint8_t target_sys_id)
     m_stop_requested = false;
     std::lock_guard<std::mutex> lock(m_receive_thread_mutex);
     m_receive_thread = std::make_unique<std::thread>(
-        &WalksnailBridge::reading_loop,
+        &WalksnailGround::reading_loop,
         this
     );
 }
 
-void WalksnailBridge::reading_loop()
+void WalksnailGround::reading_loop()
 {
     while (!m_stop_requested)
     {
@@ -47,14 +47,14 @@ void WalksnailBridge::reading_loop()
     }
 }
 
-void WalksnailBridge::stop_bridge()
+void WalksnailGround::stop_bridge()
 {
     m_stop_requested = true;
     if (m_receive_thread->joinable())
         m_receive_thread->join();
 }
 
-void WalksnailBridge::registerCallback(MAV_MSG_CALLBACK callback) {
+void WalksnailGround::registerCallback(MAV_MSG_CALLBACK callback) {
     std::lock_guard<std::mutex> lock(m_callback_mutex);
     m_callback = std::move(callback);
 }

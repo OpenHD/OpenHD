@@ -454,11 +454,11 @@ void GroundTelemetry::disable_joystick() {
 
 void GroundTelemetry::setup_walksnail_bridge()
 {
-  m_walksnail_bridge = std::make_unique<WalksnailBridge>();
-  m_walksnail_bridge->registerCallback(
+  m_walksnail_ground = std::make_unique<WalksnailGround>();
+  m_walksnail_ground->registerCallback(
     [this](std::vector<MavlinkMessage> messages) {
       on_messages_ground_station_clients(messages);
     }
   );
-  m_walksnail_bridge->setup_bridge(_sys_id, OHD_SYS_ID_FC);
+  m_walksnail_ground->setup_bridge(_sys_id, OHD_SYS_ID_FC);
 }
