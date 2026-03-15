@@ -5,7 +5,7 @@
 
 static constexpr uint16_t WALKSNAIL_PAYLOAD_TYPE = 0x5A00;
 
-static std::vector<MavlinkMessage> pack_uart_data_to_mavlink(
+static std::vector<MavlinkMessage> pack_walksnail_data_to_mavlink(
     const uint8_t* data,
     size_t length,
     uint8_t src_sys_id,

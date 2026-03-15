@@ -36,7 +36,7 @@ void WalksnailBridge::reading_loop()
             std::lock_guard<std::mutex> lock(m_callback_mutex);
             if (!m_callback) return;
 
-            auto messages = pack_uart_data_to_mavlink(
+            auto messages = pack_walksnail_data_to_mavlink(
                 buf, static_cast<size_t>(n),
                 m_src_sys_id,
                 m_target_sys_id
