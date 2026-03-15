@@ -76,6 +76,7 @@ GroundTelemetry::GroundTelemetry() : MavlinkSystem(OHD_SYS_ID_GROUND) {
   m_generic_mavlink_param_provider->add_params(get_all_settings());
   m_components.push_back(m_generic_mavlink_param_provider);
   setup_uart();
+  setup_walksnail_bridge();
   openhd::ExternalDeviceManager::instance().register_listener(
       [this](openhd::ExternalDevice external_device, bool connected) {
         if (!external_device.discovered_by_mavlink_tcp_server) {
@@ -380,10 +381,6 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
 }
 
 void GroundTelemetry::setup_uart() {
-  // Setup walksnail bridge
-  m_walksnail_bridge = std::make_unique<WalksnailBridge>();
-  m_walksnail_bridge->setup_bridge();
-
   assert(m_gnd_settings);
   using namespace openhd::telemetry;
   const auto uart_linux_fd = serial_openhd_param_to_linux_fd(
@@ -454,3 +451,9 @@ void GroundTelemetry::disable_joystick() {
   m_console->debug("Disable joy end");
 }
 #endif
+
+void GroundTelemetry::setup_walksnail_bridge()
+{
+  m_walksnail_bridge = std::make_unique<WalksnailBridge>();
+  m_walksnail_bridge->setup_bridge();
+}
