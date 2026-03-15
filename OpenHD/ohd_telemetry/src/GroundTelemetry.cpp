@@ -462,9 +462,9 @@ void GroundTelemetry::setup_walksnail_bridge()
       // Print message data
       std::cout << messages[0].m.msgid << std::endl;
 
-      if (msg.m.msgid == MAVLINK_MSG_ID_TUNNEL) {
+      if (messages[0].m.msgid == MAVLINK_MSG_ID_TUNNEL) {
         mavlink_tunnel_t tunnel;
-        mavlink_msg_tunnel_decode(&msg.m, &tunnel);
+        mavlink_msg_tunnel_decode(&messages[0].m, &tunnel);
 
         // as hex
         m_console->debug("tunnel hex [{} bytes]: {:02x}",
