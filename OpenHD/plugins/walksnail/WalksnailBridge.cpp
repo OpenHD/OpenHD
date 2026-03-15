@@ -32,3 +32,10 @@ void WalksnailBridge::reading_loop()
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 }
+
+void WalksnailBridge::stop_bridge()
+{
+    m_stop_requested = true;
+    if (m_receive_thread.joinable())
+        m_receive_thread.join();
+}

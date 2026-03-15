@@ -11,6 +11,7 @@ class WalksnailBridge
 {
 public:
     void setup_bridge();
+    void stop_bridge();
 private:
     void reading_loop();
 
