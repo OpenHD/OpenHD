@@ -278,23 +278,28 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
 // was already started) This properly handles all the cases, e.g cleaning up an
 // existing uart connection if set.
 void AirTelemetry::setup_uart() {
-  assert(m_air_settings);
-  using namespace openhd::telemetry;
-  const auto uart_linux_fd = serial_openhd_param_to_linux_fd(
-      m_air_settings->get_settings().fc_uart_connection_type);
-  if (uart_linux_fd.has_value()) {
-    SerialEndpoint::HWOptions options{};
-    options.linux_filename = uart_linux_fd.value();
-    options.baud_rate = m_air_settings->get_settings().fc_uart_baudrate;
-    options.flow_control = m_air_settings->get_settings().fc_uart_flow_control;
-    options.enable_reading = true;
-    m_fc_serial->configure(options, "fc_ser",
-                           [this](std::vector<MavlinkMessage> messages) {
-                             this->on_messages_fc(messages);
-                           });
-  } else {
-    m_fc_serial->disable();
-  }
+  // assert(m_air_settings);
+  // using namespace openhd::telemetry;
+  // const auto uart_linux_fd = serial_openhd_param_to_linux_fd(
+  //     m_air_settings->get_settings().fc_uart_connection_type);
+  // if (uart_linux_fd.has_value()) {
+  //   SerialEndpoint::HWOptions options{};
+  //   options.linux_filename = uart_linux_fd.value();
+  //   options.baud_rate = m_air_settings->get_settings().fc_uart_baudrate;
+  //   options.flow_control = m_air_settings->get_settings().fc_uart_flow_control;
+  //   options.enable_reading = true;
+  //   m_fc_serial->configure(options, "fc_ser",
+  //                          [this](std::vector<MavlinkMessage> messages) {
+  //                            this->on_messages_fc(messages);
+  //                          });
+  // } else {
+  //   m_fc_serial->disable();
+  // }
+
+  // TEMP: Disable the FC serial port, which frees it up for data
+  // transfer to Walksnail. May be replaced by Walksnail serial port
+  // in the future
+  m_fc_serial->disable();
 }
 
 void AirTelemetry::set_link_handle(std::shared_ptr<OHDLink> link) {
