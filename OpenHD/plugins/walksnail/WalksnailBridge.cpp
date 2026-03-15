@@ -44,9 +44,6 @@ void WalksnailBridge::reading_loop()
     
             m_callback(messages);
         }
-
-        
-        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 }
 
