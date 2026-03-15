@@ -466,14 +466,8 @@ void GroundTelemetry::setup_walksnail_bridge()
         mavlink_tunnel_t tunnel;
         mavlink_msg_tunnel_decode(&messages[0].m, &tunnel);
 
-        // as hex
-        m_console->debug("tunnel hex [{} bytes]: {:02x}",
-            tunnel.payload_length,
-            fmt::join(tunnel.payload, tunnel.payload + tunnel.payload_length, " "));
-
-        // as string (if payload is text)
         std::string str(reinterpret_cast<const char*>(tunnel.payload), tunnel.payload_length);
-        m_console->debug("tunnel str: {}", str);
+        std::cout << "tunnel: " << str << std::endl;
       }
     }
   );
