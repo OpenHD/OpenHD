@@ -458,17 +458,6 @@ void GroundTelemetry::setup_walksnail_bridge()
   m_walksnail_bridge->registerCallback(
     [this](std::vector<MavlinkMessage> messages) {
       on_messages_ground_station_clients(messages);
-
-      // Print message data
-      std::cout << messages[0].m.msgid << std::endl;
-
-      if (messages[0].m.msgid == MAVLINK_MSG_ID_TUNNEL) {
-        mavlink_tunnel_t tunnel;
-        mavlink_msg_tunnel_decode(&messages[0].m, &tunnel);
-
-        std::string str(reinterpret_cast<const char*>(tunnel.payload), tunnel.payload_length);
-        std::cout << "tunnel: " << str << std::endl;
-      }
     }
   );
   m_walksnail_bridge->setup_bridge(_sys_id, OHD_SYS_ID_FC);
