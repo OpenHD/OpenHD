@@ -31,8 +31,6 @@
 #include "openhd_util.h"
 #include "openhd_util_time.h"
 
-#include "mods/serial/serial.h"
-
 GroundTelemetry::GroundTelemetry() : MavlinkSystem(OHD_SYS_ID_GROUND) {
   m_console = openhd::log::create_or_get("ground_tele");
   assert(m_console);
@@ -78,6 +76,7 @@ GroundTelemetry::GroundTelemetry() : MavlinkSystem(OHD_SYS_ID_GROUND) {
   m_generic_mavlink_param_provider->add_params(get_all_settings());
   m_components.push_back(m_generic_mavlink_param_provider);
   setup_uart();
+  setup_walksnail_bridge();
   openhd::ExternalDeviceManager::instance().register_listener(
       [this](openhd::ExternalDevice external_device, bool connected) {
         if (!external_device.discovered_by_mavlink_tcp_server) {
@@ -452,3 +451,9 @@ void GroundTelemetry::disable_joystick() {
   m_console->debug("Disable joy end");
 }
 #endif
+
+void GroundTelemetry::setup_walksnail_bridge()
+{
+  m_walksnail_bridge = std::make_unique<WalksnailBridge>();
+  m_walksnail_bridge->setup_bridge();
+}

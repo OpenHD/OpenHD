@@ -25,7 +25,7 @@ add_subdirectory(ohd_common EXCLUDE_FROM_ALL)
 add_subdirectory(ohd_interface EXCLUDE_FROM_ALL)
 add_subdirectory(ohd_telemetry EXCLUDE_FROM_ALL)
 add_subdirectory(ohd_video EXCLUDE_FROM_ALL)
-add_subdirectory(mods)
+add_subdirectory(plugins)
 
 # Suppress specific warnings
 add_compile_options(-Wno-address-of-packed-member -Wno-cast-align)
@@ -42,7 +42,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_
 endif()
 
 # Link the libraries
-target_link_libraries(openhd PRIVATE OHDInterfaceLib OHDVideoLib OHDTelemetryLib OHDCommonLib COHDMods)
+target_link_libraries(openhd PRIVATE OHDInterfaceLib OHDVideoLib OHDTelemetryLib OHDCommonLib OHDPlugins)
 
 # Check if libatomic is needed and available
 include(CheckLibraryExists)
