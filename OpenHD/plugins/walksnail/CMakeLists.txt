@@ -7,6 +7,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_library(OHDPluginWalksnail STATIC
     WalksnailGround.h
     WalksnailGround.cpp
+    WalksnailAir.h
+    WalksnailAir.cpp
     WalksnailUtils.h
     serial/serial.h
     serial/serial.cpp

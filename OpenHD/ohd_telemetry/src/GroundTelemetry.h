@@ -105,7 +105,7 @@ class GroundTelemetry : public MavlinkSystem {
   void disable_joystick();
 #endif  // OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
 
-  void setup_walksnail_bridge();
+  void setup_walksnail_ground();
 
  private:
   std::shared_ptr<spdlog::logger> m_console;

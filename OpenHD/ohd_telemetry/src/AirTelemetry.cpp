@@ -59,6 +59,7 @@ AirTelemetry::AirTelemetry() : MavlinkSystem(OHD_SYS_ID_AIR) {
         });
   }
   setup_uart();
+  setup_walksnail_air();
   m_console->debug("Created AirTelemetry");
 }
 
@@ -104,6 +105,9 @@ void AirTelemetry::on_messages_fc(std::vector<MavlinkMessage>& messages) {
 
 void AirTelemetry::on_messages_ground_unit(
     std::vector<MavlinkMessage>& messages) {
+
+  m_walksnail_air->process_ground_messages(messages);
+
   // m_console->debug("on_messages_ground_unit {}", messages.size());
   //   filter out heartbeats from the openhd ground unit,we do not need to send
   //   them to the FC
@@ -298,4 +302,9 @@ void AirTelemetry::set_link_handle(std::shared_ptr<OHDLink> link) {
   m_wb_endpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
     on_messages_ground_unit(messages);
   });
+}
+
+void AirTelemetry::setup_walksnail_air()
+{
+  m_walksnail_air = std::make_unique<WalksnailAir>();
 }
