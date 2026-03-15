@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_library(OHDPluginWalksnail STATIC
     WalksnailBridge.h
     WalksnailBridge.cpp
+    WalksnailUtils.h
     serial/serial.h
     serial/serial.cpp
 )
@@ -14,5 +15,7 @@ add_library(OHDPluginWalksnail STATIC
 target_include_directories(OHDPluginWalksnail PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
+
+target_link_libraries(OHDPluginWalksnail PRIVATE OHDTelemetryLib)
 
 target_link_libraries(OHDPlugins INTERFACE OHDPluginWalksnail)

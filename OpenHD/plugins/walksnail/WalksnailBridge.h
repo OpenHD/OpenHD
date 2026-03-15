@@ -1,4 +1,5 @@
 #include "serial/serial.h"
+#include "mav_include.h"
 #include <memory>
 #include <thread>
 #include <mutex>
@@ -12,6 +13,8 @@ class WalksnailBridge
 public:
     void setup_bridge();
     void stop_bridge();
+
+    void registerCallback(MAV_MSG_CALLBACK callback);
 private:
     void reading_loop();
 
@@ -19,4 +22,7 @@ private:
     std::mutex m_receive_thread_mutex;
     std::unique_ptr<std::thread> m_receive_thread = nullptr;
     std::atomic<bool> m_stop_requested = false;
+
+    MAV_MSG_CALLBACK m_callback = nullptr;
+    std::mutex m_callback_mutex;
 };
