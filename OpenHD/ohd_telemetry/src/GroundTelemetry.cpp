@@ -76,7 +76,7 @@ GroundTelemetry::GroundTelemetry() : MavlinkSystem(OHD_SYS_ID_GROUND) {
   m_generic_mavlink_param_provider->add_params(get_all_settings());
   m_components.push_back(m_generic_mavlink_param_provider);
   setup_uart();
-  setup_walksnail_bridge();
+  setup_walksnail_ground();
   openhd::ExternalDeviceManager::instance().register_listener(
       [this](openhd::ExternalDevice external_device, bool connected) {
         if (!external_device.discovered_by_mavlink_tcp_server) {
@@ -452,7 +452,7 @@ void GroundTelemetry::disable_joystick() {
 }
 #endif
 
-void GroundTelemetry::setup_walksnail_bridge()
+void GroundTelemetry::setup_walksnail_ground()
 {
   m_walksnail_ground = std::make_unique<WalksnailGround>();
   m_walksnail_ground->registerCallback(
