@@ -592,18 +592,7 @@ void OHDInterface::generate_keys_from_pw_if_exists_and_delete() {
 
   const auto password_path = std::string(getConfigBasePath()) + "password.txt";
   if (OHDFilesystemUtil::exists(password_path)) {
-    console->warn(
-        "password.txt based key generation is no longer supported. "
-        "Please place a shared keypair at {}",
-        openhd::SECURITY_KEYPAIR_FILENAME);
-  }
-
-  if (!OHDFilesystemUtil::exists(openhd::SECURITY_KEYPAIR_FILENAME)) {
-    console->warn(
-        "No keypair file found at {}. "
-        "Wifibroadcast authentication will not work until a shared keypair "
-        "is installed on both air and ground units.",
-        openhd::SECURITY_KEYPAIR_FILENAME);
+    console->debug("password.txt ignored (bind phrase is not supported).");
   }
 }
 

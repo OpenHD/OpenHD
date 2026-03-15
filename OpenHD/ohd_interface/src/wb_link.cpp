@@ -264,10 +264,8 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
                        openhd::SECURITY_KEYPAIR_FILENAME);
     } else {
       txrx_options.secure_keypair = std::nullopt;
-      m_console->warn(
-          "Failed to read keypair file {}. "
-          "Wifibroadcast authentication will not work until a valid shared "
-          "keypair is installed on both air and ground units.",
+      m_console->debug(
+          "Failed to read keypair file {}, continuing without a fixed keypair.",
           openhd::SECURITY_KEYPAIR_FILENAME);
     }
   } else {
@@ -283,10 +281,8 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
       }
     }
     if (!loaded_from_crypto) {
-      m_console->warn(
-          "No keypair file at {}. "
-          "Wifibroadcast authentication will not work until a shared keypair "
-          "is installed on both air and ground units.",
+      m_console->debug(
+          "No keypair file at {}, continuing without a fixed keypair.",
           openhd::SECURITY_KEYPAIR_FILENAME);
     }
   }

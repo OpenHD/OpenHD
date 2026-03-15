@@ -212,6 +212,11 @@ std::optional<WiFiCard> DWifiCards::fill_linux_wifi_card_identifiers(
 std::vector<WiFiCard> DWifiCards::discover_connected_wifi_cards() {
   openhd::log::get_default()->trace("WiFi::discover_connected_wifi_cards");
   std::vector<WiFiCard> wifi_cards{};
+  const auto config = openhd::load_config();
+  if (config.WIFI_MONITOR_CARD_EMULATE) {
+    write_wificards_manifest(wifi_cards);
+    return wifi_cards;
+  }
 
   auto sysutil_cards_opt = openhd::request_sysutil_wifi_cards();
   if (!sysutil_cards_opt.has_value()) {

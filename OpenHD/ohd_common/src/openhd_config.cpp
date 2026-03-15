@@ -60,8 +60,10 @@ static openhd::Config load_or_default() {
   openhd::Config ret{};
   const auto sysutil_settings = openhd::request_sysutil_settings();
   if (!sysutil_settings.has_value()) {
-    std::cerr << "WARN: sysutils settings unavailable, using defaults"
-              << std::endl;
+    if (!g_wifi_monitor_emulate_override.value_or(false)) {
+      std::cerr << "WARN: sysutils settings unavailable, using defaults"
+                << std::endl;
+    }
     return ret;
   }
 
@@ -106,6 +108,10 @@ openhd::Config openhd::load_config() {
 void openhd::set_wifi_monitor_card_emulate_override(
     std::optional<bool> value) {
   g_wifi_monitor_emulate_override = value;
+}
+
+bool openhd::is_wifi_monitor_card_emulate_override_enabled() {
+  return g_wifi_monitor_emulate_override.value_or(false);
 }
 
 void openhd::debug_config(const openhd::Config& config) {

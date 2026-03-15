@@ -26,6 +26,7 @@
 #include <sstream>
 
 #include "include_json.hpp"
+#include "openhd_config.h"
 #include "openhd_settings_directories.h"
 #include "openhd_sock.h"
 #include "openhd_spdlog.h"
@@ -67,6 +68,9 @@ void write_cached_platform_type(int platform_type) {
 }
 
 int request_platform_from_sysutils() {
+  if (openhd::is_wifi_monitor_card_emulate_override_enabled()) {
+    return X_PLATFORM_TYPE_UNKNOWN;
+  }
   auto cached = read_cached_platform_type();
   if (cached.has_value()) {
     return cached.value();

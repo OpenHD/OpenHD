@@ -72,6 +72,7 @@ struct Config {
 
 Config load_config();
 void set_wifi_monitor_card_emulate_override(std::optional<bool> value);
+bool is_wifi_monitor_card_emulate_override_enabled();
 
 void debug_config(const Config& config);
 void debug_config();

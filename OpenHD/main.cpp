@@ -96,6 +96,18 @@ namespace {
 constexpr std::string_view kControlSocketDir = "/run/openhd";
 constexpr std::string_view kControlSocketPath = "/run/openhd/openhd_ctrl.sock";
 constexpr std::size_t kControlMaxLineLength = 4096;
+constexpr const char* kEmulateMonitorLong = "--emulate-monitor-card";
+constexpr const char* kEmulateMonitorShort = "-e";
+
+bool argv_has_emulate_monitor_card(int argc, char* argv[]) {
+  for (int i = 1; i < argc; ++i) {
+    if (std::strcmp(argv[i], kEmulateMonitorLong) == 0 ||
+        std::strcmp(argv[i], kEmulateMonitorShort) == 0) {
+      return true;
+    }
+  }
+  return false;
+}
 
 std::string trim_copy(std::string value) {
   auto not_space = [](unsigned char ch) { return !std::isspace(ch); };
@@ -463,8 +475,13 @@ int main(int argc, char *argv[]) {
   }
   auto& reporter = openhd::Reporter::instance();
   reporter.report(openhd::State::Booting);
-  if (!openhd::wait_for_sysutils()) {
-    std::cerr << "WARN: sysutils socket not ready after 30s, continuing.\n";
+  const bool emulate_monitor_card = argv_has_emulate_monitor_card(argc, argv);
+  if (emulate_monitor_card) {
+    openhd::set_wifi_monitor_card_emulate_override(true);
+  } else {
+    if (!openhd::wait_for_sysutils()) {
+      std::cerr << "WARN: sysutils socket not ready after 30s, continuing.\n";
+    }
   }
   const OHDRunOptions options = parse_run_parameters(argc, argv);
   // Create the folder structure

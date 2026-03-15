@@ -56,6 +56,14 @@ jobs:
         run: |
           cd OpenHD/ohd_interface/video_crypto_private/client
           g++ -std=c++17 client.cpp -lsodium -o ohd_video_crypto_client
+      - name: Build wifibroadcast dummy encryption test
+        run: |
+          cd OpenHD/ohd_interface/lib/wifibroadcast
+          cmake -S . -B build
+          cmake --build build --target test_dummy_link
+      - name: Run wifibroadcast dummy encryption test
+        run: |
+          ./OpenHD/ohd_interface/lib/wifibroadcast/build/test_dummy_link
       - name: Build
         run: |
           cd OpenHD
