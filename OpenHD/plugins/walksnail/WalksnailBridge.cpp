@@ -36,6 +36,6 @@ void WalksnailBridge::reading_loop()
 void WalksnailBridge::stop_bridge()
 {
     m_stop_requested = true;
-    if (m_receive_thread.joinable())
-        m_receive_thread.join();
+    if (m_receive_thread->joinable())
+        m_receive_thread->join();
 }
