@@ -3,8 +3,11 @@
 #include <iostream>
 #include <chrono>
 
-void WalksnailBridge::setup_bridge()
+void WalksnailBridge::setup_bridge(uint8_t src_sys_id, uint8_t target_sys_id)
 {
+    m_src_sys_id = src_sys_id;
+    m_target_sys_id = target_sys_id;
+
     m_walksnail_serial = std::make_unique<Serial>(
         WALKSNAIL_DEFAULT_UART,
         WALKSNAIL_DEFAULT_BAUDRATE
@@ -27,20 +30,21 @@ void WalksnailBridge::reading_loop()
 {
     while (!m_stop_requested)
     {
-        std::lock_guard<std::mutex> lock(m_callback_mutex);
-        if (!m_callback) return;
+        uint8_t buf[64];
+        const auto n = m_walksnail_serial->read(buf, sizeof(buf));
+        if (n > 0) {
+            std::lock_guard<std::mutex> lock(m_callback_mutex);
+            if (!m_callback) return;
 
-        const uint8_t test_data[] = {
-            0x01, 0x02, 0x03, 0x04, 0x05,
-            'H', 'E', 'L', 'L', 'O'
-        };
-        auto messages = pack_uart_data_to_mavlink(
-            test_data, sizeof(test_data),
-            OHD_SYS_ID_GROUND,
-            OHD_SYS_ID_FC
-        );
+            auto messages = pack_uart_data_to_mavlink(
+                buf, static_cast<size_t>(n),
+                m_src_sys_id,
+                m_target_sys_id
+            );
+    
+            m_callback(messages);
+        }
 
-        m_callback(messages);
         
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }

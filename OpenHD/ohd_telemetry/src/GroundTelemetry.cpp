@@ -461,5 +461,5 @@ void GroundTelemetry::setup_walksnail_bridge()
       std::cout << messages[0].m.msgid << std::endl;
     }
   );
-  m_walksnail_bridge->setup_bridge();
+  m_walksnail_bridge->setup_bridge(_sys_id, OHD_SYS_ID_FC);
 }

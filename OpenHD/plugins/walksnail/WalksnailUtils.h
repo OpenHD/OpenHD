@@ -3,7 +3,7 @@
 #include <vector>
 
 
-static constexpr uint16_t WALKSNAIL_PAYLOAD_TYPE = 0x5A00; // pick a custom ID
+static constexpr uint16_t WALKSNAIL_PAYLOAD_TYPE = 0x5A00;
 
 static std::vector<MavlinkMessage> pack_uart_data_to_mavlink(
     const uint8_t* data,
