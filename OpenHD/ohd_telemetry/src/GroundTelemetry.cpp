@@ -457,7 +457,7 @@ void GroundTelemetry::setup_walksnail_bridge()
   m_walksnail_bridge = std::make_unique<WalksnailBridge>();
   m_walksnail_bridge->registerCallback(
     [this](std::vector<MavlinkMessage> messages) {
-      // on_messages_ground_station_clients(messages);
+      on_messages_ground_station_clients(messages);
       std::cout << messages[0].m.msgid << std::endl;
     }
   );
