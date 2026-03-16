@@ -39,6 +39,8 @@ void WalksnailGround::reading_loop()
         const auto n = m_walksnail_serial->read(buf, sizeof(buf));
         if (n > 0) {
             // TEST: print data BEGIN
+            std::cout << "Bytes received: " << n << std::endl;
+
             std::cout << "UART RX (" << n << " bytes): ";
             for (int i = 0; i < n; i++) {
                 std::cout << std::hex << std::setw(2) << std::setfill('0')
