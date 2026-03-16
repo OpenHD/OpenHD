@@ -39,6 +39,10 @@ void WalksnailGround::reading_loop()
         if (packet.empty())
             continue;
 
+        // Restore delimiter removed by readline
+        line.push_back('\r');
+        line.push_back('\n');
+
         std::cout << "Received packet (str):" << packet << std::endl;
         std::cout << "Packet (" << packet.size() << " bytes): ";
         for (unsigned char c : packet)
