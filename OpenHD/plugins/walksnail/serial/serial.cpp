@@ -32,7 +32,7 @@ bool Serial::open()
     tty.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
     tty.c_iflag &= ~(IXON | IXOFF | IXANY | ICRNL);
     tty.c_oflag &= ~OPOST;
-    tty.c_cc[VMIN]  = 1;
+    tty.c_cc[VMIN]  = 0;
     tty.c_cc[VTIME] = 10;
 
     if (tcsetattr(m_fd, TCSANOW, &tty) != 0) {
