@@ -1,6 +1,7 @@
 #include "WalksnailGround.h"
 #include "WalksnailUtils.h"
 #include <iostream>
+#include <iomanip>
 #include <chrono>
 
 void WalksnailGround::setup_bridge(uint8_t src_sys_id, uint8_t target_sys_id)
@@ -16,6 +17,10 @@ void WalksnailGround::setup_bridge(uint8_t src_sys_id, uint8_t target_sys_id)
     {
         std::cout << "Failed to open Walksnail serial" << std::endl;
         return;
+    }
+    else
+    {
+        std::cout << "Walksnail serial opened successfully!" << std::endl;
     }
 
     m_stop_requested = false;
@@ -33,6 +38,15 @@ void WalksnailGround::reading_loop()
         uint8_t buf[64];
         const auto n = m_walksnail_serial->read(buf, sizeof(buf));
         if (n > 0) {
+            // TEST: print data BEGIN
+            std::cout << "UART RX (" << n << " bytes): ";
+            for (int i = 0; i < n; i++) {
+                std::cout << std::hex << std::setw(2) << std::setfill('0')
+                          << static_cast<int>(buf[i]) << " ";
+            }
+            std::cout << std::dec << std::endl;
+            // TEST: print data END
+
             std::lock_guard<std::mutex> lock(m_callback_mutex);
             if (!m_callback) return;
 

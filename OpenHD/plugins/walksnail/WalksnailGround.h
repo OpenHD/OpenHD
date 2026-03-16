@@ -5,7 +5,7 @@
 #include <mutex>
 #include <atomic>
 
-#define WALKSNAIL_DEFAULT_UART      "/tmp/ttyV0"
+#define WALKSNAIL_DEFAULT_UART      "/dev/serial0"
 #define WALKSNAIL_DEFAULT_BAUDRATE  115200
 
 class WalksnailGround
