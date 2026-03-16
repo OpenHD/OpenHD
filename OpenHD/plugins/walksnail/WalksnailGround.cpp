@@ -43,7 +43,6 @@ void WalksnailGround::reading_loop()
         packet.push_back('\r');
         packet.push_back('\n');
 
-        std::cout << "Received packet (str):" << packet << std::endl;
         std::cout << "Packet (" << packet.size() << " bytes): ";
         for (unsigned char c : packet)
             std::cout << std::hex << std::setw(2) << std::setfill('0')
