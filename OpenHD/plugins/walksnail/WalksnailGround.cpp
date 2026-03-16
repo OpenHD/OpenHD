@@ -35,42 +35,27 @@ void WalksnailGround::reading_loop()
 {
     while (!m_stop_requested)
     {
-        std::string line = m_walksnail_serial->readline();
-        if (line.empty())
+        std::string packet = m_walksnail_serial->readline();
+        if (packet.empty())
             continue;
 
-        std::cout << "Received line (str):" << line << std::endl;
-        std::cout << "Packet (" << line.size() << " bytes): ";
-        for (unsigned char c : line)
+        std::cout << "Received packet (str):" << packet << std::endl;
+        std::cout << "Packet (" << packet.size() << " bytes): ";
+        for (unsigned char c : packet)
             std::cout << std::hex << std::setw(2) << std::setfill('0')
                     << static_cast<int>(c) << " ";
         std::cout << std::dec << std::endl;
 
-        // uint8_t buf[64];
-        // const auto n = m_walksnail_serial->read(buf, sizeof(buf));
-        // if (n > 0) {
-        //     // TEST: print data BEGIN
-        //     std::cout << "Bytes received: " << n << std::endl;
+        std::lock_guard<std::mutex> lock(m_callback_mutex);
+        if (!m_callback) return;
 
-        //     std::cout << "UART RX (" << n << " bytes): ";
-        //     for (int i = 0; i < n; i++) {
-        //         std::cout << std::hex << std::setw(2) << std::setfill('0')
-        //                   << static_cast<int>(buf[i]) << " ";
-        //     }
-        //     std::cout << std::dec << std::endl;
-        //     // TEST: print data END
+        auto messages = pack_walksnail_data_to_mavlink(
+            reinterpret_cast<const uint8_t*>(packet.data()), packet.size(),
+            m_src_sys_id,
+            m_target_sys_id
+        );
 
-        //     std::lock_guard<std::mutex> lock(m_callback_mutex);
-        //     if (!m_callback) return;
-
-        //     auto messages = pack_walksnail_data_to_mavlink(
-        //         buf, static_cast<size_t>(n),
-        //         m_src_sys_id,
-        //         m_target_sys_id
-        //     );
-
-        //     m_callback(messages);
-        // }
+        m_callback(messages);
     }
 }
 
