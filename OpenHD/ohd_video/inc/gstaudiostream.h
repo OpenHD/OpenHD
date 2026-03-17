@@ -26,6 +26,9 @@
 
 #include <gst/gst.h>
 
+#include <condition_variable>
+#include <mutex>
+
 #include "openhd_link.hpp"
 
 /**
@@ -50,6 +53,9 @@ class GstAudioStream {
   std::shared_ptr<spdlog::logger> m_console;
   std::atomic_bool m_keep_looping = false;
   std::unique_ptr<std::thread> m_loop_thread = nullptr;
+  std::atomic_bool m_loop_exited = true;
+  std::mutex m_loop_mutex;
+  std::condition_variable m_loop_cv;
   openhd::ON_AUDIO_TX_DATA_PACKET m_cb = nullptr;
 
  private:

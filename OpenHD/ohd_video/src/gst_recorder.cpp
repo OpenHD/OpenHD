@@ -166,7 +166,8 @@ void GstVideoRecorder::enqueue_rtp_fragment(
 }
 
 void GstVideoRecorder::start() {
-  gst_element_set_state(m_gst_pipeline, GST_STATE_PLAYING);
+  openhd::gst_element_set_state_with_timeout(m_gst_pipeline,
+                                             GST_STATE_PLAYING);
   m_console->debug(
       openhd::gst_element_get_current_state_as_string(m_gst_pipeline));
   std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -184,5 +185,5 @@ void GstVideoRecorder::stop_and_cleanup() {
                                                    GST_STATE_NULL);
   m_console->debug(
       openhd::gst_element_get_current_state_as_string(m_gst_pipeline));
-  gst_object_unref(m_gst_pipeline);
+  openhd::gst_object_unref_with_timeout(GST_OBJECT(m_gst_pipeline));
 }

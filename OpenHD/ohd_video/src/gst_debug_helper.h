@@ -27,6 +27,13 @@
 #include <gst/app/gstappsink.h>
 #include <gst/gst.h>
 
+#include <chrono>
+#include <future>
+#include <optional>
+#include <thread>
+#include <type_traits>
+
+#include "openhd_action_handler.h"
 #include "openhd_spdlog.h"
 
 // Code that depends on gstreamer and falls in the "helper for debugging"
@@ -35,6 +42,74 @@ namespace openhd {
 
 // Helpfull links:
 // https://gstreamer.freedesktop.org/documentation/additional/design/states.html?gi-language=c
+
+static constexpr auto GST_CALL_TIMEOUT = std::chrono::seconds(5);
+static constexpr auto GST_TERMINATE_DELAY = std::chrono::milliseconds(100);
+
+template <typename Func>
+static std::optional<std::invoke_result_t<Func>> run_gst_with_timeout_result(
+    const char* tag, std::chrono::milliseconds timeout, Func&& func) {
+  using Ret = std::invoke_result_t<Func>;
+  std::packaged_task<Ret()> task(std::forward<Func>(func));
+  auto fut = task.get_future();
+  std::thread t(std::move(task));
+  if (fut.wait_for(timeout) != std::future_status::ready) {
+    openhd::log::get_default()->error(
+        "{} timed out after {}ms", tag, timeout.count());
+    openhd::TerminateHelper::instance().terminate_after(tag,
+                                                        GST_TERMINATE_DELAY);
+    t.detach();
+    return std::nullopt;
+  }
+  t.join();
+  try {
+    return fut.get();
+  } catch (const std::exception& ex) {
+    openhd::log::get_default()->error("{} threw exception: {}", tag, ex.what());
+    openhd::TerminateHelper::instance().terminate_after(tag,
+                                                        GST_TERMINATE_DELAY);
+    return std::nullopt;
+  } catch (...) {
+    openhd::log::get_default()->error("{} threw unknown exception", tag);
+    openhd::TerminateHelper::instance().terminate_after(tag,
+                                                        GST_TERMINATE_DELAY);
+    return std::nullopt;
+  }
+}
+
+template <typename Func>
+static bool run_gst_with_timeout_void(const char* tag,
+                                      std::chrono::milliseconds timeout,
+                                      Func&& func) {
+  auto res = run_gst_with_timeout_result(
+      tag, timeout, [func = std::forward<Func>(func)]() mutable -> bool {
+        func();
+        return true;
+      });
+  return res.has_value();
+}
+
+static std::optional<GstStateChangeReturn> gst_element_set_state_with_timeout(
+    GstElement* element, GstState state,
+    std::chrono::milliseconds timeout = GST_CALL_TIMEOUT) {
+  if (element == nullptr) {
+    openhd::log::get_default()->error(
+        "gst_element_set_state_with_timeout: null element");
+    return std::nullopt;
+  }
+  return run_gst_with_timeout_result(
+      "gst_element_set_state", timeout,
+      [element, state]() { return gst_element_set_state(element, state); });
+}
+
+static bool gst_object_unref_with_timeout(
+    GstObject* obj, std::chrono::milliseconds timeout = GST_CALL_TIMEOUT) {
+  if (obj == nullptr) {
+    return true;
+  }
+  return run_gst_with_timeout_void("gst_object_unref", timeout,
+                                   [obj]() { gst_object_unref(obj); });
+}
 
 static std::string gst_state_change_return_to_string(
     const GstStateChangeReturn &gst_state_change_return) {
@@ -68,10 +143,15 @@ static std::string gst_element_get_current_state_as_string(
 
 static void gst_element_set_set_state_and_log_result(GstElement *element,
                                                      GstState state) {
-  auto res = gst_element_set_state(element, state);
-  openhd::log::get_default()->debug("State changed to {} result {}",
-                                    gst_element_state_get_name(state),
-                                    gst_state_change_return_to_string(res));
+  auto res = gst_element_set_state_with_timeout(element, state);
+  if (!res.has_value()) {
+    openhd::log::get_default()->error(
+        "State change to {} timed out", gst_element_state_get_name(state));
+    return;
+  }
+  openhd::log::get_default()->debug(
+      "State changed to {} result {}", gst_element_state_get_name(state),
+      gst_state_change_return_to_string(res.value()));
 }
 
 // From

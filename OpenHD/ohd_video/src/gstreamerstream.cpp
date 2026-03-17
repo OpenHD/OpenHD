@@ -85,15 +85,37 @@ GStreamerStream::GStreamerStream(std::shared_ptr<CameraHolder> camera_holder,
 GStreamerStream::~GStreamerStream() { GStreamerStream::terminate_looping(); }
 
 void GStreamerStream::start_looping() {
+  {
+    std::lock_guard<std::mutex> lock(m_loop_mutex);
+    m_loop_exited = false;
+  }
   m_keep_looping = true;
   m_loop_thread =
       std::make_unique<std::thread>(&GStreamerStream::loop_infinite, this);
 }
 
 void GStreamerStream::terminate_looping() {
+  static constexpr auto kJoinTimeout = std::chrono::seconds(5);
   m_keep_looping = false;
   if (m_loop_thread) {
     m_console->debug("Wating for loop thread to terminate");
+    bool exited = false;
+    {
+      std::unique_lock<std::mutex> lock(m_loop_mutex);
+      exited = m_loop_cv.wait_for(lock, kJoinTimeout,
+                                  [this]() { return m_loop_exited.load(); });
+    }
+    if (!exited) {
+      m_console->error(
+          "Loop thread did not exit within {}ms, requesting terminate",
+          std::chrono::duration_cast<std::chrono::milliseconds>(kJoinTimeout)
+              .count());
+      openhd::TerminateHelper::instance().terminate_after(
+          "gst_thread_hang", std::chrono::milliseconds(100));
+      m_loop_thread->detach();
+      m_loop_thread = nullptr;
+      return;
+    }
     m_loop_thread->join();
     m_loop_thread = nullptr;
   }
@@ -337,9 +359,13 @@ void GStreamerStream::start() {
   m_console->debug("GStreamerStream::start()");
   assert(m_gst_pipeline != nullptr);
   openhd::register_message_cb(m_gst_pipeline);
-  const auto ret = gst_element_set_state(m_gst_pipeline, GST_STATE_PLAYING);
-  m_console->debug("State change ret:{}",
-                   openhd::gst_state_change_return_to_string(ret));
+  auto ret =
+      openhd::gst_element_set_state_with_timeout(m_gst_pipeline,
+                                                 GST_STATE_PLAYING);
+  if (ret.has_value()) {
+    m_console->debug("State change ret:{}",
+                     openhd::gst_state_change_return_to_string(ret.value()));
+  }
 }
 
 void GStreamerStream::stop() {
@@ -371,7 +397,7 @@ void GStreamerStream::cleanup_pipe() {
   // TODO do we need to wait until the pipeline is actually in state NULL ?
   openhd::gst_element_set_set_state_and_log_result(m_gst_pipeline,
                                                    GST_STATE_NULL);
-  gst_object_unref(m_gst_pipeline);
+  openhd::gst_object_unref_with_timeout(GST_OBJECT(m_gst_pipeline));
   m_gst_pipeline = nullptr;
   if (m_opt_curr_recording_filename) {
     // make file read / writeable by everybody
@@ -463,6 +489,11 @@ void GStreamerStream::loop_infinite() {
       std::cerr << "GStreamerStream::Unknown exception occurred" << std::endl;
     }
   }
+  {
+    std::lock_guard<std::mutex> lock(m_loop_mutex);
+    m_loop_exited = true;
+  }
+  m_loop_cv.notify_all();
 }
 
 void GStreamerStream::stream_once() {

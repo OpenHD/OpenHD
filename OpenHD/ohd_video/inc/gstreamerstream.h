@@ -27,6 +27,7 @@
 #include <gst/gst.h>
 
 #include <array>
+#include <condition_variable>
 #include <memory>
 #include <mutex>
 #include <thread>
@@ -97,6 +98,9 @@ class GStreamerStream : public CameraStream {
   std::atomic_bool m_request_restart = false;
   std::atomic_bool m_keep_looping = false;
   std::unique_ptr<std::thread> m_loop_thread = nullptr;
+  std::atomic_bool m_loop_exited = true;
+  std::mutex m_loop_mutex;
+  std::condition_variable m_loop_cv;
 
  private:
   // The stuff here is to pull the data out of the gstreamer pipeline, such that

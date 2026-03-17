@@ -46,15 +46,37 @@ void GstAudioStream::set_link_cb(openhd::ON_AUDIO_TX_DATA_PACKET cb) {
 }
 
 void GstAudioStream::start_looping() {
+  {
+    std::lock_guard<std::mutex> lock(m_loop_mutex);
+    m_loop_exited = false;
+  }
   m_keep_looping = true;
   m_loop_thread =
       std::make_unique<std::thread>(&GstAudioStream::loop_infinite, this);
 }
 
 void GstAudioStream::stop_looping() {
+  static constexpr auto kJoinTimeout = std::chrono::seconds(5);
   m_keep_looping = false;
   if (m_loop_thread) {
     m_console->debug("Waiting for loop thread to terminate");
+    bool exited = false;
+    {
+      std::unique_lock<std::mutex> lock(m_loop_mutex);
+      exited = m_loop_cv.wait_for(lock, kJoinTimeout,
+                                  [this]() { return m_loop_exited.load(); });
+    }
+    if (!exited) {
+      m_console->error(
+          "Loop thread did not exit within {}ms, requesting terminate",
+          std::chrono::duration_cast<std::chrono::milliseconds>(kJoinTimeout)
+              .count());
+      openhd::TerminateHelper::instance().terminate_after(
+          "gst_audio_thread_hang", std::chrono::milliseconds(100));
+      m_loop_thread->detach();
+      m_loop_thread = nullptr;
+      return;
+    }
     m_loop_thread->join();
     m_loop_thread = nullptr;
   }
@@ -73,6 +95,11 @@ void GstAudioStream::loop_infinite() {
       std::this_thread::sleep_for(std::chrono::seconds(1));
     }
   }
+  {
+    std::lock_guard<std::mutex> lock(m_loop_mutex);
+    m_loop_exited = true;
+  }
+  m_loop_cv.notify_all();
 }
 
 // Quite dirty, but hey ...
@@ -167,17 +194,20 @@ void GstAudioStream::stream_once() {
       gst_bin_get_by_name(GST_BIN(m_gst_pipeline), "out_appsink");
   if (!m_app_sink_element) {
     m_console->error("Failed to get appsink element");
-    gst_object_unref(m_gst_pipeline);
+    openhd::gst_object_unref_with_timeout(GST_OBJECT(m_gst_pipeline));
     m_gst_pipeline = nullptr;
     return;
   }
 
-  const auto ret = gst_element_set_state(m_gst_pipeline, GST_STATE_PLAYING);
-  m_console->debug("State change ret:{}",
-                   openhd::gst_state_change_return_to_string(ret));
-  if (ret == GST_STATE_CHANGE_FAILURE) {
+  const auto ret = openhd::gst_element_set_state_with_timeout(
+      m_gst_pipeline, GST_STATE_PLAYING);
+  if (ret.has_value()) {
+    m_console->debug("State change ret:{}",
+                     openhd::gst_state_change_return_to_string(ret.value()));
+  }
+  if (!ret.has_value() || ret.value() == GST_STATE_CHANGE_FAILURE) {
     m_console->error("Failed to set pipeline to PLAYING state");
-    gst_object_unref(m_gst_pipeline);
+    openhd::gst_object_unref_with_timeout(GST_OBJECT(m_gst_pipeline));
     m_gst_pipeline = nullptr;
     return;
   }
@@ -210,7 +240,7 @@ void GstAudioStream::stream_once() {
   openhd::unref_appsink_element(m_app_sink_element);
   openhd::gst_element_set_set_state_and_log_result(m_gst_pipeline,
                                                    GST_STATE_NULL);
-  gst_object_unref(m_gst_pipeline);
+  openhd::gst_object_unref_with_timeout(GST_OBJECT(m_gst_pipeline));
   m_gst_pipeline = nullptr;
 }
 

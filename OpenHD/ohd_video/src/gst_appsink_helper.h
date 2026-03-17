@@ -29,6 +29,7 @@
 
 #include <optional>
 
+#include "gst_debug_helper.h"
 #include "openhd_spdlog.h"
 
 namespace openhd {
@@ -119,7 +120,7 @@ static void gst_debug_sample(GstSample* sample) {
 static void unref_appsink_element(GstElement* appsink) {
   if (appsink) {
     openhd::log::get_default()->debug("Unref appsink begin");
-    gst_object_unref(appsink);
+    openhd::gst_object_unref_with_timeout(GST_OBJECT(appsink));
     appsink = nullptr;
     openhd::log::get_default()->debug("Unref appsink end");
   }
