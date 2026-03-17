@@ -34,8 +34,8 @@ void WalksnailAir::process_ground_messages(std::vector<MavlinkMessage> messages)
             std::string str(reinterpret_cast<const char*>(tunnel.payload), tunnel.payload_length);
             std::cout << msg.m.msgid << ", payload: " << str << std::endl;
 
-            if (m_walksnail_serial.isOpen()) {
-                m_walksnail_serial.write(tunnel.payload, tunnel.payload_length);
+            if (m_walksnail_serial->isOpen()) {
+                m_walksnail_serial->write(tunnel.payload, tunnel.payload_length);
             }
         }
     }
