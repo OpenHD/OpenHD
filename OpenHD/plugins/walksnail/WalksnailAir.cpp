@@ -2,6 +2,28 @@
 #include "WalksnailUtils.h"
 #include <iostream>
 
+void WalksnailAir::setup_bridge()
+{
+    m_walksnail_serial = std::make_unique<Serial>(
+        WALKSNAIL_DEFAULT_UART,
+        WALKSNAIL_DEFAULT_BAUDRATE
+    );
+    if (!m_walksnail_serial->open())
+    {
+        std::cout << "Failed to open Walksnail serial" << std::endl;
+        return;
+    }
+    else
+    {
+        std::cout << "Walksnail serial opened successfully!" << std::endl;
+    }
+}
+
+void WalksnailAir::stop_bridge()
+{
+    
+}
+
 void WalksnailAir::process_ground_messages(std::vector<MavlinkMessage> messages)
 {
     for (const auto& msg : messages) {
@@ -11,6 +33,10 @@ void WalksnailAir::process_ground_messages(std::vector<MavlinkMessage> messages)
 
             std::string str(reinterpret_cast<const char*>(tunnel.payload), tunnel.payload_length);
             std::cout << msg.m.msgid << ", payload: " << str << std::endl;
+
+            if (m_walksnail_serial.isOpen()) {
+                m_walksnail_serial.write(tunnel.payload, tunnel.payload_length);
+            }
         }
     }
 }
