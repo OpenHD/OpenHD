@@ -312,4 +312,5 @@ void AirTelemetry::set_link_handle(std::shared_ptr<OHDLink> link) {
 void AirTelemetry::setup_walksnail_air()
 {
   m_walksnail_air = std::make_unique<WalksnailAir>();
+  m_walksnail_air->setup_bridge();
 }
