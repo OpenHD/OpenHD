@@ -457,7 +457,7 @@ void GroundTelemetry::setup_walksnail_ground()
   m_walksnail_ground = std::make_unique<WalksnailGround>();
   m_walksnail_ground->registerCallback(
     [this](std::vector<MavlinkMessage> messages) {
-      on_messages_ground_station_clients(messages);
+      send_messages_air_unit(messages);
     }
   );
   m_walksnail_ground->setup_bridge(_sys_id, OHD_SYS_ID_FC);
