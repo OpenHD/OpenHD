@@ -32,7 +32,8 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
     fc_battery_n_cells, fc_sys_id, openhd_uart_telemetry_connection,
     openhd_uart_telemetry_enabled, openhd_uart_telemetry_baudrate,
     openhd_uart_telemetry_flow_control, openhd_uart_priority_rc,
-    openhd_uart_priority_openhd, openhd_uart_priority_fc);
+    openhd_uart_priority_openhd, openhd_uart_priority_fc, sbus_out_enabled,
+    sbus_uart_device, sbus_update_rate_hz);
 
 std::optional<Settings> SettingsHolder::impl_deserialize(
     const std::string &file_as_string) const {

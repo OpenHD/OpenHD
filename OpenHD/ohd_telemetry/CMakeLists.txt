@@ -83,6 +83,8 @@ SET(sources
     "src/rc/JoystickReader.h"
     "src/rc/RcJoystickSender.cpp"
     "src/rc/RcJoystickSender.h"
+    "src/rc/SbusOutput.cpp"
+    "src/rc/SbusOutput.h"
 
     "src/routing/MavlinkComponent.hpp"
     "src/routing/MavlinkSystem.hpp"

@@ -45,6 +45,9 @@
 class WBLink;
 class MicrohardLink;
 class EthernetLink;
+#ifdef OHD_ENABLE_ARTOSYN
+class ArtosynLink;
+#endif
 
 struct LinkControlRequest {
   std::optional<int> frequency_mhz;
@@ -116,6 +119,9 @@ class OHDInterface {
   std::shared_ptr<spdlog::logger> m_console;
   std::shared_ptr<WBLink> m_wb_link;
   std::shared_ptr<MicrohardLink> m_microhard_link;
+#ifdef OHD_ENABLE_ARTOSYN
+  std::shared_ptr<ArtosynLink> m_artosyn_link;
+#endif
   std::unique_ptr<USBTetherListener> m_usb_tether_listener;
   std::unique_ptr<EthernetManager> m_ethernet_manager;
   std::unique_ptr<WifiHotspot> m_wifi_hotspot;

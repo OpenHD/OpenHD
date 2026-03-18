@@ -33,6 +33,9 @@
 
 #include "config_paths.h"
 #include "ethernet_link.h"
+#ifdef OHD_ENABLE_ARTOSYN
+#include "artosyn_link.h"
+#endif
 #include "microhard_link.h"
 #include "openhd_config.h"
 #include "openhd_global_constants.hpp"
@@ -75,6 +78,14 @@ OHDInterface::OHDInterface(OHDProfile profile1, bool disable_wifi_hotspot)
   m_opt_hotspot_card = std::nullopt;
   const auto config = openhd::load_config();
   bool microhard_device_present = is_microhard_device_present();
+
+#ifdef OHD_ENABLE_ARTOSYN
+  if (ArtosynLink::probe()) {
+    m_artosyn_link = std::make_shared<ArtosynLink>(m_profile);
+    m_console->warn("artosyn found");
+    return;
+  }
+#endif
 
   if (OHDFilesystemUtil::exists(std::string(getConfigBasePath()) +
                                 "ethernet.txt")) {
@@ -446,6 +457,12 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings() {
     auto settings = m_microhard_link->get_all_settings();
     OHDUtil::vec_append(ret, settings);
   }
+#ifdef OHD_ENABLE_ARTOSYN
+  if (m_artosyn_link) {
+    auto settings = m_artosyn_link->get_all_settings();
+    OHDUtil::vec_append(ret, settings);
+  }
+#endif
   const auto settings = m_nw_settings.get_settings();
   auto cb_wifi_mode = [this](std::string, int value) {
     if (!is_valid_wifi_operating_mode(value)) return false;
@@ -555,6 +572,12 @@ void OHDInterface::print_internal_fec_optimization_method() {
 }
 
 std::shared_ptr<OHDLink> OHDInterface::get_link_handle() {
+#ifdef OHD_ENABLE_ARTOSYN
+  if (m_artosyn_link) {
+    m_console->warn("Using alternative Link: Artosyn");
+    return m_artosyn_link;
+  }
+#endif
   if (m_ethernet_link) {
     m_console->warn("Using alternative Link: Ethernet");
     return m_ethernet_link;
@@ -571,6 +594,9 @@ std::shared_ptr<OHDLink> OHDInterface::get_link_handle() {
 }
 
 bool OHDInterface::has_primary_link() const {
+#ifdef OHD_ENABLE_ARTOSYN
+  if (m_artosyn_link) return true;
+#endif
   return static_cast<bool>(m_wb_link) || static_cast<bool>(m_microhard_link) ||
          static_cast<bool>(m_ethernet_link);
 }

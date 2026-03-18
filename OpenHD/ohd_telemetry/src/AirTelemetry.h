@@ -41,6 +41,7 @@
 #include "endpoints/WBEndpoint.h"
 #include "gpio_control/RaspberryPiGPIOControl.h"
 #include "mavsdk_temporary/XMavlinkParamProvider.h"
+#include "rc/SbusOutput.h"
 #include "openhd_action_handler.h"
 #include "openhd_link.hpp"
 #include "openhd_spdlog.h"
@@ -107,6 +108,7 @@ class AirTelemetry : public MavlinkSystem {
   std::vector<openhd::Setting> get_all_settings();
   void setup_uart();
   void setup_openhd_uart_telemetry();
+  void setup_sbus_output();
 
  private:
   std::unique_ptr<openhd::telemetry::air::SettingsHolder> m_air_settings;
@@ -118,6 +120,7 @@ class AirTelemetry : public MavlinkSystem {
   std::shared_ptr<OHDMainComponent> m_ohd_main_component;
   UartDeduplicator m_uart_deduplicator;
   UartPrioritizer m_uart_prioritizer;
+  std::unique_ptr<SbusOutput> m_sbus_output;
   std::mutex m_components_lock;
   std::vector<std::shared_ptr<MavlinkComponent>> m_components;
   std::shared_ptr<XMavlinkParamProvider> m_generic_mavlink_param_provider;

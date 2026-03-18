@@ -38,6 +38,7 @@ AirTelemetry::AirTelemetry() : MavlinkSystem(OHD_SYS_ID_AIR) {
   m_air_settings = std::make_unique<openhd::telemetry::air::SettingsHolder>();
   m_fc_serial = std::make_unique<SerialEndpointManager>();
   m_openhd_uart_serial = std::make_unique<SerialEndpointManager>();
+  m_sbus_output = std::make_unique<SbusOutput>();
   m_ohd_main_component = std::make_shared<OHDMainComponent>(_sys_id, true);
   m_ohd_main_component->set_fc_sys_id(
       static_cast<uint8_t>(m_air_settings->get_settings().fc_sys_id));
@@ -64,6 +65,7 @@ AirTelemetry::AirTelemetry() : MavlinkSystem(OHD_SYS_ID_AIR) {
   }
   setup_uart();
   setup_openhd_uart_telemetry();
+  setup_sbus_output();
   m_console->debug("Created AirTelemetry");
 }
 
@@ -126,6 +128,34 @@ void AirTelemetry::on_messages_fc(std::vector<MavlinkMessage>& messages) {
 void AirTelemetry::on_messages_ground_unit(
     std::vector<MavlinkMessage>& messages) {
   // m_console->debug("on_messages_ground_unit {}", messages.size());
+  if (m_sbus_output) {
+    for (const auto& msg : messages) {
+      if (msg.m.msgid == MAVLINK_MSG_ID_RC_CHANNELS_OVERRIDE) {
+        mavlink_rc_channels_override_t rc_override;
+        mavlink_msg_rc_channels_override_decode(&msg.m, &rc_override);
+        std::array<uint16_t, 18> channels{};
+        channels[0] = rc_override.chan1_raw;
+        channels[1] = rc_override.chan2_raw;
+        channels[2] = rc_override.chan3_raw;
+        channels[3] = rc_override.chan4_raw;
+        channels[4] = rc_override.chan5_raw;
+        channels[5] = rc_override.chan6_raw;
+        channels[6] = rc_override.chan7_raw;
+        channels[7] = rc_override.chan8_raw;
+        channels[8] = rc_override.chan9_raw;
+        channels[9] = rc_override.chan10_raw;
+        channels[10] = rc_override.chan11_raw;
+        channels[11] = rc_override.chan12_raw;
+        channels[12] = rc_override.chan13_raw;
+        channels[13] = rc_override.chan14_raw;
+        channels[14] = rc_override.chan15_raw;
+        channels[15] = rc_override.chan16_raw;
+        channels[16] = rc_override.chan17_raw;
+        channels[17] = rc_override.chan18_raw;
+        m_sbus_output->update_channels(channels);
+      }
+    }
+  }
   //   filter out heartbeats from the openhd ground unit,we do not need to send
   //   them to the FC
   std::vector<MavlinkMessage> filtered_messages_fc;
@@ -324,6 +354,26 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
     m_air_settings->persist(false);
     return true;
   };
+  auto c_sbus_enable = [this](std::string, int value) {
+    if (!openhd::validate_yes_or_no(value)) return false;
+    m_air_settings->unsafe_get_settings().sbus_out_enabled = value;
+    m_air_settings->persist();
+    setup_sbus_output();
+    return true;
+  };
+  auto c_sbus_device = [this](std::string, std::string value) {
+    m_air_settings->unsafe_get_settings().sbus_uart_device = value;
+    m_air_settings->persist();
+    setup_sbus_output();
+    return true;
+  };
+  auto c_sbus_rate = [this](std::string, int value) {
+    if (value < 1 || value > 200) return false;
+    m_air_settings->unsafe_get_settings().sbus_update_rate_hz = value;
+    m_air_settings->persist();
+    setup_sbus_output();
+    return true;
+  };
   ret.push_back(openhd::Setting{
       air::FC_UART_CONNECTION_TYPE,
       openhd::StringSetting{
@@ -390,6 +440,20 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
           static_cast<int>(
               m_air_settings->get_settings().openhd_uart_priority_fc),
           c_openhd_uart_prio_fc}});
+  ret.push_back(openhd::Setting{
+      air::SBUS_OUT_ENABLE_PARAM,
+      openhd::IntSetting{
+          static_cast<int>(m_air_settings->get_settings().sbus_out_enabled),
+          c_sbus_enable}});
+  ret.push_back(openhd::Setting{
+      air::SBUS_OUT_DEVICE_PARAM,
+      openhd::StringSetting{
+          m_air_settings->get_settings().sbus_uart_device, c_sbus_device}});
+  ret.push_back(openhd::Setting{
+      air::SBUS_OUT_RATE_PARAM,
+      openhd::IntSetting{
+          static_cast<int>(m_air_settings->get_settings().sbus_update_rate_hz),
+          c_sbus_rate}});
   // and this allows an advanced user to change its air unit to a ground unit
   // only expose this setting if OpenHD uses the file workaround to figure out
   // air or ground.
@@ -456,6 +520,16 @@ void AirTelemetry::setup_openhd_uart_telemetry() {
           this->on_messages_ground_unit(filtered);
         }
       });
+}
+
+void AirTelemetry::setup_sbus_output() {
+  if (!m_sbus_output) return;
+  const auto& settings = m_air_settings->get_settings();
+  SbusOutput::Options options{};
+  options.enabled = settings.sbus_out_enabled;
+  options.device = settings.sbus_uart_device;
+  options.update_rate_hz = settings.sbus_update_rate_hz;
+  m_sbus_output->configure(options);
 }
 
 void AirTelemetry::configure_openhd_uart_telemetry(
