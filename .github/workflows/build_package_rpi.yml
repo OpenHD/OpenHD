@@ -61,6 +61,7 @@ jobs:
     - name: Push
       id: push
       uses: cloudsmith-io/action@master
+      continue-on-error: true
       with:
         api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
         command: "push"
@@ -85,4 +86,4 @@ jobs:
         release: "bullseye"
         republish: "true" # needed ONLY if version is not changing
         file: "OpenHD/*.deb"
-      if: ${{ github.ref != 'refs/heads/2.5-evo' }}
+      if: ${{ always() && github.ref != 'refs/heads/2.5-evo' }}
