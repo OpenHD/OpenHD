@@ -6,8 +6,8 @@
 
 #include <asm/termbits.h>
 #include <fcntl.h>
+#include <spdlog/spdlog.h>
 #include <sys/ioctl.h>
-#include <termios.h>
 #include <unistd.h>
 
 namespace {
@@ -46,7 +46,7 @@ bool configure_sbus_port(int fd) {
     return false;
   }
 
-  tcflush(fd, TCIOFLUSH);
+  ioctl(fd, TCFLSH, TCIOFLUSH);
   return true;
 }
 }  // namespace
