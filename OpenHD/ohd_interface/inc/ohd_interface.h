@@ -82,9 +82,9 @@ class OHDInterface {
   // easy access without polluting the headers
   static void print_internal_fec_optimization_method();
   /**
-   * If a password.txt file exists, generate the key(s) from it, store them, and
-   * then delete the password.txt file. Does nothing if no password.txt file
-   * exists.
+   * Legacy password.txt handling is ignored in the community build.
+   * Licensed builds enable premium video encryption features.
+   * For licensing, contact license@openhdfpv.com.
    */
   static void generate_keys_from_pw_if_exists_and_delete();
   // Agnostic of the link, even though r.n we only have a wifibroadcast

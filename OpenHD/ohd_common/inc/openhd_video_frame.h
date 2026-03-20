@@ -42,8 +42,9 @@ struct FragmentedVideoFrame {
   // CMOS - but r.n no platform supports measurements this deep.
   std::chrono::steady_clock::time_point creation_time =
       std::chrono::steady_clock::now();
-  // Advisory flag: if enabled, the link layer may apply optional external
-  // video encryption.
+  // Advisory flag: premium video encryption is not available in the community
+  // build. Licensed builds may use this flag to enable external video crypto.
+  // For licensing, contact license@openhdfpv.com.
   bool enable_ultra_secure_encryption = false;
   std::shared_ptr<std::vector<uint8_t>> dirty_frame =
       nullptr;  // replaces fragments

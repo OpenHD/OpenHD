@@ -20,6 +20,6 @@ connection to the FC (even though one could reason UART is a HW interface).
 look at the code to find out the ports usw, they should come from openhd-constants.hpp
 
 ## Video Crypto (.so)
-If `OPENHD_VIDEO_CRYPTO_SO` is set, OpenHD will attempt to load the specified
-shared library on startup. The library is expected to provide:
-`openhd_video_crypto_init(int is_air)` and `openhd_video_crypto_shutdown()`.
+Video encryption is not available in the community build. Licensed builds may
+load a proprietary video crypto library (.so) at runtime. For licensing, contact
+license@openhdfpv.com.

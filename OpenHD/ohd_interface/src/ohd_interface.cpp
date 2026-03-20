@@ -618,7 +618,7 @@ void OHDInterface::generate_keys_from_pw_if_exists_and_delete() {
 
   const auto password_path = std::string(getConfigBasePath()) + "password.txt";
   if (OHDFilesystemUtil::exists(password_path)) {
-    console->debug("password.txt ignored (bind phrase is not supported).");
+    console->debug("password.txt ignored.");
   }
 }
 

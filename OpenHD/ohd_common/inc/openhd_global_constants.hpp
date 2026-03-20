@@ -83,11 +83,5 @@ static std::string get_ohd_version_as_string() {
                                RELEASE_TYPE);
 }
 
-// This optional file contains a wifibroadcast keypair (up/down).
-// If this file does not exist, wifibroadcast will generate random keys at
-// runtime, which requires a shared keypair on both air and ground to work.
-static constexpr auto SECURITY_KEYPAIR_FILENAME =
-    "/usr/local/share/openhd/txrx.key";
-
 }  // namespace openhd
 #endif  // OPEN_HD_OPNHD_GLOBAL_CONSTANTS_H
