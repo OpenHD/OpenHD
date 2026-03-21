@@ -730,9 +730,11 @@ bool WBLink::request_set_air_tx_channel_width(int channel_width) {
           channel_width, m_broadcast_cards.at(0), m_console)) {
     return false;
   }
+  const int prev_channel_width =
+      m_settings->get_settings().wb_air_tx_channel_width;
   auto work_item = std::make_shared<WorkItem>(
       fmt::format("SET_CHWIDTH:{}", channel_width),
-      [this, channel_width]() {
+      [this, channel_width, prev_channel_width]() {
         // temporarily disable video streaming to free up BW
         m_air_close_video_in = true;
         m_settings->unsafe_get_settings().wb_air_tx_channel_width =
@@ -741,7 +743,12 @@ bool WBLink::request_set_air_tx_channel_width(int channel_width) {
         m_management_air->set_channel_width(channel_width);
         // On ASUS, we have to reduce the TX power when on 40Mhz
         apply_txpower();
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        // Allow the ground to receive the new BW announcement while still on the old width.
+        auto announce_delay = std::chrono::milliseconds(300);
+        if (prev_channel_width == 10 || channel_width == 10) {
+          announce_delay = std::chrono::milliseconds(800);
+        }
+        std::this_thread::sleep_for(announce_delay);
         // Ground will automatically apply the right channel width once first
         // (broadcast) management frame is received.
         apply_frequency_and_channel_width_from_settings();
@@ -948,7 +955,13 @@ bool WBLink::apply_frequency_and_channel_width(int frequency,
   const auto res = openhd::wb::set_frequency_and_channel_width_for_all_cards(
       frequency, channel_width_rx, m_broadcast_cards, m_profile.is_air);
   m_tx_header_1->update_channel_width(channel_width_tx);
-  m_tx_header_2->update_channel_width(channel_width_tx);
+  // Keep management/session-key packets on 20MHz (if possible) to allow re-sync after BW changes.
+  // For 10MHz operation, we must also transmit management at 10MHz.
+  const int management_channel_width =
+      channel_width_tx < openhd::DEFAULT_GND_RX_CHANNEL_WIDTH
+          ? channel_width_tx
+          : openhd::DEFAULT_GND_RX_CHANNEL_WIDTH;
+  m_tx_header_2->update_channel_width(management_channel_width);
   m_wb_txrx->tx_reset_stats();
   m_wb_txrx->rx_reset_stats();
   re_enable_injection_unless_user_passive_mode_enabled();
