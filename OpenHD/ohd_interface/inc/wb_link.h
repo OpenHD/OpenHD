@@ -260,7 +260,7 @@ class WBLink : public OHDLink {
   std::unique_ptr<ManagementAir> m_management_air = nullptr;
   std::unique_ptr<ManagementGround> m_management_gnd = nullptr;
   std::unique_ptr<openhd::VideoCrypto> m_video_crypto = nullptr;
-  // We start on 40Mhz, and go down to 20Mhz if possible
+  // We start on 20Mhz, and only go up to 40Mhz if requested/available
   std::atomic<int> m_gnd_curr_rx_channel_width =
       openhd::DEFAULT_GND_RX_CHANNEL_WIDTH;
   std::atomic<int> m_gnd_curr_rx_frequency = -1;

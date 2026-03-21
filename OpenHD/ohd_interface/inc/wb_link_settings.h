@@ -46,7 +46,7 @@ static constexpr auto DEFAULT_MCS_INDEX = 2;
 // range for video
 static constexpr auto WB_GND_UPLINK_MCS_INDEX = 0;
 static constexpr auto DEFAULT_CHANNEL_WIDTH = 20;
-static constexpr auto DEFAULT_GND_RX_CHANNEL_WIDTH = 40;
+static constexpr auto DEFAULT_GND_RX_CHANNEL_WIDTH = 20;
 // Consti10: Stephen used a default tx power of 3100 somewhere (not sure if that
 // ever made it trough though) This value seems a bit high to me, so I am going
 // with a default of "1800" (which should be 18.0 dBm ) Used to be in dBm, but
