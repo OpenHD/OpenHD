@@ -183,7 +183,8 @@ bool openhd::wb::any_card_supports_stbc_ldpc_sgi(
         card.type == WiFiCardType::OPENHD_RTL_88X2BU ||
         card.type == WiFiCardType::OPENHD_RTL_88X2CU ||
         card.type == WiFiCardType::OPENHD_RTL_88X2EU ||
-        card.type == WiFiCardType::OPENHD_RTL_8852BU) {
+        card.type == WiFiCardType::OPENHD_RTL_8852BU ||
+        card.type == WiFiCardType::QUALCOMM) {
       return true;
     }
   }

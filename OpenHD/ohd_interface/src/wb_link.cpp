@@ -1073,6 +1073,17 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
     return m_settings->unsafe_get_settings().wb_frequency;
   };
   ret.push_back(Setting{WB_FREQUENCY, change_freq});
+  if (m_profile.is_ground()) {
+    auto change_wb_channel_width = openhd::IntSetting{
+        (int)m_gnd_curr_rx_channel_width.load(),
+        [this](std::string, int value) {
+          return request_set_ground_rx_channel_width(value);
+        }};
+    change_wb_channel_width.get_callback = [this]() {
+      return m_gnd_curr_rx_channel_width.load();
+    };
+    ret.push_back(Setting{WB_CHANNEL_WIDTH, change_wb_channel_width});
+  }
   if (m_profile.is_air) {
     // MCS is only changeable on air
     auto change_wb_air_mcs_index = openhd::IntSetting{
@@ -1402,15 +1413,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
         WB_ENABLE_SHORT_GUARD,
         openhd::IntSetting{settings.wb_enable_short_guard, cb_wb_enable_sg}});
   } else {
-    auto change_wb_channel_width = openhd::IntSetting{
-        (int)m_gnd_curr_rx_channel_width.load(),
-        [this](std::string, int value) {
-          return request_set_ground_rx_channel_width(value);
-        }};
-    change_wb_channel_width.get_callback = [this]() {
-      return m_gnd_curr_rx_channel_width.load();
-    };
-    ret.push_back(Setting{WB_CHANNEL_WIDTH, change_wb_channel_width});
+    // no-op
   }
   // WIFI TX power depends on the used chips
   // We expose settings for all 4 slots, but usually only applicable ones

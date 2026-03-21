@@ -234,8 +234,13 @@ static bool wifi_card_supports_5Mhz_channel_width_injection(
 
 static bool wifi_card_supports_10Mhz_channel_width_injection(
     const WiFiCard& wifi_card) {
-  if (wifi_card.type == WiFiCardType::QUALCOMM) return true;
+  if (wifi_card.type == WiFiCardType::OPENHD_EMULATED) return true;
+  if (wifi_card.type == WiFiCardType::OPENHD_RTL_88X2AU) return true;
+  if (wifi_card.type == WiFiCardType::OPENHD_RTL_88X2BU) return true;
+  if (wifi_card.type == WiFiCardType::OPENHD_RTL_88X2CU) return true;
   if (wifi_card.type == WiFiCardType::OPENHD_RTL_88X2EU) return true;
+  if (wifi_card.type == WiFiCardType::OPENHD_RTL_8852BU) return true;
+  if (wifi_card.type == WiFiCardType::QUALCOMM) return true;
   return false;
 }
 
