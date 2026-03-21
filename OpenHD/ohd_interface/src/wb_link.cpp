@@ -66,6 +66,24 @@ std::optional<int> read_proc_int(const std::string& base_dir,
   return OHDFilesystemUtil::read_int_from_file(base_dir + "/" + entry);
 }
 
+std::vector<std::string> build_proc_device_candidates(
+    const std::string& device_name) {
+  std::vector<std::string> names;
+  if (device_name.empty()) {
+    return names;
+  }
+  names.push_back(device_name);
+  static constexpr const char* kMonSuffix = "mon";
+  const auto suffix_len = std::strlen(kMonSuffix);
+  if (device_name.size() > suffix_len &&
+      device_name.rfind(kMonSuffix) == device_name.size() - suffix_len) {
+    names.push_back(device_name.substr(0, device_name.size() - suffix_len));
+  } else {
+    names.push_back(device_name + kMonSuffix);
+  }
+  return names;
+}
+
 std::optional<std::string> find_proc_base_for_device(
     const std::string& device_name) {
   static std::unordered_map<std::string, std::string> cache;
@@ -81,14 +99,16 @@ std::optional<std::string> find_proc_base_for_device(
     return std::nullopt;
   }
 
+  const auto device_candidates = build_proc_device_candidates(device_name);
   const auto driver_dirs =
       OHDFilesystemUtil::getAllEntriesFilenameOnlyInDirectory(proc_net);
   for (const auto& driver_dir : driver_dirs) {
-    const std::string candidate =
-        proc_net + "/" + driver_dir + "/" + device_name;
-    if (OHDFilesystemUtil::exists(candidate + "/thermal_state")) {
-      cache[device_name] = candidate;
-      return candidate;
+    for (const auto& dev_name : device_candidates) {
+      const std::string candidate = proc_net + "/" + driver_dir + "/" + dev_name;
+      if (OHDFilesystemUtil::exists(candidate + "/thermal_state")) {
+        cache[device_name] = candidate;
+        return candidate;
+      }
     }
   }
 
@@ -98,9 +118,12 @@ std::optional<std::string> find_proc_base_for_device(
 
 std::optional<std::string> resolve_proc_base_dir(
     const std::string& driver_name, const std::string& device_name) {
-  const std::string proc_base = "/proc/net/" + driver_name + "/" + device_name;
-  if (OHDFilesystemUtil::exists(proc_base)) {
-    return proc_base;
+  const auto device_candidates = build_proc_device_candidates(device_name);
+  for (const auto& dev_name : device_candidates) {
+    const std::string proc_base = "/proc/net/" + driver_name + "/" + dev_name;
+    if (OHDFilesystemUtil::exists(proc_base)) {
+      return proc_base;
+    }
   }
   return find_proc_base_for_device(device_name);
 }
