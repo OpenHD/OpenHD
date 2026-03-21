@@ -66,6 +66,45 @@ std::optional<int> read_proc_int(const std::string& base_dir,
   return OHDFilesystemUtil::read_int_from_file(base_dir + "/" + entry);
 }
 
+std::optional<std::string> find_proc_base_for_device(
+    const std::string& device_name) {
+  static std::unordered_map<std::string, std::string> cache;
+  auto it = cache.find(device_name);
+  if (it != cache.end()) {
+    if (it->second.empty()) return std::nullopt;
+    return it->second;
+  }
+
+  const std::string proc_net = "/proc/net";
+  if (!OHDFilesystemUtil::exists(proc_net)) {
+    cache[device_name] = "";
+    return std::nullopt;
+  }
+
+  const auto driver_dirs =
+      OHDFilesystemUtil::getAllEntriesFilenameOnlyInDirectory(proc_net);
+  for (const auto& driver_dir : driver_dirs) {
+    const std::string candidate =
+        proc_net + "/" + driver_dir + "/" + device_name;
+    if (OHDFilesystemUtil::exists(candidate + "/thermal_state")) {
+      cache[device_name] = candidate;
+      return candidate;
+    }
+  }
+
+  cache[device_name] = "";
+  return std::nullopt;
+}
+
+std::optional<std::string> resolve_proc_base_dir(
+    const std::string& driver_name, const std::string& device_name) {
+  const std::string proc_base = "/proc/net/" + driver_name + "/" + device_name;
+  if (OHDFilesystemUtil::exists(proc_base)) {
+    return proc_base;
+  }
+  return find_proc_base_for_device(device_name);
+}
+
 int extract_temperature_from_thermal_state(const std::string& input) {
   auto pos = input.find("temperature:");
   if (pos == std::string::npos) return 0;
@@ -1787,9 +1826,10 @@ void WBLink::wt_update_statistics() {
     card_stats.rx_snr_antenna2 = -128;
     card_stats.card_temperature = 0;
     {
-      const std::string proc_base =
-          "/proc/net/" + card.driver_name + "/" + card.device_name;
-      if (OHDFilesystemUtil::exists(proc_base)) {
+      const auto proc_base_opt =
+          resolve_proc_base_dir(card.driver_name, card.device_name);
+      if (proc_base_opt.has_value()) {
+        const auto& proc_base = proc_base_opt.value();
         if (const auto temp_opt = read_proc_temperature(proc_base);
             temp_opt.has_value()) {
           card_stats.card_temperature = static_cast<int8_t>(temp_opt.value());
