@@ -222,12 +222,12 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       ohd_encryption = 3;
     }
 
-    // rtl88x2eu driver temp readout
-    const std::string rtl88x2eu_proc_dir = "/proc/net/rtl88x2eu_ohd/";
-    if (OHDFilesystemUtil::exists(rtl88x2eu_proc_dir)) {
+    auto read_txc_from_proc_dir = [&](const std::string& proc_dir) {
+      if (!OHDFilesystemUtil::exists(proc_dir)) {
+        return;
+      }
       const auto interface_dirs =
-          OHDFilesystemUtil::getAllMatchingDirectoriesByPrefix(
-              rtl88x2eu_proc_dir, "wl");
+          OHDFilesystemUtil::getAllMatchingDirectoriesByPrefix(proc_dir, "wl");
 
       std::set<std::string> seen_ifaces;
       size_t iface_index = 0;
@@ -238,7 +238,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
         seen_ifaces.insert(iface);
 
         const std::string thermal_state_file =
-            rtl88x2eu_proc_dir + iface + "/thermal_state";
+            proc_dir + iface + "/thermal_state";
 
         if (OHDFilesystemUtil::exists(thermal_state_file)) {
           const std::string thermal_content =
@@ -246,49 +246,22 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
           int temp = extract_temperature(thermal_content);
 
           if (temp != 0) {
-            if (iface_index == 0)
+            if (iface_index == 0 && curr_temperature_txc0 == 0)
               curr_temperature_txc0 = static_cast<int8_t>(temp);
-            else if (iface_index == 1)
+            else if (iface_index == 1 && curr_temperature_txc1 == 0)
               curr_temperature_txc1 = static_cast<int8_t>(temp);
           }
           ++iface_index;
         }
       }
-    }
+    };
 
-    // rtl88x2cu driver temp readout
-    const std::string rtl88x2cu_proc_dir = "/proc/net/rtl88x2cu_ohd/";
-    if (OHDFilesystemUtil::exists(rtl88x2cu_proc_dir)) {
-      const auto interface_dirs =
-          OHDFilesystemUtil::getAllMatchingDirectoriesByPrefix(
-              rtl88x2cu_proc_dir, "wl");
-
-      std::set<std::string> seen_ifaces;
-      size_t iface_index = 0;
-
-      for (const auto& iface : interface_dirs) {
-        if (iface_index > 1) break;
-        if (seen_ifaces.find(iface) != seen_ifaces.end()) continue;
-        seen_ifaces.insert(iface);
-
-        const std::string thermal_state_file =
-            rtl88x2cu_proc_dir + iface + "/thermal_state";
-
-        if (OHDFilesystemUtil::exists(thermal_state_file)) {
-          const std::string thermal_content =
-              OHDFilesystemUtil::read_file(thermal_state_file);
-          int temp = extract_temperature(thermal_content);
-
-          if (temp != 0) {
-            if (iface_index == 0)
-              curr_temperature_txc0 = static_cast<int8_t>(temp);
-            else if (iface_index == 1)
-              curr_temperature_txc1 = static_cast<int8_t>(temp);
-          }
-          ++iface_index;
-        }
-      }
-    }
+    read_txc_from_proc_dir("/proc/net/rtl88xxau_ohd/");
+    read_txc_from_proc_dir("/proc/net/rtl88x2au_ohd/");
+    read_txc_from_proc_dir("/proc/net/rtl88x2bu_ohd/");
+    read_txc_from_proc_dir("/proc/net/rtl88x2cu_ohd/");
+    read_txc_from_proc_dir("/proc/net/rtl88x2eu_ohd/");
+    read_txc_from_proc_dir("/proc/net/rtl8852bu_ohd/");
 
     if (OHDPlatform::instance().is_rpi()) {
       curr_temperature_core =
