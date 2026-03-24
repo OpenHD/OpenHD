@@ -104,6 +104,8 @@ GroundTelemetry::~GroundTelemetry() {
 
 void GroundTelemetry::on_messages_air_unit(
     const std::vector<MavlinkMessage>& messages) {
+
+  m_walksnail_ground->process_air_messages(messages);
   // All messages we get from the Air pi (they might come from the AirPi itself
   // or the FC connected to the air pi) get forwarded straight to all the
   // client(s) connected to the ground station.

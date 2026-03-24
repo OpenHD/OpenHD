@@ -12,13 +12,11 @@
 class WalksnailAir
 {
 public:
-    void process_ground_messages(std::vector<MavlinkMessage> messages);
     void setup_bridge(uint8_t src_sys_id, uint8_t target_sys_id);
     void stop_bridge();
+    void process_ground_messages(std::vector<MavlinkMessage> messages);
     void register_callback(MAV_MSG_CALLBACK callback);
-
-
-    private:
+private:
     void reading_loop();
 
     uint8_t m_src_sys_id = 0;

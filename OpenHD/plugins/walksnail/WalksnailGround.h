@@ -13,7 +13,7 @@ class WalksnailGround
 public:
     void setup_bridge(uint8_t src_sys_id, uint8_t target_sys_id);
     void stop_bridge();
-
+    void process_air_messages(std::vector<MavlinkMessage> messages);
     void registerCallback(MAV_MSG_CALLBACK callback);
 private:
     void reading_loop();
