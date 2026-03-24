@@ -66,6 +66,12 @@ void WalksnailAir::reading_loop()
         packet.push_back('\r');
         packet.push_back('\n');
 
+        for (unsigned char c : packet) {
+            std::cout << std::hex << std::setw(2) << std::setfill('0')
+                << static_cast<int>(c) << " ";
+        }
+        std::cout << std::endl;
+
         std::lock_guard<std::mutex> lock(m_callback_mutex);
         if (!m_callback) return;
 

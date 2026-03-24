@@ -317,11 +317,7 @@ void AirTelemetry::setup_walksnail_air()
   m_walksnail_air = std::make_unique<WalksnailAir>();
   m_walksnail_air->register_callback(
     [this](std::vector<MavlinkMessage> messages) {
-      std::cout << "Payload (" << tunnel.payload_length << " bytes): ";
-      for (uint8_t i = 0; i < tunnel.payload_length; i++)
-          std::cout << std::hex << std::setw(2) << std::setfill('0')
-                  << static_cast<int>(tunnel.payload[i]) << " ";
-      std::cout << std::dec << std::endl;
+      // Add sending to ground unit
     }
   );
   m_walksnail_air->setup_bridge(_sys_id, OHD_SYS_ID_FC);
