@@ -52,26 +52,34 @@ void WalksnailAir::reading_loop()
 {
     while (!m_stop_requested)
     {
-        std::string packet = m_walksnail_serial->readline();
-        if (packet.empty())
+        uint8_t buffer[256];
+        int n = m_walksnail_serial->read(buffer, sizeof(buffer));
+        if (n <= 0)
             continue;
 
-        m_log_file << packet << std::endl;
+        m_log_file.write(reinterpret_cast<char*>(buffer), n);
+        m_log_file.flush();
 
-        // Restore delimiter removed by readline
-        packet.push_back('\r');
-        packet.push_back('\n');
+        // std::string packet = m_walksnail_serial->readline();
+        // if (packet.empty())
+        //     continue;
 
-        std::lock_guard<std::mutex> lock(m_callback_mutex);
-        if (!m_callback) return;
+        // m_log_file << packet << std::endl;
 
-        auto messages = pack_walksnail_data_to_mavlink(
-            reinterpret_cast<const uint8_t*>(packet.data()), packet.size(),
-            m_src_sys_id,
-            m_target_sys_id
-        );
+        // // Restore delimiter removed by readline
+        // packet.push_back('\r');
+        // packet.push_back('\n');
 
-        m_callback(messages);
+        // std::lock_guard<std::mutex> lock(m_callback_mutex);
+        // if (!m_callback) return;
+
+        // auto messages = pack_walksnail_data_to_mavlink(
+        //     reinterpret_cast<const uint8_t*>(packet.data()), packet.size(),
+        //     m_src_sys_id,
+        //     m_target_sys_id
+        // );
+
+        // m_callback(messages);
     }
 }
 
