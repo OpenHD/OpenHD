@@ -32,5 +32,5 @@ private:
     MAV_MSG_CALLBACK m_callback = nullptr;
     std::mutex m_callback_mutex;
 
-    std::ofstream m_log_file("/tmp/my_custom_log.txt", std::ios::app);
+    std::ofstream m_log_file{"/tmp/my_custom_log.txt", std::ios::app};
 };
