@@ -41,12 +41,6 @@ void WalksnailAir::process_ground_messages(std::vector<MavlinkMessage> messages)
             mavlink_tunnel_t tunnel;
             mavlink_msg_tunnel_decode(&msg.m, &tunnel);
 
-            std::cout << "Payload (" << tunnel.payload_length << " bytes): ";
-            for (uint8_t i = 0; i < tunnel.payload_length; i++)
-                std::cout << std::hex << std::setw(2) << std::setfill('0')
-                        << static_cast<int>(tunnel.payload[i]) << " ";
-            std::cout << std::dec << std::endl;
-
             if (m_walksnail_serial->isOpen()) {
                 m_walksnail_serial->write(tunnel.payload, tunnel.payload_length);
             }
@@ -62,15 +56,11 @@ void WalksnailAir::reading_loop()
         if (packet.empty())
             continue;
 
+        m_log_file << packet << std::endl;
+
         // Restore delimiter removed by readline
         packet.push_back('\r');
         packet.push_back('\n');
-
-        for (unsigned char c : packet) {
-            std::cout << std::hex << std::setw(2) << std::setfill('0')
-                << static_cast<int>(c) << " ";
-        }
-        std::cout << std::endl;
 
         std::lock_guard<std::mutex> lock(m_callback_mutex);
         if (!m_callback) return;

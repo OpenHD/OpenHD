@@ -5,6 +5,7 @@
 #include <atomic>
 #include <thread>
 #include <memory>
+#include <fstream>
 
 #define WALKSNAIL_DEFAULT_UART      "/dev/serial0"
 #define WALKSNAIL_DEFAULT_BAUDRATE  115200
@@ -23,11 +24,13 @@ private:
     uint8_t m_target_sys_id = 0;
 
     std::unique_ptr<Serial> m_walksnail_serial = nullptr;
-    
+
     std::mutex m_receive_thread_mutex;
     std::unique_ptr<std::thread> m_receive_thread = nullptr;
     std::atomic<bool> m_stop_requested = false;
 
     MAV_MSG_CALLBACK m_callback = nullptr;
     std::mutex m_callback_mutex;
+
+    std::ofstream m_log_file("/tmp/my_custom_log.txt", std::ios::app);
 };
