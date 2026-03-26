@@ -52,6 +52,7 @@ void WalksnailAir::reading_loop()
 {
     while (!m_stop_requested)
     {
+        m_log_file << "STARTED AIR READ LOOP LOGGING" << std::endl;
         std::string packet = m_walksnail_serial->readline();
         if (packet.empty())
             continue;
