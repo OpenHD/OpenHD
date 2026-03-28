@@ -771,7 +771,7 @@ static std::string create_orqa_camera1_stream(const int device_index,
   std::ostringstream ss;
   // ORCA V2 validated capture path
   ss << "v4l2src device=/dev/video" << device_index
-     << " io-mode=dmabuf do-timestamp=true ! "
+     << " io-mode=mmap do-timestamp=true ! "
      << "video/x-raw,width=" << width << ",height=" << height
      << ",framerate=" << framerate << "/1 ! "
      << "queue max-size-buffers=4 leaky=downstream ! "

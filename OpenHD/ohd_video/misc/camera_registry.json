@@ -583,10 +583,10 @@
     {
       "key": "X_CAM_TYPE_ORQA_HORNET",
       "id": 122,
-      "name": "ORCA_V2",
-      "ui_label": "ORCA V2",
+      "name": "ORQA_HORNET",
+      "ui_label": "HORNET",
       "resolutions": [
-        {"width": 1920, "height": 1080, "fps": 120}
+        {"width": 1280, "height": 720, "fps": 120}
       ]
     },
     {
@@ -605,6 +605,15 @@
       "ui_label": "REKINDLE",
       "resolutions": [
         {"width": 1280, "height": 720, "fps": 60}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_ORQA_ORCA_DIGITAL_V2",
+      "id": 125,
+      "name": "ORQA_ORCA_DIGITAL_V2",
+      "ui_label": "ORCA DIGITAL V2",
+      "resolutions": [
+        {"width": 1920, "height": 1080, "fps": 120}
       ]
     },
     {
@@ -789,6 +798,7 @@
       "key": "ORQA",
       "name": "ORQA",
       "cameras": [
+        "X_CAM_TYPE_ORQA_ORCA_DIGITAL_V2",
         "X_CAM_TYPE_ORQA_HORNET",
         "X_CAM_TYPE_ORQA_JAGUAR",
         "X_CAM_TYPE_ORQA_REKINDLE"
