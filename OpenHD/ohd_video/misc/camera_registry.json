@@ -586,7 +586,7 @@
       "name": "ORCA_V2",
       "ui_label": "ORCA V2",
       "resolutions": [
-        {"width": 1920, "height": 1080, "fps": 60}
+        {"width": 1920, "height": 1080, "fps": 120}
       ]
     },
     {

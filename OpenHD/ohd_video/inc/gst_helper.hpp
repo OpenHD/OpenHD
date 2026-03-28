@@ -748,49 +748,35 @@ static int nxp_calculate_number_of_mbs_in_a_slice(int frame_height_px,
 
 static std::string create_orqa_camera1_stream(const int device_index,
                                               const CameraSettings& settings) {
-  using namespace openhd;
-
-  // Target encode size/fps (fallbacks if settings are zero)
-  int target_w = settings.streamed_video_format.width > 0
-                     ? settings.streamed_video_format.width
-                     : 1280;
-  int target_h = settings.streamed_video_format.height > 0
-                     ? settings.streamed_video_format.height
-                     : 720;
-  int target_fps = settings.streamed_video_format.framerate > 0
-                       ? settings.streamed_video_format.framerate
-                       : 120;
-
-  // Keep encoder-friendly alignment
-  target_w = ALIGN_UP(target_w, 16);
-  target_h = ALIGN_UP(target_h, 16);
-
-  // VPU bitrate expects bits/s on this stack
-  const int bps = settings.h26x_bitrate_kbits;
-
-  // Select encoder by codec (both NXP plugins use same knobs here)
+  const int width = settings.streamed_video_format.width > 0
+                        ? settings.streamed_video_format.width
+                        : 1920;
+  const int height = settings.streamed_video_format.height > 0
+                         ? settings.streamed_video_format.height
+                         : 1080;
+  const int framerate = settings.streamed_video_format.framerate > 0
+                            ? settings.streamed_video_format.framerate
+                            : 120;
+  const int bitrate_kbits =
+      settings.h26x_bitrate_kbits > 0 ? settings.h26x_bitrate_kbits : 100000;
+  const int keyframe_interval = settings.h26x_keyframe_interval > 0
+                                    ? settings.h26x_keyframe_interval
+                                    : DEFAULT_KEYFRAME_INTERVAL;
   const bool use_h264 =
-      (settings.streamed_video_format.videoCodec == VideoCodec::H264);
-  const char* enc_name = use_h264 ? "vpuenc_h264" : "vpuenc_h265";
+      settings.streamed_video_format.videoCodec == VideoCodec::H264;
+  const auto encoder_name = use_h264 ? "imxvpuenc_h264" : "imxvpuenc_h265";
+  const std::string aud_parameter =
+      use_h264 && settings.nxp_enable_aud ? " enable-aud=true" : "";
 
   std::ostringstream ss;
-  // Source: ORQA camera path is YUY2 952x720 @120; dmabuf from v4l2src into
-  // g2d
-  ss << "v4l2src io-mode=dmabuf device=/dev/video" << device_index << " ! "
-     << "video/x-raw,format=YUY2,width=960,height=720,framerate=120/"
-        "1,interlace-mode=progressive ! "
-     << "queue max-size-buffers=1 leaky=downstream ! "
-     << "imxvideoconvert_g2d ! ";
-
-  // Convert + scale to encoder target; RGBx is known-good on this BSP
-  ss << "video/x-raw,format=RGBx,width=" << target_w << ",height=" << target_h
-     << " ! "
-     << "queue max-size-buffers=1 leaky=downstream ! ";
-
-  // Hardware encoder
-  ss << enc_name << " gop-size=" << settings.h26x_keyframe_interval
-     << " bitrate=" << bps << " ! ";
-
+  // ORCA V2 validated capture path
+  ss << "v4l2src device=/dev/video" << device_index
+     << " io-mode=dmabuf do-timestamp=true ! "
+     << "video/x-raw,width=" << width << ",height=" << height
+     << ",framerate=" << framerate << "/1 ! "
+     << "queue max-size-buffers=4 leaky=downstream ! "
+     << encoder_name << " bitrate=" << bitrate_kbits
+     << " gop-size=" << keyframe_interval << aud_parameter << " ! ";
   return ss.str();
 }
 
