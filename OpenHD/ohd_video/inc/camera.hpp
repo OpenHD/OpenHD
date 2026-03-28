@@ -87,7 +87,7 @@ struct XCamera {
     return camera_type >= 90 && camera_type < 100;
   }
   bool requires_orqa_pipeline() const {
-    return camera_type >= 122 && camera_type < 124;
+    return camera_type >= 122 && camera_type <= 124;
   }
   bool requires_nxp_imx8_v4l2_pipeline() const {
     return camera_type >= 130 && camera_type < 140;
