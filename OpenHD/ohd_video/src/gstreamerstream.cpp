@@ -209,8 +209,9 @@ std::string GStreamerStream::create_source_encode_pipeline(
   } else if (camera.requires_orqa_pipeline()) {
     openhd::log::get_default()->debug(
         "Camera requires ORQA pipeline. Using NXP i.MX8 V4L2 compatibility "
-        "pipeline on /dev/video3.");
-    pipeline << OHDGstHelper::create_nxp_imx8_v4l2_stream(setting, 3);
+        "pipeline on /dev/video3 (1920x1080@60, io-mode=mmap).");
+    pipeline << OHDGstHelper::create_nxp_imx8_v4l2_stream(
+        setting, 3, false, true);
   } else if (camera.requires_nxp_imx8_v4l2_pipeline()) {
     openhd::log::get_default()->debug(
         "Camera requires NXP i.MX8 V4L2 pipeline.");
@@ -241,7 +242,8 @@ std::string GStreamerStream::create_source_encode_pipeline(
     pipeline << OHDGstHelper::create_qualcomm_camera1_stream(0, setting);
   } else if (camera.camera_type == X_CAM_TYPE_ORQA_HORNET) {
     openhd::log::get_default()->warn("Using ORQA HORNET camera type.");
-    pipeline << OHDGstHelper::create_nxp_imx8_v4l2_stream(setting, 3);
+    pipeline << OHDGstHelper::create_nxp_imx8_v4l2_stream(
+        setting, 3, false, true);
   } else if (camera.camera_type == X_CAM_TYPE_ROCKCHIP_RV110X) {
     openhd::log::get_default()->warn("Using Rockchip RV camera type.");
     pipeline << OHDGstHelper::createRv1106Stream(setting);

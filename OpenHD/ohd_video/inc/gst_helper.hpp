@@ -592,16 +592,24 @@ static std::string createRockchipCSIStream(int v4l2_filenumber,
 }
 
 static std::string create_nxp_imx8_v4l2_stream(const CameraSettings& settings,
-                                               int device_index = 3) {
-  const int width = settings.streamed_video_format.width > 0
-                        ? settings.streamed_video_format.width
-                        : 1280;
-  const int height = settings.streamed_video_format.height > 0
-                         ? settings.streamed_video_format.height
-                         : 720;
-  const int framerate = settings.streamed_video_format.framerate > 0
-                            ? settings.streamed_video_format.framerate
-                            : 30;
+                                               int device_index = 3,
+                                               bool use_dmabuf = true,
+                                               bool force_1080p60 = false) {
+  const int width = force_1080p60
+                        ? 1920
+                        : (settings.streamed_video_format.width > 0
+                               ? settings.streamed_video_format.width
+                               : 1280);
+  const int height = force_1080p60
+                         ? 1080
+                         : (settings.streamed_video_format.height > 0
+                                ? settings.streamed_video_format.height
+                                : 720);
+  const int framerate = force_1080p60
+                            ? 60
+                            : (settings.streamed_video_format.framerate > 0
+                                   ? settings.streamed_video_format.framerate
+                                   : 30);
 
   const bool use_h264 =
       settings.streamed_video_format.videoCodec == VideoCodec::H264;
@@ -611,12 +619,13 @@ static std::string create_nxp_imx8_v4l2_stream(const CameraSettings& settings,
                                     : DEFAULT_KEYFRAME_INTERVAL;
   const bool use_intra_refresh =
       settings.h26x_intra_refresh_type != -1 && keyframe_interval > 0;
+  const auto io_mode = use_dmabuf ? "dmabuf" : "mmap";
 
   std::stringstream ss;
   ss << fmt::format(
-      "v4l2src device=/dev/video{} io-mode=dmabuf do-timestamp=true ! "
+      "v4l2src device=/dev/video{} io-mode={} do-timestamp=true ! "
       "video/x-raw,format=NV12,width={},height={},framerate={}/1 ! ",
-      device_index, width, height, framerate);
+      device_index, io_mode, width, height, framerate);
   ss << "queue max-size-buffers=4 leaky=downstream ! ";
   const std::string aud_parameter =
       use_h264 && settings.nxp_enable_aud ? " enable-aud=true" : "";

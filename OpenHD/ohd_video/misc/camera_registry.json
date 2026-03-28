@@ -583,10 +583,10 @@
     {
       "key": "X_CAM_TYPE_ORQA_HORNET",
       "id": 122,
-      "name": "ORQA_HORNET",
-      "ui_label": "HORNET",
+      "name": "ORCA_V2",
+      "ui_label": "ORCA V2",
       "resolutions": [
-        {"width": 960, "height": 720, "fps": 120}
+        {"width": 1920, "height": 1080, "fps": 60}
       ]
     },
     {
