@@ -613,7 +613,8 @@
       "name": "ORQA_ORCA_DIGITAL_V2",
       "ui_label": "ORCA DIGITAL V2",
       "resolutions": [
-        {"width": 1920, "height": 1080, "fps": 120}
+        {"width": 1920, "height": 1080, "fps": 60},
+        {"width": 1280, "height": 720, "fps": 60}
       ]
     },
     {
