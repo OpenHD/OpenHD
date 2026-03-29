@@ -154,6 +154,7 @@ class SerialEndpointManager {
 // Here we return std::null-opt if serial is disabled ("")
 // otherwise, a (most likely) valid serial fd path
 std::optional<std::string> serial_openhd_param_to_linux_fd(
-    const std::string& param_name);
+    const std::string& param_name,
+    bool use_openhd_uart_default = false);
 
 #endif  // OPENHD_OPENHD_OHD_TELEMETRY_SRC_ENDPOINTS_SERIALENDPOINT_H_

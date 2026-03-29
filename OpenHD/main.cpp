@@ -109,6 +109,13 @@ bool argv_has_emulate_monitor_card(int argc, char* argv[]) {
   return false;
 }
 
+std::string default_openhd_uart_telemetry_device_for_platform() {
+  if (OHDPlatform::instance().is_orqa()) {
+    return "/dev/ttymxc1";
+  }
+  return "/dev/serial1";
+}
+
 std::string trim_copy(std::string value) {
   auto not_space = [](unsigned char ch) { return !std::isspace(ch); };
   value.erase(value.begin(),
@@ -342,7 +349,8 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
           if (optarg != nullptr) {
             ret.openhd_uart_telemetry_device = optarg;
           } else {
-            ret.openhd_uart_telemetry_device = "/dev/serial1";
+            ret.openhd_uart_telemetry_device =
+                default_openhd_uart_telemetry_device_for_platform();
           }
         }
         break;
@@ -407,7 +415,7 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
         ss << "--run-time-seconds -t [Manually specify run time (default "
               "infinite),for debugging] \n";
         ss << "--openhd_uart_telemetry [optional serial device, default "
-              "/dev/serial1] \n";
+           << default_openhd_uart_telemetry_device_for_platform() << "] \n";
         std::cout << ss.str() << std::flush;
       }
         exit(1);

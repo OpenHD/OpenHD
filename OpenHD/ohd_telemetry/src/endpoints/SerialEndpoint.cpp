@@ -404,7 +404,7 @@ void SerialEndpointManager::configure(const SerialEndpoint::HWOptions& options,
 }
 
 std::optional<std::string> serial_openhd_param_to_linux_fd(
-    const std::string& param_name) {
+    const std::string& param_name, bool use_openhd_uart_default) {
   if (param_name.empty()) {
     // "" means disabled
     return std::nullopt;
@@ -412,7 +412,12 @@ std::optional<std::string> serial_openhd_param_to_linux_fd(
   // Default mapping
   if (OHDUtil::str_equal(param_name, "DEFAULT")) {
     const auto platform = OHDPlatform::instance();
-    if (platform.is_rpi()) {
+    if (platform.is_orqa()) {
+      if (use_openhd_uart_default) {
+        return "/dev/ttymxc1";
+      }
+      return "/dev/ttymxc0";
+    } else if (platform.is_rpi()) {
       return "/dev/serial0";
     } else if (platform.is_x20() || platform.is_rock()) {
       return "dev/ttyS2";

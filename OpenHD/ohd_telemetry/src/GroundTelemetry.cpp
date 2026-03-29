@@ -576,7 +576,7 @@ void GroundTelemetry::setup_openhd_uart_telemetry() {
     return;
   }
   const auto uart_linux_fd = serial_openhd_param_to_linux_fd(
-      settings.openhd_uart_telemetry_connection);
+      settings.openhd_uart_telemetry_connection, true);
   if (!uart_linux_fd.has_value()) {
     m_openhd_uart_serial->disable();
     return;
