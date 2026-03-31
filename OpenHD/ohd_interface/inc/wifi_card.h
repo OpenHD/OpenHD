@@ -53,7 +53,9 @@ enum class WiFiCardType {
   OPENHD_EMULATED,
   AIC,
   QUALCOMM,
-  UNKNOWN
+  UNKNOWN,
+  // Non-monitor-mode Artosyn link pseudo card type for telemetry/UI display.
+  ARTOSYN
 };
 
 static constexpr uint8_t WIFI_CARD_SUB_TYPE_UNKNOWN = 0;
@@ -90,6 +92,8 @@ static std::string wifi_card_type_to_string(const WiFiCardType& card_type) {
       return "AIC";
     case WiFiCardType::QUALCOMM:
       return "QUALCOMM";
+    case WiFiCardType::ARTOSYN:
+      return "ARTOSYN";
     case WiFiCardType::UNKNOWN:
     default:
       return "UNKNOWN";
@@ -140,6 +144,9 @@ static std::optional<WiFiCardType> wifi_card_type_from_string(
   }
   if (OHDUtil::equal_after_uppercase(value, "QUALCOMM")) {
     return WiFiCardType::QUALCOMM;
+  }
+  if (OHDUtil::equal_after_uppercase(value, "ARTOSYN")) {
+    return WiFiCardType::ARTOSYN;
   }
   if (OHDUtil::equal_after_uppercase(value, "OPENHD_EMULATED")) {
     return WiFiCardType::OPENHD_EMULATED;

@@ -13,7 +13,9 @@ extern "C" {
 
 #include "openhd_action_handler.h"
 #include "openhd_settings_imp.h"
+#include "openhd_util.h"
 #include "openhd_util_time.h"
+#include "wifi_card.h"
 
 namespace {
 ArtosynLink::Config config_from_settings(
@@ -82,6 +84,39 @@ int bandwidth_enum_to_mhz(int bw) {
     default:
       return 0;
   }
+}
+
+struct ArtosynUsbInfo {
+  bool present = false;
+  bool hs_mode = false;
+};
+
+static ArtosynUsbInfo detect_artosyn_usb_info() {
+  ArtosynUsbInfo info{};
+  const auto lsusb_out = OHDUtil::run_command_out("lsusb", false);
+  if (!lsusb_out.has_value()) {
+    return info;
+  }
+  const auto lsusb_upper = OHDUtil::to_uppercase(lsusb_out.value());
+  if (!OHDUtil::contains(lsusb_upper, "1D6B:8030")) {
+    return info;
+  }
+  info.present = true;
+  info.hs_mode =
+      OHDUtil::contains(lsusb_upper, "IN HS MODE") ||
+      OHDUtil::contains(lsusb_upper, "HS MODE");
+  return info;
+}
+
+// Cache expensive lsusb probing since link stats are emitted at 2Hz.
+static ArtosynUsbInfo detect_artosyn_usb_info_cached(int64_t now_ms) {
+  static int64_t last_probe_ms = 0;
+  static ArtosynUsbInfo cached{};
+  if (last_probe_ms == 0 || (now_ms - last_probe_ms) > 5000) {
+    cached = detect_artosyn_usb_info();
+    last_probe_ms = now_ms;
+  }
+  return cached;
 }
 }  // namespace
 
@@ -487,7 +522,13 @@ void ArtosynLink::update_link_stats() {
   auto& card = stats.cards.at(0);
   card.NON_MAVLINK_CARD_ACTIVE = true;
   card.card_index = 0;
-  card.card_type = 15;  // WiFiCardType::UNKNOWN
+  const auto artosyn_usb = detect_artosyn_usb_info_cached(now_ms);
+  // Keep UNKNOWN as fallback if we cannot identify the Artosyn USB endpoint.
+  card.card_type = artosyn_usb.present
+                       ? wifi_card_type_to_int(WiFiCardType::ARTOSYN)
+                       : wifi_card_type_to_int(WiFiCardType::UNKNOWN);
+  // Use card_sub_type to expose "HS mode" detail to UI if needed later.
+  card.card_sub_type = artosyn_usb.hs_mode ? 1 : 0;
   card.tx_active = m_profile.is_air ? 1 : 0;
   card.rx_rssi = -127;
   card.rx_rssi_1 = -127;
