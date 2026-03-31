@@ -12,6 +12,7 @@
 #include "openhd_link.hpp"
 #include "openhd_spdlog.h"
 #include "artosyn_link_settings.h"
+#include "non_wb_video_bitrate_meter.h"
 
 // SDK types used by helper methods.
 extern "C" {
@@ -140,6 +141,7 @@ class ArtosynLink : public OHDLink {
   uint64_t m_last_stats_tx_tele_packets = 0;
   uint64_t m_last_stats_rx_tele_bytes = 0;
   uint64_t m_last_stats_rx_tele_packets = 0;
+  openhd::non_wb::VideoBitrateMeter m_video_bitrate_meter;
 };
 
 #endif  // OPENHD_ARTOSYN_LINK_H

@@ -25,6 +25,7 @@
 
 #include <gst/gst.h>
 
+#include <cmath>
 #include <iostream>
 #include <utility>
 #include <vector>
@@ -60,6 +61,10 @@ GStreamerStream::GStreamerStream(std::shared_ptr<CameraHolder> camera_holder,
     dirty_use_raw = true;
   }
   m_camera_holder->register_listener([this]() {
+    m_console->debug(
+        "Camera settings changed, requesting pipeline restart "
+        "(persisted_h26x_bitrate_kbits:{})",
+        m_camera_holder->get_settings().h26x_bitrate_kbits);
     // right now, every time the settings for this camera change, we just
     // re-start the whole stream. That is not ideal, since some cameras support
     // changing for example the bitrate or white balance during operation. But
@@ -437,6 +442,12 @@ void GStreamerStream::handle_change_bitrate_request(
   //  We do some safety checks first - the link might recommend too much / too
   //  little
   auto bitrate_for_encoder_kbits = lb.recommended_encoder_bitrate_kbits;
+  m_console->debug(
+      "Bitrate request received cam{}: requested_kbits:{} current_target_kbits:{} "
+      "persisted_kbits:{}",
+      m_camera_holder->get_camera().index, bitrate_for_encoder_kbits,
+      m_curr_dynamic_bitrate_kbits.load(),
+      m_camera_holder->get_settings().h26x_bitrate_kbits);
   // m_console->debug(
   //     "Received bitrate update request: {} kBit/s (current target: {}
   //     kBit/s)", bitrate_for_encoder_kbits,
@@ -570,6 +581,8 @@ void GStreamerStream::stream_once() {
   std::chrono::steady_clock::time_point
       m_last_air_recording_remaining_space_check =
           std::chrono::steady_clock::now();
+  std::chrono::steady_clock::time_point m_last_bitrate_diag_log =
+      std::chrono::steady_clock::now();
   while (true) {
     // Quickly terminate if openhd wants to terminate
     if (!m_keep_looping) break;
@@ -605,8 +618,25 @@ void GStreamerStream::stream_once() {
           currently_applied_bitrate = new_bitrate;
           openhd::LinkActionHandler::instance().set_cam_info_bitrate(
               m_camera_holder->get_camera().index, currently_applied_bitrate);
+          const auto rb_opt = read_bitrate_readback(bitrate_ctrl_element);
+          if (rb_opt.has_value()) {
+            int effective_kbits = rb_opt->interpreted_kbits;
+            if (m_camera_holder->requires_half_bitrate_workaround()) {
+              effective_kbits *= 2;
+            }
+            m_console->debug(
+                "Bitrate apply success cam{}: requested_kbits:{} "
+                "applied_kbits:{} encoder_readback_raw:{} "
+                "encoder_readback_kbits:{} effective_kbits:{}",
+                m_camera_holder->get_camera().index, new_bitrate,
+                hacked_bitrate_kbits, rb_opt->raw_property_value,
+                rb_opt->interpreted_kbits, effective_kbits);
+          }
         } else {
-          m_console->warn("Cannot apply bitrate though code assumes itl work");
+          m_console->warn(
+              "Cannot apply bitrate cam{} requested_kbits:{} applied_kbits:{}",
+              m_camera_holder->get_camera().index, new_bitrate,
+              hacked_bitrate_kbits);
         }
       } else {
         // Sad, but if the camera doesn't support changing the bitrate without a
@@ -629,6 +659,49 @@ void GStreamerStream::stream_once() {
       m_camera_holder->check_remaining_space_air_recording(true);
       m_last_air_recording_remaining_space_check =
           std::chrono::steady_clock::now();
+    }
+    if (m_bitrate_ctrl_element.has_value() &&
+        std::chrono::steady_clock::now() - m_last_bitrate_diag_log >
+            std::chrono::seconds(3)) {
+      m_last_bitrate_diag_log = std::chrono::steady_clock::now();
+      const auto bitrate_ctrl_element = m_bitrate_ctrl_element.value();
+      const auto rb_opt = read_bitrate_readback(bitrate_ctrl_element);
+      if (rb_opt.has_value()) {
+        int effective_kbits = rb_opt->interpreted_kbits;
+        if (m_camera_holder->requires_half_bitrate_workaround()) {
+          effective_kbits *= 2;
+        }
+        const int target_kbits = m_curr_dynamic_bitrate_kbits.load();
+        const int delta = std::abs(effective_kbits - target_kbits);
+        if (delta > 500) {
+          m_console->warn(
+              "Bitrate mismatch cam{}: target_kbits:{} "
+              "encoder_readback_raw:{} encoder_readback_kbits:{} "
+              "effective_kbits:{} delta_kbits:{} "
+              "persisted_kbits:{} currently_applied_kbits:{}",
+              m_camera_holder->get_camera().index, target_kbits,
+              rb_opt->raw_property_value, rb_opt->interpreted_kbits,
+              effective_kbits, delta,
+              m_camera_holder->get_settings().h26x_bitrate_kbits,
+              currently_applied_bitrate);
+        } else {
+          m_console->debug(
+              "Bitrate state cam{}: target_kbits:{} "
+              "encoder_readback_raw:{} encoder_readback_kbits:{} "
+              "effective_kbits:{} persisted_kbits:{} "
+              "currently_applied_kbits:{}",
+              m_camera_holder->get_camera().index, target_kbits,
+              rb_opt->raw_property_value, rb_opt->interpreted_kbits,
+              effective_kbits,
+              m_camera_holder->get_settings().h26x_bitrate_kbits,
+              currently_applied_bitrate);
+        }
+      } else {
+        m_console->warn(
+            "Bitrate diagnostics cam{}: cannot read encoder property {}",
+            m_camera_holder->get_camera().index,
+            bitrate_ctrl_element.property_name);
+      }
     }
     // try get a new frame fragment from gst
     GstSample* sample = gst_app_sink_try_pull_sample(

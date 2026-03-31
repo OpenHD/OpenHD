@@ -28,6 +28,7 @@
 
 #include <optional>
 
+#include "openhd_bitrate.h"
 #include "openhd_spdlog.h"
 #include "openhd_spdlog_include.h"
 
@@ -44,6 +45,28 @@ struct GstBitrateControlElement {
   // Not all encoders / elements call the bitrate property "bitrate"
   std::string property_name = "bitrate";
 };
+
+struct GstBitrateReadback {
+  int raw_property_value = -1;
+  int interpreted_kbits = -1;
+};
+
+static std::optional<GstBitrateReadback> read_bitrate_readback(
+    const GstBitrateControlElement& ctrl_el) {
+  gint raw_property_value = -1;
+  g_object_get(ctrl_el.encoder, ctrl_el.property_name.c_str(),
+               &raw_property_value, NULL);
+  if (raw_property_value < 0) {
+    return std::nullopt;
+  }
+  GstBitrateReadback ret{};
+  ret.raw_property_value = raw_property_value;
+  ret.interpreted_kbits =
+      ctrl_el.takes_kbit
+          ? raw_property_value
+          : openhd::bits_per_second_to_kbits_per_second(raw_property_value);
+  return ret;
+}
 
 static std::optional<GstBitrateControlElement>
 get_dynamic_bitrate_control_element_in_pipeline(
@@ -83,37 +106,50 @@ get_dynamic_bitrate_control_element_in_pipeline(
     return std::nullopt;
   }
   // try fetching the value for testing if it actually works
-  gint actual_bits_per_second = -1;
-  g_object_get(ret.encoder, ret.property_name.c_str(), &actual_bits_per_second,
-               NULL);
-  if (actual_bits_per_second == -1) {
+  const auto readback_opt = read_bitrate_readback(ret);
+  if (!readback_opt.has_value()) {
     openhd::log::get_default()->warn(
         "dynamic bitrate control element doesn't work");
     return std::nullopt;
   }
+  const auto readback = readback_opt.value();
+  const char* encoder_name = GST_OBJECT_NAME(ret.encoder);
   openhd::log::get_default()->info(
-      "Got bitrate control for camera {}, current:{}",
-      camera.cam_type_as_verbose_string(), actual_bits_per_second);
+      "Got bitrate control for camera {} encoder:{} property:{} units:{} "
+      "current_raw:{} current_kbits:{}",
+      camera.cam_type_as_verbose_string(), encoder_name ? encoder_name : "n/a",
+      ret.property_name, ret.takes_kbit ? "kbit/s" : "bit/s",
+      readback.raw_property_value, readback.interpreted_kbits);
   return ret;
 }
 
 static bool change_bitrate(const GstBitrateControlElement& ctrl_el,
                            int bitrate_kbits) {
-  const auto bitrate = ctrl_el.takes_kbit
-                           ? bitrate_kbits
-                           : openhd::kbits_to_bits_per_second(bitrate_kbits);
-  g_object_set(ctrl_el.encoder, ctrl_el.property_name.c_str(), bitrate, NULL);
-  gint actual_bits_per_second = -1;
-  g_object_get(ctrl_el.encoder, ctrl_el.property_name.c_str(),
-               &actual_bits_per_second, NULL);
-  if (actual_bits_per_second != bitrate) {
+  const auto target_raw_property_value =
+      ctrl_el.takes_kbit ? bitrate_kbits
+                         : openhd::kbits_to_bits_per_second(bitrate_kbits);
+  g_object_set(ctrl_el.encoder, ctrl_el.property_name.c_str(),
+               target_raw_property_value, NULL);
+  const auto readback_opt = read_bitrate_readback(ctrl_el);
+  if (!readback_opt.has_value()) {
     openhd::log::get_default()->warn(
-        "Cannot change bitrate to {}kbit/s, got {}kBit/s", bitrate_kbits,
-        actual_bits_per_second);
+        "Cannot read bitrate property {} after bitrate set to {} kbit/s",
+        ctrl_el.property_name, bitrate_kbits);
     return false;
   }
-  openhd::log::get_default()->debug("Changed bitrate to {} kbit/s",
-                                    bitrate_kbits);
+  const auto readback = readback_opt.value();
+  if (readback.raw_property_value != target_raw_property_value) {
+    openhd::log::get_default()->warn(
+        "Cannot change bitrate: target_kbits:{} target_raw:{} property:{} "
+        "units:{} readback_raw:{} readback_kbits:{}",
+        bitrate_kbits, target_raw_property_value, ctrl_el.property_name,
+        ctrl_el.takes_kbit ? "kbit/s" : "bit/s", readback.raw_property_value,
+        readback.interpreted_kbits);
+    return false;
+  }
+  openhd::log::get_default()->debug(
+      "Changed bitrate to {} kbit/s (property:{} raw:{})", bitrate_kbits,
+      ctrl_el.property_name, target_raw_property_value);
   return true;
 }
 

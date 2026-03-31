@@ -25,8 +25,11 @@
 #define OPENHD_ETHERNET_LINK_H
 
 #include <memory>
+#include <atomic>
+#include <cstdint>
 #include <thread>
 
+#include "non_wb_video_bitrate_meter.h"
 #include "openhd_config.h"
 #include "openhd_link.hpp"
 #include "openhd_udp.h"
@@ -62,9 +65,35 @@ class EthernetLink : public OHDLink {
 
   void initialize_air_unit();
   void initialize_ground_unit();
+  void start_stats_thread();
+  void stop_stats_thread();
+  void stats_loop();
+  void update_link_stats();
 
   void handle_video_data(int stream_index, const uint8_t* data, int data_len);
   void handle_telemetry_data(const uint8_t* data, int data_len);
+
+  std::atomic<bool> m_stats_running{false};
+  std::thread m_stats_thread;
+  std::atomic<uint64_t> m_tx_total_bytes{0};
+  std::atomic<uint64_t> m_tx_total_packets{0};
+  std::atomic<uint64_t> m_rx_total_bytes{0};
+  std::atomic<uint64_t> m_rx_total_packets{0};
+  std::atomic<uint64_t> m_tx_tele_bytes{0};
+  std::atomic<uint64_t> m_tx_tele_packets{0};
+  std::atomic<uint64_t> m_rx_tele_bytes{0};
+  std::atomic<uint64_t> m_rx_tele_packets{0};
+  std::atomic<int64_t> m_last_rx_packet_ts_ms{0};
+  int64_t m_last_stats_ts_ms = 0;
+  uint64_t m_last_stats_tx_bytes = 0;
+  uint64_t m_last_stats_tx_packets = 0;
+  uint64_t m_last_stats_rx_bytes = 0;
+  uint64_t m_last_stats_rx_packets = 0;
+  uint64_t m_last_stats_tx_tele_bytes = 0;
+  uint64_t m_last_stats_tx_tele_packets = 0;
+  uint64_t m_last_stats_rx_tele_bytes = 0;
+  uint64_t m_last_stats_rx_tele_packets = 0;
+  openhd::non_wb::VideoBitrateMeter m_video_bitrate_meter;
 };
 
 #endif  // OPENHD_ETHERNET_LINK_H

@@ -315,11 +315,12 @@ void ArtosynLink::transmit_video_data(
     return;
   }
   if (m_video_fd < 0) return;
-  (void)stream_index;
   for (const auto& fragment : fragmented_video_frame.rtp_fragments) {
     bb_socket_write(m_video_fd, fragment->data(),
                     static_cast<uint32_t>(fragment->size()),
                     m_cfg.read_timeout_ms);
+    m_video_bitrate_meter.on_tx_fragment(
+        stream_index, static_cast<uint64_t>(fragment->size()));
     m_tx_total_bytes.fetch_add(static_cast<uint64_t>(fragment->size()),
                                std::memory_order_relaxed);
     m_tx_total_packets.fetch_add(1, std::memory_order_relaxed);
@@ -355,6 +356,11 @@ void ArtosynLink::stats_loop() {
 
 void ArtosynLink::update_link_stats() {
   if (!m_dev) return;
+  // WB publishes its own detailed video stats. Never overwrite if WB is active.
+  if (openhd::LinkActionHandler::instance().wb_get_supported_channels !=
+      nullptr) {
+    return;
+  }
   const int64_t now_ms = openhd::util::steady_clock_time_epoch_ms();
   if (m_last_stats_ts_ms == 0) {
     m_last_stats_ts_ms = now_ms;
@@ -458,6 +464,25 @@ void ArtosynLink::update_link_stats() {
       clamp_int16(static_cast<int>(tx_tele_pps));
   stats.telemetry.curr_rx_pps =
       clamp_int16(static_cast<int>(rx_tele_pps));
+  if (m_profile.is_air) {
+    for (int i = 0; i < openhd::non_wb::VideoBitrateMeter::kMaxStreams; ++i) {
+      const auto sample = m_video_bitrate_meter.sample_stream(i, now_ms);
+      if (sample.total_packets == 0) {
+        continue;
+      }
+      openhd::link_statistics::Xmavlink_openhd_stats_wb_video_air_t air_video{};
+      const auto cam_stats = openhd::LinkActionHandler::instance().get_cam_info(i);
+      air_video.link_index = static_cast<uint8_t>(i);
+      air_video.curr_recommended_bitrate = cam_stats.encoding_bitrate_kbits;
+      air_video.curr_measured_encoder_bitrate = sample.bitrate_bps;
+      // No additional link-layer FEC injection on this path.
+      air_video.curr_injected_bitrate = sample.bitrate_bps;
+      air_video.curr_injected_pps = sample.packets_per_second;
+      air_video.curr_dropped_frames = 0;
+      air_video.curr_fec_percentage = 0;
+      stats.stats_wb_video_air.push_back(air_video);
+    }
+  }
 
   auto& card = stats.cards.at(0);
   card.NON_MAVLINK_CARD_ACTIVE = true;

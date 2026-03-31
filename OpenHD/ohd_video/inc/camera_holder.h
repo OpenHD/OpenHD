@@ -83,8 +83,13 @@ class CameraHolder :
     if (!openhd::validate_bitrate_mbits(bitrate_mbits)) {
       return false;
     }
+    const auto previous_kbits = get_settings().h26x_bitrate_kbits;
     unsafe_get_settings().h26x_bitrate_kbits =
         openhd::mbits_to_kbits_per_second(bitrate_mbits);
+    openhd::log::get_default()->debug(
+        "Camera{} BITRATE_MBITS request:{} old_kbits:{} new_kbits:{}",
+        m_camera.index, bitrate_mbits, previous_kbits,
+        unsafe_get_settings().h26x_bitrate_kbits);
     persist();
     return true;
   }
