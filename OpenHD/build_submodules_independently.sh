@@ -26,12 +26,18 @@
 # For the github CIs
 # Here we build all the submodules independently from each other to make sure
 # no unwanted dependencies were introduced by accident during OpenHD development
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/scripts/resolve_artosyn_sdk.sh"
+resolve_artosyn_sdk
+
 cd ohd_common || exit
 cmake -S . -B build_debug -DCMAKE_BUILD_TYPE=Debug || exit
 cmake --build build_debug || exit
 
 cd ../ohd_interface || exit
-cmake -S . -B build_debug -DCMAKE_BUILD_TYPE=Debug || exit
+cmake -S . -B build_debug -DCMAKE_BUILD_TYPE=Debug \
+  -DARTOSYN_SDK_ROOT="${ARTOSYN_SDK_ROOT}" \
+  -DARTOSYN_SDK_LIB="${ARTOSYN_SDK_LIB}" || exit
 cmake --build build_debug || exit
 
 cd ../ohd_telemetry || exit

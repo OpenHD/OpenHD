@@ -24,6 +24,9 @@
 
 set -euo pipefail  # Enable strict error handling
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "${SCRIPT_DIR}"
+
 CUSTOM="${1:-}"
 PACKAGE_ARCH="${2:-}"
 OS="${3:-}"
@@ -101,8 +104,13 @@ build_package() {
     package_name="${package_name}-QCom"
   fi
 
+  source "${SCRIPT_DIR}/OpenHD/scripts/resolve_artosyn_sdk.sh"
+  resolve_artosyn_sdk
+
   rm -f "${package_name}_${VERSION}_${PACKAGE_ARCH}.deb"
-  cmake OpenHD/
+  cmake OpenHD/ \
+    -DARTOSYN_SDK_ROOT="${ARTOSYN_SDK_ROOT}" \
+    -DARTOSYN_SDK_LIB="${ARTOSYN_SDK_LIB}"
   make -j$(nproc)
 
   mkdir -p "${PKGDIR}usr/local/bin/"

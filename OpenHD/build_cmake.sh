@@ -24,6 +24,7 @@
 ###############################################################################
 
 # convenient script to build this project with cmake
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 rm -rf build
 
@@ -34,5 +35,9 @@ cd build
 #cmake -G Ninja ..
 #ninja
 
-cmake ..
+source "${SCRIPT_DIR}/scripts/resolve_artosyn_sdk.sh"
+resolve_artosyn_sdk
+cmake .. \
+  -DARTOSYN_SDK_ROOT="${ARTOSYN_SDK_ROOT}" \
+  -DARTOSYN_SDK_LIB="${ARTOSYN_SDK_LIB}"
 make -j$(nproc)

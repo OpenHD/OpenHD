@@ -41,9 +41,47 @@ set(sources
     src/ethernet_manager.cpp
 )
 
-if (NOT ARTOSYN_SDK_ROOT OR NOT ARTOSYN_SDK_LIB)
-    message(FATAL_ERROR "Artosyn link is mandatory: set ARTOSYN_SDK_ROOT and ARTOSYN_SDK_LIB")
+if (NOT ARTOSYN_SDK_ROOT AND DEFINED ENV{ARTOSYN_SDK_ROOT})
+    set(ARTOSYN_SDK_ROOT "$ENV{ARTOSYN_SDK_ROOT}" CACHE PATH "Path to Artosyn host_drv SDK root" FORCE)
 endif()
+if (NOT ARTOSYN_SDK_LIB AND DEFINED ENV{ARTOSYN_SDK_LIB})
+    set(ARTOSYN_SDK_LIB "$ENV{ARTOSYN_SDK_LIB}" CACHE FILEPATH "Path to libar8030_client.a/.so" FORCE)
+endif()
+
+if (ARTOSYN_SDK_ROOT AND NOT ARTOSYN_SDK_LIB)
+    set(_artosyn_lib_candidates
+        "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/libar8030_client.a"
+        "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/libar8030_client.so"
+        "${ARTOSYN_SDK_ROOT}/lib/libar8030_client.a"
+        "${ARTOSYN_SDK_ROOT}/lib/libar8030_client.so"
+        "${ARTOSYN_SDK_ROOT}/libar8030_client.a"
+        "${ARTOSYN_SDK_ROOT}/libar8030_client.so"
+    )
+    foreach(_candidate IN LISTS _artosyn_lib_candidates)
+        if (EXISTS "${_candidate}")
+            set(ARTOSYN_SDK_LIB "${_candidate}" CACHE FILEPATH "Path to libar8030_client.a/.so" FORCE)
+            break()
+        endif()
+    endforeach()
+endif()
+
+if (NOT ARTOSYN_SDK_ROOT OR NOT ARTOSYN_SDK_LIB)
+    message(FATAL_ERROR
+        "Artosyn link is mandatory.\n"
+        "Set ARTOSYN_SDK_ROOT + ARTOSYN_SDK_LIB (cache or environment),\n"
+        "or provide ARTOSYN_SDK_ROOT so CMake can auto-detect libar8030_client."
+    )
+endif()
+if (NOT EXISTS "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030" OR
+    NOT EXISTS "${ARTOSYN_SDK_ROOT}/host_drv/com")
+    message(FATAL_ERROR
+        "Invalid ARTOSYN_SDK_ROOT: expected host_drv/app/ar8030 and host_drv/com under ${ARTOSYN_SDK_ROOT}"
+    )
+endif()
+if (NOT EXISTS "${ARTOSYN_SDK_LIB}")
+    message(FATAL_ERROR "Invalid ARTOSYN_SDK_LIB: ${ARTOSYN_SDK_LIB}")
+endif()
+
 list(APPEND sources src/artosyn_link.cpp src/artosyn_link_settings.cpp)
 target_compile_definitions(OHDInterfaceLib PUBLIC OHD_ENABLE_ARTOSYN=1)
 target_include_directories(OHDInterfaceLib PUBLIC

@@ -20,6 +20,11 @@ jobs:
       image: docker://ubuntu:lunar
     env:
       CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
+      DOWNLOAD_KEY: ${{ secrets.DOWNLOAD_KEY }}
+      DOWNLOAD_URL: ${{ secrets.DOWNLOAD_URL }}
+      OPENHD_SUBMODULE_TOKEN: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+      ARTLINK_GIT_AUTH_USERNAME: raphael@openhdfpv.org
+      ARTLINK_GIT_AUTH: "raphael@openhdfpv.org:${{ secrets.OPENHD_SUBMODULE_TOKEN }}"
     steps:
       - name: Setup Old-Releases Repositories
         run: |
@@ -47,7 +52,6 @@ jobs:
           pip install cloudsmith-api --break-system-packages
           pip install cloudsmith-cli --break-system-packages
           ./install_build_dep.sh ubuntu-x86
-
       - name: Build with make
         run: |
           cd OpenHD

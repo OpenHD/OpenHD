@@ -23,8 +23,15 @@
 # © OpenHD, All Rights Reserved.
 ###############################################################################
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 mkdir build_air_disabled
 cd build_air_disabled
 
-cmake .. -DENABLE_AIR=false
+source "${SCRIPT_DIR}/scripts/resolve_artosyn_sdk.sh"
+resolve_artosyn_sdk
+cmake .. \
+  -DENABLE_AIR=false \
+  -DARTOSYN_SDK_ROOT="${ARTOSYN_SDK_ROOT}" \
+  -DARTOSYN_SDK_LIB="${ARTOSYN_SDK_LIB}"
 make -j4
