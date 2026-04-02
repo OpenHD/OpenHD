@@ -19,7 +19,6 @@ find_package(Poco REQUIRED COMPONENTS Foundation Net) # Add other components if 
 add_library(OHDInterfaceLib STATIC) # initialized below
 add_library(OHDInterfaceLib::OHDInterfaceLib ALIAS OHDInterfaceLib)
 
-option(ENABLE_ARTOSYN_LINK "Enable Artosyn 8030 link (requires SDK)" OFF)
 set(ARTOSYN_SDK_ROOT "" CACHE PATH "Path to Artosyn host_drv SDK root")
 set(ARTOSYN_SDK_LIB "" CACHE FILEPATH "Path to libar8030_client.a/.so")
 
@@ -42,18 +41,16 @@ set(sources
     src/ethernet_manager.cpp
 )
 
-if (ENABLE_ARTOSYN_LINK)
-    if (NOT ARTOSYN_SDK_ROOT OR NOT ARTOSYN_SDK_LIB)
-        message(FATAL_ERROR "ENABLE_ARTOSYN_LINK=ON requires ARTOSYN_SDK_ROOT and ARTOSYN_SDK_LIB")
-    endif()
-    list(APPEND sources src/artosyn_link.cpp src/artosyn_link_settings.cpp)
-    target_compile_definitions(OHDInterfaceLib PUBLIC OHD_ENABLE_ARTOSYN=1)
-    target_include_directories(OHDInterfaceLib PUBLIC
-        "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030"
-        "${ARTOSYN_SDK_ROOT}/host_drv/com"
-    )
-    target_link_libraries(OHDInterfaceLib PUBLIC "${ARTOSYN_SDK_LIB}")
+if (NOT ARTOSYN_SDK_ROOT OR NOT ARTOSYN_SDK_LIB)
+    message(FATAL_ERROR "Artosyn link is mandatory: set ARTOSYN_SDK_ROOT and ARTOSYN_SDK_LIB")
 endif()
+list(APPEND sources src/artosyn_link.cpp src/artosyn_link_settings.cpp)
+target_compile_definitions(OHDInterfaceLib PUBLIC OHD_ENABLE_ARTOSYN=1)
+target_include_directories(OHDInterfaceLib PUBLIC
+    "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030"
+    "${ARTOSYN_SDK_ROOT}/host_drv/com"
+)
+target_link_libraries(OHDInterfaceLib PUBLIC "${ARTOSYN_SDK_LIB}")
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
 

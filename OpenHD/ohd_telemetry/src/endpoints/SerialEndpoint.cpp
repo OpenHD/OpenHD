@@ -420,14 +420,14 @@ std::optional<std::string> serial_openhd_param_to_linux_fd(
     } else if (platform.is_rpi()) {
       return "/dev/serial0";
     } else if (platform.is_x20() || platform.is_rock()) {
-      return "dev/ttyS2";
+      return "/dev/ttyS2";
     } else if (platform.is_luckfox_pico()) {
-      return "dev/ttyS3";
+      return "/dev/ttyS3";
     } else {
       openhd::log::get_default()->debug(
           "No default serial mapping for this platform");
       // fallback
-      return "dev/ttyS2";
+      return "/dev/ttyS2";
     }
   }
   // Otherwise, the user can enter any serial FD name

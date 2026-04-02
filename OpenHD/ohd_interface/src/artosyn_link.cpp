@@ -14,6 +14,7 @@ extern "C" {
 #include "openhd_action_handler.h"
 #include "openhd_settings_imp.h"
 #include "openhd_util.h"
+#include "openhd_util_filesystem.h"
 #include "openhd_util_time.h"
 #include "wifi_card.h"
 
@@ -91,14 +92,33 @@ struct ArtosynUsbInfo {
   bool hs_mode = false;
 };
 
+static constexpr auto kArtosynUsbIdPrimary = "4152:8030";
+// Keep old ID for compatibility with setups that still report this variant.
+static constexpr auto kArtosynUsbIdLegacy = "1D6B:8030";
+
+static bool contains_artosyn_usb_id(const std::string& lsusb_upper) {
+  return OHDUtil::contains(lsusb_upper, kArtosynUsbIdPrimary) ||
+         OHDUtil::contains(lsusb_upper, kArtosynUsbIdLegacy);
+}
+
+static bool has_artosyn_device_nodes() {
+  for (int i = 0; i < 16; ++i) {
+    if (OHDFilesystemUtil::exists("/dev/ar_mdev" + std::to_string(i))) {
+      return true;
+    }
+  }
+  return OHDFilesystemUtil::exists("/dev/artosyn_sdio");
+}
+
 static ArtosynUsbInfo detect_artosyn_usb_info() {
   ArtosynUsbInfo info{};
+  info.present = has_artosyn_device_nodes();
   const auto lsusb_out = OHDUtil::run_command_out("lsusb", false);
   if (!lsusb_out.has_value()) {
     return info;
   }
   const auto lsusb_upper = OHDUtil::to_uppercase(lsusb_out.value());
-  if (!OHDUtil::contains(lsusb_upper, "1D6B:8030")) {
+  if (!contains_artosyn_usb_id(lsusb_upper)) {
     return info;
   }
   info.present = true;
@@ -117,6 +137,23 @@ static ArtosynUsbInfo detect_artosyn_usb_info_cached(int64_t now_ms) {
     last_probe_ms = now_ms;
   }
   return cached;
+}
+
+static bool probe_artosyn_daemon_once(const ArtosynLink::Config& cfg) {
+  if (bb_host_connect_test(cfg.addr.c_str(), cfg.port) != 0) {
+    return false;
+  }
+  bb_host_t* host = nullptr;
+  if (bb_host_connect(&host, cfg.addr.c_str(), cfg.port) != 0) {
+    return false;
+  }
+  bb_dev_list_t* list = nullptr;
+  int n = bb_dev_getlist(host, &list);
+  if (list) {
+    bb_dev_freelist(list);
+  }
+  bb_host_disconnect(host);
+  return n > 0;
 }
 }  // namespace
 
@@ -152,20 +189,26 @@ ArtosynLink::~ArtosynLink() {
 bool ArtosynLink::probe() {
   openhd::ArtosynLinkSettingsHolder holder;
   Config cfg = config_from_settings(holder.get_settings());
-  if (bb_host_connect_test(cfg.addr.c_str(), cfg.port) != 0) {
-    return false;
+  bool artosyn_hw_hint = has_artosyn_device_nodes();
+  if (!artosyn_hw_hint) {
+    const auto lsusb_out = OHDUtil::run_command_out("lsusb", false);
+    if (lsusb_out.has_value()) {
+      artosyn_hw_hint =
+          contains_artosyn_usb_id(OHDUtil::to_uppercase(lsusb_out.value()));
+    }
   }
-  bb_host_t* host = nullptr;
-  if (bb_host_connect(&host, cfg.addr.c_str(), cfg.port) != 0) {
-    return false;
+  // If hardware is visible but the daemon starts slightly later than OpenHD,
+  // retry a bit before giving up.
+  const int max_attempts = artosyn_hw_hint ? 25 : 3;
+  for (int attempt = 0; attempt < max_attempts; ++attempt) {
+    if (probe_artosyn_daemon_once(cfg)) {
+      return true;
+    }
+    if (attempt + 1 < max_attempts) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(250));
+    }
   }
-  bb_dev_list_t* list = nullptr;
-  int n = bb_dev_getlist(host, &list);
-  if (list) {
-    bb_dev_freelist(list);
-  }
-  bb_host_disconnect(host);
-  return n > 0;
+  return false;
 }
 
 bool ArtosynLink::init_device() {
