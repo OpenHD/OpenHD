@@ -24,6 +24,8 @@
 #ifndef OPENHD_OPENHD_OHD_VIDEO_INC_CAMERA_HOLDER_H_
 #define OPENHD_OPENHD_OHD_VIDEO_INC_CAMERA_HOLDER_H_
 
+#include <spdlog/spdlog.h>
+
 #include <sstream>
 
 #include "camera.hpp"
