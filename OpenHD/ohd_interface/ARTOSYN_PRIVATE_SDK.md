@@ -16,6 +16,7 @@ export ARTOSYN_SDK_LIB=/opt/openhd-private/artosyn_sdk/host_drv/app/ar8030/libar
 
 3. Reuse kernel-builder secret contract:
    - `DOWNLOAD_URL` (+ optional `DOWNLOAD_KEY`) for secured archive download.
+   - If `DOWNLOAD_URL` is a git URL (not an archive), it is treated as ArtLink repo URL.
    - or `OPENHD_SUBMODULE_TOKEN` / `ARTLINK_GIT_AUTH` for private GitHub clone.
 
 4. (Optional) Set `ARTOSYN_SDK_ARCHIVE` to a local `.tar/.tar.gz/.tgz` archive path.
@@ -47,3 +48,10 @@ For GitHub Actions, prefer reusing existing secrets already used by
 - `DOWNLOAD_URL`
 - `DOWNLOAD_KEY`
 - `OPENHD_SUBMODULE_TOKEN`
+
+You can control fetch strategy with `ARTLINK_FETCH_MODE`:
+
+- `git-only` (recommended for private GitHub repo)
+- `git-first` (default auto behavior)
+- `download-first`
+- `download-only`

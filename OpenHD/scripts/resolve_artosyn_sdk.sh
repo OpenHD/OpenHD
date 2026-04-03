@@ -6,7 +6,8 @@
 #   resolve_artosyn_sdk
 #   cmake ... -DARTOSYN_SDK_ROOT="${ARTOSYN_SDK_ROOT}" -DARTOSYN_SDK_LIB="${ARTOSYN_SDK_LIB}"
 
-ARTLINK_REPO=${ARTLINK_REPO:-https://github.com/OpenHD-Technologies/OpenHD-ArtLink.git}
+ARTLINK_REPO_DEFAULT="https://github.com/OpenHD-Technologies/OpenHD-ArtLink.git"
+ARTLINK_REPO=${ARTLINK_REPO:-${ARTLINK_REPO_DEFAULT}}
 ARTLINK_BRANCH=${ARTLINK_BRANCH:-main}
 ARTLINK_REPO_DIR=${ARTLINK_REPO_DIR:-OpenHD-ArtLink}
 
@@ -15,10 +16,16 @@ ARTLINK_DOWNLOAD_URL=${ARTLINK_DOWNLOAD_URL:-${DOWNLOAD_URL:-}}
 ARTLINK_DOWNLOAD_KEY=${ARTLINK_DOWNLOAD_KEY:-${DOWNLOAD_KEY:-}}
 ARTLINK_GIT_AUTH_USERNAME=${ARTLINK_GIT_AUTH_USERNAME:-raphael@openhdfpv.org}
 ARTLINK_GIT_TOKEN=${ARTLINK_GIT_TOKEN:-${OPENHD_SUBMODULE_TOKEN:-}}
-ARTLINK_GIT_AUTH=${ARTLINK_GIT_AUTH:-${ARTLINK_DOWNLOAD_KEY:-}}
+ARTLINK_GIT_AUTH=${ARTLINK_GIT_AUTH:-}
 
+# Prefer dedicated git token for private repo clone.
 if [[ -z "${ARTLINK_GIT_AUTH}" && -n "${ARTLINK_GIT_TOKEN}" ]]; then
   ARTLINK_GIT_AUTH="${ARTLINK_GIT_AUTH_USERNAME}:${ARTLINK_GIT_TOKEN}"
+fi
+
+# Fallback to DOWNLOAD_KEY only when no explicit git auth is available.
+if [[ -z "${ARTLINK_GIT_AUTH}" && -n "${ARTLINK_DOWNLOAD_KEY}" ]]; then
+  ARTLINK_GIT_AUTH="${ARTLINK_DOWNLOAD_KEY}"
 fi
 
 _artlink_git_auth_basic() {
@@ -62,6 +69,24 @@ _extract_archive() {
   return 1
 }
 
+_is_archive_url() {
+  local url="$1"
+  local lower
+  lower="$(printf '%s' "${url}" | tr '[:upper:]' '[:lower:]')"
+  case "${lower}" in
+    *.tar|*.tar.gz|*.tgz|*.tar.xz|*.txz|*.zip|*.7z)
+      return 0
+      ;;
+  esac
+  # Common query-parameter style download links
+  if [[ "${lower}" == *".tar?"* || "${lower}" == *".tar.gz?"* || \
+        "${lower}" == *".tgz?"* || "${lower}" == *".zip?"* || \
+        "${lower}" == *"format=tar"* || "${lower}" == *"format=zip"* ]]; then
+    return 0
+  fi
+  return 1
+}
+
 _find_sdk_root() {
   local search_root="$1"
   if [[ -d "${search_root}/host_drv/app/ar8030" && -d "${search_root}/host_drv/com" ]]; then
@@ -79,6 +104,10 @@ _find_sdk_root() {
 
 _fetch_from_download_url() {
   if [[ -z "${ARTLINK_DOWNLOAD_URL}" ]]; then
+    return 1
+  fi
+  # If DOWNLOAD_URL points to a git repo (not an archive), let git path handle it.
+  if ! _is_archive_url "${ARTLINK_DOWNLOAD_URL}"; then
     return 1
   fi
   local fetch_root="/tmp/openhd_artosyn_sdk_fetch"
@@ -162,6 +191,15 @@ _build_client_lib_from_source() {
 resolve_artosyn_sdk() {
   local sdk_root="${ARTOSYN_SDK_ROOT:-}"
   local sdk_lib="${ARTOSYN_SDK_LIB:-}"
+  local fetch_mode="${ARTLINK_FETCH_MODE:-auto}"
+
+  # Kernel-builder secret reuse:
+  # If DOWNLOAD_URL is actually a git repository URL, use it as the ArtLink repo.
+  if [[ -n "${ARTLINK_DOWNLOAD_URL}" && "${ARTLINK_REPO}" == "${ARTLINK_REPO_DEFAULT}" ]]; then
+    if ! _is_archive_url "${ARTLINK_DOWNLOAD_URL}"; then
+      ARTLINK_REPO="${ARTLINK_DOWNLOAD_URL}"
+    fi
+  fi
 
   # Optional archive injection for CI/private builders.
   # If set, extract archive into /tmp/openhd_artosyn_sdk and use it as root.
@@ -224,14 +262,32 @@ resolve_artosyn_sdk() {
     done
   fi
 
-  # Reuse kernel-builder style secure download contract.
+  # Prefer git clone + build (same model as kernel-builder), then fallback to
+  # download URL only if needed.
   if [[ -z "${sdk_root}" ]]; then
-    sdk_root="$(_fetch_from_download_url || true)"
-  fi
-
-  # Fallback: fetch private ArtLink repo with token/basic auth.
-  if [[ -z "${sdk_root}" ]]; then
-    sdk_root="$(_fetch_from_git || true)"
+    case "${fetch_mode}" in
+      git-first|auto|"")
+        sdk_root="$(_fetch_from_git || true)"
+        if [[ -z "${sdk_root}" ]]; then
+          sdk_root="$(_fetch_from_download_url || true)"
+        fi
+        ;;
+      download-first)
+        sdk_root="$(_fetch_from_download_url || true)"
+        if [[ -z "${sdk_root}" ]]; then
+          sdk_root="$(_fetch_from_git || true)"
+        fi
+        ;;
+      git-only)
+        sdk_root="$(_fetch_from_git || true)"
+        ;;
+      download-only)
+        sdk_root="$(_fetch_from_download_url || true)"
+        ;;
+      *)
+        echo "Unknown ARTLINK_FETCH_MODE=${fetch_mode} (use git-first, download-first, git-only, download-only)" >&2
+        ;;
+    esac
   fi
 
   if [[ -n "${sdk_root}" && -z "${sdk_lib}" ]]; then
