@@ -55,6 +55,7 @@ class OHDLink {
  public:
   typedef std::function<void(std::shared_ptr<std::vector<uint8_t>> data)>
       ON_TELE_DATA_CB;
+  virtual ~OHDLink() = default;
 
  public:
   // --- Telemetry air and ground both receive and send --------
