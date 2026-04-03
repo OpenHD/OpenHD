@@ -179,9 +179,9 @@ _build_client_lib_from_source() {
     -DUSING_8030USB=OFF \
     -DUSING_8030SDIO=OFF \
     -DUSING_8030UART=ON \
-    -DUSING_8030DRV=OFF >/dev/null || return 1
+    -DUSING_8030DRV=OFF || return 1
 
-  cmake --build "${build_dir}" --target ar8030_client >/dev/null || return 1
+  cmake --build "${build_dir}" --target ar8030_client || return 1
 
   local built_lib
   built_lib="$(find "${build_dir}" -type f -name "libar8030_client.a" | head -n 1 || true)"
@@ -297,6 +297,10 @@ resolve_artosyn_sdk() {
     local lib_candidates=(
       "${sdk_root}/host_drv/app/ar8030/libar8030_client.a"
       "${sdk_root}/host_drv/app/ar8030/libar8030_client.so"
+      "${sdk_root}/host_drv/build/app/ar8030/libar8030_client.a"
+      "${sdk_root}/host_drv/build/app/ar8030/libar8030_client.so"
+      "${sdk_root}/host_drv/install/bin/libar8030_client.a"
+      "${sdk_root}/host_drv/install/bin/libar8030_client.so"
       "${sdk_root}/lib/libar8030_client.a"
       "${sdk_root}/lib/libar8030_client.so"
       "${sdk_root}/libar8030_client.a"
@@ -309,6 +313,11 @@ resolve_artosyn_sdk() {
         break
       fi
     done
+  fi
+
+  if [[ -n "${sdk_root}" && -z "${sdk_lib}" ]]; then
+    # Fallback for SDK trees that keep prebuilt libs in non-standard host_drv paths.
+    sdk_lib="$(find "${sdk_root}/host_drv" -type f \( -name "libar8030_client.a" -o -name "libar8030_client.so" \) | head -n 1 || true)"
   fi
 
   if [[ -n "${sdk_root}" && -z "${sdk_lib}" ]]; then
