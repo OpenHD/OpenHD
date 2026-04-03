@@ -25,6 +25,9 @@ export ARTOSYN_SDK_LIB=/opt/openhd-private/artosyn_sdk/host_drv/app/ar8030/libar
    - `OPENHD_KERNEL_BUILDER_DIR` (for `<dir>/workdir/mods/OpenHD-ArtLink`)
    - or `ARTLINK_SOURCE_DIR` (direct path to the ArtLink source tree)
 
+If `libar8030_client` is not prebuilt in that source tree, the resolver will
+attempt to build `ar8030_client` from `host_drv` automatically.
+
 ## Builder defaults
 
 OpenHD build scripts also search these default SDK roots when env vars are not set:

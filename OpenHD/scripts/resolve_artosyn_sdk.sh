@@ -113,6 +113,52 @@ _fetch_from_git() {
   _find_sdk_root "${repo_root}" || return 1
 }
 
+_build_client_lib_from_source() {
+  local sdk_root="$1"
+  local host_drv_dir="${sdk_root}/host_drv"
+  if [[ ! -f "${host_drv_dir}/CMakeLists.txt" ]]; then
+    return 1
+  fi
+  if ! command -v cmake >/dev/null 2>&1; then
+    return 1
+  fi
+
+  local build_dir="/tmp/openhd_artosyn_sdk_build"
+  rm -rf "${build_dir}" || return 1
+
+  cmake -S "${host_drv_dir}" -B "${build_dir}" \
+    -DAPP_STATIC_LIB=ON \
+    -DBUILD_TEST_APP=OFF \
+    -DBUILD_ARTOSYN_EXAMPLE=OFF \
+    -DBUILD_RAM_INIT=OFF \
+    -DBUILD_TUNTAP=OFF \
+    -DBUILD_BW_UPDATE_DEMO=OFF \
+    -DBUILD_IMG_UPGRADE=OFF \
+    -DBUILD_XDATA_TEST=OFF \
+    -DBUILD_REPEATER_TEST=OFF \
+    -DBUILD_BB_TEST=OFF \
+    -DBUILD_WORK_MODE_CFG=OFF \
+    -DBUILD_NET_DEV_DEMO=OFF \
+    -DENABLE_PYTHON=OFF \
+    -DENABLE_JAVA=OFF \
+    -DUSING_8030USB=OFF \
+    -DUSING_8030SDIO=OFF \
+    -DUSING_8030UART=ON \
+    -DUSING_8030DRV=OFF >/dev/null || return 1
+
+  cmake --build "${build_dir}" --target ar8030_client >/dev/null || return 1
+
+  local built_lib
+  built_lib="$(find "${build_dir}" -type f -name "libar8030_client.a" | head -n 1 || true)"
+  if [[ -z "${built_lib}" ]]; then
+    built_lib="$(find "${build_dir}" -type f -name "libar8030_client.so" | head -n 1 || true)"
+  fi
+  if [[ -z "${built_lib}" ]]; then
+    return 1
+  fi
+  echo "${built_lib}"
+}
+
 resolve_artosyn_sdk() {
   local sdk_root="${ARTOSYN_SDK_ROOT:-}"
   local sdk_lib="${ARTOSYN_SDK_LIB:-}"
@@ -204,6 +250,10 @@ resolve_artosyn_sdk() {
         break
       fi
     done
+  fi
+
+  if [[ -n "${sdk_root}" && -z "${sdk_lib}" ]]; then
+    sdk_lib="$(_build_client_lib_from_source "${sdk_root}" || true)"
   fi
 
   if [[ -z "${sdk_root}" || -z "${sdk_lib}" ]]; then
