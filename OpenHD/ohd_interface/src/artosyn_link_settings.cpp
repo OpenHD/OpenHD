@@ -2,8 +2,10 @@
 
 #include "include_json.hpp"
 
+namespace openhd {
+
 static void to_json(nlohmann::json& j,
-                    const openhd::ArtosynLinkSettings& s) {
+                    const ArtosynLinkSettings& s) {
   j = nlohmann::json{
       {"addr", s.addr},
       {"port", s.port},
@@ -38,7 +40,7 @@ static void to_json(nlohmann::json& j,
 }
 
 static void from_json(const nlohmann::json& j,
-                      openhd::ArtosynLinkSettings& s) {
+                      ArtosynLinkSettings& s) {
   s.addr = j.value("addr", s.addr);
   s.port = j.value("port", s.port);
   s.slot = j.value("slot", s.slot);
@@ -70,14 +72,16 @@ static void from_json(const nlohmann::json& j,
   s.rf_b_rx = j.value("rf_b_rx", s.rf_b_rx);
 }
 
-std::optional<openhd::ArtosynLinkSettings>
-openhd::ArtosynLinkSettingsHolder::impl_deserialize(
+std::optional<ArtosynLinkSettings>
+ArtosynLinkSettingsHolder::impl_deserialize(
     const std::string& file_as_string) const {
   return openhd_json_parse<ArtosynLinkSettings>(file_as_string);
 }
 
-std::string openhd::ArtosynLinkSettingsHolder::imp_serialize(
+std::string ArtosynLinkSettingsHolder::imp_serialize(
     const ArtosynLinkSettings& data) const {
   const nlohmann::json tmp = data;
   return tmp.dump(4);
 }
+
+}  // namespace openhd
