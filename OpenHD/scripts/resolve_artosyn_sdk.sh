@@ -89,6 +89,9 @@ _is_archive_url() {
 
 _find_sdk_root() {
   local search_root="$1"
+  if [[ -z "${search_root}" || ! -d "${search_root}" ]]; then
+    return 1
+  fi
   if [[ -d "${search_root}/host_drv/app/ar8030" && -d "${search_root}/host_drv/com" ]]; then
     echo "${search_root}"
     return 0
@@ -197,13 +200,8 @@ resolve_artosyn_sdk() {
   local fetch_mode="${ARTLINK_FETCH_MODE:-auto}"
   echo "[Artosyn] Resolving SDK (mode=${fetch_mode})." >&2
 
-  # Kernel-builder secret reuse:
-  # If DOWNLOAD_URL is actually a git repository URL, use it as the ArtLink repo.
-  if [[ -n "${ARTLINK_DOWNLOAD_URL}" && "${ARTLINK_REPO}" == "${ARTLINK_REPO_DEFAULT}" ]]; then
-    if ! _is_archive_url "${ARTLINK_DOWNLOAD_URL}"; then
-      ARTLINK_REPO="${ARTLINK_DOWNLOAD_URL}"
-    fi
-  fi
+  # Keep git repo explicit for git fetch flow. DOWNLOAD_URL is treated as archive input only.
+  echo "[Artosyn] Git repo: ${ARTLINK_REPO}" >&2
 
   # Optional archive injection for CI/private builders.
   # If set, extract archive into /tmp/openhd_artosyn_sdk and use it as root.
