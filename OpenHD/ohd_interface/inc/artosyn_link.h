@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "openhd_link.hpp"
+#include "openhd_settings_imp.h"
 #include "openhd_spdlog.h"
 #include "artosyn_link_settings.h"
 #include "non_wb_video_bitrate_meter.h"
@@ -44,7 +45,7 @@ class ArtosynLink : public OHDLink {
 
   std::vector<openhd::Setting> get_all_settings();
 
- private:
+ public:
   struct Config {
     std::string addr = "127.0.0.1";
     int port = 50000;
@@ -57,6 +58,7 @@ class ArtosynLink : public OHDLink {
     int read_timeout_ms = 100;
   };
 
+ private:
   bool init_device();
   void shutdown_device();
 
