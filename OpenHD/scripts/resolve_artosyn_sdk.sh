@@ -219,6 +219,7 @@ Or place SDK under one of:
   /opt/openhd/artosyn_sdk
   /opt/artosyn_sdk
   /usr/local/share/openhd/artosyn_sdk
+If running via sudo, preserve env (e.g. sudo -E ...).
 EOF
     return 1
   fi

@@ -49,7 +49,7 @@ jobs:
           sudo ./install_build_dep.sh ubuntu-x86
       - name: Build with make
         run: |
-          sudo ./package.sh standard x86_64 ubuntu jammy
+          sudo -E ./package.sh standard x86_64 ubuntu jammy
           ls -a
 
       - name: Upload to Github
