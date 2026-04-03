@@ -110,6 +110,7 @@ _fetch_from_download_url() {
   if ! _is_archive_url "${ARTLINK_DOWNLOAD_URL}"; then
     return 1
   fi
+  echo "[Artosyn] Trying archive fetch path (DOWNLOAD_URL archive)." >&2
   local fetch_root="/tmp/openhd_artosyn_sdk_fetch"
   local archive_path="${fetch_root}/artlink-source.archive"
   local extract_dir="${fetch_root}/extract"
@@ -128,6 +129,7 @@ _fetch_from_download_url() {
 }
 
 _fetch_from_git() {
+  echo "[Artosyn] Trying git clone path for private ArtLink SDK." >&2
   local repo_root="/tmp/openhd_artosyn_sdk_repo/${ARTLINK_REPO_DIR}"
   rm -rf "${repo_root}" || return 1
   mkdir -p "$(dirname "${repo_root}")" || return 1
@@ -154,6 +156,7 @@ _build_client_lib_from_source() {
 
   local build_dir="/tmp/openhd_artosyn_sdk_build"
   rm -rf "${build_dir}" || return 1
+  echo "[Artosyn] libar8030_client missing, building ar8030_client from source." >&2
 
   cmake -S "${host_drv_dir}" -B "${build_dir}" \
     -DAPP_STATIC_LIB=ON \
@@ -192,6 +195,7 @@ resolve_artosyn_sdk() {
   local sdk_root="${ARTOSYN_SDK_ROOT:-}"
   local sdk_lib="${ARTOSYN_SDK_LIB:-}"
   local fetch_mode="${ARTLINK_FETCH_MODE:-auto}"
+  echo "[Artosyn] Resolving SDK (mode=${fetch_mode})." >&2
 
   # Kernel-builder secret reuse:
   # If DOWNLOAD_URL is actually a git repository URL, use it as the ArtLink repo.
@@ -256,6 +260,7 @@ resolve_artosyn_sdk() {
       local resolved
       resolved="$(_find_sdk_root "${candidate}" || true)"
       if [[ -n "${resolved}" ]]; then
+        echo "[Artosyn] Found SDK in local candidate path." >&2
         sdk_root="${resolved}"
         break
       fi
@@ -329,6 +334,9 @@ If running via sudo, preserve env (e.g. sudo -E ...).
 EOF
     return 1
   fi
+
+  echo "[Artosyn] SDK resolved: root=${ARTOSYN_SDK_ROOT:-${sdk_root}}" >&2
+  echo "[Artosyn] SDK lib resolved: ${ARTOSYN_SDK_LIB:-${sdk_lib}}" >&2
 
   export ARTOSYN_SDK_ROOT="${sdk_root}"
   export ARTOSYN_SDK_LIB="${sdk_lib}"

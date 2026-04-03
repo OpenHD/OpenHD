@@ -34,6 +34,7 @@ jobs:
       DOWNLOAD_KEY: ${{ secrets.DOWNLOAD_KEY }}
       DOWNLOAD_URL: ${{ secrets.DOWNLOAD_URL }}
       OPENHD_SUBMODULE_TOKEN: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+      ARTLINK_FETCH_MODE: git-only
       ARTLINK_GIT_AUTH_USERNAME: raphael@openhdfpv.org
       ARTLINK_GIT_AUTH: "raphael@openhdfpv.org:${{ secrets.OPENHD_SUBMODULE_TOKEN }}"
     steps:
@@ -59,6 +60,7 @@ jobs:
       DOWNLOAD_KEY: ${{ secrets.DOWNLOAD_KEY }}
       DOWNLOAD_URL: ${{ secrets.DOWNLOAD_URL }}
       OPENHD_SUBMODULE_TOKEN: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+      ARTLINK_FETCH_MODE: git-only
       ARTLINK_GIT_AUTH_USERNAME: raphael@openhdfpv.org
       ARTLINK_GIT_AUTH: "raphael@openhdfpv.org:${{ secrets.OPENHD_SUBMODULE_TOKEN }}"
     steps:
@@ -88,6 +90,7 @@ jobs:
       DOWNLOAD_KEY: ${{ secrets.DOWNLOAD_KEY }}
       DOWNLOAD_URL: ${{ secrets.DOWNLOAD_URL }}
       OPENHD_SUBMODULE_TOKEN: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+      ARTLINK_FETCH_MODE: git-only
       ARTLINK_GIT_AUTH_USERNAME: raphael@openhdfpv.org
       ARTLINK_GIT_AUTH: "raphael@openhdfpv.org:${{ secrets.OPENHD_SUBMODULE_TOKEN }}"
 
