@@ -197,9 +197,9 @@ _build_client_lib_from_source() {
     -DUSING_8030USB=OFF \
     -DUSING_8030SDIO=OFF \
     -DUSING_8030UART=ON \
-    -DUSING_8030DRV=OFF || return 1
+    -DUSING_8030DRV=OFF >&2 || return 1
 
-  cmake --build "${build_dir}" --target ar8030_client || return 1
+  cmake --build "${build_dir}" --target ar8030_client >&2 || return 1
 
   local built_lib
   built_lib="$(find "${build_dir}" -type f -name "libar8030_client.a" | head -n 1 || true)"
