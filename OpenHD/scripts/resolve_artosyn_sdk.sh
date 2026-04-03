@@ -134,17 +134,35 @@ _fetch_from_download_url() {
 _fetch_from_git() {
   echo "[Artosyn] Trying git clone path for private ArtLink SDK." >&2
   local repo_root="/tmp/openhd_artosyn_sdk_repo/${ARTLINK_REPO_DIR}"
+  local clone_manifest="/tmp/openhd_artlink_clone_manifest.log"
   rm -rf "${repo_root}" || return 1
   mkdir -p "$(dirname "${repo_root}")" || return 1
 
-  _artlink_git clone "${ARTLINK_REPO}" "${repo_root}" || return 1
+  _artlink_git clone --quiet "${ARTLINK_REPO}" "${repo_root}" || return 1
   if [[ -n "${ARTLINK_BRANCH}" && "${ARTLINK_BRANCH}" != "latest" ]]; then
     pushd "${repo_root}" >/dev/null || return 1
-      _artlink_git fetch --all --tags --prune || return 1
-      _artlink_git checkout -f "${ARTLINK_BRANCH}" || return 1
+      _artlink_git fetch --all --tags --prune --quiet || return 1
+      _artlink_git checkout -q -f "${ARTLINK_BRANCH}" || return 1
     popd >/dev/null || return 1
   fi
-  _find_sdk_root "${repo_root}" || return 1
+
+  {
+    echo "[Artosyn] Clone manifest"
+    echo "[Artosyn] repo_root=${repo_root}"
+    echo "[Artosyn] top-level:"
+    ls -la "${repo_root}"
+    echo "[Artosyn] key paths:"
+    ls -la "${repo_root}/host_drv" 2>/dev/null || true
+    ls -la "${repo_root}/host_drv/app" 2>/dev/null || true
+    ls -la "${repo_root}/host_drv/com" 2>/dev/null || true
+  } | tee "${clone_manifest}" >&2
+
+  local resolved
+  resolved="$(_find_sdk_root "${repo_root}" || true)"
+  if [[ -z "${resolved}" ]]; then
+    return 1
+  fi
+  echo "${resolved}"
 }
 
 _build_client_lib_from_source() {
