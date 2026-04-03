@@ -194,9 +194,9 @@ _build_client_lib_from_source() {
     -DBUILD_NET_DEV_DEMO=OFF \
     -DENABLE_PYTHON=OFF \
     -DENABLE_JAVA=OFF \
-    -DUSING_8030USB=OFF \
+    -DUSING_8030USB=ON \
     -DUSING_8030SDIO=OFF \
-    -DUSING_8030UART=ON \
+    -DUSING_8030UART=OFF \
     -DUSING_8030DRV=OFF >&2 || return 1
 
   cmake --build "${build_dir}" --target ar8030_client >&2 || return 1
