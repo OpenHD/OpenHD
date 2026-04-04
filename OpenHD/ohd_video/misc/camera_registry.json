@@ -628,6 +628,15 @@
         {"width": 1280, "height": 720, "fps": 60}
       ]
     },
+    {
+      "key": "X_CAM_TYPE_ROCKCHIP_RV1126",
+      "id": 141,
+      "name": "OHD_ARDUCAM",
+      "ui_label": "ARDUCAM",
+      "resolutions": [
+        {"width": 1920, "height": 1080, "fps": 60}
+      ]
+    },
     {"key": "X_CAM_TYPE_DISABLED", "id": 255, "name": "DISABLED", "ui_label": "DISABLE"}
   ],
   "manufacturer_groups": [
@@ -796,6 +805,13 @@
       "cameras": [
         "X_CAM_TYPE_ROCKCHIP_RV110X"
       ]
+    },
+    {
+      "key": "ARDUCAM",
+      "name": "ARDUCAM",
+      "cameras": [
+        "X_CAM_TYPE_ROCKCHIP_RV1126"
+      ]
     }
   ],
   "platform_choices": [
@@ -854,6 +870,10 @@
     {
       "platform": "X_PLATFORM_TYPE_LUCKFOX_RV110X",
       "manufacturers": ["LUCKFOX"]
+    },
+    {
+      "platform": "X_PLATFORM_TYPE_OPENHD_X21",
+      "manufacturers": ["ARDUCAM"]
     }
   ],
   "secondary_choices": ["DISABLE", "USB", "DEBUG"],
