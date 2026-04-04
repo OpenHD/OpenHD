@@ -55,6 +55,7 @@ static constexpr int X_PLATFORM_TYPE_LUCKFOX_RV110X = 25;
 // 26 used to be X_PLATFORM_TYPE_ROCKCHIP_RV1103, merged with
 // X_PLATFORM_TYPE_LUCKFOX_RV110X now
 static constexpr int X_PLATFORM_TYPE_LUCKFOX_LYRA = 27;
+static constexpr int X_PLATFORM_TYPE_OPENHD_X21 = 28;
 
 // Numbers 30..35 are reserved for allwinner
 static constexpr int X_PLATFORM_TYPE_ALWINNER_X20 = 30;
@@ -111,6 +112,8 @@ struct OHDPlatform {
   bool is_uvx_mod() const;
   // Luckfox Pico
   bool is_luckfox_pico() const;
+  // X21(B)
+  bool is_x21() const;
 };
 
 // We need to differentiate between rpi 4 and other pi's to use the right fec
