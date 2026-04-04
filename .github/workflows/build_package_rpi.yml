@@ -52,6 +52,26 @@ jobs:
             mkdir -p /usr/local/share/openhd/
             touch /usr/local/share/openhd/joyconfig.txt
             sudo ./install_build_dep.sh rpi
+            cmake_ge_322() {
+                v="$(cmake --version | awk 'NR==1{print $3}')"
+                dpkg --compare-versions "$v" ge "3.22"
+            }
+            if ! cmake_ge_322; then
+                echo "CMake < 3.22 detected, upgrading for Artosyn SDK build"
+                echo "deb http://deb.debian.org/debian bullseye-backports main" | sudo tee /etc/apt/sources.list.d/bullseye-backports.list
+                sudo apt-get update
+                sudo apt-get install -y -t bullseye-backports cmake || true
+            fi
+            if ! cmake_ge_322; then
+                echo "Backports cmake unavailable, trying pip cmake"
+                sudo apt-get install -y python3-pip
+                sudo pip3 install --upgrade cmake --break-system-packages
+            fi
+            cmake --version
+            if ! cmake_ge_322; then
+                echo "CMake >= 3.22 is required for Artosyn SDK build" >&2
+                exit 1
+            fi
             cd /opt
             cd OpenHD
             chown -R root:root ../OpenHD
