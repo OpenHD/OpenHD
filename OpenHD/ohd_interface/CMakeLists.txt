@@ -78,9 +78,15 @@ if (NOT EXISTS "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030" OR
         "Invalid ARTOSYN_SDK_ROOT: expected host_drv/app/ar8030 and host_drv/com under ${ARTOSYN_SDK_ROOT}"
     )
 endif()
-if (NOT EXISTS "${ARTOSYN_SDK_LIB}")
+set(_artosyn_sdk_libs ${ARTOSYN_SDK_LIB})
+if (NOT _artosyn_sdk_libs)
     message(FATAL_ERROR "Invalid ARTOSYN_SDK_LIB: ${ARTOSYN_SDK_LIB}")
 endif()
+foreach(_artosyn_lib IN LISTS _artosyn_sdk_libs)
+    if (NOT EXISTS "${_artosyn_lib}")
+        message(FATAL_ERROR "Invalid ARTOSYN_SDK_LIB entry: ${_artosyn_lib}")
+    endif()
+endforeach()
 
 list(APPEND sources src/artosyn_link.cpp src/artosyn_link_settings.cpp)
 target_compile_definitions(OHDInterfaceLib PUBLIC OHD_ENABLE_ARTOSYN=1)
@@ -88,7 +94,7 @@ target_include_directories(OHDInterfaceLib PUBLIC
     "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030"
     "${ARTOSYN_SDK_ROOT}/host_drv/com"
 )
-target_link_libraries(OHDInterfaceLib PUBLIC "${ARTOSYN_SDK_LIB}")
+target_link_libraries(OHDInterfaceLib PUBLIC ${_artosyn_sdk_libs})
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
 

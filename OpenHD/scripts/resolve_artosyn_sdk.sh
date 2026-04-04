@@ -209,6 +209,24 @@ _build_client_lib_from_source() {
   if [[ -z "${built_lib}" ]]; then
     return 1
   fi
+  if [[ "${built_lib}" == *.a ]]; then
+    local dep_candidates=(
+      "${build_dir}/com/libcom.a"
+      "${sdk_root}/host_drv/build/com/libcom.a"
+      "${sdk_root}/host_drv/install/bin/libcom.a"
+      "${sdk_root}/host_drv/com/libcom.a"
+    )
+    local dep
+    local out="${built_lib}"
+    for dep in "${dep_candidates[@]}"; do
+      if [[ -f "${dep}" ]]; then
+        out="${out};${dep}"
+        break
+      fi
+    done
+    echo "${out}"
+    return 0
+  fi
   echo "${built_lib}"
 }
 
@@ -340,6 +358,30 @@ resolve_artosyn_sdk() {
 
   if [[ -n "${sdk_root}" && -z "${sdk_lib}" ]]; then
     sdk_lib="$(_build_client_lib_from_source "${sdk_root}" || true)"
+  fi
+
+  if [[ -n "${sdk_lib}" && "${sdk_lib}" == *.a* ]]; then
+    local primary_lib="${sdk_lib%%;*}"
+    local lib_dir
+    lib_dir="$(dirname "${primary_lib}")"
+    local build_root
+    build_root="$(dirname "$(dirname "${lib_dir}")")"
+    local dep_candidates=(
+      "${build_root}/com/libcom.a"
+      "${sdk_root}/host_drv/build/com/libcom.a"
+      "${sdk_root}/host_drv/install/bin/libcom.a"
+      "${sdk_root}/host_drv/com/libcom.a"
+    )
+    local dep
+    for dep in "${dep_candidates[@]}"; do
+      if [[ -f "${dep}" ]]; then
+        case ";${sdk_lib};" in
+          *";${dep};"*) ;;
+          *) sdk_lib="${sdk_lib};${dep}" ;;
+        esac
+        break
+      fi
+    done
   fi
 
   if [[ -z "${sdk_root}" || -z "${sdk_lib}" ]]; then
