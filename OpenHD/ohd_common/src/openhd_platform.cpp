@@ -244,7 +244,6 @@ bool OHDPlatform::is_luckfox_pico() const {
   return platform_type == X_PLATFORM_TYPE_LUCKFOX_RV110X;
 }
 
-
 bool OHDPlatform::is_x21() const {
   return platform_type == X_PLATFORM_TYPE_OPENHD_X21;
 }

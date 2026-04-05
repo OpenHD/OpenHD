@@ -1183,7 +1183,6 @@ static std::string createRv1126Stream(const CameraSettings& settings) {
   const int bps_min = (bps * 90) / 100;
   const int bps_max = (bps * 110) / 100;
 
-
   if (settings.streamed_video_format.videoCodec == VideoCodec::H264) {
     ss << " mpph264enc";
   } else {
