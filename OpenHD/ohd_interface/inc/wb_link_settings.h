@@ -103,8 +103,10 @@ struct WBLinkSettings {
   // Ground RX channel width when not yet synchronized with the air unit.
   uint32_t wb_gnd_rx_channel_width = DEFAULT_GND_RX_CHANNEL_WIDTH;
   // MCS index used during injection - only used by air unit, since ground
-  // always sends with MCS0
+  // always sends with MCS0 unless manually overridden.
   uint32_t wb_air_mcs_index = DEFAULT_MCS_INDEX;
+  // Ground uplink MCS index. Defaults to MCS0 for range/reliability.
+  uint32_t wb_gnd_uplink_mcs_index = WB_GND_UPLINK_MCS_INDEX;
   int wb_enable_stbc = 0;  // 0==disabled
   bool wb_enable_ldpc = DEFAULT_ENABLE_LDPC;
   bool wb_enable_short_guard = DEFAULT_ENABLE_SHORT_GUARD;

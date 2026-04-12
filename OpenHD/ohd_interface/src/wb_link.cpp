@@ -386,11 +386,9 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
   m_tx_header_2 = std::make_shared<RadiotapHeaderTxHolder>();
   {
     const auto settings = m_settings->get_settings();
-    auto mcs_index = static_cast<int>(settings.wb_air_mcs_index);
-    if (m_profile.is_ground()) {
-      // Always use mcs 0 on ground
-      mcs_index = openhd::WB_GND_UPLINK_MCS_INDEX;
-    }
+    auto mcs_index = m_profile.is_air
+                         ? static_cast<int>(settings.wb_air_mcs_index)
+                         : static_cast<int>(settings.wb_gnd_uplink_mcs_index);
     int tx_channel_width = static_cast<int>(settings.wb_air_tx_channel_width);
     if (m_profile.is_ground()) {
       // Always use 20Mhz for injection on ground
@@ -691,11 +689,20 @@ int8_t clamp_to_int8(int value) {
                  static_cast<int>(std::numeric_limits<int8_t>::max())));
 }
 
+int WBLink::get_configured_tx_mcs_index() const {
+  const auto settings = m_settings->get_settings();
+  return m_profile.is_air ? static_cast<int>(settings.wb_air_mcs_index)
+                          : static_cast<int>(settings.wb_gnd_uplink_mcs_index);
+}
+
 bool WBLink::request_set_frequency(int frequency) {
   m_console->debug("request_set_frequency {}", frequency);
+  const int current_channel_width =
+      m_profile.is_air
+          ? static_cast<int>(m_settings->get_settings().wb_air_tx_channel_width)
+          : m_gnd_curr_rx_channel_width.load();
   if (!openhd::wb::validate_frequency_change(
-          frequency, m_settings->get_settings().wb_air_tx_channel_width,
-          m_broadcast_cards, m_console)) {
+          frequency, current_channel_width, m_broadcast_cards, m_console)) {
     return false;
   }
   if (OHDPlatform::instance().is_x20() && frequency < 5180) {
@@ -770,11 +777,21 @@ bool WBLink::request_set_ground_rx_channel_width(int channel_width) {
   auto work_item = std::make_shared<WorkItem>(
       fmt::format("SET_GND_CHWIDTH:{}", channel_width),
       [this, channel_width]() {
+        const int previous_frequency =
+            m_gnd_curr_rx_frequency > 0
+                ? m_gnd_curr_rx_frequency.load()
+                : static_cast<int>(m_settings->get_settings().wb_frequency);
+        const int previous_channel_width = m_gnd_curr_rx_channel_width.load();
         m_gnd_curr_rx_channel_width = channel_width;
         m_settings->unsafe_get_settings().wb_gnd_rx_channel_width =
             channel_width;
         m_settings->persist();
-        apply_frequency_and_channel_width_from_settings();
+        const bool switched = apply_frequency_and_channel_width_from_settings();
+        if (switched) {
+          gnd_note_channel_switch_attempt(previous_frequency,
+                                          previous_channel_width,
+                                          previous_frequency, channel_width);
+        }
       },
       std::chrono::steady_clock::now());
   return try_schedule_work_item(work_item);
@@ -862,7 +879,36 @@ bool WBLink::request_set_air_mcs_index(int mcs_index) {
       [this, mcs_index]() {
         m_settings->unsafe_get_settings().wb_air_mcs_index = mcs_index;
         m_settings->persist();
-        m_request_apply_air_mcs_index = true;
+        m_request_apply_tx_mcs_index = true;
+      },
+      std::chrono::steady_clock::now());
+  return try_schedule_work_item(work_item);
+}
+
+bool WBLink::request_set_ground_mcs_index(int mcs_index) {
+  if (m_profile.is_air) {
+    return false;
+  }
+  m_console->debug("set_ground_mcs_index {}", mcs_index);
+  const auto& tx_card = m_broadcast_cards.at(0);
+  if (!openhd::is_valid_mcs_index(mcs_index)) {
+    m_console->warn("Invalid mcs index{}", mcs_index);
+    return false;
+  }
+  if (!wifi_card_supports_variable_mcs(tx_card) &&
+      mcs_index != openhd::WB_GND_UPLINK_MCS_INDEX) {
+    m_console->warn(
+        "Card doesn't support variable MCS, only {} is allowed on ground",
+        openhd::WB_GND_UPLINK_MCS_INDEX);
+    return false;
+  }
+  auto tag = fmt::format("SET_GND_MCS:{}", mcs_index);
+  auto work_item = std::make_shared<WorkItem>(
+      tag,
+      [this, mcs_index]() {
+        m_settings->unsafe_get_settings().wb_gnd_uplink_mcs_index = mcs_index;
+        m_settings->persist();
+        m_request_apply_tx_mcs_index = true;
       },
       std::chrono::steady_clock::now());
   return try_schedule_work_item(work_item);
@@ -1119,6 +1165,15 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
       return m_gnd_curr_rx_channel_width.load();
     };
     ret.push_back(Setting{WB_CHANNEL_WIDTH, change_wb_channel_width});
+    auto change_wb_ground_mcs_index =
+        openhd::IntSetting{(int)settings.wb_gnd_uplink_mcs_index,
+                           [this](std::string, int value) {
+                             return request_set_ground_mcs_index(value);
+                           }};
+    change_wb_ground_mcs_index.get_callback = [this]() {
+      return m_settings->unsafe_get_settings().wb_gnd_uplink_mcs_index;
+    };
+    ret.push_back(Setting{WB_MCS_INDEX, change_wb_ground_mcs_index});
   }
   if (m_profile.is_air) {
     // MCS is only changeable on air
@@ -1601,9 +1656,8 @@ void WBLink::loop_do_work() {
     //  After we've applied the rate, we update the tx header mcs index if
     //  necessary
     tmp_true = true;
-    if (m_request_apply_air_mcs_index.compare_exchange_strong(tmp_true,
-                                                              false)) {
-      const int mcs_index = m_settings->unsafe_get_settings().wb_air_mcs_index;
+    if (m_request_apply_tx_mcs_index.compare_exchange_strong(tmp_true, false)) {
+      const int mcs_index = get_configured_tx_mcs_index();
       m_tx_header_1->update_mcs_index(mcs_index);
       m_tx_header_2->update_mcs_index(mcs_index);
     }
@@ -1784,7 +1838,7 @@ void WBLink::wt_update_statistics() {
       txStats.count_tx_injections_error_hint;
   stats.monitor_mode_link.count_tx_dropped_packets =
       txStats.count_tx_dropped_packets;
-  stats.monitor_mode_link.curr_tx_mcs_index = curr_settings.wb_air_mcs_index;
+  stats.monitor_mode_link.curr_tx_mcs_index = get_configured_tx_mcs_index();
   // m_console->debug("Big gaps:{}",rxStats.curr_big_gaps_counter);
   stats.monitor_mode_link.curr_tx_channel_mhz = curr_settings.wb_frequency;
   if (m_profile.is_air) {
@@ -2494,7 +2548,7 @@ void WBLink::wt_perform_mcs_via_rc_channel_if_enabled() {
                      settings.wb_air_mcs_index, mcs_from_rc);
     m_settings->unsafe_get_settings().wb_air_mcs_index = mcs_from_rc;
     m_settings->persist();
-    m_request_apply_air_mcs_index = true;
+    m_request_apply_tx_mcs_index = true;
   }
 }
 
@@ -2524,8 +2578,107 @@ void WBLink::update_arming_state(bool armed) {
   m_request_apply_tx_power = true;
 }
 
+void WBLink::gnd_note_channel_switch_attempt(int previous_frequency,
+                                             int previous_channel_width,
+                                             int new_frequency,
+                                             int new_channel_width) {
+  if (!m_profile.is_ground()) {
+    return;
+  }
+  if (previous_frequency == new_frequency &&
+      previous_channel_width == new_channel_width) {
+    m_gnd_switch_rollback_state.active = false;
+    return;
+  }
+  auto& state = m_gnd_switch_rollback_state;
+  state.active = true;
+  state.previous_frequency = previous_frequency;
+  state.previous_channel_width = previous_channel_width;
+  state.attempted_frequency = new_frequency;
+  state.attempted_channel_width = new_channel_width;
+  state.baseline_count_p_valid = m_wb_txrx->get_rx_stats().count_p_valid;
+  state.switch_tp = std::chrono::steady_clock::now();
+  m_console->debug(
+      "Ground switch armed rollback prev:{}@{}MHz attempt:{}@{}MHz "
+      "baseline_valid:{}",
+      state.previous_frequency, state.previous_channel_width,
+      state.attempted_frequency, state.attempted_channel_width,
+      state.baseline_count_p_valid);
+}
+
+void WBLink::wt_gnd_perform_channel_switch_rollback_check() {
+  if (!m_profile.is_ground()) {
+    return;
+  }
+  auto& state = m_gnd_switch_rollback_state;
+  if (!state.active) {
+    return;
+  }
+  const auto elapsed_since_switch =
+      std::chrono::steady_clock::now() - state.switch_tp;
+  if (elapsed_since_switch < GND_SWITCH_ROLLBACK_TIMEOUT) {
+    return;
+  }
+  const auto rx_stats = m_wb_txrx->get_rx_stats();
+  const bool got_new_valid_packets =
+      rx_stats.count_p_valid > state.baseline_count_p_valid;
+  if (got_new_valid_packets) {
+    m_console->debug(
+        "Ground switch healthy {}@{}MHz valid {}->{}",
+        state.attempted_frequency, state.attempted_channel_width,
+        state.baseline_count_p_valid, rx_stats.count_p_valid);
+    state.active = false;
+    return;
+  }
+  m_console->warn(
+      "Ground switch rollback after {}ms without valid RX packets. "
+      "reverting {}@{}MHz -> {}@{}MHz",
+      std::chrono::duration_cast<std::chrono::milliseconds>(elapsed_since_switch)
+          .count(),
+      state.attempted_frequency, state.attempted_channel_width,
+      state.previous_frequency, state.previous_channel_width);
+  const int revert_frequency = state.previous_frequency > 0
+                                   ? state.previous_frequency
+                                   : static_cast<int>(
+                                         m_settings->get_settings().wb_frequency);
+  const int revert_channel_width =
+      state.previous_channel_width == 10 || state.previous_channel_width == 20 ||
+              state.previous_channel_width == 40
+          ? state.previous_channel_width
+          : openhd::DEFAULT_GND_RX_CHANNEL_WIDTH;
+  m_gnd_curr_rx_frequency = revert_frequency;
+  m_gnd_curr_rx_channel_width = revert_channel_width;
+  m_settings->unsafe_get_settings().wb_frequency = revert_frequency;
+  m_settings->unsafe_get_settings().wb_gnd_rx_channel_width =
+      revert_channel_width;
+  m_settings->persist(false);
+  state.active = false;
+  if (m_management_gnd) {
+    m_management_gnd->m_air_reported_curr_frequency = -1;
+    m_management_gnd->m_air_reported_curr_channel_width = -1;
+  }
+  const bool reverted =
+      apply_frequency_and_channel_width(revert_frequency, revert_channel_width,
+                                        openhd::DEFAULT_GND_RX_CHANNEL_WIDTH);
+  if (!reverted) {
+    m_console->warn("Ground rollback apply failed {}@{}MHz", revert_frequency,
+                    revert_channel_width);
+  }
+}
+
 void WBLink::wt_gnd_perform_channel_management() {
   if (m_profile.is_ground()) {
+    wt_gnd_perform_channel_switch_rollback_check();
+    const int last_management_packet_ts_ms =
+        m_management_gnd ? m_management_gnd->get_last_received_packet_ts_ms()
+                         : 0;
+    const int elapsed_since_last_management_ms =
+        openhd::util::steady_clock_time_epoch_ms() -
+        last_management_packet_ts_ms;
+    const bool management_is_fresh =
+        last_management_packet_ts_ms > 0 &&
+        elapsed_since_last_management_ms <=
+            static_cast<int>(GND_SWITCH_ROLLBACK_TIMEOUT.count());
     // Ground: Listen on the channel width the air reports (always works due to
     // management always on 20Mhz) And switch "up" to 40Mhz if needed
     // AND react to (announced) frequency changes (right now without any
@@ -2534,11 +2687,17 @@ void WBLink::wt_gnd_perform_channel_management() {
         m_management_gnd->m_air_reported_curr_channel_width;
     const int air_reported_frequency =
         m_management_gnd->m_air_reported_curr_frequency;
-    if ((air_reported_channel_width == 10 || air_reported_channel_width == 20 ||
+    if (management_is_fresh &&
+        (air_reported_channel_width == 10 || air_reported_channel_width == 20 ||
          air_reported_channel_width == 40) &&
         air_reported_frequency > 100) {
       if (m_gnd_curr_rx_channel_width != air_reported_channel_width ||
           m_gnd_curr_rx_frequency != air_reported_frequency) {
+        const int previous_frequency =
+            m_gnd_curr_rx_frequency > 0
+                ? m_gnd_curr_rx_frequency.load()
+                : static_cast<int>(m_settings->get_settings().wb_frequency);
+        const int previous_channel_width = m_gnd_curr_rx_channel_width.load();
         m_console->debug("m_gnd_curr_rx_frequency: {}",
                          m_gnd_curr_rx_frequency.load());
         m_console->debug("air_reported_frequency: {}", air_reported_frequency);
@@ -2550,8 +2709,15 @@ void WBLink::wt_gnd_perform_channel_management() {
         m_settings->unsafe_get_settings().wb_gnd_rx_channel_width =
             air_reported_channel_width;
         m_settings->persist(false);
-        apply_frequency_and_channel_width(air_reported_frequency,
-                                          air_reported_channel_width, 20);
+        const bool switched =
+            apply_frequency_and_channel_width(air_reported_frequency,
+                                              air_reported_channel_width, 20);
+        if (switched) {
+          gnd_note_channel_switch_attempt(previous_frequency,
+                                          previous_channel_width,
+                                          air_reported_frequency,
+                                          air_reported_channel_width);
+        }
       }
     }
   }

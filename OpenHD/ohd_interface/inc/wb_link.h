@@ -26,6 +26,7 @@
 
 #include <array>
 #include <chrono>
+#include <cstdint>
 #include <optional>
 #include <utility>
 #include <vector>
@@ -110,8 +111,9 @@ class WBLink : public OHDLink {
   bool request_set_tx_power_rtl8812au(int card_idx, int tx_power_index_override,
                                       bool armed);
   bool request_set_tx_power_level(int level);
-  // MCS index can be changed on air (user can control the rate with it).
+  // MCS index can be changed on air (video downlink) and on ground (uplink).
   bool request_set_air_mcs_index(int mcs_index);
+  bool request_set_ground_mcs_index(int mcs_index);
 
  private:
   // These do not "break" the bidirectional connectivity and therefore
@@ -151,6 +153,11 @@ class WBLink : public OHDLink {
   // Do rate adjustments, does nothing if variable bitrate is disabled
   void wt_perform_rate_adjustment();
   void wt_gnd_perform_channel_management();
+  void wt_gnd_perform_channel_switch_rollback_check();
+  void gnd_note_channel_switch_attempt(int previous_frequency,
+                                       int previous_channel_width,
+                                       int new_frequency,
+                                       int new_channel_width);
   // this is special, mcs index can not only be changed via mavlink param, but
   // also via RC channel (if enabled)
   void wt_perform_mcs_via_rc_channel_if_enabled();
@@ -191,6 +198,7 @@ class WBLink : public OHDLink {
   void apply_retransmission_history_window(int window_ms_video,
                                            int window_ms_telemetry,
                                            int window_ms_rc);
+  [[nodiscard]] int get_configured_tx_mcs_index() const;
   // set passive mode to disabled (do not drop packets) unless we are ground
   // and passive mode is enabled by the user
   void re_enable_injection_unless_user_passive_mode_enabled();
@@ -244,7 +252,7 @@ class WBLink : public OHDLink {
   // disarmed
   bool m_is_armed = false;
   std::atomic_bool m_request_apply_tx_power = false;
-  std::atomic_bool m_request_apply_air_mcs_index = false;
+  std::atomic_bool m_request_apply_tx_mcs_index = false;
   std::atomic_bool m_request_apply_air_bw = false;
   std::chrono::steady_clock::time_point m_last_log_key_mismatch =
       std::chrono::steady_clock::now();
@@ -264,6 +272,19 @@ class WBLink : public OHDLink {
   std::atomic<int> m_gnd_curr_rx_channel_width =
       openhd::DEFAULT_GND_RX_CHANNEL_WIDTH;
   std::atomic<int> m_gnd_curr_rx_frequency = -1;
+  struct GroundSwitchRollbackState {
+    bool active = false;
+    int previous_frequency = -1;
+    int previous_channel_width = openhd::DEFAULT_GND_RX_CHANNEL_WIDTH;
+    int attempted_frequency = -1;
+    int attempted_channel_width = -1;
+    int64_t baseline_count_p_valid = 0;
+    std::chrono::steady_clock::time_point switch_tp =
+        std::chrono::steady_clock::now();
+  };
+  GroundSwitchRollbackState m_gnd_switch_rollback_state{};
+  static constexpr auto GND_SWITCH_ROLLBACK_TIMEOUT =
+      std::chrono::milliseconds(2000);
   // Allows temporarily closing the video input
   std::atomic_bool m_air_close_video_in = false;
   const int m_recommended_max_fec_blk_size_for_this_platform;

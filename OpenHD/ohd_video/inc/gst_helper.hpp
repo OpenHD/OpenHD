@@ -317,13 +317,11 @@ static int rpi_calculate_intra_refresh_period(int frame_width_px,
 
 // v4l2 h264 encoder on raspberry pi
 // we configure the v4l2 h264 encoder by using the extra controls
-// We want constant bitrate (e.g. what the user has set) as long as we don't
-// dynamically adjust anything in this regard (video_bitrate_mode) 24.10.22:
-// something seems t be bugged on the rpi v4l2 encoder, setting constant bitrate
-// doesn't work and somehow increases latency (,video_bitrate_mode=1) The
-// default for h264_minimum_qp_value seems to be 20 - we set it to something
-// lower, so we can get a higher bitrate on scenes with less change (openhd
-// values consistency over everything else)
+// We want constant bitrate and then let OpenHD's link logic adjust the target
+// bitrate as channel conditions change.
+// The default for h264_minimum_qp_value seems to be 20 - we set it to
+// something lower, so we can get a higher bitrate on scenes with less change
+// (openhd values consistency over everything else)
 static std::string create_rpi_v4l2_h264_encoder(
     const CameraSettings& settings) {
   assert(settings.streamed_video_format.videoCodec == VideoCodec::H264);
@@ -358,19 +356,18 @@ static std::string create_rpi_v4l2_h264_encoder(
     slicing_str =
         fmt::format(",number_of_mbs_in_a_slice={}", number_of_mbs_in_a_slice);
   }
-  // BUG RPI FOUNDATION: video_bitrate_mode=1 makes encoder non functional
   // rpi v4l2 encoder takes bit/s instead of kbit/s
   const int bitrateBitsPerSecond =
       openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
-  std::string bitrate_str;
-  bitrate_str = fmt::format(",video_bitrate={}", bitrateBitsPerSecond);
+  const auto bitrate_mode_and_value_str = fmt::format(
+      ",video_bitrate_mode=1,video_bitrate={}", bitrateBitsPerSecond);
   std::stringstream ret;
   ret << fmt::format(
       "v4l2h264enc name=rpi_v4l2_encoder "
       "extra-controls=\"controls,repeat_sequence_header=1,h264_profile=1,h264_"
       "level={}{},h264_i_frame_period={},generate_access_unit_delimiters=1{}{}{"
       "}\" ! ",
-      rpi_h264_encode_level_v4l2_int, bitrate_str,
+      rpi_h264_encode_level_v4l2_int, bitrate_mode_and_value_str,
       settings.h26x_keyframe_interval, quantization_str,
       intra_refresh_period_str, slicing_str);
   ret << fmt::format(

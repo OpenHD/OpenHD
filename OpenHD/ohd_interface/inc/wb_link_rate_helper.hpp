@@ -42,123 +42,123 @@ static Rate10Mhz20Mhz40Mhz rtl8812au_get_max_rate_5G_kbits(uint16_t mcs_index) {
   switch (mcs_index) {
     case 0:
       return {
-          3200 - 300,   // minus 0.3MBit/s
+          (3200 - 300) / 2,  // minus 0.3MBit/s, reduced 10MHz profile
           5700 - 1000,  // minus 1MBit/s
           10400 - 3000  // minus 3MBit/s
       };
     case 1:
       return {
-          5400 - 300,    // minus 0.3MBit/s
+          (5400 - 300) / 2,  // minus 0.3MBit/s, reduced 10MHz profile
           10800 - 1000,  // minus 1MBit/s
           18800 - 3500   // minus 3.5MBit/s
       };
     case 2:
       return {
-          8400 - 800,    // minus 0.8MBit/s
+          (8400 - 800) / 2,  // minus 0.8MBit/s, reduced 10MHz profile
           15200 - 2000,  // minus 2MBit/s
           26600 - 6000   // minus 6MBit/s
       };
     case 3:
       return {
-          10200 - 800,   // minus 0.8MBit/s
+          (10200 - 800) / 2,  // minus 0.8MBit/s, reduced 10MHz profile
           19200 - 3000,  // minus 3MBit/s
           30000 - 5000   // minus 5MBit/s
       };
     case 4:
       return {
-          12000 - 1000,  // minus 1MBit/s
+          (12000 - 1000) / 2,  // minus 1MBit/s, reduced 10MHz profile
           20000,         //
           30000          //
       };
     case 5:
       return {
-          14000 - 1000,  // minus 1MBit/s
+          (14000 - 1000) / 2,  // minus 1MBit/s, reduced 10MHz profile
           23000,         //
           40000          //
       };
     case 6:
       return {
-          16000 - 1000,  // minus 1MBit/s
+          (16000 - 1000) / 2,  // minus 1MBit/s, reduced 10MHz profile
           26000,         //
           50000          //
       };
     case 7:
       return {
-          18000 - 1000,  // minus 1MBit/s
+          (18000 - 1000) / 2,  // minus 1MBit/s, reduced 10MHz profile
           29000,         //
           55000          //
       };
     case 8:
       return {
-          11700 - 3000,  // minus 3MBit/s
+          (11700 - 3000) / 2,  // minus 3MBit/s, reduced 10MHz profile
           11700 - 3000,  // same as 20MHz
           22100 - 4000   // minus 4MBit/s
       };
     case 9:
       return {
-          15000 - 2000,  // minus 2MBit/s
+          (15000 - 2000) / 2,  // minus 2MBit/s, reduced 10MHz profile
           21000 - 3000,  // minus 3MBit/s
           32000 - 4000   // minus 4MBit/s
       };
     case 10:
       return {
-          18000 - 3000,  // minus 3MBit/s
+          (18000 - 3000) / 2,  // minus 3MBit/s, reduced 10MHz profile
           25000 - 3000,  // minus 3MBit/s
           37000 - 4000   // minus 4MBit/s
       };
     case 11:
       return {
-          21000 - 3000,  // minus 3MBit/s
+          (21000 - 3000) / 2,  // minus 3MBit/s, reduced 10MHz profile
           30000 - 3000,  // minus 3MBit/s
           50000 - 4000   // minus 4MBit/s
       };
     case 12:
       return {
-          22000 - 3000,  // minus 3MBit/s
+          (22000 - 3000) / 2,  // minus 3MBit/s, reduced 10MHz profile
           30000 - 3000,  // minus 3MBit/s
           50000 - 4000   // minus 4MBit/s
       };
     default:
       break;
   }
-  return {5000, 5000, 5000};
+  return {2500, 5000, 5000};
 }
 
 static Rate10Mhz20Mhz40Mhz rtl8812au_get_max_rate_2G_kbits(uint16_t mcs_index) {
   switch (mcs_index) {
     case 0:
       return {
-          3600 - 1000,  // minus 1MBit/s
+          (3600 - 1000) / 2,  // minus 1MBit/s, reduced 10MHz profile
           4600 - 1000,  // minus 1MBit/s
           6500 - 2000   // minus 2MBit/s
       };
     case 1:
       return {
-          8200 - 1000,   // minus 1MBit/s
+          (8200 - 1000) / 2,  // minus 1MBit/s, reduced 10MHz profile
           10100 - 1000,  // minus 1MBit/s
           15900 - 2000   // minus 2MBit/s
       };
     case 2:
       return {
-          10200 - 1500,  // minus 1.5MBit/s
+          (10200 - 1500) / 2,  // minus 1.5MBit/s, reduced 10MHz profile
           13500 - 2000,  // minus 2MBit/s
           20000 - 2000   // minus 2MBit/s
       };
     case 3:
       return {
-          12800 - 2000,  // minus 2MBit/s
+          (12800 - 2000) / 2,  // minus 2MBit/s, reduced 10MHz profile
           16600 - 2000,  // minus 2MBit/s
           24000 - 2000   // minus 2MBit/s
       };
     case 4:
       return {
-          15000,  //
+          15000 / 2,  // reduced 10MHz profile
           20000,  //
           30000   //
       };
     default: {
       openhd::log::get_default()->warn("MCS >4 not recommended");
-      return {15000, 20000, 30000};
+      return {15000 / 2, 20000, 30000};
     }
   }
   assert(false);

@@ -29,8 +29,8 @@ namespace openhd {
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
     WBLinkSettings, wb_frequency, wb_air_tx_channel_width,
-    wb_gnd_rx_channel_width, wb_air_mcs_index, wb_enable_stbc, wb_enable_ldpc,
-    wb_enable_short_guard,
+    wb_gnd_rx_channel_width, wb_air_mcs_index, wb_gnd_uplink_mcs_index,
+    wb_enable_stbc, wb_enable_ldpc, wb_enable_short_guard,
     wb_tx_power_milli_watt, wb_tx_power_milli_watt_armed, wb_tx_power_level,
     wb_rtl8812au_tx_pwr_idx_override, wb_rtl8812au_tx_pwr_idx_override_armed,
     wb_tx_power_mw_per_card, wb_tx_power_mw_armed_per_card,
@@ -56,6 +56,8 @@ std::optional<WBLinkSettings> openhd::WBLinkSettingsHolder::impl_deserialize(
         "wb_gnd_rx_channel_width", settings.wb_gnd_rx_channel_width);
     settings.wb_air_mcs_index =
         parsed.value("wb_air_mcs_index", settings.wb_air_mcs_index);
+    settings.wb_gnd_uplink_mcs_index = parsed.value(
+        "wb_gnd_uplink_mcs_index", settings.wb_gnd_uplink_mcs_index);
     settings.wb_enable_stbc =
         parsed.value("wb_enable_stbc", settings.wb_enable_stbc);
     settings.wb_enable_ldpc =
