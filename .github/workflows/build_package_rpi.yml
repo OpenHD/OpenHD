@@ -56,6 +56,18 @@ jobs:
                 v="$(cmake --version | awk 'NR==1{print $3}')"
                 dpkg --compare-versions "$v" ge "3.22"
             }
+            pip_install_cmake_compatible() {
+                for cmake_spec in cmake==3.27.9 cmake==3.25.2 cmake==3.24.4 cmake==3.22.6; do
+                    echo "Trying pip $cmake_spec"
+                    sudo pip3 uninstall -y cmake >/dev/null 2>&1 || true
+                    sudo pip3 install --upgrade "$cmake_spec" --break-system-packages || sudo pip3 install --upgrade "$cmake_spec" || true
+                    if cmake --version >/dev/null 2>&1 && cmake_ge_322; then
+                        echo "Using pip $cmake_spec"
+                        return 0
+                    fi
+                done
+                return 1
+            }
             if ! cmake_ge_322; then
                 echo "CMake < 3.22 detected, upgrading for Artosyn SDK build"
                 echo "deb [trusted=yes] http://archive.debian.org/debian bullseye-backports main" | sudo tee /etc/apt/sources.list.d/bullseye-backports.list
@@ -65,7 +77,7 @@ jobs:
             if ! cmake_ge_322; then
                 echo "Backports cmake unavailable, trying pip cmake"
                 sudo apt-get install -y python3-pip
-                sudo pip3 install --upgrade cmake --break-system-packages || sudo pip3 install --upgrade cmake
+                pip_install_cmake_compatible || true
             fi
             cmake --version
             if ! cmake_ge_322; then
