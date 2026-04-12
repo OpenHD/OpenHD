@@ -58,8 +58,8 @@ jobs:
             }
             if ! cmake_ge_322; then
                 echo "CMake < 3.22 detected, upgrading for Artosyn SDK build"
-                echo "deb http://deb.debian.org/debian bullseye-backports main" | sudo tee /etc/apt/sources.list.d/bullseye-backports.list
-                sudo apt-get update
+                echo "deb http://archive.debian.org/debian bullseye-backports main" | sudo tee /etc/apt/sources.list.d/bullseye-backports.list
+                sudo apt-get -o Acquire::Check-Valid-Until=false update || true
                 sudo apt-get install -y -t bullseye-backports cmake || true
             fi
             if ! cmake_ge_322; then
