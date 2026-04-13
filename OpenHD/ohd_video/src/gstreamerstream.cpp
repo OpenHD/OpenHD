@@ -25,6 +25,7 @@
 
 #include <gst/gst.h>
 
+#include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <utility>
@@ -442,12 +443,6 @@ void GStreamerStream::handle_change_bitrate_request(
   //  We do some safety checks first - the link might recommend too much / too
   //  little
   auto bitrate_for_encoder_kbits = lb.recommended_encoder_bitrate_kbits;
-  m_console->debug(
-      "Bitrate request received cam{}: requested_kbits:{} current_target_kbits:{} "
-      "persisted_kbits:{}",
-      m_camera_holder->get_camera().index, bitrate_for_encoder_kbits,
-      m_curr_dynamic_bitrate_kbits.load(),
-      m_camera_holder->get_settings().h26x_bitrate_kbits);
   // m_console->debug(
   //     "Received bitrate update request: {} kBit/s (current target: {}
   //     kBit/s)", bitrate_for_encoder_kbits,
@@ -672,27 +667,25 @@ void GStreamerStream::stream_once() {
           effective_kbits *= 2;
         }
         const int target_kbits = m_curr_dynamic_bitrate_kbits.load();
+        if (target_kbits <= 0) {
+          continue;
+        }
         const int delta = std::abs(effective_kbits - target_kbits);
-        if (delta > 500) {
+        static constexpr int BITRATE_MISMATCH_ABS_HUGE_KBITS = 2000;
+        const int bitrate_mismatch_rel_huge_kbits = target_kbits / 4;  // 25%
+        const int mismatch_huge_threshold_kbits =
+            std::max(BITRATE_MISMATCH_ABS_HUGE_KBITS,
+                     bitrate_mismatch_rel_huge_kbits);
+        if (delta >= mismatch_huge_threshold_kbits) {
           m_console->warn(
               "Bitrate mismatch cam{}: target_kbits:{} "
               "encoder_readback_raw:{} encoder_readback_kbits:{} "
               "effective_kbits:{} delta_kbits:{} "
-              "persisted_kbits:{} currently_applied_kbits:{}",
-              m_camera_holder->get_camera().index, target_kbits,
-              rb_opt->raw_property_value, rb_opt->interpreted_kbits,
-              effective_kbits, delta,
-              m_camera_holder->get_settings().h26x_bitrate_kbits,
-              currently_applied_bitrate);
-        } else {
-          m_console->debug(
-              "Bitrate state cam{}: target_kbits:{} "
-              "encoder_readback_raw:{} encoder_readback_kbits:{} "
-              "effective_kbits:{} persisted_kbits:{} "
+              "huge_threshold_kbits:{} persisted_kbits:{} "
               "currently_applied_kbits:{}",
               m_camera_holder->get_camera().index, target_kbits,
               rb_opt->raw_property_value, rb_opt->interpreted_kbits,
-              effective_kbits,
+              effective_kbits, delta, mismatch_huge_threshold_kbits,
               m_camera_holder->get_settings().h26x_bitrate_kbits,
               currently_applied_bitrate);
         }

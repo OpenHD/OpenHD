@@ -32,6 +32,7 @@
 #include "nalu/fragment_helper.h"
 #include "openhd_config.h"
 #include "openhd_reboot_util.h"
+#include "openhd_settings_imp.h"
 #include "openhd_sock.h"
 
 OHDVideoAir::OHDVideoAir(std::vector<XCamera> cameras,
@@ -68,14 +69,14 @@ OHDVideoAir::OHDVideoAir(std::vector<XCamera> cameras,
   for (const auto& camera : cameras) {
     camera_holders.emplace_back(std::make_unique<CameraHolder>(camera));
   }
+  const int initial_air_recording_mode =
+      m_record_only ? AIR_RECORDING_ON
+                    : m_generic_settings->get_settings().air_recording;
   if (m_record_only) {
-    for (auto& camera_holder : camera_holders) {
-      if (!camera_holder->set_air_recording(AIR_RECORDING_ON)) {
-        m_console->warn("Record-only: unable to enable recording for camera {}",
-                        camera_holder->get_camera().index);
-      }
-    }
+    m_generic_settings->unsafe_get_settings().air_recording = AIR_RECORDING_ON;
+    m_generic_settings->persist(false);
   }
+  set_air_recording_for_holders(camera_holders, initial_air_recording_mode);
   assert(camera_holders.size() <= MAX_N_CAMERAS);
   for (auto& camera : camera_holders) {
     configure(camera);
@@ -140,6 +141,29 @@ void OHDVideoAir::configure(
   m_camera_streams.push_back(stream);
 }
 
+bool OHDVideoAir::set_air_recording_for_holders(
+    const std::vector<std::shared_ptr<CameraHolder>>& camera_holders,
+    int recording_enable) {
+  bool all_ok = true;
+  for (const auto& camera_holder : camera_holders) {
+    if (!camera_holder->set_air_recording(recording_enable)) {
+      m_console->warn("Unable to set recording mode {} for camera {}",
+                      recording_enable, camera_holder->get_camera().index);
+      all_ok = false;
+    }
+  }
+  return all_ok;
+}
+
+bool OHDVideoAir::set_air_recording_for_all(int recording_enable) {
+  std::vector<std::shared_ptr<CameraHolder>> camera_holders;
+  camera_holders.reserve(m_camera_streams.size());
+  for (const auto& stream : m_camera_streams) {
+    camera_holders.push_back(stream->m_camera_holder);
+  }
+  return set_air_recording_for_holders(camera_holders, recording_enable);
+}
+
 std::array<std::vector<openhd::Setting>, 2>
 OHDVideoAir::get_all_camera_settings() {
   std::array<std::vector<openhd::Setting>, 2> ret{};
@@ -184,6 +208,27 @@ OHDVideoAir::get_all_camera_settings() {
 
 std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
   std::vector<openhd::Setting> ret;
+  auto cb_recording = [this](std::string, int value) {
+    if (!(value == AIR_RECORDING_OFF || value == AIR_RECORDING_ON ||
+          value == AIR_RECORDING_AUTO_ARM_DISARM)) {
+      return false;
+    }
+    if (!set_air_recording_for_all(value)) {
+      return false;
+    }
+    m_generic_settings->unsafe_get_settings().air_recording = value;
+    m_generic_settings->persist(false);
+    return true;
+  };
+  if (m_record_only) {
+    ret.push_back(openhd::create_read_only_int("AIR_RECORDING_E",
+                                               AIR_RECORDING_ON));
+  } else {
+    ret.push_back(openhd::Setting{
+        "AIR_RECORDING_E",
+        openhd::IntSetting{m_generic_settings->get_settings().air_recording,
+                           cb_recording}});
+  }
   // Only show dual-cam settings if dual-cam is actually used
   const auto n_cameras = static_cast<int>(m_camera_streams.size());
   if (n_cameras > 1) {

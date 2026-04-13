@@ -26,6 +26,7 @@
 
 #include <gst/gst.h>
 
+#include <algorithm>
 #include <optional>
 
 #include "openhd_bitrate.h"
@@ -44,6 +45,9 @@ struct GstBitrateControlElement {
   GstElement* encoder;
   // Not all encoders / elements call the bitrate property "bitrate"
   std::string property_name = "bitrate";
+  // For rockchip mpp encoders we also update min/max bounds with each bitrate
+  // change to avoid stale clamps when the link adapts bitrate dynamically.
+  bool update_rockchip_mpp_bounds = false;
 };
 
 struct GstBitrateReadback {
@@ -93,6 +97,13 @@ get_dynamic_bitrate_control_element_in_pipeline(
     ret.encoder = gst_bin_get_by_name(GST_BIN(gst_pipeline), "sunxisrc");
     ret.property_name = "bitrate";
     ret.takes_kbit = true;
+  } else if (camera.requires_rockchip3_mpp_pipeline() ||
+             camera.requires_rockchip5_mpp_pipeline()) {
+    // Rockchip mpp encoders use bps (bit/s)
+    ret.encoder = gst_bin_get_by_name(GST_BIN(gst_pipeline), "rk_mpp_encoder");
+    ret.property_name = "bps";
+    ret.takes_kbit = false;
+    ret.update_rockchip_mpp_bounds = true;
   } else if (camera.requires_rockchip_rv_pipeline()) {
     // We can change bitrate dynamically
     ret.encoder = gst_bin_get_by_name(GST_BIN(gst_pipeline), "rkmpih264enc");
@@ -128,8 +139,24 @@ static bool change_bitrate(const GstBitrateControlElement& ctrl_el,
   const auto target_raw_property_value =
       ctrl_el.takes_kbit ? bitrate_kbits
                          : openhd::kbits_to_bits_per_second(bitrate_kbits);
-  g_object_set(ctrl_el.encoder, ctrl_el.property_name.c_str(),
-               target_raw_property_value, NULL);
+  if (ctrl_el.update_rockchip_mpp_bounds) {
+    static constexpr int RK_BPS_HARD_MIN = 500000;
+    static constexpr int RK_BPS_HARD_MAX = 25000000;
+    static constexpr int RK_BPS_MAX_PCT = 110;
+    static constexpr int RK_BPS_MIN_PCT = 90;
+    const int bps_target = std::clamp(target_raw_property_value, RK_BPS_HARD_MIN,
+                                      RK_BPS_HARD_MAX);
+    int bps_min = std::max((bps_target * RK_BPS_MIN_PCT) / 100, RK_BPS_HARD_MIN);
+    int bps_max = std::min((bps_target * RK_BPS_MAX_PCT) / 100, RK_BPS_HARD_MAX);
+    if (bps_min > bps_max) {
+      bps_min = bps_max;
+    }
+    g_object_set(ctrl_el.encoder, "bps", bps_target, "bps-min", bps_min,
+                 "bps-max", bps_max, NULL);
+  } else {
+    g_object_set(ctrl_el.encoder, ctrl_el.property_name.c_str(),
+                 target_raw_property_value, NULL);
+  }
   const auto readback_opt = read_bitrate_readback(ctrl_el);
   if (!readback_opt.has_value()) {
     openhd::log::get_default()->warn(

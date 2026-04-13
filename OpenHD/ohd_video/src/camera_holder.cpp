@@ -136,15 +136,9 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
     auto c_enable_streaming = [this](std::string, int value) {
       return set_enable_streaming(value);
     };
-    auto c_recording = [this](std::string, int value) {
-      return set_air_recording(value);
-    };
     ret.push_back(openhd::Setting{
         "STREAMING_E", openhd::IntSetting{get_settings().enable_streaming,
                                           c_enable_streaming}});
-    ret.push_back(openhd::Setting{
-        "AIR_RECORDING_E",
-        openhd::IntSetting{get_settings().air_recording, c_recording}});
   }
   // if(m_camera.sensor_name!="unknown"){
   //   ret.emplace_back(openhd::create_read_only_string("V_CAM_SENSOR",m_camera.sensor_name));
