@@ -156,7 +156,7 @@ struct WBLinkSettings {
   // when this mode is enabled (disable it to re-gain control)
   bool wb_enable_listen_only_mode = false;
   // Pit mode: when enabled and using power levels, disarmed uses LOWEST level.
-  bool wb_pit_mode = false;
+  bool wb_pit_mode = true;
   // NOTE: Really complicated, for developers only
   bool wb_dev_air_set_high_retransmit_count = false;
   // Send same package on all connected cards
