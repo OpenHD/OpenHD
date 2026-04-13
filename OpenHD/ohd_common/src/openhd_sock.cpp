@@ -528,6 +528,30 @@ std::optional<SysutilSettings> request_sysutil_settings(
   } else {
     settings.has_camera_type = parsed.value("has_camera_type", false);
   }
+  if (parsed.contains("camera2_type")) {
+    settings.camera2_type = parsed.value("camera2_type", 0);
+    settings.has_camera2_type = parsed.value("has_camera2_type", true);
+  } else {
+    settings.has_camera2_type = parsed.value("has_camera2_type", false);
+  }
+  if (parsed.contains("camera_resolution_fps")) {
+    settings.camera_resolution_fps =
+        parsed.value("camera_resolution_fps", std::string{});
+    settings.has_camera_resolution_fps =
+        parsed.value("has_camera_resolution_fps", true);
+  } else {
+    settings.has_camera_resolution_fps =
+        parsed.value("has_camera_resolution_fps", false);
+  }
+  if (parsed.contains("camera2_resolution_fps")) {
+    settings.camera2_resolution_fps =
+        parsed.value("camera2_resolution_fps", std::string{});
+    settings.has_camera2_resolution_fps =
+        parsed.value("has_camera2_resolution_fps", true);
+  } else {
+    settings.has_camera2_resolution_fps =
+        parsed.value("has_camera2_resolution_fps", false);
+  }
 
   const auto run_mode = parsed.value("run_mode", "");
   if (run_mode == "air" || run_mode == "ground" || run_mode == "record") {
@@ -596,6 +620,9 @@ std::optional<SysutilSettings> request_sysutil_settings(
 bool update_sysutil_settings(const SysutilSettingsUpdate& update,
                              std::chrono::milliseconds timeout) {
   if (!update.reset_requested.has_value() && !update.camera_type.has_value() &&
+      !update.camera2_type.has_value() &&
+      !update.camera_resolution_fps.has_value() &&
+      !update.camera2_resolution_fps.has_value() &&
       !update.run_as_air.has_value() && !update.run_mode.has_value()) {
     return true;
   }
@@ -607,6 +634,15 @@ bool update_sysutil_settings(const SysutilSettingsUpdate& update,
   }
   if (update.camera_type.has_value()) {
     request["camera_type"] = update.camera_type.value();
+  }
+  if (update.camera2_type.has_value()) {
+    request["camera2_type"] = update.camera2_type.value();
+  }
+  if (update.camera_resolution_fps.has_value()) {
+    request["camera_resolution_fps"] = update.camera_resolution_fps.value();
+  }
+  if (update.camera2_resolution_fps.has_value()) {
+    request["camera2_resolution_fps"] = update.camera2_resolution_fps.value();
   }
   if (update.run_mode.has_value()) {
     request["run_mode"] = update.run_mode.value();

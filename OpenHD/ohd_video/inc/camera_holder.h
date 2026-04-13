@@ -24,6 +24,7 @@
 #ifndef OPENHD_OPENHD_OHD_VIDEO_INC_CAMERA_HOLDER_H_
 #define OPENHD_OPENHD_OHD_VIDEO_INC_CAMERA_HOLDER_H_
 
+#include <algorithm>
 #include <spdlog/spdlog.h>
 
 #include <sstream>
@@ -32,6 +33,7 @@
 #include "camera_settings.hpp"
 #include "openhd_action_handler.h"
 #include "openhd_bitrate.h"
+#include "openhd_sock.h"
 #include "openhd_settings_directories.h"
 #include "openhd_settings_imp.h"
 #include "openhd_settings_persistent.h"
@@ -252,6 +254,52 @@ class CameraHolder :
     ret.streamed_video_format.width = default_resolution.width_px;
     ret.streamed_video_format.height = default_resolution.height_px;
     ret.streamed_video_format.framerate = default_resolution.fps;
+
+    const auto& sysutil_settings = []() -> const std::optional<openhd::SysutilSettings>& {
+      static const std::optional<openhd::SysutilSettings> cached =
+          openhd::request_sysutil_settings();
+      return cached;
+    }();
+    if (sysutil_settings.has_value()) {
+      std::string requested_resolution_fps;
+      if (m_camera.index == 0 && sysutil_settings->has_camera_resolution_fps) {
+        requested_resolution_fps = sysutil_settings->camera_resolution_fps;
+      } else if (m_camera.index == 1 &&
+                 sysutil_settings->has_camera2_resolution_fps) {
+        requested_resolution_fps = sysutil_settings->camera2_resolution_fps;
+      }
+
+      if (!requested_resolution_fps.empty()) {
+        const auto requested_format = parse_video_format(requested_resolution_fps);
+        if (requested_format.has_value()) {
+          const auto supported_formats = m_camera.get_supported_resolutions();
+          const auto supported_it = std::find_if(
+              supported_formats.begin(), supported_formats.end(),
+              [&](const ResolutionFramerate& candidate) {
+                return candidate.width_px == requested_format->width_px &&
+                       candidate.height_px == requested_format->height_px &&
+                       candidate.fps == requested_format->fps;
+              });
+          if (supported_it != supported_formats.end()) {
+            ret.streamed_video_format.width = requested_format->width_px;
+            ret.streamed_video_format.height = requested_format->height_px;
+            ret.streamed_video_format.framerate = requested_format->fps;
+            openhd::log::get_default()->debug(
+                "Using sysutils camera{} resolution override {}",
+                m_camera.index + 1, requested_resolution_fps);
+          } else {
+            openhd::log::get_default()->warn(
+                "Ignoring unsupported sysutils camera{} resolution override {}",
+                m_camera.index + 1, requested_resolution_fps);
+          }
+        } else {
+          openhd::log::get_default()->warn(
+              "Ignoring invalid sysutils camera{} resolution override {}",
+              m_camera.index + 1, requested_resolution_fps);
+        }
+      }
+    }
+
     if (OHDPlatform::instance().is_x20()) {
       // Better choice for the x20
       ret.h26x_keyframe_interval = 8;

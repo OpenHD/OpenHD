@@ -89,6 +89,12 @@ struct SysutilSettings {
   bool reset_requested = false;
   bool has_camera_type = false;
   int camera_type = 0;
+  bool has_camera2_type = false;
+  int camera2_type = 0;
+  bool has_camera_resolution_fps = false;
+  std::string camera_resolution_fps;
+  bool has_camera2_resolution_fps = false;
+  std::string camera2_resolution_fps;
   bool has_run_mode = false;
   bool run_as_air = false;
   bool run_record_only = false;
@@ -123,6 +129,9 @@ struct SysutilSettings {
 struct SysutilSettingsUpdate {
   std::optional<bool> reset_requested;
   std::optional<int> camera_type;
+  std::optional<int> camera2_type;
+  std::optional<std::string> camera_resolution_fps;
+  std::optional<std::string> camera2_resolution_fps;
   std::optional<bool> run_as_air;
   std::optional<std::string> run_mode;
 };

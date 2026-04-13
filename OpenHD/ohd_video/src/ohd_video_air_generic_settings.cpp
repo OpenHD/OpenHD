@@ -50,23 +50,32 @@ std::string AirCameraGenericSettingsHolder::imp_serialize(
   return tmp.dump(4);
 }
 
-static std::optional<int> get_sysutil_camera_type() {
+struct SysutilCameraOverrides {
+  std::optional<int> primary;
+  std::optional<int> secondary;
+};
+
+static SysutilCameraOverrides get_sysutil_camera_overrides() {
+  SysutilCameraOverrides overrides{};
   const auto settings_opt = openhd::request_sysutil_settings();
-  if (!settings_opt.has_value() || !settings_opt->has_camera_type) {
-    return std::nullopt;
+  if (!settings_opt.has_value()) {
+    return overrides;
   }
-  return settings_opt->camera_type;
+
+  if (settings_opt->has_camera_type &&
+      is_valid_primary_cam_type(settings_opt->camera_type)) {
+    overrides.primary = settings_opt->camera_type;
+  }
+  if (settings_opt->has_camera2_type &&
+      is_valid_secondary_cam_type(settings_opt->camera2_type)) {
+    overrides.secondary = settings_opt->camera2_type;
+  }
+  return overrides;
 }
 
 static int rpi_get_default_primary_cam_type() {
-  const auto sysutil_cam = get_sysutil_camera_type();
-  if (sysutil_cam.has_value()) {
-    openhd::log::get_default()->debug(
-        "Using sysutils camera type: {}",
-        x_cam_type_to_string(sysutil_cam.value()));
-    return sysutil_cam.value();
-  }
-  openhd::log::get_default()->debug("No sysutils camera override, using MMAL");
+  openhd::log::get_default()->debug(
+      "No sysutils primary camera override, using MMAL");
   return X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI;
 }
 
@@ -76,9 +85,21 @@ AirCameraGenericSettings AirCameraGenericSettingsHolder::create_default()
   ret.primary_camera_type = X_CAM_TYPE_DUMMY_SW;
   ret.secondary_camera_type = X_CAM_TYPE_DISABLED;
 
-  const auto sysutil_cam = get_sysutil_camera_type();
-  if (sysutil_cam.has_value()) {
-    ret.primary_camera_type = sysutil_cam.value();
+  const auto sysutil_overrides = get_sysutil_camera_overrides();
+  if (sysutil_overrides.primary.has_value()) {
+    ret.primary_camera_type = sysutil_overrides.primary.value();
+    openhd::log::get_default()->debug(
+        "Using sysutils primary camera type: {}",
+        x_cam_type_to_string(ret.primary_camera_type));
+  }
+  if (sysutil_overrides.secondary.has_value()) {
+    ret.secondary_camera_type = sysutil_overrides.secondary.value();
+    openhd::log::get_default()->debug(
+        "Using sysutils secondary camera type: {}",
+        x_cam_type_to_string(ret.secondary_camera_type));
+  }
+
+  if (sysutil_overrides.primary.has_value()) {
     return ret;
   }
 
