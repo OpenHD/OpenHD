@@ -39,5 +39,6 @@ source "${SCRIPT_DIR}/scripts/resolve_artosyn_sdk.sh"
 resolve_artosyn_sdk
 cmake .. \
   -DARTOSYN_SDK_ROOT="${ARTOSYN_SDK_ROOT}" \
-  -DARTOSYN_SDK_LIB="${ARTOSYN_SDK_LIB}"
+  -DARTOSYN_SDK_LIB="${ARTOSYN_SDK_LIB}" \
+  -DARTOSYN_SDK_DAEMON="${ARTOSYN_SDK_DAEMON:-}"
 make -j$(nproc)

@@ -5,6 +5,7 @@
 #   source scripts/resolve_artosyn_sdk.sh
 #   resolve_artosyn_sdk
 #   cmake ... -DARTOSYN_SDK_ROOT="${ARTOSYN_SDK_ROOT}" -DARTOSYN_SDK_LIB="${ARTOSYN_SDK_LIB}"
+#          -DARTOSYN_SDK_DAEMON="${ARTOSYN_SDK_DAEMON}"
 
 ARTLINK_REPO_DEFAULT="https://github.com/OpenHD-Technologies/OpenHD-ArtLink.git"
 ARTLINK_REPO=${ARTLINK_REPO:-${ARTLINK_REPO_DEFAULT}}
@@ -165,20 +166,16 @@ _fetch_from_git() {
   echo "${resolved}"
 }
 
-_build_client_lib_from_source() {
-  local sdk_root="$1"
-  local host_drv_dir="${sdk_root}/host_drv"
+_configure_host_drv_build_dir() {
+  local host_drv_dir="$1"
+  local build_dir="$2"
   if [[ ! -f "${host_drv_dir}/CMakeLists.txt" ]]; then
     return 1
   fi
   if ! command -v cmake >/dev/null 2>&1; then
     return 1
   fi
-
-  local build_dir="/tmp/openhd_artosyn_sdk_build"
   rm -rf "${build_dir}" || return 1
-  echo "[Artosyn] libar8030_client missing, building ar8030_client from source." >&2
-
   cmake -S "${host_drv_dir}" -B "${build_dir}" \
     -DAPP_STATIC_LIB=ON \
     -DBUILD_TEST_APP=OFF \
@@ -198,6 +195,22 @@ _build_client_lib_from_source() {
     -DUSING_8030SDIO=OFF \
     -DUSING_8030UART=OFF \
     -DUSING_8030DRV=OFF >&2 || return 1
+}
+
+_build_client_lib_from_source() {
+  local sdk_root="$1"
+  local host_drv_dir="${sdk_root}/host_drv"
+  if [[ ! -f "${host_drv_dir}/CMakeLists.txt" ]]; then
+    return 1
+  fi
+  if ! command -v cmake >/dev/null 2>&1; then
+    return 1
+  fi
+
+  local build_dir="/tmp/openhd_artosyn_sdk_build_client"
+  echo "[Artosyn] libar8030_client missing, building ar8030_client from source." >&2
+
+  _configure_host_drv_build_dir "${host_drv_dir}" "${build_dir}" || return 1
 
   cmake --build "${build_dir}" --target ar8030_client >&2 || return 1
 
@@ -230,9 +243,104 @@ _build_client_lib_from_source() {
   echo "${built_lib}"
 }
 
+_find_daemon_binary_in_tree() {
+  local sdk_root="$1"
+  if [[ -z "${sdk_root}" || ! -d "${sdk_root}" ]]; then
+    return 1
+  fi
+  local daemon_candidates=(
+    "${sdk_root}/host_drv/app/ar8030/artosyn_daemon"
+    "${sdk_root}/host_drv/app/ar8030/ar8030_daemon"
+    "${sdk_root}/host_drv/app/ar8030/artlinkd"
+    "${sdk_root}/host_drv/app/ar8030/bbd"
+    "${sdk_root}/host_drv/app/ar8030/bb_daemon"
+    "${sdk_root}/host_drv/build/app/ar8030/artosyn_daemon"
+    "${sdk_root}/host_drv/build/app/ar8030/ar8030_daemon"
+    "${sdk_root}/host_drv/build/app/ar8030/artlinkd"
+    "${sdk_root}/host_drv/build/app/ar8030/bbd"
+    "${sdk_root}/host_drv/build/app/ar8030/bb_daemon"
+    "${sdk_root}/host_drv/install/bin/artosyn_daemon"
+    "${sdk_root}/host_drv/install/bin/ar8030_daemon"
+    "${sdk_root}/host_drv/install/bin/artlinkd"
+    "${sdk_root}/host_drv/install/bin/bbd"
+    "${sdk_root}/host_drv/install/bin/bb_daemon"
+  )
+  local candidate
+  for candidate in "${daemon_candidates[@]}"; do
+    if [[ -f "${candidate}" ]]; then
+      echo "${candidate}"
+      return 0
+    fi
+  done
+  local hit
+  hit="$(find "${sdk_root}/host_drv" -type f \
+    \( -iname "artosyn_daemon" -o -iname "ar8030_daemon" -o -iname "artlinkd" -o -iname "bbd" -o -iname "bb_daemon" \) \
+    | head -n 1 || true)"
+  if [[ -n "${hit}" ]]; then
+    echo "${hit}"
+    return 0
+  fi
+  return 1
+}
+
+_build_daemon_from_source() {
+  local sdk_root="$1"
+  local host_drv_dir="${sdk_root}/host_drv"
+  if [[ ! -f "${host_drv_dir}/CMakeLists.txt" ]]; then
+    return 1
+  fi
+  if ! command -v cmake >/dev/null 2>&1; then
+    return 1
+  fi
+  local build_dir="/tmp/openhd_artosyn_sdk_build_daemon"
+  echo "[Artosyn] daemon missing, trying to build daemon targets from source." >&2
+
+  _configure_host_drv_build_dir "${host_drv_dir}" "${build_dir}" || return 1
+
+  local targets=(
+    "artosyn_daemon"
+    "ar8030_daemon"
+    "artlinkd"
+    "bbd"
+    "bb_daemon"
+    "daemon"
+  )
+  local t
+  for t in "${targets[@]}"; do
+    if cmake --build "${build_dir}" --target "${t}" >&2; then
+      local built
+      built="$(_find_daemon_binary_in_tree "${sdk_root}" || true)"
+      if [[ -z "${built}" ]]; then
+        built="$(find "${build_dir}" -type f \
+          \( -iname "artosyn_daemon" -o -iname "ar8030_daemon" -o -iname "artlinkd" -o -iname "bbd" -o -iname "bb_daemon" \) \
+          | head -n 1 || true)"
+      fi
+      if [[ -n "${built}" ]]; then
+        echo "${built}"
+        return 0
+      fi
+    fi
+  done
+  # Final fallback: try default build and search again.
+  cmake --build "${build_dir}" >&2 || true
+  local built
+  built="$(_find_daemon_binary_in_tree "${sdk_root}" || true)"
+  if [[ -z "${built}" ]]; then
+    built="$(find "${build_dir}" -type f \
+      \( -iname "artosyn_daemon" -o -iname "ar8030_daemon" -o -iname "artlinkd" -o -iname "bbd" -o -iname "bb_daemon" \) \
+      | head -n 1 || true)"
+  fi
+  if [[ -n "${built}" ]]; then
+    echo "${built}"
+    return 0
+  fi
+  return 1
+}
+
 resolve_artosyn_sdk() {
   local sdk_root="${ARTOSYN_SDK_ROOT:-}"
   local sdk_lib="${ARTOSYN_SDK_LIB:-}"
+  local sdk_daemon="${ARTOSYN_SDK_DAEMON:-}"
   local fetch_mode="${ARTLINK_FETCH_MODE:-auto}"
   echo "[Artosyn] Resolving SDK (mode=${fetch_mode})." >&2
 
@@ -360,6 +468,14 @@ resolve_artosyn_sdk() {
     sdk_lib="$(_build_client_lib_from_source "${sdk_root}" || true)"
   fi
 
+  if [[ -n "${sdk_root}" && -z "${sdk_daemon}" ]]; then
+    sdk_daemon="$(_find_daemon_binary_in_tree "${sdk_root}" || true)"
+  fi
+
+  if [[ -n "${sdk_root}" && -z "${sdk_daemon}" ]]; then
+    sdk_daemon="$(_build_daemon_from_source "${sdk_root}" || true)"
+  fi
+
   if [[ -n "${sdk_lib}" && "${sdk_lib}" == *.a* ]]; then
     local primary_lib="${sdk_lib%%;*}"
     local lib_dir
@@ -404,7 +520,13 @@ EOF
 
   echo "[Artosyn] SDK resolved: root=${ARTOSYN_SDK_ROOT:-${sdk_root}}" >&2
   echo "[Artosyn] SDK lib resolved: ${ARTOSYN_SDK_LIB:-${sdk_lib}}" >&2
+  if [[ -n "${sdk_daemon}" ]]; then
+    echo "[Artosyn] SDK daemon resolved: ${ARTOSYN_SDK_DAEMON:-${sdk_daemon}}" >&2
+  else
+    echo "[Artosyn] SDK daemon unresolved; packaging step may fail if daemon is required." >&2
+  fi
 
   export ARTOSYN_SDK_ROOT="${sdk_root}"
   export ARTOSYN_SDK_LIB="${sdk_lib}"
+  export ARTOSYN_SDK_DAEMON="${sdk_daemon}"
 }

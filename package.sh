@@ -110,7 +110,8 @@ build_package() {
   rm -f "${package_name}_${VERSION}_${PACKAGE_ARCH}.deb"
   cmake OpenHD/ \
     -DARTOSYN_SDK_ROOT="${ARTOSYN_SDK_ROOT}" \
-    -DARTOSYN_SDK_LIB="${ARTOSYN_SDK_LIB}"
+    -DARTOSYN_SDK_LIB="${ARTOSYN_SDK_LIB}" \
+    -DARTOSYN_SDK_DAEMON="${ARTOSYN_SDK_DAEMON:-}"
   make -j$(nproc)
 
   mkdir -p "${PKGDIR}usr/local/bin/"
@@ -134,9 +135,12 @@ build_package() {
     "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/bbd"
     "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/bb_daemon"
   )
-  local daemon_src=""
+  local daemon_src="${ARTOSYN_SDK_DAEMON:-}"
+  if [[ -n "${daemon_src}" && ! -f "${daemon_src}" ]]; then
+    daemon_src=""
+  fi
   for candidate in "${daemon_candidates[@]}"; do
-    if [[ -f "${candidate}" ]]; then
+    if [[ -z "${daemon_src}" && -f "${candidate}" ]]; then
       daemon_src="${candidate}"
       break
     fi
@@ -149,12 +153,12 @@ build_package() {
     fi
   fi
   if [[ -z "${daemon_src}" ]]; then
-    echo "Warning: Artosyn daemon binary not found in SDK root ${ARTOSYN_SDK_ROOT}" >&2
-    echo "Runtime can still work if a system service provides the daemon." >&2
-  else
-    cp "${daemon_src}" "${PKGDIR}usr/local/bin/$(basename "${daemon_src}")"
-    chmod +x "${PKGDIR}usr/local/bin/$(basename "${daemon_src}")"
+    echo "Artosyn daemon binary not found after SDK resolve/build." >&2
+    echo "Expected ARTOSYN_SDK_DAEMON or one of known daemon binaries in ${ARTOSYN_SDK_ROOT}/host_drv." >&2
+    exit 1
   fi
+  cp "${daemon_src}" "${PKGDIR}usr/local/bin/$(basename "${daemon_src}")"
+  chmod +x "${PKGDIR}usr/local/bin/$(basename "${daemon_src}")"
 
   local copied_runtime_lib=0
   IFS=';' read -ra sdk_libs <<< "${ARTOSYN_SDK_LIB}"
@@ -173,6 +177,22 @@ build_package() {
     if [[ -f "${lib}" ]]; then
       cp "${lib}" "${PKGDIR}usr/local/lib/"
       copied_runtime_lib=1
+    fi
+  done
+  local extra_runtime_dirs=(
+    "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030"
+    "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030"
+    "${ARTOSYN_SDK_ROOT}/host_drv/install/bin"
+    "${ARTOSYN_SDK_ROOT}/host_drv/com"
+    "${ARTOSYN_SDK_ROOT}/host_drv/build/com"
+  )
+  local lib_dir
+  for lib_dir in "${extra_runtime_dirs[@]}"; do
+    if [[ -d "${lib_dir}" ]]; then
+      while IFS= read -r lib; do
+        cp "${lib}" "${PKGDIR}usr/local/lib/"
+        copied_runtime_lib=1
+      done < <(find "${lib_dir}" -maxdepth 3 -type f \( -name "*.so" -o -name "*.so.*" \) | sort -u)
     fi
   done
   if [[ "${copied_runtime_lib}" -eq 0 ]]; then

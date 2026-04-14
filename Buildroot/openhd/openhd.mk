@@ -47,6 +47,7 @@ OPENHD_CONF_OPTS = \
     -DENABLE_USB_CAMERAS=OFF \
     -DARTOSYN_SDK_ROOT="$(ARTOSYN_SDK_ROOT)" \
     -DARTOSYN_SDK_LIB="$(ARTOSYN_SDK_LIB)" \
+    -DARTOSYN_SDK_DAEMON="$(ARTOSYN_SDK_DAEMON)" \
     -DCMAKE_EXE_LINKER_FLAGS="-lstdc++fs"
 
 # Install init.d services to target
@@ -56,7 +57,8 @@ define OPENHD_INSTALL_TARGET_CMDS
     cp -r $(OPENHD_BUILDDIR)/../Buildroot/init.d/* $(TARGET_DIR)/etc/init.d/
     chmod +x $(TARGET_DIR)/etc/init.d/*
     $(INSTALL) -d $(TARGET_DIR)/usr/bin $(TARGET_DIR)/usr/lib
-    daemon_src=""; \
+    daemon_src="$(ARTOSYN_SDK_DAEMON)"; \
+    if [ -n "$$daemon_src" ] && [ ! -f "$$daemon_src" ]; then daemon_src=""; fi; \
     for candidate in \
         "$(ARTOSYN_SDK_ROOT)/host_drv/app/ar8030/artosyn_daemon" \
         "$(ARTOSYN_SDK_ROOT)/host_drv/app/ar8030/ar8030_daemon" \
@@ -73,7 +75,7 @@ define OPENHD_INSTALL_TARGET_CMDS
         "$(ARTOSYN_SDK_ROOT)/host_drv/install/bin/artlinkd" \
         "$(ARTOSYN_SDK_ROOT)/host_drv/install/bin/bbd" \
         "$(ARTOSYN_SDK_ROOT)/host_drv/install/bin/bb_daemon"; do \
-        if [ -f "$$candidate" ]; then daemon_src="$$candidate"; break; fi; \
+        if [ -z "$$daemon_src" ] && [ -f "$$candidate" ]; then daemon_src="$$candidate"; break; fi; \
     done; \
     if [ -z "$$daemon_src" ]; then \
         if [ -d "$(ARTOSYN_SDK_ROOT)/host_drv" ]; then \
@@ -86,7 +88,8 @@ define OPENHD_INSTALL_TARGET_CMDS
         cp "$$daemon_src" "$(TARGET_DIR)/usr/bin/$$(basename $$daemon_src)"; \
         chmod +x "$(TARGET_DIR)/usr/bin/$$(basename $$daemon_src)"; \
     else \
-        echo "WARNING: Artosyn daemon not found in ARTOSYN_SDK_ROOT=$(ARTOSYN_SDK_ROOT)"; \
+        echo "ERROR: Artosyn daemon not found in ARTOSYN_SDK_ROOT=$(ARTOSYN_SDK_ROOT)"; \
+        exit 1; \
     fi; \
     for lib in $(subst ;, ,$(ARTOSYN_SDK_LIB)); do \
         if [ -f "$$lib" ] && echo "$$lib" | grep -q '\.so'; then \
@@ -98,6 +101,19 @@ define OPENHD_INSTALL_TARGET_CMDS
         "$(ARTOSYN_SDK_ROOT)/host_drv/build/com/libcom.so" \
         "$(ARTOSYN_SDK_ROOT)/host_drv/install/bin/libcom.so"; do \
         if [ -f "$$lib" ]; then cp "$$lib" "$(TARGET_DIR)/usr/lib/"; fi; \
+    done; \
+    for lib_dir in \
+        "$(ARTOSYN_SDK_ROOT)/host_drv/app/ar8030" \
+        "$(ARTOSYN_SDK_ROOT)/host_drv/build/app/ar8030" \
+        "$(ARTOSYN_SDK_ROOT)/host_drv/install/bin" \
+        "$(ARTOSYN_SDK_ROOT)/host_drv/com" \
+        "$(ARTOSYN_SDK_ROOT)/host_drv/build/com"; do \
+        if [ -d "$$lib_dir" ]; then \
+            find "$$lib_dir" -maxdepth 3 -type f \
+                \( -name "*.so" -o -name "*.so.*" \) | while read -r lib; do \
+                cp "$$lib" "$(TARGET_DIR)/usr/lib/"; \
+            done; \
+        fi; \
     done
 endef
 

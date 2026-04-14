@@ -145,6 +145,22 @@ foreach(_candidate IN LISTS _artosyn_extra_runtime_lib_candidates)
         list(APPEND _artosyn_runtime_libs "${_candidate}")
     endif()
 endforeach()
+file(GLOB _artosyn_runtime_glob_candidates
+    "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/*.so"
+    "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/*.so.*"
+    "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/*.so"
+    "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/*.so.*"
+    "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/*.so"
+    "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/*.so.*"
+    "${ARTOSYN_SDK_ROOT}/host_drv/com/*.so"
+    "${ARTOSYN_SDK_ROOT}/host_drv/com/*.so.*"
+    "${ARTOSYN_SDK_ROOT}/host_drv/build/com/*.so"
+    "${ARTOSYN_SDK_ROOT}/host_drv/build/com/*.so.*")
+foreach(_candidate IN LISTS _artosyn_runtime_glob_candidates)
+    if (EXISTS "${_candidate}" AND NOT IS_DIRECTORY "${_candidate}")
+        list(APPEND _artosyn_runtime_libs "${_candidate}")
+    endif()
+endforeach()
 list(REMOVE_DUPLICATES _artosyn_runtime_libs)
 
 list(APPEND sources src/artosyn_link.cpp src/artosyn_link_settings.cpp)

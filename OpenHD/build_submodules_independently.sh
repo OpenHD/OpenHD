@@ -37,7 +37,8 @@ cmake --build build_debug || exit
 cd ../ohd_interface || exit
 cmake -S . -B build_debug -DCMAKE_BUILD_TYPE=Debug \
   -DARTOSYN_SDK_ROOT="${ARTOSYN_SDK_ROOT}" \
-  -DARTOSYN_SDK_LIB="${ARTOSYN_SDK_LIB}" || exit
+  -DARTOSYN_SDK_LIB="${ARTOSYN_SDK_LIB}" \
+  -DARTOSYN_SDK_DAEMON="${ARTOSYN_SDK_DAEMON:-}" || exit
 cmake --build build_debug || exit
 
 cd ../ohd_telemetry || exit

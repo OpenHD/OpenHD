@@ -30,5 +30,6 @@ resolve_artosyn_sdk
 cmake -S . -B build_release \
   -DCMAKE_BUILD_TYPE=Release \
   -DARTOSYN_SDK_ROOT="${ARTOSYN_SDK_ROOT}" \
-  -DARTOSYN_SDK_LIB="${ARTOSYN_SDK_LIB}"
+  -DARTOSYN_SDK_LIB="${ARTOSYN_SDK_LIB}" \
+  -DARTOSYN_SDK_DAEMON="${ARTOSYN_SDK_DAEMON:-}"
 cmake --build build_release

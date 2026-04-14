@@ -25,5 +25,12 @@
 
 # convenient script to build this project with cmake and debugging enabled
 
-cmake -S . -B build_debug -DCMAKE_BUILD_TYPE=Debug
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/scripts/resolve_artosyn_sdk.sh"
+resolve_artosyn_sdk
+
+cmake -S . -B build_debug -DCMAKE_BUILD_TYPE=Debug \
+  -DARTOSYN_SDK_ROOT="${ARTOSYN_SDK_ROOT}" \
+  -DARTOSYN_SDK_LIB="${ARTOSYN_SDK_LIB}" \
+  -DARTOSYN_SDK_DAEMON="${ARTOSYN_SDK_DAEMON:-}"
 cmake --build build_debug

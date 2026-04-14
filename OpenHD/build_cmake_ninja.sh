@@ -23,5 +23,14 @@
 # © OpenHD, All Rights Reserved.
 ###############################################################################
 
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_GENERATOR:INTERNAL=Ninja
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/scripts/resolve_artosyn_sdk.sh"
+resolve_artosyn_sdk
+
+cmake -S . -B build \
+  -DCMAKE_BUILD_TYPE=Debug \
+  -DCMAKE_GENERATOR:INTERNAL=Ninja \
+  -DARTOSYN_SDK_ROOT="${ARTOSYN_SDK_ROOT}" \
+  -DARTOSYN_SDK_LIB="${ARTOSYN_SDK_LIB}" \
+  -DARTOSYN_SDK_DAEMON="${ARTOSYN_SDK_DAEMON:-}"
 cmake --build build
