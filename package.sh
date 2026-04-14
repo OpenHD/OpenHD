@@ -115,6 +115,56 @@ build_package() {
 
   mkdir -p "${PKGDIR}usr/local/bin/"
   cp openhd "${PKGDIR}usr/local/bin/"
+  mkdir -p "${PKGDIR}usr/local/lib/"
+
+  local daemon_candidates=(
+    "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/artosyn_daemon"
+    "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/ar8030_daemon"
+    "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/artlinkd"
+    "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/artosyn_daemon"
+    "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/ar8030_daemon"
+    "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/artlinkd"
+    "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/artosyn_daemon"
+    "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/ar8030_daemon"
+    "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/artlinkd"
+  )
+  local daemon_src=""
+  for candidate in "${daemon_candidates[@]}"; do
+    if [[ -f "${candidate}" ]]; then
+      daemon_src="${candidate}"
+      break
+    fi
+  done
+  if [[ -z "${daemon_src}" ]]; then
+    echo "Artosyn daemon binary not found in SDK root ${ARTOSYN_SDK_ROOT}" >&2
+    echo "Expected one of: artosyn_daemon, ar8030_daemon, artlinkd" >&2
+    exit 1
+  fi
+  cp "${daemon_src}" "${PKGDIR}usr/local/bin/$(basename "${daemon_src}")"
+  chmod +x "${PKGDIR}usr/local/bin/$(basename "${daemon_src}")"
+
+  local copied_runtime_lib=0
+  IFS=';' read -ra sdk_libs <<< "${ARTOSYN_SDK_LIB}"
+  for lib in "${sdk_libs[@]}"; do
+    if [[ -f "${lib}" && "${lib}" == *.so* ]]; then
+      cp "${lib}" "${PKGDIR}usr/local/lib/"
+      copied_runtime_lib=1
+    fi
+  done
+  local extra_runtime_libs=(
+    "${ARTOSYN_SDK_ROOT}/host_drv/com/libcom.so"
+    "${ARTOSYN_SDK_ROOT}/host_drv/build/com/libcom.so"
+    "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/libcom.so"
+  )
+  for lib in "${extra_runtime_libs[@]}"; do
+    if [[ -f "${lib}" ]]; then
+      cp "${lib}" "${PKGDIR}usr/local/lib/"
+      copied_runtime_lib=1
+    fi
+  done
+  if [[ "${copied_runtime_lib}" -eq 0 ]]; then
+    echo "No Artosyn runtime .so copied (static linking may still be fine)." >&2
+  fi
 
   # Build the package using fpm
   fpm -a "${PACKAGE_ARCH}" -s dir -t deb -n "${package_name}" -v "${VERSION}" -C "${PKGDIR}" \

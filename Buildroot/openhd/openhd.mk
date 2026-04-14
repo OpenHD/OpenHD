@@ -45,6 +45,8 @@ OPENHD_DEPENDENCIES = poco libsodium gstreamer1 gst1-plugins-base libpcap host-p
 # Additional configuration options for the CMake build
 OPENHD_CONF_OPTS = \
     -DENABLE_USB_CAMERAS=OFF \
+    -DARTOSYN_SDK_ROOT="$(ARTOSYN_SDK_ROOT)" \
+    -DARTOSYN_SDK_LIB="$(ARTOSYN_SDK_LIB)" \
     -DCMAKE_EXE_LINKER_FLAGS="-lstdc++fs"
 
 # Install init.d services to target
@@ -53,6 +55,37 @@ define OPENHD_INSTALL_TARGET_CMDS
     $(INSTALL) -d $(TARGET_DIR)/etc/init.d
     cp -r $(OPENHD_BUILDDIR)/../Buildroot/init.d/* $(TARGET_DIR)/etc/init.d/
     chmod +x $(TARGET_DIR)/etc/init.d/*
+    $(INSTALL) -d $(TARGET_DIR)/usr/bin $(TARGET_DIR)/usr/lib
+    daemon_src=""; \
+    for candidate in \
+        "$(ARTOSYN_SDK_ROOT)/host_drv/app/ar8030/artosyn_daemon" \
+        "$(ARTOSYN_SDK_ROOT)/host_drv/app/ar8030/ar8030_daemon" \
+        "$(ARTOSYN_SDK_ROOT)/host_drv/app/ar8030/artlinkd" \
+        "$(ARTOSYN_SDK_ROOT)/host_drv/build/app/ar8030/artosyn_daemon" \
+        "$(ARTOSYN_SDK_ROOT)/host_drv/build/app/ar8030/ar8030_daemon" \
+        "$(ARTOSYN_SDK_ROOT)/host_drv/build/app/ar8030/artlinkd" \
+        "$(ARTOSYN_SDK_ROOT)/host_drv/install/bin/artosyn_daemon" \
+        "$(ARTOSYN_SDK_ROOT)/host_drv/install/bin/ar8030_daemon" \
+        "$(ARTOSYN_SDK_ROOT)/host_drv/install/bin/artlinkd"; do \
+        if [ -f "$$candidate" ]; then daemon_src="$$candidate"; break; fi; \
+    done; \
+    if [ -z "$$daemon_src" ]; then \
+        echo "ERROR: Artosyn daemon not found in ARTOSYN_SDK_ROOT=$(ARTOSYN_SDK_ROOT)"; \
+        exit 1; \
+    fi; \
+    cp "$$daemon_src" "$(TARGET_DIR)/usr/bin/$$(basename $$daemon_src)"; \
+    chmod +x "$(TARGET_DIR)/usr/bin/$$(basename $$daemon_src)"; \
+    for lib in $(subst ;, ,$(ARTOSYN_SDK_LIB)); do \
+        if [ -f "$$lib" ] && echo "$$lib" | grep -q '\.so'; then \
+            cp "$$lib" "$(TARGET_DIR)/usr/lib/"; \
+        fi; \
+    done; \
+    for lib in \
+        "$(ARTOSYN_SDK_ROOT)/host_drv/com/libcom.so" \
+        "$(ARTOSYN_SDK_ROOT)/host_drv/build/com/libcom.so" \
+        "$(ARTOSYN_SDK_ROOT)/host_drv/install/bin/libcom.so"; do \
+        if [ -f "$$lib" ]; then cp "$$lib" "$(TARGET_DIR)/usr/lib/"; fi; \
+    done
 endef
 
 # Use Buildroot's CMake package infrastructure to handle the build

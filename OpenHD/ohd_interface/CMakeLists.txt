@@ -21,6 +21,7 @@ add_library(OHDInterfaceLib::OHDInterfaceLib ALIAS OHDInterfaceLib)
 
 set(ARTOSYN_SDK_ROOT "" CACHE PATH "Path to Artosyn host_drv SDK root")
 set(ARTOSYN_SDK_LIB "" CACHE FILEPATH "Path to libar8030_client.a/.so")
+set(ARTOSYN_SDK_DAEMON "" CACHE FILEPATH "Path to Artosyn daemon binary")
 
 set(sources
     src/wifi_card_discovery.cpp
@@ -88,6 +89,44 @@ foreach(_artosyn_lib IN LISTS _artosyn_sdk_libs)
     endif()
 endforeach()
 
+if (NOT ARTOSYN_SDK_DAEMON)
+    set(_artosyn_daemon_candidates
+        "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/artosyn_daemon"
+        "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/ar8030_daemon"
+        "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/artlinkd"
+        "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/artosyn_daemon"
+        "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/ar8030_daemon"
+        "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/artlinkd"
+        "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/artosyn_daemon"
+        "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/ar8030_daemon"
+        "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/artlinkd"
+    )
+    foreach(_daemon_candidate IN LISTS _artosyn_daemon_candidates)
+        if (EXISTS "${_daemon_candidate}" AND NOT IS_DIRECTORY "${_daemon_candidate}")
+            set(ARTOSYN_SDK_DAEMON "${_daemon_candidate}" CACHE FILEPATH "Path to Artosyn daemon binary" FORCE)
+            break()
+        endif()
+    endforeach()
+endif()
+
+set(_artosyn_runtime_libs)
+foreach(_artosyn_lib IN LISTS _artosyn_sdk_libs)
+    if (_artosyn_lib MATCHES "\\.so(\\..*)?$")
+        list(APPEND _artosyn_runtime_libs "${_artosyn_lib}")
+    endif()
+endforeach()
+set(_artosyn_extra_runtime_lib_candidates
+    "${ARTOSYN_SDK_ROOT}/host_drv/com/libcom.so"
+    "${ARTOSYN_SDK_ROOT}/host_drv/build/com/libcom.so"
+    "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/libcom.so"
+)
+foreach(_candidate IN LISTS _artosyn_extra_runtime_lib_candidates)
+    if (EXISTS "${_candidate}" AND NOT IS_DIRECTORY "${_candidate}")
+        list(APPEND _artosyn_runtime_libs "${_candidate}")
+    endif()
+endforeach()
+list(REMOVE_DUPLICATES _artosyn_runtime_libs)
+
 list(APPEND sources src/artosyn_link.cpp src/artosyn_link_settings.cpp)
 target_compile_definitions(OHDInterfaceLib PUBLIC OHD_ENABLE_ARTOSYN=1)
 target_include_directories(OHDInterfaceLib PUBLIC
@@ -95,6 +134,18 @@ target_include_directories(OHDInterfaceLib PUBLIC
     "${ARTOSYN_SDK_ROOT}/host_drv/com"
 )
 target_link_libraries(OHDInterfaceLib PUBLIC ${_artosyn_sdk_libs})
+
+if (ARTOSYN_SDK_DAEMON AND EXISTS "${ARTOSYN_SDK_DAEMON}")
+    install(PROGRAMS "${ARTOSYN_SDK_DAEMON}" DESTINATION bin)
+else()
+    message(WARNING "Artosyn daemon binary not found in SDK; runtime autostart may fail unless an external service provides it.")
+endif()
+
+foreach(_runtime_lib IN LISTS _artosyn_runtime_libs)
+    if (EXISTS "${_runtime_lib}")
+        install(FILES "${_runtime_lib}" DESTINATION lib)
+    endif()
+endforeach()
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
 

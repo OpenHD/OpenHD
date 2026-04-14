@@ -18,6 +18,8 @@ static constexpr auto AR_DGRAM = "AR_DGRAM";
 static constexpr auto AR_RXBUF = "AR_RXBUF";
 static constexpr auto AR_TXBUF = "AR_TXBUF";
 static constexpr auto AR_RDTMO = "AR_RDTMO";
+static constexpr auto AR_DMN_AUTO = "AR_DMN_AUTO";
+static constexpr auto AR_DMN_CMD = "AR_DMN_CMD";
 static constexpr auto AR_MCS_MD = "AR_MCS_MD";
 static constexpr auto AR_MCS_VAL = "AR_MCS_VAL";
 static constexpr auto AR_MCS_MIN = "AR_MCS_MIN";
@@ -158,6 +160,8 @@ struct ArtosynLinkSettings {
   int rx_buf_size = 64 * 1024;
   int tx_buf_size = 64 * 1024;
   int read_timeout_ms = 100;
+  int daemon_autostart = 1;
+  std::string daemon_start_cmd;
   // Link control
   int mcs_mode = 1;      // 1 auto, 0 manual
   int mcs_value = -1;    // valid when manual

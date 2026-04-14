@@ -16,6 +16,8 @@ static void to_json(nlohmann::json& j,
       {"rx_buf_size", s.rx_buf_size},
       {"tx_buf_size", s.tx_buf_size},
       {"read_timeout_ms", s.read_timeout_ms},
+      {"daemon_autostart", s.daemon_autostart},
+      {"daemon_start_cmd", s.daemon_start_cmd},
       {"mcs_mode", s.mcs_mode},
       {"mcs_value", s.mcs_value},
       {"mcs_min", s.mcs_min},
@@ -50,6 +52,8 @@ static void from_json(const nlohmann::json& j,
   s.rx_buf_size = j.value("rx_buf_size", s.rx_buf_size);
   s.tx_buf_size = j.value("tx_buf_size", s.tx_buf_size);
   s.read_timeout_ms = j.value("read_timeout_ms", s.read_timeout_ms);
+  s.daemon_autostart = j.value("daemon_autostart", s.daemon_autostart);
+  s.daemon_start_cmd = j.value("daemon_start_cmd", s.daemon_start_cmd);
   s.mcs_mode = j.value("mcs_mode", s.mcs_mode);
   s.mcs_value = j.value("mcs_value", s.mcs_value);
   s.mcs_min = j.value("mcs_min", s.mcs_min);

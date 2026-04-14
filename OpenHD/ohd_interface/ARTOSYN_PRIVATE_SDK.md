@@ -29,6 +29,19 @@ export ARTOSYN_SDK_LIB=/opt/openhd-private/artosyn_sdk/host_drv/app/ar8030/libar
 If `libar8030_client` is not prebuilt in that source tree, the resolver will
 attempt to build `ar8030_client` from `host_drv` automatically.
 
+## Runtime artifacts installed with OpenHD
+
+OpenHD now also installs Artosyn userspace runtime artifacts from the SDK:
+
+- Artosyn daemon binary (`artosyn_daemon`, `ar8030_daemon`, or `artlinkd`)
+- Shared runtime libraries such as `libar8030_client.so` / `libcom.so` when present
+
+For CMake-based builds, you can override daemon auto-detection with:
+
+```bash
+-DARTOSYN_SDK_DAEMON=/absolute/path/to/artosyn_daemon
+```
+
 ## Builder defaults
 
 OpenHD build scripts also search these default SDK roots when env vars are not set:

@@ -103,6 +103,9 @@ class ArtosynLink : public OHDLink {
   void stop_stats_thread();
   void stats_loop();
   void update_link_stats();
+  void start_connect_worker();
+  void stop_connect_worker();
+  void connect_loop();
 
  private:
   const OHDProfile m_profile;
@@ -123,6 +126,8 @@ class ArtosynLink : public OHDLink {
   std::thread m_rx_video_thread;
   std::thread m_rx_telemetry_thread;
   std::thread m_stats_thread;
+  std::thread m_connect_thread;
+  std::atomic<bool> m_stop_connect_worker{false};
 
   std::atomic<uint64_t> m_tx_total_bytes{0};
   std::atomic<uint64_t> m_tx_total_packets{0};

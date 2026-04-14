@@ -23,5 +23,12 @@
 # © OpenHD, All Rights Reserved.
 ###############################################################################
 
-cmake -S . -B build_release -DCMAKE_BUILD_TYPE=Release
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/scripts/resolve_artosyn_sdk.sh"
+resolve_artosyn_sdk
+
+cmake -S . -B build_release \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DARTOSYN_SDK_ROOT="${ARTOSYN_SDK_ROOT}" \
+  -DARTOSYN_SDK_LIB="${ARTOSYN_SDK_LIB}"
 cmake --build build_release

@@ -25,6 +25,10 @@
 
 systemctl enable openhd.service
 
+if command -v ldconfig >/dev/null 2>&1; then
+    ldconfig || true
+fi
+
 # this is the serial port on the jetson boards, we don't want a tty running on it
 systemctl stop nvgetty || true
 systemctl disable nvgetty || true

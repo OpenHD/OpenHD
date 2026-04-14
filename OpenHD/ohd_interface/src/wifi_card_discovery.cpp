@@ -252,9 +252,19 @@ std::vector<WiFiCard> DWifiCards::discover_connected_wifi_cards() {
       continue;
     }
     if (sys_card.phy_index < 0) {
-      openhd::log::get_default()->warn(
-          "Skipping WiFi card {} due to missing phy index",
-          sys_card.interface_name);
+      const bool artosyn_pseudo_iface =
+          OHDUtil::contains_after_uppercase(sys_card.interface_name,
+                                            "AR_MDEV") ||
+          OHDUtil::equal_after_uppercase(sys_card.type, "ARTOSYN");
+      if (artosyn_pseudo_iface) {
+        openhd::log::get_default()->debug(
+            "Skipping pseudo Artosyn interface {} (no phy index)",
+            sys_card.interface_name);
+      } else {
+        openhd::log::get_default()->warn(
+            "Skipping WiFi card {} due to missing phy index",
+            sys_card.interface_name);
+      }
       continue;
     }
     WiFiCard card{};

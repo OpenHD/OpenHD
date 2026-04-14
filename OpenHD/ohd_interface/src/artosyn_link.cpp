@@ -1,6 +1,8 @@
 #include "artosyn_link.h"
 
+#include <array>
 #include <chrono>
+#include <cstdlib>
 #include <iomanip>
 #include <limits>
 #include <sstream>
@@ -155,6 +157,115 @@ static bool probe_artosyn_daemon_once(const ArtosynLink::Config& cfg) {
   bb_host_disconnect(host);
   return n > 0;
 }
+
+static bool try_start_artosyn_daemon(
+    const openhd::ArtosynLinkSettings& settings,
+    const ArtosynLink::Config& cfg,
+    const std::shared_ptr<spdlog::logger>& logger) {
+  if (settings.daemon_autostart == 0) {
+    return false;
+  }
+  if (probe_artosyn_daemon_once(cfg)) {
+    return true;
+  }
+  constexpr int64_t kMinAutostartIntervalMs = 30000;
+  static std::atomic<int64_t> s_last_autostart_attempt_ms{0};
+  const int64_t now_ms = openhd::util::steady_clock_time_epoch_ms();
+  const int64_t last_attempt_ms = s_last_autostart_attempt_ms.load();
+  if (last_attempt_ms != 0 &&
+      (now_ms - last_attempt_ms) < kMinAutostartIntervalMs) {
+    return false;
+  }
+  s_last_autostart_attempt_ms.store(now_ms);
+
+  const auto wait_for_daemon = [&cfg]() {
+    for (int i = 0; i < 10; ++i) {
+      if (probe_artosyn_daemon_once(cfg)) {
+        return true;
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+    return false;
+  };
+
+  if (!settings.daemon_start_cmd.empty()) {
+    logger->warn("Trying to start Artosyn daemon with AR_DMN_CMD.");
+    const std::string cmd =
+        settings.daemon_start_cmd +
+        " >/tmp/openhd_artosyn_daemon.log 2>&1 &";
+    const int ret = std::system(cmd.c_str());
+    if (ret == 0 && wait_for_daemon()) {
+      logger->warn("Artosyn daemon started via AR_DMN_CMD.");
+      return true;
+    }
+  }
+
+  const std::array<const char*, 4> service_names = {
+      "openhd-artosyn", "artosyn", "artlink", "ar8030"};
+
+  const bool has_systemctl =
+      OHDFilesystemUtil::exists("/bin/systemctl") ||
+      OHDFilesystemUtil::exists("/usr/bin/systemctl");
+  if (has_systemctl) {
+    for (const auto* service_name : service_names) {
+      const std::string cmd =
+          std::string("systemctl start ") + service_name + " >/dev/null 2>&1";
+      if (std::system(cmd.c_str()) == 0) {
+        logger->warn("Started Artosyn daemon via systemctl service {}.",
+                     service_name);
+        if (wait_for_daemon()) {
+          return true;
+        }
+      }
+    }
+  }
+
+  const bool has_service = OHDFilesystemUtil::exists("/sbin/service") ||
+                           OHDFilesystemUtil::exists("/usr/sbin/service") ||
+                           OHDFilesystemUtil::exists("/usr/bin/service");
+  if (has_service) {
+    for (const auto* service_name : service_names) {
+      const std::string cmd =
+          std::string("service ") + service_name + " start >/dev/null 2>&1";
+      if (std::system(cmd.c_str()) == 0) {
+        logger->warn("Started Artosyn daemon via service {}.", service_name);
+        if (wait_for_daemon()) {
+          return true;
+        }
+      }
+    }
+  }
+
+  const std::array<const char*, 10> daemon_candidates = {
+      "/usr/local/bin/artosyn_daemon",
+      "/usr/bin/artosyn_daemon",
+      "/usr/local/bin/ar8030_daemon",
+      "/usr/bin/ar8030_daemon",
+      "/usr/local/bin/artlinkd",
+      "/usr/bin/artlinkd",
+      "/opt/openhd-private/artosyn_sdk/host_drv/app/ar8030/artosyn_daemon",
+      "/opt/openhd-private/artosyn_sdk/host_drv/app/ar8030/ar8030_daemon",
+      "/opt/openhd/artosyn_sdk/host_drv/app/ar8030/artosyn_daemon",
+      "/opt/openhd/artosyn_sdk/host_drv/app/ar8030/ar8030_daemon"};
+  for (const auto* daemon_path : daemon_candidates) {
+    if (!OHDFilesystemUtil::exists(daemon_path)) {
+      continue;
+    }
+    const std::string cmd =
+        std::string(daemon_path) +
+        " >/tmp/openhd_artosyn_daemon.log 2>&1 &";
+    if (std::system(cmd.c_str()) == 0) {
+      logger->warn("Started Artosyn daemon binary {}.", daemon_path);
+      if (wait_for_daemon()) {
+        return true;
+      }
+    }
+  }
+
+  logger->warn(
+      "Artosyn daemon autostart failed. Set AR_DMN_CMD to a valid start command.");
+  return false;
+}
 }  // namespace
 
 ArtosynLink::ArtosynLink(OHDProfile profile)
@@ -163,6 +274,7 @@ ArtosynLink::ArtosynLink(OHDProfile profile)
   m_cfg = config_from_settings(m_settings->get_settings());
   m_settings->register_listener([this]() {
     m_console->warn("Artosyn settings changed, restarting link");
+    stop_connect_worker();
     stop_stats_thread();
     stop_rx_threads();
     shutdown_device();
@@ -170,17 +282,26 @@ ArtosynLink::ArtosynLink(OHDProfile profile)
     if (init_device()) {
       start_rx_threads();
       start_stats_thread();
+    } else {
+      (void)try_start_artosyn_daemon(m_settings->get_settings(), m_cfg,
+                                     m_console);
+      m_console->warn("Artosyn reconnect will continue in background.");
+      start_connect_worker();
     }
   });
   if (!init_device()) {
-    m_console->warn("Artosyn init failed. Link will be inactive.");
-    return;
+    (void)try_start_artosyn_daemon(m_settings->get_settings(), m_cfg, m_console);
+    m_console->warn(
+        "Artosyn init failed. Continuing with background reconnect attempts.");
+    start_connect_worker();
+  } else {
+    start_rx_threads();
+    start_stats_thread();
   }
-  start_rx_threads();
-  start_stats_thread();
 }
 
 ArtosynLink::~ArtosynLink() {
+  stop_connect_worker();
   stop_stats_thread();
   stop_rx_threads();
   shutdown_device();
@@ -197,9 +318,9 @@ bool ArtosynLink::probe() {
           contains_artosyn_usb_id(OHDUtil::to_uppercase(lsusb_out.value()));
     }
   }
-  // If hardware is visible but the daemon starts slightly later than OpenHD,
-  // retry a bit before giving up.
-  const int max_attempts = artosyn_hw_hint ? 25 : 3;
+  // Keep startup snappy: do a short daemon probe, then fall back to background
+  // reconnect handling if hardware is present but daemon is still booting.
+  const int max_attempts = artosyn_hw_hint ? 5 : 3;
   for (int attempt = 0; attempt < max_attempts; ++attempt) {
     if (probe_artosyn_daemon_once(cfg)) {
       return true;
@@ -207,6 +328,15 @@ bool ArtosynLink::probe() {
     if (attempt + 1 < max_attempts) {
       std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
+  }
+  if (artosyn_hw_hint) {
+    (void)try_start_artosyn_daemon(holder.get_settings(), cfg,
+                                   openhd::log::get_default());
+    openhd::log::get_default()->warn(
+        "Artosyn hardware detected but daemon is not reachable at {}:{} yet. "
+        "Deferring connection to runtime reconnect.",
+        cfg.addr, cfg.port);
+    return true;
   }
   return false;
 }
@@ -422,6 +552,37 @@ void ArtosynLink::stop_stats_thread() {
   m_stats_running = false;
   if (m_stats_thread.joinable()) {
     m_stats_thread.join();
+  }
+}
+
+void ArtosynLink::start_connect_worker() {
+  if (m_connect_thread.joinable()) {
+    return;
+  }
+  m_stop_connect_worker = false;
+  m_connect_thread = std::thread([this]() { connect_loop(); });
+}
+
+void ArtosynLink::stop_connect_worker() {
+  m_stop_connect_worker = true;
+  if (m_connect_thread.joinable()) {
+    m_connect_thread.join();
+  }
+}
+
+void ArtosynLink::connect_loop() {
+  while (!m_stop_connect_worker) {
+    if (init_device()) {
+      m_console->warn("Artosyn daemon connected.");
+      start_rx_threads();
+      start_stats_thread();
+      return;
+    }
+    if (m_settings) {
+      (void)try_start_artosyn_daemon(m_settings->get_settings(), m_cfg,
+                                     m_console);
+    }
+    std::this_thread::sleep_for(std::chrono::seconds(5));
   }
 }
 
@@ -1066,6 +1227,24 @@ std::vector<openhd::Setting> ArtosynLink::get_all_settings() {
   ret.push_back(
       Setting{AR_RDTMO, IntSetting{m_settings->get_settings().read_timeout_ms,
                                    cb_to}});
+
+  auto cb_dmn_auto = [this](std::string, int value) {
+    m_settings->unsafe_get_settings().daemon_autostart = value ? 1 : 0;
+    m_settings->persist();
+    return true;
+  };
+  ret.push_back(Setting{
+      AR_DMN_AUTO,
+      IntSetting{m_settings->get_settings().daemon_autostart, cb_dmn_auto}});
+
+  auto cb_dmn_cmd = [this](std::string, std::string value) {
+    m_settings->unsafe_get_settings().daemon_start_cmd = value;
+    m_settings->persist();
+    return true;
+  };
+  ret.push_back(Setting{
+      AR_DMN_CMD,
+      StringSetting{m_settings->get_settings().daemon_start_cmd, cb_dmn_cmd}});
 
   auto cb_mcs_mode = [this](std::string, int value) {
     m_settings->unsafe_get_settings().mcs_mode = value ? 1 : 0;
