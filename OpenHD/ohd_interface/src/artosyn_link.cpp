@@ -236,15 +236,23 @@ static bool try_start_artosyn_daemon(
     }
   }
 
-  const std::array<const char*, 10> daemon_candidates = {
+  const std::array<const char*, 18> daemon_candidates = {
       "/usr/local/bin/artosyn_daemon",
       "/usr/bin/artosyn_daemon",
       "/usr/local/bin/ar8030_daemon",
       "/usr/bin/ar8030_daemon",
       "/usr/local/bin/artlinkd",
       "/usr/bin/artlinkd",
+      "/usr/local/bin/bbd",
+      "/usr/bin/bbd",
+      "/usr/local/bin/bb_daemon",
+      "/usr/bin/bb_daemon",
+      "/opt/openhd-private/artosyn_sdk/host_drv/app/ar8030/bbd",
+      "/opt/openhd-private/artosyn_sdk/host_drv/app/ar8030/bb_daemon",
       "/opt/openhd-private/artosyn_sdk/host_drv/app/ar8030/artosyn_daemon",
       "/opt/openhd-private/artosyn_sdk/host_drv/app/ar8030/ar8030_daemon",
+      "/opt/openhd/artosyn_sdk/host_drv/app/ar8030/bbd",
+      "/opt/openhd/artosyn_sdk/host_drv/app/ar8030/bb_daemon",
       "/opt/openhd/artosyn_sdk/host_drv/app/ar8030/artosyn_daemon",
       "/opt/openhd/artosyn_sdk/host_drv/app/ar8030/ar8030_daemon"};
   for (const auto* daemon_path : daemon_candidates) {

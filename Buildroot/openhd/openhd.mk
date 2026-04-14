@@ -61,20 +61,33 @@ define OPENHD_INSTALL_TARGET_CMDS
         "$(ARTOSYN_SDK_ROOT)/host_drv/app/ar8030/artosyn_daemon" \
         "$(ARTOSYN_SDK_ROOT)/host_drv/app/ar8030/ar8030_daemon" \
         "$(ARTOSYN_SDK_ROOT)/host_drv/app/ar8030/artlinkd" \
+        "$(ARTOSYN_SDK_ROOT)/host_drv/app/ar8030/bbd" \
+        "$(ARTOSYN_SDK_ROOT)/host_drv/app/ar8030/bb_daemon" \
         "$(ARTOSYN_SDK_ROOT)/host_drv/build/app/ar8030/artosyn_daemon" \
         "$(ARTOSYN_SDK_ROOT)/host_drv/build/app/ar8030/ar8030_daemon" \
         "$(ARTOSYN_SDK_ROOT)/host_drv/build/app/ar8030/artlinkd" \
+        "$(ARTOSYN_SDK_ROOT)/host_drv/build/app/ar8030/bbd" \
+        "$(ARTOSYN_SDK_ROOT)/host_drv/build/app/ar8030/bb_daemon" \
         "$(ARTOSYN_SDK_ROOT)/host_drv/install/bin/artosyn_daemon" \
         "$(ARTOSYN_SDK_ROOT)/host_drv/install/bin/ar8030_daemon" \
-        "$(ARTOSYN_SDK_ROOT)/host_drv/install/bin/artlinkd"; do \
+        "$(ARTOSYN_SDK_ROOT)/host_drv/install/bin/artlinkd" \
+        "$(ARTOSYN_SDK_ROOT)/host_drv/install/bin/bbd" \
+        "$(ARTOSYN_SDK_ROOT)/host_drv/install/bin/bb_daemon"; do \
         if [ -f "$$candidate" ]; then daemon_src="$$candidate"; break; fi; \
     done; \
     if [ -z "$$daemon_src" ]; then \
-        echo "ERROR: Artosyn daemon not found in ARTOSYN_SDK_ROOT=$(ARTOSYN_SDK_ROOT)"; \
-        exit 1; \
+        if [ -d "$(ARTOSYN_SDK_ROOT)/host_drv" ]; then \
+            daemon_src="$$(find "$(ARTOSYN_SDK_ROOT)/host_drv" -type f \
+                \( -iname "artosyn_daemon" -o -iname "ar8030_daemon" -o -iname "artlinkd" -o -iname "bbd" -o -iname "bb_daemon" \) \
+                | head -n 1)"; \
+        fi; \
     fi; \
-    cp "$$daemon_src" "$(TARGET_DIR)/usr/bin/$$(basename $$daemon_src)"; \
-    chmod +x "$(TARGET_DIR)/usr/bin/$$(basename $$daemon_src)"; \
+    if [ -n "$$daemon_src" ]; then \
+        cp "$$daemon_src" "$(TARGET_DIR)/usr/bin/$$(basename $$daemon_src)"; \
+        chmod +x "$(TARGET_DIR)/usr/bin/$$(basename $$daemon_src)"; \
+    else \
+        echo "WARNING: Artosyn daemon not found in ARTOSYN_SDK_ROOT=$(ARTOSYN_SDK_ROOT)"; \
+    fi; \
     for lib in $(subst ;, ,$(ARTOSYN_SDK_LIB)); do \
         if [ -f "$$lib" ] && echo "$$lib" | grep -q '\.so'; then \
             cp "$$lib" "$(TARGET_DIR)/usr/lib/"; \

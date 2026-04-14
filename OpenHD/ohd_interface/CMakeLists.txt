@@ -94,12 +94,18 @@ if (NOT ARTOSYN_SDK_DAEMON)
         "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/artosyn_daemon"
         "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/ar8030_daemon"
         "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/artlinkd"
+        "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/bbd"
+        "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/bb_daemon"
         "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/artosyn_daemon"
         "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/ar8030_daemon"
         "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/artlinkd"
+        "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/bbd"
+        "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/bb_daemon"
         "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/artosyn_daemon"
         "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/ar8030_daemon"
         "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/artlinkd"
+        "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/bbd"
+        "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/bb_daemon"
     )
     foreach(_daemon_candidate IN LISTS _artosyn_daemon_candidates)
         if (EXISTS "${_daemon_candidate}" AND NOT IS_DIRECTORY "${_daemon_candidate}")
@@ -107,6 +113,20 @@ if (NOT ARTOSYN_SDK_DAEMON)
             break()
         endif()
     endforeach()
+    if (NOT ARTOSYN_SDK_DAEMON)
+        file(GLOB_RECURSE _artosyn_daemon_recursive
+            "${ARTOSYN_SDK_ROOT}/host_drv/*artosyn_daemon*"
+            "${ARTOSYN_SDK_ROOT}/host_drv/*ar8030_daemon*"
+            "${ARTOSYN_SDK_ROOT}/host_drv/*artlinkd*"
+            "${ARTOSYN_SDK_ROOT}/host_drv/*bb_daemon*"
+            "${ARTOSYN_SDK_ROOT}/host_drv/*bbd")
+        foreach(_daemon_candidate IN LISTS _artosyn_daemon_recursive)
+            if (EXISTS "${_daemon_candidate}" AND NOT IS_DIRECTORY "${_daemon_candidate}")
+                set(ARTOSYN_SDK_DAEMON "${_daemon_candidate}" CACHE FILEPATH "Path to Artosyn daemon binary" FORCE)
+                break()
+            endif()
+        endforeach()
+    endif()
 endif()
 
 set(_artosyn_runtime_libs)

@@ -121,12 +121,18 @@ build_package() {
     "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/artosyn_daemon"
     "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/ar8030_daemon"
     "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/artlinkd"
+    "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/bbd"
+    "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/bb_daemon"
     "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/artosyn_daemon"
     "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/ar8030_daemon"
     "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/artlinkd"
+    "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/bbd"
+    "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/bb_daemon"
     "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/artosyn_daemon"
     "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/ar8030_daemon"
     "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/artlinkd"
+    "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/bbd"
+    "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/bb_daemon"
   )
   local daemon_src=""
   for candidate in "${daemon_candidates[@]}"; do
@@ -136,12 +142,19 @@ build_package() {
     fi
   done
   if [[ -z "${daemon_src}" ]]; then
-    echo "Artosyn daemon binary not found in SDK root ${ARTOSYN_SDK_ROOT}" >&2
-    echo "Expected one of: artosyn_daemon, ar8030_daemon, artlinkd" >&2
-    exit 1
+    if [[ -d "${ARTOSYN_SDK_ROOT}/host_drv" ]]; then
+      daemon_src="$(find "${ARTOSYN_SDK_ROOT}/host_drv" -type f \
+        \( -iname "artosyn_daemon" -o -iname "ar8030_daemon" -o -iname "artlinkd" -o -iname "bbd" -o -iname "bb_daemon" \) \
+        | head -n 1 || true)"
+    fi
   fi
-  cp "${daemon_src}" "${PKGDIR}usr/local/bin/$(basename "${daemon_src}")"
-  chmod +x "${PKGDIR}usr/local/bin/$(basename "${daemon_src}")"
+  if [[ -z "${daemon_src}" ]]; then
+    echo "Warning: Artosyn daemon binary not found in SDK root ${ARTOSYN_SDK_ROOT}" >&2
+    echo "Runtime can still work if a system service provides the daemon." >&2
+  else
+    cp "${daemon_src}" "${PKGDIR}usr/local/bin/$(basename "${daemon_src}")"
+    chmod +x "${PKGDIR}usr/local/bin/$(basename "${daemon_src}")"
+  fi
 
   local copied_runtime_lib=0
   IFS=';' read -ra sdk_libs <<< "${ARTOSYN_SDK_LIB}"
