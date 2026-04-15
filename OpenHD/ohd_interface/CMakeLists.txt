@@ -48,6 +48,9 @@ endif()
 if (NOT ARTOSYN_SDK_LIB AND DEFINED ENV{ARTOSYN_SDK_LIB})
     set(ARTOSYN_SDK_LIB "$ENV{ARTOSYN_SDK_LIB}" CACHE FILEPATH "Path to libar8030_client.a/.so" FORCE)
 endif()
+if (NOT ARTOSYN_SDK_DAEMON AND DEFINED ENV{ARTOSYN_SDK_DAEMON})
+    set(ARTOSYN_SDK_DAEMON "$ENV{ARTOSYN_SDK_DAEMON}" CACHE FILEPATH "Path to Artosyn daemon binary" FORCE)
+endif()
 
 if (ARTOSYN_SDK_ROOT AND NOT ARTOSYN_SDK_LIB)
     set(_artosyn_lib_candidates
@@ -96,16 +99,19 @@ if (NOT ARTOSYN_SDK_DAEMON)
         "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/artlinkd"
         "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/bbd"
         "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/bb_daemon"
+        "${ARTOSYN_SDK_ROOT}/host_drv/daemon/daemon"
         "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/artosyn_daemon"
         "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/ar8030_daemon"
         "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/artlinkd"
         "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/bbd"
         "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/bb_daemon"
+        "${ARTOSYN_SDK_ROOT}/host_drv/build/daemon/daemon"
         "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/artosyn_daemon"
         "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/ar8030_daemon"
         "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/artlinkd"
         "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/bbd"
         "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/bb_daemon"
+        "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/daemon"
     )
     foreach(_daemon_candidate IN LISTS _artosyn_daemon_candidates)
         if (EXISTS "${_daemon_candidate}" AND NOT IS_DIRECTORY "${_daemon_candidate}")
@@ -119,7 +125,8 @@ if (NOT ARTOSYN_SDK_DAEMON)
             "${ARTOSYN_SDK_ROOT}/host_drv/*ar8030_daemon*"
             "${ARTOSYN_SDK_ROOT}/host_drv/*artlinkd*"
             "${ARTOSYN_SDK_ROOT}/host_drv/*bb_daemon*"
-            "${ARTOSYN_SDK_ROOT}/host_drv/*bbd")
+            "${ARTOSYN_SDK_ROOT}/host_drv/*bbd"
+            "${ARTOSYN_SDK_ROOT}/host_drv/*/daemon")
         foreach(_daemon_candidate IN LISTS _artosyn_daemon_recursive)
             if (EXISTS "${_daemon_candidate}" AND NOT IS_DIRECTORY "${_daemon_candidate}")
                 set(ARTOSYN_SDK_DAEMON "${_daemon_candidate}" CACHE FILEPATH "Path to Artosyn daemon binary" FORCE)
@@ -172,7 +179,12 @@ target_include_directories(OHDInterfaceLib PUBLIC
 target_link_libraries(OHDInterfaceLib PUBLIC ${_artosyn_sdk_libs})
 
 if (ARTOSYN_SDK_DAEMON AND EXISTS "${ARTOSYN_SDK_DAEMON}")
-    install(PROGRAMS "${ARTOSYN_SDK_DAEMON}" DESTINATION bin)
+    get_filename_component(_artosyn_daemon_name "${ARTOSYN_SDK_DAEMON}" NAME)
+    if (_artosyn_daemon_name STREQUAL "daemon")
+        install(PROGRAMS "${ARTOSYN_SDK_DAEMON}" DESTINATION bin RENAME artosyn_daemon)
+    else()
+        install(PROGRAMS "${ARTOSYN_SDK_DAEMON}" DESTINATION bin)
+    endif()
 else()
     message(WARNING "Artosyn daemon binary not found in SDK; runtime autostart may fail unless an external service provides it.")
 endif()

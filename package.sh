@@ -124,16 +124,19 @@ build_package() {
     "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/artlinkd"
     "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/bbd"
     "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/bb_daemon"
+    "${ARTOSYN_SDK_ROOT}/host_drv/daemon/daemon"
     "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/artosyn_daemon"
     "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/ar8030_daemon"
     "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/artlinkd"
     "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/bbd"
     "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/bb_daemon"
+    "${ARTOSYN_SDK_ROOT}/host_drv/build/daemon/daemon"
     "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/artosyn_daemon"
     "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/ar8030_daemon"
     "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/artlinkd"
     "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/bbd"
     "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/bb_daemon"
+    "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/daemon"
   )
   local daemon_src="${ARTOSYN_SDK_DAEMON:-}"
   if [[ -n "${daemon_src}" && ! -f "${daemon_src}" ]]; then
@@ -148,7 +151,7 @@ build_package() {
   if [[ -z "${daemon_src}" ]]; then
     if [[ -d "${ARTOSYN_SDK_ROOT}/host_drv" ]]; then
       daemon_src="$(find "${ARTOSYN_SDK_ROOT}/host_drv" -type f \
-        \( -iname "artosyn_daemon" -o -iname "ar8030_daemon" -o -iname "artlinkd" -o -iname "bbd" -o -iname "bb_daemon" \) \
+        \( -iname "artosyn_daemon" -o -iname "ar8030_daemon" -o -iname "artlinkd" -o -iname "bbd" -o -iname "bb_daemon" -o -iname "daemon" \) \
         | head -n 1 || true)"
     fi
   fi
@@ -157,8 +160,13 @@ build_package() {
     echo "Expected ARTOSYN_SDK_DAEMON or one of known daemon binaries in ${ARTOSYN_SDK_ROOT}/host_drv." >&2
     exit 1
   fi
-  cp "${daemon_src}" "${PKGDIR}usr/local/bin/$(basename "${daemon_src}")"
-  chmod +x "${PKGDIR}usr/local/bin/$(basename "${daemon_src}")"
+  local daemon_dst_name
+  daemon_dst_name="$(basename "${daemon_src}")"
+  if [[ "${daemon_dst_name}" == "daemon" ]]; then
+    daemon_dst_name="artosyn_daemon"
+  fi
+  cp "${daemon_src}" "${PKGDIR}usr/local/bin/${daemon_dst_name}"
+  chmod +x "${PKGDIR}usr/local/bin/${daemon_dst_name}"
 
   local copied_runtime_lib=0
   IFS=';' read -ra sdk_libs <<< "${ARTOSYN_SDK_LIB}"

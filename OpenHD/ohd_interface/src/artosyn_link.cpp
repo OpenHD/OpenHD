@@ -236,7 +236,7 @@ static bool try_start_artosyn_daemon(
     }
   }
 
-  const std::array<const char*, 18> daemon_candidates = {
+  const std::array<const char*, 20> daemon_candidates = {
       "/usr/local/bin/artosyn_daemon",
       "/usr/bin/artosyn_daemon",
       "/usr/local/bin/ar8030_daemon",
@@ -251,10 +251,12 @@ static bool try_start_artosyn_daemon(
       "/opt/openhd-private/artosyn_sdk/host_drv/app/ar8030/bb_daemon",
       "/opt/openhd-private/artosyn_sdk/host_drv/app/ar8030/artosyn_daemon",
       "/opt/openhd-private/artosyn_sdk/host_drv/app/ar8030/ar8030_daemon",
+      "/opt/openhd-private/artosyn_sdk/host_drv/daemon/daemon",
       "/opt/openhd/artosyn_sdk/host_drv/app/ar8030/bbd",
       "/opt/openhd/artosyn_sdk/host_drv/app/ar8030/bb_daemon",
       "/opt/openhd/artosyn_sdk/host_drv/app/ar8030/artosyn_daemon",
-      "/opt/openhd/artosyn_sdk/host_drv/app/ar8030/ar8030_daemon"};
+      "/opt/openhd/artosyn_sdk/host_drv/app/ar8030/ar8030_daemon",
+      "/opt/openhd/artosyn_sdk/host_drv/daemon/daemon"};
   for (const auto* daemon_path : daemon_candidates) {
     if (!OHDFilesystemUtil::exists(daemon_path)) {
       continue;

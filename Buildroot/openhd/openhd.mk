@@ -65,28 +65,33 @@ define OPENHD_INSTALL_TARGET_CMDS
         "$(ARTOSYN_SDK_ROOT)/host_drv/app/ar8030/artlinkd" \
         "$(ARTOSYN_SDK_ROOT)/host_drv/app/ar8030/bbd" \
         "$(ARTOSYN_SDK_ROOT)/host_drv/app/ar8030/bb_daemon" \
+        "$(ARTOSYN_SDK_ROOT)/host_drv/daemon/daemon" \
         "$(ARTOSYN_SDK_ROOT)/host_drv/build/app/ar8030/artosyn_daemon" \
         "$(ARTOSYN_SDK_ROOT)/host_drv/build/app/ar8030/ar8030_daemon" \
         "$(ARTOSYN_SDK_ROOT)/host_drv/build/app/ar8030/artlinkd" \
         "$(ARTOSYN_SDK_ROOT)/host_drv/build/app/ar8030/bbd" \
         "$(ARTOSYN_SDK_ROOT)/host_drv/build/app/ar8030/bb_daemon" \
+        "$(ARTOSYN_SDK_ROOT)/host_drv/build/daemon/daemon" \
         "$(ARTOSYN_SDK_ROOT)/host_drv/install/bin/artosyn_daemon" \
         "$(ARTOSYN_SDK_ROOT)/host_drv/install/bin/ar8030_daemon" \
         "$(ARTOSYN_SDK_ROOT)/host_drv/install/bin/artlinkd" \
         "$(ARTOSYN_SDK_ROOT)/host_drv/install/bin/bbd" \
-        "$(ARTOSYN_SDK_ROOT)/host_drv/install/bin/bb_daemon"; do \
+        "$(ARTOSYN_SDK_ROOT)/host_drv/install/bin/bb_daemon" \
+        "$(ARTOSYN_SDK_ROOT)/host_drv/install/bin/daemon"; do \
         if [ -z "$$daemon_src" ] && [ -f "$$candidate" ]; then daemon_src="$$candidate"; break; fi; \
     done; \
     if [ -z "$$daemon_src" ]; then \
         if [ -d "$(ARTOSYN_SDK_ROOT)/host_drv" ]; then \
             daemon_src="$$(find "$(ARTOSYN_SDK_ROOT)/host_drv" -type f \
-                \( -iname "artosyn_daemon" -o -iname "ar8030_daemon" -o -iname "artlinkd" -o -iname "bbd" -o -iname "bb_daemon" \) \
+                \( -iname "artosyn_daemon" -o -iname "ar8030_daemon" -o -iname "artlinkd" -o -iname "bbd" -o -iname "bb_daemon" -o -iname "daemon" \) \
                 | head -n 1)"; \
         fi; \
     fi; \
     if [ -n "$$daemon_src" ]; then \
-        cp "$$daemon_src" "$(TARGET_DIR)/usr/bin/$$(basename $$daemon_src)"; \
-        chmod +x "$(TARGET_DIR)/usr/bin/$$(basename $$daemon_src)"; \
+        daemon_dst_name="$$(basename $$daemon_src)"; \
+        if [ "$$daemon_dst_name" = "daemon" ]; then daemon_dst_name="artosyn_daemon"; fi; \
+        cp "$$daemon_src" "$(TARGET_DIR)/usr/bin/$$daemon_dst_name"; \
+        chmod +x "$(TARGET_DIR)/usr/bin/$$daemon_dst_name"; \
     else \
         echo "ERROR: Artosyn daemon not found in ARTOSYN_SDK_ROOT=$(ARTOSYN_SDK_ROOT)"; \
         exit 1; \

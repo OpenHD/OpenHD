@@ -254,16 +254,19 @@ _find_daemon_binary_in_tree() {
     "${sdk_root}/host_drv/app/ar8030/artlinkd"
     "${sdk_root}/host_drv/app/ar8030/bbd"
     "${sdk_root}/host_drv/app/ar8030/bb_daemon"
+    "${sdk_root}/host_drv/daemon/daemon"
     "${sdk_root}/host_drv/build/app/ar8030/artosyn_daemon"
     "${sdk_root}/host_drv/build/app/ar8030/ar8030_daemon"
     "${sdk_root}/host_drv/build/app/ar8030/artlinkd"
     "${sdk_root}/host_drv/build/app/ar8030/bbd"
     "${sdk_root}/host_drv/build/app/ar8030/bb_daemon"
+    "${sdk_root}/host_drv/build/daemon/daemon"
     "${sdk_root}/host_drv/install/bin/artosyn_daemon"
     "${sdk_root}/host_drv/install/bin/ar8030_daemon"
     "${sdk_root}/host_drv/install/bin/artlinkd"
     "${sdk_root}/host_drv/install/bin/bbd"
     "${sdk_root}/host_drv/install/bin/bb_daemon"
+    "${sdk_root}/host_drv/install/bin/daemon"
   )
   local candidate
   for candidate in "${daemon_candidates[@]}"; do
@@ -274,7 +277,7 @@ _find_daemon_binary_in_tree() {
   done
   local hit
   hit="$(find "${sdk_root}/host_drv" -type f \
-    \( -iname "artosyn_daemon" -o -iname "ar8030_daemon" -o -iname "artlinkd" -o -iname "bbd" -o -iname "bb_daemon" \) \
+    \( -iname "artosyn_daemon" -o -iname "ar8030_daemon" -o -iname "artlinkd" -o -iname "bbd" -o -iname "bb_daemon" -o -iname "daemon" \) \
     | head -n 1 || true)"
   if [[ -n "${hit}" ]]; then
     echo "${hit}"
@@ -312,7 +315,7 @@ _build_daemon_from_source() {
       built="$(_find_daemon_binary_in_tree "${sdk_root}" || true)"
       if [[ -z "${built}" ]]; then
         built="$(find "${build_dir}" -type f \
-          \( -iname "artosyn_daemon" -o -iname "ar8030_daemon" -o -iname "artlinkd" -o -iname "bbd" -o -iname "bb_daemon" \) \
+          \( -iname "artosyn_daemon" -o -iname "ar8030_daemon" -o -iname "artlinkd" -o -iname "bbd" -o -iname "bb_daemon" -o -iname "daemon" \) \
           | head -n 1 || true)"
       fi
       if [[ -n "${built}" ]]; then
@@ -327,7 +330,7 @@ _build_daemon_from_source() {
   built="$(_find_daemon_binary_in_tree "${sdk_root}" || true)"
   if [[ -z "${built}" ]]; then
     built="$(find "${build_dir}" -type f \
-      \( -iname "artosyn_daemon" -o -iname "ar8030_daemon" -o -iname "artlinkd" -o -iname "bbd" -o -iname "bb_daemon" \) \
+      \( -iname "artosyn_daemon" -o -iname "ar8030_daemon" -o -iname "artlinkd" -o -iname "bbd" -o -iname "bb_daemon" -o -iname "daemon" \) \
       | head -n 1 || true)"
   fi
   if [[ -n "${built}" ]]; then

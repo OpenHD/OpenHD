@@ -36,7 +36,8 @@ daemon targets from `host_drv` (for packaging/runtime).
 
 OpenHD now also installs Artosyn userspace runtime artifacts from the SDK:
 
-- Artosyn daemon binary (`artosyn_daemon`, `ar8030_daemon`, or `artlinkd`)
+- Artosyn daemon binary (`artosyn_daemon`, `ar8030_daemon`, `artlinkd`, or
+  upstream `daemon`; OpenHD installs `daemon` as `artosyn_daemon`)
 - Shared runtime libraries from common SDK runtime dirs (`host_drv/app/ar8030`,
   `host_drv/build/app/ar8030`, `host_drv/install/bin`, `host_drv/com`,
   `host_drv/build/com`) including `libar8030_client.so` / `libcom.so`
