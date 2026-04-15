@@ -160,7 +160,7 @@ struct ArtosynLinkSettings {
   int rx_buf_size = 64 * 1024;
   int tx_buf_size = 64 * 1024;
   int read_timeout_ms = 100;
-  int daemon_autostart = 1;
+  int daemon_autostart = 0;
   std::string daemon_start_cmd;
   // Link control
   int mcs_mode = 1;      // 1 auto, 0 manual

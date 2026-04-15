@@ -133,6 +133,46 @@ static void apply_supported_frequencies(WiFiCard& card) {
         supported_frequencies(card.phy80211_index, false);
   }
 }
+
+static std::optional<WiFiCard> create_local_artosyn_pseudo_card() {
+  std::string iface_name;
+  for (int i = 0; i < 16; ++i) {
+    const auto dev = fmt::format("/dev/ar_mdev{}", i);
+    if (OHDFilesystemUtil::exists(dev)) {
+      iface_name = fmt::format("ar_mdev{}", i);
+      break;
+    }
+  }
+  if (iface_name.empty() && OHDFilesystemUtil::exists("/dev/artosyn_sdio")) {
+    iface_name = "artosyn_sdio";
+  }
+  if (iface_name.empty()) {
+    return std::nullopt;
+  }
+
+  WiFiCard card{};
+  card.device_name = iface_name;
+  card.driver_name = "artosyn";
+  card.mac = "00:00:00:00:00:00";
+  card.phy80211_index = -1;
+  card.type = WiFiCardType::ARTOSYN;
+  return card;
+}
+
+static void append_local_artosyn_pseudo_if_missing(std::vector<WiFiCard>& cards) {
+  const auto pseudo = create_local_artosyn_pseudo_card();
+  if (!pseudo.has_value()) {
+    return;
+  }
+  const auto already = std::find_if(
+      cards.begin(), cards.end(), [&](const WiFiCard& c) {
+        return c.device_name == pseudo->device_name ||
+               c.type == WiFiCardType::ARTOSYN;
+      });
+  if (already == cards.end()) {
+    cards.push_back(pseudo.value());
+  }
+}
 std::optional<WiFiCard> DWifiCards::fill_linux_wifi_card_identifiers(
     const std::string& interface_name) {
   // Determine the correct uevent file for the interface
@@ -224,6 +264,7 @@ std::vector<WiFiCard> DWifiCards::discover_connected_wifi_cards() {
   if (!sysutil_cards_opt.has_value()) {
     openhd::log::get_default()->warn(
         "WiFi::discover_connected_wifi_cards: sysutils unavailable");
+    append_local_artosyn_pseudo_if_missing(wifi_cards);
     write_wificards_manifest(wifi_cards);
     return wifi_cards;
   }
@@ -240,6 +281,7 @@ std::vector<WiFiCard> DWifiCards::discover_connected_wifi_cards() {
   if (!sysutil_cards_opt.has_value()) {
     openhd::log::get_default()->warn(
         "WiFi::discover_connected_wifi_cards: sysutils unavailable after refresh");
+    append_local_artosyn_pseudo_if_missing(wifi_cards);
     write_wificards_manifest(wifi_cards);
     return wifi_cards;
   }
@@ -257,8 +299,15 @@ std::vector<WiFiCard> DWifiCards::discover_connected_wifi_cards() {
                                             "AR_MDEV") ||
           OHDUtil::equal_after_uppercase(sys_card.type, "ARTOSYN");
       if (artosyn_pseudo_iface) {
+        WiFiCard card{};
+        card.device_name = sys_card.interface_name;
+        card.driver_name = sys_card.driver_name;
+        card.mac = sys_card.mac.empty() ? "00:00:00:00:00:00" : sys_card.mac;
+        card.phy80211_index = -1;
+        card.type = WiFiCardType::ARTOSYN;
+        wifi_cards.push_back(std::move(card));
         openhd::log::get_default()->debug(
-            "Skipping pseudo Artosyn interface {} (no phy index)",
+            "Registered pseudo Artosyn interface {} (no phy index)",
             sys_card.interface_name);
       } else {
         openhd::log::get_default()->warn(
@@ -288,6 +337,7 @@ std::vector<WiFiCard> DWifiCards::discover_connected_wifi_cards() {
     apply_supported_frequencies(card);
     wifi_cards.push_back(std::move(card));
   }
+  append_local_artosyn_pseudo_if_missing(wifi_cards);
   openhd::log::get_default()->trace(
       "WiFi::discover_connected_wifi_cards done, n cards: {}",
       wifi_cards.size());
@@ -392,15 +442,20 @@ DWifiCards::ProcessedWifiCards DWifiCards::process_and_evaluate_cards(
       n_cards_openhd_wifibroadcast_supported(discovered_cards);
   if (n_openhd_wifibroadcast_supported_cards <= 0) {
     // no monitor mode cards - use any other card(s) for hotspot
-    if (!discovered_cards.empty()) {
-      hotspot_card = discovered_cards.at(0);
+    for (const auto& card : discovered_cards) {
+      if (card.type == WiFiCardType::ARTOSYN) {
+        continue;
+      }
+      hotspot_card = card;
+      break;
     }
   } else {
     for (auto& card : discovered_cards) {
       if (card.supports_openhd_wifibroadcast()) {
         monitor_mode_cards.push_back(card);
       } else {
-        if (hotspot_card == std::nullopt) {
+        if (card.type != WiFiCardType::ARTOSYN &&
+            hotspot_card == std::nullopt) {
           hotspot_card = card;
         }
       }

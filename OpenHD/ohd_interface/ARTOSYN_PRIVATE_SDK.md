@@ -48,6 +48,17 @@ For CMake-based builds, you can override daemon auto-detection with:
 -DARTOSYN_SDK_DAEMON=/absolute/path/to/artosyn_daemon
 ```
 
+## Runtime ownership split (sysutils vs OpenHD)
+
+- `sysutils` is responsible for Artosyn hardware/PHY handling and daemon lifecycle
+  (start, restart, diagnostics).
+- OpenHD `ohd_interface` treats Artosyn as a daemon client:
+  - probe Artosyn availability via sysutils-reported cards
+  - connect/reconnect to configured daemon socket (`AR_ADDR`/`AR_PORT`)
+  - transmit/receive link traffic and stats
+- OpenHD no longer performs daemon autostart itself (`AR_DMN_AUTO`/`AR_DMN_CMD`
+  are exposed read-only as sysutils-managed).
+
 ## Builder defaults
 
 OpenHD build scripts also search these default SDK roots when env vars are not set:
