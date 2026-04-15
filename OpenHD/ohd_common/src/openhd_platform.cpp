@@ -72,11 +72,14 @@ int request_platform_from_sysutils() {
     return X_PLATFORM_TYPE_UNKNOWN;
   }
   auto cached = read_cached_platform_type();
-  if (cached.has_value()) {
+  if (cached.has_value() && cached.value() != X_PLATFORM_TYPE_UNKNOWN) {
     return cached.value();
   }
   auto platform_opt = openhd::request_platform_type();
   if (!platform_opt.has_value()) {
+    if (cached.has_value()) {
+      return cached.value();
+    }
     openhd::log::get_default()->warn(
         "Platform request from sysutils failed, defaulting to UNKNOWN.");
     return X_PLATFORM_TYPE_UNKNOWN;
