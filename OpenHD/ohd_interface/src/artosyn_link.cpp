@@ -112,6 +112,37 @@ static bool has_artosyn_device_nodes() {
   return OHDFilesystemUtil::exists("/dev/artosyn_sdio");
 }
 
+static bool has_artosyn_drv_nodes() {
+  for (int i = 0; i < 16; ++i) {
+    if (OHDFilesystemUtil::exists("/dev/ar_mdev" + std::to_string(i))) {
+      return true;
+    }
+  }
+  return false;
+}
+
+static int select_artosyn_daemon_intf() {
+  // Match daemon interface mode to present kernel nodes.
+  // 0:usb, 1:sdio, 3:drv
+  if (has_artosyn_drv_nodes()) {
+    return 3;
+  }
+  if (OHDFilesystemUtil::exists("/dev/artosyn_sdio")) {
+    return 1;
+  }
+  return 0;
+}
+
+static std::string make_artosyn_daemon_launch_cmd(
+    const std::string& daemon_path,
+    const ArtosynLink::Config& cfg,
+    int daemon_intf) {
+  std::ostringstream cmd;
+  cmd << daemon_path << " -i " << daemon_intf << " -p " << cfg.port
+      << " >/tmp/openhd_artosyn_daemon.log 2>&1 &";
+  return cmd.str();
+}
+
 static ArtosynUsbInfo detect_artosyn_usb_info() {
   ArtosynUsbInfo info{};
   info.present = has_artosyn_device_nodes();
@@ -179,7 +210,7 @@ static bool try_start_artosyn_daemon(
   s_last_autostart_attempt_ms.store(now_ms);
 
   const auto wait_for_daemon = [&cfg]() {
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 30; ++i) {
       if (probe_artosyn_daemon_once(cfg)) {
         return true;
       }
@@ -257,15 +288,16 @@ static bool try_start_artosyn_daemon(
       "/opt/openhd/artosyn_sdk/host_drv/app/ar8030/artosyn_daemon",
       "/opt/openhd/artosyn_sdk/host_drv/app/ar8030/ar8030_daemon",
       "/opt/openhd/artosyn_sdk/host_drv/daemon/daemon"};
+  const int daemon_intf = select_artosyn_daemon_intf();
   for (const auto* daemon_path : daemon_candidates) {
     if (!OHDFilesystemUtil::exists(daemon_path)) {
       continue;
     }
     const std::string cmd =
-        std::string(daemon_path) +
-        " >/tmp/openhd_artosyn_daemon.log 2>&1 &";
+        make_artosyn_daemon_launch_cmd(daemon_path, cfg, daemon_intf);
     if (std::system(cmd.c_str()) == 0) {
-      logger->warn("Started Artosyn daemon binary {}.", daemon_path);
+      logger->warn("Started Artosyn daemon binary {} (intf {}, port {}).",
+                   daemon_path, daemon_intf, cfg.port);
       if (wait_for_daemon()) {
         return true;
       }
