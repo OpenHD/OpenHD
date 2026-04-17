@@ -106,6 +106,10 @@ build_package() {
 
   source "${SCRIPT_DIR}/OpenHD/scripts/resolve_artosyn_sdk.sh"
   resolve_artosyn_sdk
+  local artosyn_enabled=0
+  if [[ -n "${ARTOSYN_SDK_ROOT:-}" && -n "${ARTOSYN_SDK_LIB:-}" ]]; then
+    artosyn_enabled=1
+  fi
 
   rm -f "${package_name}_${VERSION}_${PACKAGE_ARCH}.deb"
   cmake OpenHD/ \
@@ -118,93 +122,94 @@ build_package() {
   cp openhd "${PKGDIR}usr/local/bin/"
   mkdir -p "${PKGDIR}usr/local/lib/"
 
-  local daemon_candidates=(
-    "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/artosyn_daemon"
-    "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/ar8030_daemon"
-    "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/artlinkd"
-    "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/bbd"
-    "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/bb_daemon"
-    "${ARTOSYN_SDK_ROOT}/host_drv/daemon/daemon"
-    "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/artosyn_daemon"
-    "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/ar8030_daemon"
-    "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/artlinkd"
-    "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/bbd"
-    "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/bb_daemon"
-    "${ARTOSYN_SDK_ROOT}/host_drv/build/daemon/daemon"
-    "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/artosyn_daemon"
-    "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/ar8030_daemon"
-    "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/artlinkd"
-    "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/bbd"
-    "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/bb_daemon"
-    "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/daemon"
-  )
-  local daemon_src="${ARTOSYN_SDK_DAEMON:-}"
-  if [[ -n "${daemon_src}" && ! -f "${daemon_src}" ]]; then
-    daemon_src=""
-  fi
-  for candidate in "${daemon_candidates[@]}"; do
-    if [[ -z "${daemon_src}" && -f "${candidate}" ]]; then
-      daemon_src="${candidate}"
-      break
+  if [[ "${artosyn_enabled}" -eq 1 ]]; then
+    local daemon_candidates=(
+      "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/artosyn_daemon"
+      "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/ar8030_daemon"
+      "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/artlinkd"
+      "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/bbd"
+      "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/bb_daemon"
+      "${ARTOSYN_SDK_ROOT}/host_drv/daemon/daemon"
+      "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/artosyn_daemon"
+      "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/ar8030_daemon"
+      "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/artlinkd"
+      "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/bbd"
+      "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/bb_daemon"
+      "${ARTOSYN_SDK_ROOT}/host_drv/build/daemon/daemon"
+      "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/artosyn_daemon"
+      "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/ar8030_daemon"
+      "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/artlinkd"
+      "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/bbd"
+      "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/bb_daemon"
+      "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/daemon"
+    )
+    local daemon_src="${ARTOSYN_SDK_DAEMON:-}"
+    if [[ -n "${daemon_src}" && ! -f "${daemon_src}" ]]; then
+      daemon_src=""
     fi
-  done
-  if [[ -z "${daemon_src}" ]]; then
-    if [[ -d "${ARTOSYN_SDK_ROOT}/host_drv" ]]; then
+    for candidate in "${daemon_candidates[@]}"; do
+      if [[ -z "${daemon_src}" && -f "${candidate}" ]]; then
+        daemon_src="${candidate}"
+        break
+      fi
+    done
+    if [[ -z "${daemon_src}" && -d "${ARTOSYN_SDK_ROOT}/host_drv" ]]; then
       daemon_src="$(find "${ARTOSYN_SDK_ROOT}/host_drv" -type f \
         \( -iname "artosyn_daemon" -o -iname "ar8030_daemon" -o -iname "artlinkd" -o -iname "bbd" -o -iname "bb_daemon" -o -iname "daemon" \) \
         | head -n 1 || true)"
     fi
-  fi
-  if [[ -z "${daemon_src}" ]]; then
-    echo "Artosyn daemon binary not found after SDK resolve/build." >&2
-    echo "Expected ARTOSYN_SDK_DAEMON or one of known daemon binaries in ${ARTOSYN_SDK_ROOT}/host_drv." >&2
-    exit 1
-  fi
-  local daemon_dst_name
-  daemon_dst_name="$(basename "${daemon_src}")"
-  if [[ "${daemon_dst_name}" == "daemon" ]]; then
-    daemon_dst_name="artosyn_daemon"
-  fi
-  cp "${daemon_src}" "${PKGDIR}usr/local/bin/${daemon_dst_name}"
-  chmod +x "${PKGDIR}usr/local/bin/${daemon_dst_name}"
+    if [[ -n "${daemon_src}" ]]; then
+      local daemon_dst_name
+      daemon_dst_name="$(basename "${daemon_src}")"
+      if [[ "${daemon_dst_name}" == "daemon" ]]; then
+        daemon_dst_name="artosyn_daemon"
+      fi
+      cp "${daemon_src}" "${PKGDIR}usr/local/bin/${daemon_dst_name}"
+      chmod +x "${PKGDIR}usr/local/bin/${daemon_dst_name}"
+    else
+      echo "Artosyn SDK detected but daemon binary not found; continuing without daemon install." >&2
+    fi
 
-  local copied_runtime_lib=0
-  IFS=';' read -ra sdk_libs <<< "${ARTOSYN_SDK_LIB}"
-  for lib in "${sdk_libs[@]}"; do
-    if [[ -f "${lib}" && "${lib}" == *.so* ]]; then
-      cp "${lib}" "${PKGDIR}usr/local/lib/"
-      copied_runtime_lib=1
-    fi
-  done
-  local extra_runtime_libs=(
-    "${ARTOSYN_SDK_ROOT}/host_drv/com/libcom.so"
-    "${ARTOSYN_SDK_ROOT}/host_drv/build/com/libcom.so"
-    "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/libcom.so"
-  )
-  for lib in "${extra_runtime_libs[@]}"; do
-    if [[ -f "${lib}" ]]; then
-      cp "${lib}" "${PKGDIR}usr/local/lib/"
-      copied_runtime_lib=1
-    fi
-  done
-  local extra_runtime_dirs=(
-    "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030"
-    "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030"
-    "${ARTOSYN_SDK_ROOT}/host_drv/install/bin"
-    "${ARTOSYN_SDK_ROOT}/host_drv/com"
-    "${ARTOSYN_SDK_ROOT}/host_drv/build/com"
-  )
-  local lib_dir
-  for lib_dir in "${extra_runtime_dirs[@]}"; do
-    if [[ -d "${lib_dir}" ]]; then
-      while IFS= read -r lib; do
+    local copied_runtime_lib=0
+    IFS=';' read -ra sdk_libs <<< "${ARTOSYN_SDK_LIB}"
+    for lib in "${sdk_libs[@]}"; do
+      if [[ -f "${lib}" && "${lib}" == *.so* ]]; then
         cp "${lib}" "${PKGDIR}usr/local/lib/"
         copied_runtime_lib=1
-      done < <(find "${lib_dir}" -maxdepth 3 -type f \( -name "*.so" -o -name "*.so.*" \) | sort -u)
+      fi
+    done
+    local extra_runtime_libs=(
+      "${ARTOSYN_SDK_ROOT}/host_drv/com/libcom.so"
+      "${ARTOSYN_SDK_ROOT}/host_drv/build/com/libcom.so"
+      "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/libcom.so"
+    )
+    for lib in "${extra_runtime_libs[@]}"; do
+      if [[ -f "${lib}" ]]; then
+        cp "${lib}" "${PKGDIR}usr/local/lib/"
+        copied_runtime_lib=1
+      fi
+    done
+    local extra_runtime_dirs=(
+      "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030"
+      "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030"
+      "${ARTOSYN_SDK_ROOT}/host_drv/install/bin"
+      "${ARTOSYN_SDK_ROOT}/host_drv/com"
+      "${ARTOSYN_SDK_ROOT}/host_drv/build/com"
+    )
+    local lib_dir
+    for lib_dir in "${extra_runtime_dirs[@]}"; do
+      if [[ -d "${lib_dir}" ]]; then
+        while IFS= read -r lib; do
+          cp "${lib}" "${PKGDIR}usr/local/lib/"
+          copied_runtime_lib=1
+        done < <(find "${lib_dir}" -maxdepth 3 -type f \( -name "*.so" -o -name "*.so.*" \) | sort -u)
+      fi
+    done
+    if [[ "${copied_runtime_lib}" -eq 0 ]]; then
+      echo "No Artosyn runtime .so copied (static linking may still be fine)." >&2
     fi
-  done
-  if [[ "${copied_runtime_lib}" -eq 0 ]]; then
-    echo "No Artosyn runtime .so copied (static linking may still be fine)." >&2
+  else
+    echo "Artosyn SDK not resolved; skipping Artosyn daemon/runtime library packaging." >&2
   fi
 
   # Build the package using fpm

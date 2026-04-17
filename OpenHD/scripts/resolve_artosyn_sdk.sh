@@ -505,8 +505,8 @@ resolve_artosyn_sdk() {
 
   if [[ -z "${sdk_root}" || -z "${sdk_lib}" ]]; then
     cat >&2 <<'EOF'
-Unable to resolve private Artosyn SDK.
-Set one of:
+[Artosyn] SDK not resolved; continuing with Artosyn integration disabled.
+To enable Artosyn, set one of:
   - ARTOSYN_SDK_ROOT + ARTOSYN_SDK_LIB
   - ARTOSYN_SDK_ARCHIVE (tar/tar.gz/tgz containing the SDK)
   - DOWNLOAD_URL (+ optional DOWNLOAD_KEY) as used by kernel builder
@@ -518,7 +518,10 @@ Or place SDK under one of:
   /usr/local/share/openhd/artosyn_sdk
 If running via sudo, preserve env (e.g. sudo -E ...).
 EOF
-    return 1
+    export ARTOSYN_SDK_ROOT=""
+    export ARTOSYN_SDK_LIB=""
+    export ARTOSYN_SDK_DAEMON=""
+    return 0
   fi
 
   echo "[Artosyn] SDK resolved: root=${ARTOSYN_SDK_ROOT:-${sdk_root}}" >&2

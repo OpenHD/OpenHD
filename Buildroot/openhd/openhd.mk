@@ -57,69 +57,70 @@ define OPENHD_INSTALL_TARGET_CMDS
     cp -r $(OPENHD_BUILDDIR)/../Buildroot/init.d/* $(TARGET_DIR)/etc/init.d/
     chmod +x $(TARGET_DIR)/etc/init.d/*
     $(INSTALL) -d $(TARGET_DIR)/usr/bin $(TARGET_DIR)/usr/lib
-    daemon_src="$(ARTOSYN_SDK_DAEMON)"; \
-    if [ -n "$$daemon_src" ] && [ ! -f "$$daemon_src" ]; then daemon_src=""; fi; \
-    for candidate in \
-        "$(ARTOSYN_SDK_ROOT)/host_drv/app/ar8030/artosyn_daemon" \
-        "$(ARTOSYN_SDK_ROOT)/host_drv/app/ar8030/ar8030_daemon" \
-        "$(ARTOSYN_SDK_ROOT)/host_drv/app/ar8030/artlinkd" \
-        "$(ARTOSYN_SDK_ROOT)/host_drv/app/ar8030/bbd" \
-        "$(ARTOSYN_SDK_ROOT)/host_drv/app/ar8030/bb_daemon" \
-        "$(ARTOSYN_SDK_ROOT)/host_drv/daemon/daemon" \
-        "$(ARTOSYN_SDK_ROOT)/host_drv/build/app/ar8030/artosyn_daemon" \
-        "$(ARTOSYN_SDK_ROOT)/host_drv/build/app/ar8030/ar8030_daemon" \
-        "$(ARTOSYN_SDK_ROOT)/host_drv/build/app/ar8030/artlinkd" \
-        "$(ARTOSYN_SDK_ROOT)/host_drv/build/app/ar8030/bbd" \
-        "$(ARTOSYN_SDK_ROOT)/host_drv/build/app/ar8030/bb_daemon" \
-        "$(ARTOSYN_SDK_ROOT)/host_drv/build/daemon/daemon" \
-        "$(ARTOSYN_SDK_ROOT)/host_drv/install/bin/artosyn_daemon" \
-        "$(ARTOSYN_SDK_ROOT)/host_drv/install/bin/ar8030_daemon" \
-        "$(ARTOSYN_SDK_ROOT)/host_drv/install/bin/artlinkd" \
-        "$(ARTOSYN_SDK_ROOT)/host_drv/install/bin/bbd" \
-        "$(ARTOSYN_SDK_ROOT)/host_drv/install/bin/bb_daemon" \
-        "$(ARTOSYN_SDK_ROOT)/host_drv/install/bin/daemon"; do \
-        if [ -z "$$daemon_src" ] && [ -f "$$candidate" ]; then daemon_src="$$candidate"; break; fi; \
-    done; \
-    if [ -z "$$daemon_src" ]; then \
-        if [ -d "$(ARTOSYN_SDK_ROOT)/host_drv" ]; then \
+    if [ -n "$(ARTOSYN_SDK_ROOT)" ] && [ -n "$(ARTOSYN_SDK_LIB)" ] && [ -d "$(ARTOSYN_SDK_ROOT)/host_drv" ]; then \
+        daemon_src="$(ARTOSYN_SDK_DAEMON)"; \
+        if [ -n "$$daemon_src" ] && [ ! -f "$$daemon_src" ]; then daemon_src=""; fi; \
+        for candidate in \
+            "$(ARTOSYN_SDK_ROOT)/host_drv/app/ar8030/artosyn_daemon" \
+            "$(ARTOSYN_SDK_ROOT)/host_drv/app/ar8030/ar8030_daemon" \
+            "$(ARTOSYN_SDK_ROOT)/host_drv/app/ar8030/artlinkd" \
+            "$(ARTOSYN_SDK_ROOT)/host_drv/app/ar8030/bbd" \
+            "$(ARTOSYN_SDK_ROOT)/host_drv/app/ar8030/bb_daemon" \
+            "$(ARTOSYN_SDK_ROOT)/host_drv/daemon/daemon" \
+            "$(ARTOSYN_SDK_ROOT)/host_drv/build/app/ar8030/artosyn_daemon" \
+            "$(ARTOSYN_SDK_ROOT)/host_drv/build/app/ar8030/ar8030_daemon" \
+            "$(ARTOSYN_SDK_ROOT)/host_drv/build/app/ar8030/artlinkd" \
+            "$(ARTOSYN_SDK_ROOT)/host_drv/build/app/ar8030/bbd" \
+            "$(ARTOSYN_SDK_ROOT)/host_drv/build/app/ar8030/bb_daemon" \
+            "$(ARTOSYN_SDK_ROOT)/host_drv/build/daemon/daemon" \
+            "$(ARTOSYN_SDK_ROOT)/host_drv/install/bin/artosyn_daemon" \
+            "$(ARTOSYN_SDK_ROOT)/host_drv/install/bin/ar8030_daemon" \
+            "$(ARTOSYN_SDK_ROOT)/host_drv/install/bin/artlinkd" \
+            "$(ARTOSYN_SDK_ROOT)/host_drv/install/bin/bbd" \
+            "$(ARTOSYN_SDK_ROOT)/host_drv/install/bin/bb_daemon" \
+            "$(ARTOSYN_SDK_ROOT)/host_drv/install/bin/daemon"; do \
+            if [ -z "$$daemon_src" ] && [ -f "$$candidate" ]; then daemon_src="$$candidate"; break; fi; \
+        done; \
+        if [ -z "$$daemon_src" ]; then \
             daemon_src="$$(find "$(ARTOSYN_SDK_ROOT)/host_drv" -type f \
                 \( -iname "artosyn_daemon" -o -iname "ar8030_daemon" -o -iname "artlinkd" -o -iname "bbd" -o -iname "bb_daemon" -o -iname "daemon" \) \
                 | head -n 1)"; \
         fi; \
-    fi; \
-    if [ -n "$$daemon_src" ]; then \
-        daemon_dst_name="$$(basename $$daemon_src)"; \
-        if [ "$$daemon_dst_name" = "daemon" ]; then daemon_dst_name="artosyn_daemon"; fi; \
-        cp "$$daemon_src" "$(TARGET_DIR)/usr/bin/$$daemon_dst_name"; \
-        chmod +x "$(TARGET_DIR)/usr/bin/$$daemon_dst_name"; \
-    else \
-        echo "ERROR: Artosyn daemon not found in ARTOSYN_SDK_ROOT=$(ARTOSYN_SDK_ROOT)"; \
-        exit 1; \
-    fi; \
-    for lib in $(subst ;, ,$(ARTOSYN_SDK_LIB)); do \
-        if [ -f "$$lib" ] && echo "$$lib" | grep -q '\.so'; then \
-            cp "$$lib" "$(TARGET_DIR)/usr/lib/"; \
+        if [ -n "$$daemon_src" ]; then \
+            daemon_dst_name="$$(basename $$daemon_src)"; \
+            if [ "$$daemon_dst_name" = "daemon" ]; then daemon_dst_name="artosyn_daemon"; fi; \
+            cp "$$daemon_src" "$(TARGET_DIR)/usr/bin/$$daemon_dst_name"; \
+            chmod +x "$(TARGET_DIR)/usr/bin/$$daemon_dst_name"; \
+        else \
+            echo "Artosyn SDK detected but daemon not found; skipping daemon install."; \
         fi; \
-    done; \
-    for lib in \
-        "$(ARTOSYN_SDK_ROOT)/host_drv/com/libcom.so" \
-        "$(ARTOSYN_SDK_ROOT)/host_drv/build/com/libcom.so" \
-        "$(ARTOSYN_SDK_ROOT)/host_drv/install/bin/libcom.so"; do \
-        if [ -f "$$lib" ]; then cp "$$lib" "$(TARGET_DIR)/usr/lib/"; fi; \
-    done; \
-    for lib_dir in \
-        "$(ARTOSYN_SDK_ROOT)/host_drv/app/ar8030" \
-        "$(ARTOSYN_SDK_ROOT)/host_drv/build/app/ar8030" \
-        "$(ARTOSYN_SDK_ROOT)/host_drv/install/bin" \
-        "$(ARTOSYN_SDK_ROOT)/host_drv/com" \
-        "$(ARTOSYN_SDK_ROOT)/host_drv/build/com"; do \
-        if [ -d "$$lib_dir" ]; then \
-            find "$$lib_dir" -maxdepth 3 -type f \
-                \( -name "*.so" -o -name "*.so.*" \) | while read -r lib; do \
+        for lib in $(subst ;, ,$(ARTOSYN_SDK_LIB)); do \
+            if [ -f "$$lib" ] && echo "$$lib" | grep -q '\.so'; then \
                 cp "$$lib" "$(TARGET_DIR)/usr/lib/"; \
-            done; \
-        fi; \
-    done
+            fi; \
+        done; \
+        for lib in \
+            "$(ARTOSYN_SDK_ROOT)/host_drv/com/libcom.so" \
+            "$(ARTOSYN_SDK_ROOT)/host_drv/build/com/libcom.so" \
+            "$(ARTOSYN_SDK_ROOT)/host_drv/install/bin/libcom.so"; do \
+            if [ -f "$$lib" ]; then cp "$$lib" "$(TARGET_DIR)/usr/lib/"; fi; \
+        done; \
+        for lib_dir in \
+            "$(ARTOSYN_SDK_ROOT)/host_drv/app/ar8030" \
+            "$(ARTOSYN_SDK_ROOT)/host_drv/build/app/ar8030" \
+            "$(ARTOSYN_SDK_ROOT)/host_drv/install/bin" \
+            "$(ARTOSYN_SDK_ROOT)/host_drv/com" \
+            "$(ARTOSYN_SDK_ROOT)/host_drv/build/com"; do \
+            if [ -d "$$lib_dir" ]; then \
+                find "$$lib_dir" -maxdepth 3 -type f \
+                    \( -name "*.so" -o -name "*.so.*" \) | while read -r lib; do \
+                    cp "$$lib" "$(TARGET_DIR)/usr/lib/"; \
+                done; \
+            fi; \
+        done; \
+    else \
+        echo "Artosyn SDK not resolved; skipping Artosyn daemon/runtime library install."; \
+    fi
 endef
 
 # Use Buildroot's CMake package infrastructure to handle the build
