@@ -171,6 +171,9 @@ void GStreamerStream::setup_perf_tap_probe() {
                         &GStreamerStream::on_perf_tap_buffer, this, nullptr);
   if (m_perf_tap_probe_id == 0) {
     m_console->warn("Cannot attach encoder perf probe");
+  } else {
+    m_console->debug("Attached encoder perf probe on {}", 
+                     OHDGstHelper::kEncoderPerfTapElementName);
   }
   m_perf_bytes_since_last_report.store(0, std::memory_order_relaxed);
   m_perf_frames_since_last_report.store(0, std::memory_order_relaxed);
@@ -231,6 +234,12 @@ void GStreamerStream::publish_perf_stats_if_due(
   const auto fps = fps_u64 > std::numeric_limits<uint16_t>::max()
                        ? std::numeric_limits<uint16_t>::max()
                        : static_cast<uint16_t>(fps_u64);
+  m_console->debug(
+      "Perf cam{}: bitrate={} bps ({} bytes/{}) fps={} ({} frames/{})",
+      m_camera_holder->get_camera().index, bitrate_bps, bytes,
+      std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count(),
+      fps, frames,
+      std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count());
   openhd::LinkActionHandler::instance().set_cam_info_perf(
       m_camera_holder->get_camera().index, bitrate_bps, fps);
 }

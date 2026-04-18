@@ -617,11 +617,11 @@ void ArtosynLink::update_link_stats() {
   if (m_profile.is_air) {
     for (int i = 0; i < openhd::non_wb::VideoBitrateMeter::kMaxStreams; ++i) {
       const auto sample = m_video_bitrate_meter.sample_stream(i, now_ms);
-      if (sample.total_packets == 0) {
-        continue;
-      }
       openhd::link_statistics::Xmavlink_openhd_stats_wb_video_air_t air_video{};
       const auto cam_stats = openhd::LinkActionHandler::instance().get_cam_info(i);
+      if (sample.total_packets == 0 && cam_stats.measured_bitrate_bps == 0) {
+        continue;
+      }
       air_video.link_index = static_cast<uint8_t>(i);
       air_video.curr_recommended_bitrate =
           cam_stats.target_bitrate_kbits > 0 ? cam_stats.target_bitrate_kbits
@@ -635,7 +635,9 @@ void ArtosynLink::update_link_stats() {
         air_video.curr_measured_encoder_bitrate = sample.bitrate_bps;
       }
       // No additional link-layer FEC injection on this path.
-      air_video.curr_injected_bitrate = sample.bitrate_bps;
+      air_video.curr_injected_bitrate =
+          sample.bitrate_bps > 0 ? sample.bitrate_bps
+                                 : air_video.curr_measured_encoder_bitrate;
       air_video.curr_injected_pps = sample.packets_per_second;
       air_video.curr_dropped_frames = 0;
       air_video.curr_fec_percentage = 0;
