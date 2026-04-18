@@ -88,10 +88,6 @@ class OHDVideoAir {
   // propagate a bitrate change request to the CameraStream implementation(s)
   void handle_change_bitrate_request(
       openhd::LinkActionHandler::LinkBitrateInformation lb);
-  bool set_air_recording_for_all(int recording_enable);
-  bool set_air_recording_for_holders(
-      const std::vector<std::shared_ptr<CameraHolder>>& camera_holders,
-      int recording_enable);
   // Called every time an encoded frame was generated
   void on_video_data(
       int stream_index,

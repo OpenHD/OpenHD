@@ -27,7 +27,6 @@
 // NOTE: These are not the camera-specific settings, but rather settings
 // regarding the management of how those camera(s) should be used
 
-#include "camera_enums.hpp"
 #include "openhd_settings_directories.h"
 #include "openhd_settings_persistent.h"
 
@@ -45,8 +44,6 @@ struct AirCameraGenericSettings {
   // Default camera type(s) depend on platform - see below
   int primary_camera_type = 0;
   int secondary_camera_type = 0;
-  // Unified recording mode for all connected cameras.
-  int air_recording = AIR_RECORDING_OFF;
   // Audio can be enabled, in which case gstreamer hopefully picks up the right
   // audio source via autoaudiosrc
   int enable_audio = OPENHD_AUDIO_DISABLE;

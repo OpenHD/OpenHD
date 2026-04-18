@@ -26,7 +26,6 @@
 
 #include <gst/gst.h>
 
-#include <algorithm>
 #include <sstream>
 #include <string>
 
@@ -318,13 +317,11 @@ static int rpi_calculate_intra_refresh_period(int frame_width_px,
 
 // v4l2 h264 encoder on raspberry pi
 // we configure the v4l2 h264 encoder by using the extra controls
-// We want constant bitrate (e.g. what the user has set) as long as we don't
-// dynamically adjust anything in this regard (video_bitrate_mode) 24.10.22:
-// something seems t be bugged on the rpi v4l2 encoder, setting constant bitrate
-// doesn't work and somehow increases latency (,video_bitrate_mode=1) The
-// default for h264_minimum_qp_value seems to be 20 - we set it to something
-// lower, so we can get a higher bitrate on scenes with less change (openhd
-// values consistency over everything else)
+// We want constant bitrate and then let OpenHD's link logic adjust the target
+// bitrate as channel conditions change.
+// The default for h264_minimum_qp_value seems to be 20 - we set it to
+// something lower, so we can get a higher bitrate on scenes with less change
+// (openhd values consistency over everything else)
 static std::string create_rpi_v4l2_h264_encoder(
     const CameraSettings& settings) {
   assert(settings.streamed_video_format.videoCodec == VideoCodec::H264);
@@ -359,19 +356,18 @@ static std::string create_rpi_v4l2_h264_encoder(
     slicing_str =
         fmt::format(",number_of_mbs_in_a_slice={}", number_of_mbs_in_a_slice);
   }
-  // BUG RPI FOUNDATION: video_bitrate_mode=1 makes encoder non functional
   // rpi v4l2 encoder takes bit/s instead of kbit/s
   const int bitrateBitsPerSecond =
       openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
-  std::string bitrate_str;
-  bitrate_str = fmt::format(",video_bitrate={}", bitrateBitsPerSecond);
+  const auto bitrate_mode_and_value_str = fmt::format(
+      ",video_bitrate_mode=1,video_bitrate={}", bitrateBitsPerSecond);
   std::stringstream ret;
   ret << fmt::format(
       "v4l2h264enc name=rpi_v4l2_encoder "
       "extra-controls=\"controls,repeat_sequence_header=1,h264_profile=1,h264_"
       "level={}{},h264_i_frame_period={},generate_access_unit_delimiters=1{}{}{"
       "}\" ! ",
-      rpi_h264_encode_level_v4l2_int, bitrate_str,
+      rpi_h264_encode_level_v4l2_int, bitrate_mode_and_value_str,
       settings.h26x_keyframe_interval, quantization_str,
       intra_refresh_period_str, slicing_str);
   ret << fmt::format(
@@ -524,31 +520,24 @@ static std::string createRockchipEncoderPipeline(
     const CameraSettings& settings) {
   std::stringstream ss;
 
-  // Keep Rockchip in bounded VBR mode to avoid broken CBR behavior on some
-  // boards / driver combos while still staying close to the requested target.
-  // Safety requirement: never allow more than +10% overshoot over requested
-  // bitrate, otherwise fragile links can collapse.
-  const int BPS_HARD_MIN = 500000;
-  const int BPS_HARD_MAX = 25000000;
-  const int BPS_MAX_PCT = 110;
-  const int BPS_MIN_PCT = 90;
-  const int requested_bps =
-      openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
-  const int bps_target = std::clamp(requested_bps, BPS_HARD_MIN, BPS_HARD_MAX);
-  int bps_min = std::max((bps_target * BPS_MIN_PCT) / 100, BPS_HARD_MIN);
-  int bps_max = std::min((bps_target * BPS_MAX_PCT) / 100, BPS_HARD_MAX);
-  if (bps_min > bps_max) {
-    bps_min = bps_max;
-  }
+  const int bps =
+      openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits) / 2;
+  const int BPS_ACTUAL_LIMIT = 6650000;
+  const int BPS_MAX_LIMIT = 7000000;
+  const int BPS_MIN_LIMIT = 6300000;
+
+  int bps_actual = std::min((bps * 95) / 100, BPS_ACTUAL_LIMIT);
+  int bps_min = std::min((bps * 90) / 100, BPS_MIN_LIMIT);
+  int bps_max = std::min(bps, BPS_MAX_LIMIT);
 
   if (settings.streamed_video_format.videoCodec == VideoCodec::H264) {
-    ss << " mpph264enc name=rk_mpp_encoder";
+    ss << " mpph264enc";
   } else {
-    ss << " mpph265enc name=rk_mpp_encoder";
+    ss << " mpph265enc";
   }
 
-  ss << " rc-mode=0";
-  ss << " bps=" << bps_target;
+  ss << " rc-mode=1";
+  ss << " bps=" << bps_actual;
   ss << " bps-max=" << bps_max;
   ss << " bps-min=" << bps_min;
   ss << " qp-min=" << settings.qp_min;

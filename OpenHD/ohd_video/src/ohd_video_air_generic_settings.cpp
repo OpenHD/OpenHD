@@ -23,8 +23,6 @@
 
 #include "ohd_video_air_generic_settings.h"
 
-#include <sstream>
-
 #include "camera.hpp"
 #include "include_json.hpp"
 #include "openhd_platform.h"
@@ -38,35 +36,12 @@ extern AirCameraGenericSettings g_airCameraGenericSettings;
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
     AirCameraGenericSettings, switch_primary_and_secondary,
     dualcam_primary_video_allocated_bandwidth_perc, primary_camera_type,
-    secondary_camera_type, air_recording, enable_audio);
+    secondary_camera_type, enable_audio);
 
 std::optional<AirCameraGenericSettings>
 AirCameraGenericSettingsHolder::impl_deserialize(
     const std::string &file_as_string) const {
-  try {
-    const auto parsed = nlohmann::json::parse(file_as_string);
-    auto settings = create_default();
-    settings.switch_primary_and_secondary =
-        parsed.value("switch_primary_and_secondary",
-                     settings.switch_primary_and_secondary);
-    settings.dualcam_primary_video_allocated_bandwidth_perc = parsed.value(
-        "dualcam_primary_video_allocated_bandwidth_perc",
-        settings.dualcam_primary_video_allocated_bandwidth_perc);
-    settings.primary_camera_type =
-        parsed.value("primary_camera_type", settings.primary_camera_type);
-    settings.secondary_camera_type =
-        parsed.value("secondary_camera_type", settings.secondary_camera_type);
-    settings.air_recording =
-        parsed.value("air_recording", settings.air_recording);
-    settings.enable_audio = parsed.value("enable_audio", settings.enable_audio);
-    return settings;
-  } catch (const nlohmann::json::exception &ex) {
-    std::stringstream ss;
-    ss << "openhd_json_parse error:" << ex.what() << "\n";
-    ss << file_as_string;
-    std::cout << ss.str() << std::endl;
-  }
-  return std::nullopt;
+  return openhd_json_parse<AirCameraGenericSettings>(file_as_string);
 }
 
 std::string AirCameraGenericSettingsHolder::imp_serialize(
