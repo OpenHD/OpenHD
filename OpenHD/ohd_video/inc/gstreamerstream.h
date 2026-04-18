@@ -77,12 +77,12 @@ class GStreamerStream : public CameraStream {
   // To reduce the time on the param callback(s) - they need to return
   // immediately to not block the param server
   void request_restart();
-  static GstPadProbeReturn on_perf_tap_buffer(GstPad* pad,
-                                              GstPadProbeInfo* info,
-                                              gpointer user_data);
-  void setup_perf_tap_probe();
-  void cleanup_perf_tap_probe();
-  void publish_perf_stats_if_due(std::chrono::steady_clock::time_point now);
+  static GstBusSyncReply on_gst_bus_message(GstBus* bus, GstMessage* message,
+                                            gpointer user_data);
+  void handle_gst_message(GstMessage* message);
+  void setup_perf_element();
+  void cleanup_perf_element();
+  void handle_perf_info_message(const char* info_text);
   bool should_skip_runtime_bitrate_update() const;
 
  private:
@@ -93,10 +93,9 @@ class GStreamerStream : public CameraStream {
   // not supported by all camera(s).
   // for dynamically changing the bitrate
   std::optional<GstBitrateControlElement> m_bitrate_ctrl_element = std::nullopt;
-  // Optional encoder-side perf tap ("identity") to measure bitrate/fps.
-  GstElement* m_perf_tap_element = nullptr;
-  GstPad* m_perf_tap_src_pad = nullptr;
-  gulong m_perf_tap_probe_id = 0;
+  // Optional gst-perf element that reports encoder-side bitrate/fps.
+  GstElement* m_perf_element = nullptr;
+  GstBus* m_gst_bus = nullptr;
   // If a pipeline is started with air recording enabled, the file name the
   // recording is written to is stored here otherwise, it is set to std::nullopt
   std::optional<std::string> m_opt_curr_recording_filename = std::nullopt;
@@ -108,14 +107,10 @@ class GStreamerStream : public CameraStream {
   // std::unique_ptr<GstVideoRecorder> m_gst_video_recorder=nullptr;
   std::atomic_bool m_request_restart = false;
   std::atomic_bool m_keep_looping = false;
-  std::atomic<uint64_t> m_perf_bytes_since_last_report = 0;
-  std::atomic<uint32_t> m_perf_frames_since_last_report = 0;
   std::unique_ptr<std::thread> m_loop_thread = nullptr;
   std::atomic_bool m_loop_exited = true;
   std::mutex m_loop_mutex;
   std::condition_variable m_loop_cv;
-  std::chrono::steady_clock::time_point m_last_perf_report_tp =
-      std::chrono::steady_clock::now();
   std::chrono::steady_clock::time_point m_last_log_skip_dynamic_bitrate =
       std::chrono::steady_clock::now();
 
