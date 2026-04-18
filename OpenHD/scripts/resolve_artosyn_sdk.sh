@@ -536,3 +536,14 @@ EOF
   export ARTOSYN_SDK_LIB="${sdk_lib}"
   export ARTOSYN_SDK_DAEMON="${sdk_daemon}"
 }
+
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  resolve_artosyn_sdk
+  if [[ -n "${ARTOSYN_SDK_ROOT:-}" && -n "${ARTOSYN_SDK_LIB:-}" ]]; then
+    echo "ARTOSYN_SDK_ROOT=${ARTOSYN_SDK_ROOT}"
+    echo "ARTOSYN_SDK_LIB=${ARTOSYN_SDK_LIB}"
+    if [[ -n "${ARTOSYN_SDK_DAEMON:-}" ]]; then
+      echo "ARTOSYN_SDK_DAEMON=${ARTOSYN_SDK_DAEMON}"
+    fi
+  fi
+fi

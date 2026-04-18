@@ -32,6 +32,21 @@ attempt to build `ar8030_client` from `host_drv` automatically.
 If no daemon binary is prebuilt, the resolver also attempts to build common
 daemon targets from `host_drv` (for packaging/runtime).
 
+## Local interactive setup helper (non-CI)
+
+For normal device builds (outside CI), you can use:
+
+```bash
+./scripts/setup_artosyn_local_sdk.sh
+```
+
+The helper script:
+
+- prompts for GitHub username + personal access token
+- clones the private ArtLink SDK
+- copies/stages it into `/opt/openhd-private/artosyn_sdk` (uses `sudo` if needed)
+- re-resolves SDK paths so regular build scripts can auto-detect it afterwards
+
 ## Runtime artifacts installed with OpenHD
 
 OpenHD now also installs Artosyn userspace runtime artifacts from the SDK:
