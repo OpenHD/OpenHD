@@ -181,6 +181,17 @@ static bool probe_artosyn_daemon_once(const ArtosynLink::Config& cfg) {
   bb_host_disconnect(host);
   return n > 0;
 }
+
+static std::string describe_artosyn_runtime_state(const ArtosynLink::Config& cfg) {
+  const auto usb = detect_artosyn_usb_info();
+  std::ostringstream ss;
+  ss << "daemon=" << cfg.addr << ":" << cfg.port
+     << " sysutils_hint=" << (has_sysutils_artosyn_hint() ? "yes" : "no")
+     << " dev_nodes=" << (has_artosyn_device_nodes() ? "yes" : "no")
+     << " usb_present=" << (usb.present ? "yes" : "no")
+     << " usb_hs_mode=" << (usb.hs_mode ? "yes" : "no");
+  return ss.str();
+}
 }  // namespace
 
 ArtosynLink::ArtosynLink(OHDProfile profile)
@@ -254,7 +265,8 @@ bool ArtosynLink::init_device() {
   bb_dev_list_t* list = nullptr;
   int n = bb_dev_getlist(m_host, &list);
   if (n <= 0 || !list) {
-    m_console->warn("No artosyn devices found");
+    m_console->warn("No artosyn devices found ({})",
+                    describe_artosyn_runtime_state(m_cfg));
     if (list) {
       bb_dev_freelist(list);
     }

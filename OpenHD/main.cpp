@@ -621,7 +621,8 @@ int main(int argc, char *argv[]) {
     if (!options.record_only) {
       ohdInterface = std::make_shared<OHDInterface>(profile, options.no_hotspot);
       controlServer = std::make_unique<OpenhdControlServer>(ohdInterface);
-      if (!ohdInterface->has_real_monitor_mode_cards()) {
+      if (!ohdInterface->has_real_monitor_mode_cards() &&
+          !ohdInterface->has_primary_link()) {
         const std::string detected_cards =
             ohdInterface->describe_discovered_wifi_cards_with_drivers();
         const std::string no_wifi_card_message =
