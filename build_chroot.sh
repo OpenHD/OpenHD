@@ -67,6 +67,119 @@ echo "Custom: ${CUSTOM}"
 echo "Arch: ${ARCH}"
 echo "Arch: ${QCOM}"
 
+read_optional_file() {
+    local file_path="$1"
+    if [[ -f "${file_path}" ]]; then
+        # Remove trailing CR/LF from file-based values.
+        tr -d '\r\n' < "${file_path}"
+    fi
+}
+
+ARTLINK_REPO_FILE_VALUE="$(read_optional_file artlink_repo.txt)"
+if [[ -n "${ARTLINK_REPO_FILE_VALUE}" ]]; then
+    export ARTLINK_REPO="${ARTLINK_REPO_FILE_VALUE}"
+fi
+
+ARTLINK_BRANCH_FILE_VALUE="$(read_optional_file artlink_branch.txt)"
+if [[ -n "${ARTLINK_BRANCH_FILE_VALUE}" ]]; then
+    export ARTLINK_BRANCH="${ARTLINK_BRANCH_FILE_VALUE}"
+fi
+
+ARTLINK_FETCH_MODE_FILE_VALUE="$(read_optional_file artlink_fetch_mode.txt)"
+if [[ -n "${ARTLINK_FETCH_MODE_FILE_VALUE}" ]]; then
+    export ARTLINK_FETCH_MODE="${ARTLINK_FETCH_MODE_FILE_VALUE}"
+fi
+
+ARTLINK_GIT_AUTH_FILE_VALUE="$(read_optional_file artlink_git_auth.txt)"
+if [[ -n "${ARTLINK_GIT_AUTH_FILE_VALUE}" ]]; then
+    export ARTLINK_GIT_AUTH="${ARTLINK_GIT_AUTH_FILE_VALUE}"
+fi
+
+ARTLINK_GIT_USERNAME_FILE_VALUE="$(read_optional_file artlink_git_username.txt)"
+if [[ -n "${ARTLINK_GIT_USERNAME_FILE_VALUE}" ]]; then
+    export ARTLINK_GIT_AUTH_USERNAME="${ARTLINK_GIT_USERNAME_FILE_VALUE}"
+fi
+
+ARTLINK_GIT_TOKEN_FILE_VALUE="$(read_optional_file artlink_git_token.txt)"
+if [[ -n "${ARTLINK_GIT_TOKEN_FILE_VALUE}" ]]; then
+    export ARTLINK_GIT_TOKEN="${ARTLINK_GIT_TOKEN_FILE_VALUE}"
+fi
+
+DOWNLOAD_URL_FILE_VALUE="$(read_optional_file download_url.txt)"
+if [[ -n "${DOWNLOAD_URL_FILE_VALUE}" ]]; then
+    export DOWNLOAD_URL="${DOWNLOAD_URL_FILE_VALUE}"
+    export ARTLINK_DOWNLOAD_URL="${DOWNLOAD_URL_FILE_VALUE}"
+fi
+
+DOWNLOAD_KEY_FILE_VALUE="$(read_optional_file download_key.txt)"
+if [[ -n "${DOWNLOAD_KEY_FILE_VALUE}" ]]; then
+    export DOWNLOAD_KEY="${DOWNLOAD_KEY_FILE_VALUE}"
+    export ARTLINK_DOWNLOAD_KEY="${DOWNLOAD_KEY_FILE_VALUE}"
+fi
+
+ARTOSYN_SDK_ARCHIVE_FILE_VALUE="$(read_optional_file artosyn_sdk_archive.txt)"
+if [[ -n "${ARTOSYN_SDK_ARCHIVE_FILE_VALUE}" ]]; then
+    export ARTOSYN_SDK_ARCHIVE="${ARTOSYN_SDK_ARCHIVE_FILE_VALUE}"
+fi
+if [[ -z "${ARTOSYN_SDK_ARCHIVE:-}" ]]; then
+    for archive_candidate in ./artosyn_sdk.tar.gz ./artosyn_sdk.tgz ./artosyn_sdk.tar; do
+        if [[ -f "${archive_candidate}" ]]; then
+            export ARTOSYN_SDK_ARCHIVE="${archive_candidate}"
+            break
+        fi
+    done
+fi
+
+OPENHD_REQUIRE_ARTOSYN_FILE_VALUE="$(read_optional_file openhd_require_artosyn.txt)"
+if [[ -n "${OPENHD_REQUIRE_ARTOSYN_FILE_VALUE}" ]]; then
+    export OPENHD_REQUIRE_ARTOSYN="${OPENHD_REQUIRE_ARTOSYN_FILE_VALUE}"
+fi
+
+OPENHD_REQUIRE_ARTOSYN_DAEMON_FILE_VALUE="$(read_optional_file openhd_require_artosyn_daemon.txt)"
+if [[ -n "${OPENHD_REQUIRE_ARTOSYN_DAEMON_FILE_VALUE}" ]]; then
+    export OPENHD_REQUIRE_ARTOSYN_DAEMON="${OPENHD_REQUIRE_ARTOSYN_DAEMON_FILE_VALUE}"
+fi
+
+if [[ "${DISTRO}" == "jammy" && "${ARCH}" == "x86_64" ]]; then
+    # Jammy x86 builder should produce openhd-3.0 with full Artosyn support.
+    export OPENHD_REQUIRE_ARTOSYN="${OPENHD_REQUIRE_ARTOSYN:-1}"
+    export OPENHD_REQUIRE_ARTOSYN_DAEMON="${OPENHD_REQUIRE_ARTOSYN_DAEMON:-1}"
+fi
+
+if [[ -n "${ARTLINK_REPO:-}" ]]; then
+    echo "ArtLink repo override: ${ARTLINK_REPO}"
+fi
+if [[ -n "${ARTLINK_BRANCH:-}" ]]; then
+    echo "ArtLink branch override: ${ARTLINK_BRANCH}"
+fi
+if [[ -n "${ARTLINK_FETCH_MODE:-}" ]]; then
+    echo "ArtLink fetch mode: ${ARTLINK_FETCH_MODE}"
+fi
+if [[ -n "${ARTOSYN_SDK_ARCHIVE:-}" ]]; then
+    echo "Artosyn SDK archive configured: ${ARTOSYN_SDK_ARCHIVE}"
+fi
+if [[ -n "${ARTLINK_GIT_AUTH:-}" || -n "${ARTLINK_GIT_TOKEN:-}" || -n "${DOWNLOAD_KEY:-}" ]]; then
+    echo "Artosyn credentials: configured"
+else
+    echo "Artosyn credentials: not configured"
+fi
+if [[ -n "${OPENHD_REQUIRE_ARTOSYN:-}" ]]; then
+    echo "OPENHD_REQUIRE_ARTOSYN=${OPENHD_REQUIRE_ARTOSYN}"
+fi
+
+if [[ "${OPENHD_REQUIRE_ARTOSYN:-0}" == "1" ]]; then
+    source ./OpenHD/scripts/resolve_artosyn_sdk.sh
+    resolve_artosyn_sdk
+    if [[ -z "${ARTOSYN_SDK_ROOT:-}" || -z "${ARTOSYN_SDK_LIB:-}" ]]; then
+        echo "Artosyn is required for this build target, but SDK resolution failed."
+        exit 1
+    fi
+    if [[ "${OPENHD_REQUIRE_ARTOSYN_DAEMON:-0}" == "1" && -z "${ARTOSYN_SDK_DAEMON:-}" ]]; then
+        echo "Artosyn daemon is required for this build target, but daemon resolution failed."
+        exit 1
+    fi
+fi
+
 # Install dependencies based on DISTRO or ARCH
 if [[ "${QCOM}" == "coretronic" ]]; then
 

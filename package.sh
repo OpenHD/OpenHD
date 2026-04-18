@@ -107,8 +107,14 @@ build_package() {
   source "${SCRIPT_DIR}/OpenHD/scripts/resolve_artosyn_sdk.sh"
   resolve_artosyn_sdk
   local artosyn_enabled=0
+  local require_artosyn="${OPENHD_REQUIRE_ARTOSYN:-0}"
+  local require_artosyn_daemon="${OPENHD_REQUIRE_ARTOSYN_DAEMON:-0}"
   if [[ -n "${ARTOSYN_SDK_ROOT:-}" && -n "${ARTOSYN_SDK_LIB:-}" ]]; then
     artosyn_enabled=1
+  fi
+  if [[ "${require_artosyn}" == "1" && "${artosyn_enabled}" -ne 1 ]]; then
+    echo "Artosyn SDK is required for this build, but resolver did not provide ARTOSYN_SDK_ROOT/ARTOSYN_SDK_LIB." >&2
+    exit 1
   fi
 
   rm -f "${package_name}_${VERSION}_${PACKAGE_ARCH}.deb"
@@ -167,6 +173,10 @@ build_package() {
       cp "${daemon_src}" "${PKGDIR}usr/local/bin/${daemon_dst_name}"
       chmod +x "${PKGDIR}usr/local/bin/${daemon_dst_name}"
     else
+      if [[ "${require_artosyn_daemon}" == "1" ]]; then
+        echo "Artosyn daemon is required for this build, but daemon binary was not found in SDK." >&2
+        exit 1
+      fi
       echo "Artosyn SDK detected but daemon binary not found; continuing without daemon install." >&2
     fi
 
