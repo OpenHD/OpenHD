@@ -623,8 +623,17 @@ void ArtosynLink::update_link_stats() {
       openhd::link_statistics::Xmavlink_openhd_stats_wb_video_air_t air_video{};
       const auto cam_stats = openhd::LinkActionHandler::instance().get_cam_info(i);
       air_video.link_index = static_cast<uint8_t>(i);
-      air_video.curr_recommended_bitrate = cam_stats.encoding_bitrate_kbits;
-      air_video.curr_measured_encoder_bitrate = sample.bitrate_bps;
+      air_video.curr_recommended_bitrate =
+          cam_stats.target_bitrate_kbits > 0 ? cam_stats.target_bitrate_kbits
+                                             : cam_stats.encoding_bitrate_kbits;
+      if (cam_stats.measured_bitrate_bps > 0) {
+        air_video.curr_measured_encoder_bitrate = static_cast<int32_t>(
+            std::min<uint32_t>(cam_stats.measured_bitrate_bps,
+                               static_cast<uint32_t>(
+                                   std::numeric_limits<int32_t>::max())));
+      } else {
+        air_video.curr_measured_encoder_bitrate = sample.bitrate_bps;
+      }
       // No additional link-layer FEC injection on this path.
       air_video.curr_injected_bitrate = sample.bitrate_bps;
       air_video.curr_injected_pps = sample.packets_per_second;
