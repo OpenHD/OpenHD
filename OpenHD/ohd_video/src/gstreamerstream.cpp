@@ -28,6 +28,7 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <limits>
 #include <utility>
 #include <vector>
 
@@ -47,6 +48,11 @@
 #include "rtp_eof_helper.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "x20_cam_helper.h"
+
+namespace {
+static constexpr auto kPerfReportInterval = std::chrono::seconds(1);
+static constexpr auto kSkipDynamicBitrateLogInterval = std::chrono::seconds(5);
+}  // namespace
 
 GStreamerStream::GStreamerStream(std::shared_ptr<CameraHolder> camera_holder,
                                  openhd::ON_ENCODE_FRAME_CB out_cb)
@@ -125,6 +131,109 @@ void GStreamerStream::terminate_looping() {
     m_loop_thread->join();
     m_loop_thread = nullptr;
   }
+}
+
+GstPadProbeReturn GStreamerStream::on_perf_tap_buffer(GstPad* /*pad*/,
+                                                      GstPadProbeInfo* info,
+                                                      gpointer user_data) {
+  auto* self = static_cast<GStreamerStream*>(user_data);
+  if (self == nullptr || info == nullptr) {
+    return GST_PAD_PROBE_OK;
+  }
+  if ((GST_PAD_PROBE_INFO_TYPE(info) & GST_PAD_PROBE_TYPE_BUFFER) == 0) {
+    return GST_PAD_PROBE_OK;
+  }
+  GstBuffer* buffer = GST_PAD_PROBE_INFO_BUFFER(info);
+  if (buffer == nullptr) {
+    return GST_PAD_PROBE_OK;
+  }
+  self->m_perf_bytes_since_last_report.fetch_add(gst_buffer_get_size(buffer),
+                                                 std::memory_order_relaxed);
+  return GST_PAD_PROBE_OK;
+}
+
+void GStreamerStream::setup_perf_tap_probe() {
+  cleanup_perf_tap_probe();
+  m_perf_tap_element = gst_bin_get_by_name(
+      GST_BIN(m_gst_pipeline), OHDGstHelper::kEncoderPerfTapElementName);
+  if (m_perf_tap_element == nullptr) {
+    m_console->warn("Cannot find encoder perf tap element in pipeline");
+    return;
+  }
+  m_perf_tap_src_pad = gst_element_get_static_pad(m_perf_tap_element, "src");
+  if (m_perf_tap_src_pad == nullptr) {
+    m_console->warn("Cannot get src pad for encoder perf tap element");
+    gst_object_unref(m_perf_tap_element);
+    m_perf_tap_element = nullptr;
+    return;
+  }
+  m_perf_tap_probe_id =
+      gst_pad_add_probe(m_perf_tap_src_pad, GST_PAD_PROBE_TYPE_BUFFER,
+                        &GStreamerStream::on_perf_tap_buffer, this, nullptr);
+  if (m_perf_tap_probe_id == 0) {
+    m_console->warn("Cannot attach encoder perf probe");
+  }
+  m_perf_bytes_since_last_report.store(0, std::memory_order_relaxed);
+  m_perf_frames_since_last_report.store(0, std::memory_order_relaxed);
+  m_last_perf_report_tp = std::chrono::steady_clock::now();
+}
+
+void GStreamerStream::cleanup_perf_tap_probe() {
+  if (m_perf_tap_src_pad != nullptr) {
+    if (m_perf_tap_probe_id != 0) {
+      gst_pad_remove_probe(m_perf_tap_src_pad, m_perf_tap_probe_id);
+      m_perf_tap_probe_id = 0;
+    }
+    gst_object_unref(m_perf_tap_src_pad);
+    m_perf_tap_src_pad = nullptr;
+  }
+  if (m_perf_tap_element != nullptr) {
+    gst_object_unref(m_perf_tap_element);
+    m_perf_tap_element = nullptr;
+  }
+}
+
+bool GStreamerStream::should_skip_runtime_bitrate_update() const {
+  const auto& camera = m_camera_holder->get_camera();
+  if (camera.requires_rockchip3_mpp_pipeline() ||
+      camera.requires_rockchip5_mpp_pipeline() ||
+      camera.requires_rockchip1126_mpp_pipeline() ||
+      camera.requires_rockchip_rv_pipeline()) {
+    return true;
+  }
+  return false;
+}
+
+void GStreamerStream::publish_perf_stats_if_due(
+    std::chrono::steady_clock::time_point now) {
+  if (m_perf_tap_probe_id == 0) {
+    return;
+  }
+  const auto elapsed = now - m_last_perf_report_tp;
+  if (elapsed < kPerfReportInterval) {
+    return;
+  }
+  m_last_perf_report_tp = now;
+  const auto elapsed_us = std::max<int64_t>(
+      1, std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count());
+  const uint64_t bytes =
+      m_perf_bytes_since_last_report.exchange(0, std::memory_order_relaxed);
+  const uint32_t frames =
+      m_perf_frames_since_last_report.exchange(0, std::memory_order_relaxed);
+  const uint64_t bitrate_bps_u64 = (bytes * 8ULL * 1000000ULL) /
+                                   static_cast<uint64_t>(elapsed_us);
+  const auto bitrate_bps =
+      bitrate_bps_u64 > std::numeric_limits<uint32_t>::max()
+          ? std::numeric_limits<uint32_t>::max()
+          : static_cast<uint32_t>(bitrate_bps_u64);
+  const uint64_t fps_u64 =
+      (static_cast<uint64_t>(frames) * 1000000ULL + elapsed_us / 2ULL) /
+      static_cast<uint64_t>(elapsed_us);
+  const auto fps = fps_u64 > std::numeric_limits<uint16_t>::max()
+                       ? std::numeric_limits<uint16_t>::max()
+                       : static_cast<uint16_t>(fps_u64);
+  openhd::LinkActionHandler::instance().set_cam_info_perf(
+      m_camera_holder->get_camera().index, bitrate_bps, fps);
 }
 
 std::string GStreamerStream::create_source_encode_pipeline(
@@ -270,6 +379,7 @@ void GStreamerStream::setup() {
   std::stringstream pipeline_content;
   m_bitrate_ctrl_element = std::nullopt;
   pipeline_content << create_source_encode_pipeline(*m_camera_holder);
+  pipeline_content << OHDGstHelper::createEncoderPerfTap();
   // quick check,here the pipeline should end with a "! ";
   if (!OHDUtil::endsWith(pipeline_content.str(), "! ")) {
     m_console->warn("Probably ill-formatted pipeline: [{}]",
@@ -331,10 +441,15 @@ void GStreamerStream::setup() {
         ADD_RECORDING_TO_PIPELINE,
         (uint8_t)video_codec_to_int(setting.streamed_video_format.videoCodec),
         (uint16_t)setting.h26x_bitrate_kbits,
+        (uint16_t)setting.h26x_bitrate_kbits,
         (uint8_t)setting.h26x_keyframe_interval,
         (uint16_t)setting.streamed_video_format.width,
         (uint16_t)setting.streamed_video_format.height,
-        (uint16_t)setting.streamed_video_format.framerate};
+        (uint16_t)setting.streamed_video_format.framerate,
+        0,
+        0,
+        0,
+        0};
     openhd::LinkActionHandler::instance().set_cam_info(index, cam_info);
   }
   m_console->debug("Starting pipeline:[{}]", pipeline_content.str());
@@ -350,6 +465,7 @@ void GStreamerStream::setup() {
   }
   m_bitrate_ctrl_element = get_dynamic_bitrate_control_element_in_pipeline(
       m_gst_pipeline, *m_camera_holder);
+  setup_perf_tap_probe();
   // we pull data out of the gst pipeline as cpu memory buffer(s) using the
   // gstreamer "appsink" element
   m_app_sink_element =
@@ -391,6 +507,7 @@ void GStreamerStream::stop() {
 void GStreamerStream::cleanup_pipe() {
   m_console->debug("GStreamerStream::cleanup_pipe() begin");
   assert(m_gst_pipeline != nullptr);
+  cleanup_perf_tap_probe();
   // Drop the reference to the bitrate control element (if it exists)
   if (m_bitrate_ctrl_element.has_value()) {
     unref_bitrate_element(m_bitrate_ctrl_element.value());
@@ -440,6 +557,18 @@ void GStreamerStream::request_restart() { m_request_restart = true; }
 
 void GStreamerStream::handle_change_bitrate_request(
     openhd::LinkActionHandler::LinkBitrateInformation lb) {
+  if (should_skip_runtime_bitrate_update()) {
+    const auto now = std::chrono::steady_clock::now();
+    if (now - m_last_log_skip_dynamic_bitrate >
+        kSkipDynamicBitrateLogInterval) {
+      m_last_log_skip_dynamic_bitrate = now;
+      m_console->warn(
+          "Ignoring runtime bitrate update for Rockchip/MPP camera (requested "
+          "{} kBit/s)",
+          lb.recommended_encoder_bitrate_kbits);
+    }
+    return;
+  }
   // m_console->debug("handle_change_bitrate_request prev: {} new:{}",
   //                  kbits_per_second_to_string(m_curr_dynamic_bitrate_kbits),
   //                  kbits_per_second_to_string(lb.recommended_encoder_bitrate_kbits));
@@ -561,6 +690,9 @@ void GStreamerStream::stream_once() {
   int currently_applied_bitrate =
       m_camera_holder->get_settings().h26x_bitrate_kbits;
   m_curr_dynamic_bitrate_kbits = currently_applied_bitrate;
+  m_perf_bytes_since_last_report.store(0, std::memory_order_relaxed);
+  m_perf_frames_since_last_report.store(0, std::memory_order_relaxed);
+  m_last_perf_report_tp = std::chrono::steady_clock::now();
   // Now we should have a running pipeline and are able to pull samples from it
   // We use a timeout of 40ms to not unnecessarily wake up the thread on up to
   // 30fps (33ms) but also quickly respond to restart requests or bitrate
@@ -582,12 +714,13 @@ void GStreamerStream::stream_once() {
   std::chrono::steady_clock::time_point m_last_bitrate_diag_log =
       std::chrono::steady_clock::now();
   while (true) {
+    const auto loop_now = std::chrono::steady_clock::now();
+    publish_perf_stats_if_due(loop_now);
     // Quickly terminate if openhd wants to terminate
     if (!m_keep_looping) break;
     // ANNOYING BUGGED CAMERAS FIX - we restart the pipeline if we don't get a
     // frame from the camera for more than X seconds
-    if (std::chrono::steady_clock::now() - m_last_camera_frame >
-        std::chrono::seconds(10)) {
+    if (loop_now - m_last_camera_frame > std::chrono::seconds(10)) {
       m_console->warn("Restarting camera due to no frame after 10 seconds");
       openhd::Reporter::instance().report_status(
           "camera_no_frames",
@@ -651,17 +784,14 @@ void GStreamerStream::stream_once() {
       break;
     }
     const auto elapsed_remaining_space =
-        std::chrono::steady_clock::now() -
-        m_last_air_recording_remaining_space_check;
+        loop_now - m_last_air_recording_remaining_space_check;
     if (elapsed_remaining_space > std::chrono::seconds(1)) {
       m_camera_holder->check_remaining_space_air_recording(true);
-      m_last_air_recording_remaining_space_check =
-          std::chrono::steady_clock::now();
+      m_last_air_recording_remaining_space_check = loop_now;
     }
     if (m_bitrate_ctrl_element.has_value() &&
-        std::chrono::steady_clock::now() - m_last_bitrate_diag_log >
-            std::chrono::seconds(3)) {
-      m_last_bitrate_diag_log = std::chrono::steady_clock::now();
+        loop_now - m_last_bitrate_diag_log > std::chrono::seconds(3)) {
+      m_last_bitrate_diag_log = loop_now;
       const auto bitrate_ctrl_element = m_bitrate_ctrl_element.value();
       const auto rb_opt = read_bitrate_readback(bitrate_ctrl_element);
       if (rb_opt.has_value()) {
@@ -778,6 +908,7 @@ void GStreamerStream::on_new_rtp_frame_fragment(
   }
   if (is_last_fragment_of_frame) {
     on_new_rtp_fragmented_frame();
+    m_perf_frames_since_last_report.fetch_add(1, std::memory_order_relaxed);
     m_frame_fragments.resize(0);
     m_last_fu_s_idr = false;
   }
@@ -807,6 +938,7 @@ void GStreamerStream::on_new_rtp_fragmented_frame() {
 
 void GStreamerStream::x_on_new_rtp_fragmented_frame(
     std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments) {
+  m_perf_frames_since_last_report.fetch_add(1, std::memory_order_relaxed);
   if (m_output_cb) {
     const auto stream_index = m_camera_holder->get_camera().index;
     const bool enable_ultra_secure_encryption =

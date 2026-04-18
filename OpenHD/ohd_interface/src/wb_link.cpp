@@ -1754,12 +1754,20 @@ void WBLink::wt_update_statistics() {
       openhd::link_statistics::
           Xmavlink_openhd_stats_wb_video_air_fec_performance_t air_fec{};
       air_video.link_index = i;
-      int rec_bitrate = 0;
       auto cam_stats = openhd::LinkActionHandler::instance().get_cam_info(i);
-      rec_bitrate = cam_stats.encoding_bitrate_kbits;
+      const int rec_bitrate =
+          cam_stats.target_bitrate_kbits > 0 ? cam_stats.target_bitrate_kbits
+                                             : cam_stats.encoding_bitrate_kbits;
       air_video.curr_recommended_bitrate = rec_bitrate;
-      air_video.curr_measured_encoder_bitrate =
-          curr_tx_stats.current_provided_bits_per_second;
+      if (cam_stats.measured_bitrate_bps > 0) {
+        air_video.curr_measured_encoder_bitrate = static_cast<int32_t>(
+            std::min<uint32_t>(cam_stats.measured_bitrate_bps,
+                               static_cast<uint32_t>(
+                                   std::numeric_limits<int32_t>::max())));
+      } else {
+        air_video.curr_measured_encoder_bitrate =
+            curr_tx_stats.current_provided_bits_per_second;
+      }
       air_video.curr_injected_bitrate =
           curr_tx_stats.current_injected_bits_per_second;
       air_video.curr_injected_pps =

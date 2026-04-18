@@ -899,6 +899,15 @@ static std::string createOutputUdpLocalhost(const int udpOutPort) {
   return fmt::format(" udpsink host=127.0.0.1 port={}", udpOutPort);
 }
 
+static constexpr auto kEncoderPerfTapElementName = "openhd_perf_tap";
+
+// Lightweight pass-through element used as a stable probe point for
+// encoder-side bitrate measurements.
+static std::string createEncoderPerfTap() {
+  return fmt::format(" identity name={} silent=true ! ",
+                     kEncoderPerfTapElementName);
+}
+
 static std::string createOutputAppSink() {
   // @wait-on-eos: set to false since when terminating, we don't care if all
   // buffers of appsink have been consumed or not.

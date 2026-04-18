@@ -26,6 +26,7 @@
 
 #include <atomic>
 #include <functional>
+#include <limits>
 #include <map>
 #include <mutex>
 #include <sstream>
@@ -198,11 +199,19 @@ class LinkActionHandler {
     uint8_t cam_status = 0;
     uint8_t air_recording_active = 0;
     uint8_t encoding_format = 0;
+    // Broadcast to QOpenHD via OPENHD_CAMERA_STATUS_AIR.
+    // Updated from encoder-side performance measurements.
     uint16_t encoding_bitrate_kbits = 0;
+    // Internal target/requested bitrate used for recommended bitrate stats.
+    uint16_t target_bitrate_kbits = 0;
     uint8_t encoding_keyframe_interval = 0;
     uint16_t stream_w = 0;
     uint16_t stream_h = 0;
+    // Broadcast to QOpenHD via OPENHD_CAMERA_STATUS_AIR.
+    // Updated from encoder-side performance measurements.
     uint16_t stream_fps = 0;
+    // Internal measured bitrate in bit/s for high-resolution telemetry stats.
+    uint32_t measured_bitrate_bps = 0;
     uint8_t supports_variable_bitrate = 0;
     uint8_t qp_max = 0;
     uint8_t qp_min = 0;
@@ -219,10 +228,36 @@ class LinkActionHandler {
   void set_cam_info_bitrate(uint8_t cam_index, uint16_t bitrate_kbits) {
     if (cam_index == 0) {
       std::lock_guard<std::mutex> lock(m_cam_info_cam1_mutex);
-      m_cam_info_cam1.encoding_bitrate_kbits = bitrate_kbits;
+      m_cam_info_cam1.target_bitrate_kbits = bitrate_kbits;
+      if (m_cam_info_cam1.measured_bitrate_bps == 0) {
+        m_cam_info_cam1.encoding_bitrate_kbits = bitrate_kbits;
+      }
     } else {
       std::lock_guard<std::mutex> lock(m_cam_info_cam2_mutex);
-      m_cam_info_cam2.encoding_bitrate_kbits = bitrate_kbits;
+      m_cam_info_cam2.target_bitrate_kbits = bitrate_kbits;
+      if (m_cam_info_cam2.measured_bitrate_bps == 0) {
+        m_cam_info_cam2.encoding_bitrate_kbits = bitrate_kbits;
+      }
+    }
+  }
+  void set_cam_info_perf(uint8_t cam_index, uint32_t bitrate_bps,
+                         uint16_t fps) {
+    const uint64_t bitrate_kbits_rounded =
+        (static_cast<uint64_t>(bitrate_bps) + 500) / 1000;
+    const auto clamped_bitrate_kbits =
+        bitrate_kbits_rounded > std::numeric_limits<uint16_t>::max()
+            ? std::numeric_limits<uint16_t>::max()
+            : static_cast<uint16_t>(bitrate_kbits_rounded);
+    if (cam_index == 0) {
+      std::lock_guard<std::mutex> lock(m_cam_info_cam1_mutex);
+      m_cam_info_cam1.measured_bitrate_bps = bitrate_bps;
+      m_cam_info_cam1.encoding_bitrate_kbits = clamped_bitrate_kbits;
+      m_cam_info_cam1.stream_fps = fps;
+    } else {
+      std::lock_guard<std::mutex> lock(m_cam_info_cam2_mutex);
+      m_cam_info_cam2.measured_bitrate_bps = bitrate_bps;
+      m_cam_info_cam2.encoding_bitrate_kbits = clamped_bitrate_kbits;
+      m_cam_info_cam2.stream_fps = fps;
     }
   }
   void set_cam_info_status(uint8_t cam_index, uint8_t status) {
