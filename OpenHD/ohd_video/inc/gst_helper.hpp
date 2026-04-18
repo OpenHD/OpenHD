@@ -360,7 +360,7 @@ static std::string create_rpi_v4l2_h264_encoder(
   const int bitrateBitsPerSecond =
       openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
   const auto bitrate_mode_and_value_str = fmt::format(
-      ",video_bitrate_mode=1,video_bitrate={}", bitrateBitsPerSecond);
+      ",video_bitrate_mode=0,video_bitrate={}", bitrateBitsPerSecond);
   std::stringstream ret;
   ret << fmt::format(
       "v4l2h264enc name=rpi_v4l2_encoder "
