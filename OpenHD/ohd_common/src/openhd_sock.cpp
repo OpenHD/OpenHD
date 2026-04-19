@@ -925,6 +925,69 @@ bool request_sysutil_wifi_refresh(std::chrono::milliseconds timeout) {
   return true;
 }
 
+bool request_sysutil_artosyn_restart(std::chrono::milliseconds timeout) {
+  nlohmann::json request;
+  request["type"] = "sysutil.wifi.update";
+  request["action"] = "restart_artosyn";
+  auto serialized = request.dump();
+  serialized.push_back('\n');
+
+  if (strlen(kSocketPath) >= sizeof(sockaddr_un::sun_path)) {
+    openhd_sock_logger()->debug("artosyn restart socket path too long: {}",
+                                kSocketPath);
+    return false;
+  }
+
+  const int fd = ::socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
+  if (fd < 0) {
+    openhd_sock_logger()->debug("artosyn restart socket creation failed: {}",
+                                strerror(errno));
+    return false;
+  }
+
+  sockaddr_un addr{};
+  addr.sun_family = AF_UNIX;
+  std::strncpy(addr.sun_path, kSocketPath, sizeof(addr.sun_path) - 1);
+
+  if (::connect(fd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
+    openhd_sock_logger()->debug("artosyn restart socket connect failed: {}",
+                                strerror(errno));
+    ::close(fd);
+    return false;
+  }
+
+  const bool sent_ok = write_all(fd, serialized.data(), serialized.size());
+  if (!sent_ok) {
+    openhd_sock_logger()->debug("artosyn restart request send failed: {}",
+                                strerror(errno));
+    ::close(fd);
+    return false;
+  }
+
+  auto line_opt = read_line_with_timeout(fd, timeout);
+  ::close(fd);
+  if (!line_opt.has_value()) {
+    openhd_sock_logger()->debug("artosyn restart response timed out");
+    return false;
+  }
+
+  auto parsed = nlohmann::json::parse(*line_opt, nullptr, false);
+  if (parsed.is_discarded()) {
+    openhd_sock_logger()->debug("artosyn restart response parse failed");
+    return false;
+  }
+  if (!parsed.contains("type") ||
+      parsed.value("type", "") != "sysutil.wifi.update.response") {
+    openhd_sock_logger()->debug("unexpected artosyn restart response payload");
+    return false;
+  }
+  if (parsed.contains("ok") && !parsed.value("ok", true)) {
+    openhd_sock_logger()->debug("artosyn restart response reported failure");
+    return false;
+  }
+  return true;
+}
+
 bool wait_for_sysutils(std::chrono::milliseconds timeout,
                        std::chrono::milliseconds poll_interval) {
   if (timeout <= std::chrono::milliseconds::zero()) {

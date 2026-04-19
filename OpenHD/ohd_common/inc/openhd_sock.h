@@ -173,6 +173,8 @@ std::optional<std::vector<SysutilWifiCardInfo>> request_sysutil_wifi_cards(
     std::chrono::milliseconds timeout = std::chrono::seconds(1));
 bool request_sysutil_wifi_refresh(
     std::chrono::milliseconds timeout = std::chrono::seconds(2));
+bool request_sysutil_artosyn_restart(
+    std::chrono::milliseconds timeout = std::chrono::seconds(3));
 
 }  // namespace openhd
 

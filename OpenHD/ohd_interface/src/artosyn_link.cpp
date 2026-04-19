@@ -192,6 +192,25 @@ static std::string describe_artosyn_runtime_state(const ArtosynLink::Config& cfg
      << " usb_hs_mode=" << (usb.hs_mode ? "yes" : "no");
   return ss.str();
 }
+
+static bool should_restart_artosyn_daemon(const ArtosynLink::Config& cfg) {
+  (void)cfg;
+  const auto usb = detect_artosyn_usb_info();
+  if (!usb.present || !usb.hs_mode) {
+    return false;
+  }
+  if (!has_sysutils_artosyn_hint()) {
+    return false;
+  }
+  static int64_t last_restart_request_ms = 0;
+  const int64_t now_ms = openhd::util::steady_clock_time_epoch_ms();
+  if (last_restart_request_ms != 0 &&
+      (now_ms - last_restart_request_ms) < 15000) {
+    return false;
+  }
+  last_restart_request_ms = now_ms;
+  return true;
+}
 }  // namespace
 
 ArtosynLink::ArtosynLink(OHDProfile profile)
@@ -267,6 +286,13 @@ bool ArtosynLink::init_device() {
   if (n <= 0 || !list) {
     m_console->warn("No artosyn devices found ({})",
                     describe_artosyn_runtime_state(m_cfg));
+    if (should_restart_artosyn_daemon(m_cfg)) {
+      m_console->warn(
+          "Requesting sysutils Artosyn daemon restart for HS-mode USB recovery.");
+      if (!openhd::request_sysutil_artosyn_restart(std::chrono::seconds(4))) {
+        m_console->warn("Sysutils Artosyn daemon restart request failed.");
+      }
+    }
     if (list) {
       bb_dev_freelist(list);
     }
