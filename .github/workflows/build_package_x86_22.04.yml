@@ -71,16 +71,25 @@ jobs:
             *.log
           if-no-files-found: error
 
+      - name: Resolve Cloudsmith target repo
+        id: cloudsmith_repo
+        run: |
+          if [[ "${GITHUB_REF_NAME}" == "openhd-3.0" ]]; then
+            echo "name=dev-release" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Push
         id: push
-        if: github.ref_name == 'release' || github.ref_name == 'dev-release'
+        if: github.ref_name == 'release' || github.ref_name == 'dev-release' || github.ref_name == 'openhd-3.0'
         uses: cloudsmith-io/action@master
         with:
           api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
           command: "push"
           format: "deb"
           owner: "openhd"
-          repo: ${{ github.ref_name }}
+          repo: ${{ steps.cloudsmith_repo.outputs.name }}
           distro: "ubuntu"
           release: "jammy"
           republish: "true" # needed ONLY if version is not changing

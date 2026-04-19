@@ -183,15 +183,18 @@ build_package() {
     local copied_runtime_lib=0
     IFS=';' read -ra sdk_libs <<< "${ARTOSYN_SDK_LIB}"
     for lib in "${sdk_libs[@]}"; do
-      if [[ -f "${lib}" && "${lib}" == *.so* ]]; then
+      if [[ -f "${lib}" && ( "${lib}" == *.so* || "${lib}" == *.a ) ]]; then
         cp "${lib}" "${PKGDIR}usr/local/lib/"
         copied_runtime_lib=1
       fi
     done
     local extra_runtime_libs=(
       "${ARTOSYN_SDK_ROOT}/host_drv/com/libcom.so"
+      "${ARTOSYN_SDK_ROOT}/host_drv/com/libcom.a"
       "${ARTOSYN_SDK_ROOT}/host_drv/build/com/libcom.so"
+      "${ARTOSYN_SDK_ROOT}/host_drv/build/com/libcom.a"
       "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/libcom.so"
+      "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/libcom.a"
     )
     for lib in "${extra_runtime_libs[@]}"; do
       if [[ -f "${lib}" ]]; then
@@ -212,11 +215,11 @@ build_package() {
         while IFS= read -r lib; do
           cp "${lib}" "${PKGDIR}usr/local/lib/"
           copied_runtime_lib=1
-        done < <(find "${lib_dir}" -maxdepth 3 -type f \( -name "*.so" -o -name "*.so.*" \) | sort -u)
+        done < <(find "${lib_dir}" -maxdepth 3 -type f \( -name "*.so" -o -name "*.so.*" -o -name "*.a" \) | sort -u)
       fi
     done
     if [[ "${copied_runtime_lib}" -eq 0 ]]; then
-      echo "No Artosyn runtime .so copied (static linking may still be fine)." >&2
+      echo "No Artosyn SDK libraries (.so/.a) copied." >&2
     fi
   else
     echo "Artosyn SDK not resolved; skipping Artosyn daemon/runtime library packaging." >&2

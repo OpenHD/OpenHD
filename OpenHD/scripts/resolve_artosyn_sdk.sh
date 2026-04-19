@@ -300,6 +300,12 @@ _build_daemon_from_source() {
 
   _configure_host_drv_build_dir "${host_drv_dir}" "${build_dir}" || return 1
 
+  local available_targets=""
+  local targets_help_file="${build_dir}/.openhd_targets_help.txt"
+  if cmake --build "${build_dir}" --target help >"${targets_help_file}" 2>/dev/null; then
+    available_targets="$(tr '[:upper:]' '[:lower:]' < "${targets_help_file}")"
+  fi
+
   local targets=(
     "artosyn_daemon"
     "ar8030_daemon"
@@ -308,8 +314,21 @@ _build_daemon_from_source() {
     "bb_daemon"
     "daemon"
   )
+  local target_declared
+  target_declared() {
+    local target_name="$1"
+    if [[ -z "${available_targets}" ]]; then
+      # Unknown target set: keep previous behavior and try building.
+      return 0
+    fi
+    grep -Eq "(^|[[:space:]])${target_name,,}([[:space:]]|$)" <<<"${available_targets}"
+  }
   local t
   for t in "${targets[@]}"; do
+    if ! target_declared "${t}"; then
+      echo "[Artosyn] Skipping unavailable daemon build target '${t}'." >&2
+      continue
+    fi
     if cmake --build "${build_dir}" --target "${t}" >&2; then
       local built
       built="$(_find_daemon_binary_in_tree "${sdk_root}" || true)"
@@ -322,6 +341,8 @@ _build_daemon_from_source() {
         echo "${built}"
         return 0
       fi
+    else
+      echo "[Artosyn] Build failed for daemon target '${t}', trying next candidate." >&2
     fi
   done
   # Final fallback: try default build and search again.
