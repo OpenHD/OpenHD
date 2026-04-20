@@ -325,6 +325,33 @@ _find_daemon_binary_in_tree() {
   return 1
 }
 
+_find_tuntap_binary_in_tree() {
+  local sdk_root="$1"
+  if [[ -z "${sdk_root}" || ! -d "${sdk_root}" ]]; then
+    return 1
+  fi
+  local tuntap_candidates=(
+    "${sdk_root}/host_drv/install/dev_helper/tuntap_bb"
+    "${sdk_root}/host_drv/dev_helper/tuntap_bb"
+    "${sdk_root}/host_drv/build/dev_helper/tuntap_bb"
+    "${sdk_root}/host_drv/build/dev_helper/tuntap_bb/tuntap_bb"
+  )
+  local candidate
+  for candidate in "${tuntap_candidates[@]}"; do
+    if [[ -f "${candidate}" ]]; then
+      echo "${candidate}"
+      return 0
+    fi
+  done
+  local hit
+  hit="$(find "${sdk_root}/host_drv" -type f -name "tuntap_bb" | head -n 1 || true)"
+  if [[ -n "${hit}" ]]; then
+    echo "${hit}"
+    return 0
+  fi
+  return 1
+}
+
 _build_daemon_from_source() {
   local sdk_root="$1"
   local host_drv_dir="${sdk_root}/host_drv"
@@ -392,6 +419,74 @@ _build_daemon_from_source() {
     built="$(find "${build_dir}" -type f \
       \( -iname "artosyn_daemon" -o -iname "ar8030_daemon" -o -iname "artlinkd" -o -iname "bbd" -o -iname "bb_daemon" -o -iname "daemon" \) \
       | head -n 1 || true)"
+  fi
+  if [[ -n "${built}" ]]; then
+    echo "${built}"
+    return 0
+  fi
+  return 1
+}
+
+_build_tuntap_from_source() {
+  local sdk_root="$1"
+  local host_drv_dir="${sdk_root}/host_drv"
+  if [[ ! -f "${host_drv_dir}/CMakeLists.txt" ]]; then
+    return 1
+  fi
+  if ! command -v cmake >/dev/null 2>&1; then
+    return 1
+  fi
+  local build_dir="/tmp/openhd_artosyn_sdk_build_tuntap"
+  echo "[Artosyn] tuntap_bb missing, trying to build tuntap target from source." >&2
+
+  rm -rf "${build_dir}" || return 1
+  cmake -S "${host_drv_dir}" -B "${build_dir}" \
+    -DAPP_STATIC_LIB=ON \
+    -DBUILD_TEST_APP=OFF \
+    -DBUILD_ARTOSYN_EXAMPLE=OFF \
+    -DBUILD_RAM_INIT=OFF \
+    -DBUILD_TUNTAP=ON \
+    -DBUILD_BW_UPDATE_DEMO=OFF \
+    -DBUILD_IMG_UPGRADE=OFF \
+    -DBUILD_XDATA_TEST=OFF \
+    -DBUILD_REPEATER_TEST=OFF \
+    -DBUILD_BB_TEST=OFF \
+    -DBUILD_WORK_MODE_CFG=OFF \
+    -DBUILD_NET_DEV_DEMO=OFF \
+    -DENABLE_PYTHON=OFF \
+    -DENABLE_JAVA=OFF \
+    -DUSING_8030USB=ON \
+    -DUSING_8030SDIO=OFF \
+    -DUSING_8030UART=OFF \
+    -DUSING_8030DRV=OFF >&2 || return 1
+
+  local available_targets=""
+  local targets_help_file="${build_dir}/.openhd_targets_help_tuntap.txt"
+  if cmake --build "${build_dir}" --target help >"${targets_help_file}" 2>/dev/null; then
+    available_targets="$(tr '[:upper:]' '[:lower:]' < "${targets_help_file}")"
+  fi
+
+  local target_declared=0
+  if [[ -z "${available_targets}" ]]; then
+    target_declared=1
+  elif grep -Eq "(^|[[:space:]])tuntap_bb([[:space:]]|$)" <<<"${available_targets}"; then
+    target_declared=1
+  fi
+
+  if [[ "${target_declared}" -eq 1 ]]; then
+    if ! cmake --build "${build_dir}" --target tuntap_bb >&2; then
+      echo "[Artosyn] Explicit tuntap_bb target build failed, trying default build." >&2
+      cmake --build "${build_dir}" >&2 || true
+    fi
+  else
+    echo "[Artosyn] Target tuntap_bb not listed, trying default build." >&2
+    cmake --build "${build_dir}" >&2 || true
+  fi
+
+  local built
+  built="$(_find_tuntap_binary_in_tree "${sdk_root}" || true)"
+  if [[ -z "${built}" ]]; then
+    built="$(find "${build_dir}" -type f -name "tuntap_bb" | head -n 1 || true)"
   fi
   if [[ -n "${built}" ]]; then
     echo "${built}"
@@ -552,22 +647,11 @@ resolve_artosyn_sdk() {
   fi
 
   if [[ -n "${sdk_root}" && -z "${sdk_tuntap}" ]]; then
-    local tuntap_candidates=(
-      "${sdk_root}/host_drv/install/dev_helper/tuntap_bb"
-      "${sdk_root}/host_drv/dev_helper/tuntap_bb"
-      "${sdk_root}/host_drv/build/dev_helper/tuntap_bb"
-    )
-    local tuntap_candidate
-    for tuntap_candidate in "${tuntap_candidates[@]}"; do
-      if [[ -f "${tuntap_candidate}" ]]; then
-        sdk_tuntap="${tuntap_candidate}"
-        break
-      fi
-    done
+    sdk_tuntap="$(_find_tuntap_binary_in_tree "${sdk_root}" || true)"
   fi
 
   if [[ -n "${sdk_root}" && -z "${sdk_tuntap}" ]]; then
-    sdk_tuntap="$(find "${sdk_root}/host_drv" -type f -name "tuntap_bb" | head -n 1 || true)"
+    sdk_tuntap="$(_build_tuntap_from_source "${sdk_root}" || true)"
   fi
 
   if [[ -n "${sdk_lib}" && "${sdk_lib}" == *.a* ]]; then
