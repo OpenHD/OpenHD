@@ -164,10 +164,41 @@ _fetch_from_git() {
     ls -la "${repo_root}/host_drv" 2>/dev/null || true
     ls -la "${repo_root}/host_drv/app" 2>/dev/null || true
     ls -la "${repo_root}/host_drv/com" 2>/dev/null || true
+    echo "[Artosyn] archive hints:"
+    find "${repo_root}" -type f \
+      \( -iname "*.tar.gz" -o -iname "*.tgz" -o -iname "*.tar" -o -iname "*.zip" \) \
+      | head -n 10 || true
   } | tee "${clone_manifest}" >&2
 
   local resolved
   resolved="$(_find_sdk_root "${repo_root}" || true)"
+  if [[ -z "${resolved}" ]]; then
+    local archive_hit=""
+    local fallback_archive=""
+    while IFS= read -r candidate; do
+      if [[ -z "${fallback_archive}" ]]; then
+        fallback_archive="${candidate}"
+      fi
+      local lower
+      lower="$(printf '%s' "${candidate}" | tr '[:upper:]' '[:lower:]')"
+      if [[ "${lower}" == *"host_drv"* || "${lower}" == *"artosyn"* || "${lower}" == *"artlink"* ]]; then
+        archive_hit="${candidate}"
+        break
+      fi
+    done < <(find "${repo_root}" -type f \
+      \( -iname "*.tar.gz" -o -iname "*.tgz" -o -iname "*.tar" -o -iname "*.zip" \) \
+      | sort)
+    if [[ -z "${archive_hit}" ]]; then
+      archive_hit="${fallback_archive}"
+    fi
+    if [[ -n "${archive_hit}" ]]; then
+      echo "[Artosyn] Found SDK archive in cloned repo: ${archive_hit}" >&2
+      local extract_dir="/tmp/openhd_artosyn_sdk_repo_extract/${ARTLINK_REPO_DIR}"
+      if _extract_archive "${archive_hit}" "${extract_dir}"; then
+        resolved="$(_find_sdk_root "${extract_dir}" || true)"
+      fi
+    fi
+  fi
   if [[ -z "${resolved}" ]]; then
     return 1
   fi
