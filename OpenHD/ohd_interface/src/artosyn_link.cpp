@@ -173,6 +173,21 @@ static ArtosynUsbInfo detect_artosyn_usb_info_cached(int64_t now_ms) {
   return cached;
 }
 
+static bool is_openhd_debug_mode_enabled() {
+  return OHDFilesystemUtil::exists("/usr/local/share/openhd/debug.txt") ||
+         OHDFilesystemUtil::exists("/usr/share/openhd/debug.txt");
+}
+
+static bool is_openhd_debug_mode_enabled_cached(int64_t now_ms) {
+  static int64_t last_probe_ms = 0;
+  static bool cached = false;
+  if (last_probe_ms == 0 || (now_ms - last_probe_ms) > 5000) {
+    cached = is_openhd_debug_mode_enabled();
+    last_probe_ms = now_ms;
+  }
+  return cached;
+}
+
 static bool probe_artosyn_daemon_once(const ArtosynLink::Config& cfg) {
   if (bb_host_connect_test(cfg.addr.c_str(), cfg.port) != 0) {
     return false;
@@ -649,20 +664,31 @@ void ArtosynLink::update_link_stats() {
         tx_real_tp > 0 ? tx_real_tp : (tx_tp_th > 0 ? tx_tp_th : tx_phy_tp);
     stats.monitor_mode_link.curr_rate_kbits = clamp_uint16(rate_kbits);
   }
-  // Artosyn-specific debug: expose additional RX/TX link metrics via spare
-  // fields so ground tools can observe them continuously.
-  stats.monitor_mode_link.dummy0 = clamp_int8(rx_mcs);
-  const int tx_phy_rate_mbps = tx_phy_tp > 0 ? ((tx_phy_tp + 500) / 1000) : -1;
-  stats.monitor_mode_link.dummy1 = clamp_int16(tx_phy_rate_mbps);
-  const int rx_rate_kbits =
-      rx_real_tp > 0 ? rx_real_tp : (rx_tp_th > 0 ? rx_tp_th : rx_phy_tp);
-  stats.monitor_mode_link.dummy2 = clamp_int32(rx_rate_kbits);
+  const bool artosyn_debug_stats_enabled =
+      is_openhd_debug_mode_enabled_cached(now_ms);
+  if (artosyn_debug_stats_enabled) {
+    // Artosyn-specific debug: expose additional RX/TX link metrics via spare
+    // fields so ground tools can observe them continuously.
+    stats.monitor_mode_link.dummy0 = clamp_int8(rx_mcs);
+    const int tx_phy_rate_mbps =
+        tx_phy_tp > 0 ? ((tx_phy_tp + 500) / 1000) : -1;
+    stats.monitor_mode_link.dummy1 = clamp_int16(tx_phy_rate_mbps);
+    const int rx_rate_kbits =
+        rx_real_tp > 0 ? rx_real_tp : (rx_tp_th > 0 ? rx_tp_th : rx_phy_tp);
+    stats.monitor_mode_link.dummy2 = clamp_int32(rx_rate_kbits);
+  } else {
+    // Keep legacy semantics (non-Artosyn links use dummy1 for foreign pps).
+    // Artosyn does not provide that value, so emit neutral defaults.
+    stats.monitor_mode_link.dummy0 = 0;
+    stats.monitor_mode_link.dummy1 = 0;
+    stats.monitor_mode_link.dummy2 = 0;
+  }
 
   const int64_t last_rx_ts =
       m_last_rx_packet_ts_ms.load(std::memory_order_relaxed);
   const bool rx_ok = last_rx_ts > 0 && (now_ms - last_rx_ts) <= 5000;
   const auto bitfield = openhd::link_statistics::MonitorModeLinkBitfield{
-      false, false, false, rx_ok};
+      false, false, false, rx_ok, artosyn_debug_stats_enabled, 0};
   stats.monitor_mode_link.bitfield =
       openhd::link_statistics::write_monitor_link_bitfield(bitfield);
 
