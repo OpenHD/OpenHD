@@ -72,7 +72,8 @@ class ArtosynLink : public OHDLink {
   void apply_link_settings();
   bool read_metrics(int* link_state, int* rx_mcs, int* tx_mcs, int* bw,
                     int* phy_tp_kbps, int* real_tp_kbps, int* tx_freq_khz,
-                    int* rx_freq_khz, int* rx_bw);
+                    int* rx_freq_khz, int* rx_bw, int* rx_phy_tp_kbps,
+                    int* rx_real_tp_kbps);
   bool read_quality_metrics(int* snr, int* ldpc_err, int* ldpc_num,
                             int* gain_a, int* gain_b);
   bool read_power_metrics(int* power_auto, int* power_dbm);

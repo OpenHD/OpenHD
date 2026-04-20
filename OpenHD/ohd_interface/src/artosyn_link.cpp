@@ -53,6 +53,14 @@ int16_t clamp_int16(int value) {
   return static_cast<int16_t>(value);
 }
 
+int8_t clamp_int8(int value) {
+  if (value > std::numeric_limits<int8_t>::max())
+    return std::numeric_limits<int8_t>::max();
+  if (value < std::numeric_limits<int8_t>::min())
+    return std::numeric_limits<int8_t>::min();
+  return static_cast<int8_t>(value);
+}
+
 int32_t clamp_int32(int64_t value) {
   if (value > std::numeric_limits<int32_t>::max())
     return std::numeric_limits<int32_t>::max();
@@ -610,21 +618,45 @@ void ArtosynLink::update_link_stats() {
   stats.monitor_mode_link.curr_tx_pps = clamp_int16(static_cast<int>(tx_pps));
   stats.monitor_mode_link.curr_rx_pps = clamp_int16(static_cast<int>(rx_pps));
 
+  int link_state = -1;
+  int rx_mcs = -1;
   int tx_mcs = -1;
   int bw = -1;
-  int phy_tp = -1;
-  int real_tp = -1;
+  int rx_bw = -1;
+  int tx_phy_tp = -1;
+  int tx_real_tp = -1;
+  int rx_phy_tp = -1;
+  int rx_real_tp = -1;
+  int tx_tp_th = -1;
+  int rx_tp_th = -1;
   int tx_freq_khz = -1;
-  if (read_metrics(nullptr, nullptr, &tx_mcs, &bw, &phy_tp, &real_tp,
-                   &tx_freq_khz, nullptr, nullptr)) {
+  int rx_freq_khz = -1;
+  const bool have_metrics =
+      read_metrics(&link_state, &rx_mcs, &tx_mcs, &bw, &tx_phy_tp, &tx_real_tp,
+                   &tx_freq_khz, &rx_freq_khz, &rx_bw, &rx_phy_tp,
+                   &rx_real_tp);
+  (void)link_state;
+  (void)rx_freq_khz;
+  (void)rx_bw;
+  (void)read_mcs_throughput(&tx_tp_th, &rx_tp_th);
+  if (have_metrics) {
     stats.monitor_mode_link.curr_tx_mcs_index = clamp_uint8(tx_mcs);
     stats.monitor_mode_link.curr_tx_channel_w_mhz =
         clamp_uint8(bandwidth_enum_to_mhz(bw));
     const int tx_mhz = tx_freq_khz > 0 ? tx_freq_khz / 1000 : 0;
     stats.monitor_mode_link.curr_tx_channel_mhz = clamp_uint16(tx_mhz);
-    const int rate_kbits = real_tp > 0 ? real_tp : phy_tp;
+    const int rate_kbits =
+        tx_real_tp > 0 ? tx_real_tp : (tx_tp_th > 0 ? tx_tp_th : tx_phy_tp);
     stats.monitor_mode_link.curr_rate_kbits = clamp_uint16(rate_kbits);
   }
+  // Artosyn-specific debug: expose additional RX/TX link metrics via spare
+  // fields so ground tools can observe them continuously.
+  stats.monitor_mode_link.dummy0 = clamp_int8(rx_mcs);
+  const int tx_phy_rate_mbps = tx_phy_tp > 0 ? ((tx_phy_tp + 500) / 1000) : -1;
+  stats.monitor_mode_link.dummy1 = clamp_int16(tx_phy_rate_mbps);
+  const int rx_rate_kbits =
+      rx_real_tp > 0 ? rx_real_tp : (rx_tp_th > 0 ? rx_tp_th : rx_phy_tp);
+  stats.monitor_mode_link.dummy2 = clamp_int32(rx_rate_kbits);
 
   const int64_t last_rx_ts =
       m_last_rx_packet_ts_ms.load(std::memory_order_relaxed);
@@ -691,15 +723,24 @@ void ArtosynLink::update_link_stats() {
   card.rx_signal_quality_adapter = 0;
   card.rx_signal_quality_antenna1 = 0;
   card.rx_signal_quality_antenna2 = 0;
-  card.rx_snr_antenna1 = -128;
-  card.rx_snr_antenna2 = -128;
+  int snr = -1;
+  (void)read_quality_metrics(&snr, nullptr, nullptr, nullptr, nullptr);
+  if (snr >= 0) {
+    card.rx_snr_antenna1 = clamp_int8(snr);
+    card.rx_snr_antenna2 = clamp_int8(snr);
+  } else {
+    card.rx_snr_antenna1 = -128;
+    card.rx_snr_antenna2 = -128;
+  }
   card.card_temperature = 0;
   card.count_p_received =
       static_cast<uint32_t>(m_rx_total_packets.load());
   card.count_p_injected =
       static_cast<uint32_t>(m_tx_total_packets.load());
   card.curr_rx_packet_loss_perc = 0;
-  card.tx_power_current = 0;
+  int pwr_dbm = -1;
+  (void)read_power_metrics(nullptr, &pwr_dbm);
+  card.tx_power_current = pwr_dbm >= 0 ? clamp_int16(pwr_dbm) : 0;
   card.tx_power_armed = 0;
   card.tx_power_disarmed = 0;
   card.curr_status = m_dev ? 0 : 1;
@@ -816,7 +857,8 @@ void ArtosynLink::apply_link_settings() {
 bool ArtosynLink::read_metrics(int* link_state, int* rx_mcs, int* tx_mcs,
                                int* bw, int* phy_tp_kbps, int* real_tp_kbps,
                                int* tx_freq_khz, int* rx_freq_khz,
-                               int* rx_bw) {
+                               int* rx_bw, int* rx_phy_tp_kbps,
+                               int* rx_real_tp_kbps) {
   if (!m_dev) return false;
   const int slot = m_cfg.slot;
   bb_get_status_in_t st_in{};
@@ -833,7 +875,7 @@ bool ArtosynLink::read_metrics(int* link_state, int* rx_mcs, int* tx_mcs,
   if (rx_freq_khz) *rx_freq_khz = st_out.user_status[slot].rx_status.freq_khz;
   if (rx_bw) *rx_bw = st_out.user_status[slot].rx_status.bandwidth;
 
-  if (phy_tp_kbps || real_tp_kbps) {
+  if (phy_tp_kbps || real_tp_kbps || rx_phy_tp_kbps || rx_real_tp_kbps) {
     bb_get_throughput_in_t tp_in{};
     bb_get_throughput_out_t tp_out{};
     tp_in.slot = slot;
@@ -846,6 +888,14 @@ bool ArtosynLink::read_metrics(int* link_state, int* rx_mcs, int* tx_mcs,
       if (real_tp_kbps) {
         *real_tp_kbps = static_cast<int>(
             tp_out.throughput[BB_DIR_TX].real_throughput);
+      }
+      if (rx_phy_tp_kbps) {
+        *rx_phy_tp_kbps = static_cast<int>(
+            tp_out.throughput[BB_DIR_RX].phy_throughput);
+      }
+      if (rx_real_tp_kbps) {
+        *rx_real_tp_kbps = static_cast<int>(
+            tp_out.throughput[BB_DIR_RX].real_throughput);
       }
     }
   }
@@ -1178,7 +1228,7 @@ std::vector<openhd::Setting> ArtosynLink::get_all_settings() {
 
   ret.push_back(create_read_only_int(AR_DMN_AUTO, 0));
   ret.push_back(
-      create_read_only_string(AR_DMN_CMD, "managed-by-sysutils"));
+      create_read_only_string(AR_DMN_CMD, "managed-by-sysutils (daemon+tunnel)"));
 
   auto cb_mcs_mode = [this](std::string, int value) {
     m_settings->unsafe_get_settings().mcs_mode = value ? 1 : 0;
@@ -1389,18 +1439,17 @@ std::vector<openhd::Setting> ArtosynLink::get_all_settings() {
   int real_tp = -1;
   int tx_freq_khz = -1;
   int rx_freq_khz = -1;
-  if (read_metrics(&link_state, &rx_mcs, &tx_mcs, &bw, &phy_tp, &real_tp,
-                   &tx_freq_khz, &rx_freq_khz, &rx_bw)) {
-    ret.push_back(create_read_only_int(AR_LK_STATE, link_state));
-    ret.push_back(create_read_only_int(AR_RX_MCS, rx_mcs));
-    ret.push_back(create_read_only_int(AR_TX_MCS, tx_mcs));
-    ret.push_back(create_read_only_int(AR_BW, bw));
-    ret.push_back(create_read_only_int(AR_RX_BW, rx_bw));
-    ret.push_back(create_read_only_int(AR_PHY_TP, phy_tp));
-    ret.push_back(create_read_only_int(AR_REAL_TP, real_tp));
-    ret.push_back(create_read_only_int(AR_TX_FREQ, tx_freq_khz));
-    ret.push_back(create_read_only_int(AR_RX_FREQ, rx_freq_khz));
-  }
+  (void)read_metrics(&link_state, &rx_mcs, &tx_mcs, &bw, &phy_tp, &real_tp,
+                     &tx_freq_khz, &rx_freq_khz, &rx_bw, nullptr, nullptr);
+  ret.push_back(create_read_only_int(AR_LK_STATE, link_state));
+  ret.push_back(create_read_only_int(AR_RX_MCS, rx_mcs));
+  ret.push_back(create_read_only_int(AR_TX_MCS, tx_mcs));
+  ret.push_back(create_read_only_int(AR_BW, bw));
+  ret.push_back(create_read_only_int(AR_RX_BW, rx_bw));
+  ret.push_back(create_read_only_int(AR_PHY_TP, phy_tp));
+  ret.push_back(create_read_only_int(AR_REAL_TP, real_tp));
+  ret.push_back(create_read_only_int(AR_TX_FREQ, tx_freq_khz));
+  ret.push_back(create_read_only_int(AR_RX_FREQ, rx_freq_khz));
 
   int role = -1;
   int mode = -1;
@@ -1515,14 +1564,9 @@ std::vector<openhd::Setting> ArtosynLink::get_all_settings() {
 
   int tx_tp_th = -1;
   int rx_tp_th = -1;
-  if (read_mcs_throughput(&tx_tp_th, &rx_tp_th)) {
-    if (tx_tp_th >= 0) {
-      ret.push_back(create_read_only_int(AR_TX_TPTH, tx_tp_th));
-    }
-    if (rx_tp_th >= 0) {
-      ret.push_back(create_read_only_int(AR_RX_TPTH, rx_tp_th));
-    }
-  }
+  (void)read_mcs_throughput(&tx_tp_th, &rx_tp_th);
+  ret.push_back(create_read_only_int(AR_TX_TPTH, tx_tp_th));
+  ret.push_back(create_read_only_int(AR_RX_TPTH, rx_tp_th));
 
   int p_snr = -1;
   int p_ldpc_err = -1;

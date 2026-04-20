@@ -35,6 +35,7 @@ jobs:
       DOWNLOAD_URL: ${{ secrets.DOWNLOAD_URL }}
       OPENHD_SUBMODULE_TOKEN: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
       ARTLINK_REPO: https://github.com/OpenHD-Technologies/OpenHD-ArtLink.git
+      ARTLINK_BRANCH: sdk
       ARTLINK_FETCH_MODE: git-only
       ARTLINK_GIT_AUTH_USERNAME: raphael@openhdfpv.org
       ARTLINK_GIT_AUTH: "raphael@openhdfpv.org:${{ secrets.OPENHD_SUBMODULE_TOKEN }}"
@@ -62,6 +63,7 @@ jobs:
       DOWNLOAD_URL: ${{ secrets.DOWNLOAD_URL }}
       OPENHD_SUBMODULE_TOKEN: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
       ARTLINK_REPO: https://github.com/OpenHD-Technologies/OpenHD-ArtLink.git
+      ARTLINK_BRANCH: sdk
       ARTLINK_FETCH_MODE: git-only
       ARTLINK_GIT_AUTH_USERNAME: raphael@openhdfpv.org
       ARTLINK_GIT_AUTH: "raphael@openhdfpv.org:${{ secrets.OPENHD_SUBMODULE_TOKEN }}"
@@ -93,6 +95,7 @@ jobs:
       DOWNLOAD_URL: ${{ secrets.DOWNLOAD_URL }}
       OPENHD_SUBMODULE_TOKEN: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
       ARTLINK_REPO: https://github.com/OpenHD-Technologies/OpenHD-ArtLink.git
+      ARTLINK_BRANCH: sdk
       ARTLINK_FETCH_MODE: git-only
       ARTLINK_GIT_AUTH_USERNAME: raphael@openhdfpv.org
       ARTLINK_GIT_AUTH: "raphael@openhdfpv.org:${{ secrets.OPENHD_SUBMODULE_TOKEN }}"

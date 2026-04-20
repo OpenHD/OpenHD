@@ -121,7 +121,8 @@ build_package() {
   cmake OpenHD/ \
     -DARTOSYN_SDK_ROOT="${ARTOSYN_SDK_ROOT}" \
     -DARTOSYN_SDK_LIB="${ARTOSYN_SDK_LIB}" \
-    -DARTOSYN_SDK_DAEMON="${ARTOSYN_SDK_DAEMON:-}"
+    -DARTOSYN_SDK_DAEMON="${ARTOSYN_SDK_DAEMON:-}" \
+    -DARTOSYN_SDK_TUNTAP="${ARTOSYN_SDK_TUNTAP:-}"
   make -j$(nproc)
 
   mkdir -p "${PKGDIR}usr/local/bin/"
@@ -178,6 +179,29 @@ build_package() {
         exit 1
       fi
       echo "Artosyn SDK detected but daemon binary not found; continuing without daemon install." >&2
+    fi
+
+    local tuntap_candidates=(
+      "${ARTOSYN_SDK_TUNTAP:-}"
+      "${ARTOSYN_SDK_ROOT}/host_drv/install/dev_helper/tuntap_bb"
+      "${ARTOSYN_SDK_ROOT}/host_drv/dev_helper/tuntap_bb"
+      "${ARTOSYN_SDK_ROOT}/host_drv/build/dev_helper/tuntap_bb"
+    )
+    local tuntap_src=""
+    for candidate in "${tuntap_candidates[@]}"; do
+      if [[ -n "${candidate}" && -f "${candidate}" ]]; then
+        tuntap_src="${candidate}"
+        break
+      fi
+    done
+    if [[ -z "${tuntap_src}" && -d "${ARTOSYN_SDK_ROOT}/host_drv" ]]; then
+      tuntap_src="$(find "${ARTOSYN_SDK_ROOT}/host_drv" -type f -name "tuntap_bb" | head -n 1 || true)"
+    fi
+    if [[ -n "${tuntap_src}" ]]; then
+      cp "${tuntap_src}" "${PKGDIR}usr/local/bin/tuntap_bb"
+      chmod +x "${PKGDIR}usr/local/bin/tuntap_bb"
+    else
+      echo "Artosyn SDK detected but tuntap_bb binary not found; continuing without LAN tunnel helper install." >&2
     fi
 
     local copied_runtime_lib=0

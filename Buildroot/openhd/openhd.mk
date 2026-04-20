@@ -48,6 +48,7 @@ OPENHD_CONF_OPTS = \
     -DARTOSYN_SDK_ROOT="$(ARTOSYN_SDK_ROOT)" \
     -DARTOSYN_SDK_LIB="$(ARTOSYN_SDK_LIB)" \
     -DARTOSYN_SDK_DAEMON="$(ARTOSYN_SDK_DAEMON)" \
+    -DARTOSYN_SDK_TUNTAP="$(ARTOSYN_SDK_TUNTAP)" \
     -DCMAKE_EXE_LINKER_FLAGS="-lstdc++fs"
 
 # Install init.d services to target
@@ -93,6 +94,23 @@ define OPENHD_INSTALL_TARGET_CMDS
             chmod +x "$(TARGET_DIR)/usr/bin/$$daemon_dst_name"; \
         else \
             echo "Artosyn SDK detected but daemon not found; skipping daemon install."; \
+        fi; \
+        tuntap_src=""; \
+        for candidate in \
+            "$(ARTOSYN_SDK_TUNTAP)" \
+            "$(ARTOSYN_SDK_ROOT)/host_drv/install/dev_helper/tuntap_bb" \
+            "$(ARTOSYN_SDK_ROOT)/host_drv/dev_helper/tuntap_bb" \
+            "$(ARTOSYN_SDK_ROOT)/host_drv/build/dev_helper/tuntap_bb"; do \
+            if [ -z "$$tuntap_src" ] && [ -n "$$candidate" ] && [ -f "$$candidate" ]; then tuntap_src="$$candidate"; break; fi; \
+        done; \
+        if [ -z "$$tuntap_src" ]; then \
+            tuntap_src="$$(find "$(ARTOSYN_SDK_ROOT)/host_drv" -type f -name "tuntap_bb" | head -n 1)"; \
+        fi; \
+        if [ -n "$$tuntap_src" ]; then \
+            cp "$$tuntap_src" "$(TARGET_DIR)/usr/bin/tuntap_bb"; \
+            chmod +x "$(TARGET_DIR)/usr/bin/tuntap_bb"; \
+        else \
+            echo "Artosyn SDK detected but tuntap_bb not found; skipping LAN tunnel helper install."; \
         fi; \
         for lib in $(subst ;, ,$(ARTOSYN_SDK_LIB)); do \
             if [ -f "$$lib" ] && echo "$$lib" | grep -q '\.so'; then \

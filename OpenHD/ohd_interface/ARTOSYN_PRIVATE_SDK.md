@@ -9,7 +9,7 @@ The SDK source remains private and is **not** stored in this repository.
 
 ```bash
 export ARTOSYN_SDK_ROOT=/opt/openhd-private/artosyn_sdk
-export ARTOSYN_SDK_LIB=/opt/openhd-private/artosyn_sdk/host_drv/app/ar8030/libar8030_client.a
+export ARTOSYN_SDK_LIB=/opt/openhd-private/artosyn_sdk/host_drv/install/bin/libar8030_client.a
 ```
 
 2. Set only `ARTOSYN_SDK_ROOT` and let CMake/scripts auto-detect `libar8030_client`.
@@ -53,6 +53,7 @@ OpenHD now also installs Artosyn userspace runtime artifacts from the SDK:
 
 - Artosyn daemon binary (`artosyn_daemon`, `ar8030_daemon`, `artlinkd`, or
   upstream `daemon`; OpenHD installs `daemon` as `artosyn_daemon`)
+- Artosyn LAN tunnel helper (`tuntap_bb`) as `/usr/local/bin/tuntap_bb`
 - Shared runtime libraries from common SDK runtime dirs (`host_drv/app/ar8030`,
   `host_drv/build/app/ar8030`, `host_drv/install/bin`, `host_drv/com`,
   `host_drv/build/com`) including `libar8030_client.so` / `libcom.so`
@@ -63,15 +64,21 @@ For CMake-based builds, you can override daemon auto-detection with:
 -DARTOSYN_SDK_DAEMON=/absolute/path/to/artosyn_daemon
 ```
 
+Optionally override tuntap helper auto-detection:
+
+```bash
+-DARTOSYN_SDK_TUNTAP=/absolute/path/to/tuntap_bb
+```
+
 ## Runtime ownership split (sysutils vs OpenHD)
 
 - `sysutils` is responsible for Artosyn hardware/PHY handling and daemon lifecycle
-  (start, restart, diagnostics).
+  (start, restart, diagnostics) and the `tuntap_bb` LAN tunnel bootstrap.
 - OpenHD `ohd_interface` treats Artosyn as a daemon client:
   - probe Artosyn availability via sysutils-reported cards
   - connect/reconnect to configured daemon socket (`AR_ADDR`/`AR_PORT`)
   - transmit/receive link traffic and stats
-- OpenHD no longer performs daemon autostart itself (`AR_DMN_AUTO`/`AR_DMN_CMD`
+- OpenHD no longer performs daemon/tunnel autostart itself (`AR_DMN_AUTO`/`AR_DMN_CMD`
   are exposed read-only as sysutils-managed).
 
 ## Builder defaults

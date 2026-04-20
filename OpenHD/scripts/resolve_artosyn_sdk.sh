@@ -6,10 +6,11 @@
 #   resolve_artosyn_sdk
 #   cmake ... -DARTOSYN_SDK_ROOT="${ARTOSYN_SDK_ROOT}" -DARTOSYN_SDK_LIB="${ARTOSYN_SDK_LIB}"
 #          -DARTOSYN_SDK_DAEMON="${ARTOSYN_SDK_DAEMON}"
+#          -DARTOSYN_SDK_TUNTAP="${ARTOSYN_SDK_TUNTAP}"
 
 ARTLINK_REPO_DEFAULT="https://github.com/OpenHD-Technologies/OpenHD-ArtLink.git"
 ARTLINK_REPO=${ARTLINK_REPO:-${ARTLINK_REPO_DEFAULT}}
-ARTLINK_BRANCH=${ARTLINK_BRANCH:-main}
+ARTLINK_BRANCH=${ARTLINK_BRANCH:-sdk}
 ARTLINK_REPO_DIR=${ARTLINK_REPO_DIR:-OpenHD-ArtLink}
 
 # Reuse the kernel-builder/OpenHD secret contract when present.
@@ -93,17 +94,24 @@ _find_sdk_root() {
   if [[ -z "${search_root}" || ! -d "${search_root}" ]]; then
     return 1
   fi
-  if [[ -d "${search_root}/host_drv/app/ar8030" && -d "${search_root}/host_drv/com" ]]; then
+  if [[ -d "${search_root}/host_drv/app/ar8030" && \
+        ( -d "${search_root}/host_drv/com" || -d "${search_root}/host_drv/install/include" ) ]]; then
     echo "${search_root}"
     return 0
   fi
   local hit
-  hit="$(find "${search_root}" -type d -path "*/host_drv/app/ar8030" | head -n 1 || true)"
-  if [[ -z "${hit}" ]]; then
-    return 1
-  fi
-  # .../<sdk-root>/host_drv/app/ar8030 -> sdk-root
-  echo "$(dirname "$(dirname "$(dirname "${hit}")")")"
+  while IFS= read -r hit; do
+    local candidate_root
+    candidate_root="$(dirname "$(dirname "$(dirname "${hit}")")")"
+    if [[ -d "${candidate_root}/host_drv/app/ar8030" && \
+          ( -d "${candidate_root}/host_drv/com" || -d "${candidate_root}/host_drv/install/include" ) ]]; then
+      echo "${candidate_root}"
+      return 0
+    fi
+  done < <(find "${search_root}" -type d \
+    \( -path "*/host_drv/app/ar8030" -o -path "*/host_drv/install/include" \) \
+    2>/dev/null)
+  return 1
 }
 
 _fetch_from_download_url() {
@@ -365,6 +373,7 @@ resolve_artosyn_sdk() {
   local sdk_root="${ARTOSYN_SDK_ROOT:-}"
   local sdk_lib="${ARTOSYN_SDK_LIB:-}"
   local sdk_daemon="${ARTOSYN_SDK_DAEMON:-}"
+  local sdk_tuntap="${ARTOSYN_SDK_TUNTAP:-}"
   local fetch_mode="${ARTLINK_FETCH_MODE:-auto}"
   echo "[Artosyn] Resolving SDK (mode=${fetch_mode})." >&2
 
@@ -418,6 +427,17 @@ resolve_artosyn_sdk() {
       "/opt/artosyn_sdk"
       "/usr/local/share/openhd/artosyn_sdk"
     )
+    local win_mount_candidates=()
+    local nullglob_was_set=0
+    if shopt -q nullglob; then
+      nullglob_was_set=1
+    fi
+    shopt -s nullglob
+    win_mount_candidates+=(/mnt/c/Users/*/OpenHD-ArtLink /c/Users/*/OpenHD-ArtLink)
+    if [[ "${nullglob_was_set}" -eq 0 ]]; then
+      shopt -u nullglob
+    fi
+    candidates+=("${win_mount_candidates[@]}")
     local candidate
     for candidate in "${candidates[@]}"; do
       if [[ -z "${candidate}" ]]; then
@@ -463,12 +483,12 @@ resolve_artosyn_sdk() {
 
   if [[ -n "${sdk_root}" && -z "${sdk_lib}" ]]; then
     local lib_candidates=(
-      "${sdk_root}/host_drv/app/ar8030/libar8030_client.a"
-      "${sdk_root}/host_drv/app/ar8030/libar8030_client.so"
-      "${sdk_root}/host_drv/build/app/ar8030/libar8030_client.a"
-      "${sdk_root}/host_drv/build/app/ar8030/libar8030_client.so"
       "${sdk_root}/host_drv/install/bin/libar8030_client.a"
       "${sdk_root}/host_drv/install/bin/libar8030_client.so"
+      "${sdk_root}/host_drv/build/app/ar8030/libar8030_client.a"
+      "${sdk_root}/host_drv/build/app/ar8030/libar8030_client.so"
+      "${sdk_root}/host_drv/app/ar8030/libar8030_client.a"
+      "${sdk_root}/host_drv/app/ar8030/libar8030_client.so"
       "${sdk_root}/lib/libar8030_client.a"
       "${sdk_root}/lib/libar8030_client.so"
       "${sdk_root}/libar8030_client.a"
@@ -498,6 +518,25 @@ resolve_artosyn_sdk() {
 
   if [[ -n "${sdk_root}" && -z "${sdk_daemon}" ]]; then
     sdk_daemon="$(_build_daemon_from_source "${sdk_root}" || true)"
+  fi
+
+  if [[ -n "${sdk_root}" && -z "${sdk_tuntap}" ]]; then
+    local tuntap_candidates=(
+      "${sdk_root}/host_drv/install/dev_helper/tuntap_bb"
+      "${sdk_root}/host_drv/dev_helper/tuntap_bb"
+      "${sdk_root}/host_drv/build/dev_helper/tuntap_bb"
+    )
+    local tuntap_candidate
+    for tuntap_candidate in "${tuntap_candidates[@]}"; do
+      if [[ -f "${tuntap_candidate}" ]]; then
+        sdk_tuntap="${tuntap_candidate}"
+        break
+      fi
+    done
+  fi
+
+  if [[ -n "${sdk_root}" && -z "${sdk_tuntap}" ]]; then
+    sdk_tuntap="$(find "${sdk_root}/host_drv" -type f -name "tuntap_bb" | head -n 1 || true)"
   fi
 
   if [[ -n "${sdk_lib}" && "${sdk_lib}" == *.a* ]]; then
@@ -542,6 +581,7 @@ EOF
     export ARTOSYN_SDK_ROOT=""
     export ARTOSYN_SDK_LIB=""
     export ARTOSYN_SDK_DAEMON=""
+    export ARTOSYN_SDK_TUNTAP=""
     return 0
   fi
 
@@ -552,10 +592,16 @@ EOF
   else
     echo "[Artosyn] SDK daemon unresolved; packaging step may fail if daemon is required." >&2
   fi
+  if [[ -n "${sdk_tuntap}" ]]; then
+    echo "[Artosyn] SDK tuntap resolved: ${ARTOSYN_SDK_TUNTAP:-${sdk_tuntap}}" >&2
+  else
+    echo "[Artosyn] SDK tuntap unresolved; runtime LAN tunnel helper may be unavailable." >&2
+  fi
 
   export ARTOSYN_SDK_ROOT="${sdk_root}"
   export ARTOSYN_SDK_LIB="${sdk_lib}"
   export ARTOSYN_SDK_DAEMON="${sdk_daemon}"
+  export ARTOSYN_SDK_TUNTAP="${sdk_tuntap}"
 }
 
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
@@ -565,6 +611,9 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
     echo "ARTOSYN_SDK_LIB=${ARTOSYN_SDK_LIB}"
     if [[ -n "${ARTOSYN_SDK_DAEMON:-}" ]]; then
       echo "ARTOSYN_SDK_DAEMON=${ARTOSYN_SDK_DAEMON}"
+    fi
+    if [[ -n "${ARTOSYN_SDK_TUNTAP:-}" ]]; then
+      echo "ARTOSYN_SDK_TUNTAP=${ARTOSYN_SDK_TUNTAP}"
     fi
   fi
 fi

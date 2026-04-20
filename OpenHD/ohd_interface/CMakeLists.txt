@@ -22,6 +22,7 @@ add_library(OHDInterfaceLib::OHDInterfaceLib ALIAS OHDInterfaceLib)
 set(ARTOSYN_SDK_ROOT "" CACHE PATH "Path to Artosyn host_drv SDK root")
 set(ARTOSYN_SDK_LIB "" CACHE FILEPATH "Path to libar8030_client.a/.so")
 set(ARTOSYN_SDK_DAEMON "" CACHE FILEPATH "Path to Artosyn daemon binary")
+set(ARTOSYN_SDK_TUNTAP "" CACHE FILEPATH "Path to Artosyn tuntap_bb helper binary")
 
 set(sources
     src/wifi_card_discovery.cpp
@@ -51,6 +52,9 @@ endif()
 if (NOT ARTOSYN_SDK_DAEMON AND DEFINED ENV{ARTOSYN_SDK_DAEMON})
     set(ARTOSYN_SDK_DAEMON "$ENV{ARTOSYN_SDK_DAEMON}" CACHE FILEPATH "Path to Artosyn daemon binary" FORCE)
 endif()
+if (NOT ARTOSYN_SDK_TUNTAP AND DEFINED ENV{ARTOSYN_SDK_TUNTAP})
+    set(ARTOSYN_SDK_TUNTAP "$ENV{ARTOSYN_SDK_TUNTAP}" CACHE FILEPATH "Path to Artosyn tuntap_bb helper binary" FORCE)
+endif()
 
 set(_enable_artosyn OFF)
 set(_artosyn_sdk_libs)
@@ -58,11 +62,11 @@ set(_artosyn_disable_reason "")
 
 if (ARTOSYN_SDK_ROOT AND NOT ARTOSYN_SDK_LIB)
     set(_artosyn_lib_candidates
-        "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/libar8030_client.a"
-        "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/libar8030_client.a"
-        "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/libar8030_client.so"
         "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/libar8030_client.a"
         "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/libar8030_client.so"
+        "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/libar8030_client.a"
+        "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/libar8030_client.so"
+        "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/libar8030_client.a"
         "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/libar8030_client.so"
         "${ARTOSYN_SDK_ROOT}/lib/libar8030_client.a"
         "${ARTOSYN_SDK_ROOT}/lib/libar8030_client.so"
@@ -77,12 +81,30 @@ if (ARTOSYN_SDK_ROOT AND NOT ARTOSYN_SDK_LIB)
     endforeach()
 endif()
 
+set(_artosyn_include_dirs)
 if (ARTOSYN_SDK_ROOT AND ARTOSYN_SDK_LIB)
-    if (NOT EXISTS "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030" OR
-        NOT EXISTS "${ARTOSYN_SDK_ROOT}/host_drv/com")
+    if (NOT EXISTS "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030")
         set(_artosyn_disable_reason
-            "invalid ARTOSYN_SDK_ROOT (${ARTOSYN_SDK_ROOT}); expected host_drv/app/ar8030 and host_drv/com"
+            "invalid ARTOSYN_SDK_ROOT (${ARTOSYN_SDK_ROOT}); expected host_drv/app/ar8030"
         )
+    endif()
+    if (NOT _artosyn_disable_reason)
+        set(_artosyn_include_candidates
+            "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030"
+            "${ARTOSYN_SDK_ROOT}/host_drv/com"
+            "${ARTOSYN_SDK_ROOT}/host_drv/install/include"
+        )
+        foreach(_candidate IN LISTS _artosyn_include_candidates)
+            if (EXISTS "${_candidate}" AND IS_DIRECTORY "${_candidate}")
+                list(APPEND _artosyn_include_dirs "${_candidate}")
+            endif()
+        endforeach()
+        list(REMOVE_DUPLICATES _artosyn_include_dirs)
+        if (NOT _artosyn_include_dirs)
+            set(_artosyn_disable_reason
+                "invalid ARTOSYN_SDK_ROOT (${ARTOSYN_SDK_ROOT}); expected Artosyn SDK include directories under host_drv"
+            )
+        endif()
     endif()
     if (NOT _artosyn_disable_reason)
         set(_artosyn_sdk_libs ${ARTOSYN_SDK_LIB})
@@ -159,6 +181,29 @@ if (_enable_artosyn)
             endforeach()
         endif()
     endif()
+    if (NOT ARTOSYN_SDK_TUNTAP)
+        set(_artosyn_tuntap_candidates
+            "${ARTOSYN_SDK_ROOT}/host_drv/install/dev_helper/tuntap_bb"
+            "${ARTOSYN_SDK_ROOT}/host_drv/dev_helper/tuntap_bb"
+            "${ARTOSYN_SDK_ROOT}/host_drv/build/dev_helper/tuntap_bb"
+        )
+        foreach(_tuntap_candidate IN LISTS _artosyn_tuntap_candidates)
+            if (EXISTS "${_tuntap_candidate}" AND NOT IS_DIRECTORY "${_tuntap_candidate}")
+                set(ARTOSYN_SDK_TUNTAP "${_tuntap_candidate}" CACHE FILEPATH "Path to Artosyn tuntap_bb helper binary" FORCE)
+                break()
+            endif()
+        endforeach()
+        if (NOT ARTOSYN_SDK_TUNTAP)
+            file(GLOB_RECURSE _artosyn_tuntap_recursive
+                "${ARTOSYN_SDK_ROOT}/host_drv/*tuntap_bb*")
+            foreach(_tuntap_candidate IN LISTS _artosyn_tuntap_recursive)
+                if (EXISTS "${_tuntap_candidate}" AND NOT IS_DIRECTORY "${_tuntap_candidate}")
+                    set(ARTOSYN_SDK_TUNTAP "${_tuntap_candidate}" CACHE FILEPATH "Path to Artosyn tuntap_bb helper binary" FORCE)
+                    break()
+                endif()
+            endforeach()
+        endif()
+    endif()
 
     set(_artosyn_runtime_libs)
     foreach(_artosyn_lib IN LISTS _artosyn_sdk_libs)
@@ -196,10 +241,7 @@ if (_enable_artosyn)
 
     list(APPEND sources src/artosyn_link.cpp src/artosyn_link_settings.cpp)
     target_compile_definitions(OHDInterfaceLib PUBLIC OHD_ENABLE_ARTOSYN=1)
-    target_include_directories(OHDInterfaceLib PUBLIC
-        "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030"
-        "${ARTOSYN_SDK_ROOT}/host_drv/com"
-    )
+    target_include_directories(OHDInterfaceLib PUBLIC ${_artosyn_include_dirs})
     target_link_libraries(OHDInterfaceLib PUBLIC ${_artosyn_sdk_libs})
 
     if (ARTOSYN_SDK_DAEMON AND EXISTS "${ARTOSYN_SDK_DAEMON}")
@@ -211,6 +253,11 @@ if (_enable_artosyn)
         endif()
     else()
         message(WARNING "Artosyn daemon binary not found in SDK; runtime autostart may fail unless an external service provides it.")
+    endif()
+    if (ARTOSYN_SDK_TUNTAP AND EXISTS "${ARTOSYN_SDK_TUNTAP}")
+        install(PROGRAMS "${ARTOSYN_SDK_TUNTAP}" DESTINATION bin RENAME tuntap_bb)
+    else()
+        message(WARNING "Artosyn tuntap_bb binary not found in SDK; runtime LAN tunnel helper may be unavailable.")
     endif()
 
     foreach(_runtime_lib IN LISTS _artosyn_runtime_libs)

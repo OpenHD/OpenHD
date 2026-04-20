@@ -43,7 +43,7 @@ DEST_ROOT_DEFAULT="/opt/openhd-private/artosyn_sdk"
 DEST_ROOT="${ARTOSYN_LOCAL_DEST:-${DEST_ROOT_DEFAULT}}"
 
 REPO_DEFAULT="${ARTLINK_REPO:-${ARTLINK_REPO_DEFAULT}}"
-BRANCH_DEFAULT="${ARTLINK_BRANCH:-main}"
+BRANCH_DEFAULT="${ARTLINK_BRANCH:-sdk}"
 USER_DEFAULT="${ARTLINK_GIT_AUTH_USERNAME:-}"
 if [[ -z "${USER_DEFAULT}" ]]; then
   USER_DEFAULT="$(git config --global user.name 2>/dev/null || true)"
@@ -153,10 +153,10 @@ for lib in "${sdk_libs[@]}"; do
   lib_name="$(basename "${lib}")"
   case "${lib_name}" in
     libar8030_client*)
-      stage_runtime_file "${lib}" "${DEST_ROOT}/host_drv/app/ar8030/${lib_name}" "0644"
+      stage_runtime_file "${lib}" "${DEST_ROOT}/host_drv/install/bin/${lib_name}" "0644"
       ;;
     libcom*)
-      stage_runtime_file "${lib}" "${DEST_ROOT}/host_drv/com/${lib_name}" "0644"
+      stage_runtime_file "${lib}" "${DEST_ROOT}/host_drv/install/bin/${lib_name}" "0644"
       ;;
   esac
 done
@@ -169,12 +169,21 @@ if [[ -n "${ARTOSYN_SDK_DAEMON:-}" && -f "${ARTOSYN_SDK_DAEMON}" ]]; then
   fi
 fi
 
+if [[ -n "${ARTOSYN_SDK_TUNTAP:-}" && -f "${ARTOSYN_SDK_TUNTAP}" ]]; then
+  if [[ "${ARTOSYN_SDK_TUNTAP}" != "${DEST_ROOT}"/* ]]; then
+    tuntap_name="$(basename "${ARTOSYN_SDK_TUNTAP}")"
+    stage_runtime_file "${ARTOSYN_SDK_TUNTAP}" \
+      "${DEST_ROOT}/host_drv/install/dev_helper/${tuntap_name}" "0755"
+  fi
+fi
+
 unset ARTLINK_GIT_AUTH
 
 # Re-resolve against the persisted local location so later builds pick stable paths.
 export ARTOSYN_SDK_ROOT="${DEST_ROOT}"
 export ARTOSYN_SDK_LIB=""
 export ARTOSYN_SDK_DAEMON=""
+export ARTOSYN_SDK_TUNTAP=""
 resolve_artosyn_sdk
 
 echo
@@ -183,6 +192,9 @@ echo "[Artosyn] Resolved root: ${ARTOSYN_SDK_ROOT}"
 echo "[Artosyn] Resolved lib:  ${ARTOSYN_SDK_LIB}"
 if [[ -n "${ARTOSYN_SDK_DAEMON:-}" ]]; then
   echo "[Artosyn] Resolved daemon: ${ARTOSYN_SDK_DAEMON}"
+fi
+if [[ -n "${ARTOSYN_SDK_TUNTAP:-}" ]]; then
+  echo "[Artosyn] Resolved tuntap: ${ARTOSYN_SDK_TUNTAP}"
 fi
 echo
 echo "Normal OpenHD build scripts should now auto-detect this SDK path."
