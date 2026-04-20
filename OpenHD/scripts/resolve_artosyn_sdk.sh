@@ -439,6 +439,25 @@ _build_tuntap_from_source() {
   local build_dir="/tmp/openhd_artosyn_sdk_build_tuntap"
   echo "[Artosyn] tuntap_bb missing, trying to build tuntap target from source." >&2
 
+  local tuntap_src="${host_drv_dir}/dev_helper/tuntap_bb/test_bb_tun.cpp"
+  if [[ -f "${tuntap_src}" ]]; then
+    if grep -Eq '^[[:space:]]*typedef[[:space:]]+unsigned[[:space:]]+.*uint(8|16|32|64)_t;[[:space:]]*$' "${tuntap_src}"; then
+      echo "[Artosyn] Applying uint*_t typedef compatibility patch for tuntap_bb source." >&2
+      local tmp_src="${tuntap_src}.openhdtmp"
+      awk '
+        BEGIN { patched = 0 }
+        /^[[:space:]]*typedef[[:space:]]+unsigned[[:space:]]+.*uint(8|16|32|64)_t;[[:space:]]*$/ {
+          if (patched == 0) {
+            print "// openhd-patch: use <stdint.h> typedefs for cross-arch compatibility";
+            patched = 1;
+          }
+          next;
+        }
+        { print }
+      ' "${tuntap_src}" > "${tmp_src}" && mv "${tmp_src}" "${tuntap_src}"
+    fi
+  fi
+
   rm -rf "${build_dir}" || return 1
   cmake -S "${host_drv_dir}" -B "${build_dir}" \
     -DAPP_STATIC_LIB=ON \
