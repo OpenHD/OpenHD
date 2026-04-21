@@ -189,6 +189,14 @@ static bool force_artosyn_bb_init_start() {
   return std::string(env) == "1";
 }
 
+static bool apply_artosyn_link_settings_on_init() {
+  const char* env = std::getenv("OHD_ARTOSYN_APPLY_SETTINGS");
+  if (!env) {
+    return false;
+  }
+  return std::string(env) == "1";
+}
+
 static bool is_openhd_debug_mode_enabled_cached(int64_t now_ms) {
   static int64_t last_probe_ms = 0;
   static bool cached = false;
@@ -397,9 +405,16 @@ bool ArtosynLink::init_device() {
         "Artosyn init step: skip bb_init/bb_start (daemon-managed SDK flow). "
         "Set OHD_ARTOSYN_FORCE_BB_INIT=1 to force legacy behavior.");
   }
-  m_console->info("Artosyn init step: apply_link_settings");
-  apply_link_settings();
-  m_console->info("Artosyn init step ok: apply_link_settings");
+  if (apply_artosyn_link_settings_on_init()) {
+    m_console->info("Artosyn init step: apply_link_settings");
+    apply_link_settings();
+    m_console->info("Artosyn init step ok: apply_link_settings");
+  } else {
+    m_console->info(
+        "Artosyn init step: skip apply_link_settings on init "
+        "(daemon-managed safe mode). Set OHD_ARTOSYN_APPLY_SETTINGS=1 "
+        "to enable init-time BB_SET_* ioctls.");
+  }
 
   m_console->info("Artosyn init step: open video socket");
   m_video_fd =
@@ -911,17 +926,35 @@ void ArtosynLink::update_link_stats() {
 void ArtosynLink::apply_link_settings() {
   if (!m_dev || !m_settings) return;
   const auto& s = m_settings->get_settings();
+  auto timed_ioctl_set = [this](uint32_t req, const void* in,
+                                const char* label) -> int {
+    const auto t0 = std::chrono::steady_clock::now();
+    const int ret = bb_ioctl(m_dev, req, const_cast<void*>(in), nullptr);
+    const auto dt_ms =
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now() - t0)
+            .count();
+    if (ret != 0) {
+      m_console->warn("Artosyn apply setting failed: {} req={} ret={} dt={}ms",
+                      label, req, ret, dt_ms);
+    } else if (dt_ms > 80) {
+      m_console->info("Artosyn apply setting slow: {} req={} dt={}ms", label,
+                      req, dt_ms);
+    }
+    return ret;
+  };
+  m_console->info("Artosyn apply settings begin");
 
   bb_set_mcs_mode_t mcs_mode{};
   mcs_mode.slot = static_cast<uint8_t>(m_cfg.slot);
   mcs_mode.auto_mode = (s.mcs_mode != 0);
-  (void)bb_ioctl(m_dev, BB_SET_MCS_MODE, &mcs_mode, nullptr);
+  (void)timed_ioctl_set(BB_SET_MCS_MODE, &mcs_mode, "BB_SET_MCS_MODE");
 
   if (s.mcs_mode == 0 && s.mcs_value >= 0) {
     bb_set_mcs_t mcs{};
     mcs.slot = static_cast<uint8_t>(m_cfg.slot);
     mcs.mcs = static_cast<uint8_t>(s.mcs_value);
-    (void)bb_ioctl(m_dev, BB_SET_MCS, &mcs, nullptr);
+    (void)timed_ioctl_set(BB_SET_MCS, &mcs, "BB_SET_MCS");
   }
   if (s.mcs_min >= 0 || s.mcs_max >= 0) {
     bb_set_mcs_range_in_t range{};
@@ -929,89 +962,95 @@ void ArtosynLink::apply_link_settings() {
     range.mcs_min = static_cast<uint8_t>(s.mcs_min >= 0 ? s.mcs_min : 0);
     range.mcs_max = static_cast<uint8_t>(s.mcs_max >= 0 ? s.mcs_max
                                                          : BB_PHY_MCS_MAX);
-    (void)bb_ioctl(m_dev, BB_SET_MCS_RANGE, &range, nullptr);
+    (void)timed_ioctl_set(BB_SET_MCS_RANGE, &range, "BB_SET_MCS_RANGE");
   }
 
   bb_set_bandwidth_mode_t bw_mode{};
   bw_mode.slot = static_cast<uint8_t>(m_cfg.slot);
   bw_mode.mode = (s.bw_mode != 0);
-  (void)bb_ioctl(m_dev, BB_SET_BANDWIDTH_MODE, &bw_mode, nullptr);
+  (void)timed_ioctl_set(BB_SET_BANDWIDTH_MODE, &bw_mode,
+                        "BB_SET_BANDWIDTH_MODE");
 
   if (s.bw_mode == 0 && s.bw_value >= 0) {
     bb_set_bandwidth_t bw{};
     bw.slot = static_cast<uint8_t>(m_cfg.slot);
     bw.bandwidth = static_cast<uint8_t>(s.bw_value);
     bw.dir = BB_DIR_TX;
-    (void)bb_ioctl(m_dev, BB_SET_BANDWIDTH, &bw, nullptr);
+    (void)timed_ioctl_set(BB_SET_BANDWIDTH, &bw, "BB_SET_BANDWIDTH_TX");
     bw.dir = BB_DIR_RX;
-    (void)bb_ioctl(m_dev, BB_SET_BANDWIDTH, &bw, nullptr);
+    (void)timed_ioctl_set(BB_SET_BANDWIDTH, &bw, "BB_SET_BANDWIDTH_RX");
   }
 
   bb_set_chan_mode_t chan_mode{};
   chan_mode.auto_mode = (s.chan_mode != 0);
-  (void)bb_ioctl(m_dev, BB_SET_CHAN_MODE, &chan_mode, nullptr);
+  (void)timed_ioctl_set(BB_SET_CHAN_MODE, &chan_mode, "BB_SET_CHAN_MODE");
 
   if (s.chan_mode == 0 && s.chan_index >= 0) {
     bb_set_chan_t chan{};
     chan.chan_dir = BB_DIR_TX;
     chan.chan_index = static_cast<uint8_t>(s.chan_index);
-    (void)bb_ioctl(m_dev, BB_SET_CHAN, &chan, nullptr);
+    (void)timed_ioctl_set(BB_SET_CHAN, &chan, "BB_SET_CHAN");
   }
 
   bb_set_pwr_auto_in_t pwr_auto{};
   pwr_auto.pwr_auto = (s.power_auto != 0);
-  (void)bb_ioctl(m_dev, BB_SET_POWER_AUTO, &pwr_auto, nullptr);
+  (void)timed_ioctl_set(BB_SET_POWER_AUTO, &pwr_auto, "BB_SET_POWER_AUTO");
 
   if (s.power_auto == 0 && s.tx_power_dbm >= 0) {
     bb_set_pwr_in_t pwr{};
     pwr.usr = static_cast<uint8_t>(m_cfg.slot);
     pwr.pwr = static_cast<uint8_t>(s.tx_power_dbm);
-    (void)bb_ioctl(m_dev, BB_SET_POWER, &pwr, nullptr);
+    (void)timed_ioctl_set(BB_SET_POWER, &pwr, "BB_SET_POWER");
   }
 
   if (s.band_mode >= 0) {
     bb_set_band_mode_t band_mode{};
     band_mode.auto_mode = (s.band_mode != 0);
-    (void)bb_ioctl(m_dev, BB_SET_BAND_MODE, &band_mode, nullptr);
+    (void)timed_ioctl_set(BB_SET_BAND_MODE, &band_mode, "BB_SET_BAND_MODE");
   }
   if (s.band_value >= 0) {
     bb_set_band_t band{};
     band.target_band = static_cast<uint8_t>(s.band_value);
-    (void)bb_ioctl(m_dev, BB_SET_BAND, &band, nullptr);
+    (void)timed_ioctl_set(BB_SET_BAND, &band, "BB_SET_BAND");
   }
   if (s.compliance_mode >= 0) {
     bb_set_compliance_mode_t cmp{};
     cmp.enable = (s.compliance_mode != 0);
-    (void)bb_ioctl(m_dev, BB_SET_COMPLIANCE_MODE, &cmp, nullptr);
+    (void)timed_ioctl_set(BB_SET_COMPLIANCE_MODE, &cmp,
+                          "BB_SET_COMPLIANCE_MODE");
   }
   if (s.power_mode >= 0) {
     bb_set_pwr_mode_in_t pwr_mode{};
     pwr_mode.pwr_mode = static_cast<uint8_t>(s.power_mode);
-    (void)bb_ioctl(m_dev, BB_SET_POWER_MODE, &pwr_mode, nullptr);
+    (void)timed_ioctl_set(BB_SET_POWER_MODE, &pwr_mode, "BB_SET_POWER_MODE");
   }
   if (s.lna_mode >= 0) {
     bb_set_lna_mode_t lna_mode{};
     lna_mode.mode = (s.lna_mode != 0);
-    (void)bb_ioctl(m_dev, BB_SET_LNA_MODE, &lna_mode, nullptr);
+    (void)timed_ioctl_set(BB_SET_LNA_MODE, &lna_mode, "BB_SET_LNA_MODE");
   }
   if (s.lna_bypass >= 0) {
     bb_set_lna_t lna{};
     lna.lna_bypass = (s.lna_bypass != 0);
-    (void)bb_ioctl(m_dev, BB_SET_LNA, &lna, nullptr);
+    (void)timed_ioctl_set(BB_SET_LNA, &lna, "BB_SET_LNA");
   }
 
-  auto apply_rf = [this](int state, bb_rf_path_e path, bb_dir_e dir) {
+  auto apply_rf = [this, &timed_ioctl_set](int state, bb_rf_path_e path,
+                                           bb_dir_e dir) {
     if (state < 0) return;
     bb_set_rf_t rf{};
     rf.rf_path = static_cast<uint8_t>(path);
     rf.dir = static_cast<uint8_t>(dir);
     rf.state = (state != 0);
-    (void)bb_ioctl(m_dev, BB_SET_RF, &rf, nullptr);
+    const std::string label = "BB_SET_RF path=" + std::to_string(rf.rf_path) +
+                              " dir=" + std::to_string(rf.dir);
+    (void)timed_ioctl_set(BB_SET_RF, &rf, label.c_str());
   };
   apply_rf(s.rf_a_tx, BB_RF_PATH_A, BB_DIR_TX);
   apply_rf(s.rf_a_rx, BB_RF_PATH_A, BB_DIR_RX);
   apply_rf(s.rf_b_tx, BB_RF_PATH_B, BB_DIR_TX);
   apply_rf(s.rf_b_rx, BB_RF_PATH_B, BB_DIR_RX);
+  m_console->info("Artosyn apply settings done");
 }
 
 bool ArtosynLink::read_metrics(int* link_state, int* rx_mcs, int* tx_mcs,
