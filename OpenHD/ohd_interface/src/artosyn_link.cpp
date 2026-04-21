@@ -479,21 +479,45 @@ void ArtosynLink::try_open_sockets_if_ready() {
   if (m_video_fd >= 0 && m_telemetry_fd >= 0) {
     return;
   }
+  static int64_t s_last_status_probe_ms = 0;
+  const int64_t now_ms = openhd::util::steady_clock_time_epoch_ms();
+  if (s_last_status_probe_ms != 0 && (now_ms - s_last_status_probe_ms) < 1000) {
+    return;
+  }
+  s_last_status_probe_ms = now_ms;
 
   bb_get_status_in_t st_in{};
   bb_get_status_out_t st_out{};
   st_in.user_bmp = (1 << m_cfg.slot);
   if (bb_ioctl_ex(m_dev, BB_GET_STATUS, &st_in, &st_out, 100) != 0) {
     static int64_t s_last_status_err_log_ms = 0;
-    const int64_t now_ms = openhd::util::steady_clock_time_epoch_ms();
+    const int fail_streak = ++m_status_ioctl_fail_streak;
     if (now_ms - s_last_status_err_log_ms >= 2000) {
       s_last_status_err_log_ms = now_ms;
       m_console->warn(
-          "Artosyn defer socket open: BB_GET_STATUS timeout/fail (slot={})",
-          m_cfg.slot);
+          "Artosyn defer socket open: BB_GET_STATUS timeout/fail (slot={} "
+          "streak={})",
+          m_cfg.slot, fail_streak);
+    }
+    const int64_t last_recover_ms = m_last_recover_request_ms.load();
+    if (fail_streak >= 5 && (now_ms - last_recover_ms) > 10000) {
+      m_last_recover_request_ms = now_ms;
+      m_console->warn(
+          "Artosyn repeated BB_GET_STATUS failures, requesting daemon/link "
+          "recovery (streak={}).",
+          fail_streak);
+      if (should_restart_artosyn_daemon(m_cfg)) {
+        if (!openhd::request_sysutil_artosyn_restart(std::chrono::seconds(4))) {
+          m_console->warn("Sysutils Artosyn daemon restart request failed.");
+        }
+      }
+      stop_rx_threads();
+      shutdown_device();
+      start_connect_worker();
     }
     return;
   }
+  m_status_ioctl_fail_streak = 0;
 
   const int slot = m_cfg.slot;
   const int link_state = st_out.link_status[slot].state;
