@@ -497,6 +497,9 @@ void ArtosynLink::try_open_sockets_if_ready() {
 
   const int slot = m_cfg.slot;
   const int link_state = st_out.link_status[slot].state;
+  const int pair_state = static_cast<int>(st_out.link_status[slot].pair_state);
+  const int mode = static_cast<int>(st_out.mode);
+  const int sync_mode = static_cast<int>(st_out.sync_mode);
   if (link_state != BB_LINK_STATE_CONNECT) {
     static int64_t s_last_defer_log_ms = 0;
     const int64_t now_ms = openhd::util::steady_clock_time_epoch_ms();
@@ -505,8 +508,7 @@ void ArtosynLink::try_open_sockets_if_ready() {
       m_console->info(
           "Artosyn defer socket open: link_state={} pair_state={} mode={} "
           "sync_mode={}",
-          link_state, st_out.link_status[slot].pair_state, st_out.mode,
-          st_out.sync_mode);
+          link_state, pair_state, mode, sync_mode);
     }
     return;
   }
