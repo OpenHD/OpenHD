@@ -210,9 +210,11 @@ struct MonitorModeLinkBitfield {
   unsigned int lpdc : 1;
   unsigned int short_guard : 1;
   unsigned int curr_rx_last_packet_status_good : 1;
+  // Set when this message is emitted by ArtosynLink.
+  unsigned int artosyn_link_active : 1;
   // Set when monitor_mode_link dummy fields carry Artosyn debug metrics.
   unsigned int artosyn_debug_stats_present : 1;
-  unsigned int unused : 3;
+  unsigned int unused : 2;
 } __attribute__((packed));
 static_assert(sizeof(MonitorModeLinkBitfield) == 1);
 static uint8_t write_monitor_link_bitfield(

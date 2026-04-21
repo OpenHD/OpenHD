@@ -276,25 +276,47 @@ bool ArtosynLink::probe() {
   openhd::ArtosynLinkSettingsHolder holder;
   Config cfg = config_from_settings(holder.get_settings());
   const bool artosyn_hw_hint = has_sysutils_artosyn_hint();
-  if (!artosyn_hw_hint) {
-    return false;
-  }
+  const auto usb_info = detect_artosyn_usb_info();
+  // Treat non-default daemon endpoint as explicit user intent to use Artosyn.
+  const bool explicit_artosyn_config =
+      cfg.addr != "127.0.0.1" || cfg.port != 50000 || cfg.slot != 0;
+  const bool allow_runtime_reconnect =
+      artosyn_hw_hint || usb_info.present || explicit_artosyn_config;
+  openhd::log::get_default()->info(
+      "Artosyn probe: daemon={}:{} slot={} sysutils_hint={} usb_present={} "
+      "usb_hs_mode={} explicit_cfg={}",
+      cfg.addr, cfg.port, cfg.slot, artosyn_hw_hint ? "yes" : "no",
+      usb_info.present ? "yes" : "no", usb_info.hs_mode ? "yes" : "no",
+      explicit_artosyn_config ? "yes" : "no");
   // Keep startup snappy: do a short daemon probe, then fall back to background
-  // reconnect handling if sysutils reports Artosyn but daemon is still booting.
+  // reconnect handling if Artosyn is likely present but daemon is still booting.
   const int max_attempts = 5;
   for (int attempt = 0; attempt < max_attempts; ++attempt) {
     if (probe_artosyn_daemon_once(cfg)) {
+      openhd::log::get_default()->info(
+          "Artosyn probe success: daemon reachable at {}:{}.", cfg.addr,
+          cfg.port);
       return true;
     }
     if (attempt + 1 < max_attempts) {
       std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
   }
+  if (allow_runtime_reconnect) {
+    openhd::log::get_default()->warn(
+        "Artosyn hint/config present (sysutils_hint={} usb_present={} "
+        "explicit_cfg={}), but daemon is not reachable at {}:{} yet. "
+        "Deferring connection to runtime reconnect.",
+        artosyn_hw_hint ? "yes" : "no", usb_info.present ? "yes" : "no",
+        explicit_artosyn_config ? "yes" : "no", cfg.addr, cfg.port);
+    return true;
+  }
   openhd::log::get_default()->warn(
-      "Sysutils reports Artosyn, but daemon is not reachable at {}:{} yet. "
-      "Deferring connection to runtime reconnect.",
+      "Artosyn probe failed: no sysutils hint, no Artosyn USB presence, no "
+      "explicit Artosyn config, and daemon {}:{} unreachable. "
+      "Falling back to non-Artosyn link stack.",
       cfg.addr, cfg.port);
-  return true;
+  return false;
 }
 
 bool ArtosynLink::init_device() {
@@ -535,6 +557,7 @@ void ArtosynLink::stop_connect_worker() {
 }
 
 void ArtosynLink::connect_loop() {
+  int retry_count = 0;
   while (!m_stop_connect_worker) {
     if (init_device()) {
       m_console->warn("Artosyn daemon connected.");
@@ -542,6 +565,10 @@ void ArtosynLink::connect_loop() {
       start_stats_thread();
       return;
     }
+    ++retry_count;
+    m_console->warn(
+        "Artosyn reconnect retry {} in 5s (state: {})", retry_count,
+        describe_artosyn_runtime_state(m_cfg));
     std::this_thread::sleep_for(std::chrono::seconds(5));
   }
 }
@@ -688,7 +715,7 @@ void ArtosynLink::update_link_stats() {
       m_last_rx_packet_ts_ms.load(std::memory_order_relaxed);
   const bool rx_ok = last_rx_ts > 0 && (now_ms - last_rx_ts) <= 5000;
   const auto bitfield = openhd::link_statistics::MonitorModeLinkBitfield{
-      false, false, false, rx_ok, artosyn_debug_stats_enabled, 0};
+      false, false, false, rx_ok, true, artosyn_debug_stats_enabled, 0};
   stats.monitor_mode_link.bitfield =
       openhd::link_statistics::write_monitor_link_bitfield(bitfield);
 

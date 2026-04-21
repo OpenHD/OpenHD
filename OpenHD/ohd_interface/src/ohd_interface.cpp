@@ -85,6 +85,9 @@ OHDInterface::OHDInterface(OHDProfile profile1, bool disable_wifi_hotspot)
     m_console->warn("artosyn found");
     return;
   }
+  m_console->warn(
+      "Artosyn probe did not select ArtosynLink, continuing with "
+      "ethernet/microhard/wifibroadcast discovery.");
 #endif
 
   if (OHDFilesystemUtil::exists(std::string(getConfigBasePath()) +
