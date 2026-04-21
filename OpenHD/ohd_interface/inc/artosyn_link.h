@@ -61,6 +61,7 @@ class ArtosynLink : public OHDLink {
  private:
   bool init_device();
   void shutdown_device();
+  void try_open_sockets_if_ready();
 
   int open_socket(int port, bool want_tx, bool want_rx);
   void start_rx_threads();

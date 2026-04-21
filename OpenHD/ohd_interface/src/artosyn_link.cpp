@@ -416,20 +416,13 @@ bool ArtosynLink::init_device() {
         "to enable init-time BB_SET_* ioctls.");
   }
 
-  m_console->info("Artosyn init step: open video socket");
-  m_video_fd =
-      open_socket(m_cfg.video_port, m_profile.is_air, m_profile.is_ground());
-  m_console->info("Artosyn init step: open telemetry socket");
-  // Telemetry is bidirectional (includes RC MAVLink)
-  m_telemetry_fd = open_socket(m_cfg.telemetry_port, true, true);
-
-  if (m_video_fd < 0 && m_telemetry_fd < 0) {
-    m_console->warn("Failed to open artosyn sockets");
-    shutdown_device();
-    return false;
-  }
-
   m_running = true;
+  try_open_sockets_if_ready();
+  if (m_video_fd < 0 || m_telemetry_fd < 0) {
+    m_console->warn(
+        "Artosyn sockets deferred until link is CONNECT (video_fd={} tele_fd={}).",
+        m_video_fd, m_telemetry_fd);
+  }
   m_console->info("Artosyn init complete: video_fd={} tele_fd={}", m_video_fd,
                   m_telemetry_fd);
   return true;
@@ -479,11 +472,63 @@ int ArtosynLink::open_socket(int port, bool want_tx, bool want_rx) {
   return fd;
 }
 
+void ArtosynLink::try_open_sockets_if_ready() {
+  if (!m_dev) {
+    return;
+  }
+  if (m_video_fd >= 0 && m_telemetry_fd >= 0) {
+    return;
+  }
+
+  bb_get_status_in_t st_in{};
+  bb_get_status_out_t st_out{};
+  st_in.user_bmp = (1 << m_cfg.slot);
+  if (bb_ioctl_ex(m_dev, BB_GET_STATUS, &st_in, &st_out, 100) != 0) {
+    static int64_t s_last_status_err_log_ms = 0;
+    const int64_t now_ms = openhd::util::steady_clock_time_epoch_ms();
+    if (now_ms - s_last_status_err_log_ms >= 2000) {
+      s_last_status_err_log_ms = now_ms;
+      m_console->warn(
+          "Artosyn defer socket open: BB_GET_STATUS timeout/fail (slot={})",
+          m_cfg.slot);
+    }
+    return;
+  }
+
+  const int slot = m_cfg.slot;
+  const int link_state = st_out.link_status[slot].state;
+  if (link_state != BB_LINK_STATE_CONNECT) {
+    static int64_t s_last_defer_log_ms = 0;
+    const int64_t now_ms = openhd::util::steady_clock_time_epoch_ms();
+    if (now_ms - s_last_defer_log_ms >= 2000) {
+      s_last_defer_log_ms = now_ms;
+      m_console->info(
+          "Artosyn defer socket open: link_state={} pair_state={} mode={} "
+          "sync_mode={}",
+          link_state, st_out.link_status[slot].pair_state, st_out.mode,
+          st_out.sync_mode);
+    }
+    return;
+  }
+
+  if (m_telemetry_fd < 0) {
+    m_console->info("Artosyn init step: open telemetry socket");
+    // Telemetry is bidirectional (includes RC MAVLink)
+    m_telemetry_fd = open_socket(m_cfg.telemetry_port, true, true);
+  }
+  if (m_video_fd < 0) {
+    m_console->info("Artosyn init step: open video socket");
+    m_video_fd =
+        open_socket(m_cfg.video_port, m_profile.is_air, m_profile.is_ground());
+  }
+}
+
 void ArtosynLink::start_rx_threads() {
-  if (m_profile.is_ground() && m_video_fd >= 0) {
+  if (m_profile.is_ground() && m_video_fd >= 0 &&
+      !m_rx_video_thread.joinable()) {
     m_rx_video_thread = std::thread([this]() { rx_loop_video(); });
   }
-  if (m_telemetry_fd >= 0) {
+  if (m_telemetry_fd >= 0 && !m_rx_telemetry_thread.joinable()) {
     m_rx_telemetry_thread = std::thread([this]() { rx_loop_telemetry(); });
   }
 }
@@ -647,6 +692,8 @@ void ArtosynLink::connect_loop() {
 
 void ArtosynLink::stats_loop() {
   while (m_stats_running) {
+    try_open_sockets_if_ready();
+    start_rx_threads();
     update_link_stats();
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
   }
