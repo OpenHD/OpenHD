@@ -1,6 +1,8 @@
 #include "artosyn_link.h"
 
 #include <chrono>
+#include <cerrno>
+#include <cstring>
 #include <iomanip>
 #include <limits>
 #include <sstream>
@@ -320,14 +322,24 @@ bool ArtosynLink::probe() {
 }
 
 bool ArtosynLink::init_device() {
+  m_console->info("Artosyn init begin: daemon={}:{} slot={} vport={} tport={} datagram={} rx_buf={} tx_buf={} rto_ms={}",
+                  m_cfg.addr, m_cfg.port, m_cfg.slot, m_cfg.video_port,
+                  m_cfg.telemetry_port, m_cfg.use_datagram ? 1 : 0,
+                  m_cfg.rx_buf_size, m_cfg.tx_buf_size, m_cfg.read_timeout_ms);
+
+  m_console->info("Artosyn init step: bb_host_connect");
   if (bb_host_connect(&m_host, m_cfg.addr.c_str(), m_cfg.port) != 0) {
     m_console->warn("Cannot connect to artosyn daemon at {}:{}",
                     m_cfg.addr, m_cfg.port);
     return false;
   }
+  m_console->info("Artosyn init step ok: bb_host_connect");
 
   bb_dev_list_t* list = nullptr;
+  m_console->info("Artosyn init step: bb_dev_getlist");
   int n = bb_dev_getlist(m_host, &list);
+  m_console->info("Artosyn init step result: bb_dev_getlist n={} list={}",
+                  n, list ? "yes" : "no");
   if (n <= 0 || !list) {
     m_console->warn("No artosyn devices found ({})",
                     describe_artosyn_runtime_state(m_cfg));
@@ -346,6 +358,7 @@ bool ArtosynLink::init_device() {
     return false;
   }
 
+  m_console->info("Artosyn init step: bb_dev_open");
   bb_dev_t* dev = list[0];
   m_dev = bb_dev_open(dev);
   bb_dev_freelist(list);
@@ -355,17 +368,28 @@ bool ArtosynLink::init_device() {
     m_host = nullptr;
     return false;
   }
+  m_console->info("Artosyn init step ok: bb_dev_open");
 
+  m_console->info("Artosyn init step: bb_init");
   if (bb_init(m_dev) != 0) {
     m_console->warn("bb_init failed");
+  } else {
+    m_console->info("Artosyn init step ok: bb_init");
   }
+  m_console->info("Artosyn init step: bb_start");
   if (bb_start(m_dev) != 0) {
     m_console->warn("bb_start failed");
+  } else {
+    m_console->info("Artosyn init step ok: bb_start");
   }
+  m_console->info("Artosyn init step: apply_link_settings");
   apply_link_settings();
+  m_console->info("Artosyn init step ok: apply_link_settings");
 
+  m_console->info("Artosyn init step: open video socket");
   m_video_fd =
       open_socket(m_cfg.video_port, m_profile.is_air, m_profile.is_ground());
+  m_console->info("Artosyn init step: open telemetry socket");
   // Telemetry is bidirectional (includes RC MAVLink)
   m_telemetry_fd = open_socket(m_cfg.telemetry_port, true, true);
 
@@ -376,6 +400,8 @@ bool ArtosynLink::init_device() {
   }
 
   m_running = true;
+  m_console->info("Artosyn init complete: video_fd={} tele_fd={}", m_video_fd,
+                  m_telemetry_fd);
   return true;
 }
 
@@ -444,6 +470,7 @@ void ArtosynLink::stop_rx_threads() {
 
 void ArtosynLink::rx_loop_video() {
   std::vector<uint8_t> buf(static_cast<size_t>(m_cfg.rx_buf_size));
+  int64_t last_error_log_ms = 0;
   while (m_running) {
     int n = bb_socket_read(m_video_fd, buf.data(),
                            static_cast<uint32_t>(buf.size()),
@@ -456,12 +483,20 @@ void ArtosynLink::rx_loop_video() {
           openhd::util::steady_clock_time_epoch_ms(),
           std::memory_order_relaxed);
       on_receive_video_data(0, buf.data(), n);
+    } else if (n < 0) {
+      const int64_t now_ms = openhd::util::steady_clock_time_epoch_ms();
+      if (now_ms - last_error_log_ms >= 2000) {
+        last_error_log_ms = now_ms;
+        m_console->warn("Artosyn video read error n={} errno={} ({})", n, errno,
+                        std::strerror(errno));
+      }
     }
   }
 }
 
 void ArtosynLink::rx_loop_telemetry() {
   std::vector<uint8_t> buf(static_cast<size_t>(m_cfg.rx_buf_size));
+  int64_t last_error_log_ms = 0;
   while (m_running) {
     int n = bb_socket_read(m_telemetry_fd, buf.data(),
                            static_cast<uint32_t>(buf.size()),
@@ -479,6 +514,13 @@ void ArtosynLink::rx_loop_telemetry() {
       auto shared = std::make_shared<std::vector<uint8_t>>(buf.begin(),
                                                            buf.begin() + n);
       on_receive_telemetry_data(shared);
+    } else if (n < 0) {
+      const int64_t now_ms = openhd::util::steady_clock_time_epoch_ms();
+      if (now_ms - last_error_log_ms >= 2000) {
+        last_error_log_ms = now_ms;
+        m_console->warn("Artosyn telemetry read error n={} errno={} ({})", n,
+                        errno, std::strerror(errno));
+      }
     }
   }
 }
