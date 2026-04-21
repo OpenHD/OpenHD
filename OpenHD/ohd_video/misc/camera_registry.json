@@ -655,7 +655,7 @@
       "name": "OHD_ARDUCAM",
       "ui_label": "ARDUCAM",
       "resolutions": [
-        {"width": 1920, "height": 1080, "fps": 60}
+        {"width": 1280, "height": 720, "fps": 60}
       ]
     },
     {"key": "X_CAM_TYPE_DISABLED", "id": 255, "name": "DISABLED", "ui_label": "DISABLE"}
