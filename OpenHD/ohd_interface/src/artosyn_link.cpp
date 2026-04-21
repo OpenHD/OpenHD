@@ -719,6 +719,56 @@ void ArtosynLink::update_link_stats() {
   stats.monitor_mode_link.bitfield =
       openhd::link_statistics::write_monitor_link_bitfield(bitfield);
 
+  int role = -1;
+  int mode = -1;
+  int sync_mode = -1;
+  int pair_state = -1;
+  const bool have_status = read_status_extra(
+      &role, &mode, &sync_mode, nullptr, nullptr, nullptr, nullptr,
+      &pair_state, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+      nullptr, nullptr, nullptr);
+
+  const int tx_effective_kbits =
+      tx_real_tp > 0 ? tx_real_tp : (tx_tp_th > 0 ? tx_tp_th : tx_phy_tp);
+  const int rx_effective_kbits =
+      rx_real_tp > 0 ? rx_real_tp : (rx_tp_th > 0 ? rx_tp_th : rx_phy_tp);
+
+  static int64_t s_last_diag_log_ms = 0;
+  static bool s_last_rx_ok = true;
+  static bool s_last_have_metrics = true;
+  static int s_last_pair_state = std::numeric_limits<int>::min();
+  const bool link_state_changed =
+      (s_last_rx_ok != rx_ok) || (s_last_have_metrics != have_metrics) ||
+      (have_status && s_last_pair_state != pair_state);
+  if (link_state_changed) {
+    m_console->warn(
+        "Artosyn state change: rx_ok={} metrics={} role={} mode={} sync={} "
+        "pair={} tx_mcs={} rx_mcs={} tx_kbit={} rx_kbit={} tx_pps={} "
+        "rx_pps={} video_fd={} tele_fd={}",
+        rx_ok ? "yes" : "no", have_metrics ? "yes" : "no", role, mode,
+        sync_mode, pair_state, tx_mcs, rx_mcs, tx_effective_kbits,
+        rx_effective_kbits, tx_pps, rx_pps, m_video_fd, m_telemetry_fd);
+    s_last_rx_ok = rx_ok;
+    s_last_have_metrics = have_metrics;
+    if (have_status) {
+      s_last_pair_state = pair_state;
+    }
+  }
+  const bool periodic_diag = (now_ms - s_last_diag_log_ms) >= 2000;
+  if (periodic_diag && (artosyn_debug_stats_enabled || !rx_ok || !have_metrics)) {
+    s_last_diag_log_ms = now_ms;
+    m_console->info(
+        "Artosyn diag: rx_ok={} metrics={} role={} mode={} sync={} pair={} "
+        "tx_mcs={} rx_mcs={} bw={} tx_real_kbit={} rx_real_kbit={} "
+        "tx_phy_kbit={} rx_phy_kbit={} tx_tp_th={} rx_tp_th={} "
+        "tx_bps={} rx_bps={} tx_pps={} rx_pps={} tx_tele_bps={} "
+        "rx_tele_bps={} video_fd={} tele_fd={}",
+        rx_ok ? "yes" : "no", have_metrics ? "yes" : "no", role, mode,
+        sync_mode, pair_state, tx_mcs, rx_mcs, bw, tx_real_tp, rx_real_tp,
+        tx_phy_tp, rx_phy_tp, tx_tp_th, rx_tp_th, tx_bps, rx_bps, tx_pps,
+        rx_pps, tx_tele_bps, rx_tele_bps, m_video_fd, m_telemetry_fd);
+  }
+
   stats.telemetry.curr_tx_bps = clamp_int32(tx_tele_bps);
   stats.telemetry.curr_rx_bps = clamp_int32(rx_tele_bps);
   stats.telemetry.curr_tx_pps =
