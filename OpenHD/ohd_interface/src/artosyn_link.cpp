@@ -3,6 +3,7 @@
 #include <chrono>
 #include <cerrno>
 #include <cstring>
+#include <cstdlib>
 #include <iomanip>
 #include <limits>
 #include <sstream>
@@ -178,6 +179,14 @@ static ArtosynUsbInfo detect_artosyn_usb_info_cached(int64_t now_ms) {
 static bool is_openhd_debug_mode_enabled() {
   return OHDFilesystemUtil::exists("/usr/local/share/openhd/debug.txt") ||
          OHDFilesystemUtil::exists("/usr/share/openhd/debug.txt");
+}
+
+static bool force_artosyn_bb_init_start() {
+  const char* env = std::getenv("OHD_ARTOSYN_FORCE_BB_INIT");
+  if (!env) {
+    return false;
+  }
+  return std::string(env) == "1";
 }
 
 static bool is_openhd_debug_mode_enabled_cached(int64_t now_ms) {
@@ -370,17 +379,23 @@ bool ArtosynLink::init_device() {
   }
   m_console->info("Artosyn init step ok: bb_dev_open");
 
-  m_console->info("Artosyn init step: bb_init");
-  if (bb_init(m_dev) != 0) {
-    m_console->warn("bb_init failed");
+  if (force_artosyn_bb_init_start()) {
+    m_console->info("Artosyn init step: bb_init (forced by env)");
+    if (bb_init(m_dev) != 0) {
+      m_console->warn("bb_init failed");
+    } else {
+      m_console->info("Artosyn init step ok: bb_init");
+    }
+    m_console->info("Artosyn init step: bb_start (forced by env)");
+    if (bb_start(m_dev) != 0) {
+      m_console->warn("bb_start failed");
+    } else {
+      m_console->info("Artosyn init step ok: bb_start");
+    }
   } else {
-    m_console->info("Artosyn init step ok: bb_init");
-  }
-  m_console->info("Artosyn init step: bb_start");
-  if (bb_start(m_dev) != 0) {
-    m_console->warn("bb_start failed");
-  } else {
-    m_console->info("Artosyn init step ok: bb_start");
+    m_console->info(
+        "Artosyn init step: skip bb_init/bb_start (daemon-managed SDK flow). "
+        "Set OHD_ARTOSYN_FORCE_BB_INIT=1 to force legacy behavior.");
   }
   m_console->info("Artosyn init step: apply_link_settings");
   apply_link_settings();
