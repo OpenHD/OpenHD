@@ -339,6 +339,8 @@ bool ArtosynLink::probe() {
 }
 
 bool ArtosynLink::init_device() {
+  m_status_ioctl_fail_streak = 0;
+  m_legacy_init_retry_done = false;
   m_console->info("Artosyn init begin: daemon={}:{} slot={} vport={} tport={} datagram={} rx_buf={} tx_buf={} rto_ms={}",
                   m_cfg.addr, m_cfg.port, m_cfg.slot, m_cfg.video_port,
                   m_cfg.telemetry_port, m_cfg.use_datagram ? 1 : 0,
@@ -498,6 +500,20 @@ void ArtosynLink::try_open_sockets_if_ready() {
           "Artosyn defer socket open: BB_GET_STATUS timeout/fail (slot={} "
           "streak={})",
           m_cfg.slot, fail_streak);
+    }
+    if (fail_streak >= 3 &&
+        !m_legacy_init_retry_done.exchange(true)) {
+      m_console->warn(
+          "Artosyn BB_GET_STATUS keeps failing, trying legacy bb_init/bb_start "
+          "fallback once.");
+      const int ret_init = bb_init(m_dev);
+      int ret_start = -1;
+      if (ret_init == 0) {
+        ret_start = bb_start(m_dev);
+      }
+      m_console->warn(
+          "Artosyn legacy fallback result: bb_init={} bb_start={}",
+          ret_init, ret_start);
     }
     const int64_t last_recover_ms = m_last_recover_request_ms.load();
     if (fail_streak >= 5 && (now_ms - last_recover_ms) > 10000) {
