@@ -299,12 +299,6 @@ void GStreamerStream::handle_gst_message(GstMessage* message) {
       (info_debug == nullptr || std::strcmp(info_error->message, info_debug) != 0)) {
     parsed_perf_info = handle_perf_info_message(info_error->message);
   }
-  if (!parsed_perf_info && info_error != nullptr && info_error->message != nullptr &&
-      info_debug != nullptr && std::strcmp(info_error->message, info_debug) != 0) {
-    m_console->debug("Perf cam{} parse_info mismatch error_msg=[{}] debug=[{}]",
-                     m_camera_holder->get_camera().index, info_error->message,
-                     info_debug);
-  }
   if (info_error != nullptr) {
     g_error_free(info_error);
   }
@@ -335,8 +329,6 @@ bool GStreamerStream::setup_perf_element() {
   }
   gst_bus_set_sync_handler(m_gst_bus, &GStreamerStream::on_gst_bus_message, this,
                            nullptr);
-  m_console->debug("Attached gst-perf bus handler on {}",
-                   OHDGstHelper::kEncoderPerfElementName);
   m_perf_probe_pad = gst_element_get_static_pad(m_perf_element, "sink");
   if (m_perf_probe_pad == nullptr) {
     report_required_perf_problem(
@@ -360,8 +352,6 @@ bool GStreamerStream::setup_perf_element() {
                     m_camera_holder->get_camera().index));
     return false;
   }
-  m_console->debug("Attached encoder perf buffer probe on {} sink pad",
-                   OHDGstHelper::kEncoderPerfElementName);
   return true;
 }
 
@@ -388,9 +378,6 @@ bool GStreamerStream::handle_perf_info_message(const char* info_text) {
   uint32_t bitrate_bps = 0;
   uint16_t fps = 0;
   if (!parse_gst_perf_bitrate_fps(info_text, bitrate_bps, fps)) {
-    m_console->debug("Perf cam{} raw (gst-perf): {}",
-                     m_camera_holder->get_camera().index,
-                     info_text == nullptr ? "<null>" : info_text);
     return false;
   }
   if (m_perf_probe_active.load(std::memory_order_relaxed) &&
@@ -398,9 +385,6 @@ bool GStreamerStream::handle_perf_info_message(const char* info_text) {
        bitrate_bps == 0)) {
     return true;
   }
-  m_console->debug("Perf cam{} raw (gst-perf): {}",
-                   m_camera_holder->get_camera().index,
-                   info_text == nullptr ? "<null>" : info_text);
   const int64_t now_ms = steady_clock_ms();
   if (m_perf_first_message_ms <= 0) {
     m_perf_first_message_ms = now_ms;
@@ -410,14 +394,9 @@ bool GStreamerStream::handle_perf_info_message(const char* info_text) {
   } else if (fps > 0 &&
              !m_perf_seen_nonzero_bitrate.load(std::memory_order_relaxed) &&
              now_ms - m_perf_first_message_ms < kPerfBitrateWarmupMs) {
-    m_console->debug(
-        "Perf cam{} (gst-perf): skipping warmup zero bitrate fps={} age_ms={}",
-        m_camera_holder->get_camera().index, fps, now_ms - m_perf_first_message_ms);
     return true;
   }
   m_last_perf_message_ms.store(steady_clock_ms(), std::memory_order_relaxed);
-  m_console->debug("Perf cam{} (gst-perf): bitrate={} bps fps={}",
-                   m_camera_holder->get_camera().index, bitrate_bps, fps);
   openhd::LinkActionHandler::instance().set_cam_info_perf(
       m_camera_holder->get_camera().index, bitrate_bps, fps);
   return true;
@@ -477,9 +456,6 @@ void GStreamerStream::handle_perf_pad_probe(GstPadProbeInfo* info) {
   }
   m_perf_probe_reported.store(true, std::memory_order_relaxed);
   m_last_perf_message_ms.store(now_ms, std::memory_order_relaxed);
-  m_console->debug("Perf cam{} (pad-probe): bitrate={} bps fps={}",
-                   m_camera_holder->get_camera().index, bitrate_bps,
-                   frame_rate);
   openhd::LinkActionHandler::instance().set_cam_info_perf(
       m_camera_holder->get_camera().index, bitrate_bps, frame_rate);
 
@@ -682,7 +658,6 @@ std::string GStreamerStream::create_source_encode_pipeline(
     pipeline << OHDGstHelper::createDummyStreamX(setting);
   }
 
-  openhd::log::get_default()->debug("Pipeline created: {}", pipeline.str());
   return pipeline.str();
 }
 
@@ -708,23 +683,6 @@ bool GStreamerStream::setup() {
                     "gstreamer1.0-plugins-bad",
                     m_camera_holder->get_camera().index));
     return false;
-  }
-  GstPlugin* perf_plugin =
-      gst_plugin_feature_get_plugin(GST_PLUGIN_FEATURE(perf_factory));
-  if (perf_plugin != nullptr) {
-    const gchar* plugin_name = gst_plugin_get_name(perf_plugin);
-    const gchar* plugin_description = gst_plugin_get_description(perf_plugin);
-    const gchar* plugin_filename = gst_plugin_get_filename(perf_plugin);
-    const gchar* plugin_version = gst_plugin_get_version(perf_plugin);
-    m_console->info(
-        "Using gst-perf plugin name:{} version:{} file:{} description:{}",
-        plugin_name != nullptr ? plugin_name : "n/a",
-        plugin_version != nullptr ? plugin_version : "n/a",
-        plugin_filename != nullptr ? plugin_filename : "n/a",
-        plugin_description != nullptr ? plugin_description : "n/a");
-    gst_object_unref(perf_plugin);
-  } else {
-    m_console->warn("Unable to query gst-perf plugin metadata");
   }
   gst_object_unref(perf_factory);
   pipeline_content << create_source_encode_pipeline(*m_camera_holder);
@@ -789,7 +747,7 @@ bool GStreamerStream::setup() {
         CAM_STATUS_RESTARTING,
         ADD_RECORDING_TO_PIPELINE,
         (uint8_t)video_codec_to_int(setting.streamed_video_format.videoCodec),
-        0,
+        (uint16_t)setting.h26x_bitrate_kbits,
         (uint16_t)setting.h26x_bitrate_kbits,
         (uint8_t)setting.h26x_keyframe_interval,
         (uint16_t)setting.streamed_video_format.width,
@@ -798,11 +756,11 @@ bool GStreamerStream::setup() {
         0,
         0,
         0,
+        0,
         0};
     openhd::LinkActionHandler::instance().set_cam_info(index, cam_info);
   }
   const auto full_pipeline = pipeline_content.str();
-  m_console->debug("Starting pipeline:[{}]", full_pipeline);
   send_pipeline_debug_over_mavlink(m_camera_holder->get_camera().index,
                                    full_pipeline);
   // Protect against unwanted use - stop and free the pipeline first
@@ -969,12 +927,6 @@ void GStreamerStream::handle_change_bitrate_request(
   //  We do some safety checks first - the link might recommend too much / too
   //  little
   auto bitrate_for_encoder_kbits = lb.recommended_encoder_bitrate_kbits;
-  m_console->debug(
-      "Bitrate request received cam{}: requested_kbits:{} current_target_kbits:{} "
-      "persisted_kbits:{}",
-      m_camera_holder->get_camera().index, bitrate_for_encoder_kbits,
-      m_curr_dynamic_bitrate_kbits.load(),
-      m_camera_holder->get_settings().h26x_bitrate_kbits);
   // m_console->debug(
   //     "Received bitrate update request: {} kBit/s (current target: {}
   //     kBit/s)", bitrate_for_encoder_kbits,
@@ -987,9 +939,6 @@ void GStreamerStream::handle_change_bitrate_request(
   if (bitrate_for_encoder_kbits < MIN_BITRATE_KBITS) {
     // m_console->debug("Cam cannot do <{}",
     // kbits_per_second_to_string(MIN_BITRATE_KBITS));
-    m_console->debug(
-        "Clamping bitrate request from {} kBit/s to minimum {} kBit/s",
-        bitrate_for_encoder_kbits, MIN_BITRATE_KBITS);
     bitrate_for_encoder_kbits = MIN_BITRATE_KBITS;
   }
   // The gst thread is responsible for changing the bitrate - it will be applied
@@ -1133,16 +1082,11 @@ void GStreamerStream::stream_once() {
     // Check if we need to set a new bitrate
     if (currently_applied_bitrate != m_curr_dynamic_bitrate_kbits) {
       const int new_bitrate = m_curr_dynamic_bitrate_kbits;
-      m_console->debug("Bitrate change, old:{} new:{}",
-                       currently_applied_bitrate, new_bitrate);
       if (m_bitrate_ctrl_element != std::nullopt) {
         // apply the new bitrate
         // Don't forget, the rpi csi hdmi needs the 'half bitrate' hack
         auto hacked_bitrate_kbits = new_bitrate;
         if (m_camera_holder->requires_half_bitrate_workaround()) {
-          m_console->debug(
-              "applying hack - reduce bitrate by 2 to get actual correct "
-              "bitrate");
           hacked_bitrate_kbits = hacked_bitrate_kbits / 2;
         }
         auto bitrate_ctrl_element = m_bitrate_ctrl_element.value();
@@ -1150,20 +1094,6 @@ void GStreamerStream::stream_once() {
           currently_applied_bitrate = new_bitrate;
           openhd::LinkActionHandler::instance().set_cam_info_bitrate(
               m_camera_holder->get_camera().index, currently_applied_bitrate);
-          const auto rb_opt = read_bitrate_readback(bitrate_ctrl_element);
-          if (rb_opt.has_value()) {
-            int effective_kbits = rb_opt->interpreted_kbits;
-            if (m_camera_holder->requires_half_bitrate_workaround()) {
-              effective_kbits *= 2;
-            }
-            m_console->debug(
-                "Bitrate apply success cam{}: requested_kbits:{} "
-                "applied_kbits:{} encoder_readback_raw:{} "
-                "encoder_readback_kbits:{} effective_kbits:{}",
-                m_camera_holder->get_camera().index, new_bitrate,
-                hacked_bitrate_kbits, rb_opt->raw_property_value,
-                rb_opt->interpreted_kbits, effective_kbits);
-          }
         } else {
           m_console->warn(
               "Cannot apply bitrate cam{} requested_kbits:{} applied_kbits:{}",
@@ -1211,17 +1141,6 @@ void GStreamerStream::stream_once() {
               m_camera_holder->get_camera().index, target_kbits,
               rb_opt->raw_property_value, rb_opt->interpreted_kbits,
               effective_kbits, delta,
-              m_camera_holder->get_settings().h26x_bitrate_kbits,
-              currently_applied_bitrate);
-        } else {
-          m_console->debug(
-              "Bitrate state cam{}: target_kbits:{} "
-              "encoder_readback_raw:{} encoder_readback_kbits:{} "
-              "effective_kbits:{} persisted_kbits:{} "
-              "currently_applied_kbits:{}",
-              m_camera_holder->get_camera().index, target_kbits,
-              rb_opt->raw_property_value, rb_opt->interpreted_kbits,
-              effective_kbits,
               m_camera_holder->get_settings().h26x_bitrate_kbits,
               currently_applied_bitrate);
         }
