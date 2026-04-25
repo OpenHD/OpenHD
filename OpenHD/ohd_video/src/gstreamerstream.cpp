@@ -272,16 +272,16 @@ void GStreamerStream::handle_gst_message(GstMessage* message) {
   GError* info_error = nullptr;
   gchar* info_debug = nullptr;
   gst_message_parse_info(message, &info_error, &info_debug);
-  const char* info_text = nullptr;
-  if (info_error != nullptr && info_error->message != nullptr) {
-    info_text = info_error->message;
-  } else if (info_debug != nullptr) {
-    info_text = info_debug;
+  bool parsed_perf_info = false;
+  if (info_debug != nullptr) {
+    parsed_perf_info = handle_perf_info_message(info_debug);
   }
-  if (info_text != nullptr) {
-    handle_perf_info_message(info_text);
+  if (!parsed_perf_info && info_error != nullptr &&
+      info_error->message != nullptr &&
+      (info_debug == nullptr || std::strcmp(info_error->message, info_debug) != 0)) {
+    parsed_perf_info = handle_perf_info_message(info_error->message);
   }
-  if (info_error != nullptr && info_error->message != nullptr &&
+  if (!parsed_perf_info && info_error != nullptr && info_error->message != nullptr &&
       info_debug != nullptr && std::strcmp(info_error->message, info_debug) != 0) {
     m_console->debug("Perf cam{} parse_info mismatch error_msg=[{}] debug=[{}]",
                      m_camera_holder->get_camera().index, info_error->message,
@@ -352,7 +352,7 @@ bool GStreamerStream::handle_perf_info_message(const char* info_text) {
     m_console->debug(
         "Perf cam{} (gst-perf): skipping warmup zero bitrate fps={} age_ms={}",
         m_camera_holder->get_camera().index, fps, now_ms - m_perf_first_message_ms);
-    return false;
+    return true;
   }
   m_last_perf_message_ms.store(steady_clock_ms(), std::memory_order_relaxed);
   m_console->debug("Perf cam{} (gst-perf): bitrate={} bps fps={}",
