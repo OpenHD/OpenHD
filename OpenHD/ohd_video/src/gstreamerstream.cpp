@@ -100,6 +100,7 @@ bool parse_gst_perf_metric(const char* text, const char* key, double& out_value)
 bool parse_gst_perf_bitrate_fps(const char* info_text, uint32_t& bitrate_bps,
                                 uint16_t& fps) {
   double parsed_bitrate = 0.0;
+  double parsed_mean_bitrate = 0.0;
   double parsed_fps = 0.0;
   bool has_any_bitrate = false;
   const auto use_bitrate_candidate = [&](const char* key, double scale) {
