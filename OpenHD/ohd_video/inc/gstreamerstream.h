@@ -123,6 +123,8 @@ class GStreamerStream : public CameraStream {
   std::atomic<int64_t> m_last_perf_message_ms = 0;
   std::atomic<int64_t> m_last_required_perf_problem_ms = 0;
   int64_t m_last_perf_warning_ms = 0;
+  int64_t m_perf_first_message_ms = 0;
+  bool m_perf_seen_nonzero_bitrate = false;
 
  private:
   // The stuff here is to pull the data out of the gstreamer pipeline, such that
