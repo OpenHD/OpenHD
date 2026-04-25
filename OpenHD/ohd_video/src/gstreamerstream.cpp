@@ -567,6 +567,23 @@ bool GStreamerStream::setup() {
                     m_camera_holder->get_camera().index));
     return false;
   }
+  GstPlugin* perf_plugin =
+      gst_plugin_feature_get_plugin(GST_PLUGIN_FEATURE(perf_factory));
+  if (perf_plugin != nullptr) {
+    const gchar* plugin_name = gst_plugin_get_name(perf_plugin);
+    const gchar* plugin_description = gst_plugin_get_description(perf_plugin);
+    const gchar* plugin_filename = gst_plugin_get_filename(perf_plugin);
+    const gchar* plugin_version = gst_plugin_get_version(perf_plugin);
+    m_console->info(
+        "Using gst-perf plugin name:{} version:{} file:{} description:{}",
+        plugin_name != nullptr ? plugin_name : "n/a",
+        plugin_version != nullptr ? plugin_version : "n/a",
+        plugin_filename != nullptr ? plugin_filename : "n/a",
+        plugin_description != nullptr ? plugin_description : "n/a");
+    gst_object_unref(perf_plugin);
+  } else {
+    m_console->warn("Unable to query gst-perf plugin metadata");
+  }
   gst_object_unref(perf_factory);
   pipeline_content << create_source_encode_pipeline(*m_camera_holder);
   pipeline_content << OHDGstHelper::createEncoderPerfElement();
