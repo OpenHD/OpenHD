@@ -26,6 +26,7 @@
 #include <gst/gst.h>
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
@@ -53,38 +54,80 @@
 
 namespace {
 static constexpr auto kSkipDynamicBitrateLogInterval = std::chrono::seconds(5);
+static constexpr int64_t kPerfFirstMessageTimeoutMs = 5000;
+static constexpr int64_t kPerfMissingWarningIntervalMs = 10000;
+static constexpr int64_t kPerfBitrateWarmupMs = 3000;
+static constexpr int64_t kPerfProbeIntervalMs = 1000;
+static constexpr size_t kPipelineDebugMaxChars = 1200;
+static constexpr size_t kPipelineDebugChunkChars = 34;
+
+int64_t steady_clock_ms() {
+  return std::chrono::duration_cast<std::chrono::milliseconds>(
+             std::chrono::steady_clock::now().time_since_epoch())
+      .count();
+}
 
 bool parse_gst_perf_metric(const char* text, const char* key, double& out_value) {
   if (text == nullptr || key == nullptr) {
     return false;
   }
-  const char* value_start = std::strstr(text, key);
-  if (value_start == nullptr) {
-    return false;
+  const auto key_len = std::strlen(key);
+  const char* search = text;
+  while (search != nullptr) {
+    const char* match = std::strstr(search, key);
+    if (match == nullptr) {
+      return false;
+    }
+    const char* value_start = match + key_len;
+    const bool at_start = match == text;
+    const unsigned char prev_char =
+        at_start ? static_cast<unsigned char>(' ')
+                 : static_cast<unsigned char>(*(match - 1));
+    // gst-perf INFO strings may contain similarly named keys like "mean_bps".
+    // Ensure we match a standalone metric key (e.g. "; bps: ") rather than a
+    // suffix inside another token.
+    if (at_start || !(std::isalnum(prev_char) != 0 || prev_char == '_')) {
+      char* value_end = nullptr;
+      const double parsed = std::strtod(value_start, &value_end);
+      if (value_end != value_start) {
+        out_value = parsed;
+        return true;
+      }
+    }
+    search = match + 1;
   }
-  value_start += std::strlen(key);
-  char* value_end = nullptr;
-  const double parsed = std::strtod(value_start, &value_end);
-  if (value_end == value_start) {
-    return false;
-  }
-  out_value = parsed;
-  return true;
+  return false;
 }
 
 bool parse_gst_perf_bitrate_fps(const char* info_text, uint32_t& bitrate_bps,
                                 uint16_t& fps) {
   double parsed_bitrate = 0.0;
   double parsed_fps = 0.0;
-  if (!parse_gst_perf_metric(info_text, "bps: ", parsed_bitrate)) {
+  bool has_any_bitrate = false;
+  const auto use_bitrate_candidate = [&](const char* key, double scale) {
+    double candidate = 0.0;
+    if (!parse_gst_perf_metric(info_text, key, candidate)) {
+      return;
+    }
+    has_any_bitrate = true;
+    parsed_bitrate = std::max(parsed_bitrate, candidate * scale);
+  };
+  use_bitrate_candidate("bps: ", 1.0);
+  use_bitrate_candidate("bps=", 1.0);
+  use_bitrate_candidate("mean_bps: ", 1.0);
+  use_bitrate_candidate("mean_bps=", 1.0);
+  // Some gst-perf variants report in kbps via bitrate fields.
+  use_bitrate_candidate("bitrate: ", 1000.0);
+  use_bitrate_candidate("bitrate=", 1000.0);
+  use_bitrate_candidate("mean_bitrate: ", 1000.0);
+  use_bitrate_candidate("mean_bitrate=", 1000.0);
+  if (!has_any_bitrate) {
     return false;
   }
   if (!parse_gst_perf_metric(info_text, "fps: ", parsed_fps)) {
     return false;
   }
-  if (parsed_bitrate < 0.0) {
-    parsed_bitrate = 0.0;
-  }
+  parsed_bitrate = std::max(0.0, parsed_bitrate);
   if (parsed_fps < 0.0) {
     parsed_fps = 0.0;
   }
@@ -94,6 +137,42 @@ bool parse_gst_perf_bitrate_fps(const char* info_text, uint32_t& bitrate_bps,
   bitrate_bps = static_cast<uint32_t>(std::llround(std::min(parsed_bitrate, bitrate_max)));
   fps = static_cast<uint16_t>(std::llround(std::min(parsed_fps, fps_max)));
   return true;
+}
+
+uint64_t gst_buffer_list_total_size(GstBufferList* buffer_list,
+                                    uint32_t& buffer_count) {
+  if (buffer_list == nullptr) {
+    return 0;
+  }
+  uint64_t total_size = 0;
+  const guint length = gst_buffer_list_length(buffer_list);
+  for (guint i = 0; i < length; ++i) {
+    GstBuffer* buffer = gst_buffer_list_get(buffer_list, i);
+    if (buffer == nullptr) {
+      continue;
+    }
+    total_size += gst_buffer_get_size(buffer);
+    ++buffer_count;
+  }
+  return total_size;
+}
+
+void send_pipeline_debug_over_mavlink(int cam_index,
+                                      const std::string& pipeline) {
+  std::string payload = pipeline;
+  if (payload.size() > kPipelineDebugMaxChars) {
+    payload = payload.substr(0, kPipelineDebugMaxChars - 3) + "...";
+  }
+  const size_t total =
+      std::max<size_t>(1, (payload.size() + kPipelineDebugChunkChars - 1) /
+                              kPipelineDebugChunkChars);
+  for (size_t seq = 0; seq < total; ++seq) {
+    const auto chunk =
+        payload.substr(seq * kPipelineDebugChunkChars, kPipelineDebugChunkChars);
+    openhd::log::log_via_mavlink(
+        static_cast<int>(openhd::log::STATUS_LEVEL::DEBUG),
+        fmt::format("OHDPIPE{} {}/{} {}", cam_index, seq, total, chunk));
+  }
 }
 }  // namespace
 
@@ -126,6 +205,10 @@ GStreamerStream::GStreamerStream(std::shared_ptr<CameraHolder> camera_holder,
     // for telemetry.
     this->request_restart();
   });
+  m_camera_holder->register_video_bitrate_listener([this](int bitrate_kbits) {
+    openhd::LinkActionHandler::LinkBitrateInformation lb{bitrate_kbits};
+    this->handle_change_bitrate_request(lb);
+  });
   OHDGstHelper::initGstreamerOrThrow();
   if (m_camera_holder->get_camera().is_camera_type_usb_infiray()) {
     openhd::set_infiray_custom_control_zoom_absolute_async(
@@ -137,7 +220,10 @@ GStreamerStream::GStreamerStream(std::shared_ptr<CameraHolder> camera_holder,
   m_console->debug("GStreamerStream::GStreamerStream done");
 }
 
-GStreamerStream::~GStreamerStream() { GStreamerStream::terminate_looping(); }
+GStreamerStream::~GStreamerStream() {
+  m_camera_holder->register_video_bitrate_listener(nullptr);
+  GStreamerStream::terminate_looping();
+}
 
 void GStreamerStream::start_looping() {
   {
@@ -204,10 +290,14 @@ void GStreamerStream::handle_gst_message(GstMessage* message) {
   GError* info_error = nullptr;
   gchar* info_debug = nullptr;
   gst_message_parse_info(message, &info_error, &info_debug);
+  bool parsed_perf_info = false;
   if (info_debug != nullptr) {
-    handle_perf_info_message(info_debug);
-  } else if (info_error != nullptr && info_error->message != nullptr) {
-    handle_perf_info_message(info_error->message);
+    parsed_perf_info = handle_perf_info_message(info_debug);
+  }
+  if (!parsed_perf_info && info_error != nullptr &&
+      info_error->message != nullptr &&
+      (info_debug == nullptr || std::strcmp(info_error->message, info_debug) != 0)) {
+    parsed_perf_info = handle_perf_info_message(info_error->message);
   }
   if (info_error != nullptr) {
     g_error_free(info_error);
@@ -217,27 +307,66 @@ void GStreamerStream::handle_gst_message(GstMessage* message) {
   }
 }
 
-void GStreamerStream::setup_perf_element() {
+bool GStreamerStream::setup_perf_element() {
   cleanup_perf_element();
   m_perf_element = gst_bin_get_by_name(GST_BIN(m_gst_pipeline),
                                        OHDGstHelper::kEncoderPerfElementName);
   if (m_perf_element == nullptr) {
-    m_console->warn("Cannot find gst-perf element in pipeline");
-    return;
+    report_required_perf_problem(
+        "gst_perf_missing_element",
+        fmt::format("gst-perf is required but the perf element is missing in "
+                    "the camera {} pipeline",
+                    m_camera_holder->get_camera().index));
+    return false;
   }
   if (m_gst_bus == nullptr) {
-    m_console->warn("Cannot attach gst-perf handler: pipeline bus unavailable");
-    return;
+    report_required_perf_problem(
+        "gst_perf_no_bus",
+        fmt::format("gst-perf is required but the camera {} pipeline bus is "
+                    "unavailable",
+                    m_camera_holder->get_camera().index));
+    return false;
   }
   gst_bus_set_sync_handler(m_gst_bus, &GStreamerStream::on_gst_bus_message, this,
                            nullptr);
-  m_console->debug("Attached gst-perf bus handler on {}",
-                   OHDGstHelper::kEncoderPerfElementName);
+  m_perf_probe_pad = gst_element_get_static_pad(m_perf_element, "sink");
+  if (m_perf_probe_pad == nullptr) {
+    report_required_perf_problem(
+        "gst_perf_no_sink_pad",
+        fmt::format("gst-perf is required but the camera {} perf element has "
+                    "no sink pad",
+                    m_camera_holder->get_camera().index));
+    return false;
+  }
+  m_perf_probe_id = gst_pad_add_probe(
+      m_perf_probe_pad,
+      static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER |
+                                   GST_PAD_PROBE_TYPE_BUFFER_LIST),
+      &GStreamerStream::on_perf_pad_probe, this, nullptr);
+  m_perf_probe_active.store(m_perf_probe_id != 0, std::memory_order_relaxed);
+  if (m_perf_probe_id == 0) {
+    report_required_perf_problem(
+        "gst_perf_probe_failed",
+        fmt::format("gst-perf is required but attaching camera {} perf buffer "
+                    "probe failed",
+                    m_camera_holder->get_camera().index));
+    return false;
+  }
+  return true;
 }
 
 void GStreamerStream::cleanup_perf_element() {
   if (m_gst_bus != nullptr) {
     gst_bus_set_sync_handler(m_gst_bus, nullptr, nullptr, nullptr);
+  }
+  m_perf_probe_active.store(false, std::memory_order_relaxed);
+  if (m_perf_probe_pad != nullptr && m_perf_probe_id != 0) {
+    gst_pad_remove_probe(m_perf_probe_pad, m_perf_probe_id);
+    m_perf_probe_id = 0;
+  }
+  if (m_perf_probe_pad != nullptr) {
+    gst_object_unref(m_perf_probe_pad);
+    m_perf_probe_pad = nullptr;
   }
   if (m_perf_element != nullptr) {
     gst_object_unref(m_perf_element);
@@ -245,23 +374,152 @@ void GStreamerStream::cleanup_perf_element() {
   }
 }
 
-void GStreamerStream::handle_perf_info_message(const char* info_text) {
+bool GStreamerStream::handle_perf_info_message(const char* info_text) {
   uint32_t bitrate_bps = 0;
   uint16_t fps = 0;
   if (!parse_gst_perf_bitrate_fps(info_text, bitrate_bps, fps)) {
-    return;
+    return false;
   }
-  m_console->debug("Perf cam{} (gst-perf): bitrate={} bps fps={}",
-                   m_camera_holder->get_camera().index, bitrate_bps, fps);
+  if (m_perf_probe_active.load(std::memory_order_relaxed) &&
+      (m_perf_probe_reported.load(std::memory_order_relaxed) ||
+       bitrate_bps == 0)) {
+    return true;
+  }
+  const int64_t now_ms = steady_clock_ms();
+  if (m_perf_first_message_ms <= 0) {
+    m_perf_first_message_ms = now_ms;
+  }
+  if (bitrate_bps > 0) {
+    m_perf_seen_nonzero_bitrate.store(true, std::memory_order_relaxed);
+  } else if (fps > 0 &&
+             !m_perf_seen_nonzero_bitrate.load(std::memory_order_relaxed) &&
+             now_ms - m_perf_first_message_ms < kPerfBitrateWarmupMs) {
+    return true;
+  }
+  m_last_perf_message_ms.store(steady_clock_ms(), std::memory_order_relaxed);
   openhd::LinkActionHandler::instance().set_cam_info_perf(
       m_camera_holder->get_camera().index, bitrate_bps, fps);
+  return true;
+}
+
+GstPadProbeReturn GStreamerStream::on_perf_pad_probe(
+    GstPad* /*pad*/, GstPadProbeInfo* info, gpointer user_data) {
+  auto* self = static_cast<GStreamerStream*>(user_data);
+  if (self != nullptr && info != nullptr) {
+    self->handle_perf_pad_probe(info);
+  }
+  return GST_PAD_PROBE_OK;
+}
+
+void GStreamerStream::handle_perf_pad_probe(GstPadProbeInfo* info) {
+  const auto probe_type = GST_PAD_PROBE_INFO_TYPE(info);
+  uint64_t bytes = 0;
+  uint32_t buffers = 0;
+  if ((probe_type & GST_PAD_PROBE_TYPE_BUFFER) != 0) {
+    GstBuffer* buffer = GST_PAD_PROBE_INFO_BUFFER(info);
+    if (buffer != nullptr) {
+      bytes = gst_buffer_get_size(buffer);
+      buffers = 1;
+    }
+  } else if ((probe_type & GST_PAD_PROBE_TYPE_BUFFER_LIST) != 0) {
+    GstBufferList* buffer_list = GST_PAD_PROBE_INFO_BUFFER_LIST(info);
+    bytes = gst_buffer_list_total_size(buffer_list, buffers);
+  }
+  if (buffers == 0) {
+    return;
+  }
+  const int64_t now_ms = steady_clock_ms();
+  if (m_perf_probe_window_start_ms <= 0) {
+    m_perf_probe_window_start_ms = now_ms;
+  }
+  m_perf_probe_window_bytes += bytes;
+  m_perf_probe_window_buffers += buffers;
+  const int64_t elapsed_ms = now_ms - m_perf_probe_window_start_ms;
+  if (elapsed_ms < kPerfProbeIntervalMs) {
+    return;
+  }
+  const double elapsed = static_cast<double>(elapsed_ms);
+  const double bitrate =
+      static_cast<double>(m_perf_probe_window_bytes) * 8.0 * 1000.0 / elapsed;
+  const double fps =
+      static_cast<double>(m_perf_probe_window_buffers) * 1000.0 / elapsed;
+  const double bitrate_max =
+      static_cast<double>(std::numeric_limits<uint32_t>::max());
+  const double fps_max = static_cast<double>(std::numeric_limits<uint16_t>::max());
+  const uint32_t bitrate_bps =
+      static_cast<uint32_t>(std::llround(std::min(bitrate, bitrate_max)));
+  const uint16_t frame_rate =
+      static_cast<uint16_t>(std::llround(std::min(fps, fps_max)));
+
+  if (bitrate_bps > 0) {
+    m_perf_seen_nonzero_bitrate.store(true, std::memory_order_relaxed);
+  }
+  m_perf_probe_reported.store(true, std::memory_order_relaxed);
+  m_last_perf_message_ms.store(now_ms, std::memory_order_relaxed);
+  openhd::LinkActionHandler::instance().set_cam_info_perf(
+      m_camera_holder->get_camera().index, bitrate_bps, frame_rate);
+
+  m_perf_probe_window_start_ms = now_ms;
+  m_perf_probe_window_bytes = 0;
+  m_perf_probe_window_buffers = 0;
+}
+
+void GStreamerStream::check_required_perf_telemetry(int64_t now_ms,
+                                                    int64_t first_frame_ms) {
+  if (first_frame_ms <= 0) {
+    return;
+  }
+  const int64_t last_perf_ms =
+      m_last_perf_message_ms.load(std::memory_order_relaxed);
+  const bool never_received = last_perf_ms <= 0;
+  const int64_t reference_ms = never_received ? first_frame_ms : last_perf_ms;
+  const int64_t timeout_ms = never_received ? kPerfFirstMessageTimeoutMs
+                                            : kPerfMissingWarningIntervalMs;
+  if (now_ms - reference_ms < timeout_ms) {
+    return;
+  }
+  if (now_ms - m_last_perf_warning_ms < kPerfMissingWarningIntervalMs) {
+    return;
+  }
+  m_last_perf_warning_ms = now_ms;
+  const auto cam_index = m_camera_holder->get_camera().index;
+  openhd::LinkActionHandler::instance().set_cam_info_perf(cam_index, 0, 0);
+  if (never_received) {
+    report_required_perf_problem(
+        "gst_perf_no_data",
+        fmt::format("gst-perf is required but has not reported bitrate/fps "
+                    "for camera {}; measured bitrate stays unavailable",
+                    cam_index));
+  } else {
+    report_required_perf_problem(
+        "gst_perf_stale",
+        fmt::format("gst-perf is required but stopped reporting bitrate/fps "
+                    "for camera {}; measured bitrate may be stale",
+                    cam_index));
+  }
+}
+
+void GStreamerStream::report_required_perf_problem(
+    const std::string& code, const std::string& description) {
+  const int64_t now_ms = steady_clock_ms();
+  const int64_t last_ms =
+      m_last_required_perf_problem_ms.load(std::memory_order_relaxed);
+  if (last_ms > 0 && now_ms - last_ms < kPerfMissingWarningIntervalMs) {
+    m_console->debug("{}", description);
+    return;
+  }
+  m_last_required_perf_problem_ms.store(now_ms, std::memory_order_relaxed);
+  m_console->error("{}", description);
+  openhd::Reporter::instance().report_status(code, description, 10000);
+  openhd::log::log_via_mavlink(
+      static_cast<int>(openhd::log::STATUS_LEVEL::ERROR),
+      fmt::format("cam{} {}", m_camera_holder->get_camera().index, code));
 }
 
 bool GStreamerStream::should_skip_runtime_bitrate_update() const {
   const auto& camera = m_camera_holder->get_camera();
   if (camera.requires_rockchip3_mpp_pipeline() ||
       camera.requires_rockchip5_mpp_pipeline() ||
-      camera.requires_rockchip1126_mpp_pipeline() ||
       camera.requires_rockchip_rv_pipeline()) {
     return true;
   }
@@ -400,28 +658,35 @@ std::string GStreamerStream::create_source_encode_pipeline(
     pipeline << OHDGstHelper::createDummyStreamX(setting);
   }
 
-  openhd::log::get_default()->debug("Pipeline created: {}", pipeline.str());
   return pipeline.str();
 }
 
-void GStreamerStream::setup() {
+bool GStreamerStream::setup() {
   m_console->debug("GStreamerStream::setup() begin");
   const auto& setting = m_camera_holder->get_settings();
   std::stringstream pipeline_content;
   m_bitrate_ctrl_element = std::nullopt;
-  bool gst_perf_available = false;
+  m_last_perf_message_ms.store(0, std::memory_order_relaxed);
+  m_last_perf_warning_ms = steady_clock_ms() - kPerfMissingWarningIntervalMs;
+  m_perf_first_message_ms = 0;
+  m_perf_seen_nonzero_bitrate.store(false, std::memory_order_relaxed);
+  m_perf_probe_active.store(false, std::memory_order_relaxed);
+  m_perf_probe_reported.store(false, std::memory_order_relaxed);
+  m_perf_probe_window_start_ms = 0;
+  m_perf_probe_window_bytes = 0;
+  m_perf_probe_window_buffers = 0;
   auto* perf_factory = gst_element_factory_find("perf");
-  if (perf_factory != nullptr) {
-    gst_perf_available = true;
-    gst_object_unref(perf_factory);
+  if (perf_factory == nullptr) {
+    report_required_perf_problem(
+        "gst_perf_missing",
+        fmt::format("gst-perf is required for camera {}; install "
+                    "gstreamer1.0-plugins-bad",
+                    m_camera_holder->get_camera().index));
+    return false;
   }
+  gst_object_unref(perf_factory);
   pipeline_content << create_source_encode_pipeline(*m_camera_holder);
-  if (gst_perf_available) {
-    pipeline_content << OHDGstHelper::createEncoderPerfElement();
-  } else {
-    m_console->warn(
-        "gst-perf plugin not available, encoder perf bitrate/fps reporting disabled");
-  }
+  pipeline_content << OHDGstHelper::createEncoderPerfElement();
   // quick check,here the pipeline should end with a "! ";
   if (!OHDUtil::endsWith(pipeline_content.str(), "! ")) {
     m_console->warn("Probably ill-formatted pipeline: [{}]",
@@ -491,33 +756,66 @@ void GStreamerStream::setup() {
         0,
         0,
         0,
+        0,
         0};
     openhd::LinkActionHandler::instance().set_cam_info(index, cam_info);
   }
-  m_console->debug("Starting pipeline:[{}]", pipeline_content.str());
+  const auto full_pipeline = pipeline_content.str();
+  send_pipeline_debug_over_mavlink(m_camera_holder->get_camera().index,
+                                   full_pipeline);
   // Protect against unwanted use - stop and free the pipeline first
   assert(m_gst_pipeline == nullptr);
   // Now start the (as a string) built pipeline
   GError* error = nullptr;
-  m_gst_pipeline = gst_parse_launch(pipeline_content.str().c_str(), &error);
+  m_gst_pipeline = gst_parse_launch(full_pipeline.c_str(), &error);
   m_console->debug("GStreamerStream::setup() end");
   if (error) {
-    m_console->error("Failed to create pipeline: {}", error->message);
+    report_required_perf_problem(
+        "gst_pipeline_parse",
+        fmt::format("Failed to create camera {} pipeline: {}",
+                    m_camera_holder->get_camera().index, error->message));
     g_error_free(error);
-    return;
+    if (m_gst_pipeline != nullptr) {
+      cleanup_pipe();
+    }
+    return false;
+  }
+  if (m_gst_pipeline == nullptr) {
+    report_required_perf_problem(
+        "gst_pipeline_null",
+        fmt::format("Failed to create camera {} pipeline",
+                    m_camera_holder->get_camera().index));
+    return false;
   }
   m_gst_bus = gst_pipeline_get_bus(GST_PIPELINE(m_gst_pipeline));
   if (m_gst_bus == nullptr) {
-    m_console->warn("Cannot get GST bus for pipeline");
+    report_required_perf_problem(
+        "gst_pipeline_no_bus",
+        fmt::format("Cannot get GST bus for camera {} pipeline",
+                    m_camera_holder->get_camera().index));
+    cleanup_pipe();
+    return false;
   }
   m_bitrate_ctrl_element = get_dynamic_bitrate_control_element_in_pipeline(
       m_gst_pipeline, *m_camera_holder);
-  setup_perf_element();
+  openhd::LinkActionHandler::instance().set_cam_info_supports_variable_bitrate(
+      m_camera_holder->get_camera().index, m_bitrate_ctrl_element.has_value());
+  if (!setup_perf_element()) {
+    cleanup_pipe();
+    return false;
+  }
   // we pull data out of the gst pipeline as cpu memory buffer(s) using the
   // gstreamer "appsink" element
   m_app_sink_element =
       gst_bin_get_by_name(GST_BIN(m_gst_pipeline), "out_appsink");
-  assert(m_app_sink_element);
+  if (m_app_sink_element == nullptr) {
+    report_required_perf_problem(
+        "gst_pipeline_no_appsink",
+        fmt::format("Cannot find appsink in camera {} pipeline",
+                    m_camera_holder->get_camera().index));
+    cleanup_pipe();
+    return false;
+  }
   // m_console->debug("Cam encoding format: {}",(int)cam_info.encoding_format);
   auto lol_cb =
       [this](
@@ -527,6 +825,7 @@ void GStreamerStream::setup() {
   m_rtp_helper = std::make_shared<openhd::RTPHelper>(
       setting.streamed_video_format.videoCodec == VideoCodec::H265);
   m_rtp_helper->set_out_cb(lol_cb);
+  return true;
 }
 
 void GStreamerStream::start() {
@@ -562,9 +861,11 @@ void GStreamerStream::cleanup_pipe() {
   // Drop the reference to the bitrate control element (if it exists)
   if (m_bitrate_ctrl_element.has_value()) {
     unref_bitrate_element(m_bitrate_ctrl_element.value());
+    m_bitrate_ctrl_element = std::nullopt;
   }
   // As well as the appsink (always exists)
   openhd::unref_appsink_element(m_app_sink_element);
+  m_app_sink_element = nullptr;
   // Jan 22: Confirmed this hangs quite a lot of pipeline(s) - removed for that
   // reason
   /*m_console->debug("send EOS begin");
@@ -626,12 +927,6 @@ void GStreamerStream::handle_change_bitrate_request(
   //  We do some safety checks first - the link might recommend too much / too
   //  little
   auto bitrate_for_encoder_kbits = lb.recommended_encoder_bitrate_kbits;
-  m_console->debug(
-      "Bitrate request received cam{}: requested_kbits:{} current_target_kbits:{} "
-      "persisted_kbits:{}",
-      m_camera_holder->get_camera().index, bitrate_for_encoder_kbits,
-      m_curr_dynamic_bitrate_kbits.load(),
-      m_camera_holder->get_settings().h26x_bitrate_kbits);
   // m_console->debug(
   //     "Received bitrate update request: {} kBit/s (current target: {}
   //     kBit/s)", bitrate_for_encoder_kbits,
@@ -644,9 +939,6 @@ void GStreamerStream::handle_change_bitrate_request(
   if (bitrate_for_encoder_kbits < MIN_BITRATE_KBITS) {
     // m_console->debug("Cam cannot do <{}",
     // kbits_per_second_to_string(MIN_BITRATE_KBITS));
-    m_console->debug(
-        "Clamping bitrate request from {} kBit/s to minimum {} kBit/s",
-        bitrate_for_encoder_kbits, MIN_BITRATE_KBITS);
     bitrate_for_encoder_kbits = MIN_BITRATE_KBITS;
   }
   // The gst thread is responsible for changing the bitrate - it will be applied
@@ -709,7 +1001,10 @@ void GStreamerStream::stream_once() {
   // First, we (try) starting the pipeline using the current settings
   openhd::LinkActionHandler::instance().set_cam_info_status(
       m_camera_holder->get_camera().index, CAM_STATUS_RESTARTING);
-  setup();
+  if (!setup()) {
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    return;
+  }
   if (OHDPlatform::instance().is_x20()) {
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
   }
@@ -761,6 +1056,7 @@ void GStreamerStream::stream_once() {
   m_frame_fragments.resize(0);
   // As soon as we get the first frame, we change the status to streaming
   bool has_first_frame = false;
+  int64_t first_frame_ms = 0;
   // Every X seconds, we check if we are about to run out of space
   std::chrono::steady_clock::time_point
       m_last_air_recording_remaining_space_check =
@@ -769,6 +1065,7 @@ void GStreamerStream::stream_once() {
       std::chrono::steady_clock::now();
   while (true) {
     const auto loop_now = std::chrono::steady_clock::now();
+    const int64_t loop_now_ms = steady_clock_ms();
     // Quickly terminate if openhd wants to terminate
     if (!m_keep_looping) break;
     // ANNOYING BUGGED CAMERAS FIX - we restart the pipeline if we don't get a
@@ -785,16 +1082,11 @@ void GStreamerStream::stream_once() {
     // Check if we need to set a new bitrate
     if (currently_applied_bitrate != m_curr_dynamic_bitrate_kbits) {
       const int new_bitrate = m_curr_dynamic_bitrate_kbits;
-      m_console->debug("Bitrate change, old:{} new:{}",
-                       currently_applied_bitrate, new_bitrate);
       if (m_bitrate_ctrl_element != std::nullopt) {
         // apply the new bitrate
         // Don't forget, the rpi csi hdmi needs the 'half bitrate' hack
         auto hacked_bitrate_kbits = new_bitrate;
         if (m_camera_holder->requires_half_bitrate_workaround()) {
-          m_console->debug(
-              "applying hack - reduce bitrate by 2 to get actual correct "
-              "bitrate");
           hacked_bitrate_kbits = hacked_bitrate_kbits / 2;
         }
         auto bitrate_ctrl_element = m_bitrate_ctrl_element.value();
@@ -802,20 +1094,6 @@ void GStreamerStream::stream_once() {
           currently_applied_bitrate = new_bitrate;
           openhd::LinkActionHandler::instance().set_cam_info_bitrate(
               m_camera_holder->get_camera().index, currently_applied_bitrate);
-          const auto rb_opt = read_bitrate_readback(bitrate_ctrl_element);
-          if (rb_opt.has_value()) {
-            int effective_kbits = rb_opt->interpreted_kbits;
-            if (m_camera_holder->requires_half_bitrate_workaround()) {
-              effective_kbits *= 2;
-            }
-            m_console->debug(
-                "Bitrate apply success cam{}: requested_kbits:{} "
-                "applied_kbits:{} encoder_readback_raw:{} "
-                "encoder_readback_kbits:{} effective_kbits:{}",
-                m_camera_holder->get_camera().index, new_bitrate,
-                hacked_bitrate_kbits, rb_opt->raw_property_value,
-                rb_opt->interpreted_kbits, effective_kbits);
-          }
         } else {
           m_console->warn(
               "Cannot apply bitrate cam{} requested_kbits:{} applied_kbits:{}",
@@ -865,17 +1143,6 @@ void GStreamerStream::stream_once() {
               effective_kbits, delta,
               m_camera_holder->get_settings().h26x_bitrate_kbits,
               currently_applied_bitrate);
-        } else {
-          m_console->debug(
-              "Bitrate state cam{}: target_kbits:{} "
-              "encoder_readback_raw:{} encoder_readback_kbits:{} "
-              "effective_kbits:{} persisted_kbits:{} "
-              "currently_applied_kbits:{}",
-              m_camera_holder->get_camera().index, target_kbits,
-              rb_opt->raw_property_value, rb_opt->interpreted_kbits,
-              effective_kbits,
-              m_camera_holder->get_settings().h26x_bitrate_kbits,
-              currently_applied_bitrate);
         }
       } else {
         m_console->warn(
@@ -884,12 +1151,16 @@ void GStreamerStream::stream_once() {
             bitrate_ctrl_element.property_name);
       }
     }
+    if (has_first_frame) {
+      check_required_perf_telemetry(loop_now_ms, first_frame_ms);
+    }
     // try get a new frame fragment from gst
     GstSample* sample = gst_app_sink_try_pull_sample(
         GST_APP_SINK(m_app_sink_element), timeout_ns);
     if (sample) {
       if (!has_first_frame) {
         has_first_frame = true;
+        first_frame_ms = loop_now_ms;
         openhd::LinkActionHandler::instance().set_cam_info_status(
             m_camera_holder->get_camera().index, CAM_STATUS_STREAMING);
       }

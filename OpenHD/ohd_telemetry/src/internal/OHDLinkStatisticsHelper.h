@@ -29,6 +29,9 @@
 #include "openhd_external_device.h"
 #include "openhd_link_statistics.hpp"
 
+#include <algorithm>
+#include <limits>
+
 namespace openhd::LinkStatisticsHelper {
 
 static MavlinkMessage pack_card(
@@ -205,7 +208,9 @@ static MavlinkMessage pack_camera_stats(
   tmp.cam_type = cam_info.cam_type;
   tmp.encoding_format = cam_info.encoding_format;
   tmp.air_recording_active = cam_info.air_recording_active;
-  tmp.encoding_bitrate_kbits = cam_info.encoding_bitrate_kbits;
+  tmp.encoding_bitrate_kbits = cam_info.target_bitrate_kbits > 0
+                                   ? cam_info.target_bitrate_kbits
+                                   : cam_info.encoding_bitrate_kbits;
   tmp.encoding_keyframe_interval = cam_info.encoding_keyframe_interval;
   tmp.stream_w = cam_info.stream_w;
   tmp.stream_h = cam_info.stream_h;
@@ -213,6 +218,14 @@ static MavlinkMessage pack_camera_stats(
   tmp.encoding_format = cam_info.encoding_format;
   tmp.cam_status = cam_info.cam_status;
   tmp.supports_variable_bitrate = cam_info.supports_variable_bitrate;
+  tmp.dummy2 = static_cast<int32_t>(
+      std::min<uint32_t>(cam_info.measured_bitrate_bps,
+                         static_cast<uint32_t>(
+                             std::numeric_limits<int32_t>::max())));
+  tmp.dummy1 = static_cast<int16_t>(
+      std::min<uint16_t>(cam_info.measured_fps,
+                         static_cast<uint16_t>(
+                             std::numeric_limits<int16_t>::max())));
   mavlink_msg_openhd_camera_status_air_encode(system_id, component_id, &msg.m,
                                               &tmp);
   return msg;

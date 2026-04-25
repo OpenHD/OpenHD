@@ -626,7 +626,8 @@ static std::string create_nxp_imx8_v4l2_stream(const CameraSettings& settings,
   ss << "queue max-size-buffers=4 leaky=downstream ! ";
   const std::string aud_parameter =
       use_h264 && settings.nxp_enable_aud ? " enable-aud=true" : "";
-  ss << fmt::format("{} bitrate={} gop-size={}{} ", encoder_name,
+  ss << fmt::format("{} name=nxp_encoder bitrate={} gop-size={}{} ",
+                    encoder_name,
                     settings.h26x_bitrate_kbits, keyframe_interval,
                     aud_parameter);
   if (use_intra_refresh) {
@@ -893,7 +894,9 @@ static constexpr auto kEncoderPerfElementName = "openhd_perf";
 // Add gst-perf right after encoding so bitrate/fps are measured on the encoder
 // output before packetization.
 static std::string createEncoderPerfElement() {
-  return fmt::format(" perf name={} bitrate-interval=1000 ! ",
+  // Keep a queue directly after perf, matching the known-good standalone test
+  // pipeline shape used for debugging bitrate measurements.
+  return fmt::format(" perf name={} bitrate-interval=1000 ! queue ! ",
                      kEncoderPerfElementName);
 }
 
@@ -1186,9 +1189,9 @@ static std::string createRv1126Stream(const CameraSettings& settings) {
 
 
   if (settings.streamed_video_format.videoCodec == VideoCodec::H264) {
-    ss << " mpph264enc";
+    ss << " mpph264enc name=mpp_encoder";
   } else {
-    ss << " mpph265enc";
+    ss << " mpph265enc name=mpp_encoder";
   }
 
   ss << " rc-mode=cbr bps=" << bps_actual;
