@@ -89,7 +89,7 @@ struct Xmavlink_openhd_stats_wb_video_air_t {
   int32_t curr_injected_bitrate;    /*<  curr_injected_bitrate (+FEC overhead)*/
   int32_t curr_injected_pps;        /*<  curr_injected_pps*/
   int32_t curr_dropped_frames;      /*<  curr_dropped_frames*/
-  int32_t dummy2;                   /*<  for future use*/
+  int32_t dummy2;                   /*<  link-calculated source bitrate*/
   int16_t curr_recommended_bitrate; /*<  curr_recommended_bitrate*/
   int16_t curr_fec_percentage;      /*<  curr_fec_percentage*/
   int16_t dummy1;                   /*<  for future use*/

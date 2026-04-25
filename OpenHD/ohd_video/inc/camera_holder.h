@@ -25,6 +25,7 @@
 #define OPENHD_OPENHD_OHD_VIDEO_INC_CAMERA_HOLDER_H_
 
 #include <algorithm>
+#include <functional>
 #include <spdlog/spdlog.h>
 
 #include <sstream>
@@ -54,6 +55,10 @@ class CameraHolder :
     init();
   }
   [[nodiscard]] const XCamera& get_camera() const { return m_camera; }
+  using VIDEO_BITRATE_CHANGED_CALLBACK = std::function<void(int bitrate_kbits)>;
+  void register_video_bitrate_listener(VIDEO_BITRATE_CHANGED_CALLBACK cb) {
+    m_video_bitrate_changed_callback = std::move(cb);
+  }
   // Settings hacky begin
   std::vector<openhd::Setting> get_all_settings();
   bool set_enable_streaming(int enable) {
@@ -94,7 +99,11 @@ class CameraHolder :
         "Camera{} BITRATE_MBITS request:{} old_kbits:{} new_kbits:{}",
         m_camera.index, bitrate_mbits, previous_kbits,
         unsafe_get_settings().h26x_bitrate_kbits);
-    persist();
+    persist(false);
+    if (m_video_bitrate_changed_callback &&
+        unsafe_get_settings().h26x_bitrate_kbits != previous_kbits) {
+      m_video_bitrate_changed_callback(unsafe_get_settings().h26x_bitrate_kbits);
+    }
     return true;
   }
   bool set_air_recording(int recording_enable);
@@ -237,6 +246,7 @@ class CameraHolder :
  private:
   // Camera info is immutable
   const XCamera m_camera;
+  VIDEO_BITRATE_CHANGED_CALLBACK m_video_bitrate_changed_callback = nullptr;
 
  private:
   [[nodiscard]] std::string get_unique_filename() const override {

@@ -53,6 +53,8 @@
 
 namespace {
 static constexpr auto kSkipDynamicBitrateLogInterval = std::chrono::seconds(5);
+static constexpr size_t kPipelineDebugMaxChars = 1200;
+static constexpr size_t kPipelineDebugChunkChars = 34;
 
 bool parse_gst_perf_metric(const char* text, const char* key, double& out_value) {
   if (text == nullptr || key == nullptr) {
@@ -95,6 +97,24 @@ bool parse_gst_perf_bitrate_fps(const char* info_text, uint32_t& bitrate_bps,
   fps = static_cast<uint16_t>(std::llround(std::min(parsed_fps, fps_max)));
   return true;
 }
+
+void send_pipeline_debug_over_mavlink(int cam_index,
+                                      const std::string& pipeline) {
+  std::string payload = pipeline;
+  if (payload.size() > kPipelineDebugMaxChars) {
+    payload = payload.substr(0, kPipelineDebugMaxChars - 3) + "...";
+  }
+  const size_t total =
+      std::max<size_t>(1, (payload.size() + kPipelineDebugChunkChars - 1) /
+                              kPipelineDebugChunkChars);
+  for (size_t seq = 0; seq < total; ++seq) {
+    const auto chunk =
+        payload.substr(seq * kPipelineDebugChunkChars, kPipelineDebugChunkChars);
+    openhd::log::log_via_mavlink(
+        static_cast<int>(openhd::log::STATUS_LEVEL::DEBUG),
+        fmt::format("OHDPIPE{} {}/{} {}", cam_index, seq, total, chunk));
+  }
+}
 }  // namespace
 
 GStreamerStream::GStreamerStream(std::shared_ptr<CameraHolder> camera_holder,
@@ -126,6 +146,10 @@ GStreamerStream::GStreamerStream(std::shared_ptr<CameraHolder> camera_holder,
     // for telemetry.
     this->request_restart();
   });
+  m_camera_holder->register_video_bitrate_listener([this](int bitrate_kbits) {
+    openhd::LinkActionHandler::LinkBitrateInformation lb{bitrate_kbits};
+    this->handle_change_bitrate_request(lb);
+  });
   OHDGstHelper::initGstreamerOrThrow();
   if (m_camera_holder->get_camera().is_camera_type_usb_infiray()) {
     openhd::set_infiray_custom_control_zoom_absolute_async(
@@ -137,7 +161,10 @@ GStreamerStream::GStreamerStream(std::shared_ptr<CameraHolder> camera_holder,
   m_console->debug("GStreamerStream::GStreamerStream done");
 }
 
-GStreamerStream::~GStreamerStream() { GStreamerStream::terminate_looping(); }
+GStreamerStream::~GStreamerStream() {
+  m_camera_holder->register_video_bitrate_listener(nullptr);
+  GStreamerStream::terminate_looping();
+}
 
 void GStreamerStream::start_looping() {
   {
@@ -261,7 +288,6 @@ bool GStreamerStream::should_skip_runtime_bitrate_update() const {
   const auto& camera = m_camera_holder->get_camera();
   if (camera.requires_rockchip3_mpp_pipeline() ||
       camera.requires_rockchip5_mpp_pipeline() ||
-      camera.requires_rockchip1126_mpp_pipeline() ||
       camera.requires_rockchip_rv_pipeline()) {
     return true;
   }
@@ -494,12 +520,15 @@ void GStreamerStream::setup() {
         0};
     openhd::LinkActionHandler::instance().set_cam_info(index, cam_info);
   }
-  m_console->debug("Starting pipeline:[{}]", pipeline_content.str());
+  const auto full_pipeline = pipeline_content.str();
+  m_console->debug("Starting pipeline:[{}]", full_pipeline);
+  send_pipeline_debug_over_mavlink(m_camera_holder->get_camera().index,
+                                   full_pipeline);
   // Protect against unwanted use - stop and free the pipeline first
   assert(m_gst_pipeline == nullptr);
   // Now start the (as a string) built pipeline
   GError* error = nullptr;
-  m_gst_pipeline = gst_parse_launch(pipeline_content.str().c_str(), &error);
+  m_gst_pipeline = gst_parse_launch(full_pipeline.c_str(), &error);
   m_console->debug("GStreamerStream::setup() end");
   if (error) {
     m_console->error("Failed to create pipeline: {}", error->message);
@@ -512,6 +541,8 @@ void GStreamerStream::setup() {
   }
   m_bitrate_ctrl_element = get_dynamic_bitrate_control_element_in_pipeline(
       m_gst_pipeline, *m_camera_holder);
+  openhd::LinkActionHandler::instance().set_cam_info_supports_variable_bitrate(
+      m_camera_holder->get_camera().index, m_bitrate_ctrl_element.has_value());
   setup_perf_element();
   // we pull data out of the gst pipeline as cpu memory buffer(s) using the
   // gstreamer "appsink" element

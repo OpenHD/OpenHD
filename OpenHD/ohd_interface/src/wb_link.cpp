@@ -1780,7 +1780,9 @@ void WBLink::wt_update_statistics() {
       air_video.dummy0 =
           (int8_t)m_thermal_protection_level.load(std::memory_order_relaxed);
       air_video.dummy1 = 776;
-      air_video.dummy2 = 673;
+      air_video.dummy2 = static_cast<int32_t>(std::min<int64_t>(
+          curr_tx_stats.current_provided_bits_per_second,
+          std::numeric_limits<int32_t>::max()));
       const auto curr_tx_fec_stats = wb_tx.get_latest_fec_stats();
       air_fec.curr_fec_encode_time_avg_us =
           openhd::util::get_micros(curr_tx_fec_stats.curr_fec_encode_time.avg);

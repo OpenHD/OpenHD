@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - openhd-3.0
+      - openhd-3.0-test
   pull_request:
     branches:
       - openhd-3.0

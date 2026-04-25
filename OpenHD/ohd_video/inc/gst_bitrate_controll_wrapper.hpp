@@ -26,7 +26,13 @@
 
 #include <gst/gst.h>
 
+#include <algorithm>
+#include <cstdint>
+#include <limits>
 #include <optional>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include "openhd_bitrate.h"
 #include "openhd_spdlog.h"
@@ -44,6 +50,9 @@ struct GstBitrateControlElement {
   GstElement* encoder;
   // Not all encoders / elements call the bitrate property "bitrate"
   std::string property_name = "bitrate";
+  // Some encoders need related rate-control bounds updated with the target.
+  // The percentage is relative to the raw property value, not kbit/s.
+  std::vector<std::pair<std::string, int>> extra_properties_percent;
 };
 
 struct GstBitrateReadback {
@@ -51,20 +60,107 @@ struct GstBitrateReadback {
   int interpreted_kbits = -1;
 };
 
-static std::optional<GstBitrateReadback> read_bitrate_readback(
-    const GstBitrateControlElement& ctrl_el) {
-  gint raw_property_value = -1;
-  g_object_get(ctrl_el.encoder, ctrl_el.property_name.c_str(),
-               &raw_property_value, NULL);
-  if (raw_property_value < 0) {
+static std::optional<int64_t> read_integer_property(GObject* object,
+                                                    const std::string& name) {
+  auto* pspec = g_object_class_find_property(G_OBJECT_GET_CLASS(object),
+                                             name.c_str());
+  if (pspec == nullptr) {
+    openhd::log::get_default()->warn("Cannot find gst property {}", name);
     return std::nullopt;
   }
+  GValue value = G_VALUE_INIT;
+  g_value_init(&value, G_PARAM_SPEC_VALUE_TYPE(pspec));
+  g_object_get_property(object, name.c_str(), &value);
+  std::optional<int64_t> ret = std::nullopt;
+  if (G_VALUE_HOLDS_INT(&value)) {
+    ret = g_value_get_int(&value);
+  } else if (G_VALUE_HOLDS_UINT(&value)) {
+    ret = static_cast<int64_t>(g_value_get_uint(&value));
+  } else if (G_VALUE_HOLDS_LONG(&value)) {
+    ret = static_cast<int64_t>(g_value_get_long(&value));
+  } else if (G_VALUE_HOLDS_ULONG(&value)) {
+    const auto raw = g_value_get_ulong(&value);
+    ret = raw > static_cast<gulong>(std::numeric_limits<int64_t>::max())
+              ? std::numeric_limits<int64_t>::max()
+              : static_cast<int64_t>(raw);
+  } else if (G_VALUE_HOLDS_INT64(&value)) {
+    ret = g_value_get_int64(&value);
+  } else if (G_VALUE_HOLDS_UINT64(&value)) {
+    const auto raw = g_value_get_uint64(&value);
+    ret = raw > static_cast<uint64_t>(std::numeric_limits<int64_t>::max())
+              ? std::numeric_limits<int64_t>::max()
+              : static_cast<int64_t>(raw);
+  } else {
+    openhd::log::get_default()->warn("gst property {} is not integer-like",
+                                     name);
+  }
+  g_value_unset(&value);
+  return ret;
+}
+
+static bool set_integer_property(GObject* object, const std::string& name,
+                                 int64_t raw_value) {
+  auto* pspec = g_object_class_find_property(G_OBJECT_GET_CLASS(object),
+                                             name.c_str());
+  if (pspec == nullptr) {
+    openhd::log::get_default()->warn("Cannot find gst property {}", name);
+    return false;
+  }
+  GValue value = G_VALUE_INIT;
+  g_value_init(&value, G_PARAM_SPEC_VALUE_TYPE(pspec));
+  if (G_VALUE_HOLDS_INT(&value)) {
+    g_value_set_int(&value, static_cast<gint>(std::clamp<int64_t>(
+                                raw_value, std::numeric_limits<gint>::min(),
+                                std::numeric_limits<gint>::max())));
+  } else if (G_VALUE_HOLDS_UINT(&value)) {
+    const auto unsigned_value =
+        static_cast<uint64_t>(std::max<int64_t>(raw_value, 0));
+    g_value_set_uint(&value, static_cast<guint>(std::min<uint64_t>(
+                                 unsigned_value,
+                                 std::numeric_limits<guint>::max())));
+  } else if (G_VALUE_HOLDS_LONG(&value)) {
+    g_value_set_long(&value, static_cast<glong>(std::clamp<int64_t>(
+                                 raw_value, std::numeric_limits<glong>::min(),
+                                 std::numeric_limits<glong>::max())));
+  } else if (G_VALUE_HOLDS_ULONG(&value)) {
+    const auto unsigned_value =
+        static_cast<uint64_t>(std::max<int64_t>(raw_value, 0));
+    g_value_set_ulong(&value, static_cast<gulong>(std::min<uint64_t>(
+                                  unsigned_value,
+                                  std::numeric_limits<gulong>::max())));
+  } else if (G_VALUE_HOLDS_INT64(&value)) {
+    g_value_set_int64(&value, raw_value);
+  } else if (G_VALUE_HOLDS_UINT64(&value)) {
+    g_value_set_uint64(&value, static_cast<guint64>(
+                                   std::max<int64_t>(raw_value, 0)));
+  } else {
+    openhd::log::get_default()->warn("gst property {} is not integer-like",
+                                     name);
+    g_value_unset(&value);
+    return false;
+  }
+  g_object_set_property(object, name.c_str(), &value);
+  g_value_unset(&value);
+  return true;
+}
+
+static std::optional<GstBitrateReadback> read_bitrate_readback(
+    const GstBitrateControlElement& ctrl_el) {
+  const auto raw_property_value_opt =
+      read_integer_property(G_OBJECT(ctrl_el.encoder), ctrl_el.property_name);
+  if (!raw_property_value_opt.has_value() || raw_property_value_opt.value() < 0) {
+    return std::nullopt;
+  }
+  const auto raw_property_value = raw_property_value_opt.value();
   GstBitrateReadback ret{};
-  ret.raw_property_value = raw_property_value;
+  ret.raw_property_value =
+      raw_property_value > std::numeric_limits<int>::max()
+          ? std::numeric_limits<int>::max()
+          : static_cast<int>(raw_property_value);
   ret.interpreted_kbits =
       ctrl_el.takes_kbit
-          ? raw_property_value
-          : openhd::bits_per_second_to_kbits_per_second(raw_property_value);
+          ? ret.raw_property_value
+          : openhd::bits_per_second_to_kbits_per_second(ret.raw_property_value);
   return ret;
 }
 
@@ -98,6 +194,15 @@ get_dynamic_bitrate_control_element_in_pipeline(
     ret.encoder = gst_bin_get_by_name(GST_BIN(gst_pipeline), "rkmpih264enc");
     ret.property_name = "bitrate";
     ret.takes_kbit = true;
+  } else if (camera.requires_rockchip1126_mpp_pipeline()) {
+    ret.encoder = gst_bin_get_by_name(GST_BIN(gst_pipeline), "mpp_encoder");
+    ret.property_name = "bps";
+    ret.takes_kbit = false;
+    ret.extra_properties_percent = {{"bps-min", 90}, {"bps-max", 110}};
+  } else if (camera.requires_nxp_imx8_v4l2_pipeline()) {
+    ret.encoder = gst_bin_get_by_name(GST_BIN(gst_pipeline), "nxp_encoder");
+    ret.property_name = "bitrate";
+    ret.takes_kbit = true;
   }
   if (ret.encoder == nullptr) {
     openhd::log::get_default()->debug(
@@ -128,8 +233,18 @@ static bool change_bitrate(const GstBitrateControlElement& ctrl_el,
   const auto target_raw_property_value =
       ctrl_el.takes_kbit ? bitrate_kbits
                          : openhd::kbits_to_bits_per_second(bitrate_kbits);
-  g_object_set(ctrl_el.encoder, ctrl_el.property_name.c_str(),
-               target_raw_property_value, NULL);
+  if (!set_integer_property(G_OBJECT(ctrl_el.encoder), ctrl_el.property_name,
+                            target_raw_property_value)) {
+    return false;
+  }
+  for (const auto& extra : ctrl_el.extra_properties_percent) {
+    const int64_t bounded_value =
+        static_cast<int64_t>(target_raw_property_value) * extra.second / 100;
+    if (!set_integer_property(G_OBJECT(ctrl_el.encoder), extra.first,
+                              bounded_value)) {
+      return false;
+    }
+  }
   const auto readback_opt = read_bitrate_readback(ctrl_el);
   if (!readback_opt.has_value()) {
     openhd::log::get_default()->warn(

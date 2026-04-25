@@ -260,6 +260,18 @@ class LinkActionHandler {
       m_cam_info_cam2.stream_fps = fps;
     }
   }
+  void set_cam_info_supports_variable_bitrate(uint8_t cam_index,
+                                              bool supports_variable_bitrate) {
+    if (cam_index == 0) {
+      std::lock_guard<std::mutex> lock(m_cam_info_cam1_mutex);
+      m_cam_info_cam1.supports_variable_bitrate =
+          supports_variable_bitrate ? 1 : 0;
+    } else {
+      std::lock_guard<std::mutex> lock(m_cam_info_cam2_mutex);
+      m_cam_info_cam2.supports_variable_bitrate =
+          supports_variable_bitrate ? 1 : 0;
+    }
+  }
   void set_cam_info_status(uint8_t cam_index, uint8_t status) {
     if (cam_index == 0) {
       std::lock_guard<std::mutex> lock(m_cam_info_cam1_mutex);

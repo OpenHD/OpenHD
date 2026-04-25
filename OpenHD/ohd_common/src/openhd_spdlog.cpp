@@ -35,6 +35,8 @@
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"
 
+static constexpr size_t MAX_BUFFERED_MAVLINK_LOG_MESSAGES = 80;
+
 static openhd::log::MavlinkLogMessage safe_create(int level,
                                                   const std::string& message) {
   openhd::log::MavlinkLogMessage lmessage{};
@@ -91,7 +93,7 @@ openhd::log::MavlinkLogMessageBuffer::dequeue_log_messages() {
 void openhd::log::MavlinkLogMessageBuffer::enqueue_log_message(
     openhd::log::MavlinkLogMessage message) {
   std::lock_guard<std::mutex> lock(m_mutex);
-  if (m_buffer.size() > 10) {
+  if (m_buffer.size() >= MAX_BUFFERED_MAVLINK_LOG_MESSAGES) {
     std::cerr << "Dropping log message:" << message.message << std::endl;
     return;
   }

@@ -351,6 +351,7 @@ void EthernetLink::update_link_stats() {
       air_video.curr_injected_bitrate =
           sample.bitrate_bps > 0 ? sample.bitrate_bps
                                  : air_video.curr_measured_encoder_bitrate;
+      air_video.dummy2 = clamp_int32(sample.bitrate_bps);
       air_video.curr_injected_pps = sample.packets_per_second;
       air_video.curr_dropped_frames = 0;
       air_video.curr_fec_percentage = 0;
