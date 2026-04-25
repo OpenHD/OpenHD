@@ -272,10 +272,20 @@ void GStreamerStream::handle_gst_message(GstMessage* message) {
   GError* info_error = nullptr;
   gchar* info_debug = nullptr;
   gst_message_parse_info(message, &info_error, &info_debug);
-  if (info_debug != nullptr) {
-    handle_perf_info_message(info_debug);
-  } else if (info_error != nullptr && info_error->message != nullptr) {
-    handle_perf_info_message(info_error->message);
+  const char* info_text = nullptr;
+  if (info_error != nullptr && info_error->message != nullptr) {
+    info_text = info_error->message;
+  } else if (info_debug != nullptr) {
+    info_text = info_debug;
+  }
+  if (info_text != nullptr) {
+    handle_perf_info_message(info_text);
+  }
+  if (info_error != nullptr && info_error->message != nullptr &&
+      info_debug != nullptr && std::strcmp(info_error->message, info_debug) != 0) {
+    m_console->debug("Perf cam{} parse_info mismatch error_msg=[{}] debug=[{}]",
+                     m_camera_holder->get_camera().index, info_error->message,
+                     info_debug);
   }
   if (info_error != nullptr) {
     g_error_free(info_error);
@@ -322,14 +332,14 @@ void GStreamerStream::cleanup_perf_element() {
   }
 }
 
-void GStreamerStream::handle_perf_info_message(const char* info_text) {
+bool GStreamerStream::handle_perf_info_message(const char* info_text) {
   m_console->debug("Perf cam{} raw (gst-perf): {}",
                    m_camera_holder->get_camera().index,
                    info_text == nullptr ? "<null>" : info_text);
   uint32_t bitrate_bps = 0;
   uint16_t fps = 0;
   if (!parse_gst_perf_bitrate_fps(info_text, bitrate_bps, fps)) {
-    return;
+    return false;
   }
   const int64_t now_ms = steady_clock_ms();
   if (m_perf_first_message_ms <= 0) {
@@ -349,6 +359,7 @@ void GStreamerStream::handle_perf_info_message(const char* info_text) {
                    m_camera_holder->get_camera().index, bitrate_bps, fps);
   openhd::LinkActionHandler::instance().set_cam_info_perf(
       m_camera_holder->get_camera().index, bitrate_bps, fps);
+  return true;
 }
 
 void GStreamerStream::check_required_perf_telemetry(int64_t now_ms,
