@@ -27,9 +27,13 @@
 #include <gst/gst.h>
 
 #include <array>
+#include <atomic>
+#include <chrono>
 #include <condition_variable>
+#include <cstdint>
 #include <memory>
 #include <mutex>
+#include <string>
 #include <thread>
 #include <vector>
 
@@ -61,7 +65,7 @@ class GStreamerStream : public CameraStream {
   // Creates a valid gstreamer pipeline for the given camera,
   // including the source and encoder, not including appsink
   std::string create_source_encode_pipeline(const CameraHolder& cam_holder);
-  void setup();
+  bool setup();
   // Set gst state to PLAYING
   void start();
   // Set gst state to PAUSED
@@ -80,9 +84,12 @@ class GStreamerStream : public CameraStream {
   static GstBusSyncReply on_gst_bus_message(GstBus* bus, GstMessage* message,
                                             gpointer user_data);
   void handle_gst_message(GstMessage* message);
-  void setup_perf_element();
+  bool setup_perf_element();
   void cleanup_perf_element();
   void handle_perf_info_message(const char* info_text);
+  void check_required_perf_telemetry(int64_t now_ms, int64_t first_frame_ms);
+  void report_required_perf_problem(const std::string& code,
+                                    const std::string& description);
   bool should_skip_runtime_bitrate_update() const;
 
  private:
@@ -93,7 +100,7 @@ class GStreamerStream : public CameraStream {
   // not supported by all camera(s).
   // for dynamically changing the bitrate
   std::optional<GstBitrateControlElement> m_bitrate_ctrl_element = std::nullopt;
-  // Optional gst-perf element that reports encoder-side bitrate/fps.
+  // Required gst-perf element that reports encoder-side bitrate/fps.
   GstElement* m_perf_element = nullptr;
   GstBus* m_gst_bus = nullptr;
   // If a pipeline is started with air recording enabled, the file name the
@@ -113,6 +120,9 @@ class GStreamerStream : public CameraStream {
   std::condition_variable m_loop_cv;
   std::chrono::steady_clock::time_point m_last_log_skip_dynamic_bitrate =
       std::chrono::steady_clock::now();
+  std::atomic<int64_t> m_last_perf_message_ms = 0;
+  std::atomic<int64_t> m_last_required_perf_problem_ms = 0;
+  int64_t m_last_perf_warning_ms = 0;
 
  private:
   // The stuff here is to pull the data out of the gstreamer pipeline, such that

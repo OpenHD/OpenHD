@@ -229,15 +229,9 @@ class LinkActionHandler {
     if (cam_index == 0) {
       std::lock_guard<std::mutex> lock(m_cam_info_cam1_mutex);
       m_cam_info_cam1.target_bitrate_kbits = bitrate_kbits;
-      if (m_cam_info_cam1.measured_bitrate_bps == 0) {
-        m_cam_info_cam1.encoding_bitrate_kbits = bitrate_kbits;
-      }
     } else {
       std::lock_guard<std::mutex> lock(m_cam_info_cam2_mutex);
       m_cam_info_cam2.target_bitrate_kbits = bitrate_kbits;
-      if (m_cam_info_cam2.measured_bitrate_bps == 0) {
-        m_cam_info_cam2.encoding_bitrate_kbits = bitrate_kbits;
-      }
     }
   }
   void set_cam_info_perf(uint8_t cam_index, uint32_t bitrate_bps,

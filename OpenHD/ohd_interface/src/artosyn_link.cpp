@@ -954,12 +954,10 @@ void ArtosynLink::update_link_stats() {
                                static_cast<uint32_t>(
                                    std::numeric_limits<int32_t>::max())));
       } else {
-        air_video.curr_measured_encoder_bitrate = sample.bitrate_bps;
+        air_video.curr_measured_encoder_bitrate = 0;
       }
       // No additional link-layer FEC injection on this path.
-      air_video.curr_injected_bitrate =
-          sample.bitrate_bps > 0 ? sample.bitrate_bps
-                                 : air_video.curr_measured_encoder_bitrate;
+      air_video.curr_injected_bitrate = clamp_int32(sample.bitrate_bps);
       air_video.dummy2 = clamp_int32(sample.bitrate_bps);
       air_video.curr_injected_pps = sample.packets_per_second;
       air_video.curr_dropped_frames = 0;

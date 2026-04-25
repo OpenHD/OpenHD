@@ -1765,8 +1765,7 @@ void WBLink::wt_update_statistics() {
                                static_cast<uint32_t>(
                                    std::numeric_limits<int32_t>::max())));
       } else {
-        air_video.curr_measured_encoder_bitrate =
-            curr_tx_stats.current_provided_bits_per_second;
+        air_video.curr_measured_encoder_bitrate = 0;
       }
       air_video.curr_injected_bitrate =
           curr_tx_stats.current_injected_bits_per_second;
