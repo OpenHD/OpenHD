@@ -87,6 +87,10 @@ class GStreamerStream : public CameraStream {
   bool setup_perf_element();
   void cleanup_perf_element();
   bool handle_perf_info_message(const char* info_text);
+  static GstPadProbeReturn on_perf_pad_probe(GstPad* pad,
+                                             GstPadProbeInfo* info,
+                                             gpointer user_data);
+  void handle_perf_pad_probe(GstPadProbeInfo* info);
   void check_required_perf_telemetry(int64_t now_ms, int64_t first_frame_ms);
   void report_required_perf_problem(const std::string& code,
                                     const std::string& description);
@@ -102,6 +106,8 @@ class GStreamerStream : public CameraStream {
   std::optional<GstBitrateControlElement> m_bitrate_ctrl_element = std::nullopt;
   // Required gst-perf element that reports encoder-side bitrate/fps.
   GstElement* m_perf_element = nullptr;
+  GstPad* m_perf_probe_pad = nullptr;
+  gulong m_perf_probe_id = 0;
   GstBus* m_gst_bus = nullptr;
   // If a pipeline is started with air recording enabled, the file name the
   // recording is written to is stored here otherwise, it is set to std::nullopt
@@ -124,7 +130,12 @@ class GStreamerStream : public CameraStream {
   std::atomic<int64_t> m_last_required_perf_problem_ms = 0;
   int64_t m_last_perf_warning_ms = 0;
   int64_t m_perf_first_message_ms = 0;
-  bool m_perf_seen_nonzero_bitrate = false;
+  std::atomic_bool m_perf_seen_nonzero_bitrate = false;
+  std::atomic_bool m_perf_probe_active = false;
+  std::atomic_bool m_perf_probe_reported = false;
+  int64_t m_perf_probe_window_start_ms = 0;
+  uint64_t m_perf_probe_window_bytes = 0;
+  uint32_t m_perf_probe_window_buffers = 0;
 
  private:
   // The stuff here is to pull the data out of the gstreamer pipeline, such that

@@ -57,6 +57,7 @@ static constexpr auto kSkipDynamicBitrateLogInterval = std::chrono::seconds(5);
 static constexpr int64_t kPerfFirstMessageTimeoutMs = 5000;
 static constexpr int64_t kPerfMissingWarningIntervalMs = 10000;
 static constexpr int64_t kPerfBitrateWarmupMs = 3000;
+static constexpr int64_t kPerfProbeIntervalMs = 1000;
 static constexpr size_t kPipelineDebugMaxChars = 1200;
 static constexpr size_t kPipelineDebugChunkChars = 34;
 
@@ -101,7 +102,6 @@ bool parse_gst_perf_metric(const char* text, const char* key, double& out_value)
 bool parse_gst_perf_bitrate_fps(const char* info_text, uint32_t& bitrate_bps,
                                 uint16_t& fps) {
   double parsed_bitrate = 0.0;
-  double parsed_mean_bitrate = 0.0;
   double parsed_fps = 0.0;
   bool has_any_bitrate = false;
   const auto use_bitrate_candidate = [&](const char* key, double scale) {
@@ -137,6 +137,24 @@ bool parse_gst_perf_bitrate_fps(const char* info_text, uint32_t& bitrate_bps,
   bitrate_bps = static_cast<uint32_t>(std::llround(std::min(parsed_bitrate, bitrate_max)));
   fps = static_cast<uint16_t>(std::llround(std::min(parsed_fps, fps_max)));
   return true;
+}
+
+uint64_t gst_buffer_list_total_size(GstBufferList* buffer_list,
+                                    uint32_t& buffer_count) {
+  if (buffer_list == nullptr) {
+    return 0;
+  }
+  uint64_t total_size = 0;
+  const guint length = gst_buffer_list_length(buffer_list);
+  for (guint i = 0; i < length; ++i) {
+    GstBuffer* buffer = gst_buffer_list_get(buffer_list, i);
+    if (buffer == nullptr) {
+      continue;
+    }
+    total_size += gst_buffer_get_size(buffer);
+    ++buffer_count;
+  }
+  return total_size;
 }
 
 void send_pipeline_debug_over_mavlink(int cam_index,
@@ -319,12 +337,46 @@ bool GStreamerStream::setup_perf_element() {
                            nullptr);
   m_console->debug("Attached gst-perf bus handler on {}",
                    OHDGstHelper::kEncoderPerfElementName);
+  m_perf_probe_pad = gst_element_get_static_pad(m_perf_element, "sink");
+  if (m_perf_probe_pad == nullptr) {
+    report_required_perf_problem(
+        "gst_perf_no_sink_pad",
+        fmt::format("gst-perf is required but the camera {} perf element has "
+                    "no sink pad",
+                    m_camera_holder->get_camera().index));
+    return false;
+  }
+  m_perf_probe_id = gst_pad_add_probe(
+      m_perf_probe_pad,
+      static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER |
+                                   GST_PAD_PROBE_TYPE_BUFFER_LIST),
+      &GStreamerStream::on_perf_pad_probe, this, nullptr);
+  m_perf_probe_active.store(m_perf_probe_id != 0, std::memory_order_relaxed);
+  if (m_perf_probe_id == 0) {
+    report_required_perf_problem(
+        "gst_perf_probe_failed",
+        fmt::format("gst-perf is required but attaching camera {} perf buffer "
+                    "probe failed",
+                    m_camera_holder->get_camera().index));
+    return false;
+  }
+  m_console->debug("Attached encoder perf buffer probe on {} sink pad",
+                   OHDGstHelper::kEncoderPerfElementName);
   return true;
 }
 
 void GStreamerStream::cleanup_perf_element() {
   if (m_gst_bus != nullptr) {
     gst_bus_set_sync_handler(m_gst_bus, nullptr, nullptr, nullptr);
+  }
+  m_perf_probe_active.store(false, std::memory_order_relaxed);
+  if (m_perf_probe_pad != nullptr && m_perf_probe_id != 0) {
+    gst_pad_remove_probe(m_perf_probe_pad, m_perf_probe_id);
+    m_perf_probe_id = 0;
+  }
+  if (m_perf_probe_pad != nullptr) {
+    gst_object_unref(m_perf_probe_pad);
+    m_perf_probe_pad = nullptr;
   }
   if (m_perf_element != nullptr) {
     gst_object_unref(m_perf_element);
@@ -333,21 +385,30 @@ void GStreamerStream::cleanup_perf_element() {
 }
 
 bool GStreamerStream::handle_perf_info_message(const char* info_text) {
-  m_console->debug("Perf cam{} raw (gst-perf): {}",
-                   m_camera_holder->get_camera().index,
-                   info_text == nullptr ? "<null>" : info_text);
   uint32_t bitrate_bps = 0;
   uint16_t fps = 0;
   if (!parse_gst_perf_bitrate_fps(info_text, bitrate_bps, fps)) {
+    m_console->debug("Perf cam{} raw (gst-perf): {}",
+                     m_camera_holder->get_camera().index,
+                     info_text == nullptr ? "<null>" : info_text);
     return false;
   }
+  if (m_perf_probe_active.load(std::memory_order_relaxed) &&
+      (m_perf_probe_reported.load(std::memory_order_relaxed) ||
+       bitrate_bps == 0)) {
+    return true;
+  }
+  m_console->debug("Perf cam{} raw (gst-perf): {}",
+                   m_camera_holder->get_camera().index,
+                   info_text == nullptr ? "<null>" : info_text);
   const int64_t now_ms = steady_clock_ms();
   if (m_perf_first_message_ms <= 0) {
     m_perf_first_message_ms = now_ms;
   }
   if (bitrate_bps > 0) {
-    m_perf_seen_nonzero_bitrate = true;
-  } else if (fps > 0 && !m_perf_seen_nonzero_bitrate &&
+    m_perf_seen_nonzero_bitrate.store(true, std::memory_order_relaxed);
+  } else if (fps > 0 &&
+             !m_perf_seen_nonzero_bitrate.load(std::memory_order_relaxed) &&
              now_ms - m_perf_first_message_ms < kPerfBitrateWarmupMs) {
     m_console->debug(
         "Perf cam{} (gst-perf): skipping warmup zero bitrate fps={} age_ms={}",
@@ -360,6 +421,71 @@ bool GStreamerStream::handle_perf_info_message(const char* info_text) {
   openhd::LinkActionHandler::instance().set_cam_info_perf(
       m_camera_holder->get_camera().index, bitrate_bps, fps);
   return true;
+}
+
+GstPadProbeReturn GStreamerStream::on_perf_pad_probe(
+    GstPad* /*pad*/, GstPadProbeInfo* info, gpointer user_data) {
+  auto* self = static_cast<GStreamerStream*>(user_data);
+  if (self != nullptr && info != nullptr) {
+    self->handle_perf_pad_probe(info);
+  }
+  return GST_PAD_PROBE_OK;
+}
+
+void GStreamerStream::handle_perf_pad_probe(GstPadProbeInfo* info) {
+  const auto probe_type = GST_PAD_PROBE_INFO_TYPE(info);
+  uint64_t bytes = 0;
+  uint32_t buffers = 0;
+  if ((probe_type & GST_PAD_PROBE_TYPE_BUFFER) != 0) {
+    GstBuffer* buffer = GST_PAD_PROBE_INFO_BUFFER(info);
+    if (buffer != nullptr) {
+      bytes = gst_buffer_get_size(buffer);
+      buffers = 1;
+    }
+  } else if ((probe_type & GST_PAD_PROBE_TYPE_BUFFER_LIST) != 0) {
+    GstBufferList* buffer_list = GST_PAD_PROBE_INFO_BUFFER_LIST(info);
+    bytes = gst_buffer_list_total_size(buffer_list, buffers);
+  }
+  if (buffers == 0) {
+    return;
+  }
+  const int64_t now_ms = steady_clock_ms();
+  if (m_perf_probe_window_start_ms <= 0) {
+    m_perf_probe_window_start_ms = now_ms;
+  }
+  m_perf_probe_window_bytes += bytes;
+  m_perf_probe_window_buffers += buffers;
+  const int64_t elapsed_ms = now_ms - m_perf_probe_window_start_ms;
+  if (elapsed_ms < kPerfProbeIntervalMs) {
+    return;
+  }
+  const double elapsed = static_cast<double>(elapsed_ms);
+  const double bitrate =
+      static_cast<double>(m_perf_probe_window_bytes) * 8.0 * 1000.0 / elapsed;
+  const double fps =
+      static_cast<double>(m_perf_probe_window_buffers) * 1000.0 / elapsed;
+  const double bitrate_max =
+      static_cast<double>(std::numeric_limits<uint32_t>::max());
+  const double fps_max = static_cast<double>(std::numeric_limits<uint16_t>::max());
+  const uint32_t bitrate_bps =
+      static_cast<uint32_t>(std::llround(std::min(bitrate, bitrate_max)));
+  const uint16_t frame_rate =
+      static_cast<uint16_t>(std::llround(std::min(fps, fps_max)));
+
+  if (bitrate_bps > 0) {
+    m_perf_seen_nonzero_bitrate.store(true, std::memory_order_relaxed);
+  }
+  m_perf_probe_reported.store(true, std::memory_order_relaxed);
+  m_last_perf_message_ms.store(now_ms, std::memory_order_relaxed);
+  m_console->debug("Perf cam{} (pad-probe): bitrate={} bps fps={}",
+                   m_camera_holder->get_camera().index, bitrate_bps,
+                   frame_rate);
+  openhd::LinkActionHandler::instance().set_cam_info_perf(
+      m_camera_holder->get_camera().index, bitrate_bps, frame_rate);
+
+  m_perf_probe_window_start_ms = now_ms;
+  m_perf_probe_window_bytes = 0;
+  m_perf_probe_window_buffers = 0;
 }
 
 void GStreamerStream::check_required_perf_telemetry(int64_t now_ms,
@@ -568,7 +694,12 @@ bool GStreamerStream::setup() {
   m_last_perf_message_ms.store(0, std::memory_order_relaxed);
   m_last_perf_warning_ms = steady_clock_ms() - kPerfMissingWarningIntervalMs;
   m_perf_first_message_ms = 0;
-  m_perf_seen_nonzero_bitrate = false;
+  m_perf_seen_nonzero_bitrate.store(false, std::memory_order_relaxed);
+  m_perf_probe_active.store(false, std::memory_order_relaxed);
+  m_perf_probe_reported.store(false, std::memory_order_relaxed);
+  m_perf_probe_window_start_ms = 0;
+  m_perf_probe_window_bytes = 0;
+  m_perf_probe_window_buffers = 0;
   auto* perf_factory = gst_element_factory_find("perf");
   if (perf_factory == nullptr) {
     report_required_perf_problem(
