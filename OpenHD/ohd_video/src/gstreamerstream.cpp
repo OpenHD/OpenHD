@@ -56,6 +56,7 @@ namespace {
 static constexpr auto kSkipDynamicBitrateLogInterval = std::chrono::seconds(5);
 static constexpr int64_t kPerfFirstMessageTimeoutMs = 5000;
 static constexpr int64_t kPerfMissingWarningIntervalMs = 10000;
+static constexpr int64_t kPerfBitrateWarmupMs = 3000;
 static constexpr size_t kPipelineDebugMaxChars = 1200;
 static constexpr size_t kPipelineDebugChunkChars = 34;
 
@@ -100,8 +101,27 @@ bool parse_gst_perf_metric(const char* text, const char* key, double& out_value)
 bool parse_gst_perf_bitrate_fps(const char* info_text, uint32_t& bitrate_bps,
                                 uint16_t& fps) {
   double parsed_bitrate = 0.0;
+  double parsed_mean_bitrate = 0.0;
   double parsed_fps = 0.0;
-  if (!parse_gst_perf_metric(info_text, "bps: ", parsed_bitrate)) {
+  bool has_any_bitrate = false;
+  const auto use_bitrate_candidate = [&](const char* key, double scale) {
+    double candidate = 0.0;
+    if (!parse_gst_perf_metric(info_text, key, candidate)) {
+      return;
+    }
+    has_any_bitrate = true;
+    parsed_bitrate = std::max(parsed_bitrate, candidate * scale);
+  };
+  use_bitrate_candidate("bps: ", 1.0);
+  use_bitrate_candidate("bps=", 1.0);
+  use_bitrate_candidate("mean_bps: ", 1.0);
+  use_bitrate_candidate("mean_bps=", 1.0);
+  // Some gst-perf variants report in kbps via bitrate fields.
+  use_bitrate_candidate("bitrate: ", 1000.0);
+  use_bitrate_candidate("bitrate=", 1000.0);
+  use_bitrate_candidate("mean_bitrate: ", 1000.0);
+  use_bitrate_candidate("mean_bitrate=", 1000.0);
+  if (!has_any_bitrate) {
     return false;
   }
   if (!parse_gst_perf_metric(info_text, "fps: ", parsed_fps)) {
@@ -321,6 +341,19 @@ bool GStreamerStream::handle_perf_info_message(const char* info_text) {
   if (!parse_gst_perf_bitrate_fps(info_text, bitrate_bps, fps)) {
     return false;
   }
+  const int64_t now_ms = steady_clock_ms();
+  if (m_perf_first_message_ms <= 0) {
+    m_perf_first_message_ms = now_ms;
+  }
+  if (bitrate_bps > 0) {
+    m_perf_seen_nonzero_bitrate = true;
+  } else if (fps > 0 && !m_perf_seen_nonzero_bitrate &&
+             now_ms - m_perf_first_message_ms < kPerfBitrateWarmupMs) {
+    m_console->debug(
+        "Perf cam{} (gst-perf): skipping warmup zero bitrate fps={} age_ms={}",
+        m_camera_holder->get_camera().index, fps, now_ms - m_perf_first_message_ms);
+    return;
+  }
   m_last_perf_message_ms.store(steady_clock_ms(), std::memory_order_relaxed);
   m_console->debug("Perf cam{} (gst-perf): bitrate={} bps fps={}",
                    m_camera_holder->get_camera().index, bitrate_bps, fps);
@@ -534,6 +567,8 @@ bool GStreamerStream::setup() {
   m_bitrate_ctrl_element = std::nullopt;
   m_last_perf_message_ms.store(0, std::memory_order_relaxed);
   m_last_perf_warning_ms = steady_clock_ms() - kPerfMissingWarningIntervalMs;
+  m_perf_first_message_ms = 0;
+  m_perf_seen_nonzero_bitrate = false;
   auto* perf_factory = gst_element_factory_find("perf");
   if (perf_factory == nullptr) {
     report_required_perf_problem(

@@ -894,7 +894,9 @@ static constexpr auto kEncoderPerfElementName = "openhd_perf";
 // Add gst-perf right after encoding so bitrate/fps are measured on the encoder
 // output before packetization.
 static std::string createEncoderPerfElement() {
-  return fmt::format(" perf name={} bitrate-interval=1000 ! ",
+  // Keep a queue directly after perf, matching the known-good standalone test
+  // pipeline shape used for debugging bitrate measurements.
+  return fmt::format(" perf name={} bitrate-interval=1000 ! queue ! ",
                      kEncoderPerfElementName);
 }
 
