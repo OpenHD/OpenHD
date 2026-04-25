@@ -100,16 +100,22 @@ bool parse_gst_perf_metric(const char* text, const char* key, double& out_value)
 bool parse_gst_perf_bitrate_fps(const char* info_text, uint32_t& bitrate_bps,
                                 uint16_t& fps) {
   double parsed_bitrate = 0.0;
+  double parsed_mean_bitrate = 0.0;
   double parsed_fps = 0.0;
-  if (!parse_gst_perf_metric(info_text, "bps: ", parsed_bitrate)) {
+  const bool has_bitrate =
+      parse_gst_perf_metric(info_text, "bps: ", parsed_bitrate);
+  const bool has_mean_bitrate =
+      parse_gst_perf_metric(info_text, "mean_bps: ", parsed_mean_bitrate);
+  if (!has_bitrate && !has_mean_bitrate) {
     return false;
   }
   if (!parse_gst_perf_metric(info_text, "fps: ", parsed_fps)) {
     return false;
   }
-  if (parsed_bitrate < 0.0) {
-    parsed_bitrate = 0.0;
-  }
+  // Some gst-perf builds can emit instantaneous bps as 0 while mean_bps is
+  // populated, so use the higher of the two metrics when both are present.
+  parsed_bitrate = std::max(parsed_bitrate, parsed_mean_bitrate);
+  parsed_bitrate = std::max(0.0, parsed_bitrate);
   if (parsed_fps < 0.0) {
     parsed_fps = 0.0;
   }
