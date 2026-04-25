@@ -322,6 +322,9 @@ void GStreamerStream::cleanup_perf_element() {
 }
 
 void GStreamerStream::handle_perf_info_message(const char* info_text) {
+  m_console->debug("Perf cam{} raw (gst-perf): {}",
+                   m_camera_holder->get_camera().index,
+                   info_text == nullptr ? "<null>" : info_text);
   uint32_t bitrate_bps = 0;
   uint16_t fps = 0;
   if (!parse_gst_perf_bitrate_fps(info_text, bitrate_bps, fps)) {
