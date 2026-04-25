@@ -86,7 +86,7 @@ class GStreamerStream : public CameraStream {
   void handle_gst_message(GstMessage* message);
   bool setup_perf_element();
   void cleanup_perf_element();
-  void handle_perf_info_message(const char* info_text);
+  bool handle_perf_info_message(const char* info_text);
   void check_required_perf_telemetry(int64_t now_ms, int64_t first_frame_ms);
   void report_required_perf_problem(const std::string& code,
                                     const std::string& description);
