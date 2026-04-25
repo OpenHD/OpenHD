@@ -26,6 +26,7 @@
 #include <gst/gst.h>
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
@@ -68,33 +69,63 @@ bool parse_gst_perf_metric(const char* text, const char* key, double& out_value)
   if (text == nullptr || key == nullptr) {
     return false;
   }
-  const char* value_start = std::strstr(text, key);
-  if (value_start == nullptr) {
-    return false;
+  const auto key_len = std::strlen(key);
+  const char* search = text;
+  while (search != nullptr) {
+    const char* match = std::strstr(search, key);
+    if (match == nullptr) {
+      return false;
+    }
+    const char* value_start = match + key_len;
+    const bool at_start = match == text;
+    const unsigned char prev_char =
+        at_start ? static_cast<unsigned char>(' ')
+                 : static_cast<unsigned char>(*(match - 1));
+    // gst-perf INFO strings may contain similarly named keys like "mean_bps".
+    // Ensure we match a standalone metric key (e.g. "; bps: ") rather than a
+    // suffix inside another token.
+    if (at_start || !(std::isalnum(prev_char) != 0 || prev_char == '_')) {
+      char* value_end = nullptr;
+      const double parsed = std::strtod(value_start, &value_end);
+      if (value_end != value_start) {
+        out_value = parsed;
+        return true;
+      }
+    }
+    search = match + 1;
   }
-  value_start += std::strlen(key);
-  char* value_end = nullptr;
-  const double parsed = std::strtod(value_start, &value_end);
-  if (value_end == value_start) {
-    return false;
-  }
-  out_value = parsed;
-  return true;
+  return false;
 }
 
 bool parse_gst_perf_bitrate_fps(const char* info_text, uint32_t& bitrate_bps,
                                 uint16_t& fps) {
   double parsed_bitrate = 0.0;
   double parsed_fps = 0.0;
-  if (!parse_gst_perf_metric(info_text, "bps: ", parsed_bitrate)) {
+  bool has_any_bitrate = false;
+  const auto use_bitrate_candidate = [&](const char* key, double scale) {
+    double candidate = 0.0;
+    if (!parse_gst_perf_metric(info_text, key, candidate)) {
+      return;
+    }
+    has_any_bitrate = true;
+    parsed_bitrate = std::max(parsed_bitrate, candidate * scale);
+  };
+  use_bitrate_candidate("bps: ", 1.0);
+  use_bitrate_candidate("bps=", 1.0);
+  use_bitrate_candidate("mean_bps: ", 1.0);
+  use_bitrate_candidate("mean_bps=", 1.0);
+  // Some gst-perf variants report in kbps via bitrate fields.
+  use_bitrate_candidate("bitrate: ", 1000.0);
+  use_bitrate_candidate("bitrate=", 1000.0);
+  use_bitrate_candidate("mean_bitrate: ", 1000.0);
+  use_bitrate_candidate("mean_bitrate=", 1000.0);
+  if (!has_any_bitrate) {
     return false;
   }
   if (!parse_gst_perf_metric(info_text, "fps: ", parsed_fps)) {
     return false;
   }
-  if (parsed_bitrate < 0.0) {
-    parsed_bitrate = 0.0;
-  }
+  parsed_bitrate = std::max(0.0, parsed_bitrate);
   if (parsed_fps < 0.0) {
     parsed_fps = 0.0;
   }
