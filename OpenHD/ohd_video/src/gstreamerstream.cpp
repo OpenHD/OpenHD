@@ -352,7 +352,7 @@ bool GStreamerStream::handle_perf_info_message(const char* info_text) {
     m_console->debug(
         "Perf cam{} (gst-perf): skipping warmup zero bitrate fps={} age_ms={}",
         m_camera_holder->get_camera().index, fps, now_ms - m_perf_first_message_ms);
-    return;
+    return false;
   }
   m_last_perf_message_ms.store(steady_clock_ms(), std::memory_order_relaxed);
   m_console->debug("Perf cam{} (gst-perf): bitrate={} bps fps={}",
