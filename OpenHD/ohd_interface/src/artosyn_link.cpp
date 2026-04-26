@@ -433,6 +433,7 @@ bool ArtosynLink::init_device() {
   }
 
   m_running = true;
+  update_link_stats();
   try_open_sockets_if_ready();
   if (m_video_fd < 0 || m_telemetry_fd < 0) {
     m_console->warn(
@@ -795,11 +796,6 @@ void ArtosynLink::stats_loop() {
 
 void ArtosynLink::update_link_stats() {
   if (!m_dev) return;
-  // WB publishes its own detailed video stats. Never overwrite if WB is active.
-  if (openhd::LinkActionHandler::instance().wb_get_supported_channels !=
-      nullptr) {
-    return;
-  }
   const int64_t now_ms = openhd::util::steady_clock_time_epoch_ms();
   if (m_last_stats_ts_ms == 0) {
     m_last_stats_ts_ms = now_ms;
