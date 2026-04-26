@@ -197,6 +197,14 @@ static bool apply_artosyn_link_settings_on_init() {
   return std::string(env) == "1";
 }
 
+static bool expose_artosyn_diagnostic_settings() {
+  const char* env = std::getenv("OHD_ARTOSYN_DIAG_PARAMS");
+  if (!env) {
+    return false;
+  }
+  return std::string(env) == "1";
+}
+
 static bool is_openhd_debug_mode_enabled_cached(int64_t now_ms) {
   static int64_t last_probe_ms = 0;
   static bool cached = false;
@@ -341,10 +349,14 @@ bool ArtosynLink::probe() {
 bool ArtosynLink::init_device() {
   m_status_ioctl_fail_streak = 0;
   m_legacy_init_retry_done = false;
-  m_console->info("Artosyn init begin: daemon={}:{} slot={} vport={} tport={} datagram={} rx_buf={} tx_buf={} rto_ms={}",
-                  m_cfg.addr, m_cfg.port, m_cfg.slot, m_cfg.video_port,
-                  m_cfg.telemetry_port, m_cfg.use_datagram ? 1 : 0,
-                  m_cfg.rx_buf_size, m_cfg.tx_buf_size, m_cfg.read_timeout_ms);
+  m_bb_initialized_by_openhd = false;
+  m_bb_started_by_openhd = false;
+  m_console->info(
+      "Artosyn init begin: role={} daemon={}:{} slot={} vport={} tport={} "
+      "datagram={} rx_buf={} tx_buf={} rto_ms={}",
+      m_profile.is_air ? "air" : "ground", m_cfg.addr, m_cfg.port, m_cfg.slot,
+      m_cfg.video_port, m_cfg.telemetry_port, m_cfg.use_datagram ? 1 : 0,
+      m_cfg.rx_buf_size, m_cfg.tx_buf_size, m_cfg.read_timeout_ms);
 
   m_console->info("Artosyn init step: bb_host_connect");
   if (bb_host_connect(&m_host, m_cfg.addr.c_str(), m_cfg.port) != 0) {
@@ -394,12 +406,14 @@ bool ArtosynLink::init_device() {
     if (bb_init(m_dev) != 0) {
       m_console->warn("bb_init failed");
     } else {
+      m_bb_initialized_by_openhd = true;
       m_console->info("Artosyn init step ok: bb_init");
     }
     m_console->info("Artosyn init step: bb_start (forced by env)");
     if (bb_start(m_dev) != 0) {
       m_console->warn("bb_start failed");
     } else {
+      m_bb_started_by_openhd = true;
       m_console->info("Artosyn init step ok: bb_start");
     }
   } else {
@@ -440,8 +454,12 @@ void ArtosynLink::shutdown_device() {
     m_telemetry_fd = -1;
   }
   if (m_dev) {
-    bb_stop(m_dev);
-    bb_deinit(m_dev);
+    if (m_bb_started_by_openhd) {
+      bb_stop(m_dev);
+    }
+    if (m_bb_initialized_by_openhd) {
+      bb_deinit(m_dev);
+    }
     bb_dev_close(m_dev);
     m_dev = nullptr;
   }
@@ -460,14 +478,44 @@ int ArtosynLink::open_socket(int port, bool want_tx, bool want_rx) {
   if (want_rx) flags |= BB_SOCK_FLAG_RX;
   if (m_cfg.use_datagram) flags |= BB_SOCK_FLAG_DATAGRAM;
 
-  bb_sock_opt_t opt;
+  bb_sock_opt_t opt{};
   opt.tx_buf_size = m_cfg.tx_buf_size;
   opt.rx_buf_size = m_cfg.rx_buf_size;
 
   int fd = bb_socket_open(m_dev, static_cast<bb_slot_e>(m_cfg.slot),
                           static_cast<uint32_t>(port), flags, &opt);
   if (fd < 0) {
-    m_console->warn("bb_socket_open failed for port {}", port);
+    m_console->warn(
+        "bb_socket_open failed for slot {} port {} flags=0x{:x} tx={} rx={} "
+        "datagram={}",
+        m_cfg.slot, port, flags, want_tx ? 1 : 0, want_rx ? 1 : 0,
+        m_cfg.use_datagram ? 1 : 0);
+    if (!m_legacy_init_retry_done.exchange(true)) {
+      m_console->warn(
+          "Artosyn socket open failed, trying legacy bb_init/bb_start "
+          "fallback once.");
+      const int ret_init = bb_init(m_dev);
+      int ret_start = -1;
+      if (ret_init == 0) {
+        m_bb_initialized_by_openhd = true;
+        ret_start = bb_start(m_dev);
+        if (ret_start == 0) {
+          m_bb_started_by_openhd = true;
+        }
+      }
+      m_console->warn(
+          "Artosyn legacy fallback result: bb_init={} bb_start={}",
+          ret_init, ret_start);
+      fd = bb_socket_open(m_dev, static_cast<bb_slot_e>(m_cfg.slot),
+                          static_cast<uint32_t>(port), flags, &opt);
+      if (fd < 0) {
+        m_console->warn(
+            "bb_socket_open retry failed for slot {} port {} flags=0x{:x}",
+            m_cfg.slot, port, flags);
+      } else {
+        m_console->info("artosyn socket open retry port {} fd {}", port, fd);
+      }
+    }
   } else {
     m_console->info("artosyn socket open port {} fd {}", port, fd);
   }
@@ -509,7 +557,11 @@ void ArtosynLink::try_open_sockets_if_ready() {
       const int ret_init = bb_init(m_dev);
       int ret_start = -1;
       if (ret_init == 0) {
+        m_bb_initialized_by_openhd = true;
         ret_start = bb_start(m_dev);
+        if (ret_start == 0) {
+          m_bb_started_by_openhd = true;
+        }
       }
       m_console->warn(
           "Artosyn legacy fallback result: bb_init={} bb_start={}",
@@ -1716,6 +1768,13 @@ std::vector<openhd::Setting> ArtosynLink::get_all_settings() {
   ret.push_back(
       Setting{AR_RF_BRX, IntSetting{m_settings->get_settings().rf_b_rx,
                                     cb_rf_brx}});
+
+  if (!expose_artosyn_diagnostic_settings()) {
+    return ret;
+  }
+  m_console->warn(
+      "OHD_ARTOSYN_DIAG_PARAMS=1 enabled: exposing live Artosyn diagnostic "
+      "parameters during settings registration.");
 
   int link_state = -1;
   int rx_mcs = -1;
