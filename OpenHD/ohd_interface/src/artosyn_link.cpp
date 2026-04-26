@@ -1022,10 +1022,9 @@ void ArtosynLink::update_link_stats() {
   card.NON_MAVLINK_CARD_ACTIVE = true;
   card.card_index = 0;
   const auto artosyn_usb = detect_artosyn_usb_info_cached(now_ms);
-  // Keep UNKNOWN as fallback if we cannot identify the Artosyn USB endpoint.
-  card.card_type = artosyn_usb.present
-                       ? wifi_card_type_to_int(WiFiCardType::ARTOSYN)
-                       : wifi_card_type_to_int(WiFiCardType::UNKNOWN);
+  // This stats producer only exists for the Artosyn backend. Keep the UI and
+  // telemetry identity stable even if the USB sysfs heuristic is incomplete.
+  card.card_type = wifi_card_type_to_int(WiFiCardType::ARTOSYN);
   // Use card_sub_type to expose "HS mode" detail to UI if needed later.
   card.card_sub_type = artosyn_usb.hs_mode ? 1 : 0;
   card.tx_active = m_profile.is_air ? 1 : 0;
