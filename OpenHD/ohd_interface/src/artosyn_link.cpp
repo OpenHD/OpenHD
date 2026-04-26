@@ -1024,7 +1024,7 @@ void ArtosynLink::update_link_stats() {
       read_status_extra(&role, &mode, &sync_mode, &sync_master, &cfg_sbmp,
                         &rt_sbmp, nullptr, &pair_state, &peer_mac, nullptr,
                         nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-                        nullptr, nullptr);
+                        nullptr);
 
   const int tx_effective_kbits =
       tx_real_tp > 0 ? tx_real_tp : (tx_tp_th > 0 ? tx_tp_th : tx_phy_tp);
