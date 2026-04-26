@@ -32,7 +32,8 @@
 #include "openhd_util.h"
 #include "openhd_util_time.h"
 
-AirTelemetry::AirTelemetry() : MavlinkSystem(OHD_SYS_ID_AIR) {
+AirTelemetry::AirTelemetry(bool ignoreSerial)
+    : MavlinkSystem(OHD_SYS_ID_AIR), m_ignoreSerial(ignoreSerial) {
   m_console = openhd::log::create_or_get("air_tele");
   assert(m_console);
   m_air_settings = std::make_unique<openhd::telemetry::air::SettingsHolder>();
@@ -63,15 +64,20 @@ AirTelemetry::AirTelemetry() : MavlinkSystem(OHD_SYS_ID_AIR) {
           on_messages_ground_unit(messages);
         });
   }
-  setup_uart();
-  setup_openhd_uart_telemetry();
-  setup_sbus_output();
+  if (m_ignoreSerial) {
+    m_console->info("Serial setup disabled by CLI");
+  } else {
+    setup_uart();
+    setup_openhd_uart_telemetry();
+    setup_sbus_output();
+  }
   m_console->debug("Created AirTelemetry");
 }
 
 AirTelemetry::~AirTelemetry() {}
 
 void AirTelemetry::send_messages_fc(std::vector<MavlinkMessage>& messages) {
+  if (!m_fc_serial) return;
   auto [generic, local_only] =
       split_into_generic_and_local_only(messages, OHD_SYS_ID_AIR);
   // NOTE: Remember there is a hack in place for rc channels override in regards
@@ -475,6 +481,10 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
 // was already started) This properly handles all the cases, e.g cleaning up an
 // existing uart connection if set.
 void AirTelemetry::setup_uart() {
+  if (m_ignoreSerial) {
+    if (m_fc_serial) m_fc_serial->disable();
+    return;
+  }
   assert(m_air_settings);
   using namespace openhd::telemetry;
   const auto uart_linux_fd = serial_openhd_param_to_linux_fd(
@@ -495,6 +505,10 @@ void AirTelemetry::setup_uart() {
 }
 
 void AirTelemetry::setup_openhd_uart_telemetry() {
+  if (m_ignoreSerial) {
+    if (m_openhd_uart_serial) m_openhd_uart_serial->disable();
+    return;
+  }
   if (!m_openhd_uart_serial) return;
   const auto& settings = m_air_settings->get_settings();
   if (!settings.openhd_uart_telemetry_enabled) {
@@ -523,6 +537,10 @@ void AirTelemetry::setup_openhd_uart_telemetry() {
 }
 
 void AirTelemetry::setup_sbus_output() {
+  if (m_ignoreSerial) {
+    if (m_sbus_output) m_sbus_output->configure(SbusOutput::Options{});
+    return;
+  }
   if (!m_sbus_output) return;
   const auto& settings = m_air_settings->get_settings();
   SbusOutput::Options options{};
@@ -535,6 +553,10 @@ void AirTelemetry::setup_sbus_output() {
 void AirTelemetry::configure_openhd_uart_telemetry(
     const std::optional<std::string>& device_path) {
   if (!device_path.has_value()) {
+    return;
+  }
+  if (m_ignoreSerial) {
+    m_console->info("Ignoring OpenHD UART telemetry CLI override because serial setup is disabled");
     return;
   }
   m_console->info("CLI override for OpenHD UART telemetry: {}",

@@ -51,7 +51,7 @@
  */
 class AirTelemetry : public MavlinkSystem {
  public:
-  explicit AirTelemetry();
+  explicit AirTelemetry(bool ignoreSerial = false);
   AirTelemetry(const AirTelemetry&) = delete;
   AirTelemetry(const AirTelemetry&&) = delete;
   ~AirTelemetry();
@@ -128,6 +128,7 @@ class AirTelemetry : public MavlinkSystem {
   std::unique_ptr<openhd::telemetry::rpi::GPIOControl> m_opt_gpio_control =
       nullptr;
   std::shared_ptr<spdlog::logger> m_console;
+  const bool m_ignoreSerial;
   // EXP - always on TCP mavlink server
   std::unique_ptr<TCPEndpoint> m_tcp_server = nullptr;
 };

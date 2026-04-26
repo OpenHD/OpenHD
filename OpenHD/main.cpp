@@ -85,6 +85,7 @@ static const struct option long_options[] = {
     {"record-only", no_argument, nullptr, 'r'},
     {"run-time-seconds", required_argument, nullptr, 't'},
     {"openhd_uart_telemetry", optional_argument, nullptr, 0},
+    {"ignore-serial", no_argument, nullptr, 0},
     {nullptr, 0, nullptr, 0},
 };
     const std::string red = "\033[31m";
@@ -328,6 +329,7 @@ struct OHDRunOptions {
   bool record_only = false;
   bool no_hotspot=false;
   bool emulate_monitor_card = false;
+  bool ignore_serial = false;
   int run_time_seconds = -1;  //-1= infinite, only usefully for debugging
   std::optional<std::string> openhd_uart_telemetry_device;
 };
@@ -352,6 +354,8 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
             ret.openhd_uart_telemetry_device =
                 default_openhd_uart_telemetry_device_for_platform();
           }
+        } else if (option_name == "ignore-serial") {
+          ret.ignore_serial = true;
         }
         break;
       }
@@ -416,6 +420,7 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
               "infinite),for debugging] \n";
         ss << "--openhd_uart_telemetry [optional serial device, default "
            << default_openhd_uart_telemetry_device_for_platform() << "] \n";
+        ss << "--ignore-serial [Do not set up any serial telemetry endpoints] \n";
         std::cout << ss.str() << std::flush;
       }
         exit(1);
@@ -608,8 +613,10 @@ int main(int argc, char *argv[]) {
     // to any ground station clients (e.g. QOpenHD)
     std::shared_ptr<OHDTelemetry> ohdTelemetry = nullptr;
     if (!options.record_only) {
-      ohdTelemetry = std::make_shared<OHDTelemetry>(profile);
-      if (options.openhd_uart_telemetry_device.has_value()) {
+      ohdTelemetry = std::make_shared<OHDTelemetry>(
+          profile, false, options.ignore_serial);
+      if (!options.ignore_serial &&
+          options.openhd_uart_telemetry_device.has_value()) {
         ohdTelemetry->configure_openhd_uart_telemetry(
             options.openhd_uart_telemetry_device);
       }

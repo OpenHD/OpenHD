@@ -31,7 +31,8 @@
 #include "openhd_util.h"
 #include "openhd_util_time.h"
 
-GroundTelemetry::GroundTelemetry() : MavlinkSystem(OHD_SYS_ID_GROUND) {
+GroundTelemetry::GroundTelemetry(bool ignoreSerial)
+    : MavlinkSystem(OHD_SYS_ID_GROUND), m_ignoreSerial(ignoreSerial) {
   m_console = openhd::log::create_or_get("ground_tele");
   assert(m_console);
   m_gnd_settings =
@@ -78,8 +79,12 @@ GroundTelemetry::GroundTelemetry() : MavlinkSystem(OHD_SYS_ID_GROUND) {
       _sys_id, MAV_COMP_ID_ONBOARD_COMPUTER);
   m_generic_mavlink_param_provider->add_params(get_all_settings());
   m_components.push_back(m_generic_mavlink_param_provider);
-  setup_uart();
-  setup_openhd_uart_telemetry();
+  if (m_ignoreSerial) {
+    m_console->info("Serial setup disabled by CLI");
+  } else {
+    setup_uart();
+    setup_openhd_uart_telemetry();
+  }
   openhd::ExternalDeviceManager::instance().register_listener(
       [this](openhd::ExternalDevice external_device, bool connected) {
         if (!external_device.discovered_by_mavlink_tcp_server) {
@@ -549,6 +554,10 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
 }
 
 void GroundTelemetry::setup_uart() {
+  if (m_ignoreSerial) {
+    if (m_endpoint_tracker) m_endpoint_tracker->disable();
+    return;
+  }
   assert(m_gnd_settings);
   using namespace openhd::telemetry;
   const auto uart_linux_fd = serial_openhd_param_to_linux_fd(
@@ -569,6 +578,10 @@ void GroundTelemetry::setup_uart() {
 }
 
 void GroundTelemetry::setup_openhd_uart_telemetry() {
+  if (m_ignoreSerial) {
+    if (m_openhd_uart_serial) m_openhd_uart_serial->disable();
+    return;
+  }
   if (!m_openhd_uart_serial) return;
   const auto& settings = m_gnd_settings->get_settings();
   if (!settings.openhd_uart_telemetry_enabled) {
@@ -598,6 +611,10 @@ void GroundTelemetry::setup_openhd_uart_telemetry() {
 void GroundTelemetry::configure_openhd_uart_telemetry(
     const std::optional<std::string>& device_path) {
   if (!device_path.has_value()) {
+    return;
+  }
+  if (m_ignoreSerial) {
+    m_console->info("Ignoring OpenHD UART telemetry CLI override because serial setup is disabled");
     return;
   }
   m_console->info("CLI override for OpenHD UART telemetry: {}",

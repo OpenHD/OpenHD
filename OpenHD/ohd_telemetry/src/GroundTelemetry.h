@@ -51,7 +51,7 @@
  */
 class GroundTelemetry : public MavlinkSystem {
  public:
-  explicit GroundTelemetry();
+  explicit GroundTelemetry(bool ignoreSerial = false);
   GroundTelemetry(const GroundTelemetry&) = delete;
   GroundTelemetry(const GroundTelemetry&&) = delete;
   ~GroundTelemetry();
@@ -136,6 +136,7 @@ class GroundTelemetry : public MavlinkSystem {
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
   std::unique_ptr<RcJoystickSender> m_rc_joystick_sender = nullptr;
 #endif
+  const bool m_ignoreSerial;
 };
 
 #endif  // OPENHD_TELEMETRY_GROUNDTELEMETRY_H

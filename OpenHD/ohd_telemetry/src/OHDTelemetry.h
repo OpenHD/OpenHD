@@ -46,7 +46,8 @@ class GroundTelemetry;
  */
 class OHDTelemetry {
  public:
-  OHDTelemetry(OHDProfile profile1, bool enableExtendedLogging = false);
+  OHDTelemetry(OHDProfile profile1, bool enableExtendedLogging = false,
+               bool ignoreSerial = false);
   OHDTelemetry(const OHDTelemetry&) = delete;
   OHDTelemetry(const OHDTelemetry&&) = delete;
   ~OHDTelemetry();
@@ -90,6 +91,7 @@ class OHDTelemetry {
   bool m_loop_thread_terminate = false;
   const OHDProfile m_profile;
   const bool m_enableExtendedLogging;
+  const bool m_ignoreSerial;
 };
 
 #endif  // OPENHD_OHDTELEMETRY_H
