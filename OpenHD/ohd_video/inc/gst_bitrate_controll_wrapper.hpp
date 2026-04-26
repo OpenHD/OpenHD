@@ -46,6 +46,7 @@
 struct GstBitrateControlElement {
   // Some elements take kbit/s, some take bit/s
   bool takes_kbit = false;
+  bool uses_extra_controls_video_bitrate = false;
   // the encoder (or similar) element, must not be null
   GstElement* encoder;
   // Not all encoders / elements call the bitrate property "bitrate"
@@ -146,6 +147,26 @@ static bool set_integer_property(GObject* object, const std::string& name,
 
 static std::optional<GstBitrateReadback> read_bitrate_readback(
     const GstBitrateControlElement& ctrl_el) {
+  if (ctrl_el.uses_extra_controls_video_bitrate) {
+    GstStructure* extra_controls = nullptr;
+    g_object_get(ctrl_el.encoder, ctrl_el.property_name.c_str(),
+                 &extra_controls, NULL);
+    if (extra_controls == nullptr) {
+      return std::nullopt;
+    }
+    gint raw_property_value = -1;
+    const bool ok = gst_structure_get_int(extra_controls, "video_bitrate",
+                                          &raw_property_value);
+    gst_structure_free(extra_controls);
+    if (!ok || raw_property_value < 0) {
+      return std::nullopt;
+    }
+    GstBitrateReadback ret{};
+    ret.raw_property_value = raw_property_value;
+    ret.interpreted_kbits =
+        openhd::bits_per_second_to_kbits_per_second(raw_property_value);
+    return ret;
+  }
   const auto raw_property_value_opt =
       read_integer_property(G_OBJECT(ctrl_el.encoder), ctrl_el.property_name);
   if (!raw_property_value_opt.has_value() || raw_property_value_opt.value() < 0) {
@@ -175,6 +196,14 @@ get_dynamic_bitrate_control_element_in_pipeline(
     ret.encoder = gst_bin_get_by_name(GST_BIN(gst_pipeline), "rpicamsrc");
     ret.property_name = "bitrate";
     ret.takes_kbit = false;
+  } else if (camera.requires_rpi_libcamera_pipeline() &&
+             !settings.force_sw_encode &&
+             settings.streamed_video_format.videoCodec == VideoCodec::H264) {
+    ret.encoder =
+        gst_bin_get_by_name(GST_BIN(gst_pipeline), "rpi_v4l2_encoder");
+    ret.property_name = "extra-controls";
+    ret.takes_kbit = false;
+    ret.uses_extra_controls_video_bitrate = true;
   } else if (camera.camera_type == X_CAM_TYPE_DUMMY_SW ||
              is_usb_camera(camera.camera_type) || settings.force_sw_encode) {
     ret.encoder = gst_bin_get_by_name(GST_BIN(gst_pipeline), "swencoder");
@@ -233,9 +262,18 @@ static bool change_bitrate(const GstBitrateControlElement& ctrl_el,
   const auto target_raw_property_value =
       ctrl_el.takes_kbit ? bitrate_kbits
                          : openhd::kbits_to_bits_per_second(bitrate_kbits);
-  if (!set_integer_property(G_OBJECT(ctrl_el.encoder), ctrl_el.property_name,
-                            target_raw_property_value)) {
-    return false;
+  if (ctrl_el.uses_extra_controls_video_bitrate) {
+    GstStructure* extra_controls =
+        gst_structure_new("controls", "video_bitrate", G_TYPE_INT,
+                          target_raw_property_value, NULL);
+    g_object_set(ctrl_el.encoder, ctrl_el.property_name.c_str(),
+                 extra_controls, NULL);
+    gst_structure_free(extra_controls);
+  } else {
+    if (!set_integer_property(G_OBJECT(ctrl_el.encoder), ctrl_el.property_name,
+                              target_raw_property_value)) {
+      return false;
+    }
   }
   for (const auto& extra : ctrl_el.extra_properties_percent) {
     const int64_t bounded_value =
