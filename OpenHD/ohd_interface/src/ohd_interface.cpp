@@ -479,6 +479,25 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings() {
       openhd::IntSetting{settings.wifi_operating_mode, cb_wifi_mode}});
   ret.push_back(openhd::create_read_only_string("WIFI_IFACES",
                                                 describe_wifi_interfaces()));
+  auto get_primary_link = [this]() -> std::string {
+#ifdef OHD_ENABLE_ARTOSYN
+    if (m_artosyn_link) {
+      return "ARTOSYN";
+    }
+#endif
+    if (m_ethernet_link) {
+      return "ETHERNET";
+    }
+    if (m_wb_link) {
+      return "WIFIBROADCAST";
+    }
+    if (m_microhard_link) {
+      return "MICROHARD";
+    }
+    return "NONE";
+  };
+  ret.push_back(
+      openhd::create_read_only_string("PRIMARY_LINK", get_primary_link()));
   auto cb_wifi_hotspot_mode = [this](std::string, int value) {
     if (!is_valid_wifi_hotspot_mode(value)) return false;
     m_nw_settings.unsafe_get_settings().wifi_hotspot_mode = value;
