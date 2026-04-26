@@ -189,6 +189,11 @@ static bool force_artosyn_bb_init_start() {
   return std::string(env) == "1";
 }
 
+static bool allow_artosyn_legacy_recovery() {
+  const char* env = std::getenv("OHD_ARTOSYN_LEGACY_RECOVERY");
+  return force_artosyn_bb_init_start() || (env && std::string(env) == "1");
+}
+
 static bool apply_artosyn_link_settings_on_init() {
   const char* env = std::getenv("OHD_ARTOSYN_APPLY_SETTINGS");
   if (!env) {
@@ -471,7 +476,8 @@ void ArtosynLink::shutdown_device() {
   m_running = false;
 }
 
-int ArtosynLink::open_socket(int port, bool want_tx, bool want_rx) {
+int ArtosynLink::open_socket(int port, bool want_tx, bool want_rx,
+                             bool allow_legacy_fallback) {
   if (!m_dev) return -1;
 
   uint32_t flags = 0;
@@ -491,7 +497,8 @@ int ArtosynLink::open_socket(int port, bool want_tx, bool want_rx) {
         "datagram={}",
         m_cfg.slot, port, flags, want_tx ? 1 : 0, want_rx ? 1 : 0,
         m_cfg.use_datagram ? 1 : 0);
-    if (!m_legacy_init_retry_done.exchange(true)) {
+    if (allow_legacy_fallback && allow_artosyn_legacy_recovery() &&
+        !m_legacy_init_retry_done.exchange(true)) {
       m_console->warn(
           "Artosyn socket open failed, trying legacy bb_init/bb_start "
           "fallback once.");
@@ -523,6 +530,21 @@ int ArtosynLink::open_socket(int port, bool want_tx, bool want_rx) {
   return fd;
 }
 
+void ArtosynLink::open_configured_sockets(bool allow_legacy_fallback,
+                                          const char* reason) {
+  if (m_telemetry_fd < 0) {
+    m_console->info("Artosyn init step: open telemetry socket ({})", reason);
+    m_telemetry_fd = open_socket(m_cfg.telemetry_port, m_profile.is_air,
+                                 m_profile.is_ground(),
+                                 allow_legacy_fallback);
+  }
+  if (m_video_fd < 0) {
+    m_console->info("Artosyn init step: open video socket ({})", reason);
+    m_video_fd = open_socket(m_cfg.video_port, m_profile.is_air,
+                             m_profile.is_ground(), allow_legacy_fallback);
+  }
+}
+
 void ArtosynLink::try_open_sockets_if_ready() {
   if (!m_dev) {
     return;
@@ -550,7 +572,7 @@ void ArtosynLink::try_open_sockets_if_ready() {
           "streak={})",
           m_cfg.slot, fail_streak);
     }
-    if (fail_streak >= 3 &&
+    if (allow_artosyn_legacy_recovery() && fail_streak >= 3 &&
         !m_legacy_init_retry_done.exchange(true)) {
       m_console->warn(
           "Artosyn BB_GET_STATUS keeps failing, trying legacy bb_init/bb_start "
@@ -568,8 +590,16 @@ void ArtosynLink::try_open_sockets_if_ready() {
           "Artosyn legacy fallback result: bb_init={} bb_start={}",
           ret_init, ret_start);
     }
+    if (fail_streak >= 2) {
+      m_console->warn(
+          "Artosyn BB_GET_STATUS failed, probing sockets anyway "
+          "(streak={}).",
+          fail_streak);
+      open_configured_sockets(false, "status-fallback");
+    }
     const int64_t last_recover_ms = m_last_recover_request_ms.load();
-    if (fail_streak >= 5 && (now_ms - last_recover_ms) > 10000) {
+    if (m_video_fd < 0 && m_telemetry_fd < 0 && fail_streak >= 5 &&
+        (now_ms - last_recover_ms) > 10000) {
       m_last_recover_request_ms = now_ms;
       m_console->warn(
           "Artosyn repeated BB_GET_STATUS failures, requesting daemon/link "
@@ -602,20 +632,15 @@ void ArtosynLink::try_open_sockets_if_ready() {
           "Artosyn defer socket open: link_state={} pair_state={} mode={} "
           "sync_mode={}",
           link_state, pair_state, mode, sync_mode);
+      m_console->info(
+          "Artosyn probing sockets despite non-CONNECT status; socket open "
+          "will decide readiness.");
     }
+    open_configured_sockets(false, "not-connect");
     return;
   }
 
-  if (m_telemetry_fd < 0) {
-    m_console->info("Artosyn init step: open telemetry socket");
-    // Telemetry is bidirectional (includes RC MAVLink)
-    m_telemetry_fd = open_socket(m_cfg.telemetry_port, true, true);
-  }
-  if (m_video_fd < 0) {
-    m_console->info("Artosyn init step: open video socket");
-    m_video_fd =
-        open_socket(m_cfg.video_port, m_profile.is_air, m_profile.is_ground());
-  }
+  open_configured_sockets(true, "connected");
 }
 
 void ArtosynLink::start_rx_threads() {
@@ -623,7 +648,8 @@ void ArtosynLink::start_rx_threads() {
       !m_rx_video_thread.joinable()) {
     m_rx_video_thread = std::thread([this]() { rx_loop_video(); });
   }
-  if (m_telemetry_fd >= 0 && !m_rx_telemetry_thread.joinable()) {
+  if (m_profile.is_ground() && m_telemetry_fd >= 0 &&
+      !m_rx_telemetry_thread.joinable()) {
     m_rx_telemetry_thread = std::thread([this]() { rx_loop_telemetry(); });
   }
 }
@@ -695,21 +721,39 @@ void ArtosynLink::rx_loop_telemetry() {
   }
 }
 
+void ArtosynLink::log_tx_error_throttled(const char* stream, int ret) {
+  const int64_t now_ms = openhd::util::steady_clock_time_epoch_ms();
+  const int64_t last_ms = m_last_tx_error_log_ms.load();
+  if (now_ms - last_ms < 2000) {
+    return;
+  }
+  m_last_tx_error_log_ms = now_ms;
+  m_console->warn("Artosyn {} write failed ret={} errno={} ({})", stream, ret,
+                  errno, std::strerror(errno));
+}
+
 void ArtosynLink::transmit_telemetry_data(TelemetryTxPacket packet) {
+  if (!m_profile.is_air) {
+    return;
+  }
   if (m_telemetry_fd < 0) return;
   if (!packet.data || packet.data->empty()) return;
   int injections = packet.n_injections < 1 ? 1 : packet.n_injections;
   for (int i = 0; i < injections; ++i) {
-    bb_socket_write(m_telemetry_fd, packet.data->data(),
-                    static_cast<uint32_t>(packet.data->size()),
-                    m_cfg.read_timeout_ms);
-    m_tx_total_bytes.fetch_add(
-        static_cast<uint64_t>(packet.data->size()),
-        std::memory_order_relaxed);
+    const int written =
+        bb_socket_write(m_telemetry_fd, packet.data->data(),
+                        static_cast<uint32_t>(packet.data->size()),
+                        m_cfg.read_timeout_ms);
+    if (written < 0) {
+      log_tx_error_throttled("telemetry", written);
+      continue;
+    }
+    const auto accounted_bytes =
+        static_cast<uint64_t>(written > 0 ? written : packet.data->size());
+    m_tx_total_bytes.fetch_add(accounted_bytes,
+                               std::memory_order_relaxed);
     m_tx_total_packets.fetch_add(1, std::memory_order_relaxed);
-    m_tx_tele_bytes.fetch_add(
-        static_cast<uint64_t>(packet.data->size()),
-        std::memory_order_relaxed);
+    m_tx_tele_bytes.fetch_add(accounted_bytes, std::memory_order_relaxed);
     m_tx_tele_packets.fetch_add(1, std::memory_order_relaxed);
   }
 }
@@ -722,13 +766,19 @@ void ArtosynLink::transmit_video_data(
   }
   if (m_video_fd < 0) return;
   for (const auto& fragment : fragmented_video_frame.rtp_fragments) {
-    bb_socket_write(m_video_fd, fragment->data(),
-                    static_cast<uint32_t>(fragment->size()),
-                    m_cfg.read_timeout_ms);
+    const int written =
+        bb_socket_write(m_video_fd, fragment->data(),
+                        static_cast<uint32_t>(fragment->size()),
+                        m_cfg.read_timeout_ms);
+    if (written < 0) {
+      log_tx_error_throttled("video", written);
+      continue;
+    }
+    const auto accounted_bytes =
+        static_cast<uint64_t>(written > 0 ? written : fragment->size());
     m_video_bitrate_meter.on_tx_fragment(
-        stream_index, static_cast<uint64_t>(fragment->size()));
-    m_tx_total_bytes.fetch_add(static_cast<uint64_t>(fragment->size()),
-                               std::memory_order_relaxed);
+        stream_index, accounted_bytes);
+    m_tx_total_bytes.fetch_add(accounted_bytes, std::memory_order_relaxed);
     m_tx_total_packets.fetch_add(1, std::memory_order_relaxed);
   }
 }
@@ -797,19 +847,8 @@ void ArtosynLink::stats_loop() {
 void ArtosynLink::update_link_stats() {
   if (!m_dev) return;
   const int64_t now_ms = openhd::util::steady_clock_time_epoch_ms();
-  if (m_last_stats_ts_ms == 0) {
-    m_last_stats_ts_ms = now_ms;
-    m_last_stats_tx_bytes = m_tx_total_bytes.load();
-    m_last_stats_tx_packets = m_tx_total_packets.load();
-    m_last_stats_rx_bytes = m_rx_total_bytes.load();
-    m_last_stats_rx_packets = m_rx_total_packets.load();
-    m_last_stats_tx_tele_bytes = m_tx_tele_bytes.load();
-    m_last_stats_tx_tele_packets = m_tx_tele_packets.load();
-    m_last_stats_rx_tele_bytes = m_rx_tele_bytes.load();
-    m_last_stats_rx_tele_packets = m_rx_tele_packets.load();
-    return;
-  }
-  const int64_t dt_ms = now_ms - m_last_stats_ts_ms;
+  const bool first_sample = m_last_stats_ts_ms == 0;
+  int64_t dt_ms = first_sample ? 1000 : (now_ms - m_last_stats_ts_ms);
   if (dt_ms <= 0) return;
 
   const uint64_t tx_bytes = m_tx_total_bytes.load();
@@ -821,16 +860,22 @@ void ArtosynLink::update_link_stats() {
   const uint64_t rx_tele_bytes = m_rx_tele_bytes.load();
   const uint64_t rx_tele_packets = m_rx_tele_packets.load();
 
-  const uint64_t d_tx_bytes = tx_bytes - m_last_stats_tx_bytes;
-  const uint64_t d_tx_packets = tx_packets - m_last_stats_tx_packets;
-  const uint64_t d_rx_bytes = rx_bytes - m_last_stats_rx_bytes;
-  const uint64_t d_rx_packets = rx_packets - m_last_stats_rx_packets;
-  const uint64_t d_tx_tele_bytes = tx_tele_bytes - m_last_stats_tx_tele_bytes;
+  const uint64_t d_tx_bytes =
+      first_sample ? 0 : (tx_bytes - m_last_stats_tx_bytes);
+  const uint64_t d_tx_packets =
+      first_sample ? 0 : (tx_packets - m_last_stats_tx_packets);
+  const uint64_t d_rx_bytes =
+      first_sample ? 0 : (rx_bytes - m_last_stats_rx_bytes);
+  const uint64_t d_rx_packets =
+      first_sample ? 0 : (rx_packets - m_last_stats_rx_packets);
+  const uint64_t d_tx_tele_bytes =
+      first_sample ? 0 : (tx_tele_bytes - m_last_stats_tx_tele_bytes);
   const uint64_t d_tx_tele_packets =
-      tx_tele_packets - m_last_stats_tx_tele_packets;
-  const uint64_t d_rx_tele_bytes = rx_tele_bytes - m_last_stats_rx_tele_bytes;
+      first_sample ? 0 : (tx_tele_packets - m_last_stats_tx_tele_packets);
+  const uint64_t d_rx_tele_bytes =
+      first_sample ? 0 : (rx_tele_bytes - m_last_stats_rx_tele_bytes);
   const uint64_t d_rx_tele_packets =
-      rx_tele_packets - m_last_stats_rx_tele_packets;
+      first_sample ? 0 : (rx_tele_packets - m_last_stats_rx_tele_packets);
 
   const int64_t scale = 1000;
   const int64_t tx_bps =
@@ -883,13 +928,16 @@ void ArtosynLink::update_link_stats() {
   int tx_freq_khz = -1;
   int rx_freq_khz = -1;
   const bool have_metrics =
+      !first_sample &&
       read_metrics(&link_state, &rx_mcs, &tx_mcs, &bw, &tx_phy_tp, &tx_real_tp,
                    &tx_freq_khz, &rx_freq_khz, &rx_bw, &rx_phy_tp,
                    &rx_real_tp);
   (void)link_state;
   (void)rx_freq_khz;
   (void)rx_bw;
-  (void)read_mcs_throughput(&tx_tp_th, &rx_tp_th);
+  if (!first_sample) {
+    (void)read_mcs_throughput(&tx_tp_th, &rx_tp_th);
+  }
   if (have_metrics) {
     stats.monitor_mode_link.curr_tx_mcs_index = clamp_uint8(tx_mcs);
     stats.monitor_mode_link.curr_tx_channel_w_mhz =
@@ -932,10 +980,11 @@ void ArtosynLink::update_link_stats() {
   int mode = -1;
   int sync_mode = -1;
   int pair_state = -1;
-  const bool have_status = read_status_extra(
-      &role, &mode, &sync_mode, nullptr, nullptr, nullptr, nullptr,
-      &pair_state, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-      nullptr, nullptr, nullptr);
+  const bool have_status =
+      !first_sample &&
+      read_status_extra(&role, &mode, &sync_mode, nullptr, nullptr, nullptr,
+                        nullptr, &pair_state, nullptr, nullptr, nullptr,
+                        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
 
   const int tx_effective_kbits =
       tx_real_tp > 0 ? tx_real_tp : (tx_tp_th > 0 ? tx_tp_th : tx_phy_tp);
@@ -947,8 +996,9 @@ void ArtosynLink::update_link_stats() {
   static bool s_last_have_metrics = true;
   static int s_last_pair_state = std::numeric_limits<int>::min();
   const bool link_state_changed =
-      (s_last_rx_ok != rx_ok) || (s_last_have_metrics != have_metrics) ||
-      (have_status && s_last_pair_state != pair_state);
+      !first_sample &&
+      ((s_last_rx_ok != rx_ok) || (s_last_have_metrics != have_metrics) ||
+       (have_status && s_last_pair_state != pair_state));
   if (link_state_changed) {
     m_console->warn(
         "Artosyn state change: rx_ok={} metrics={} role={} mode={} sync={} "
@@ -963,7 +1013,8 @@ void ArtosynLink::update_link_stats() {
       s_last_pair_state = pair_state;
     }
   }
-  const bool periodic_diag = (now_ms - s_last_diag_log_ms) >= 2000;
+  const bool periodic_diag =
+      !first_sample && (now_ms - s_last_diag_log_ms) >= 2000;
   if (periodic_diag && (artosyn_debug_stats_enabled || !rx_ok || !have_metrics)) {
     s_last_diag_log_ms = now_ms;
     m_console->info(
@@ -1034,7 +1085,9 @@ void ArtosynLink::update_link_stats() {
   card.rx_signal_quality_antenna1 = 0;
   card.rx_signal_quality_antenna2 = 0;
   int snr = -1;
-  (void)read_quality_metrics(&snr, nullptr, nullptr, nullptr, nullptr);
+  if (!first_sample) {
+    (void)read_quality_metrics(&snr, nullptr, nullptr, nullptr, nullptr);
+  }
   if (snr >= 0) {
     card.rx_snr_antenna1 = clamp_int8(snr);
     card.rx_snr_antenna2 = clamp_int8(snr);
@@ -1049,7 +1102,9 @@ void ArtosynLink::update_link_stats() {
       static_cast<uint32_t>(m_tx_total_packets.load());
   card.curr_rx_packet_loss_perc = 0;
   int pwr_dbm = -1;
-  (void)read_power_metrics(nullptr, &pwr_dbm);
+  if (!first_sample) {
+    (void)read_power_metrics(nullptr, &pwr_dbm);
+  }
   card.tx_power_current = pwr_dbm >= 0 ? clamp_int16(pwr_dbm) : 0;
   card.tx_power_armed = 0;
   card.tx_power_disarmed = 0;

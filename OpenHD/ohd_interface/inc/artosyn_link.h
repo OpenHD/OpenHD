@@ -63,12 +63,16 @@ class ArtosynLink : public OHDLink {
   void shutdown_device();
   void try_open_sockets_if_ready();
 
-  int open_socket(int port, bool want_tx, bool want_rx);
+  int open_socket(int port, bool want_tx, bool want_rx,
+                  bool allow_legacy_fallback = true);
+  void open_configured_sockets(bool allow_legacy_fallback,
+                               const char* reason);
   void start_rx_threads();
   void stop_rx_threads();
 
   void rx_loop_video();
   void rx_loop_telemetry();
+  void log_tx_error_throttled(const char* stream, int ret);
 
   void apply_link_settings();
   bool read_metrics(int* link_state, int* rx_mcs, int* tx_mcs, int* bw,
@@ -145,6 +149,7 @@ class ArtosynLink : public OHDLink {
   std::atomic<uint64_t> m_rx_tele_bytes{0};
   std::atomic<uint64_t> m_rx_tele_packets{0};
   std::atomic<int64_t> m_last_rx_packet_ts_ms{0};
+  std::atomic<int64_t> m_last_tx_error_log_ms{0};
 
   int64_t m_last_stats_ts_ms = 0;
   uint64_t m_last_stats_tx_bytes = 0;
