@@ -78,10 +78,14 @@ OHDInterface::OHDInterface(OHDProfile profile1, bool disable_wifi_hotspot)
   m_opt_hotspot_card = std::nullopt;
   const auto config = openhd::load_config();
   bool microhard_device_present = is_microhard_device_present();
+  openhd::LinkActionHandler::instance().set_primary_link_type(
+      openhd::LinkActionHandler::PRIMARY_LINK_NONE);
 
 #ifdef OHD_ENABLE_ARTOSYN
   if (ArtosynLink::probe()) {
     m_artosyn_link = std::make_shared<ArtosynLink>(m_profile);
+    openhd::LinkActionHandler::instance().set_primary_link_type(
+        openhd::LinkActionHandler::PRIMARY_LINK_ARTOSYN);
     m_console->warn("artosyn found");
     return;
   }
@@ -93,12 +97,16 @@ OHDInterface::OHDInterface(OHDProfile profile1, bool disable_wifi_hotspot)
   if (OHDFilesystemUtil::exists(std::string(getConfigBasePath()) +
                                 "ethernet.txt")) {
     m_ethernet_link = std::make_shared<EthernetLink>(m_profile);
+    openhd::LinkActionHandler::instance().set_primary_link_type(
+        openhd::LinkActionHandler::PRIMARY_LINK_ETHERNET);
     m_console->warn("eth found");
     return;
   }
 
   if (microhard_device_present) {
     m_microhard_link = std::make_shared<MicrohardLink>(m_profile);
+    openhd::LinkActionHandler::instance().set_primary_link_type(
+        openhd::LinkActionHandler::PRIMARY_LINK_MICROHARD);
     m_console->warn("mc found");
     return;
   }
@@ -130,6 +138,8 @@ OHDInterface::OHDInterface(OHDProfile profile1, bool disable_wifi_hotspot)
     // Set the card(s) we have into monitor mode
     openhd::wb::takeover_cards_monitor_mode(m_monitor_mode_cards, m_console);
     m_wb_link = std::make_shared<WBLink>(m_profile, m_monitor_mode_cards);
+    openhd::LinkActionHandler::instance().set_primary_link_type(
+        openhd::LinkActionHandler::PRIMARY_LINK_WIFIBROADCAST);
   }
   // The USB tethering listener is always enabled on ground - it doesn't
   // interfere with anything

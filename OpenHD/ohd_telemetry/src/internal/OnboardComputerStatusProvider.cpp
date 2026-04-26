@@ -27,6 +27,7 @@
 
 #include "onboard_computer_status.hpp"
 #include "onboard_computer_status_rpi.hpp"
+#include "openhd_action_handler.h"
 #include "openhd_spdlog_include.h"
 #include "openhd_util_filesystem.h"
 
@@ -341,6 +342,9 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       m_core_status.undervolt_status = curr_rpi_undervolt ? 1 : 0;
       m_core_status.platform_type = ohd_platform;
       m_core_status.encryption_enabled = (ohd_encryption == 1) ? 1 : 0;
+      m_core_status.operating_mode =
+          static_cast<uint8_t>(openhd::LinkActionHandler::instance()
+                                   .get_primary_link_type());
 
       // Power Status
       if (!m_ina_219.has_any_error) {

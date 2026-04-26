@@ -105,6 +105,19 @@ class LinkActionHandler {
   static LinkActionHandler& instance();
 
  public:
+  enum PrimaryLinkType : int {
+    PRIMARY_LINK_NONE = 0,
+    PRIMARY_LINK_WIFIBROADCAST = 1,
+    PRIMARY_LINK_ETHERNET = 2,
+    PRIMARY_LINK_MICROHARD = 3,
+    PRIMARY_LINK_ARTOSYN = 4,
+  };
+  void set_primary_link_type(PrimaryLinkType type) {
+    m_primary_link_type = static_cast<int>(type);
+  }
+  int get_primary_link_type() const { return m_primary_link_type.load(); }
+
+ public:
   // Link bitrate change request
   struct LinkBitrateInformation {
     int recommended_encoder_bitrate_kbits;
@@ -286,6 +299,7 @@ class LinkActionHandler {
   }
 
  private:
+  std::atomic<int> m_primary_link_type{PRIMARY_LINK_NONE};
   CamInfo m_cam_info_cam1{};
   CamInfo m_cam_info_cam2{};
   std::mutex m_cam_info_cam1_mutex;
