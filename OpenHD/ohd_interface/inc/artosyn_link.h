@@ -139,6 +139,7 @@ class ArtosynLink : public OHDLink {
   std::atomic<bool> m_bb_started_by_openhd{false};
   std::atomic<int> m_status_ioctl_fail_streak{0};
   std::atomic<int64_t> m_last_recover_request_ms{0};
+  std::atomic<int64_t> m_next_socket_probe_ms{0};
 
   std::atomic<uint64_t> m_tx_total_bytes{0};
   std::atomic<uint64_t> m_tx_total_packets{0};

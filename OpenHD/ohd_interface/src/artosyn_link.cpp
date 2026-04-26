@@ -480,23 +480,40 @@ int ArtosynLink::open_socket(int port, bool want_tx, bool want_rx,
                              bool allow_legacy_fallback) {
   if (!m_dev) return -1;
 
-  uint32_t flags = 0;
-  if (want_tx) flags |= BB_SOCK_FLAG_TX;
-  if (want_rx) flags |= BB_SOCK_FLAG_RX;
-  if (m_cfg.use_datagram) flags |= BB_SOCK_FLAG_DATAGRAM;
+  auto make_flags = [want_tx, want_rx](bool use_datagram) {
+    uint32_t flags = 0;
+    if (want_tx) flags |= BB_SOCK_FLAG_TX;
+    if (want_rx) flags |= BB_SOCK_FLAG_RX;
+    if (use_datagram) flags |= BB_SOCK_FLAG_DATAGRAM;
+    return flags;
+  };
 
   bb_sock_opt_t opt{};
   opt.tx_buf_size = m_cfg.tx_buf_size;
   opt.rx_buf_size = m_cfg.rx_buf_size;
 
+  uint32_t flags = make_flags(m_cfg.use_datagram);
   int fd = bb_socket_open(m_dev, static_cast<bb_slot_e>(m_cfg.slot),
                           static_cast<uint32_t>(port), flags, &opt);
+  if (fd < 0 && m_cfg.use_datagram) {
+    flags = make_flags(false);
+    m_console->warn(
+        "bb_socket_open failed for slot {} port {} flags=0x{:x}; retrying "
+        "without datagram flags=0x{:x}",
+        m_cfg.slot, port, make_flags(true), flags);
+    fd = bb_socket_open(m_dev, static_cast<bb_slot_e>(m_cfg.slot),
+                        static_cast<uint32_t>(port), flags, &opt);
+    if (fd >= 0) {
+      m_console->info("artosyn socket open stream fallback port {} fd {}",
+                      port, fd);
+    }
+  }
   if (fd < 0) {
     m_console->warn(
         "bb_socket_open failed for slot {} port {} flags=0x{:x} tx={} rx={} "
         "datagram={}",
         m_cfg.slot, port, flags, want_tx ? 1 : 0, want_rx ? 1 : 0,
-        m_cfg.use_datagram ? 1 : 0);
+        (flags & BB_SOCK_FLAG_DATAGRAM) ? 1 : 0);
     if (allow_legacy_fallback && allow_artosyn_legacy_recovery() &&
         !m_legacy_init_retry_done.exchange(true)) {
       m_console->warn(
@@ -532,16 +549,29 @@ int ArtosynLink::open_socket(int port, bool want_tx, bool want_rx,
 
 void ArtosynLink::open_configured_sockets(bool allow_legacy_fallback,
                                           const char* reason) {
+  const int64_t now_ms = openhd::util::steady_clock_time_epoch_ms();
+  const int64_t next_probe_ms = m_next_socket_probe_ms.load();
+  if (next_probe_ms != 0 && now_ms < next_probe_ms) {
+    return;
+  }
+  bool any_failed = false;
   if (m_telemetry_fd < 0) {
     m_console->info("Artosyn init step: open telemetry socket ({})", reason);
     m_telemetry_fd = open_socket(m_cfg.telemetry_port, m_profile.is_air,
                                  m_profile.is_ground(),
                                  allow_legacy_fallback);
+    any_failed = any_failed || m_telemetry_fd < 0;
   }
   if (m_video_fd < 0) {
     m_console->info("Artosyn init step: open video socket ({})", reason);
     m_video_fd = open_socket(m_cfg.video_port, m_profile.is_air,
                              m_profile.is_ground(), allow_legacy_fallback);
+    any_failed = any_failed || m_video_fd < 0;
+  }
+  if (any_failed) {
+    m_next_socket_probe_ms = now_ms + 3000;
+  } else {
+    m_next_socket_probe_ms = 0;
   }
 }
 
@@ -623,15 +653,20 @@ void ArtosynLink::try_open_sockets_if_ready() {
   const int pair_state = static_cast<int>(st_out.link_status[slot].pair_state);
   const int mode = static_cast<int>(st_out.mode);
   const int sync_mode = static_cast<int>(st_out.sync_mode);
+  const int role = static_cast<int>(st_out.role);
+  const int sync_master = static_cast<int>(st_out.sync_master);
+  const int cfg_sbmp = static_cast<int>(st_out.cfg_sbmp);
+  const int rt_sbmp = static_cast<int>(st_out.rt_sbmp);
   if (link_state != BB_LINK_STATE_CONNECT) {
     static int64_t s_last_defer_log_ms = 0;
     const int64_t now_ms = openhd::util::steady_clock_time_epoch_ms();
     if (now_ms - s_last_defer_log_ms >= 2000) {
       s_last_defer_log_ms = now_ms;
       m_console->info(
-          "Artosyn defer socket open: link_state={} pair_state={} mode={} "
-          "sync_mode={}",
-          link_state, pair_state, mode, sync_mode);
+          "Artosyn defer socket open: link_state={} pair_state={} role={} "
+          "mode={} sync_mode={} sync_master={} cfg_sbmp=0x{:x} rt_sbmp=0x{:x}",
+          link_state, pair_state, role, mode, sync_mode, sync_master, cfg_sbmp,
+          rt_sbmp);
       m_console->info(
           "Artosyn probing sockets despite non-CONNECT status; socket open "
           "will decide readiness.");
@@ -979,12 +1014,17 @@ void ArtosynLink::update_link_stats() {
   int role = -1;
   int mode = -1;
   int sync_mode = -1;
+  int sync_master = -1;
+  int cfg_sbmp = -1;
+  int rt_sbmp = -1;
   int pair_state = -1;
+  std::string peer_mac;
   const bool have_status =
       !first_sample &&
-      read_status_extra(&role, &mode, &sync_mode, nullptr, nullptr, nullptr,
-                        nullptr, &pair_state, nullptr, nullptr, nullptr,
-                        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
+      read_status_extra(&role, &mode, &sync_mode, &sync_master, &cfg_sbmp,
+                        &rt_sbmp, nullptr, &pair_state, &peer_mac, nullptr,
+                        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+                        nullptr, nullptr);
 
   const int tx_effective_kbits =
       tx_real_tp > 0 ? tx_real_tp : (tx_tp_th > 0 ? tx_tp_th : tx_phy_tp);
@@ -1002,11 +1042,13 @@ void ArtosynLink::update_link_stats() {
   if (link_state_changed) {
     m_console->warn(
         "Artosyn state change: rx_ok={} metrics={} role={} mode={} sync={} "
-        "pair={} tx_mcs={} rx_mcs={} tx_kbit={} rx_kbit={} tx_pps={} "
-        "rx_pps={} video_fd={} tele_fd={}",
+        "sync_master={} cfg_sbmp=0x{:x} rt_sbmp=0x{:x} pair={} peer={} "
+        "tx_mcs={} rx_mcs={} tx_kbit={} rx_kbit={} tx_pps={} rx_pps={} "
+        "video_fd={} tele_fd={}",
         rx_ok ? "yes" : "no", have_metrics ? "yes" : "no", role, mode,
-        sync_mode, pair_state, tx_mcs, rx_mcs, tx_effective_kbits,
-        rx_effective_kbits, tx_pps, rx_pps, m_video_fd, m_telemetry_fd);
+        sync_mode, sync_master, cfg_sbmp, rt_sbmp, pair_state, peer_mac,
+        tx_mcs, rx_mcs, tx_effective_kbits, rx_effective_kbits, tx_pps,
+        rx_pps, m_video_fd, m_telemetry_fd);
     s_last_rx_ok = rx_ok;
     s_last_have_metrics = have_metrics;
     if (have_status) {
@@ -1018,15 +1060,17 @@ void ArtosynLink::update_link_stats() {
   if (periodic_diag && (artosyn_debug_stats_enabled || !rx_ok || !have_metrics)) {
     s_last_diag_log_ms = now_ms;
     m_console->info(
-        "Artosyn diag: rx_ok={} metrics={} role={} mode={} sync={} pair={} "
+        "Artosyn diag: rx_ok={} metrics={} role={} mode={} sync={} "
+        "sync_master={} cfg_sbmp=0x{:x} rt_sbmp=0x{:x} pair={} peer={} "
         "tx_mcs={} rx_mcs={} bw={} tx_real_kbit={} rx_real_kbit={} "
-        "tx_phy_kbit={} rx_phy_kbit={} tx_tp_th={} rx_tp_th={} "
-        "tx_bps={} rx_bps={} tx_pps={} rx_pps={} tx_tele_bps={} "
-        "rx_tele_bps={} video_fd={} tele_fd={}",
+        "tx_phy_kbit={} rx_phy_kbit={} tx_tp_th={} rx_tp_th={} tx_bps={} "
+        "rx_bps={} tx_pps={} rx_pps={} tx_tele_bps={} rx_tele_bps={} "
+        "video_fd={} tele_fd={}",
         rx_ok ? "yes" : "no", have_metrics ? "yes" : "no", role, mode,
-        sync_mode, pair_state, tx_mcs, rx_mcs, bw, tx_real_tp, rx_real_tp,
-        tx_phy_tp, rx_phy_tp, tx_tp_th, rx_tp_th, tx_bps, rx_bps, tx_pps,
-        rx_pps, tx_tele_bps, rx_tele_bps, m_video_fd, m_telemetry_fd);
+        sync_mode, sync_master, cfg_sbmp, rt_sbmp, pair_state, peer_mac,
+        tx_mcs, rx_mcs, bw, tx_real_tp, rx_real_tp, tx_phy_tp, rx_phy_tp,
+        tx_tp_th, rx_tp_th, tx_bps, rx_bps, tx_pps, rx_pps, tx_tele_bps,
+        rx_tele_bps, m_video_fd, m_telemetry_fd);
   }
 
   stats.telemetry.curr_tx_bps = clamp_int32(tx_tele_bps);
