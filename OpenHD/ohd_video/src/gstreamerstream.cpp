@@ -58,6 +58,15 @@ static constexpr int64_t kPerfFirstMessageTimeoutMs = 5000;
 static constexpr int64_t kPerfMissingWarningIntervalMs = 10000;
 static constexpr int64_t kPerfBitrateWarmupMs = 3000;
 static constexpr int64_t kPerfProbeIntervalMs = 1000;
+static constexpr int64_t kQpPidUpdateIntervalMs = 1000;
+static constexpr int64_t kQpPidLogIntervalMs = 5000;
+static constexpr int kQpPidMaxStepPerUpdate = 2;
+static constexpr double kQpPidDeadband = 0.06;
+static constexpr double kQpPidKp = 8.0;
+static constexpr double kQpPidKi = 1.2;
+static constexpr double kQpPidKd = 2.0;
+static constexpr double kQpPidIntegralLimit = 4.0;
+static constexpr double kQpPidCorrectionLimit = 24.0;
 static constexpr size_t kPipelineDebugMaxChars = 1200;
 static constexpr size_t kPipelineDebugChunkChars = 34;
 
@@ -407,6 +416,7 @@ bool GStreamerStream::handle_perf_info_message(const char* info_text) {
   m_last_perf_message_ms.store(steady_clock_ms(), std::memory_order_relaxed);
   openhd::LinkActionHandler::instance().set_cam_info_perf(
       m_camera_holder->get_camera().index, bitrate_bps, fps);
+  update_qp_pid_controller(bitrate_bps, now_ms);
   return true;
 }
 
@@ -468,10 +478,121 @@ void GStreamerStream::handle_perf_pad_probe(GstPadProbeInfo* info) {
   m_last_perf_message_ms.store(now_ms, std::memory_order_relaxed);
   openhd::LinkActionHandler::instance().set_cam_info_perf(
       m_camera_holder->get_camera().index, bitrate_bps, frame_rate);
+  update_qp_pid_controller(bitrate_bps, now_ms);
 
   m_perf_probe_window_start_ms = now_ms;
   m_perf_probe_window_bytes = 0;
   m_perf_probe_window_buffers = 0;
+}
+
+void GStreamerStream::reset_qp_pid_controller() {
+  m_qp_pid_integral = 0.0;
+  m_qp_pid_last_error = 0.0;
+  m_qp_pid_last_update_ms = 0;
+  m_qp_pid_was_enabled = false;
+}
+
+void GStreamerStream::update_qp_pid_controller(uint32_t measured_bitrate_bps,
+                                               int64_t now_ms) {
+  const auto settings = m_camera_holder->get_settings();
+  const int base_qp_min = std::clamp(settings.qp_min, 0, 51);
+  const int base_qp_max = std::clamp(settings.qp_max, base_qp_min, 51);
+  const auto reset_to_manual_qp = [&]() {
+    if (m_qp_pid_was_enabled) {
+      m_curr_dynamic_qp_min = base_qp_min;
+      m_curr_dynamic_qp_max = base_qp_max;
+    }
+    reset_qp_pid_controller();
+  };
+  if (!settings.qp_pid_enable || !m_qp_ctrl_element.has_value() ||
+      measured_bitrate_bps == 0) {
+    reset_to_manual_qp();
+    return;
+  }
+  int target_kbits = m_curr_dynamic_bitrate_kbits.load();
+  if (target_kbits <= 0) {
+    target_kbits = settings.h26x_bitrate_kbits;
+  }
+  const int64_t target_bps =
+      static_cast<int64_t>(std::max(target_kbits, 1)) * 1000;
+  if (target_bps <= 0) {
+    reset_to_manual_qp();
+    return;
+  }
+  if (m_qp_pid_last_update_ms > 0 &&
+      now_ms - m_qp_pid_last_update_ms < kQpPidUpdateIntervalMs) {
+    return;
+  }
+
+  const double elapsed_s =
+      m_qp_pid_last_update_ms > 0
+          ? std::clamp((now_ms - m_qp_pid_last_update_ms) / 1000.0, 0.2, 5.0)
+          : 1.0;
+  const double raw_error = (static_cast<double>(measured_bitrate_bps) -
+                            static_cast<double>(target_bps)) /
+                           static_cast<double>(target_bps);
+  const bool in_deadband = std::abs(raw_error) < kQpPidDeadband;
+  const double error = in_deadband ? 0.0 : raw_error;
+  if (in_deadband) {
+    m_qp_pid_integral *= 0.8;
+  } else {
+    m_qp_pid_integral = std::clamp(m_qp_pid_integral + error * elapsed_s,
+                                   -kQpPidIntegralLimit, kQpPidIntegralLimit);
+  }
+  const double derivative = !in_deadband && m_qp_pid_last_update_ms > 0
+                                ? (error - m_qp_pid_last_error) / elapsed_s
+                                : 0.0;
+  const double correction = std::clamp(
+      kQpPidKp * error + kQpPidKi * m_qp_pid_integral + kQpPidKd * derivative,
+      -kQpPidCorrectionLimit, kQpPidCorrectionLimit);
+  m_qp_pid_last_error = error;
+  m_qp_pid_last_update_ms = now_ms;
+  m_qp_pid_was_enabled = true;
+
+  const int correction_qp = static_cast<int>(std::llround(correction));
+  int target_qp_min = base_qp_min;
+  int target_qp_max = base_qp_max;
+  if (correction_qp > 0) {
+    target_qp_min =
+        std::clamp(base_qp_min + correction_qp, base_qp_min, base_qp_max);
+  } else if (correction_qp < 0) {
+    target_qp_max =
+        std::clamp(base_qp_max + correction_qp, base_qp_min, base_qp_max);
+  }
+
+  int current_qp_min = m_curr_dynamic_qp_min.load();
+  int current_qp_max = m_curr_dynamic_qp_max.load();
+  if (current_qp_min < 0 || current_qp_min > 51) {
+    current_qp_min = base_qp_min;
+  }
+  if (current_qp_max < 0 || current_qp_max > 51) {
+    current_qp_max = base_qp_max;
+  }
+  target_qp_min =
+      std::clamp(target_qp_min, current_qp_min - kQpPidMaxStepPerUpdate,
+                 current_qp_min + kQpPidMaxStepPerUpdate);
+  target_qp_max =
+      std::clamp(target_qp_max, current_qp_max - kQpPidMaxStepPerUpdate,
+                 current_qp_max + kQpPidMaxStepPerUpdate);
+  target_qp_min = std::clamp(target_qp_min, 0, 51);
+  target_qp_max = std::clamp(target_qp_max, 0, 51);
+  if (target_qp_min > target_qp_max) {
+    target_qp_min = target_qp_max;
+  }
+
+  if (target_qp_min == current_qp_min && target_qp_max == current_qp_max) {
+    return;
+  }
+  m_curr_dynamic_qp_min = target_qp_min;
+  m_curr_dynamic_qp_max = target_qp_max;
+  if (now_ms - m_qp_pid_last_log_ms > kQpPidLogIntervalMs) {
+    m_qp_pid_last_log_ms = now_ms;
+    m_console->debug(
+        "QP PID cam{} target_bps:{} measured_bps:{} error:{:.3f} "
+        "correction:{:.2f} qp:{}-{}",
+        m_camera_holder->get_camera().index, target_bps, measured_bitrate_bps,
+        raw_error, correction, target_qp_min, target_qp_max);
+  }
 }
 
 void GStreamerStream::check_required_perf_telemetry(int64_t now_ms,
@@ -1066,6 +1187,7 @@ void GStreamerStream::stream_once() {
   int currently_applied_qp_max = m_camera_holder->get_settings().qp_max;
   m_curr_dynamic_qp_min = currently_applied_qp_min;
   m_curr_dynamic_qp_max = currently_applied_qp_max;
+  reset_qp_pid_controller();
   // Now we should have a running pipeline and are able to pull samples from it
   // We use a timeout of 40ms to not unnecessarily wake up the thread on up to
   // 30fps (33ms) but also quickly respond to restart requests or bitrate

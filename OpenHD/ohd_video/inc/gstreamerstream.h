@@ -91,6 +91,8 @@ class GStreamerStream : public CameraStream {
   static GstPadProbeReturn on_perf_pad_probe(GstPad* pad, GstPadProbeInfo* info,
                                              gpointer user_data);
   void handle_perf_pad_probe(GstPadProbeInfo* info);
+  void update_qp_pid_controller(uint32_t measured_bitrate_bps, int64_t now_ms);
+  void reset_qp_pid_controller();
   void check_required_perf_telemetry(int64_t now_ms, int64_t first_frame_ms);
   void report_required_perf_problem(const std::string& code,
                                     const std::string& description);
@@ -140,6 +142,11 @@ class GStreamerStream : public CameraStream {
   int64_t m_perf_probe_window_start_ms = 0;
   uint64_t m_perf_probe_window_bytes = 0;
   uint32_t m_perf_probe_window_buffers = 0;
+  double m_qp_pid_integral = 0.0;
+  double m_qp_pid_last_error = 0.0;
+  int64_t m_qp_pid_last_update_ms = 0;
+  int64_t m_qp_pid_last_log_ms = 0;
+  bool m_qp_pid_was_enabled = false;
 
  private:
   // The stuff here is to pull the data out of the gstreamer pipeline, such that

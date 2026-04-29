@@ -157,6 +157,14 @@ class CameraHolder :
     }
     return true;
   }
+  bool set_qp_pid_enable(int value) {
+    if (!openhd::validate_yes_or_no(value)) return false;
+    unsafe_get_settings().qp_pid_enable = static_cast<bool>(value);
+    openhd::log::get_default()->debug("Camera{} QP_PID_ENABLE request:{}",
+                                      m_camera.index, value);
+    persist(false);
+    return true;
+  }
   bool set_air_recording(int recording_enable);
   // EXTRA - sets the air recording param to disabled when we run out of space -
   // this should be called in regular intervals

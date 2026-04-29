@@ -35,11 +35,11 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(VideoFormat, videoCodec, width, height,
                                    framerate)
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
-    CameraSettings, enable_streaming, qp_max, qp_min, streamed_video_format,
-    h26x_bitrate_kbits, h26x_keyframe_interval, h26x_intra_refresh_type,
-    h26x_num_slices, nxp_enable_aud, air_recording, camera_rotation_degree,
-    openhd_flip, openhd_brightness, openhd_sharpness, openhd_saturation,
-    openhd_contrast,
+    CameraSettings, enable_streaming, qp_max, qp_min, qp_pid_enable,
+    streamed_video_format, h26x_bitrate_kbits, h26x_keyframe_interval,
+    h26x_intra_refresh_type, h26x_num_slices, nxp_enable_aud, air_recording,
+    camera_rotation_degree, openhd_flip, openhd_brightness, openhd_sharpness,
+    openhd_saturation, openhd_contrast,
     // rpi libcamera specific IQ params begin
     rpi_libcamera_ev_value, rpi_libcamera_denoise_index,
     rpi_libcamera_awb_index, rpi_libcamera_metering_index,
@@ -189,10 +189,17 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
     auto c_qp_max = [this](std::string, int value) {
       return set_qp_max(value);
     };
+    auto c_qp_pid_enable = [this](std::string, int value) {
+      return set_qp_pid_enable(value);
+    };
     ret.push_back(openhd::Setting{
         "QP_MIN", openhd::IntSetting{get_settings().qp_min, c_qp_min}});
     ret.push_back(openhd::Setting{
         "QP_MAX", openhd::IntSetting{get_settings().qp_max, c_qp_max}});
+    ret.push_back(openhd::Setting{
+        "QP_PID_ENABLE",
+        openhd::IntSetting{static_cast<int>(get_settings().qp_pid_enable),
+                           c_qp_pid_enable}});
   }
   if (true) {  // Always show intra, on libcamera without sw encode it
                // unfortunately is 'just not mapped' and ignored.
