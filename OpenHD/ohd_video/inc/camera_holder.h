@@ -24,20 +24,20 @@
 #ifndef OPENHD_OPENHD_OHD_VIDEO_INC_CAMERA_HOLDER_H_
 #define OPENHD_OPENHD_OHD_VIDEO_INC_CAMERA_HOLDER_H_
 
-#include <algorithm>
-#include <functional>
 #include <spdlog/spdlog.h>
 
+#include <algorithm>
+#include <functional>
 #include <sstream>
 
 #include "camera.hpp"
 #include "camera_settings.hpp"
 #include "openhd_action_handler.h"
 #include "openhd_bitrate.h"
-#include "openhd_sock.h"
 #include "openhd_settings_directories.h"
 #include "openhd_settings_imp.h"
 #include "openhd_settings_persistent.h"
+#include "openhd_sock.h"
 #include "usb_thermal_cam_helper.h"
 
 // Holds the immutable (camera) and mutable (camera_settings) information about
@@ -56,8 +56,12 @@ class CameraHolder :
   }
   [[nodiscard]] const XCamera& get_camera() const { return m_camera; }
   using VIDEO_BITRATE_CHANGED_CALLBACK = std::function<void(int bitrate_kbits)>;
+  using VIDEO_QP_CHANGED_CALLBACK = std::function<void(int qp_min, int qp_max)>;
   void register_video_bitrate_listener(VIDEO_BITRATE_CHANGED_CALLBACK cb) {
     m_video_bitrate_changed_callback = std::move(cb);
+  }
+  void register_video_qp_listener(VIDEO_QP_CHANGED_CALLBACK cb) {
+    m_video_qp_changed_callback = std::move(cb);
   }
   // Settings hacky begin
   std::vector<openhd::Setting> get_all_settings();
@@ -102,7 +106,54 @@ class CameraHolder :
     persist(false);
     if (m_video_bitrate_changed_callback &&
         unsafe_get_settings().h26x_bitrate_kbits != previous_kbits) {
-      m_video_bitrate_changed_callback(unsafe_get_settings().h26x_bitrate_kbits);
+      m_video_bitrate_changed_callback(
+          unsafe_get_settings().h26x_bitrate_kbits);
+    }
+    return true;
+  }
+  bool set_qp_min(int value) {
+    if (!openhd::validate_h26x_qp(value)) {
+      return false;
+    }
+    if (value > get_settings().qp_max) {
+      openhd::log::get_default()->warn(
+          "Invalid Camera{} QP_MIN {}, current QP_MAX is {}", m_camera.index,
+          value, get_settings().qp_max);
+      return false;
+    }
+    const auto previous_qp_min = get_settings().qp_min;
+    unsafe_get_settings().qp_min = value;
+    openhd::log::get_default()->debug(
+        "Camera{} QP_MIN request:{} old:{} new:{}", m_camera.index, value,
+        previous_qp_min, unsafe_get_settings().qp_min);
+    persist(false);
+    if (m_video_qp_changed_callback &&
+        unsafe_get_settings().qp_min != previous_qp_min) {
+      m_video_qp_changed_callback(unsafe_get_settings().qp_min,
+                                  unsafe_get_settings().qp_max);
+    }
+    return true;
+  }
+  bool set_qp_max(int value) {
+    if (!openhd::validate_h26x_qp(value)) {
+      return false;
+    }
+    if (value < get_settings().qp_min) {
+      openhd::log::get_default()->warn(
+          "Invalid Camera{} QP_MAX {}, current QP_MIN is {}", m_camera.index,
+          value, get_settings().qp_min);
+      return false;
+    }
+    const auto previous_qp_max = get_settings().qp_max;
+    unsafe_get_settings().qp_max = value;
+    openhd::log::get_default()->debug(
+        "Camera{} QP_MAX request:{} old:{} new:{}", m_camera.index, value,
+        previous_qp_max, unsafe_get_settings().qp_max);
+    persist(false);
+    if (m_video_qp_changed_callback &&
+        unsafe_get_settings().qp_max != previous_qp_max) {
+      m_video_qp_changed_callback(unsafe_get_settings().qp_min,
+                                  unsafe_get_settings().qp_max);
     }
     return true;
   }
@@ -247,6 +298,7 @@ class CameraHolder :
   // Camera info is immutable
   const XCamera m_camera;
   VIDEO_BITRATE_CHANGED_CALLBACK m_video_bitrate_changed_callback = nullptr;
+  VIDEO_QP_CHANGED_CALLBACK m_video_qp_changed_callback = nullptr;
 
  private:
   [[nodiscard]] std::string get_unique_filename() const override {
@@ -265,7 +317,8 @@ class CameraHolder :
     ret.streamed_video_format.height = default_resolution.height_px;
     ret.streamed_video_format.framerate = default_resolution.fps;
 
-    const auto& sysutil_settings = []() -> const std::optional<openhd::SysutilSettings>& {
+    const auto& sysutil_settings =
+        []() -> const std::optional<openhd::SysutilSettings>& {
       static const std::optional<openhd::SysutilSettings> cached =
           openhd::request_sysutil_settings();
       return cached;
@@ -280,7 +333,8 @@ class CameraHolder :
       }
 
       if (!requested_resolution_fps.empty()) {
-        const auto requested_format = parse_video_format(requested_resolution_fps);
+        const auto requested_format =
+            parse_video_format(requested_resolution_fps);
         if (requested_format.has_value()) {
           const auto supported_formats = m_camera.get_supported_resolutions();
           const auto supported_it = std::find_if(

@@ -69,6 +69,8 @@ static bool validate_video_codec(int codec) { return codec == 0 || codec == 1; }
 
 bool validate_bitrate_mbits(int bitrate_mbits);
 
+bool validate_h26x_qp(int value);
+
 bool validate_camera_rotation(int value);
 
 static bool validate_openhd_brightness(int value) {

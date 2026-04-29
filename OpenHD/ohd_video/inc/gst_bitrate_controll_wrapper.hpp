@@ -34,7 +34,9 @@
 #include <utility>
 #include <vector>
 
+#include "camera_holder.h"
 #include "openhd_bitrate.h"
+#include "openhd_platform.h"
 #include "openhd_spdlog.h"
 #include "openhd_spdlog_include.h"
 
@@ -61,10 +63,24 @@ struct GstBitrateReadback {
   int interpreted_kbits = -1;
 };
 
+struct GstQpControlElement {
+  // the encoder (or similar) element, must not be null
+  GstElement* encoder;
+  std::string min_property_name = "qp-min";
+  std::string max_property_name = "qp-max";
+  std::string extra_controls_property_name = "extra-controls";
+  bool uses_extra_controls_h264_qp = false;
+};
+
+struct GstQpReadback {
+  int qp_min = -1;
+  int qp_max = -1;
+};
+
 static std::optional<int64_t> read_integer_property(GObject* object,
                                                     const std::string& name) {
-  auto* pspec = g_object_class_find_property(G_OBJECT_GET_CLASS(object),
-                                             name.c_str());
+  auto* pspec =
+      g_object_class_find_property(G_OBJECT_GET_CLASS(object), name.c_str());
   if (pspec == nullptr) {
     openhd::log::get_default()->warn("Cannot find gst property {}", name);
     return std::nullopt;
@@ -101,8 +117,8 @@ static std::optional<int64_t> read_integer_property(GObject* object,
 
 static bool set_integer_property(GObject* object, const std::string& name,
                                  int64_t raw_value) {
-  auto* pspec = g_object_class_find_property(G_OBJECT_GET_CLASS(object),
-                                             name.c_str());
+  auto* pspec =
+      g_object_class_find_property(G_OBJECT_GET_CLASS(object), name.c_str());
   if (pspec == nullptr) {
     openhd::log::get_default()->warn("Cannot find gst property {}", name);
     return false;
@@ -116,9 +132,9 @@ static bool set_integer_property(GObject* object, const std::string& name,
   } else if (G_VALUE_HOLDS_UINT(&value)) {
     const auto unsigned_value =
         static_cast<uint64_t>(std::max<int64_t>(raw_value, 0));
-    g_value_set_uint(&value, static_cast<guint>(std::min<uint64_t>(
-                                 unsigned_value,
-                                 std::numeric_limits<guint>::max())));
+    g_value_set_uint(&value,
+                     static_cast<guint>(std::min<uint64_t>(
+                         unsigned_value, std::numeric_limits<guint>::max())));
   } else if (G_VALUE_HOLDS_LONG(&value)) {
     g_value_set_long(&value, static_cast<glong>(std::clamp<int64_t>(
                                  raw_value, std::numeric_limits<glong>::min(),
@@ -126,14 +142,14 @@ static bool set_integer_property(GObject* object, const std::string& name,
   } else if (G_VALUE_HOLDS_ULONG(&value)) {
     const auto unsigned_value =
         static_cast<uint64_t>(std::max<int64_t>(raw_value, 0));
-    g_value_set_ulong(&value, static_cast<gulong>(std::min<uint64_t>(
-                                  unsigned_value,
-                                  std::numeric_limits<gulong>::max())));
+    g_value_set_ulong(&value,
+                      static_cast<gulong>(std::min<uint64_t>(
+                          unsigned_value, std::numeric_limits<gulong>::max())));
   } else if (G_VALUE_HOLDS_INT64(&value)) {
     g_value_set_int64(&value, raw_value);
   } else if (G_VALUE_HOLDS_UINT64(&value)) {
-    g_value_set_uint64(&value, static_cast<guint64>(
-                                   std::max<int64_t>(raw_value, 0)));
+    g_value_set_uint64(&value,
+                       static_cast<guint64>(std::max<int64_t>(raw_value, 0)));
   } else {
     openhd::log::get_default()->warn("gst property {} is not integer-like",
                                      name);
@@ -142,6 +158,23 @@ static bool set_integer_property(GObject* object, const std::string& name,
   }
   g_object_set_property(object, name.c_str(), &value);
   g_value_unset(&value);
+  return true;
+}
+
+static bool set_extra_controls_ints(
+    GstElement* encoder, const std::string& property_name,
+    const std::vector<std::pair<std::string, int>>& controls) {
+  GstStructure* extra_controls = nullptr;
+  g_object_get(encoder, property_name.c_str(), &extra_controls, NULL);
+  if (extra_controls == nullptr) {
+    extra_controls = gst_structure_new_empty("controls");
+  }
+  for (const auto& control : controls) {
+    gst_structure_set(extra_controls, control.first.c_str(), G_TYPE_INT,
+                      control.second, NULL);
+  }
+  g_object_set(encoder, property_name.c_str(), extra_controls, NULL);
+  gst_structure_free(extra_controls);
   return true;
 }
 
@@ -169,20 +202,57 @@ static std::optional<GstBitrateReadback> read_bitrate_readback(
   }
   const auto raw_property_value_opt =
       read_integer_property(G_OBJECT(ctrl_el.encoder), ctrl_el.property_name);
-  if (!raw_property_value_opt.has_value() || raw_property_value_opt.value() < 0) {
+  if (!raw_property_value_opt.has_value() ||
+      raw_property_value_opt.value() < 0) {
     return std::nullopt;
   }
   const auto raw_property_value = raw_property_value_opt.value();
   GstBitrateReadback ret{};
-  ret.raw_property_value =
-      raw_property_value > std::numeric_limits<int>::max()
-          ? std::numeric_limits<int>::max()
-          : static_cast<int>(raw_property_value);
+  ret.raw_property_value = raw_property_value > std::numeric_limits<int>::max()
+                               ? std::numeric_limits<int>::max()
+                               : static_cast<int>(raw_property_value);
   ret.interpreted_kbits =
       ctrl_el.takes_kbit
           ? ret.raw_property_value
           : openhd::bits_per_second_to_kbits_per_second(ret.raw_property_value);
   return ret;
+}
+
+static std::optional<GstQpReadback> read_qp_readback(
+    const GstQpControlElement& ctrl_el) {
+  if (ctrl_el.uses_extra_controls_h264_qp) {
+    GstStructure* extra_controls = nullptr;
+    g_object_get(ctrl_el.encoder, ctrl_el.extra_controls_property_name.c_str(),
+                 &extra_controls, NULL);
+    if (extra_controls == nullptr) {
+      return std::nullopt;
+    }
+    gint qp_min = -1;
+    gint qp_max = -1;
+    const bool ok_min = gst_structure_get_int(
+        extra_controls, ctrl_el.min_property_name.c_str(), &qp_min);
+    const bool ok_max = gst_structure_get_int(
+        extra_controls, ctrl_el.max_property_name.c_str(), &qp_max);
+    gst_structure_free(extra_controls);
+    if (!ok_min || !ok_max || qp_min < 0 || qp_max < 0) {
+      return std::nullopt;
+    }
+    return GstQpReadback{qp_min, qp_max};
+  }
+  const auto qp_min_opt = read_integer_property(G_OBJECT(ctrl_el.encoder),
+                                                ctrl_el.min_property_name);
+  const auto qp_max_opt = read_integer_property(G_OBJECT(ctrl_el.encoder),
+                                                ctrl_el.max_property_name);
+  if (!qp_min_opt.has_value() || !qp_max_opt.has_value() ||
+      qp_min_opt.value() < 0 || qp_max_opt.value() < 0) {
+    return std::nullopt;
+  }
+  const auto to_int = [](int64_t raw) {
+    return raw > std::numeric_limits<int>::max()
+               ? std::numeric_limits<int>::max()
+               : static_cast<int>(raw);
+  };
+  return GstQpReadback{to_int(qp_min_opt.value()), to_int(qp_max_opt.value())};
 }
 
 static std::optional<GstBitrateControlElement>
@@ -257,18 +327,89 @@ get_dynamic_bitrate_control_element_in_pipeline(
   return ret;
 }
 
+static std::optional<GstQpControlElement>
+get_dynamic_qp_control_element_in_pipeline(GstElement* gst_pipeline,
+                                           const CameraHolder& camera_holder) {
+  auto camera = camera_holder.get_camera();
+  auto settings = camera_holder.get_settings();
+
+  const auto try_qp_control =
+      [&](const char* element_name, bool uses_extra_controls,
+          std::string min_property,
+          std::string max_property) -> std::optional<GstQpControlElement> {
+    GstElement* encoder =
+        gst_bin_get_by_name(GST_BIN(gst_pipeline), element_name);
+    if (encoder == nullptr) {
+      return std::nullopt;
+    }
+    GstQpControlElement ret{};
+    ret.encoder = encoder;
+    ret.min_property_name = std::move(min_property);
+    ret.max_property_name = std::move(max_property);
+    ret.uses_extra_controls_h264_qp = uses_extra_controls;
+    const auto readback_opt = read_qp_readback(ret);
+    if (!readback_opt.has_value()) {
+      gst_object_unref(encoder);
+      return std::nullopt;
+    }
+    const auto readback = readback_opt.value();
+    openhd::log::get_default()->info(
+        "Got QP control for camera {} encoder:{} min_property:{} "
+        "max_property:{} current_min:{} current_max:{}",
+        camera.cam_type_as_verbose_string(), element_name,
+        ret.min_property_name, ret.max_property_name, readback.qp_min,
+        readback.qp_max);
+    return ret;
+  };
+
+  if (camera.requires_rpi_mmal_pipeline()) {
+    if (auto ret = try_qp_control("rpicamsrc", false, "qp-min", "qp-max")) {
+      return ret;
+    }
+  }
+  if ((camera.requires_rpi_libcamera_pipeline() ||
+       camera.requires_rpi_veye_pipeline() ||
+       OHDPlatform::instance().is_rpi()) &&
+      !settings.force_sw_encode &&
+      settings.streamed_video_format.videoCodec == VideoCodec::H264) {
+    if (auto ret =
+            try_qp_control("rpi_v4l2_encoder", true, "h264_minimum_qp_value",
+                           "h264_maximum_qp_value")) {
+      return ret;
+    }
+  }
+  if (camera.requires_rockchip3_mpp_pipeline() ||
+      camera.requires_rockchip5_mpp_pipeline() ||
+      camera.requires_rockchip1126_mpp_pipeline()) {
+    if (auto ret = try_qp_control("mpp_encoder", false, "qp-min", "qp-max")) {
+      return ret;
+    }
+  }
+  if (camera.requires_rockchip_rv_pipeline()) {
+    if (auto ret = try_qp_control("rkmpih264enc", false, "qp-min", "qp-max")) {
+      return ret;
+    }
+  }
+  if (camera.camera_type == X_CAM_TYPE_DUMMY_SW ||
+      is_usb_camera(camera.camera_type) || settings.force_sw_encode) {
+    if (auto ret = try_qp_control("swencoder", false, "qp-min", "qp-max")) {
+      return ret;
+    }
+  }
+  openhd::log::get_default()->debug(
+      "Cannot find dynamic QP control element for camera {}",
+      camera.cam_type_as_verbose_string());
+  return std::nullopt;
+}
+
 static bool change_bitrate(const GstBitrateControlElement& ctrl_el,
                            int bitrate_kbits) {
   const auto target_raw_property_value =
       ctrl_el.takes_kbit ? bitrate_kbits
                          : openhd::kbits_to_bits_per_second(bitrate_kbits);
   if (ctrl_el.uses_extra_controls_video_bitrate) {
-    GstStructure* extra_controls =
-        gst_structure_new("controls", "video_bitrate", G_TYPE_INT,
-                          target_raw_property_value, NULL);
-    g_object_set(ctrl_el.encoder, ctrl_el.property_name.c_str(),
-                 extra_controls, NULL);
-    gst_structure_free(extra_controls);
+    set_extra_controls_ints(ctrl_el.encoder, ctrl_el.property_name,
+                            {{"video_bitrate", target_raw_property_value}});
   } else {
     if (!set_integer_property(G_OBJECT(ctrl_el.encoder), ctrl_el.property_name,
                               target_raw_property_value)) {
@@ -306,12 +447,75 @@ static bool change_bitrate(const GstBitrateControlElement& ctrl_el,
   return true;
 }
 
+static bool change_qp(const GstQpControlElement& ctrl_el, int qp_min,
+                      int qp_max) {
+  if (qp_min < 0 || qp_min > 51 || qp_max < 0 || qp_max > 51) {
+    openhd::log::get_default()->warn("Cannot change QP: invalid min:{} max:{}",
+                                     qp_min, qp_max);
+    return false;
+  }
+  if (qp_min > qp_max) {
+    openhd::log::get_default()->warn("Cannot change QP: min {} > max {}",
+                                     qp_min, qp_max);
+    return false;
+  }
+  if (ctrl_el.uses_extra_controls_h264_qp) {
+    set_extra_controls_ints(ctrl_el.encoder,
+                            ctrl_el.extra_controls_property_name,
+                            {{ctrl_el.min_property_name, qp_min},
+                             {ctrl_el.max_property_name, qp_max}});
+  } else {
+    const auto current_qp = read_qp_readback(ctrl_el);
+    const bool lower_max_below_current_min =
+        current_qp.has_value() && qp_max < current_qp->qp_min;
+    const bool set_min_first = lower_max_below_current_min;
+    const auto set_min = [&]() {
+      return set_integer_property(G_OBJECT(ctrl_el.encoder),
+                                  ctrl_el.min_property_name, qp_min);
+    };
+    const auto set_max = [&]() {
+      return set_integer_property(G_OBJECT(ctrl_el.encoder),
+                                  ctrl_el.max_property_name, qp_max);
+    };
+    const bool ok =
+        set_min_first ? (set_min() && set_max()) : (set_max() && set_min());
+    if (!ok) {
+      return false;
+    }
+  }
+  const auto readback_opt = read_qp_readback(ctrl_el);
+  if (!readback_opt.has_value()) {
+    openhd::log::get_default()->warn("Cannot read QP after set min:{} max:{}",
+                                     qp_min, qp_max);
+    return false;
+  }
+  const auto readback = readback_opt.value();
+  if (readback.qp_min != qp_min || readback.qp_max != qp_max) {
+    openhd::log::get_default()->warn(
+        "Cannot change QP: target_min:{} target_max:{} readback_min:{} "
+        "readback_max:{}",
+        qp_min, qp_max, readback.qp_min, readback.qp_max);
+    return false;
+  }
+  openhd::log::get_default()->debug("Changed QP min:{} max:{}", qp_min, qp_max);
+  return true;
+}
+
 static void unref_bitrate_element(GstBitrateControlElement& element) {
   if (element.encoder) {
     openhd::log::get_default()->debug("Unref bitrate control element begin");
     gst_object_unref(element.encoder);
     element.encoder = nullptr;
     openhd::log::get_default()->debug("Unref bitrate control element end");
+  }
+}
+
+static void unref_qp_element(GstQpControlElement& element) {
+  if (element.encoder) {
+    openhd::log::get_default()->debug("Unref QP control element begin");
+    gst_object_unref(element.encoder);
+    element.encoder = nullptr;
+    openhd::log::get_default()->debug("Unref QP control element end");
   }
 }
 

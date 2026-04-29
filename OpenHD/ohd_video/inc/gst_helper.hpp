@@ -203,8 +203,7 @@ static std::string createRpicamsrcStream(
   }
   // NOTE: These 2 params require the openhd rpicamsrc -
   if (true) {
-    // qp-max=51 is the default in rpi v4l2 encoder wrapper
-    ss << "qp-min=10 qp-max=51 ";
+    ss << "qp-min=" << settings.qp_min << " qp-max=" << settings.qp_max << " ";
   }
   // keyframe-interval   : Interval (in frames) between I frames. -1 =
   // automatic, 0 = single-keyframe
@@ -341,7 +340,8 @@ static std::string create_rpi_v4l2_h264_encoder(
   // bitrate NOTE: The range of QP value is from 0 to 51. Any value more than 51
   // is clamped to 51 RPI Default : 20 / 51
   std::string quantization_str =
-      fmt::format(",h264_minimum_qp_value={},h264_maximum_qp_value={}", 5, 51);
+      fmt::format(",h264_minimum_qp_value={},h264_maximum_qp_value={}",
+                  settings.qp_min, settings.qp_max);
   std::string intra_refresh_period_str;
   if (settings.h26x_intra_refresh_type != -1) {
     const int period = rpi_calculate_intra_refresh_period(
@@ -531,9 +531,9 @@ static std::string createRockchipEncoderPipeline(
   int bps_max = std::min(bps, BPS_MAX_LIMIT);
 
   if (settings.streamed_video_format.videoCodec == VideoCodec::H264) {
-    ss << " mpph264enc";
+    ss << " mpph264enc name=mpp_encoder";
   } else {
-    ss << " mpph265enc";
+    ss << " mpph265enc name=mpp_encoder";
   }
 
   ss << " rc-mode=1";
@@ -592,11 +592,10 @@ static std::string create_nxp_imx8_v4l2_stream(const CameraSettings& settings,
                                                int device_index = 3,
                                                bool use_dmabuf = true,
                                                bool force_1080p60 = false) {
-  const int width = force_1080p60
-                        ? 1920
-                        : (settings.streamed_video_format.width > 0
-                               ? settings.streamed_video_format.width
-                               : 1280);
+  const int width = force_1080p60 ? 1920
+                                  : (settings.streamed_video_format.width > 0
+                                         ? settings.streamed_video_format.width
+                                         : 1280);
   const int height = force_1080p60
                          ? 1080
                          : (settings.streamed_video_format.height > 0
@@ -627,9 +626,8 @@ static std::string create_nxp_imx8_v4l2_stream(const CameraSettings& settings,
   const std::string aud_parameter =
       use_h264 && settings.nxp_enable_aud ? " enable-aud=true" : "";
   ss << fmt::format("{} name=nxp_encoder bitrate={} gop-size={}{} ",
-                    encoder_name,
-                    settings.h26x_bitrate_kbits, keyframe_interval,
-                    aud_parameter);
+                    encoder_name, settings.h26x_bitrate_kbits,
+                    keyframe_interval, aud_parameter);
   if (use_intra_refresh) {
     ss << "use-intra-refresh=true ";
   }
@@ -772,9 +770,9 @@ static std::string create_orqa_camera1_stream(const int device_index,
      << " io-mode=mmap do-timestamp=true ! "
      << "video/x-raw,width=" << width << ",height=" << height
      << ",framerate=" << framerate << "/1 ! "
-     << "queue max-size-buffers=4 leaky=downstream ! "
-     << encoder_name << " bitrate=" << bitrate_kbits
-     << " gop-size=" << keyframe_interval << aud_parameter << " ! ";
+     << "queue max-size-buffers=4 leaky=downstream ! " << encoder_name
+     << " bitrate=" << bitrate_kbits << " gop-size=" << keyframe_interval
+     << aud_parameter << " ! ";
   return ss.str();
 }
 
@@ -1162,6 +1160,8 @@ static std::string createRv1106Stream(const CameraSettings& settings) {
   if (settings.streamed_video_format.videoCodec == VideoCodec::H265) {
     ss << fmt::format(" codec=h265");
   }
+  ss << " qp-min=" << settings.qp_min;
+  ss << " qp-max=" << settings.qp_max;
   ss << " rotation=" << settings.camera_rotation_degree;
   if (requires_hflip(settings)) {
     ss << " hflip=1";
@@ -1186,7 +1186,6 @@ static std::string createRv1126Stream(const CameraSettings& settings) {
   const int bps_actual = bps;
   const int bps_min = (bps * 90) / 100;
   const int bps_max = (bps * 110) / 100;
-
 
   if (settings.streamed_video_format.videoCodec == VideoCodec::H264) {
     ss << " mpph264enc name=mpp_encoder";

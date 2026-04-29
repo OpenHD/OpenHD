@@ -74,6 +74,7 @@ class GStreamerStream : public CameraStream {
   void cleanup_pipe();
   void handle_change_bitrate_request(
       openhd::LinkActionHandler::LinkBitrateInformation lb) override;
+  void handle_change_qp_request(int qp_min, int qp_max);
   // this is called when the FC reports itself as armed / disarmed
   void handle_update_arming_state(bool armed) override;
   void loop_infinite();
@@ -87,8 +88,7 @@ class GStreamerStream : public CameraStream {
   bool setup_perf_element();
   void cleanup_perf_element();
   bool handle_perf_info_message(const char* info_text);
-  static GstPadProbeReturn on_perf_pad_probe(GstPad* pad,
-                                             GstPadProbeInfo* info,
+  static GstPadProbeReturn on_perf_pad_probe(GstPad* pad, GstPadProbeInfo* info,
                                              gpointer user_data);
   void handle_perf_pad_probe(GstPadProbeInfo* info);
   void check_required_perf_telemetry(int64_t now_ms, int64_t first_frame_ms);
@@ -104,6 +104,8 @@ class GStreamerStream : public CameraStream {
   // not supported by all camera(s).
   // for dynamically changing the bitrate
   std::optional<GstBitrateControlElement> m_bitrate_ctrl_element = std::nullopt;
+  // for dynamically changing encoder QP limits
+  std::optional<GstQpControlElement> m_qp_ctrl_element = std::nullopt;
   // Required gst-perf element that reports encoder-side bitrate/fps.
   GstElement* m_perf_element = nullptr;
   GstPad* m_perf_probe_pad = nullptr;
@@ -116,6 +118,8 @@ class GStreamerStream : public CameraStream {
   // Set to true if armed, used for auto record on arm
   bool m_armed_enable_air_recording = false;
   std::atomic<int> m_curr_dynamic_bitrate_kbits = -1;
+  std::atomic<int> m_curr_dynamic_qp_min = -1;
+  std::atomic<int> m_curr_dynamic_qp_max = -1;
   // Not working yet, keep the old approach
   // std::unique_ptr<GstVideoRecorder> m_gst_video_recorder=nullptr;
   std::atomic_bool m_request_restart = false;

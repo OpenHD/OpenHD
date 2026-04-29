@@ -37,6 +37,14 @@ bool openhd::validate_bitrate_mbits(int bitrate_mbits) {
   return ret;
 }
 
+bool openhd::validate_h26x_qp(int value) {
+  const bool ret = value >= 0 && value <= 51;
+  if (!ret) {
+    openhd::log::get_default()->warn("Invalid h26x_qp: {}", value);
+  }
+  return ret;
+}
+
 bool openhd::validate_camera_rotation(int value) {
   const bool ret = value == 0 || value == 90 || value == 180 || value == 270;
   if (!ret) {
