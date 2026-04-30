@@ -298,6 +298,12 @@ get_dynamic_bitrate_control_element_in_pipeline(
     ret.property_name = "bps";
     ret.takes_kbit = false;
     ret.extra_properties_percent = {{"bps-min", 90}, {"bps-max", 110}};
+  } else if (camera.requires_rockchip3_mpp_pipeline() ||
+             camera.requires_rockchip5_mpp_pipeline()) {
+    ret.encoder = gst_bin_get_by_name(GST_BIN(gst_pipeline), "mpp_encoder");
+    ret.property_name = "bps";
+    ret.takes_kbit = false;
+    ret.extra_properties_percent = {{"bps-min", 90}, {"bps-max", 110}};
   } else if (camera.requires_nxp_imx8_v4l2_pipeline()) {
     ret.encoder = gst_bin_get_by_name(GST_BIN(gst_pipeline), "nxp_encoder");
     ret.property_name = "bitrate";

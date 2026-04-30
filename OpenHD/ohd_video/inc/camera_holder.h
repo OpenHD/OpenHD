@@ -165,6 +165,14 @@ class CameraHolder :
     persist(false);
     return true;
   }
+  bool set_rk_bitrate_pid_enable(int value) {
+    if (!openhd::validate_yes_or_no(value)) return false;
+    unsafe_get_settings().rk_bitrate_pid_enable = static_cast<bool>(value);
+    openhd::log::get_default()->debug("Camera{} RK_BITRATE_PID request:{}",
+                                      m_camera.index, value);
+    persist(false);
+    return true;
+  }
   bool set_air_recording(int recording_enable);
   // EXTRA - sets the air recording param to disabled when we run out of space -
   // this should be called in regular intervals
@@ -375,6 +383,10 @@ class CameraHolder :
     if (OHDPlatform::instance().is_x20()) {
       // Better choice for the x20
       ret.h26x_keyframe_interval = 8;
+    }
+    if (m_camera.requires_rockchip3_mpp_pipeline() ||
+        m_camera.requires_rockchip5_mpp_pipeline()) {
+      ret.rk_bitrate_pid_enable = true;
     }
     return ret;
   }

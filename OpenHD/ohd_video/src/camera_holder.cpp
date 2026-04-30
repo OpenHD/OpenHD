@@ -36,10 +36,10 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(VideoFormat, videoCodec, width, height,
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
     CameraSettings, enable_streaming, qp_max, qp_min, qp_pid_enable,
-    streamed_video_format, h26x_bitrate_kbits, h26x_keyframe_interval,
-    h26x_intra_refresh_type, h26x_num_slices, nxp_enable_aud, air_recording,
-    camera_rotation_degree, openhd_flip, openhd_brightness, openhd_sharpness,
-    openhd_saturation, openhd_contrast,
+    rk_bitrate_pid_enable, streamed_video_format, h26x_bitrate_kbits,
+    h26x_keyframe_interval, h26x_intra_refresh_type, h26x_num_slices,
+    nxp_enable_aud, air_recording, camera_rotation_degree, openhd_flip,
+    openhd_brightness, openhd_sharpness, openhd_saturation, openhd_contrast,
     // rpi libcamera specific IQ params begin
     rpi_libcamera_ev_value, rpi_libcamera_denoise_index,
     rpi_libcamera_awb_index, rpi_libcamera_metering_index,
@@ -50,7 +50,17 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
 
 std::optional<CameraSettings> CameraHolder::impl_deserialize(
     const std::string &file_as_string) const {
-  return openhd_json_parse<CameraSettings>(file_as_string);
+  const auto parsed_json = nlohmann::json::parse(file_as_string, nullptr, false);
+  const bool missing_rk_bitrate_pid =
+      parsed_json.is_discarded() ||
+      !parsed_json.contains("rk_bitrate_pid_enable");
+  auto parsed_settings = openhd_json_parse<CameraSettings>(file_as_string);
+  if (parsed_settings.has_value() && missing_rk_bitrate_pid &&
+      (m_camera.requires_rockchip3_mpp_pipeline() ||
+       m_camera.requires_rockchip5_mpp_pipeline())) {
+    parsed_settings->rk_bitrate_pid_enable = true;
+  }
+  return parsed_settings;
 }
 
 std::string CameraHolder::imp_serialize(const CameraSettings &data) const {
@@ -200,6 +210,17 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
         "QP_PID_ENABLE",
         openhd::IntSetting{static_cast<int>(get_settings().qp_pid_enable),
                            c_qp_pid_enable}});
+  }
+  if (m_camera.requires_rockchip3_mpp_pipeline() ||
+      m_camera.requires_rockchip5_mpp_pipeline()) {
+    auto c_rk_bitrate_pid_enable = [this](std::string, int value) {
+      return set_rk_bitrate_pid_enable(value);
+    };
+    ret.push_back(openhd::Setting{
+        "RK_BITRATE_PID",
+        openhd::IntSetting{
+            static_cast<int>(get_settings().rk_bitrate_pid_enable),
+            c_rk_bitrate_pid_enable}});
   }
   if (true) {  // Always show intra, on libcamera without sw encode it
                // unfortunately is 'just not mapped' and ignored.

@@ -26,6 +26,7 @@
 
 #include <gst/gst.h>
 
+#include <algorithm>
 #include <sstream>
 #include <string>
 
@@ -516,19 +517,30 @@ static std::string create_veye_vl2_stream(const CameraSettings& settings,
   return ss.str();
 }
 
+static constexpr int ROCKCHIP_MPP_BPS_ACTUAL_LIMIT = 6650000;
+static constexpr int ROCKCHIP_MPP_BPS_MAX_LIMIT = 7000000;
+static constexpr int ROCKCHIP_MPP_BPS_MIN_LIMIT = 6300000;
+
+static int calculateRockchipMppEncoderBps(int bitrate_kbits) {
+  const int bps = openhd::kbits_to_bits_per_second(bitrate_kbits) / 2;
+  return std::min((bps * 95) / 100, ROCKCHIP_MPP_BPS_ACTUAL_LIMIT);
+}
+
+static int calculateRockchipMppEncoderKbits(int bitrate_kbits) {
+  return openhd::bits_per_second_to_kbits_per_second(
+      calculateRockchipMppEncoderBps(bitrate_kbits));
+}
+
 static std::string createRockchipEncoderPipeline(
     const CameraSettings& settings) {
   std::stringstream ss;
 
   const int bps =
       openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits) / 2;
-  const int BPS_ACTUAL_LIMIT = 6650000;
-  const int BPS_MAX_LIMIT = 7000000;
-  const int BPS_MIN_LIMIT = 6300000;
 
-  int bps_actual = std::min((bps * 95) / 100, BPS_ACTUAL_LIMIT);
-  int bps_min = std::min((bps * 90) / 100, BPS_MIN_LIMIT);
-  int bps_max = std::min(bps, BPS_MAX_LIMIT);
+  int bps_actual = calculateRockchipMppEncoderBps(settings.h26x_bitrate_kbits);
+  int bps_min = std::min((bps * 90) / 100, ROCKCHIP_MPP_BPS_MIN_LIMIT);
+  int bps_max = std::min(bps, ROCKCHIP_MPP_BPS_MAX_LIMIT);
 
   if (settings.streamed_video_format.videoCodec == VideoCodec::H264) {
     ss << " mpph264enc name=mpp_encoder";
@@ -536,7 +548,7 @@ static std::string createRockchipEncoderPipeline(
     ss << " mpph265enc name=mpp_encoder";
   }
 
-  ss << " rc-mode=1";
+  ss << " rc-mode=vbr";
   ss << " bps=" << bps_actual;
   ss << " bps-max=" << bps_max;
   ss << " bps-min=" << bps_min;

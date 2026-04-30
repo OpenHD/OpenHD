@@ -71,6 +71,7 @@ struct CameraSettings {
   int qp_max = 51;
   int qp_min = 5;
   bool qp_pid_enable = false;
+  bool rk_bitrate_pid_enable = false;
   // The video format selected by the user. If the user sets a video format that
   // isn't supported (for example, he might select h264|1920x1080@120 but the
   // camera can only do 60fps) the camera might stop streaming, and the user has

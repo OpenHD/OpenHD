@@ -93,10 +93,14 @@ class GStreamerStream : public CameraStream {
   void handle_perf_pad_probe(GstPadProbeInfo* info);
   void update_qp_pid_controller(uint32_t measured_bitrate_bps, int64_t now_ms);
   void reset_qp_pid_controller();
+  void update_rockchip_bitrate_pid_controller(uint32_t measured_bitrate_bps,
+                                              int64_t now_ms);
+  void reset_rockchip_bitrate_pid_controller();
   void check_required_perf_telemetry(int64_t now_ms, int64_t first_frame_ms);
   void report_required_perf_problem(const std::string& code,
                                     const std::string& description);
   bool should_skip_runtime_bitrate_update() const;
+  bool is_rockchip_mpp_bitrate_pid_camera() const;
 
  private:
   // points to a running gst pipeline instance
@@ -120,6 +124,7 @@ class GStreamerStream : public CameraStream {
   // Set to true if armed, used for auto record on arm
   bool m_armed_enable_air_recording = false;
   std::atomic<int> m_curr_dynamic_bitrate_kbits = -1;
+  std::atomic<int> m_curr_dynamic_encoder_bitrate_kbits = -1;
   std::atomic<int> m_curr_dynamic_qp_min = -1;
   std::atomic<int> m_curr_dynamic_qp_max = -1;
   // Not working yet, keep the old approach
@@ -147,6 +152,11 @@ class GStreamerStream : public CameraStream {
   int64_t m_qp_pid_last_update_ms = 0;
   int64_t m_qp_pid_last_log_ms = 0;
   bool m_qp_pid_was_enabled = false;
+  double m_rockchip_bitrate_pid_integral = 0.0;
+  double m_rockchip_bitrate_pid_last_error = 0.0;
+  int64_t m_rockchip_bitrate_pid_last_update_ms = 0;
+  int64_t m_rockchip_bitrate_pid_last_log_ms = 0;
+  bool m_rockchip_bitrate_pid_was_enabled = false;
 
  private:
   // The stuff here is to pull the data out of the gstreamer pipeline, such that

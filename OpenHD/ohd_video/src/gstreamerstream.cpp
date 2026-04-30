@@ -67,6 +67,16 @@ static constexpr double kQpPidKi = 1.2;
 static constexpr double kQpPidKd = 2.0;
 static constexpr double kQpPidIntegralLimit = 4.0;
 static constexpr double kQpPidCorrectionLimit = 24.0;
+static constexpr int64_t kRockchipBitratePidUpdateIntervalMs = 1000;
+static constexpr int64_t kRockchipBitratePidLogIntervalMs = 5000;
+static constexpr int kRockchipBitratePidMaxStepKbits = 750;
+static constexpr int kRockchipBitratePidMaxEncoderKbits = 50000;
+static constexpr double kRockchipBitratePidDeadband = 0.05;
+static constexpr double kRockchipBitratePidKp = 0.8;
+static constexpr double kRockchipBitratePidKi = 0.2;
+static constexpr double kRockchipBitratePidKd = 0.1;
+static constexpr double kRockchipBitratePidIntegralLimit = 4.0;
+static constexpr double kRockchipBitratePidCorrectionLimit = 2.0;
 static constexpr size_t kPipelineDebugMaxChars = 1200;
 static constexpr size_t kPipelineDebugChunkChars = 34;
 
@@ -417,6 +427,7 @@ bool GStreamerStream::handle_perf_info_message(const char* info_text) {
   openhd::LinkActionHandler::instance().set_cam_info_perf(
       m_camera_holder->get_camera().index, bitrate_bps, fps);
   update_qp_pid_controller(bitrate_bps, now_ms);
+  update_rockchip_bitrate_pid_controller(bitrate_bps, now_ms);
   return true;
 }
 
@@ -479,6 +490,7 @@ void GStreamerStream::handle_perf_pad_probe(GstPadProbeInfo* info) {
   openhd::LinkActionHandler::instance().set_cam_info_perf(
       m_camera_holder->get_camera().index, bitrate_bps, frame_rate);
   update_qp_pid_controller(bitrate_bps, now_ms);
+  update_rockchip_bitrate_pid_controller(bitrate_bps, now_ms);
 
   m_perf_probe_window_start_ms = now_ms;
   m_perf_probe_window_bytes = 0;
@@ -504,6 +516,11 @@ void GStreamerStream::update_qp_pid_controller(uint32_t measured_bitrate_bps,
     }
     reset_qp_pid_controller();
   };
+  if (is_rockchip_mpp_bitrate_pid_camera() &&
+      settings.rk_bitrate_pid_enable) {
+    reset_to_manual_qp();
+    return;
+  }
   if (!settings.qp_pid_enable || !m_qp_ctrl_element.has_value() ||
       measured_bitrate_bps == 0) {
     reset_to_manual_qp();
@@ -595,6 +612,129 @@ void GStreamerStream::update_qp_pid_controller(uint32_t measured_bitrate_bps,
   }
 }
 
+void GStreamerStream::reset_rockchip_bitrate_pid_controller() {
+  m_rockchip_bitrate_pid_integral = 0.0;
+  m_rockchip_bitrate_pid_last_error = 0.0;
+  m_rockchip_bitrate_pid_last_update_ms = 0;
+  m_rockchip_bitrate_pid_was_enabled = false;
+}
+
+void GStreamerStream::update_rockchip_bitrate_pid_controller(
+    uint32_t measured_bitrate_bps, int64_t now_ms) {
+  const auto settings = m_camera_holder->get_settings();
+  const auto base_encoder_kbits_for_current_target = [&]() {
+    int target_kbits = m_curr_dynamic_bitrate_kbits.load();
+    if (target_kbits <= 0) {
+      target_kbits = settings.h26x_bitrate_kbits;
+    }
+    return OHDGstHelper::calculateRockchipMppEncoderKbits(
+        std::max(target_kbits, 1));
+  };
+  const auto reset_to_base_encoder_bitrate = [&]() {
+    if (m_rockchip_bitrate_pid_was_enabled) {
+      m_curr_dynamic_encoder_bitrate_kbits =
+          base_encoder_kbits_for_current_target();
+    }
+    reset_rockchip_bitrate_pid_controller();
+  };
+  if (!is_rockchip_mpp_bitrate_pid_camera() ||
+      !settings.rk_bitrate_pid_enable || !m_bitrate_ctrl_element.has_value() ||
+      measured_bitrate_bps == 0) {
+    reset_to_base_encoder_bitrate();
+    return;
+  }
+  int target_kbits = m_curr_dynamic_bitrate_kbits.load();
+  if (target_kbits <= 0) {
+    target_kbits = settings.h26x_bitrate_kbits;
+  }
+  target_kbits = std::max(target_kbits, 1);
+  const int base_encoder_kbits =
+      std::max(OHDGstHelper::calculateRockchipMppEncoderKbits(target_kbits), 1);
+  if (m_curr_dynamic_encoder_bitrate_kbits.load() <= 0) {
+    m_curr_dynamic_encoder_bitrate_kbits = base_encoder_kbits;
+  }
+  const int64_t target_bps = static_cast<int64_t>(target_kbits) * 1000;
+  if (target_bps <= 0) {
+    reset_to_base_encoder_bitrate();
+    return;
+  }
+  if (m_rockchip_bitrate_pid_last_update_ms > 0 &&
+      now_ms - m_rockchip_bitrate_pid_last_update_ms <
+          kRockchipBitratePidUpdateIntervalMs) {
+    return;
+  }
+
+  const double elapsed_s =
+      m_rockchip_bitrate_pid_last_update_ms > 0
+          ? std::clamp((now_ms - m_rockchip_bitrate_pid_last_update_ms) /
+                           1000.0,
+                       0.2, 5.0)
+          : 1.0;
+  const double raw_error =
+      (static_cast<double>(target_bps) -
+       static_cast<double>(measured_bitrate_bps)) /
+      static_cast<double>(target_bps);
+  const bool in_deadband = std::abs(raw_error) < kRockchipBitratePidDeadband;
+  const double error = in_deadband ? 0.0 : raw_error;
+  if (in_deadband) {
+    m_rockchip_bitrate_pid_integral *= 0.8;
+  } else {
+    m_rockchip_bitrate_pid_integral =
+        std::clamp(m_rockchip_bitrate_pid_integral + error * elapsed_s,
+                   -kRockchipBitratePidIntegralLimit,
+                   kRockchipBitratePidIntegralLimit);
+  }
+  const double derivative =
+      !in_deadband && m_rockchip_bitrate_pid_last_update_ms > 0
+          ? (error - m_rockchip_bitrate_pid_last_error) / elapsed_s
+          : 0.0;
+  const double correction_ratio =
+      std::clamp(kRockchipBitratePidKp * error +
+                     kRockchipBitratePidKi *
+                         m_rockchip_bitrate_pid_integral +
+                     kRockchipBitratePidKd * derivative,
+                 -kRockchipBitratePidCorrectionLimit,
+                 kRockchipBitratePidCorrectionLimit);
+  m_rockchip_bitrate_pid_last_error = error;
+  m_rockchip_bitrate_pid_last_update_ms = now_ms;
+  m_rockchip_bitrate_pid_was_enabled = true;
+
+  int current_encoder_kbits = m_curr_dynamic_encoder_bitrate_kbits.load();
+  if (current_encoder_kbits <= 0) {
+    current_encoder_kbits = base_encoder_kbits;
+  }
+  int max_encoder_kbits =
+      std::max(std::max(base_encoder_kbits * 3, target_kbits * 2),
+               base_encoder_kbits + 1000);
+  max_encoder_kbits =
+      std::clamp(max_encoder_kbits, 1000, kRockchipBitratePidMaxEncoderKbits);
+  const int min_encoder_kbits = std::max(250, base_encoder_kbits / 4);
+  int target_encoder_kbits =
+      base_encoder_kbits +
+      static_cast<int>(std::llround(base_encoder_kbits * correction_ratio));
+  target_encoder_kbits =
+      std::clamp(target_encoder_kbits, min_encoder_kbits, max_encoder_kbits);
+  target_encoder_kbits = std::clamp(
+      target_encoder_kbits,
+      current_encoder_kbits - kRockchipBitratePidMaxStepKbits,
+      current_encoder_kbits + kRockchipBitratePidMaxStepKbits);
+
+  if (target_encoder_kbits == current_encoder_kbits) {
+    return;
+  }
+  m_curr_dynamic_encoder_bitrate_kbits = target_encoder_kbits;
+  if (now_ms - m_rockchip_bitrate_pid_last_log_ms >
+      kRockchipBitratePidLogIntervalMs) {
+    m_rockchip_bitrate_pid_last_log_ms = now_ms;
+    m_console->debug(
+        "RK bitrate PID cam{} target_bps:{} measured_bps:{} error:{:.3f} "
+        "correction:{:.2f} base_encoder_kbits:{} encoder_kbits:{}",
+        m_camera_holder->get_camera().index, target_bps, measured_bitrate_bps,
+        raw_error, correction_ratio, base_encoder_kbits,
+        target_encoder_kbits);
+  }
+}
+
 void GStreamerStream::check_required_perf_telemetry(int64_t now_ms,
                                                     int64_t first_frame_ms) {
   if (first_frame_ms <= 0) {
@@ -649,12 +789,16 @@ void GStreamerStream::report_required_perf_problem(
 
 bool GStreamerStream::should_skip_runtime_bitrate_update() const {
   const auto& camera = m_camera_holder->get_camera();
-  if (camera.requires_rockchip3_mpp_pipeline() ||
-      camera.requires_rockchip5_mpp_pipeline() ||
-      camera.requires_rockchip_rv_pipeline()) {
+  if (camera.requires_rockchip_rv_pipeline()) {
     return true;
   }
   return false;
+}
+
+bool GStreamerStream::is_rockchip_mpp_bitrate_pid_camera() const {
+  const auto& camera = m_camera_holder->get_camera();
+  return camera.requires_rockchip3_mpp_pipeline() ||
+         camera.requires_rockchip5_mpp_pipeline();
 }
 
 std::string GStreamerStream::create_source_encode_pipeline(
@@ -1051,7 +1195,7 @@ void GStreamerStream::handle_change_bitrate_request(
         kSkipDynamicBitrateLogInterval) {
       m_last_log_skip_dynamic_bitrate = now;
       m_console->warn(
-          "Ignoring runtime bitrate update for Rockchip/MPP camera (requested "
+          "Ignoring runtime bitrate update for Rockchip RV camera (requested "
           "{} kBit/s)",
           lb.recommended_encoder_bitrate_kbits);
     }
@@ -1183,11 +1327,23 @@ void GStreamerStream::stream_once() {
   int currently_applied_bitrate =
       m_camera_holder->get_settings().h26x_bitrate_kbits;
   m_curr_dynamic_bitrate_kbits = currently_applied_bitrate;
+  const bool rockchip_mpp_bitrate_pid_camera =
+      is_rockchip_mpp_bitrate_pid_camera();
+  int currently_applied_encoder_bitrate = -1;
+  if (rockchip_mpp_bitrate_pid_camera) {
+    currently_applied_encoder_bitrate =
+        OHDGstHelper::calculateRockchipMppEncoderKbits(
+            currently_applied_bitrate);
+    m_curr_dynamic_encoder_bitrate_kbits = currently_applied_encoder_bitrate;
+  } else {
+    m_curr_dynamic_encoder_bitrate_kbits = -1;
+  }
   int currently_applied_qp_min = m_camera_holder->get_settings().qp_min;
   int currently_applied_qp_max = m_camera_holder->get_settings().qp_max;
   m_curr_dynamic_qp_min = currently_applied_qp_min;
   m_curr_dynamic_qp_max = currently_applied_qp_max;
   reset_qp_pid_controller();
+  reset_rockchip_bitrate_pid_controller();
   // Now we should have a running pipeline and are able to pull samples from it
   // We use a timeout of 40ms to not unnecessarily wake up the thread on up to
   // 30fps (33ms) but also quickly respond to restart requests or bitrate
@@ -1228,7 +1384,14 @@ void GStreamerStream::stream_once() {
     // Check if we need to set a new bitrate
     if (currently_applied_bitrate != m_curr_dynamic_bitrate_kbits) {
       const int new_bitrate = m_curr_dynamic_bitrate_kbits;
-      if (m_bitrate_ctrl_element != std::nullopt) {
+      if (rockchip_mpp_bitrate_pid_camera) {
+        currently_applied_bitrate = new_bitrate;
+        m_curr_dynamic_encoder_bitrate_kbits =
+            OHDGstHelper::calculateRockchipMppEncoderKbits(new_bitrate);
+        reset_rockchip_bitrate_pid_controller();
+        openhd::LinkActionHandler::instance().set_cam_info_bitrate(
+            m_camera_holder->get_camera().index, currently_applied_bitrate);
+      } else if (m_bitrate_ctrl_element != std::nullopt) {
         // apply the new bitrate
         // Don't forget, the rpi csi hdmi needs the 'half bitrate' hack
         auto hacked_bitrate_kbits = new_bitrate;
@@ -1251,6 +1414,22 @@ void GStreamerStream::stream_once() {
         // restart, we need to restart
         m_console->info("Bitrate change requires restart (Not good)");
         m_request_restart = true;
+      }
+    }
+    if (rockchip_mpp_bitrate_pid_camera) {
+      const int new_encoder_bitrate =
+          m_curr_dynamic_encoder_bitrate_kbits.load();
+      if (new_encoder_bitrate > 0 &&
+          currently_applied_encoder_bitrate != new_encoder_bitrate &&
+          m_bitrate_ctrl_element != std::nullopt) {
+        const auto bitrate_ctrl_element = m_bitrate_ctrl_element.value();
+        if (change_bitrate(bitrate_ctrl_element, new_encoder_bitrate)) {
+          currently_applied_encoder_bitrate = new_encoder_bitrate;
+        } else {
+          m_console->warn(
+              "Cannot apply RK MPP encoder bitrate cam{} requested_kbits:{}",
+              m_camera_holder->get_camera().index, new_encoder_bitrate);
+        }
       }
     }
     const int new_qp_min = m_curr_dynamic_qp_min;
@@ -1292,10 +1471,14 @@ void GStreamerStream::stream_once() {
       const auto rb_opt = read_bitrate_readback(bitrate_ctrl_element);
       if (rb_opt.has_value()) {
         int effective_kbits = rb_opt->interpreted_kbits;
-        if (m_camera_holder->requires_half_bitrate_workaround()) {
+        if (!rockchip_mpp_bitrate_pid_camera &&
+            m_camera_holder->requires_half_bitrate_workaround()) {
           effective_kbits *= 2;
         }
-        const int target_kbits = m_curr_dynamic_bitrate_kbits.load();
+        int target_kbits = m_curr_dynamic_bitrate_kbits.load();
+        if (rockchip_mpp_bitrate_pid_camera) {
+          target_kbits = m_curr_dynamic_encoder_bitrate_kbits.load();
+        }
         const int delta = std::abs(effective_kbits - target_kbits);
         if (delta > 500) {
           m_console->warn(
