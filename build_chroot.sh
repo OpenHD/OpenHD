@@ -140,11 +140,37 @@ if [[ -n "${OPENHD_REQUIRE_ARTOSYN_DAEMON_FILE_VALUE}" ]]; then
     export OPENHD_REQUIRE_ARTOSYN_DAEMON="${OPENHD_REQUIRE_ARTOSYN_DAEMON_FILE_VALUE}"
 fi
 
-if [[ "${DISTRO}" == "jammy" && "${ARCH}" == "x86_64" ]]; then
-    # Jammy x86 builder should produce openhd-3.0 with full Artosyn support.
+if [[ "${REPO}" == "openhd-3.0" || "${REPO}" == "openhd-3.0-test" ]]; then
+    # OpenHD 3.0 builds should produce packages with full Artosyn support.
     export OPENHD_REQUIRE_ARTOSYN="${OPENHD_REQUIRE_ARTOSYN:-1}"
     export OPENHD_REQUIRE_ARTOSYN_DAEMON="${OPENHD_REQUIRE_ARTOSYN_DAEMON:-1}"
 fi
+
+ensure_artosyn_cmake() {
+    if python3 - <<'PY'
+import re
+import subprocess
+import sys
+
+try:
+    output = subprocess.check_output(["cmake", "--version"], text=True)
+except Exception:
+    sys.exit(1)
+match = re.search(r"version\s+(\d+)\.(\d+)", output)
+if not match:
+    sys.exit(1)
+major, minor = map(int, match.groups())
+sys.exit(0 if (major, minor) >= (3, 22) else 1)
+PY
+    then
+        return 0
+    fi
+
+    echo "Installing newer CMake for Artosyn SDK build."
+    python3 -m pip install --upgrade cmake || { echo "Failed to install newer CMake"; exit 1; }
+    hash -r
+    cmake --version
+}
 
 if [[ -n "${ARTLINK_REPO:-}" ]]; then
     echo "ArtLink repo override: ${ARTLINK_REPO}"
@@ -168,6 +194,7 @@ if [[ -n "${OPENHD_REQUIRE_ARTOSYN:-}" ]]; then
 fi
 
 if [[ "${OPENHD_REQUIRE_ARTOSYN:-0}" == "1" ]]; then
+    ensure_artosyn_cmake
     source ./OpenHD/scripts/resolve_artosyn_sdk.sh
     resolve_artosyn_sdk
     if [[ -z "${ARTOSYN_SDK_ROOT:-}" || -z "${ARTOSYN_SDK_LIB:-}" ]]; then

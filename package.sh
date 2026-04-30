@@ -109,6 +109,12 @@ build_package() {
   local artosyn_enabled=0
   local require_artosyn="${OPENHD_REQUIRE_ARTOSYN:-0}"
   local require_artosyn_daemon="${OPENHD_REQUIRE_ARTOSYN_DAEMON:-0}"
+  local current_branch=""
+  current_branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
+  if [[ "${current_branch}" == "openhd-3.0" || "${current_branch}" == "openhd-3.0-test" ]]; then
+    require_artosyn="${OPENHD_REQUIRE_ARTOSYN:-1}"
+    require_artosyn_daemon="${OPENHD_REQUIRE_ARTOSYN_DAEMON:-1}"
+  fi
   if [[ -n "${ARTOSYN_SDK_ROOT:-}" && -n "${ARTOSYN_SDK_LIB:-}" ]]; then
     artosyn_enabled=1
   fi
