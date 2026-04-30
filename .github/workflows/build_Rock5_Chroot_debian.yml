@@ -82,6 +82,22 @@ jobs:
           cd /opt/OpenHD-ChrootCompiler/
           sudo apt update
           sudo bash install_dep.sh
+          python3 - <<'PY'
+          from pathlib import Path
+
+          build_sh = Path("/opt/OpenHD-ChrootCompiler/build.sh")
+          text = build_sh.read_text()
+          needle = "mv OpenHD-ImageBuilder/stages/01-Baseimage stages/\n"
+          patch = (
+              needle
+              + "sed -i 's/WANTEDSIZE=\"6800000000\"/WANTEDSIZE=\"15000000000\"/' stages/01-Baseimage/01-run.sh\n"
+          )
+          if "WANTEDSIZE=\"15000000000\"" not in text:
+              if needle not in text:
+                  raise SystemExit("Could not find ImageBuilder stage import in build.sh")
+              text = text.replace(needle, patch, 1)
+              build_sh.write_text(text)
+          PY
           sudo bash build.sh rock5b $API_KEY debian bullseye
     
       - name: debug
