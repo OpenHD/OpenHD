@@ -7,7 +7,6 @@ on:
       - "dev-release"
       - "release"
       - "willy"
-   branches-ignore:
       - "openhd-3.0"
 
 jobs:
@@ -16,6 +15,14 @@ jobs:
     runs-on: ubuntu-22.04
     env:
       CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
+      DOWNLOAD_KEY: ${{ secrets.DOWNLOAD_KEY }}
+      DOWNLOAD_URL: ${{ secrets.DOWNLOAD_URL }}
+      OPENHD_SUBMODULE_TOKEN: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+      ARTLINK_REPO: https://github.com/OpenHD-Technologies/OpenHD-ArtLink.git
+      ARTLINK_BRANCH: sdk
+      ARTLINK_FETCH_MODE: git-only
+      ARTLINK_GIT_AUTH_USERNAME: raphael@openhdfpv.org
+      ARTLINK_GIT_AUTH: "raphael@openhdfpv.org:${{ secrets.OPENHD_SUBMODULE_TOKEN }}"
     steps:
       - name: Maximize build space
         uses: easimon/maximize-build-space@master
@@ -31,16 +38,41 @@ jobs:
           echo "DT=$(date +'%Y-%m-%d_%H%M')" >> $GITHUB_ENV
           echo "BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV    
              
-      - name: Checkout repository and submodules
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          submodules: recursive
+          fetch-depth: 0
+          submodules: false
+          persist-credentials: false
+          token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+      - name: Download submodules with private token
+        run: |
+          if [ -z "${OPENHD_SUBMODULE_TOKEN}" ]; then
+            echo "OPENHD_SUBMODULE_TOKEN is required for recursive submodules"
+            exit 1
+          fi
+          cleanup_git_auth() {
+            git config --global --unset-all url."https://x-access-token:${OPENHD_SUBMODULE_TOKEN}@github.com/".insteadOf || true
+          }
+          trap cleanup_git_auth EXIT
+          git config --global url."https://x-access-token:${OPENHD_SUBMODULE_TOKEN}@github.com/".insteadOf "https://github.com/"
+          git submodule sync --recursive
+          git submodule update --init --recursive
+          git submodule status --recursive
       - name: Building OpenHD in CHROOT
         run: |
           git clone https://github.com/OpenHD/OpenHD-ChrootCompiler /opt/OpenHD-ChrootCompiler
           mkdir -p /opt/OpenHD-ChrootCompiler/additionalFiles
-          git clone https://github.com/OpenHD/OpenHD -b ${{ github.ref_name }} /opt/OpenHD-ChrootCompiler/additionalFiles/ --recursive
-          echo $CLOUDSMITH_API_KEY > /opt/OpenHD-ChrootCompiler/additionalFiles/cloudsmith_api_key.txt
+          cp -a "$GITHUB_WORKSPACE/." /opt/OpenHD-ChrootCompiler/additionalFiles/
+          printf '%s\n' "$CLOUDSMITH_API_KEY" > /opt/OpenHD-ChrootCompiler/additionalFiles/cloudsmith_api_key.txt
+          printf '%s\n' "$DOWNLOAD_URL" > /opt/OpenHD-ChrootCompiler/additionalFiles/download_url.txt
+          printf '%s\n' "$DOWNLOAD_KEY" > /opt/OpenHD-ChrootCompiler/additionalFiles/download_key.txt
+          printf '%s\n' "$ARTLINK_REPO" > /opt/OpenHD-ChrootCompiler/additionalFiles/artlink_repo.txt
+          printf '%s\n' "$ARTLINK_BRANCH" > /opt/OpenHD-ChrootCompiler/additionalFiles/artlink_branch.txt
+          printf '%s\n' "$ARTLINK_FETCH_MODE" > /opt/OpenHD-ChrootCompiler/additionalFiles/artlink_fetch_mode.txt
+          printf '%s\n' "$ARTLINK_GIT_AUTH" > /opt/OpenHD-ChrootCompiler/additionalFiles/artlink_git_auth.txt
+          printf '%s\n' "$ARTLINK_GIT_AUTH_USERNAME" > /opt/OpenHD-ChrootCompiler/additionalFiles/artlink_git_username.txt
+          printf '%s\n' "$OPENHD_SUBMODULE_TOKEN" > /opt/OpenHD-ChrootCompiler/additionalFiles/artlink_git_token.txt
           echo "standard" > /opt/OpenHD-ChrootCompiler/additionalFiles/custom.txt
           echo "arm64" > /opt/OpenHD-ChrootCompiler/additionalFiles/arch.txt
           echo "debian" > /opt/OpenHD-ChrootCompiler/additionalFiles/distro.txt
