@@ -150,6 +150,12 @@ if [[ "${REPO}" == "openhd-3.0" || "${REPO}" == "openhd-3.0-test" ]]; then
 fi
 
 ensure_artosyn_cmake() {
+    apt-get update --fix-missing
+    apt-get install -y build-essential make gcc g++ libc6-dev || {
+        echo "Failed to install compiler toolchain for Artosyn SDK build"
+        exit 1
+    }
+
     if python3 - <<'PY'
 import re
 import subprocess
