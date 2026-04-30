@@ -54,7 +54,10 @@ if [[ -f cloudsmith_api_key.txt && -f distro.txt && -f flavor.txt && -f repo.txt
     REPO=$(cat repo.txt)
     CUSTOM=$(cat custom.txt)
     ARCH=$(cat arch.txt)
-    QCOM=$(cat qcom.txt)
+    QCOM=""
+    if [[ -f qcom.txt ]]; then
+        QCOM=$(tr -d '\r\n' < qcom.txt)
+    fi
 else
     echo "One or more required configuration files are missing."
     exit 1
@@ -167,7 +170,7 @@ PY
     fi
 
     echo "Installing newer CMake for Artosyn SDK build."
-    python3 -m pip install --upgrade cmake || { echo "Failed to install newer CMake"; exit 1; }
+    python3 -m pip install --upgrade "cmake>=3.22,<4" || { echo "Failed to install newer CMake"; exit 1; }
     hash -r
     cmake --version
 }
