@@ -12,6 +12,8 @@ add_library(OHDPluginWalksnail STATIC
     WalksnailUtils.h
     serial/serial.h
     serial/serial.cpp
+    serial/softserial.h
+    serial/softserial.cpp
 )
 
 target_include_directories(OHDPluginWalksnail PUBLIC

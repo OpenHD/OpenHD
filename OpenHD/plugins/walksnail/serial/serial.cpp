@@ -85,15 +85,3 @@ int Serial::write(const std::string& str)
 {
     return write(str.c_str(), str.size());
 }
-
-speed_t Serial::setBaudrate(int baudrate)
-{
-    switch (baudrate) {
-        case 9600:   return B9600;
-        case 19200:  return B19200;
-        case 38400:  return B38400;
-        case 57600:  return B57600;
-        case 115200: return B115200;
-        default:     throw std::invalid_argument("Unsupported baud rate");
-    }
-}

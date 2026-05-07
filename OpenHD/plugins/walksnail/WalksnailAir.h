@@ -1,4 +1,4 @@
-#include "serial/serial.h"
+#include "serial/softserial.h"
 #include "mav_include.h"
 #include <vector>
 #include <mutex>
@@ -7,8 +7,10 @@
 #include <memory>
 #include <fstream>
 
-#define WALKSNAIL_DEFAULT_UART      "/dev/serial0"
-#define WALKSNAIL_DEFAULT_BAUDRATE  115200
+#define WALKSNAIL_DEFAULT_UART              "/dev/serial0"
+#define WALKSNAIL_DEFAULT_BAUDRATE          115200
+#define WALKSNAIL_DEFAULT_SOFT_UART_TX      26
+#define WALKSNAIL_DEFAULT_SOFT_UART_RX      27
 
 class WalksnailAir
 {
