@@ -21,4 +21,6 @@ private:
     std::string m_port;
     int         m_baud;
     int         m_fd;
+
+    speed_t     setBaudrate(int baudrate);
 };
