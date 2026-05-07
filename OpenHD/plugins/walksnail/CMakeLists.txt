@@ -21,5 +21,5 @@ target_include_directories(OHDPluginWalksnail PUBLIC
 )
 
 target_link_libraries(OHDPluginWalksnail PRIVATE OHDTelemetryLib)
-
+target_link_libraries(OHDPluginWalksnail pigpio pthread)
 target_link_libraries(OHDPlugins INTERFACE OHDPluginWalksnail)
