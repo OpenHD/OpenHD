@@ -9,8 +9,8 @@
 
 #define WALKSNAIL_DEFAULT_UART              "/dev/serial0"
 #define WALKSNAIL_DEFAULT_BAUDRATE          115200
-#define WALKSNAIL_DEFAULT_SOFT_UART_TX      26
-#define WALKSNAIL_DEFAULT_SOFT_UART_RX      27
+#define WALKSNAIL_DEFAULT_SOFT_UART_TX      23
+#define WALKSNAIL_DEFAULT_SOFT_UART_RX      24
 
 class WalksnailAir
 {
