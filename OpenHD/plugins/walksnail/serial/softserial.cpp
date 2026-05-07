@@ -88,7 +88,7 @@ int SoftSerial::write(const void* buf, size_t len)
     int wid = gpioWaveCreate();
     if (wid < 0) return -1;
 
-    gpioWaveSendOnce(wid);
+    gpioWaveTxSend(wid, PI_WAVE_MODE_ONE_SHOT);
     while (gpioWaveTxBusy())
         gpioDelay(100);
 
