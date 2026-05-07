@@ -124,10 +124,10 @@ static openhd::Config load_or_default() {
           r.Get<int>("microhard", "MICROHARD_VIDEO_PORT", 5910);
       std::cout << "DEBUG: MICROHARD_VIDEO_PORT: " << ret.MICROHARD_VIDEO_PORT
                 << std::endl;
-      ret.TELEMETRY_PORT =
+      ret.MICROHARD_TELEMETRY_PORT =
           r.Get<int>("microhard", "MICROHARD_TELEMETRY_PORT", 5920);
-      std::cout << "DEBUG: MICROHARD_TELEMETRY_PORT: " << ret.TELEMETRY_PORT
-                << std::endl;
+      std::cout << "DEBUG: MICROHARD_TELEMETRY_PORT: "
+                << ret.MICROHARD_TELEMETRY_PORT << std::endl;
     }
     // Parse Generic configuration
     ret.GEN_ENABLE_LAST_KNOWN_POSITION =

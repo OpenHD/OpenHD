@@ -36,6 +36,7 @@
 #include <unistd.h>
 
 #include <chrono>
+#include <cctype>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -59,28 +60,35 @@ const std::string command5 = "AT+MWVRATE\n";
 const std::string command6 = "AT+MWNOISEFLOOR\n";
 const std::string command7 = "AT+MWSNR\n";
 
-// Parse hardware.config
-// const auto config = openhd::load_config();
-// static const auto MICROHARD_IP_RANGE = config.MICROHARD_IP_AIR;
-// static const auto MICROHARD_AIR_IP = config.MICROHARD_IP_AIR;
-// static const auto MICROHARD_GND_IP = config.MICROHARD_IP_GROUND;
-// static const int MICROHARD_UDP_PORT_TELEMETRY_AIR_TX =
-//     config.MICROHARD_TELEMETRY_PORT;
-// static const int MICROHARD_UDP_PORT_VIDEO_AIR_TX =
-// config.MICROHARD_VIDEO_PORT; static const std::string DEFAULT_DEVICE_IP_GND =
-// config.GROUND_UNIT_IP; static const std::string DEFAULT_DEVICE_IP_AIR =
-// config.AIR_UNIT_IP; const std::string username = config.MICROHARD_USERNAME +
-// "\n"; const std::string password = config.MICROHARD_PASSWORD + "\n";
+static std::string clean_config_token(std::string value) {
+  while (!value.empty() &&
+         (std::isspace(static_cast<unsigned char>(value.front())) ||
+          value.front() == '"' || value.front() == '\'')) {
+    value.erase(value.begin());
+  }
+  while (!value.empty() &&
+         (std::isspace(static_cast<unsigned char>(value.back())) ||
+          value.back() == '"' || value.back() == '\'' || value.back() == ';')) {
+    value.pop_back();
+  }
+  return value;
+}
 
-static const auto MICROHARD_IP_RANGE = "192.168.168";
-static const auto MICROHARD_AIR_IP = "";
-static const auto MICROHARD_GND_IP = "";
-static const int MICROHARD_UDP_PORT_TELEMETRY_AIR_TX = 5000;
-static const int MICROHARD_UDP_PORT_VIDEO_AIR_TX = 5001;
-static const std::string DEFAULT_DEVICE_IP_GND = "";
+static const auto CONFIG = openhd::load_config();
+static const std::string MICROHARD_IP_RANGE =
+    CONFIG.MICROHARD_IP_RANGE.empty() ? "192.168.168"
+                                      : CONFIG.MICROHARD_IP_RANGE;
+static const std::string MICROHARD_AIR_IP = CONFIG.MICROHARD_IP_AIR;
+static const std::string MICROHARD_GND_IP = CONFIG.MICROHARD_IP_GROUND;
+static const int MICROHARD_UDP_PORT_TELEMETRY_AIR_TX =
+    CONFIG.MICROHARD_TELEMETRY_PORT;
+static const int MICROHARD_UDP_PORT_VIDEO_AIR_TX = CONFIG.MICROHARD_VIDEO_PORT;
+static const std::string DEFAULT_DEVICE_IP_GND = CONFIG.MICROHARD_IP_GROUND;
 static const std::string DEFAULT_DEVICE_IP_AIR = "";
-const std::string username = "admin\n";
-const std::string password = "qwertz1\n";
+const std::string username =
+    clean_config_token(CONFIG.MICROHARD_USERNAME) + "\n";
+const std::string password =
+    clean_config_token(CONFIG.MICROHARD_PASSWORD) + "\n";
 
 // Helper function to retrieve IP addresses starting with a specific prefix
 std::vector<std::string> get_ip_addresses(const std::string& prefix) {
@@ -350,6 +358,9 @@ bool check_ip_alive(const std::string& ip, int port = 23) {
 }
 
 std::string find_device_ip_gnd() {
+  if (!DEFAULT_DEVICE_IP_GND.empty()) {
+    return DEFAULT_DEVICE_IP_GND;
+  }
   auto ip_addresses = get_ip_addresses(MICROHARD_IP_RANGE);
   for (const auto& ip : ip_addresses) {
     if (ip != MICROHARD_AIR_IP && ip != MICROHARD_GND_IP) {
@@ -363,6 +374,9 @@ std::string find_device_ip_gnd() {
 }
 
 std::string find_device_ip_air() {
+  if (!DEFAULT_DEVICE_IP_AIR.empty()) {
+    return DEFAULT_DEVICE_IP_AIR;
+  }
   auto ip_addresses = get_ip_addresses(MICROHARD_IP_RANGE);
   for (const auto& ip : ip_addresses) {
     if (ip != MICROHARD_AIR_IP && ip != MICROHARD_GND_IP) {
