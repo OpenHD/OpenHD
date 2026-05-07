@@ -13,7 +13,7 @@ public:
     bool        isOpen() const;
 
     int         read(void* buf, size_t len);
-    std::string readline(int timeout_ms);
+    std::string readline(int timeout_ms = 300);
     int         write(const void* buf, size_t len);
     int         write(const std::string& str);
 
