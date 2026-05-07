@@ -1,10 +1,11 @@
 #pragma once
 #include <string>
-
+#include <cstdint>
+#include <cstddef>
 
 class SoftSerial {
 public:
-    SoftSerial(const uint8_t gpio_tx, uint8_t gpio_rx, int baudrate = 9600);
+    SoftSerial(uint8_t gpio_tx, uint8_t gpio_rx, int baudrate = 9600);
     ~SoftSerial();
 
     bool        open();

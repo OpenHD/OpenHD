@@ -25,7 +25,7 @@ private:
     uint8_t m_src_sys_id = 0;
     uint8_t m_target_sys_id = 0;
 
-    std::unique_ptr<Serial> m_walksnail_serial = nullptr;
+    std::unique_ptr<SoftSerial> m_walksnail_serial = nullptr;
 
     std::mutex m_receive_thread_mutex;
     std::unique_ptr<std::thread> m_receive_thread = nullptr;
