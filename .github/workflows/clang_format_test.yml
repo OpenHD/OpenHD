@@ -21,7 +21,13 @@ jobs:
         run: |
           sudo apt install clang-format
           
-      - name: Validate
+      - name: Format code
         run: |
           cd OpenHD
-          ./run_clang_format.sh
+          ./run_clang_format.sh f
+          
+      - name: Commit changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "style: Apply clang-format"
+          file_pattern: "**/*.cpp **/*.h **/*.hpp"

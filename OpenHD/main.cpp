@@ -225,6 +225,9 @@ int main(int argc, char *argv[]) {
         ss << "----------------------- " << red << "Ground Unit" << reset << " ----------------------\n";
     }
 
+    ss << "\n";
+    ss << "----------------------- " << red << "AI Mission" << reset << " ----------------------\n";
+
     if (options.reset_all_settings) {
         ss << red << "Reset Settings" << reset << "\n";
     }
