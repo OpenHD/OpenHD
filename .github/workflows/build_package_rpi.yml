@@ -42,6 +42,13 @@ jobs:
             # 빌드 디렉토리로 이동
             cd /opt
             
+            # 파일 목록 및 권한 확인
+            ls -la
+            
+            # 스크립트에 실행 권한 부여
+            chmod +x ./install_build_dep.sh
+            chmod +x ./package.sh
+            
             # 필요한 설정 파일 생성
             mkdir -p /usr/local/share/openhd/
             touch /usr/local/share/openhd/joyconfig.txt
