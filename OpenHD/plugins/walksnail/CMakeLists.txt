@@ -12,13 +12,11 @@ add_library(OHDPluginWalksnail STATIC
     WalksnailUtils.h
     serial/serial.h
     serial/serial.cpp
-    serial/softserial.h
-    serial/softserial.cpp
 )
 
 target_include_directories(OHDPluginWalksnail PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-target_link_libraries(OHDPluginWalksnail PRIVATE OHDTelemetryLib pigpio pthread)
+target_link_libraries(OHDPluginWalksnail PRIVATE OHDTelemetryLib)
 target_link_libraries(OHDPlugins INTERFACE OHDPluginWalksnail)
