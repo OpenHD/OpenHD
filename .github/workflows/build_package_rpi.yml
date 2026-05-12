@@ -7,13 +7,14 @@ on:
   workflow_dispatch: 
 
 env:
+  # CMake 빌드 유형 설정
   BUILD_TYPE: Release
 
 jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
-      # 1. 빌드 공간 확보
+      # 1. 빌드 공간 확보: 라즈베리 파이 이미지 빌드를 위해 디스크 용량 정리
       - name: Maximize build space
         uses: easimon/maximize-build-space@master
         with:
@@ -24,7 +25,7 @@ jobs:
           remove-haskell: 'true'
           overprovision-lvm: 'true'
 
-      # 2. 소스 코드 가져오기
+      # 2. 소스 코드 가져오기 (서브모듈 포함)
       - uses: actions/checkout@v4
         with:
           submodules: recursive
@@ -39,33 +40,32 @@ jobs:
           copy_artifact_path: OpenHD_build
           import_github_env: true
           commands: |
-            # 소스 코드가 복사된 하위 디렉토리로 이동
+            # 소스 코드가 복사된 디렉토리로 이동
             cd /opt/OpenHD-AI
             
-            # 현재 경로의 파일 목록 확인 (디버깅용)
-            echo "현재 디렉토리: $(pwd)"
+            # Git 보안 정책 예외 등록 (dubious ownership 에러 해결)
+            git config --global --add safe.directory /opt/OpenHD-AI
+            
+            # 파일 목록 및 권한 확인
             ls -la
             
-            # 스크립트 권한 부여
+            # 스크립트에 실행 권한 부여
             chmod +x ./install_build_dep.sh
             chmod +x ./package.sh
             
-            # 시스템 설정 파일 생성 (OpenHD 설정 관련)
+            # 필요한 설정 파일 생성
             sudo mkdir -p /usr/local/share/openhd/
             sudo touch /usr/local/share/openhd/joyconfig.txt
             
-            # 빌드 의존성 설치 (라즈베리 파이 타겟)
+            # 빌드 의존성 설치 및 패키징 스크립트 실행
             sudo ./install_build_dep.sh rpi
-            
-            # 패키징 실행 (표준 armhf 빌드)
             sudo ./package.sh standard armhf raspbian bullseye
 
-            # 결과물(.deb)을 아티팩트 경로로 복사
-            # arm-runner-action의 copy_artifact_path 설정과 일치해야 함
+            # 생성된 deb 파일을 아티팩트 경로로 복사
             mkdir -p /opt/OpenHD-AI/OpenHD_build
-            cp *.deb /opt/OpenHD-AI/OpenHD_build/ || echo "결과 파일(.deb)을 찾을 수 없습니다."
+            cp *.deb /opt/OpenHD-AI/OpenHD_build/ || echo "생성된 패키지가 없습니다."
             
-            echo "생성된 패키지 목록:"
+            echo "빌드 완료 패키지 목록:"
             ls -l /opt/OpenHD-AI/OpenHD_build/
 
       # 4. 생성된 .deb 파일을 GitHub Actions 결과물로 업로드
@@ -73,6 +73,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: OpenHD-Package-RPi
-          # arm-runner-action이 외부로 꺼내준 경로에서 파일을 찾음
           path: OpenHD_build/*.deb
           if-no-files-found: error
