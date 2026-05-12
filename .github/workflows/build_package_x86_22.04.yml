@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - "2.6-evo-AI"
+  workflow_dispatch:
       
 env:
   # CMake 빌드 유형 설정
