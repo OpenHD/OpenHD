@@ -4,8 +4,8 @@ on:
   push:
     branches:
       - "master"
-  workflow_dispatch: 
-
+  workflow_dispatch:
+      
 env:
   # CMake 빌드 유형 설정
   BUILD_TYPE: Release
@@ -14,7 +14,15 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
-      # 1. 빌드 공간 확보: 라즈베리 파이 이미지 빌드를 위해 디스크 용량 정리
+      - name: Environment Setup
+        run: |
+          echo "DT=$(date +'%Y-%m-%d_%H%M')" >> $GITHUB_ENV
+          echo "BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV    
+
+      - name: Clean UP
+        run: |
+          sudo rm -Rf *
+
       - name: Maximize build space
         uses: easimon/maximize-build-space@master
         with:
@@ -24,36 +32,33 @@ jobs:
           remove-android: 'true'
           remove-haskell: 'true'
           overprovision-lvm: 'true'
-
-      # 2. 소스 코드 가져오기 (서브모듈 포함)
-      - uses: actions/checkout@v4
+              
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      # 3. ARM 환경(Raspberry Pi OS)에서 빌드 수행
-      - uses: pguyot/arm-runner-action@v2
+      - name: Build and Package for ARM
+        uses: pguyot/arm-runner-action@v2
         id: build_image
         with:
           base_image: raspios_lite:2023-05-03
           image_additional_mb: 4000
           copy_repository_path: /opt
           copy_artifact_path: OpenHD_build
-          import_github_env: true
+          import_github_env: true # Environment Setup에서 설정한 변수를 ARM 환경 내부로 전달
           commands: |
-            # 패키지 매니저 업데이트 및 git 설치
+            # 패키지 매니저 업데이트 및 git 설치 (Lite 이미지 기본 의존성)
             sudo apt-get update
             sudo apt-get install -y git
 
             # 소스 코드가 복사된 디렉토리로 이동
             cd /opt/OpenHD-AI
             
-            # Git 보안 정책 예외 등록 (홈 디렉토리 오류 방지를 위해 system 옵션 사용)
+            # Git 보안 정책 예외 등록
             sudo git config --system --add safe.directory /opt/OpenHD-AI
             
-            # 파일 목록 및 권한 확인
-            ls -la
-            
-            # 스크립트에 실행 권한 부여 (권한 문제 방지를 위해 sudo 사용)
+            # 스크립트에 실행 권한 부여
             sudo chmod +x ./install_build_dep.sh
             sudo chmod +x ./package.sh
             
@@ -61,21 +66,24 @@ jobs:
             sudo mkdir -p /usr/local/share/openhd/
             sudo touch /usr/local/share/openhd/joyconfig.txt
             
-            # 빌드 의존성 설치 및 패키징 스크립트 실행
+            # 빌드 의존성 설치
             sudo ./install_build_dep.sh rpi
+            
+            # 패키징 스크립트 실행 (ARM 대상)
             sudo ./package.sh standard armhf raspbian bullseye
 
-            # 생성된 deb 파일을 아티팩트 경로로 복사 (root 소유 파일 복사를 위해 sudo 사용)
-            sudo mkdir -p /opt/OpenHD-AI/OpenHD_build
-            sudo cp *.deb /opt/OpenHD-AI/OpenHD_build/ || echo "생성된 패키지가 없습니다."
-            
-            echo "빌드 완료 패키지 목록:"
-            ls -l /opt/OpenHD-AI/OpenHD_build/
+            # 생성된 deb 파일 및 로그 파일을 외부 추출용 디렉토리로 복사
+            sudo mkdir -p /opt/OpenHD_build
+            sudo cp *.deb /opt/OpenHD_build/ || echo "생성된 패키지가 없습니다."
+            sudo cp *.log /opt/OpenHD_build/ 2>/dev/null || echo "생성된 로그 파일이 없습니다."
 
-      # 4. 생성된 .deb 파일을 GitHub Actions 결과물로 업로드
-      - name: Upload Build Artifacts
+      - name: Upload to Github
+        # 빌드된 패키지와 로그 파일을 GitHub Artifacts에 업로드
         uses: actions/upload-artifact@v4
         with:
           name: OpenHD-Package-RPi
-          path: OpenHD_build/*.deb
+          path: |
+            OpenHD_build/*.deb
+            OpenHD_build/*.log
           if-no-files-found: error
+
