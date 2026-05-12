@@ -40,22 +40,22 @@ jobs:
           copy_artifact_path: OpenHD_build
           import_github_env: true
           commands: |
-            # 패키지 매니저 업데이트 및 git 설치 (Lite 버전에 git이 없으므로 추가)
+            # 패키지 매니저 업데이트 및 git 설치
             sudo apt-get update
             sudo apt-get install -y git
 
             # 소스 코드가 복사된 디렉토리로 이동
             cd /opt/OpenHD-AI
             
-            # Git 보안 정책 예외 등록 (dubious ownership 에러 해결)
-            git config --global --add safe.directory /opt/OpenHD-AI
+            # Git 보안 정책 예외 등록 (홈 디렉토리 오류 방지를 위해 system 옵션 사용)
+            sudo git config --system --add safe.directory /opt/OpenHD-AI
             
             # 파일 목록 및 권한 확인
             ls -la
             
-            # 스크립트에 실행 권한 부여
-            chmod +x ./install_build_dep.sh
-            chmod +x ./package.sh
+            # 스크립트에 실행 권한 부여 (권한 문제 방지를 위해 sudo 사용)
+            sudo chmod +x ./install_build_dep.sh
+            sudo chmod +x ./package.sh
             
             # 필요한 설정 파일 생성
             sudo mkdir -p /usr/local/share/openhd/
@@ -65,9 +65,9 @@ jobs:
             sudo ./install_build_dep.sh rpi
             sudo ./package.sh standard armhf raspbian bullseye
 
-            # 생성된 deb 파일을 아티팩트 경로로 복사
-            mkdir -p /opt/OpenHD-AI/OpenHD_build
-            cp *.deb /opt/OpenHD-AI/OpenHD_build/ || echo "생성된 패키지가 없습니다."
+            # 생성된 deb 파일을 아티팩트 경로로 복사 (root 소유 파일 복사를 위해 sudo 사용)
+            sudo mkdir -p /opt/OpenHD-AI/OpenHD_build
+            sudo cp *.deb /opt/OpenHD-AI/OpenHD_build/ || echo "생성된 패키지가 없습니다."
             
             echo "빌드 완료 패키지 목록:"
             ls -l /opt/OpenHD-AI/OpenHD_build/
