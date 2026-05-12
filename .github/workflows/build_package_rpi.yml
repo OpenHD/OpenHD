@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - "master"
-
+  workflow_dispatch: 
 env:
   # CMake 빌드 유형 설정 (Release, Debug 등)
   BUILD_TYPE: Release
