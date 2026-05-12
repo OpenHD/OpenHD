@@ -1,4 +1,4 @@
-#include "serial/softserial.h"
+#include "serial/serial.h"
 #include "mav_include.h"
 #include <vector>
 #include <mutex>
@@ -9,8 +9,6 @@
 
 #define WALKSNAIL_DEFAULT_UART              "/dev/serial0"
 #define WALKSNAIL_DEFAULT_BAUDRATE          115200
-#define WALKSNAIL_DEFAULT_SOFT_UART_TX      23
-#define WALKSNAIL_DEFAULT_SOFT_UART_RX      24
 
 class WalksnailAir
 {
@@ -25,7 +23,7 @@ private:
     uint8_t m_src_sys_id = 0;
     uint8_t m_target_sys_id = 0;
 
-    std::unique_ptr<SoftSerial> m_walksnail_serial = nullptr;
+    std::unique_ptr<Serial> m_walksnail_serial = nullptr;
 
     std::mutex m_receive_thread_mutex;
     std::unique_ptr<std::thread> m_receive_thread = nullptr;

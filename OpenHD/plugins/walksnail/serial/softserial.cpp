@@ -14,6 +14,8 @@ SoftSerial::~SoftSerial()
 
 bool SoftSerial::open()
 {
+    if (m_open) return true;
+
     if (gpioInitialise() < 0)
         return false;
 
@@ -74,21 +76,31 @@ std::string SoftSerial::readline(int timeout_ms)
 
 int SoftSerial::write(const void* buf, size_t len)
 {
-    if (!m_open) return -1;
+    if (!m_open || len == 0) return -1;
 
-    // gpioWaveClear removes all existing waveforms — do not call this
-    // from multiple threads or alongside other wave users.
+    // Drain any prior transmission before touching wave resources
+    while (gpioWaveTxBusy())
+        gpioDelay(100);
+
     gpioWaveClear();
 
-    // stophalfbits=2 means 1 stop bit (unit is half-bits)
-    // pigpio's API takes char* but does not modify the buffer — cast is safe
-    gpioWaveAddSerial(m_gpio_tx, m_baud, 8, 2, 0, len,
-                      const_cast<char*>(static_cast<const char*>(buf)));
+    int rc = gpioWaveAddSerial(
+        m_gpio_tx, m_baud, 8, 2, 0, len,
+        const_cast<char*>(static_cast<const char*>(buf)));
+
+    if (rc < 0) return -1;   // wave pool still empty — don't call Create
 
     int wid = gpioWaveCreate();
     if (wid < 0) return -1;
 
-    gpioWaveTxSend(wid, PI_WAVE_MODE_ONE_SHOT);
+    if (gpioWaveTxSend(wid, PI_WAVE_MODE_ONE_SHOT) < 0) {
+        gpioWaveDelete(wid);
+        return -1;
+    }
+
+    // Small delay so DMA actually starts before we poll busy
+    gpioDelay(100);
+
     while (gpioWaveTxBusy())
         gpioDelay(100);
 

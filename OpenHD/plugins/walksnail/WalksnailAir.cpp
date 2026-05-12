@@ -5,9 +5,8 @@
 
 void WalksnailAir::setup_bridge(uint8_t src_sys_id, uint8_t target_sys_id)
 {
-    m_walksnail_serial = std::make_unique<SoftSerial>(
-        WALKSNAIL_DEFAULT_SOFT_UART_TX,
-        WALKSNAIL_DEFAULT_SOFT_UART_RX,
+    m_walksnail_serial = std::make_unique<Serial>(
+        WALKSNAIL_DEFAULT_UART,
         WALKSNAIL_DEFAULT_BAUDRATE
     );
     if (!m_walksnail_serial->open())
