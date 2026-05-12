@@ -40,6 +40,10 @@ jobs:
           copy_artifact_path: OpenHD_build
           import_github_env: true
           commands: |
+            # 패키지 매니저 업데이트 및 git 설치 (Lite 버전에 git이 없으므로 추가)
+            sudo apt-get update
+            sudo apt-get install -y git
+
             # 소스 코드가 복사된 디렉토리로 이동
             cd /opt/OpenHD-AI
             
