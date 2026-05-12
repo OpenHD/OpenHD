@@ -36,11 +36,13 @@ jobs:
           base_image: raspios_lite:2023-05-03
           image_additional_mb: 4000
           copy_repository_path: /opt
-          copy_artifact_path: OpenHD
+          copy_artifact_path: OpenHD_build
           import_github_env: true
           commands: |
-            # 빌드 디렉토리 이동 및 필요한 설정 파일 생성
-            cd /opt/OpenHD
+            # 빌드 디렉토리로 이동
+            cd /opt
+            
+            # 필요한 설정 파일 생성
             mkdir -p /usr/local/share/openhd/
             touch /usr/local/share/openhd/joyconfig.txt
             
@@ -49,12 +51,17 @@ jobs:
             chown -R root:root .
             sudo ./package.sh standard armhf raspbian bullseye
 
+            # 생성된 deb 파일을 별도 디렉토리로 이동하여 찾기 쉽게 함
+            mkdir /OpenHD_build
+            mv *.deb /OpenHD_build/
+            echo "Generated .deb file:"
+            ls -l /OpenHD_build/
+
       # 4. 생성된 .deb 파일을 GitHub Actions 결과물로 업로드
-      # 빌드 완료 후 GitHub 상단의 'Actions' 탭 -> 해당 워크플로 실행 기록에서 파일을 다운로드할 수 있습니다.
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: OpenHD-Package-RPi  # 다운로드 시 표시될 파일 이름
+          name: OpenHD-Package-RPi
           path: |
-            OpenHD/*.deb
+            OpenHD_build/*.deb
           if-no-files-found: error
