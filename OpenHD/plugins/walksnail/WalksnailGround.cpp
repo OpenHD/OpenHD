@@ -60,6 +60,13 @@ void WalksnailGround::reading_loop()
         std::lock_guard<std::mutex> lock(m_callback_mutex);
         if (!m_callback) return;
 
+        // Print packets as hex
+        std::cout << std::hex << std::setfill('0');
+        for (unsigned char c : packet) {
+            std::cout << "0x" << std::setw(2) << (int)c << " ";
+        }
+        std::cout << std::endl;
+
         auto messages = pack_walksnail_data_to_mavlink(
             reinterpret_cast<const uint8_t*>(packet.data()), packet.size(),
             m_src_sys_id,
