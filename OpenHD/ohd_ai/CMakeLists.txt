@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.16.3)
 
+find_package(PkgConfig REQUIRED)
+
 add_library(OHDAiLib STATIC
         src/ai_pipeline_helper.cpp
         inc/ai_pipeline_helper.hpp
@@ -21,3 +23,8 @@ if (OpenCV_FOUND)
     target_link_libraries(OHDAiLib PRIVATE ${OpenCV_LIBRARIES})
     message(STATUS "Found OpenCV version ${OpenCV_VERSION}")
 endif()
+
+# Find and link GStreamer
+pkg_search_module(GST REQUIRED gstreamer-1.0>=1.4)
+pkg_search_module(gstreamer REQUIRED IMPORTED_TARGET gstreamer-1.0>=1.4)
+target_link_libraries(OHDAiLib PRIVATE PkgConfig::gstreamer)
