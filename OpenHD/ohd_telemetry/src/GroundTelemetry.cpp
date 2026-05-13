@@ -76,6 +76,7 @@ GroundTelemetry::GroundTelemetry() : MavlinkSystem(OHD_SYS_ID_GROUND) {
   m_generic_mavlink_param_provider->add_params(get_all_settings());
   m_components.push_back(m_generic_mavlink_param_provider);
   setup_uart();
+  setup_walksnail_ground();
   openhd::ExternalDeviceManager::instance().register_listener(
       [this](openhd::ExternalDevice external_device, bool connected) {
         if (!external_device.discovered_by_mavlink_tcp_server) {
@@ -103,6 +104,8 @@ GroundTelemetry::~GroundTelemetry() {
 
 void GroundTelemetry::on_messages_air_unit(
     const std::vector<MavlinkMessage>& messages) {
+
+  m_walksnail_ground->process_air_messages(messages);
   // All messages we get from the Air pi (they might come from the AirPi itself
   // or the FC connected to the air pi) get forwarded straight to all the
   // client(s) connected to the ground station.
@@ -450,3 +453,14 @@ void GroundTelemetry::disable_joystick() {
   m_console->debug("Disable joy end");
 }
 #endif
+
+void GroundTelemetry::setup_walksnail_ground()
+{
+  m_walksnail_ground = std::make_unique<WalksnailGround>();
+  m_walksnail_ground->registerCallback(
+    [this](std::vector<MavlinkMessage> messages) {
+      send_messages_air_unit(messages);
+    }
+  );
+  m_walksnail_ground->setup_bridge(_sys_id, OHD_SYS_ID_FC);
+}

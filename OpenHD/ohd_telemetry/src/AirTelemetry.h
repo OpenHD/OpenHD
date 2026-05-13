@@ -42,6 +42,8 @@
 #include "openhd_link.hpp"
 #include "openhd_spdlog.h"
 
+#include "plugins/walksnail/WalksnailAir.h"
+
 /**
  * OpenHD Air telemetry. Assumes a Ground instance running on the ground pi.
  */
@@ -101,6 +103,8 @@ class AirTelemetry : public MavlinkSystem {
   std::vector<openhd::Setting> get_all_settings();
   void setup_uart();
 
+  void setup_walksnail_air();
+
  private:
   std::unique_ptr<openhd::telemetry::air::SettingsHolder> m_air_settings;
   std::unique_ptr<SerialEndpointManager> m_fc_serial;
@@ -117,6 +121,8 @@ class AirTelemetry : public MavlinkSystem {
   std::shared_ptr<spdlog::logger> m_console;
   // EXP - always on TCP mavlink server
   std::unique_ptr<TCPEndpoint> m_tcp_server = nullptr;
+
+  std::unique_ptr<WalksnailAir> m_walksnail_air = nullptr;
 };
 
 #endif  // OPENHD_TELEMETRY_AIRTELEMETRY_H

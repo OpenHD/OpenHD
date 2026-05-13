@@ -42,6 +42,8 @@
 #include "rc/RcJoystickSender.h"
 #endif
 
+#include "plugins/walksnail/WalksnailGround.h"
+
 /**
  * OpenHD Ground telemetry. Assumes a air instance running on the air pi.
  */
@@ -102,6 +104,9 @@ class GroundTelemetry : public MavlinkSystem {
   void enable_joystick();
   void disable_joystick();
 #endif  // OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
+
+  void setup_walksnail_ground();
+
  private:
   std::shared_ptr<spdlog::logger> m_console;
   std::unique_ptr<openhd::telemetry::ground::SettingsHolder> m_gnd_settings;
@@ -121,6 +126,8 @@ class GroundTelemetry : public MavlinkSystem {
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
   std::unique_ptr<RcJoystickSender> m_rc_joystick_sender = nullptr;
 #endif
+
+  std::unique_ptr<WalksnailGround> m_walksnail_ground = nullptr;
 };
 
 #endif  // OPENHD_TELEMETRY_GROUNDTELEMETRY_H
