@@ -29,6 +29,7 @@
 #include <utility>
 #include <vector>
 
+#include "../../ohd_ai/inc/ai_pipeline_helper.hpp"
 #include "air_recording_helper.hpp"
 #include "config_paths.h"
 #include "gst_appsink_helper.h"
@@ -131,7 +132,7 @@ std::string GStreamerStream::create_source_encode_pipeline(
     } else {
       openhd::log::get_default()->warn("Using RPI Camera source stream.");
       pipeline << OHDGstHelper::createRpicamsrcStream(
-          -1, setting, cam_holder.requires_half_bitrate_workaround());
+          camera.index, -1, setting, cam_holder.requires_half_bitrate_workaround());
     }
   } else if (camera.requires_rpi_libcamera_pipeline()) {
     openhd::log::get_default()->debug(
@@ -212,7 +213,7 @@ std::string GStreamerStream::create_source_encode_pipeline(
   }
 
   openhd::log::get_default()->debug("Pipeline created: {}", pipeline.str());
-  return pipeline.str();
+  return OHDAiHelper::create_ai_pipeline_if_needed(camera.index, setting, pipeline.str());
 }
 
 void GStreamerStream::setup() {
@@ -300,6 +301,10 @@ void GStreamerStream::setup() {
     m_console->error("Failed to create pipeline: {}", error->message);
     return;
   }
+
+  // Attach AI OSD Probe if needed
+  OHDAiHelper::attach_ai_osd_probe(m_gst_pipeline, m_camera_holder->get_camera().index);
+
   m_bitrate_ctrl_element = get_dynamic_bitrate_control_element_in_pipeline(
       m_gst_pipeline, *m_camera_holder);
   // we pull data out of the gst pipeline as cpu memory buffer(s) using the

@@ -113,7 +113,7 @@ target_sources(OHDVideoLib PRIVATE ${sources})
 target_include_directories(OHDVideoLib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/inc)
 target_include_directories(OHDVideoLib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/librtp/inc)
 
-target_link_libraries(OHDVideoLib PUBLIC OHDCommonLib)
+target_link_libraries(OHDVideoLib PUBLIC OHDCommonLib OHDAiLib)
 
 # disable compiler warning since we don't link against GCC before 4.4
 target_compile_options(OHDVideoLib PRIVATE -Wno-packed-bitfield-compat)

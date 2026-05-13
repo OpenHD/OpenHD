@@ -22,6 +22,7 @@ endif ()
 
 # Add subdirectories for libraries
 add_subdirectory(ohd_common EXCLUDE_FROM_ALL)
+add_subdirectory(ohd_ai EXCLUDE_FROM_ALL)
 add_subdirectory(ohd_interface EXCLUDE_FROM_ALL)
 add_subdirectory(ohd_telemetry EXCLUDE_FROM_ALL)
 add_subdirectory(ohd_video EXCLUDE_FROM_ALL)
@@ -41,7 +42,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_
 endif()
 
 # Link the libraries
-target_link_libraries(openhd PRIVATE OHDInterfaceLib OHDVideoLib OHDTelemetryLib OHDCommonLib)
+target_link_libraries(openhd PRIVATE OHDInterfaceLib OHDVideoLib OHDTelemetryLib OHDCommonLib OHDAiLib)
 
 # Check if libatomic is needed and available
 include(CheckLibraryExists)
