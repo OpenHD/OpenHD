@@ -27,7 +27,7 @@ set -e
 PLATFORM="$1"
 
 
-BASE_PACKAGES="libpoco-dev clang-format libusb-1.0-0-dev libpcap-dev libsodium-dev libnl-3-dev libnl-genl-3-dev libnl-route-3-dev libsdl2-dev"
+BASE_PACKAGES="libpoco-dev clang-format libusb-1.0-0-dev libpcap-dev libsodium-dev libnl-3-dev libnl-genl-3-dev libnl-route-3-dev libsdl2-dev libopencv-dev"
 VIDEO_PACKAGES="libgstreamer-plugins-base1.0-dev libv4l-dev"
 BUILD_PACKAGES="git build-essential autotools-dev automake libtool python3-pip autoconf apt-transport-https ruby-dev cmake"
 
@@ -92,4 +92,3 @@ PLATFORM_PACKAGES_REMOVE=""
 # Installing ruby packages
 gem install dotenv -v 2.8.1
 gem install fpm
-
