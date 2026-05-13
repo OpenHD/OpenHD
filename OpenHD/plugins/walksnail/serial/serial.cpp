@@ -32,8 +32,8 @@ bool Serial::open()
     tty.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
     tty.c_iflag &= ~(IXON | IXOFF | IXANY | ICRNL);
     tty.c_oflag &= ~OPOST;
-    tty.c_cc[VMIN]  = 0;
-    tty.c_cc[VTIME] = 10;
+    tty.c_cc[VMIN]  = 1;
+    tty.c_cc[VTIME] = 0;
 
     if (tcsetattr(m_fd, TCSANOW, &tty) != 0) {
         ::close(m_fd);
@@ -65,13 +65,15 @@ std::string Serial::readline()
 {
     std::string line;
     char c;
+    int ret;
 
-    while (::read(m_fd, &c, 1) == 1) {
-        if (c == '\n')
-            break;
-        if (c != '\r')
-            line += c;
+    while ((ret = ::read(m_fd, &c, 1)) == 1) {
+        if (c == '\n') break;
+        if (c != '\r') line += c;
     }
+
+    if (ret < 0)
+        return "";
 
     return line;
 }
