@@ -132,7 +132,7 @@ std::string GStreamerStream::create_source_encode_pipeline(
     } else {
       openhd::log::get_default()->warn("Using RPI Camera source stream.");
       pipeline << OHDGstHelper::createRpicamsrcStream(
-          camera.index, -1, setting, cam_holder.requires_half_bitrate_workaround());
+          -1, setting, cam_holder.requires_half_bitrate_workaround());
     }
   } else if (camera.requires_rpi_libcamera_pipeline()) {
     openhd::log::get_default()->debug(

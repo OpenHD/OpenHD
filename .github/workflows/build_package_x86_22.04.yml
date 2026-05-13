@@ -5,9 +5,8 @@ on:
     branches:
       - "master"
   workflow_dispatch:
-      
+
 env:
-  # CMake 빌드 유형 설정
   BUILD_TYPE: Release
 
 jobs:
@@ -18,39 +17,47 @@ jobs:
         run: |
           echo "DT=$(date +'%Y-%m-%d_%H%M')" >> $GITHUB_ENV
           echo "BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV    
+          
+          # [중요] Clean UP 단계는 캐시 효율을 위해 제거하거나 조정해야 합니다. 
+          # GitHub Actions는 이미 깨끗한 상태에서 시작하므로 sudo rm -Rf * 는 불필요합니다.
 
-      - name: Clean UP
-        run: |
-          sudo rm -Rf *
-              
       - name: Checkout repository and submodules
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
+      # 1. APT 패키지 캐시 설정
+      # 설치된 .deb 파일들을 캐싱하여 다음 빌드 시 다운로드 시간을 단축합니다.
+      - name: Cache APT Packages
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles('install_build_dep.sh') }}
+          restore-keys: |
+            ${{ runner.os }}-apt-
+
+      # 2. 빌드 의존성 및 시스템 라이브러리 설치
       - name: Update System and Install Base Libs
         run: |
           sudo apt update
-          # grub 관련 업데이트로 인한 멈춤 방지
           sudo apt-mark hold grub-efi-amd64-signed
-          sudo apt upgrade -y
+          # upgrade는 가상머신 환경에 따라 생략 가능 (시간 단축)
           sudo apt install libpoco-dev -y
 
       - name: Install Dependencies
         run: |
+          # 스크립트 내부에서 apt를 사용한다면 위에서 설정한 캐시가 적용됩니다.
           sudo ./install_build_dep.sh ubuntu-x86
-          
+
       - name: Build and Package
         run: |
-          # x86_64용 Ubuntu Jammy 패키지 생성
           sudo ./package.sh standard x86_64 ubuntu jammy
           ls -l *.deb
 
       - name: Upload to Github
-        # 빌드된 패키지와 로그 파일을 GitHub Artifacts에 업로드합니다.
         uses: actions/upload-artifact@v4
         with:
-          name: OpenHD-x86_64-Ubuntu-Jammy  # 다운로드 시 식별하기 쉬운 이름
+          name: OpenHD-x86_64-Ubuntu-Jammy
           path: |
             *.deb
             *.log
