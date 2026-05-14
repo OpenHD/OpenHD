@@ -19,6 +19,36 @@ if [[ -z "$TARGET" ]]; then
   exit 1
 fi
 
+# ==============================================================================
+# 스마트 캐시 스위칭 (Smart Cache Switching) 로직
+# ==============================================================================
+LAST_TARGET_FILE=".last_build_target"
+
+if [ -f "$LAST_TARGET_FILE" ]; then
+    LAST_TARGET=$(cat "$LAST_TARGET_FILE")
+else
+    LAST_TARGET="none"
+fi
+
+if [ "$TARGET" != "$LAST_TARGET" ]; then
+    echo "⚠️ 빌드 타겟이 변경되었습니다! ($LAST_TARGET -> $TARGET)"
+    echo "충돌(Architecture Mismatch) 방지를 위해 이전 빌드 캐시를 싹 청소합니다..."
+
+    # 루트 및 하위 디렉토리의 CMake 찌꺼기 완벽 삭제
+    find . -name 'CMakeCache.txt' -type f -delete 2>/dev/null || true
+    find . -name 'CMakeFiles' -type d -exec rm -rf {} + 2>/dev/null || true
+
+    # 새로운 타겟을 파일에 기록
+    echo "$TARGET" > "$LAST_TARGET_FILE"
+else
+    echo "✅ 이전과 동일한 타겟($TARGET)입니다."
+    echo "기존 CMake 캐시를 최대한 재사용하여 초고속으로 빌드합니다!"
+fi
+echo "=============================================================================="
+
+# ==============================================================================
+# 1. x86 (Ubuntu Desktop) 빌드
+# ==============================================================================
 if [[ "$TARGET" == "x86" ]]; then
   echo "========================================"
   echo "x86 (Ubuntu Jammy) 빌드를 시작합니다..."
@@ -49,6 +79,9 @@ if [[ "$TARGET" == "x86" ]]; then
   ls -l "${BUILD_DIR}/x86/"
   echo "========================================"
 
+# ==============================================================================
+# 2. Raspberry Pi (ARM32) 빌드
+# ==============================================================================
 elif [[ "$TARGET" == "rpi" ]]; then
   echo "========================================"
   echo "라즈베리파이 (ARM32) 빌드를 시작합니다..."
@@ -134,11 +167,6 @@ EOF
     ${IMAGE_NAME} /bin/bash -c "
       # Git 보안 정책 예외 등록
       git config --global --add safe.directory /workspace
-
-      # [여기 추가!] 이전 빌드의 CMake 캐시 찌꺼기를 완벽히 청소합니다.
-      echo '이전 CMake 캐시를 초기화합니다...'
-      find . -name 'CMakeCache.txt' -type f -delete
-      find . -name 'CMakeFiles' -type d -exec rm -rf {} +
 
       # Workflow에 있는 설정 파일 생성 로직
       mkdir -p /usr/local/share/openhd/
