@@ -33,10 +33,13 @@ if [[ "$TARGET" == "x86" ]]; then
   # 2. 패키징 디렉토리 준비
   sudo mkdir -p /out/openhd-installdir
 
-  # 3. 패키지 빌드 실행
+  # 3. Git 소유권 문제 해결 (sudo 환경에서 현재 폴더 접근 허용)
+  sudo git config --global --add safe.directory "$(pwd)"
+
+  # 4. 패키지 빌드 실행
   sudo ./package.sh standard x86_64 ubuntu jammy
 
-  # 4. 결과물을 build/x86 폴더로 이동
+  # 5. 결과물을 build/x86 폴더로 이동
   echo "빌드 결과물을 ${BUILD_DIR}/x86 로 이동합니다..."
   mv *.deb "${BUILD_DIR}/x86/" 2>/dev/null || true
 
@@ -72,7 +75,7 @@ FROM arm32v7/debian:bullseye
 ENV DEBIAN_FRONTEND=noninteractive
 
 # 기본 도구 설치
-RUN apt-get update && apt-get install -y sudo curl wget
+RUN apt-get update && apt-get install -y sudo curl wget git
 
 # 작업 공간 설정
 WORKDIR /workspace
@@ -96,6 +99,7 @@ EOF
   # 3. 캐시된 이미지를 이용해 빌드만 실행
   echo "패키징 진행 중..."
   docker run --rm -v "$(pwd):/workspace" -w /workspace ${IMAGE_NAME} /bin/bash -c "
+    git config --global --add safe.directory /workspace
     mkdir -p /out/openhd-installdir
     sudo ./package.sh standard armhf raspbian bullseye
     cp /out/*.deb /workspace/build/rpi/ 2>/dev/null || cp *.deb /workspace/build/rpi/ 2>/dev/null || true
