@@ -83,7 +83,6 @@ elif [[ "$TARGET" == "rpi" ]]; then
   sudo docker run --rm --privileged multiarch/qemu-user-static --reset -p yes > /dev/null 2>&1 || echo "QEMU 에뮬레이터 설정 확인 완료."
 
   # 3. 의존성이 설치된 커스텀 도커 이미지 캐싱
-  # (이름을 raspbian에서 debian으로 변경하여 공식 이미지 사용 명시)
   IMAGE_NAME="openhd-builder:rpi-debian"
 
   if [[ "$(sudo docker images -q ${IMAGE_NAME} 2> /dev/null)" == "" ]]; then
