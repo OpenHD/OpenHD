@@ -54,16 +54,42 @@ elif [[ "$TARGET" == "rpi" ]]; then
   echo "Docker 기반 빌드입니다."
   echo "========================================"
 
+  # 도커가 실행 중인지 확인
+  if ! command -v docker &> /dev/null; then
+    echo "========================================"
+    echo "에러: Docker가 설치되어 있지 않습니다!"
+    echo ""
+    echo "우분투(WSL)를 방금 설치하셨다면 아래 명령어로 도커를 먼저 설치해 주세요:"
+    echo "  1. sudo apt update"
+    echo "  2. sudo apt install -y docker.io"
+    echo ""
+    echo "설치 후 도커 서비스를 실행해야 합니다:"
+    echo "  3. sudo service docker start"
+    echo "  (또는 윈도우 환경이라면 Docker Desktop을 설치하고 켜주셔도 됩니다.)"
+    echo "========================================"
+    exit 1
+  fi
+
+  if ! sudo docker info &> /dev/null; then
+    echo "========================================"
+    echo "에러: Docker가 설치되어 있지만 실행 중이지 않거나 권한이 없습니다!"
+    echo "아래 명령어를 실행하여 도커 서비스를 시작해 주세요:"
+    echo "  sudo service docker start"
+    echo "========================================"
+    exit 1
+  fi
+
   # 출력 폴더 생성
   mkdir -p "${BUILD_DIR}/rpi"
 
   # 1. QEMU ARM 에뮬레이터 활성화 (다중 아키텍처 지원)
-  docker run --rm --privileged multiarch/qemu-user-static --reset -p yes > /dev/null 2>&1
+  echo "QEMU 에뮬레이터를 준비 중입니다..."
+  sudo docker run --rm --privileged multiarch/qemu-user-static --reset -p yes || echo "QEMU 에뮬레이터 설정 실패 (이미 설정되어 있을 수 있습니다. 무시하고 진행합니다.)"
 
   # 2. 의존성이 설치된 커스텀 도커 이미지가 있는지 확인하고, 없으면 생성합니다.
   IMAGE_NAME="openhd-builder:rpi"
 
-  if [[ "$(docker images -q ${IMAGE_NAME} 2> /dev/null)" == "" ]]; then
+  if [[ "$(sudo docker images -q ${IMAGE_NAME} 2> /dev/null)" == "" ]]; then
     echo "========================================"
     echo "[최초 1회 실행] 의존성이 포함된 전용 도커 이미지를 생성합니다."
     echo "이 과정은 10~20분 정도 소요될 수 있지만, 한 번 만들어두면 다음부터는 즉시 빌드됩니다!"
@@ -86,7 +112,7 @@ RUN chmod +x install_build_dep.sh && ./install_build_dep.sh rpi
 EOF
 
     # 도커 이미지 빌드
-    docker build -t ${IMAGE_NAME} -f Dockerfile.rpi .
+    sudo docker build -t ${IMAGE_NAME} -f Dockerfile.rpi .
 
     # 임시 파일 삭제
     rm Dockerfile.rpi
@@ -98,7 +124,7 @@ EOF
 
   # 3. 캐시된 이미지를 이용해 빌드만 실행
   echo "패키징 진행 중..."
-  docker run --rm -v "$(pwd):/workspace" -w /workspace ${IMAGE_NAME} /bin/bash -c "
+  sudo docker run --rm -v "$(pwd):/workspace" -w /workspace ${IMAGE_NAME} /bin/bash -c "
     git config --global --add safe.directory /workspace
     mkdir -p /out/openhd-installdir
     sudo ./package.sh standard armhf raspbian bullseye
@@ -106,7 +132,7 @@ EOF
   "
 
   # 혹시 도커 밖 루트 경로에 파일이 생성된 경우 대비 (예외 처리)
-  mv *.deb "${BUILD_DIR}/rpi/" 2>/dev/null || true
+  sudo mv *.deb "${BUILD_DIR}/rpi/" 2>/dev/null || true
 
   echo "========================================"
   echo "라즈베리파이 빌드가 완료되었습니다! 생성된 .deb 파일:"
