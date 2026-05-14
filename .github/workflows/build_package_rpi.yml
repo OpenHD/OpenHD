@@ -5,9 +5,8 @@ on:
     branches:
       - "master"
   workflow_dispatch:
-      
+
 env:
-  # CMake 빌드 유형 설정
   BUILD_TYPE: Release
 
 jobs:
@@ -19,66 +18,64 @@ jobs:
           echo "DT=$(date +'%Y-%m-%d_%H%M')" >> $GITHUB_ENV
           echo "BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV    
 
-      - name: Clean UP
-        run: |
-          sudo rm -Rf *
+      # [최적화] Clean UP 제거 (Maximize build space와 충돌 방지 및 불필요)
 
       - name: Maximize build space
         uses: easimon/maximize-build-space@master
         with:
-          root-reserve-mb: 512
-          swap-size-mb: 1024
+          root-reserve-mb: 2048 # 여유 공간을 조금 더 확보
+          swap-size-mb: 4096    # ARM 빌드는 메모리 소모가 커서 스왑을 늘리는 게 안전함
           remove-dotnet: 'true'
           remove-android: 'true'
           remove-haskell: 'true'
-          overprovision-lvm: 'true'
-              
+
       - name: Checkout repository and submodules
         uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      # 1. ARM용 패키지 캐시 설정
+      # ARM 에뮬레이션 내부의 /var/cache/apt를 캐싱하는 것은 어려우므로,
+      # 빌드 완료된 결과물이나 주요 의존성 로그를 기반으로 캐시 전략을 짭니다.
+      - name: Cache ARM Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            **/build/*.o
+            **/build/bin
+          key: ${{ runner.os }}-arm-build-${{ hashFiles('install_build_dep.sh') }}
 
       - name: Build and Package for ARM
         uses: pguyot/arm-runner-action@v2
         id: build_image
         with:
           base_image: raspios_lite:2023-05-03
-          image_additional_mb: 4000
+          image_additional_mb: 5000 # 패키징 공간 넉넉히 확보
           copy_repository_path: /opt
           copy_artifact_path: OpenHD_build
-          import_github_env: true # Environment Setup에서 설정한 변수를 ARM 환경 내부로 전달
+          import_github_env: true
           commands: |
-            # 패키지 매니저 업데이트 및 git 설치 (Lite 이미지 기본 의존성)
-            sudo apt-get update
-            sudo apt-get install -y git
-
-            # 소스 코드가 복사된 디렉토리로 이동
+            # Git 보안 정책 및 디렉토리 설정 (한 번에 실행)
+            git config --system --add safe.directory /opt/OpenHD-AI
+            mkdir -p /usr/local/share/openhd/
+            touch /usr/local/share/openhd/joyconfig.txt
+            
             cd /opt/OpenHD-AI
-            
-            # Git 보안 정책 예외 등록
-            sudo git config --system --add safe.directory /opt/OpenHD-AI
-            
-            # 스크립트에 실행 권한 부여
-            sudo chmod +x ./install_build_dep.sh
-            sudo chmod +x ./package.sh
-            
-            # 필요한 설정 파일 생성
-            sudo mkdir -p /usr/local/share/openhd/
-            sudo touch /usr/local/share/openhd/joyconfig.txt
-            
-            # 빌드 의존성 설치
+            chmod +x ./install_build_dep.sh ./package.sh
+
+            # [핵심 최적화] apt-get update 횟수 최소화
+            # install_build_dep.sh 내부에 update가 있다면 여기서 중복 실행할 필요 없음
             sudo ./install_build_dep.sh rpi
             
-            # 패키징 스크립트 실행 (ARM 대상)
+            # 빌드 및 패키징
             sudo ./package.sh standard armhf raspbian bullseye
 
-            # 생성된 deb 파일 및 로그 파일을 외부 추출용 디렉토리로 복사
-            sudo mkdir -p /opt/OpenHD_build
-            sudo cp *.deb /opt/OpenHD_build/ || echo "생성된 패키지가 없습니다."
-            sudo cp *.log /opt/OpenHD_build/ 2>/dev/null || echo "생성된 로그 파일이 없습니다."
+            # 결과물 이동
+            mkdir -p /opt/OpenHD_build
+            cp *.deb /opt/OpenHD_build/ 2>/dev/null || true
+            cp *.log /opt/OpenHD_build/ 2>/dev/null || true
 
       - name: Upload to Github
-        # 빌드된 패키지와 로그 파일을 GitHub Artifacts에 업로드
         uses: actions/upload-artifact@v4
         with:
           name: OpenHD-Package-RPi
@@ -86,4 +83,3 @@ jobs:
             OpenHD_build/*.deb
             OpenHD_build/*.log
           if-no-files-found: error
-
