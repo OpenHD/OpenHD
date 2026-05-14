@@ -37,7 +37,8 @@ if [[ "$TARGET" == "x86" ]]; then
   sudo git config --global --add safe.directory "$(pwd)"
 
   # 4. 패키지 빌드 실행
-  sudo ./package.sh standard x86_64 ubuntu jammy
+  export BUILD_TYPE=Release
+  sudo -E ./package.sh standard x86_64 ubuntu jammy
 
   # 5. 결과물을 build/x86 폴더로 이동
   echo "빌드 결과물을 ${BUILD_DIR}/x86 로 이동합니다..."
@@ -47,33 +48,26 @@ if [[ "$TARGET" == "x86" ]]; then
   echo "x86 빌드가 완료되었습니다! 생성된 .deb 파일:"
   ls -l "${BUILD_DIR}/x86/"
   echo "========================================"
-
 elif [[ "$TARGET" == "rpi" ]]; then
   echo "========================================"
   echo "라즈베리파이 (ARM32) 빌드를 시작합니다..."
-  echo "Docker 기반 빌드입니다."
+  echo "Docker 기반 빌드 (Raspbian 에뮬레이션) 방식입니다."
   echo "========================================"
 
-  # 도커가 실행 중인지 확인
+  # 1. 도커가 실행 중인지 확인
   if ! command -v docker &> /dev/null; then
     echo "========================================"
     echo "에러: Docker가 설치되어 있지 않습니다!"
-    echo ""
-    echo "우분투(WSL)를 방금 설치하셨다면 아래 명령어로 도커를 먼저 설치해 주세요:"
-    echo "  1. sudo apt update"
-    echo "  2. sudo apt install -y docker.io"
-    echo ""
-    echo "설치 후 도커 서비스를 실행해야 합니다:"
-    echo "  3. sudo service docker start"
-    echo "  (또는 윈도우 환경이라면 Docker Desktop을 설치하고 켜주셔도 됩니다.)"
+    echo "우분투(WSL)에서 아래 명령어로 설치해 주세요:"
+    echo "  sudo apt update && sudo apt install -y docker.io"
+    echo "  sudo service docker start"
     echo "========================================"
     exit 1
   fi
 
   if ! sudo docker info &> /dev/null; then
     echo "========================================"
-    echo "에러: Docker가 설치되어 있지만 실행 중이지 않거나 권한이 없습니다!"
-    echo "아래 명령어를 실행하여 도커 서비스를 시작해 주세요:"
+    echo "에러: Docker가 실행 중이지 않거나 권한이 없습니다!"
     echo "  sudo service docker start"
     echo "========================================"
     exit 1
@@ -82,61 +76,79 @@ elif [[ "$TARGET" == "rpi" ]]; then
   # 출력 폴더 생성
   mkdir -p "${BUILD_DIR}/rpi"
 
-  # 1. QEMU ARM 에뮬레이터 활성화 (다중 아키텍처 지원)
-  echo "QEMU 에뮬레이터를 준비 중입니다..."
-  sudo docker run --rm --privileged multiarch/qemu-user-static --reset -p yes || echo "QEMU 에뮬레이터 설정 실패 (이미 설정되어 있을 수 있습니다. 무시하고 진행합니다.)"
+  # 2. QEMU ARM 에뮬레이터 활성화 (--reset 옵션으로 충돌 방지)
+  echo "QEMU 에뮬레이터를 초기화 및 준비 중입니다..."
+  sudo docker run --rm --privileged multiarch/qemu-user-static --reset -p yes > /dev/null 2>&1 || echo "QEMU 에뮬레이터 설정 확인 완료."
 
-  # 2. 의존성이 설치된 커스텀 도커 이미지가 있는지 확인하고, 없으면 생성합니다.
-  IMAGE_NAME="openhd-builder:rpi"
+  # 3. 의존성이 설치된 커스텀 도커 이미지 캐싱
+  IMAGE_NAME="openhd-builder:rpi-raspbian"
 
   if [[ "$(sudo docker images -q ${IMAGE_NAME} 2> /dev/null)" == "" ]]; then
     echo "========================================"
-    echo "[최초 1회 실행] 의존성이 포함된 전용 도커 이미지를 생성합니다."
-    echo "이 과정은 10~20분 정도 소요될 수 있지만, 한 번 만들어두면 다음부터는 즉시 빌드됩니다!"
+    echo "[최초 1회 실행] Raspbian 환경 기반 전용 도커 이미지를 생성합니다."
+    echo "GitHub Actions와 동일한 환경을 구성합니다. (약 10~15분 소요)"
     echo "========================================"
 
-    # 임시 Dockerfile 생성
-    cat <<EOF > Dockerfile.rpi
-FROM arm32v7/debian:bullseye
+    mkdir -p .docker_build_tmp
+    cp install_build_dep.sh .docker_build_tmp/
+
+    # 임시 Dockerfile 생성 (navid69/raspbian-bullseye 사용)
+    cat <<EOF > .docker_build_tmp/Dockerfile.rpi
+FROM --platform=linux/arm/v7 navid69/raspbian-bullseye:latest
 ENV DEBIAN_FRONTEND=noninteractive
 
-# 기본 도구 설치
-RUN apt-get update && apt-get install -y sudo curl wget git
+# 기본 도구 및 빌드 에센셜 설치
+RUN apt-get update && apt-get install -y \
+    sudo curl wget git build-essential pkg-config
 
 # 작업 공간 설정
 WORKDIR /workspace
 COPY install_build_dep.sh /workspace/
 
-# 의존성 스크립트 실행
+# 의존성 스크립트 실행 (rpi 타겟)
 RUN chmod +x install_build_dep.sh && ./install_build_dep.sh rpi
 EOF
 
     # 도커 이미지 빌드
-    sudo docker build -t ${IMAGE_NAME} -f Dockerfile.rpi .
+    sudo DOCKER_BUILDKIT=1 docker build --platform linux/arm/v7 -t ${IMAGE_NAME} -f .docker_build_tmp/Dockerfile.rpi .docker_build_tmp/
+    rm -rf .docker_build_tmp
 
-    # 임시 파일 삭제
-    rm Dockerfile.rpi
-
-    echo "도커 이미지 생성이 완료되었습니다!"
+    echo "Raspbian 도커 이미지 생성이 완료되었습니다!"
   else
     echo "캐시된 도커 이미지(${IMAGE_NAME})를 사용하여 빠르게 빌드를 시작합니다."
   fi
 
-  # 3. 캐시된 이미지를 이용해 빌드만 실행
-  echo "패키징 진행 중..."
-  sudo docker run --rm -v "$(pwd):/workspace" -w /workspace ${IMAGE_NAME} /bin/bash -c "
-    git config --global --add safe.directory /workspace
-    mkdir -p /out/openhd-installdir
-    sudo ./package.sh standard armhf raspbian bullseye
-    cp /out/*.deb /workspace/build/rpi/ 2>/dev/null || cp *.deb /workspace/build/rpi/ 2>/dev/null || true
+  # 4. 캐시된 이미지를 이용해 빌드 수행 (GitHub Actions 환경 완벽 모사)
+  echo "패키징 진행 중 (ARM 컨테이너 내부)..."
+  sudo docker run --rm --platform linux/arm/v7 \
+    -v "$(pwd):/workspace" \
+    -w /workspace \
+    -e BUILD_TYPE=Release \
+    ${IMAGE_NAME} /bin/bash -c "
+      # Git 보안 정책 예외 등록
+      git config --global --add safe.directory /workspace
+
+      # Workflow에 있는 설정 파일 생성 로직
+      mkdir -p /usr/local/share/openhd/
+      touch /usr/local/share/openhd/joyconfig.txt
+      mkdir -p /out/openhd-installdir
+
+      # 권한 부여 및 패키징 스크립트 실행
+      chmod +x ./package.sh
+      sudo -E ./package.sh standard armhf raspbian bullseye
+
+      # 빌드 결과물(deb 파일 및 로그)을 로컬 매핑 폴더로 복사
+      cp /out/*.deb /workspace/build/rpi/ 2>/dev/null || cp *.deb /workspace/build/rpi/ 2>/dev/null || true
+      cp *.log /workspace/build/rpi/ 2>/dev/null || true
   "
 
-  # 혹시 도커 밖 루트 경로에 파일이 생성된 경우 대비 (예외 처리)
+  # 혹시 도커 밖 루트 경로에 파일이 남은 경우 대비 예외 처리
   sudo mv *.deb "${BUILD_DIR}/rpi/" 2>/dev/null || true
+  sudo mv *.log "${BUILD_DIR}/rpi/" 2>/dev/null || true
 
   echo "========================================"
-  echo "라즈베리파이 빌드가 완료되었습니다! 생성된 .deb 파일:"
-  ls -l "${BUILD_DIR}/rpi/"
+  echo "라즈베리파이 빌드가 완료되었습니다! 생성된 파일 목록:"
+  ls -lh "${BUILD_DIR}/rpi/"
   echo "========================================"
 
 else
