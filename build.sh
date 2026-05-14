@@ -135,6 +135,11 @@ EOF
       # Git 보안 정책 예외 등록
       git config --global --add safe.directory /workspace
 
+      # [여기 추가!] 이전 빌드의 CMake 캐시 찌꺼기를 완벽히 청소합니다.
+      echo '이전 CMake 캐시를 초기화합니다...'
+      find . -name 'CMakeCache.txt' -type f -delete
+      find . -name 'CMakeFiles' -type d -exec rm -rf {} +
+
       # Workflow에 있는 설정 파일 생성 로직
       mkdir -p /usr/local/share/openhd/
       touch /usr/local/share/openhd/joyconfig.txt
