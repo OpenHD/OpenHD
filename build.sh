@@ -48,10 +48,11 @@ if [[ "$TARGET" == "x86" ]]; then
   echo "x86 빌드가 완료되었습니다! 생성된 .deb 파일:"
   ls -l "${BUILD_DIR}/x86/"
   echo "========================================"
+
 elif [[ "$TARGET" == "rpi" ]]; then
   echo "========================================"
   echo "라즈베리파이 (ARM32) 빌드를 시작합니다..."
-  echo "Docker 기반 빌드 (Raspbian 에뮬레이션) 방식입니다."
+  echo "Docker 기반 빌드 (Debian ARM 에뮬레이션) 방식입니다."
   echo "========================================"
 
   # 1. 도커가 실행 중인지 확인
@@ -68,6 +69,7 @@ elif [[ "$TARGET" == "rpi" ]]; then
   if ! sudo docker info &> /dev/null; then
     echo "========================================"
     echo "에러: Docker가 실행 중이지 않거나 권한이 없습니다!"
+    echo "아래 명령어로 도커를 시작해 주세요:"
     echo "  sudo service docker start"
     echo "========================================"
     exit 1
@@ -81,21 +83,27 @@ elif [[ "$TARGET" == "rpi" ]]; then
   sudo docker run --rm --privileged multiarch/qemu-user-static --reset -p yes > /dev/null 2>&1 || echo "QEMU 에뮬레이터 설정 확인 완료."
 
   # 3. 의존성이 설치된 커스텀 도커 이미지 캐싱
-  IMAGE_NAME="openhd-builder:rpi-raspbian"
+  # (이름을 raspbian에서 debian으로 변경하여 공식 이미지 사용 명시)
+  IMAGE_NAME="openhd-builder:rpi-debian"
 
   if [[ "$(sudo docker images -q ${IMAGE_NAME} 2> /dev/null)" == "" ]]; then
     echo "========================================"
-    echo "[최초 1회 실행] Raspbian 환경 기반 전용 도커 이미지를 생성합니다."
+    echo "[최초 1회 실행] ARM32 Debian 환경 기반 전용 도커 이미지를 생성합니다."
     echo "GitHub Actions와 동일한 환경을 구성합니다. (약 10~15분 소요)"
     echo "========================================"
 
     mkdir -p .docker_build_tmp
     cp install_build_dep.sh .docker_build_tmp/
 
-    # 임시 Dockerfile 생성 (플랫폼 옵션 제거, DOCKER_DEFAULT_PLATFORM 환경변수로 대체)
+    # 임시 Dockerfile 생성 (가장 안정적인 공식 arm32v7/debian 이미지 사용)
     cat <<EOF > .docker_build_tmp/Dockerfile.rpi
-FROM navid69/raspbian-bullseye:latest
+FROM arm32v7/debian:bullseye
 ENV DEBIAN_FRONTEND=noninteractive
+
+# 오래된 Bullseye 패키지 저장소 오류 방지를 위한 레포지토리 미러 업데이트
+RUN echo "deb http://deb.debian.org/debian bullseye main contrib non-free" > /etc/apt/sources.list && \
+    echo "deb http://deb.debian.org/debian bullseye-updates main contrib non-free" >> /etc/apt/sources.list && \
+    echo "deb http://security.debian.org/debian-security bullseye-security main contrib non-free" >> /etc/apt/sources.list
 
 # 기본 도구 및 빌드 에센셜 설치
 RUN apt-get update && apt-get install -y \
@@ -109,11 +117,11 @@ COPY install_build_dep.sh /workspace/
 RUN chmod +x install_build_dep.sh && ./install_build_dep.sh rpi
 EOF
 
-    # 도커 이미지 빌드 (Buildx 대신 환경변수 사용)
+    # 도커 이미지 빌드 (Buildx가 없어도 동작하도록 DOCKER_DEFAULT_PLATFORM 환경변수 사용)
     sudo DOCKER_DEFAULT_PLATFORM=linux/arm/v7 docker build -t ${IMAGE_NAME} -f .docker_build_tmp/Dockerfile.rpi .docker_build_tmp/
     rm -rf .docker_build_tmp
 
-    echo "Raspbian 도커 이미지 생성이 완료되었습니다!"
+    echo "도커 이미지 생성이 완료되었습니다!"
   else
     echo "캐시된 도커 이미지(${IMAGE_NAME})를 사용하여 빠르게 빌드를 시작합니다."
   fi
