@@ -92,9 +92,9 @@ elif [[ "$TARGET" == "rpi" ]]; then
     mkdir -p .docker_build_tmp
     cp install_build_dep.sh .docker_build_tmp/
 
-    # 임시 Dockerfile 생성 (navid69/raspbian-bullseye 사용)
+    # 임시 Dockerfile 생성 (플랫폼 옵션 제거, DOCKER_DEFAULT_PLATFORM 환경변수로 대체)
     cat <<EOF > .docker_build_tmp/Dockerfile.rpi
-FROM --platform=linux/arm/v7 navid69/raspbian-bullseye:latest
+FROM navid69/raspbian-bullseye:latest
 ENV DEBIAN_FRONTEND=noninteractive
 
 # 기본 도구 및 빌드 에센셜 설치
@@ -109,8 +109,8 @@ COPY install_build_dep.sh /workspace/
 RUN chmod +x install_build_dep.sh && ./install_build_dep.sh rpi
 EOF
 
-    # 도커 이미지 빌드
-    sudo DOCKER_BUILDKIT=1 docker build --platform linux/arm/v7 -t ${IMAGE_NAME} -f .docker_build_tmp/Dockerfile.rpi .docker_build_tmp/
+    # 도커 이미지 빌드 (Buildx 대신 환경변수 사용)
+    sudo DOCKER_DEFAULT_PLATFORM=linux/arm/v7 docker build -t ${IMAGE_NAME} -f .docker_build_tmp/Dockerfile.rpi .docker_build_tmp/
     rm -rf .docker_build_tmp
 
     echo "Raspbian 도커 이미지 생성이 완료되었습니다!"
@@ -120,7 +120,7 @@ EOF
 
   # 4. 캐시된 이미지를 이용해 빌드 수행 (GitHub Actions 환경 완벽 모사)
   echo "패키징 진행 중 (ARM 컨테이너 내부)..."
-  sudo docker run --rm --platform linux/arm/v7 \
+  sudo DOCKER_DEFAULT_PLATFORM=linux/arm/v7 docker run --rm \
     -v "$(pwd):/workspace" \
     -w /workspace \
     -e BUILD_TYPE=Release \
