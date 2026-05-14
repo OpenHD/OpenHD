@@ -43,16 +43,12 @@ PLATFORM_PACKAGES="libpoco-dev gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugl
 PLATFORM_PACKAGES_REMOVE=""
 }
 
-# Add OpenHD Repository platform-specific packages
-apt update
-apt install -y curl
-curl -1sLf 'https://dl.cloudsmith.io/public/openhd/release/setup.deb.sh'| sudo -E bash
-apt update
-apt upgrade -y -o Dpkg::Options::="--force-overwrite" --no-install-recommends --allow-downgrades
-
-# Main function
+# [핵심 수정] 패키지 서버를 연결하기 전에, 타겟 플랫폼을 먼저 확인합니다.
 if [[ "${PLATFORM}" == "rpi" ]]; then
    install_pi_packages
+   # Debian 환경이지만, 서버에서 Raspbian 전용 패키지를 받아오도록 강제 설정
+   export os=raspbian
+   export dist=bullseye
 elif [[ "${PLATFORM}" == "ubuntu-x86" ]] ; then
    install_x86_packages
 elif [[ "${PLATFORM}" == "rock5" ]] ; then
@@ -61,11 +57,19 @@ else
    echo "platform not supported"
 fi
 
-# Remove platform-specific packages (오류 수정됨: 지울 수 없어도 무시하고 진행)
+# Add OpenHD Repository platform-specific packages
+apt update
+apt install -y curl
+# 위에서 설정한 os=raspbian 환경변수가 적용된 상태로 서버 스크립트 실행
+curl -1sLf 'https://dl.cloudsmith.io/public/openhd/release/setup.deb.sh'| bash
+apt update
+apt upgrade -y -o Dpkg::Options::="--force-overwrite" --no-install-recommends --allow-downgrades
+
+# Remove platform-specific packages (지우기 에러 무시 로직 유지)
 echo "Removing platform-specific packages..."
 for package in ${PLATFORM_PACKAGES_REMOVE}; do
     echo "Removing ${package}..."
-    apt purge -y ${package} || echo "Warning: ${package} 패키지를 지울 수 없지만 무시하고 진행합니다 (아마 설치되어 있지 않음)."
+    apt purge -y ${package} || echo "Warning: ${package} 패키지를 지울 수 없지만 무시하고 진행합니다."
 done
 
 # Install platform-specific packages
