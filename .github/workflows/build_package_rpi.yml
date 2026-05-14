@@ -56,6 +56,10 @@ jobs:
           copy_artifact_path: OpenHD_build
           import_github_env: true
           commands: |
+            # [여기 추가!] 가상 라즈베리파이에 진입하자마자 git부터 설치합니다.
+            sudo apt-get update
+            sudo apt-get install -y git
+            
             # Git 보안 정책 및 디렉토리 설정 (한 번에 실행)
             git config --system --add safe.directory /opt/OpenHD-AI
             mkdir -p /usr/local/share/openhd/
