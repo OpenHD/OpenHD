@@ -1,4 +1,4 @@
-name: build_package_rock5_debian
+name: build_package_radxa_arm64_debian
 
 on:
   push:
@@ -13,8 +13,15 @@ jobs:
   build:
     #runs-on: ubuntu-18.04
     runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image_type: rock5b
+            release: bookworm
     env:
       CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
+      API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
       DOWNLOAD_KEY: ${{ secrets.DOWNLOAD_KEY }}
       DOWNLOAD_URL: ${{ secrets.DOWNLOAD_URL }}
       OPENHD_SUBMODULE_TOKEN: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
@@ -76,7 +83,7 @@ jobs:
           echo "standard" > /opt/OpenHD-ChrootCompiler/additionalFiles/custom.txt
           echo "arm64" > /opt/OpenHD-ChrootCompiler/additionalFiles/arch.txt
           echo "debian" > /opt/OpenHD-ChrootCompiler/additionalFiles/distro.txt
-          echo "bullseye" > /opt/OpenHD-ChrootCompiler/additionalFiles/flavor.txt
+          echo "${{ matrix.release }}" > /opt/OpenHD-ChrootCompiler/additionalFiles/flavor.txt
           echo "${{ github.ref_name }}" > /opt/OpenHD-ChrootCompiler/additionalFiles/repo.txt
 
           cd /opt/OpenHD-ChrootCompiler/
@@ -85,8 +92,39 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
 
+          packages_stage = Path("/opt/OpenHD-ChrootCompiler/stages/02-Packages/00-run-chroot.sh")
+          packages_text = packages_stage.read_text()
+          packages_old = 'if [[ "${OS}" == "radxa-debian-rock5a" ]] || [[ "${OS}" == "radxa-debian-rock5b" ]]; then'
+          packages_new = 'if [[ "${DISTRO}" == "bullseye" ]] && { [[ "${OS}" == "radxa-debian-rock5a" ]] || [[ "${OS}" == "radxa-debian-rock5b" ]]; }; then'
+          if packages_new not in packages_text:
+              if packages_old not in packages_text:
+                  raise SystemExit("Could not find Rock5 package-preflight block in ChrootCompiler")
+              packages_stage.write_text(packages_text.replace(packages_old, packages_new, 1))
+
           build_sh = Path("/opt/OpenHD-ChrootCompiler/build.sh")
           text = build_sh.read_text()
+          original = text
+          image_needle = "mv OpenHD-ImageBuilder/images .\n"
+          image_patch = (
+              image_needle
+              + "for board in rock5a rock5b radxa-cm5 radxa-zero3w; do\n"
+              + "  if [ ! -f \"images/${board}\" ] && [ -f \"images/${board}_base\" ]; then\n"
+              + "    cp \"images/${board}_base\" \"images/${board}\"\n"
+              + "  fi\n"
+              + "done\n"
+          )
+          if "images/${board}_base" not in text:
+              if image_needle not in text:
+                  raise SystemExit("Could not find ImageBuilder image import in build.sh")
+              text = text.replace(image_needle, image_patch, 1)
+
+          if "export BASE_IMAGE_SHA512" not in text:
+              text = text.replace(
+                  "export BASE_IMAGE_SHA256\n",
+                  "export BASE_IMAGE_SHA256\nexport BASE_IMAGE_SHA512\n",
+                  1,
+              )
+
           needle = "mv OpenHD-ImageBuilder/stages/01-Baseimage stages/\n"
           patch = (
               needle
@@ -96,9 +134,10 @@ jobs:
               if needle not in text:
                   raise SystemExit("Could not find ImageBuilder stage import in build.sh")
               text = text.replace(needle, patch, 1)
+          if text != original:
               build_sh.write_text(text)
           PY
-          sudo bash build.sh rock5b $API_KEY debian bullseye
+          sudo bash build.sh "${{ matrix.image_type }}" "$API_KEY" debian "${{ matrix.release }}"
     
       - name: debug
         run:
@@ -107,7 +146,7 @@ jobs:
       - name: Upload to Github
         uses: 'actions/upload-artifact@v4'
         with:
-          name: "OpenHD"
+          name: "OpenHD-${{ matrix.release }}-arm64"
           path: |
             *.deb
 
@@ -122,7 +161,7 @@ jobs:
           owner: "openhd"
           repo: ${{ github.ref_name }}
           distro: "debian"
-          release: "bullseye"
+          release: "${{ matrix.release }}"
           republish: "true" # needed ONLY if version is not changing
           file: "*.deb"
 

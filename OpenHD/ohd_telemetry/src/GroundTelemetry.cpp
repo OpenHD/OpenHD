@@ -27,9 +27,30 @@
 #include <iostream>
 
 #include "mav_helper.h"
+#include "openhd_telemetry_recorder.h"
 #include "openhd_temporary_air_or_ground.h"
 #include "openhd_util.h"
 #include "openhd_util_time.h"
+
+namespace {
+
+void record_mavlink_messages(const std::vector<MavlinkMessage>& messages,
+                             const std::string& direction,
+                             const std::string& source,
+                             const std::string& destination) {
+  auto& recorder = openhd::TelemetryRecorder::instance();
+  for (const auto& msg : messages) {
+    const mavlink_message_t& mav_msg = msg.m;
+    const auto* payload =
+        reinterpret_cast<const uint8_t*>(_MAV_PAYLOAD(&mav_msg));
+    recorder.record_mavlink_message(direction, source, destination,
+                                    mav_msg.sysid, mav_msg.compid,
+                                    mav_msg.msgid, mav_msg.seq, payload,
+                                    mav_msg.len);
+  }
+}
+
+}  // namespace
 
 GroundTelemetry::GroundTelemetry(bool ignoreSerial)
     : MavlinkSystem(OHD_SYS_ID_GROUND), m_ignoreSerial(ignoreSerial) {
@@ -37,6 +58,8 @@ GroundTelemetry::GroundTelemetry(bool ignoreSerial)
   assert(m_console);
   m_gnd_settings =
       std::make_unique<openhd::telemetry::ground::SettingsHolder>();
+  openhd::TelemetryRecorder::instance().set_enabled(
+      m_gnd_settings->get_settings().telemetry_logging_enabled);
   m_endpoint_tracker = std::make_unique<SerialEndpointManager>();
   m_openhd_uart_serial = std::make_unique<SerialEndpointManager>();
   m_gcs_endpoint = std::make_unique<UDPEndpoint>(
@@ -112,6 +135,7 @@ GroundTelemetry::~GroundTelemetry() {
 
 void GroundTelemetry::on_messages_air_unit(
     const std::vector<MavlinkMessage>& messages) {
+  record_mavlink_messages(messages, "received", "air_unit", "openhd_ground");
   // All messages we get from the Air pi (they might come from the AirPi itself
   // or the FC connected to the air pi) get forwarded straight to all the
   // client(s) connected to the ground station.
@@ -142,6 +166,8 @@ void GroundTelemetry::on_messages_air_unit(
 void GroundTelemetry::on_messages_ground_station_clients(
     const std::vector<MavlinkMessage>& messages) {
   // debugMavlinkMessages(messages,"GSC");
+  record_mavlink_messages(messages, "received", "ground_station",
+                          "openhd_ground");
   //  All messages from the ground station(s) are forwarded to the air unit,
   //  unless they have a target sys id of the ohd ground unit itself
   auto [generic, local_only] =
@@ -198,6 +224,8 @@ void GroundTelemetry::on_messages_tracker(
 
 void GroundTelemetry::send_messages_ground_station_clients(
     const std::vector<MavlinkMessage>& messages) {
+  record_mavlink_messages(messages, "sent", "openhd_ground",
+                          "ground_station");
   if (m_gcs_endpoint) {
     m_gcs_endpoint->sendMessages(messages);
   }
@@ -215,6 +243,7 @@ void GroundTelemetry::send_messages_air_unit(
     const std::vector<MavlinkMessage>& messages) {
   // transmit via wb / the abstract link we use for sending message(s) to the
   // air unit
+  record_mavlink_messages(messages, "sent", "openhd_ground", "air_unit");
   if (m_wb_endpoint) {
     m_wb_endpoint->sendMessages(messages);
   }
@@ -225,6 +254,7 @@ void GroundTelemetry::send_messages_tracker(
   if (!m_endpoint_tracker) {
     return;
   }
+  record_mavlink_messages(messages, "sent", "openhd_ground", "tracker");
   m_endpoint_tracker->send_messages_if_enabled(messages);
 }
 
@@ -508,6 +538,13 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
     m_gnd_settings->persist(false);
     return true;
   };
+  auto c_telemetry_logging = [this](std::string, int value) {
+    if (!openhd::validate_yes_or_no(value)) return false;
+    m_gnd_settings->unsafe_get_settings().telemetry_logging_enabled = value;
+    m_gnd_settings->persist(false);
+    openhd::TelemetryRecorder::instance().set_enabled(value != 0);
+    return true;
+  };
   ret.push_back(openhd::Setting{
       openhd::telemetry::ground::OPENHD_UART_TELEMETRY_PARAM,
       openhd::StringSetting{
@@ -549,6 +586,12 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
           static_cast<int>(
               m_gnd_settings->get_settings().openhd_uart_priority_fc),
           c_openhd_uart_prio_fc}});
+  ret.push_back(openhd::Setting{
+      openhd::telemetry::ground::TELEMETRY_LOGGING_PARAM,
+      openhd::IntSetting{
+          static_cast<int>(
+              m_gnd_settings->get_settings().telemetry_logging_enabled),
+          c_telemetry_logging}});
   openhd::testing::append_dummy_if_empty(ret);
   return ret;
 }
@@ -561,7 +604,8 @@ void GroundTelemetry::setup_uart() {
   assert(m_gnd_settings);
   using namespace openhd::telemetry;
   const auto uart_linux_fd = serial_openhd_param_to_linux_fd(
-      m_gnd_settings->get_settings().gnd_uart_connection_type);
+      m_gnd_settings->get_settings().gnd_uart_connection_type,
+      SerialPortRole::Tracker);
   if (uart_linux_fd.has_value()) {
     SerialEndpoint::HWOptions options{};
     options.linux_filename = uart_linux_fd.value();
@@ -589,7 +633,7 @@ void GroundTelemetry::setup_openhd_uart_telemetry() {
     return;
   }
   const auto uart_linux_fd = serial_openhd_param_to_linux_fd(
-      settings.openhd_uart_telemetry_connection, true);
+      settings.openhd_uart_telemetry_connection, SerialPortRole::OpenHD);
   if (!uart_linux_fd.has_value()) {
     m_openhd_uart_serial->disable();
     return;

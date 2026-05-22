@@ -403,34 +403,68 @@ void SerialEndpointManager::configure(const SerialEndpoint::HWOptions& options,
   m_serial_endpoint->registerCallback(std::move(cb));
 }
 
+namespace {
+
+bool device_path_exists(const char* path) { return access(path, F_OK) == 0; }
+
+std::string role_alias_for(SerialPortRole role) {
+  switch (role) {
+    case SerialPortRole::Flight:
+      return "/dev/Flight";
+    case SerialPortRole::OpenHD:
+      return "/dev/OpenHD";
+    case SerialPortRole::Tracker:
+      return "/dev/Tracker";
+  }
+  return "/dev/Flight";
+}
+
+std::string platform_default_for(SerialPortRole role) {
+  if (role == SerialPortRole::Tracker) {
+    return role_alias_for(role);
+  }
+  const auto platform = OHDPlatform::instance();
+  if (platform.is_orqa()) {
+    if (role == SerialPortRole::OpenHD) {
+      return "/dev/ttymxc1";
+    }
+    return "/dev/ttymxc0";
+  }
+  if (platform.is_rpi()) {
+    if (role == SerialPortRole::OpenHD) {
+      return "/dev/serial1";
+    }
+    return "/dev/serial0";
+  }
+  if (platform.is_rock()) {
+    return "/dev/ttyS2";
+  }
+  if (platform.is_x20()) {
+    return "/dev/ttyS4";
+  }
+  if (platform.is_luckfox_pico()) {
+    return "/dev/ttyS3";
+  }
+  openhd::log::get_default()->debug(
+      "No default serial mapping for this platform");
+  return "/dev/ttyS2";
+}
+
+}  // namespace
+
 std::optional<std::string> serial_openhd_param_to_linux_fd(
-    const std::string& param_name, bool use_openhd_uart_default) {
+    const std::string& param_name, SerialPortRole role) {
   if (param_name.empty()) {
     // "" means disabled
     return std::nullopt;
   }
   // Default mapping
   if (OHDUtil::str_equal(param_name, "DEFAULT")) {
-    const auto platform = OHDPlatform::instance();
-    if (platform.is_orqa()) {
-      if (use_openhd_uart_default) {
-        return "/dev/ttymxc1";
-      }
-      return "/dev/ttymxc0";
-    } else if (platform.is_rpi()) {
-      return "/dev/serial0";
-    } else if (platform.is_rock()) {
-      return "/dev/ttyS2";
-    } else if (platform.is_x20()) {
-      return "/dev/ttyS4";
-    } else if (platform.is_luckfox_pico()) {
-      return "/dev/ttyS3";
-    } else {
-      openhd::log::get_default()->debug(
-          "No default serial mapping for this platform");
-      // fallback
-      return "/dev/ttyS2";
+    const auto alias = role_alias_for(role);
+    if (device_path_exists(alias.c_str())) {
+      return alias;
     }
+    return platform_default_for(role);
   }
   // Otherwise, the user can enter any serial FD name
   return param_name;

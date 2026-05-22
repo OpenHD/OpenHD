@@ -32,11 +32,33 @@
 #include "openhd_util.h"
 #include "openhd_util_time.h"
 
+namespace {
+
+void record_mavlink_messages(const std::vector<MavlinkMessage>& messages,
+                             const std::string& direction,
+                             const std::string& source,
+                             const std::string& destination) {
+  auto& recorder = openhd::TelemetryRecorder::instance();
+  for (const auto& msg : messages) {
+    const mavlink_message_t& mav_msg = msg.m;
+    const auto* payload =
+        reinterpret_cast<const uint8_t*>(_MAV_PAYLOAD(&mav_msg));
+    recorder.record_mavlink_message(direction, source, destination,
+                                    mav_msg.sysid, mav_msg.compid,
+                                    mav_msg.msgid, mav_msg.seq, payload,
+                                    mav_msg.len);
+  }
+}
+
+}  // namespace
+
 AirTelemetry::AirTelemetry(bool ignoreSerial)
     : MavlinkSystem(OHD_SYS_ID_AIR), m_ignoreSerial(ignoreSerial) {
   m_console = openhd::log::create_or_get("air_tele");
   assert(m_console);
   m_air_settings = std::make_unique<openhd::telemetry::air::SettingsHolder>();
+  openhd::TelemetryRecorder::instance().set_enabled(
+      m_air_settings->get_settings().telemetry_logging_enabled);
   m_fc_serial = std::make_unique<SerialEndpointManager>();
   m_openhd_uart_serial = std::make_unique<SerialEndpointManager>();
   m_sbus_output = std::make_unique<SbusOutput>();
@@ -82,11 +104,13 @@ void AirTelemetry::send_messages_fc(std::vector<MavlinkMessage>& messages) {
       split_into_generic_and_local_only(messages, OHD_SYS_ID_AIR);
   // NOTE: Remember there is a hack in place for rc channels override in regards
   // to the sender sys id
+  record_mavlink_messages(generic, "sent", "openhd_air", "flight_controller");
   m_fc_serial->send_messages_if_enabled(generic);
 }
 
 void AirTelemetry::send_messages_ground_unit(
     std::vector<MavlinkMessage>& messages) {
+  record_mavlink_messages(messages, "sent", "openhd_air", "ground_unit");
   if (m_wb_endpoint) {
     // Optimization: Increase reliability of responding to mavlink (extended)
     // parameter set responses
@@ -116,17 +140,8 @@ void AirTelemetry::on_messages_fc(std::vector<MavlinkMessage>& messages) {
   //  Note: No OpenHD component ever talks to the FC, FC is completely passed
   //  through
   // debugMavlinkMessages(messages,"FC");
-  if (!messages.empty()) {
-    auto& recorder = openhd::TelemetryRecorder::instance();
-    for (const auto& msg : messages) {
-      const mavlink_message_t& mav_msg = msg.m;
-      const auto* payload =
-          reinterpret_cast<const uint8_t*>(_MAV_PAYLOAD(&mav_msg));
-      recorder.record_fc_mavlink_message(mav_msg.sysid, mav_msg.compid,
-                                         mav_msg.msgid, mav_msg.seq, payload,
-                                         mav_msg.len);
-    }
-  }
+  record_mavlink_messages(messages, "received", "flight_controller",
+                          "openhd_air");
   send_messages_ground_unit(messages);
   m_ohd_main_component->check_fc_messages_for_actions(messages);
 }
@@ -134,6 +149,7 @@ void AirTelemetry::on_messages_fc(std::vector<MavlinkMessage>& messages) {
 void AirTelemetry::on_messages_ground_unit(
     std::vector<MavlinkMessage>& messages) {
   // m_console->debug("on_messages_ground_unit {}", messages.size());
+  record_mavlink_messages(messages, "received", "ground_unit", "openhd_air");
   if (m_sbus_output) {
     for (const auto& msg : messages) {
       if (msg.m.msgid == MAVLINK_MSG_ID_RC_CHANNELS_OVERRIDE) {
@@ -360,6 +376,13 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
     m_air_settings->persist(false);
     return true;
   };
+  auto c_telemetry_logging = [this](std::string, int value) {
+    if (!openhd::validate_yes_or_no(value)) return false;
+    m_air_settings->unsafe_get_settings().telemetry_logging_enabled = value;
+    m_air_settings->persist(false);
+    openhd::TelemetryRecorder::instance().set_enabled(value != 0);
+    return true;
+  };
   auto c_sbus_enable = [this](std::string, int value) {
     if (!openhd::validate_yes_or_no(value)) return false;
     m_air_settings->unsafe_get_settings().sbus_out_enabled = value;
@@ -447,6 +470,12 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
               m_air_settings->get_settings().openhd_uart_priority_fc),
           c_openhd_uart_prio_fc}});
   ret.push_back(openhd::Setting{
+      air::TELEMETRY_LOGGING_PARAM,
+      openhd::IntSetting{
+          static_cast<int>(
+              m_air_settings->get_settings().telemetry_logging_enabled),
+          c_telemetry_logging}});
+  ret.push_back(openhd::Setting{
       air::SBUS_OUT_ENABLE_PARAM,
       openhd::IntSetting{
           static_cast<int>(m_air_settings->get_settings().sbus_out_enabled),
@@ -488,7 +517,8 @@ void AirTelemetry::setup_uart() {
   assert(m_air_settings);
   using namespace openhd::telemetry;
   const auto uart_linux_fd = serial_openhd_param_to_linux_fd(
-      m_air_settings->get_settings().fc_uart_connection_type);
+      m_air_settings->get_settings().fc_uart_connection_type,
+      SerialPortRole::Flight);
   if (uart_linux_fd.has_value()) {
     SerialEndpoint::HWOptions options{};
     options.linux_filename = uart_linux_fd.value();
@@ -516,7 +546,7 @@ void AirTelemetry::setup_openhd_uart_telemetry() {
     return;
   }
   const auto uart_linux_fd = serial_openhd_param_to_linux_fd(
-      settings.openhd_uart_telemetry_connection, true);
+      settings.openhd_uart_telemetry_connection, SerialPortRole::OpenHD);
   if (!uart_linux_fd.has_value()) {
     m_openhd_uart_serial->disable();
     return;
@@ -545,7 +575,9 @@ void AirTelemetry::setup_sbus_output() {
   const auto& settings = m_air_settings->get_settings();
   SbusOutput::Options options{};
   options.enabled = settings.sbus_out_enabled;
-  options.device = settings.sbus_uart_device;
+  options.device = OHDUtil::str_equal(settings.sbus_uart_device, "DEFAULT")
+                       ? "/dev/Sbus"
+                       : settings.sbus_uart_device;
   options.update_rate_hz = settings.sbus_update_rate_hz;
   m_sbus_output->configure(options);
 }

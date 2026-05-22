@@ -32,6 +32,7 @@
 #include <mutex>
 #include <nlohmann/json.hpp>
 #include <string>
+#include <vector>
 
 #include "openhd_link_statistics.hpp"
 
@@ -44,6 +45,7 @@ namespace openhd {
 class TelemetryRecorder {
  public:
   TelemetryRecorder();
+  ~TelemetryRecorder();
   TelemetryRecorder(const TelemetryRecorder&) = delete;
   TelemetryRecorder& operator=(const TelemetryRecorder&) = delete;
   TelemetryRecorder(TelemetryRecorder&&) = delete;
@@ -51,10 +53,16 @@ class TelemetryRecorder {
 
   static TelemetryRecorder& instance();
 
+  void set_enabled(bool enabled);
+  bool enabled() const;
   void record(const link_statistics::StatsAirGround& stats);
-  void record_fc_mavlink_message(uint8_t sysid, uint8_t compid, uint32_t msgid,
-                                 uint8_t sequence, const uint8_t* payload,
-                                 std::size_t payload_length);
+  void record_mavlink_message(const std::string& direction,
+                              const std::string& source,
+                              const std::string& destination, uint8_t sysid,
+                              uint8_t compid, uint32_t msgid,
+                              uint8_t sequence, const uint8_t* payload,
+                              std::size_t payload_length);
+  void flush();
 
  private:
   [[nodiscard]] std::string create_filename_timestamp(
@@ -68,10 +76,15 @@ class TelemetryRecorder {
   [[nodiscard]] std::string bytes_to_hex(const uint8_t* data,
                                          std::size_t length) const;
   void write_json_line(const nlohmann::json& json_line);
+  void flush_locked();
 
   std::mutex m_mutex;
   std::ofstream m_stream;
   std::string m_file_path;
+  std::vector<std::string> m_pending_lines;
+  std::chrono::steady_clock::time_point m_last_flush =
+      std::chrono::steady_clock::now();
+  bool m_enabled = true;
   bool m_stream_ready = false;
   bool m_failed_once = false;
   std::shared_ptr<spdlog::logger> m_console;

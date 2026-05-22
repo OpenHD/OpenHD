@@ -40,6 +40,7 @@
 #include <memory>
 #include <cstdlib>
 #include <optional>
+#include <system_error>
 #include <vector>
 #include <atomic>
 #include <cerrno>
@@ -57,6 +58,7 @@
 #include "openhd_sock.h"
 #include "openhd_spdlog.h"
 #include "openhd_temporary_air_or_ground.h"
+#include "openhd_telemetry_recorder.h"
 #include "openhd_config.h"
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"
@@ -111,6 +113,10 @@ bool argv_has_emulate_monitor_card(int argc, char* argv[]) {
 }
 
 std::string default_openhd_uart_telemetry_device_for_platform() {
+  std::error_code ec;
+  if (std::filesystem::exists("/dev/OpenHD", ec)) {
+    return "/dev/OpenHD";
+  }
   if (OHDPlatform::instance().is_orqa()) {
     return "/dev/ttymxc1";
   }
@@ -509,6 +515,10 @@ int main(int argc, char *argv[]) {
   std::shared_ptr<spdlog::logger> m_console =
       openhd::log::create_or_get("main");
   assert(m_console);
+
+  // Create the run telemetry log immediately so every OpenHD run leaves a log
+  // file, even if link stats or FC telemetry arrive later.
+  openhd::TelemetryRecorder::instance();
 
   // not guaranteed, but better than nothing, check if openhd is already running
   // (kinda) and print warning if yes.

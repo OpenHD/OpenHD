@@ -18,13 +18,17 @@ rebuilding the image:
 
 - **Air unit**
   - **Flight controller telemetry (RX/TX):** `FC_UART_CONN`, `FC_UART_BAUD`, `FC_UART_FLWCTL` remain the primary knobs.
+    `DEFAULT` prefers the sysutils role alias `/dev/Flight` and falls back to the platform UART mapping.
   - **OpenHD telemetry UART (RX/TX):** gate the link with `OHD_UART_EN`, select the device via `OHD_UART_TLM`
-    (for example `/dev/serial1`), and tune `OHD_UART_BAUD` / `OHD_UART_FLW`. Message buckets are prioritised via
+    (for example `/dev/OpenHD`), and tune `OHD_UART_BAUD` / `OHD_UART_FLW`. Message buckets are prioritised via
     `UART_PRI_RC`, `UART_PRI_OHD`, and `UART_PRI_FC` (RC/control traffic highest by default, OpenHD mid, FC lowest).
+  - **SBUS output (TX only):** `SBUS_EN`, `SBUS_DEV`, and `SBUS_HZ` can output RC override data as SBUS.
+    `SBUS_DEV=DEFAULT` maps to the sysutils role alias `/dev/Sbus`.
 
 - **Ground unit**
   - **Tracker output (TX only):** `TRACKER_UART_OUT` chooses the port, `TRACK_UART_BAUD` and `TRACK_UART_FLOW`
-    control bandwidth/flow-control. Reading is intentionally disabled for this port to match one-way tracker wiring.
+    control bandwidth/flow-control. `DEFAULT` prefers the sysutils role alias `/dev/Tracker`. Reading is
+    intentionally disabled for this port to match one-way tracker wiring.
   - **OpenHD telemetry UART (RX/TX):** mirror the air-side parameters (`OHD_UART_EN`, `OHD_UART_TLM`,
     `OHD_UART_BAUD`, `OHD_UART_FLW`, plus the three `UART_PRI_*` settings) so both sides can be aligned from a GCS.
 

@@ -29,11 +29,14 @@
 #include <nlohmann/json.hpp>
 #include <sstream>
 
-#include "openhd_settings_directories.h"
+#include "config_paths.h"
 #include "openhd_spdlog.h"
+#include "openhd_spdlog_include.h"
 #include "openhd_util_filesystem.h"
 
 namespace {
+
+constexpr auto kFlushInterval = std::chrono::seconds(60);
 
 std::tm to_local_time(std::time_t time) {
   std::tm tm{};
@@ -43,6 +46,10 @@ std::tm to_local_time(std::time_t time) {
   localtime_r(&time, &tm);
 #endif
   return tm;
+}
+
+std::string telemetry_log_directory() {
+  return std::string(getVideoPath()) + "logs/";
 }
 
 nlohmann::json telemetry_to_json(
@@ -220,13 +227,13 @@ TelemetryRecorder& TelemetryRecorder::instance() {
 TelemetryRecorder::TelemetryRecorder() {
   m_console = openhd::log::create_or_get("tele_rec");
   try {
-    openhd::generateSettingsDirectoryIfNonExists();
-    const auto directory = openhd::get_telemetry_settings_directory();
+    const auto directory = telemetry_log_directory();
     if (!directory.empty()) {
       OHDFilesystemUtil::create_directories(directory);
       const auto now = std::chrono::system_clock::now();
       m_file_path =
-          directory + "telemetry" + create_filename_timestamp(now) + ".ohd";
+          directory + "openhd_telemetry_" + create_filename_timestamp(now) +
+          ".ohd";
       m_stream.open(m_file_path, std::ios::out | std::ios::app);
       if (!m_stream.is_open()) {
         m_console->error("Failed to open telemetry recording file {}",
@@ -242,6 +249,24 @@ TelemetryRecorder::TelemetryRecorder() {
                      ex.what());
   }
 }
+
+TelemetryRecorder::~TelemetryRecorder() { flush(); }
+
+void TelemetryRecorder::set_enabled(bool enabled) {
+  std::lock_guard<std::mutex> lock(m_mutex);
+  if (m_enabled == enabled) {
+    return;
+  }
+  if (!enabled) {
+    flush_locked();
+  }
+  m_enabled = enabled;
+  if (m_console) {
+    m_console->info("Telemetry logging {}", enabled ? "enabled" : "disabled");
+  }
+}
+
+bool TelemetryRecorder::enabled() const { return m_enabled; }
 
 std::string TelemetryRecorder::create_filename_timestamp(
     std::chrono::system_clock::time_point tp) const {
@@ -340,24 +365,32 @@ std::string TelemetryRecorder::bytes_to_hex(const uint8_t* data,
 
 void TelemetryRecorder::write_json_line(const nlohmann::json& json_line) {
   std::lock_guard<std::mutex> lock(m_mutex);
+  if (!m_enabled) {
+    return;
+  }
   ensure_stream_is_ready();
   if (!m_stream_ready || !m_stream.is_open()) {
     return;
   }
-  m_stream << json_line.dump() << '\n';
-  m_stream.flush();
+  m_pending_lines.push_back(json_line.dump());
+  if (std::chrono::steady_clock::now() - m_last_flush >= kFlushInterval) {
+    flush_locked();
+  }
 }
 
-void TelemetryRecorder::record_fc_mavlink_message(uint8_t sysid, uint8_t compid,
-                                                  uint32_t msgid,
-                                                  uint8_t sequence,
-                                                  const uint8_t* payload,
-                                                  std::size_t payload_length) {
+void TelemetryRecorder::record_mavlink_message(
+    const std::string& direction, const std::string& source,
+    const std::string& destination, uint8_t sysid, uint8_t compid,
+    uint32_t msgid, uint8_t sequence, const uint8_t* payload,
+    std::size_t payload_length) {
   const auto now = std::chrono::system_clock::now();
   const auto timestamp = create_entry_timestamp(now);
   nlohmann::json entry;
   entry["timestamp"] = timestamp;
-  entry["type"] = "fc_mavlink";
+  entry["type"] = "mavlink";
+  entry["direction"] = direction;
+  entry["source"] = source;
+  entry["destination"] = destination;
   entry["sysid"] = sysid;
   entry["compid"] = compid;
   entry["msgid"] = msgid;
@@ -365,6 +398,25 @@ void TelemetryRecorder::record_fc_mavlink_message(uint8_t sysid, uint8_t compid,
   entry["payload_length"] = payload_length;
   entry["payload_hex"] = bytes_to_hex(payload, payload_length);
   write_json_line(entry);
+}
+
+void TelemetryRecorder::flush() {
+  std::lock_guard<std::mutex> lock(m_mutex);
+  flush_locked();
+}
+
+void TelemetryRecorder::flush_locked() {
+  ensure_stream_is_ready();
+  if (!m_stream_ready || !m_stream.is_open() || m_pending_lines.empty()) {
+    m_last_flush = std::chrono::steady_clock::now();
+    return;
+  }
+  for (const auto& line : m_pending_lines) {
+    m_stream << line << '\n';
+  }
+  m_stream.flush();
+  m_pending_lines.clear();
+  m_last_flush = std::chrono::steady_clock::now();
 }
 
 }  // namespace openhd

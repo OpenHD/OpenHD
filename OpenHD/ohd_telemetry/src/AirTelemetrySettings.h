@@ -70,6 +70,7 @@ struct Settings {
   int openhd_uart_priority_rc = 3;
   int openhd_uart_priority_openhd = 2;
   int openhd_uart_priority_fc = 1;
+  bool telemetry_logging_enabled = true;
 
   bool sbus_out_enabled = false;
   std::string sbus_uart_device = "";
@@ -89,6 +90,7 @@ static constexpr auto OPENHD_UART_TELEMETRY_FLOW_PARAM = "OHD_UART_FLW";
 static constexpr auto OPENHD_UART_PRIORITY_RC_PARAM = "UART_PRI_RC";
 static constexpr auto OPENHD_UART_PRIORITY_OHD_PARAM = "UART_PRI_OHD";
 static constexpr auto OPENHD_UART_PRIORITY_FC_PARAM = "UART_PRI_FC";
+static constexpr auto TELEMETRY_LOGGING_PARAM = "LOG_MAVLINK";
 static constexpr auto SBUS_OUT_ENABLE_PARAM = "SBUS_EN";
 static constexpr auto SBUS_OUT_DEVICE_PARAM = "SBUS_DEV";
 static constexpr auto SBUS_OUT_RATE_PARAM = "SBUS_HZ";
