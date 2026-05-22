@@ -419,8 +419,10 @@ std::optional<std::string> serial_openhd_param_to_linux_fd(
       return "/dev/ttymxc0";
     } else if (platform.is_rpi()) {
       return "/dev/serial0";
-    } else if (platform.is_x20() || platform.is_rock()) {
+    } else if (platform.is_rock()) {
       return "/dev/ttyS2";
+    } else if (platform.is_x20()) {
+      return "/dev/ttyS4";
     } else if (platform.is_luckfox_pico()) {
       return "/dev/ttyS3";
     } else {
