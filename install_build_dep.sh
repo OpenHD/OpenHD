@@ -47,7 +47,11 @@ PLATFORM_PACKAGES_REMOVE=""
 
  # Add OpenHD Repository platform-specific packages
  apt update
- apt install -y curl
+ if ! command -v curl >/dev/null 2>&1; then
+     apt-get clean
+     apt-get install -y --no-upgrade --no-install-recommends curl
+     apt-get clean
+ fi
  curl -1sLf 'https://dl.cloudsmith.io/public/openhd/release/setup.deb.sh'| sudo -E bash
  apt update
  #apt upgrade -y -o Dpkg::Options::="--force-overwrite" --no-install-recommends --allow-downgrades
@@ -80,11 +84,13 @@ PLATFORM_PACKAGES_REMOVE=""
  echo "Installing platform-specific packages..."
  for package in ${PLATFORM_PACKAGES} ${BASE_PACKAGES} ${VIDEO_PACKAGES} ${BUILD_PACKAGES}; do
      echo "Installing ${package}..."
-     apt install -y -o Dpkg::Options::="--force-overwrite" --no-install-recommends ${package}
+     apt-get clean
+     apt-get install -y --no-upgrade -o Dpkg::Options::="--force-overwrite" --no-install-recommends ${package}
      if [ $? -ne 0 ]; then
          echo "Failed to install ${package}!"
          exit 1
      fi
+     apt-get clean
  done
  
 

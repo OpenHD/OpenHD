@@ -234,6 +234,47 @@ PY
     cmake --version
 }
 
+compact_artosyn_artifacts_for_ci() {
+    [[ -n "${ARTOSYN_SDK_LIB:-}" ]] || return 0
+
+    local artifact_dir="/opt/openhd-artosyn-artifacts"
+    mkdir -p "${artifact_dir}"
+
+    local client_lib=""
+    local com_lib=""
+    client_lib="$(printf '%s' "${ARTOSYN_SDK_LIB}" | tr ';' '\n' | grep 'libar8030_client\.a$' | head -n1 || true)"
+    com_lib="$(printf '%s' "${ARTOSYN_SDK_LIB}" | tr ';' '\n' | grep 'libcom\.a$' | head -n1 || true)"
+
+    if [[ -n "${client_lib}" && -f "${client_lib}" ]]; then
+        cp -f "${client_lib}" "${artifact_dir}/libar8030_client.a"
+        client_lib="${artifact_dir}/libar8030_client.a"
+    fi
+    if [[ -n "${com_lib}" && -f "${com_lib}" ]]; then
+        cp -f "${com_lib}" "${artifact_dir}/libcom.a"
+        com_lib="${artifact_dir}/libcom.a"
+    fi
+    if [[ -n "${client_lib}" && -n "${com_lib}" ]]; then
+        export ARTOSYN_SDK_LIB="${client_lib};${com_lib}"
+    fi
+
+    if [[ -n "${ARTOSYN_SDK_DAEMON:-}" && -f "${ARTOSYN_SDK_DAEMON}" ]]; then
+        cp -f "${ARTOSYN_SDK_DAEMON}" "${artifact_dir}/daemon"
+        export ARTOSYN_SDK_DAEMON="${artifact_dir}/daemon"
+    fi
+    if [[ -n "${ARTOSYN_SDK_TUNTAP:-}" && -f "${ARTOSYN_SDK_TUNTAP}" ]]; then
+        cp -f "${ARTOSYN_SDK_TUNTAP}" "${artifact_dir}/tuntap_bb"
+        export ARTOSYN_SDK_TUNTAP="${artifact_dir}/tuntap_bb"
+    fi
+
+    rm -rf /tmp/openhd_artosyn_sdk_build_client \
+           /tmp/openhd_artosyn_sdk_build_daemon \
+           /tmp/openhd_artosyn_sdk_build_tuntap || true
+    rm -rf /tmp/openhd_artosyn_sdk_repo/.git || true
+    apt-get clean || true
+    rm -rf /var/cache/apt/archives/*.deb /var/cache/man/* || true
+    df -h /
+}
+
 if [[ -n "${ARTLINK_REPO:-}" ]]; then
     echo "ArtLink repo override: ${ARTLINK_REPO}"
 fi
@@ -267,6 +308,7 @@ if [[ "${OPENHD_REQUIRE_ARTOSYN:-0}" == "1" ]]; then
         echo "Artosyn daemon is required for this build target, but daemon resolution failed."
         exit 1
     fi
+    compact_artosyn_artifacts_for_ci
 fi
 
 # Install dependencies based on DISTRO or ARCH
@@ -303,6 +345,7 @@ rm -rf poco_debs poco_debs_extracted poco_debs_extracted.tar
 else
     if [[ "${ARCH}" == "arm64" ]]; then
         chmod +x ./install_build_dep.sh
+        free_chroot_space_for_ci
         ./install_build_dep.sh rock5 || { echo "Failed to install build dependencies"; exit 1; }
     elif [[ "${DISTRO}" == "focal" ]]; then
         apt-get update || { echo "Failed to update and upgrade packages"; exit 1; }
