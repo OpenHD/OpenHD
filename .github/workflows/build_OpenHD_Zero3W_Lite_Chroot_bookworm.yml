@@ -85,6 +85,12 @@ jobs:
 
           chroot_build = Path("/opt/OpenHD-ChrootCompiler/additionalFiles/build_chroot.sh")
           chroot_text = chroot_build.read_text()
+          early_skip_cloudsmith = (
+              'if [[ -f skip_cloudsmith_cli_install.txt ]]; then\n'
+              '    SKIP_CLOUDSMITH_CLI_INSTALL="$(tr -d \'\\r\\n\' < skip_cloudsmith_cli_install.txt)"\n'
+              '    export SKIP_CLOUDSMITH_CLI_INSTALL\n'
+              'fi\n\n'
+          )
           chroot_text = chroot_text.replace(
               'ARTOSYN_SDK_ARCHIVE_FILE_VALUE="$(read_optional_file artosyn_sdk_archive.txt)"',
               'SKIP_CLOUDSMITH_CLI_INSTALL_FILE_VALUE="$(read_optional_file skip_cloudsmith_cli_install.txt)"\n'
@@ -105,6 +111,11 @@ jobs:
               'fi',
               1,
           )
+          if 'SKIP_CLOUDSMITH_CLI_INSTALL="$(tr -d' not in chroot_text:
+              cloudsmith_needle = 'if [[ "${SKIP_CLOUDSMITH_CLI_INSTALL:-0}" != "1" ]]; then\n'
+              if cloudsmith_needle not in chroot_text:
+                  raise SystemExit("Could not find cloudsmith-cli install block in build_chroot.sh")
+              chroot_text = chroot_text.replace(cloudsmith_needle, early_skip_cloudsmith + cloudsmith_needle, 1)
           chroot_marker = "sanitize_radxa_sources_for_current_distro"
           chroot_needle = "# Update package lists and install necessary packages as root\n"
           chroot_patch = (
@@ -134,12 +145,31 @@ jobs:
 
           packages_stage = Path("/opt/OpenHD-ChrootCompiler/stages/02-Packages/00-run-chroot.sh")
           packages_text = packages_stage.read_text()
+          packages_changed = False
+          resize_marker = "[openhd] Expanding mounted root filesystem"
+          if resize_marker not in packages_text:
+              resize_patch = (
+                  'root_dev="$(findmnt -n -o SOURCE / || true)"\n'
+                  'if [[ -n "${root_dev}" ]] && command -v resize2fs >/dev/null 2>&1; then\n'
+                  '    echo "[openhd] Expanding mounted root filesystem with chroot resize2fs: ${root_dev}"\n'
+                  '    resize2fs -f "${root_dev}" || true\n'
+                  '    df -h /\n'
+                  'fi\n\n'
+              )
+              if not packages_text.startswith("#!/bin/bash"):
+                  raise SystemExit("Could not find shebang in ChrootCompiler package stage")
+              first_newline = packages_text.find("\n")
+              packages_text = packages_text[:first_newline + 1] + "\n" + resize_patch + packages_text[first_newline + 1:]
+              packages_changed = True
           packages_old = 'if [[ "${OS}" == "radxa-debian-rock5a" ]] || [[ "${OS}" == "radxa-debian-rock5b" ]]; then'
           packages_new = 'if [[ "${DISTRO}" == "bullseye" ]] && { [[ "${OS}" == "radxa-debian-rock5a" ]] || [[ "${OS}" == "radxa-debian-rock5b" ]]; }; then'
           if packages_new not in packages_text:
               if packages_old not in packages_text:
                   raise SystemExit("Could not find Rock5 package-preflight block in ChrootCompiler")
-              packages_stage.write_text(packages_text.replace(packages_old, packages_new, 1))
+              packages_text = packages_text.replace(packages_old, packages_new, 1)
+              packages_changed = True
+          if packages_changed:
+              packages_stage.write_text(packages_text)
 
           build_sh = Path("/opt/OpenHD-ChrootCompiler/build.sh")
           text = build_sh.read_text()
@@ -157,6 +187,8 @@ jobs:
               + "    cp \"images/${board}_base\" \"images/${board}\"\n"
               + "  fi\n"
               + "done\n"
+              + "sed -i 's/^HAVE_CONF_PART=.*/HAVE_CONF_PART=false/' images/radxa-zero3w-lite\n"
+              + "sed -i '/^CONF_PART=/d' images/radxa-zero3w-lite\n"
               + "echo \"Using generated radxa-zero3w-lite image target:\"\n"
               + "cat images/radxa-zero3w-lite\n"
           )
