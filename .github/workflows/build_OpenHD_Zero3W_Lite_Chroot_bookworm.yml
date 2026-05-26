@@ -141,6 +141,57 @@ jobs:
               if chroot_needle not in chroot_text:
                   raise SystemExit("Could not find apt update block in build_chroot.sh")
               chroot_text = chroot_text.replace(chroot_needle, chroot_patch + chroot_needle, 1)
+          if "free_chroot_space_for_ci()" not in chroot_text:
+              cleanup_needle = "ensure_artosyn_cmake() {\n"
+              cleanup_patch = (
+                  "free_chroot_space_for_ci() {\n"
+                  "    echo \"Freeing image space for CI package build.\"\n"
+                  "    apt-get clean || true\n"
+                  "    rm -rf /var/cache/apt/archives/*.deb /var/cache/man/* /var/lib/apt/lists/* || true\n"
+                  "    rm -rf /usr/share/doc/* /usr/share/man/* /usr/share/locale/* || true\n"
+                  "\n"
+                  "    local purge_packages=\"\"\n"
+                  "    purge_packages=\"$(dpkg-query -W -f='${binary:Package}\\n' 2>/dev/null \\\n"
+                  "        | grep -E '^(akonadi|baloo|calligra|kde|kio|kmail|konsole|kscreen|kwin|libreoffice|plasma|sddm|xorg|xserver-xorg)' \\\n"
+                  "        | tr '\\n' ' ' || true)\"\n"
+                  "    if [[ -n \"${purge_packages}\" ]]; then\n"
+                  "        apt-get purge -y ${purge_packages} || true\n"
+                  "        apt-get autoremove -y || true\n"
+                  "    fi\n"
+                  "\n"
+                  "    apt-get clean || true\n"
+                  "    rm -rf /var/cache/apt/archives/*.deb /var/cache/man/* || true\n"
+                  "    df -h /\n"
+                  "}\n"
+                  "\n"
+              )
+              if cleanup_needle not in chroot_text:
+                  raise SystemExit("Could not find ensure_artosyn_cmake in build_chroot.sh")
+              chroot_text = chroot_text.replace(cleanup_needle, cleanup_patch + cleanup_needle, 1)
+          if "free_chroot_space_for_ci\n    apt-get update --fix-missing" not in chroot_text:
+              chroot_text = chroot_text.replace(
+                  "ensure_artosyn_cmake() {\n    apt-get update --fix-missing",
+                  "ensure_artosyn_cmake() {\n    free_chroot_space_for_ci\n    apt-get update --fix-missing",
+                  1,
+              )
+          chroot_text = chroot_text.replace(
+              "apt-get install -y build-essential make gcc g++ libc6-dev || {",
+              "apt-get install -y build-essential make gcc g++ libc6-dev cmake ninja-build || {",
+              1,
+          )
+          if 'rm -rf /var/cache/apt/archives/*.deb /var/cache/man/* || true\n\n    if python3' not in chroot_text:
+              chroot_text = chroot_text.replace(
+                  "    }\n\n    if python3 - <<'PY'",
+                  "    }\n    apt-get clean || true\n    rm -rf /var/cache/apt/archives/*.deb /var/cache/man/* || true\n\n    if python3 - <<'PY'",
+                  1,
+              )
+          chroot_text = chroot_text.replace(
+              'python3 -m pip install --upgrade "cmake>=3.22,<4" || { echo "Failed to install newer CMake"; exit 1; }',
+              'python3 -m pip install --upgrade "cmake>=3.22,<4" \\\n'
+              '        || python3 -m pip install --upgrade --break-system-packages "cmake>=3.22,<4" \\\n'
+              '        || { echo "Failed to install newer CMake"; exit 1; }',
+              1,
+          )
           chroot_build.write_text(chroot_text)
 
           packages_stage = Path("/opt/OpenHD-ChrootCompiler/stages/02-Packages/00-run-chroot.sh")

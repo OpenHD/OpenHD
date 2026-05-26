@@ -177,12 +177,35 @@ if [[ "${REPO}" == "openhd-3.0" || "${REPO}" == "openhd-3.0-test" ]]; then
     export OPENHD_REQUIRE_ARTOSYN_DAEMON="${OPENHD_REQUIRE_ARTOSYN_DAEMON:-1}"
 fi
 
+free_chroot_space_for_ci() {
+    echo "Freeing image space for CI package build."
+    apt-get clean || true
+    rm -rf /var/cache/apt/archives/*.deb /var/cache/man/* /var/lib/apt/lists/* || true
+    rm -rf /usr/share/doc/* /usr/share/man/* /usr/share/locale/* || true
+
+    local purge_packages=""
+    purge_packages="$(dpkg-query -W -f='${binary:Package}\n' 2>/dev/null \
+        | grep -E '^(akonadi|baloo|calligra|kde|kio|kmail|konsole|kscreen|kwin|libreoffice|plasma|sddm|xorg|xserver-xorg)' \
+        | tr '\n' ' ' || true)"
+    if [[ -n "${purge_packages}" ]]; then
+        apt-get purge -y ${purge_packages} || true
+        apt-get autoremove -y || true
+    fi
+
+    apt-get clean || true
+    rm -rf /var/cache/apt/archives/*.deb /var/cache/man/* || true
+    df -h /
+}
+
 ensure_artosyn_cmake() {
+    free_chroot_space_for_ci
     apt-get update --fix-missing
-    apt-get install -y build-essential make gcc g++ libc6-dev || {
+    apt-get install -y build-essential make gcc g++ libc6-dev cmake ninja-build || {
         echo "Failed to install compiler toolchain for Artosyn SDK build"
         exit 1
     }
+    apt-get clean || true
+    rm -rf /var/cache/apt/archives/*.deb /var/cache/man/* || true
 
     if python3 - <<'PY'
 import re
@@ -204,7 +227,9 @@ PY
     fi
 
     echo "Installing newer CMake for Artosyn SDK build."
-    python3 -m pip install --upgrade "cmake>=3.22,<4" || { echo "Failed to install newer CMake"; exit 1; }
+    python3 -m pip install --upgrade "cmake>=3.22,<4" \
+        || python3 -m pip install --upgrade --break-system-packages "cmake>=3.22,<4" \
+        || { echo "Failed to install newer CMake"; exit 1; }
     hash -r
     cmake --version
 }
