@@ -53,6 +53,7 @@ PLATFORM_PACKAGES_REMOVE=""
     install_x86_packages
  elif [[ "${PLATFORM}" == "rock5" ]] ; then
     install_rock_packages
+    BASE_PACKAGES="${BASE_PACKAGES/clang-format/}"
  else
     echo "platform not supported"
  fi
