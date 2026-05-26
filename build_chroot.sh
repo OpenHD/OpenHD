@@ -179,6 +179,14 @@ fi
 
 free_chroot_space_for_ci() {
     echo "Freeing image space for CI package build."
+    cat >/etc/apt/apt.conf.d/99openhd-ci-lean <<'EOF'
+Acquire::Languages "none";
+Acquire::IndexTargets::deb::Contents-deb::DefaultEnabled "false";
+Acquire::IndexTargets::deb::DEP-11::DefaultEnabled "false";
+Acquire::IndexTargets::deb::DEP-11-icons-small::DefaultEnabled "false";
+Acquire::IndexTargets::deb::DEP-11-icons::DefaultEnabled "false";
+Acquire::IndexTargets::deb::DEP-11-icons-hidpi::DefaultEnabled "false";
+EOF
     apt-get clean || true
     rm -rf /var/cache/apt/archives/*.deb /var/cache/man/* /var/lib/apt/lists/* || true
     rm -rf /usr/share/doc/* /usr/share/man/* /usr/share/locale/* || true

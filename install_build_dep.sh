@@ -45,17 +45,6 @@ PLATFORM_PACKAGES="libpoco-dev gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugl
 PLATFORM_PACKAGES_REMOVE=""
 }
 
- # Add OpenHD Repository platform-specific packages
- apt update
- if ! command -v curl >/dev/null 2>&1; then
-     apt-get clean
-     apt-get install -y --no-upgrade --no-install-recommends curl
-     apt-get clean
- fi
- curl -1sLf 'https://dl.cloudsmith.io/public/openhd/release/setup.deb.sh'| sudo -E bash
- apt update
- #apt upgrade -y -o Dpkg::Options::="--force-overwrite" --no-install-recommends --allow-downgrades
-
 # Main function
  
  if [[ "${PLATFORM}" == "rpi" ]]; then
@@ -67,6 +56,19 @@ PLATFORM_PACKAGES_REMOVE=""
  else
     echo "platform not supported"
  fi
+
+ # Add OpenHD Repository only for platform-specific packages that need it.
+ apt update
+ if [[ "${PLATFORM}" == "rpi" ]]; then
+     if ! command -v curl >/dev/null 2>&1; then
+         apt-get clean
+         apt-get install -y --no-upgrade --no-install-recommends curl
+         apt-get clean
+     fi
+     curl -1sLf 'https://dl.cloudsmith.io/public/openhd/release/setup.deb.sh' | sudo -E bash
+     apt update
+ fi
+ #apt upgrade -y -o Dpkg::Options::="--force-overwrite" --no-install-recommends --allow-downgrades
 
 
  # Install platform-specific packages
