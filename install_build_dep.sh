@@ -45,6 +45,21 @@ PLATFORM_PACKAGES="libpoco-dev gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugl
 PLATFORM_PACKAGES_REMOVE=""
 }
 
+function extract_rock_gstreamer_dev_files {
+    echo "Extracting GStreamer development files without Mesa dev dependencies..."
+    tmpdir="$(mktemp -d)"
+    (
+        cd "${tmpdir}"
+        apt-get clean
+        apt-get download libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
+        for deb in ./*.deb; do
+            dpkg-deb -x "${deb}" /
+        done
+    )
+    rm -rf "${tmpdir}"
+    apt-get clean
+}
+
 # Main function
  
  if [[ "${PLATFORM}" == "rpi" ]]; then
@@ -98,6 +113,10 @@ PLATFORM_PACKAGES_REMOVE=""
      fi
      apt-get clean
  done
+
+ if [[ "${PLATFORM}" == "rock5" ]]; then
+     extract_rock_gstreamer_dev_files
+ fi
  
 
 
@@ -111,5 +130,4 @@ if command -v dotenv >/dev/null 2>&1; then
     fi
 fi
 gem install dotenv -v 2.8.1 --no-document
-gem install fpm
-
+gem install fpm --no-document
