@@ -1,0 +1,164 @@
+name: build_openhd_zero3w_lite_bookworm
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "openhd-3.0"
+      - "dev-release"
+      - "release"
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    env:
+      CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
+      API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
+      DOWNLOAD_KEY: ${{ secrets.DOWNLOAD_KEY }}
+      DOWNLOAD_URL: ${{ secrets.DOWNLOAD_URL }}
+      OPENHD_SUBMODULE_TOKEN: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+      ARTLINK_REPO: https://github.com/OpenHD-Technologies/OpenHD-ArtLink.git
+      ARTLINK_BRANCH: sdk
+      ARTLINK_FETCH_MODE: git-only
+      ARTLINK_GIT_AUTH_USERNAME: raphael@openhdfpv.org
+      ARTLINK_GIT_AUTH: "raphael@openhdfpv.org:${{ secrets.OPENHD_SUBMODULE_TOKEN }}"
+    steps:
+      - name: Maximize build space
+        uses: easimon/maximize-build-space@master
+        with:
+          root-reserve-mb: 512
+          swap-size-mb: 1024
+          remove-dotnet: "true"
+          remove-android: "true"
+          remove-haskell: "true"
+          overprovision-lvm: "true"
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: false
+          persist-credentials: false
+          token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+
+      - name: Download submodules with private token
+        run: |
+          if [ -z "${OPENHD_SUBMODULE_TOKEN}" ]; then
+            echo "OPENHD_SUBMODULE_TOKEN is required for recursive submodules"
+            exit 1
+          fi
+          cleanup_git_auth() {
+            git config --global --unset-all url."https://x-access-token:${OPENHD_SUBMODULE_TOKEN}@github.com/".insteadOf || true
+          }
+          trap cleanup_git_auth EXIT
+          git config --global url."https://x-access-token:${OPENHD_SUBMODULE_TOKEN}@github.com/".insteadOf "https://github.com/"
+          git submodule sync --recursive
+          git submodule update --init --recursive
+          git submodule status --recursive
+
+      - name: Build OpenHD in Zero3W Lite CHROOT
+        run: |
+          git clone https://github.com/OpenHD/OpenHD-ChrootCompiler /opt/OpenHD-ChrootCompiler
+          mkdir -p /opt/OpenHD-ChrootCompiler/additionalFiles
+          cp -a "$GITHUB_WORKSPACE/." /opt/OpenHD-ChrootCompiler/additionalFiles/
+          printf '%s\n' "$CLOUDSMITH_API_KEY" > /opt/OpenHD-ChrootCompiler/additionalFiles/cloudsmith_api_key.txt
+          printf '%s\n' "$DOWNLOAD_URL" > /opt/OpenHD-ChrootCompiler/additionalFiles/download_url.txt
+          printf '%s\n' "$DOWNLOAD_KEY" > /opt/OpenHD-ChrootCompiler/additionalFiles/download_key.txt
+          printf '%s\n' "$ARTLINK_REPO" > /opt/OpenHD-ChrootCompiler/additionalFiles/artlink_repo.txt
+          printf '%s\n' "$ARTLINK_BRANCH" > /opt/OpenHD-ChrootCompiler/additionalFiles/artlink_branch.txt
+          printf '%s\n' "$ARTLINK_FETCH_MODE" > /opt/OpenHD-ChrootCompiler/additionalFiles/artlink_fetch_mode.txt
+          printf '%s\n' "$ARTLINK_GIT_AUTH" > /opt/OpenHD-ChrootCompiler/additionalFiles/artlink_git_auth.txt
+          printf '%s\n' "$ARTLINK_GIT_AUTH_USERNAME" > /opt/OpenHD-ChrootCompiler/additionalFiles/artlink_git_username.txt
+          printf '%s\n' "$OPENHD_SUBMODULE_TOKEN" > /opt/OpenHD-ChrootCompiler/additionalFiles/artlink_git_token.txt
+          echo "standard" > /opt/OpenHD-ChrootCompiler/additionalFiles/custom.txt
+          echo "arm64" > /opt/OpenHD-ChrootCompiler/additionalFiles/arch.txt
+          echo "debian" > /opt/OpenHD-ChrootCompiler/additionalFiles/distro.txt
+          echo "bookworm" > /opt/OpenHD-ChrootCompiler/additionalFiles/flavor.txt
+          echo "${{ github.ref_name }}" > /opt/OpenHD-ChrootCompiler/additionalFiles/repo.txt
+
+          cd /opt/OpenHD-ChrootCompiler/
+          sudo apt update
+          sudo bash install_dep.sh
+          python3 - <<'PY'
+          from pathlib import Path
+
+          packages_stage = Path("/opt/OpenHD-ChrootCompiler/stages/02-Packages/00-run-chroot.sh")
+          packages_text = packages_stage.read_text()
+          packages_old = 'if [[ "${OS}" == "radxa-debian-rock5a" ]] || [[ "${OS}" == "radxa-debian-rock5b" ]]; then'
+          packages_new = 'if [[ "${DISTRO}" == "bullseye" ]] && { [[ "${OS}" == "radxa-debian-rock5a" ]] || [[ "${OS}" == "radxa-debian-rock5b" ]]; }; then'
+          if packages_new not in packages_text:
+              if packages_old not in packages_text:
+                  raise SystemExit("Could not find Rock5 package-preflight block in ChrootCompiler")
+              packages_stage.write_text(packages_text.replace(packages_old, packages_new, 1))
+
+          build_sh = Path("/opt/OpenHD-ChrootCompiler/build.sh")
+          text = build_sh.read_text()
+          original = text
+          image_needle = "mv OpenHD-ImageBuilder/images .\n"
+          image_patch = (
+              image_needle
+              + "for board in radxa-zero3w-lite radxa-zero3w; do\n"
+              + "  if [ ! -f \"images/${board}\" ] && [ -f \"images/${board}_base\" ]; then\n"
+              + "    cp \"images/${board}_base\" \"images/${board}\"\n"
+              + "  fi\n"
+              + "done\n"
+          )
+          if "images/${board}_base" not in text:
+              if image_needle not in text:
+                  raise SystemExit("Could not find ImageBuilder image import in build.sh")
+              text = text.replace(image_needle, image_patch, 1)
+
+          if "export BASE_IMAGE_SHA512" not in text:
+              text = text.replace(
+                  "export BASE_IMAGE_SHA256\n",
+                  "export BASE_IMAGE_SHA256\nexport BASE_IMAGE_SHA512\n",
+                  1,
+              )
+
+          needle = "mv OpenHD-ImageBuilder/stages/01-Baseimage stages/\n"
+          patch = (
+              needle
+              + "sed -i 's/WANTEDSIZE=\"6800000000\"/WANTEDSIZE=\"15000000000\"/' stages/01-Baseimage/01-run.sh\n"
+          )
+          if "WANTEDSIZE=\"15000000000\"" not in text:
+              if needle not in text:
+                  raise SystemExit("Could not find ImageBuilder stage import in build.sh")
+              text = text.replace(needle, patch, 1)
+          if text != original:
+              build_sh.write_text(text)
+          PY
+          sudo bash build.sh radxa-zero3w-lite "$API_KEY" debian bookworm
+
+      - name: Collect artifacts
+        run: |
+          cp -r /opt/OpenHD-ChrootCompiler/out/* .
+
+      - name: Upload to Github
+        uses: actions/upload-artifact@v4
+        with:
+          name: "OpenHD-zero3w-lite-bookworm-arm64"
+          path: |
+            *.deb
+
+      - name: Resolve Cloudsmith target repo
+        id: cloudsmith_repo
+        run: |
+          if [[ "${GITHUB_REF_NAME}" == "openhd-3.0" ]]; then
+            echo "name=dev-release" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Push
+        if: github.ref_name == 'release' || github.ref_name == 'dev-release' || github.ref_name == 'openhd-3.0'
+        uses: cloudsmith-io/action@master
+        with:
+          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
+          command: "push"
+          format: "deb"
+          owner: "openhd"
+          repo: ${{ steps.cloudsmith_repo.outputs.name }}
+          distro: "debian"
+          release: "bookworm"
+          republish: "true"
+          file: "*.deb"
