@@ -94,26 +94,14 @@ jobs:
           build_sh = Path("/opt/OpenHD-ChrootCompiler/build.sh")
           text = build_sh.read_text()
           original = text
+          text = text.replace(
+              "git clone https://github.com/OpenHD/OpenHD-ImageBuilder",
+              "git clone -b dev-release https://github.com/OpenHD/OpenHD-ImageBuilder",
+              1,
+          )
           image_needle = "mv OpenHD-ImageBuilder/images .\n"
           image_patch = (
               image_needle
-              + "cat > images/radxa-zero3w-lite_base <<'EOF'\n"
-              + "BASE_IMAGE_URL=\"https://github.com/radxa-build/radxa-zero3/releases/download/rsdk-b1\"\n"
-              + "BASE_IMAGE=\"radxa-zero3_bookworm_kde_b1.output_512.img.xz\"\n"
-              + "BASE_IMAGE_SHA512=\"6f9f67df6f997bef41aac2cc568ebb4b7820216be1256a49ce472cb877684c08ad793ff726da3155a02f0eab60b2b2c9318168b3cf8fab81849ae91e8724f10d\"\n"
-              + "OS=\"radxa-debian-rock-cm3\"\n"
-              + "DISTRO=\"bookworm\"\n"
-              + "HAVE_BOOT_PART=false\n"
-              + "HAVE_CONF_PART=true\n"
-              + "CONF_PART=1\n"
-              + "ROOT_PART=3\n"
-              + "BIT=\"64\"\n"
-              + "OPENHD_LITE_IMAGE=true\n"
-              + "GLIDE_PACKAGE=\"openhd-glide-radxa-zero3w\"\n"
-              + "KERNEL_PACKAGES=\"linux-image-radxa-zero3 linux-headers-radxa-zero3 linux-libc-dev-radxa-zero3\"\n"
-              + "BUILD_RTL_DRIVERS_FROM_SOURCE=true\n"
-              + "RTL_DRIVER_KERNEL_REGEX=\"rk2410-nocsf$\"\n"
-              + "EOF\n"
               + "for board in radxa-zero3w-lite radxa-zero3w; do\n"
               + "  if [ ! -f \"images/${board}\" ] && [ -f \"images/${board}_base\" ]; then\n"
               + "    cp \"images/${board}_base\" \"images/${board}\"\n"
