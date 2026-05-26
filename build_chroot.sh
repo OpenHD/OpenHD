@@ -57,8 +57,14 @@ su -c "apt-get update --fix-missing && apt-get install -y sudo" || { echo "Faile
 # Install required packages for the script
 apt-get install -y python3-pip git || { echo "Failed to install python3-pip and git"; exit 1; }
 
-# Install or upgrade cloudsmith-cli
-pip3 install --upgrade cloudsmith-cli || { echo "Failed to install cloudsmith-cli"; exit 1; }
+if [[ "${SKIP_CLOUDSMITH_CLI_INSTALL:-0}" != "1" ]]; then
+    # Install or upgrade cloudsmith-cli
+    pip3 install --upgrade cloudsmith-cli \
+        || pip3 install --upgrade cloudsmith-cli --break-system-packages \
+        || { echo "Failed to install cloudsmith-cli"; exit 1; }
+else
+    echo "Skipping cloudsmith-cli install in chroot."
+fi
 
 # List all files in the current directory for debugging purposes
 ls -a

@@ -70,6 +70,7 @@ jobs:
           printf '%s\n' "$ARTLINK_GIT_AUTH" > /opt/OpenHD-ChrootCompiler/additionalFiles/artlink_git_auth.txt
           printf '%s\n' "$ARTLINK_GIT_AUTH_USERNAME" > /opt/OpenHD-ChrootCompiler/additionalFiles/artlink_git_username.txt
           printf '%s\n' "$OPENHD_SUBMODULE_TOKEN" > /opt/OpenHD-ChrootCompiler/additionalFiles/artlink_git_token.txt
+          echo "1" > /opt/OpenHD-ChrootCompiler/additionalFiles/skip_cloudsmith_cli_install.txt
           echo "standard" > /opt/OpenHD-ChrootCompiler/additionalFiles/custom.txt
           echo "arm64" > /opt/OpenHD-ChrootCompiler/additionalFiles/arch.txt
           echo "debian" > /opt/OpenHD-ChrootCompiler/additionalFiles/distro.txt
@@ -84,6 +85,26 @@ jobs:
 
           chroot_build = Path("/opt/OpenHD-ChrootCompiler/additionalFiles/build_chroot.sh")
           chroot_text = chroot_build.read_text()
+          chroot_text = chroot_text.replace(
+              'ARTOSYN_SDK_ARCHIVE_FILE_VALUE="$(read_optional_file artosyn_sdk_archive.txt)"',
+              'SKIP_CLOUDSMITH_CLI_INSTALL_FILE_VALUE="$(read_optional_file skip_cloudsmith_cli_install.txt)"\n'
+              'if [[ -n "${SKIP_CLOUDSMITH_CLI_INSTALL_FILE_VALUE}" ]]; then\n'
+              '    export SKIP_CLOUDSMITH_CLI_INSTALL="${SKIP_CLOUDSMITH_CLI_INSTALL_FILE_VALUE}"\n'
+              'fi\n\n'
+              'ARTOSYN_SDK_ARCHIVE_FILE_VALUE="$(read_optional_file artosyn_sdk_archive.txt)"',
+              1,
+          )
+          chroot_text = chroot_text.replace(
+              'pip3 install --upgrade cloudsmith-cli || { echo "Failed to install cloudsmith-cli"; exit 1; }',
+              'if [[ "${SKIP_CLOUDSMITH_CLI_INSTALL:-0}" != "1" ]]; then\n'
+              '    pip3 install --upgrade cloudsmith-cli \\\n'
+              '        || pip3 install --upgrade cloudsmith-cli --break-system-packages \\\n'
+              '        || { echo "Failed to install cloudsmith-cli"; exit 1; }\n'
+              'else\n'
+              '    echo "Skipping cloudsmith-cli install in chroot."\n'
+              'fi',
+              1,
+          )
           chroot_marker = "sanitize_radxa_sources_for_current_distro"
           chroot_needle = "# Update package lists and install necessary packages as root\n"
           chroot_patch = (
@@ -108,7 +129,8 @@ jobs:
           if chroot_marker not in chroot_text:
               if chroot_needle not in chroot_text:
                   raise SystemExit("Could not find apt update block in build_chroot.sh")
-              chroot_build.write_text(chroot_text.replace(chroot_needle, chroot_patch + chroot_needle, 1))
+              chroot_text = chroot_text.replace(chroot_needle, chroot_patch + chroot_needle, 1)
+          chroot_build.write_text(chroot_text)
 
           packages_stage = Path("/opt/OpenHD-ChrootCompiler/stages/02-Packages/00-run-chroot.sh")
           packages_text = packages_stage.read_text()
