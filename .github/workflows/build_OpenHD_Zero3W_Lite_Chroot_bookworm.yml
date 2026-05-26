@@ -97,6 +97,17 @@ jobs:
           image_needle = "mv OpenHD-ImageBuilder/images .\n"
           image_patch = (
               image_needle
+              + "if [ ! -f images/radxa-zero3w-lite_base ]; then\n"
+              + "  cp images/radxa-zero3w_base images/radxa-zero3w-lite_base\n"
+              + "  cat >> images/radxa-zero3w-lite_base <<'EOF'\n"
+              + "\n"
+              + "OPENHD_LITE_IMAGE=true\n"
+              + "GLIDE_PACKAGE=\"openhd-glide-radxa-zero3w\"\n"
+              + "KERNEL_PACKAGES=\"linux-image-radxa-zero3 linux-headers-radxa-zero3 linux-libc-dev-radxa-zero3\"\n"
+              + "BUILD_RTL_DRIVERS_FROM_SOURCE=true\n"
+              + "RTL_DRIVER_KERNEL_REGEX=\"rk2410-nocsf$\"\n"
+              + "EOF\n"
+              + "fi\n"
               + "for board in radxa-zero3w-lite radxa-zero3w; do\n"
               + "  if [ ! -f \"images/${board}\" ] && [ -f \"images/${board}_base\" ]; then\n"
               + "    cp \"images/${board}_base\" \"images/${board}\"\n"
