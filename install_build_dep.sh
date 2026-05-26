@@ -53,7 +53,9 @@ PLATFORM_PACKAGES_REMOVE=""
     install_x86_packages
  elif [[ "${PLATFORM}" == "rock5" ]] ; then
     install_rock_packages
-    BASE_PACKAGES="${BASE_PACKAGES/clang-format/}"
+    for package in clang-format libsdl2-dev; do
+        BASE_PACKAGES="${BASE_PACKAGES/${package}/}"
+    done
  else
     echo "platform not supported"
  fi
