@@ -56,6 +56,7 @@ PLATFORM_PACKAGES_REMOVE=""
     for package in clang-format libsdl2-dev; do
         BASE_PACKAGES="${BASE_PACKAGES/${package}/}"
     done
+    VIDEO_PACKAGES="${VIDEO_PACKAGES/libgstreamer-plugins-base1.0-dev/}"
  else
     echo "platform not supported"
  fi
