@@ -34,6 +34,23 @@ if grep -Rq "bullseye-backports" /etc/apt/sources.list /etc/apt/sources.list.d 2
     done
 fi
 
+sanitize_radxa_sources_for_current_distro() {
+    local codename=""
+    codename="$(. /etc/os-release; echo "${VERSION_CODENAME:-}")"
+    [[ -n "${codename}" ]] || return 0
+
+    for source_file in /etc/apt/sources.list /etc/apt/sources.list.d/*.list; do
+        [[ -f "$source_file" ]] || continue
+        if [[ "${codename}" == "bookworm" ]]; then
+            sed -i -E '/radxa-repo\.github\.io\/bullseye|radxa-repo\.github\.io[[:space:]]+bullseye/s/^[[:space:]]*deb/# deb/' "$source_file"
+        elif [[ "${codename}" == "bullseye" ]]; then
+            sed -i -E '/radxa-repo\.github\.io\/bookworm|radxa-repo\.github\.io\/rk3566-bookworm|radxa-repo\.github\.io[[:space:]]+bookworm|radxa-repo\.github\.io[[:space:]]+rk3566-bookworm/s/^[[:space:]]*deb/# deb/' "$source_file"
+        fi
+    done
+}
+
+sanitize_radxa_sources_for_current_distro
+
 # Update package lists and install necessary packages as root
 su -c "apt-get update --fix-missing && apt-get install -y sudo" || { echo "Failed to update and install sudo"; exit 1; }
 

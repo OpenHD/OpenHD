@@ -82,6 +82,34 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
 
+          chroot_build = Path("/opt/OpenHD-ChrootCompiler/additionalFiles/build_chroot.sh")
+          chroot_text = chroot_build.read_text()
+          chroot_marker = "sanitize_radxa_sources_for_current_distro"
+          chroot_needle = "# Update package lists and install necessary packages as root\n"
+          chroot_patch = (
+              "sanitize_radxa_sources_for_current_distro() {\n"
+              "    local codename=\"\"\n"
+              "    codename=\"$(. /etc/os-release; echo \"${VERSION_CODENAME:-}\")\"\n"
+              "    [[ -n \"${codename}\" ]] || return 0\n"
+              "\n"
+              "    for source_file in /etc/apt/sources.list /etc/apt/sources.list.d/*.list; do\n"
+              "        [[ -f \"$source_file\" ]] || continue\n"
+              "        if [[ \"${codename}\" == \"bookworm\" ]]; then\n"
+              "            sed -i -E '/radxa-repo\\.github\\.io\\/bullseye|radxa-repo\\.github\\.io[[:space:]]+bullseye/s/^[[:space:]]*deb/# deb/' \"$source_file\"\n"
+              "        elif [[ \"${codename}\" == \"bullseye\" ]]; then\n"
+              "            sed -i -E '/radxa-repo\\.github\\.io\\/bookworm|radxa-repo\\.github\\.io\\/rk3566-bookworm|radxa-repo\\.github\\.io[[:space:]]+bookworm|radxa-repo\\.github\\.io[[:space:]]+rk3566-bookworm/s/^[[:space:]]*deb/# deb/' \"$source_file\"\n"
+              "        fi\n"
+              "    done\n"
+              "}\n"
+              "\n"
+              "sanitize_radxa_sources_for_current_distro\n"
+              "\n"
+          )
+          if chroot_marker not in chroot_text:
+              if chroot_needle not in chroot_text:
+                  raise SystemExit("Could not find apt update block in build_chroot.sh")
+              chroot_build.write_text(chroot_text.replace(chroot_needle, chroot_patch + chroot_needle, 1))
+
           packages_stage = Path("/opt/OpenHD-ChrootCompiler/stages/02-Packages/00-run-chroot.sh")
           packages_text = packages_stage.read_text()
           packages_old = 'if [[ "${OS}" == "radxa-debian-rock5a" ]] || [[ "${OS}" == "radxa-debian-rock5b" ]]; then'
