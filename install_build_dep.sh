@@ -57,14 +57,25 @@ function extract_rock_gstreamer_dev_files {
     (
         cd "${tmpdir}"
         apt-get clean
-        apt-get download libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev liborc-0.4-dev liborc-0.4-dev-bin
+        apt-get download \
+            libgstreamer1.0-dev \
+            libgstreamer-plugins-base1.0-dev \
+            liborc-0.4-dev \
+            liborc-0.4-dev-bin \
+            libunwind-dev \
+            libdw-dev \
+            libelf-dev \
+            zlib1g-dev \
+            libzstd-dev \
+            liblzma-dev \
+            libbz2-dev
         for deb in ./*.deb; do
             dpkg-deb -x "${deb}" /
         done
     )
     rm -rf "${tmpdir}"
     mkdir -p /usr/lib/pkgconfig
-    find /usr/lib/aarch64-linux-gnu/pkgconfig -name 'gstreamer*.pc' -exec cp -a {} /usr/lib/pkgconfig/ \;
+    find /usr/lib/aarch64-linux-gnu/pkgconfig -name '*.pc' -exec cp -a {} /usr/lib/pkgconfig/ \;
     export PKG_CONFIG_PATH="/usr/lib/pkgconfig:/usr/lib/aarch64-linux-gnu/pkgconfig:/usr/share/pkgconfig:${PKG_CONFIG_PATH:-}"
     if ! pkg-config --exists gstreamer-1.0 gstreamer-app-1.0 gstreamer-sdp-1.0 gstreamer-video-1.0; then
         echo "GStreamer development pkg-config files are still unavailable"
