@@ -32,6 +32,12 @@ VIDEO_PACKAGES="libgstreamer-plugins-base1.0-dev gstreamer1.0-plugins-bad libv4l
 BUILD_PACKAGES="git build-essential autotools-dev automake libtool python3-pip autoconf apt-transport-https ruby-dev cmake"
 
 
+function free_package_install_space {
+    apt-get clean || true
+    rm -rf /var/cache/apt/archives/*.deb /var/cache/man/* || true
+    rm -rf /usr/share/doc/* /usr/share/man/* /usr/share/locale/* || true
+}
+
 function install_pi_packages {
 PLATFORM_PACKAGES="libcamera-openhd"
 PLATFORM_PACKAGES_REMOVE="python3-libcamera libcamera0"
@@ -51,7 +57,7 @@ function extract_rock_gstreamer_dev_files {
     (
         cd "${tmpdir}"
         apt-get clean
-        apt-get download libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
+        apt-get download libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev liborc-0.4-dev liborc-0.4-dev-bin
         for deb in ./*.deb; do
             dpkg-deb -x "${deb}" /
         done
@@ -81,18 +87,19 @@ elif [[ "${PLATFORM}" == "rock5" ]] ; then
         BASE_PACKAGES="${BASE_PACKAGES/${package}/}"
     done
     VIDEO_PACKAGES="${VIDEO_PACKAGES/libgstreamer-plugins-base1.0-dev/}"
-    VIDEO_PACKAGES="${VIDEO_PACKAGES} libglib2.0-dev liborc-0.4-dev"
+    VIDEO_PACKAGES="${VIDEO_PACKAGES} libglib2.0-dev"
 else
     echo "platform not supported"
 fi
 
  # Add OpenHD Repository only for platform-specific packages that need it.
+ free_package_install_space
  apt update
  if [[ "${PLATFORM}" == "rpi" ]]; then
      if ! command -v curl >/dev/null 2>&1; then
-         apt-get clean
+         free_package_install_space
          apt-get install -y --no-upgrade --no-install-recommends curl
-         apt-get clean
+         free_package_install_space
      fi
      curl -1sLf 'https://dl.cloudsmith.io/public/openhd/release/setup.deb.sh' | sudo -E bash
      apt update
@@ -109,19 +116,20 @@ fi
          echo "Failed to remove ${package}!"
          exit 1
      fi
+     free_package_install_space
  done
 
  # Install platform-specific packages
  echo "Installing platform-specific packages..."
  for package in ${PLATFORM_PACKAGES} ${BASE_PACKAGES} ${VIDEO_PACKAGES} ${BUILD_PACKAGES}; do
      echo "Installing ${package}..."
-     apt-get clean
+     free_package_install_space
      apt-get install -y --no-upgrade -o Dpkg::Options::="--force-overwrite" --no-install-recommends ${package}
      if [ $? -ne 0 ]; then
          echo "Failed to install ${package}!"
          exit 1
      fi
-     apt-get clean
+     free_package_install_space
  done
 
  if [[ "${PLATFORM}" == "rock5" ]]; then
