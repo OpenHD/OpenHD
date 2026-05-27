@@ -34,6 +34,47 @@ OS="${3:-}"
 PKGDIR="/out/openhd-installdir/"
 VERSION="3.0-alpha-$(date '+%Y%m%d%H%M')-$(git rev-parse --short HEAD)"
 
+join_by() {
+  local IFS="$1"
+  shift
+  echo "$*"
+}
+
+build_deb_package() {
+  local package_name="$1"
+  local package_arch="$2"
+  shift 2
+  local dependencies=("$@")
+  local debian_dir="${PKGDIR}DEBIAN"
+
+  rm -rf "${debian_dir}"
+  mkdir -p "${debian_dir}"
+  {
+    echo "Package: ${package_name}"
+    echo "Version: ${VERSION}"
+    echo "Section: misc"
+    echo "Priority: optional"
+    echo "Architecture: ${package_arch}"
+    echo "Maintainer: OpenHD <openhd@openhdfpv.org>"
+    if [[ "${#dependencies[@]}" -gt 0 ]]; then
+      echo "Depends: $(join_by ', ' "${dependencies[@]}")"
+    fi
+    echo "Description: OpenHD runtime package"
+    echo " OpenHD runtime files and service definitions."
+  } >"${debian_dir}/control"
+
+  if [[ -f before-install.sh ]]; then
+    cp before-install.sh "${debian_dir}/preinst"
+    chmod 0755 "${debian_dir}/preinst"
+  fi
+  if [[ -f after-install.sh ]]; then
+    cp after-install.sh "${debian_dir}/postinst"
+    chmod 0755 "${debian_dir}/postinst"
+  fi
+
+  dpkg-deb --build "${PKGDIR}" "${package_name}_${VERSION}_${package_arch}.deb"
+}
+
 # Function to create the package directory structure
 create_package_directory() {
   echo "Creating package directory structure..."
@@ -255,12 +296,17 @@ build_package() {
     echo "Artosyn SDK not resolved; skipping Artosyn daemon/runtime library packaging." >&2
   fi
 
-  # Build the package using fpm
-  fpm -a "${PACKAGE_ARCH}" -s dir -t deb -n "${package_name}" -v "${VERSION}" -C "${PKGDIR}" \
-    -p "${package_name}_${VERSION}_${PACKAGE_ARCH}.deb" \
-    --after-install after-install.sh \
-    --before-install before-install.sh \
-    -d "$(IFS=','; echo "${packages[*]}")"
+  if command -v fpm >/dev/null 2>&1; then
+    # Build the package using fpm
+    fpm -a "${PACKAGE_ARCH}" -s dir -t deb -n "${package_name}" -v "${VERSION}" -C "${PKGDIR}" \
+      -p "${package_name}_${VERSION}_${PACKAGE_ARCH}.deb" \
+      --after-install after-install.sh \
+      --before-install before-install.sh \
+      -d "$(IFS=','; echo "${packages[*]}")"
+  else
+    echo "fpm not available; building package with dpkg-deb."
+    build_deb_package "${package_name}" "${PACKAGE_ARCH}" "${packages[@]}"
+  fi
 
   cp *.deb /out/
 }
