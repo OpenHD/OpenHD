@@ -49,6 +49,7 @@ build_deb_package() {
 
   rm -rf "${debian_dir}"
   mkdir -p "${debian_dir}"
+  chmod 0755 "${debian_dir}"
   {
     echo "Package: ${package_name}"
     echo "Version: ${VERSION}"
