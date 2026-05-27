@@ -58,10 +58,11 @@ function extract_rock_gstreamer_dev_files {
     )
     rm -rf "${tmpdir}"
     mkdir -p /usr/lib/pkgconfig
-    find /usr/lib -path '*/pkgconfig/gstreamer*.pc' -exec cp -a {} /usr/lib/pkgconfig/ \;
+    find /usr/lib/aarch64-linux-gnu/pkgconfig -name 'gstreamer*.pc' -exec cp -a {} /usr/lib/pkgconfig/ \;
     export PKG_CONFIG_PATH="/usr/lib/pkgconfig:/usr/lib/aarch64-linux-gnu/pkgconfig:/usr/share/pkgconfig:${PKG_CONFIG_PATH:-}"
     if ! pkg-config --exists gstreamer-1.0 gstreamer-app-1.0 gstreamer-sdp-1.0 gstreamer-video-1.0; then
         echo "GStreamer development pkg-config files are still unavailable"
+        pkg-config --print-errors --exists gstreamer-1.0 gstreamer-app-1.0 gstreamer-sdp-1.0 gstreamer-video-1.0 || true
         find /usr -name 'gstreamer*.pc' -print
         exit 1
     fi
@@ -74,15 +75,16 @@ function extract_rock_gstreamer_dev_files {
     install_pi_packages
  elif [[ "${PLATFORM}" == "ubuntu-x86" ]] ; then
     install_x86_packages
- elif [[ "${PLATFORM}" == "rock5" ]] ; then
+elif [[ "${PLATFORM}" == "rock5" ]] ; then
     install_rock_packages
     for package in clang-format libsdl2-dev; do
         BASE_PACKAGES="${BASE_PACKAGES/${package}/}"
     done
     VIDEO_PACKAGES="${VIDEO_PACKAGES/libgstreamer-plugins-base1.0-dev/}"
- else
+    VIDEO_PACKAGES="${VIDEO_PACKAGES} libglib2.0-dev liborc-0.4-dev"
+else
     echo "platform not supported"
- fi
+fi
 
  # Add OpenHD Repository only for platform-specific packages that need it.
  apt update
