@@ -165,15 +165,21 @@ build_package() {
   fi
 
   rm -f "${package_name}_${VERSION}_${PACKAGE_ARCH}.deb"
-  cmake OpenHD/ \
+  local build_dir="/out/openhd-build"
+  local build_tmp="/out/openhd-build-tmp"
+  rm -rf "${build_dir}" "${build_tmp}"
+  mkdir -p "${build_dir}" "${build_tmp}"
+  export TMPDIR="${build_tmp}"
+
+  cmake -S OpenHD/ -B "${build_dir}" \
     -DARTOSYN_SDK_ROOT="${ARTOSYN_SDK_ROOT}" \
     -DARTOSYN_SDK_LIB="${ARTOSYN_SDK_LIB}" \
     -DARTOSYN_SDK_DAEMON="${ARTOSYN_SDK_DAEMON:-}" \
     -DARTOSYN_SDK_TUNTAP="${ARTOSYN_SDK_TUNTAP:-}"
-  make -j$(nproc)
+  cmake --build "${build_dir}" --parallel "$(nproc)"
 
   mkdir -p "${PKGDIR}usr/local/bin/"
-  cp openhd "${PKGDIR}usr/local/bin/"
+  cp "${build_dir}/openhd" "${PKGDIR}usr/local/bin/"
   mkdir -p "${PKGDIR}usr/local/lib/"
 
   if [[ "${artosyn_enabled}" -eq 1 ]]; then
