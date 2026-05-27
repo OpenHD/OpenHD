@@ -60,6 +60,7 @@ function extract_rock_gstreamer_dev_files {
         apt-get download \
             libgstreamer1.0-dev \
             libgstreamer-plugins-base1.0-dev \
+            librga-dev \
             liborc-0.4-dev \
             liborc-0.4-dev-bin \
             libunwind-dev \
