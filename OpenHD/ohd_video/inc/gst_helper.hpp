@@ -517,13 +517,15 @@ static std::string create_veye_vl2_stream(const CameraSettings& settings,
   return ss.str();
 }
 
-static constexpr int ROCKCHIP_MPP_BPS_ACTUAL_LIMIT = 6650000;
-static constexpr int ROCKCHIP_MPP_BPS_MAX_LIMIT = 7000000;
-static constexpr int ROCKCHIP_MPP_BPS_MIN_LIMIT = 6300000;
+static constexpr int ROCKCHIP_MPP_MAX_BITRATE_KBITS = 25000;
+
+static int clampRockchipMppEncoderKbits(int bitrate_kbits) {
+  return std::clamp(bitrate_kbits, 1, ROCKCHIP_MPP_MAX_BITRATE_KBITS);
+}
 
 static int calculateRockchipMppEncoderBps(int bitrate_kbits) {
-  const int bps = openhd::kbits_to_bits_per_second(bitrate_kbits) / 2;
-  return std::min((bps * 95) / 100, ROCKCHIP_MPP_BPS_ACTUAL_LIMIT);
+  return openhd::kbits_to_bits_per_second(
+      clampRockchipMppEncoderKbits(bitrate_kbits));
 }
 
 static int calculateRockchipMppEncoderKbits(int bitrate_kbits) {
@@ -535,12 +537,12 @@ static std::string createRockchipEncoderPipeline(
     const CameraSettings& settings) {
   std::stringstream ss;
 
-  const int bps =
-      openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits) / 2;
-
-  int bps_actual = calculateRockchipMppEncoderBps(settings.h26x_bitrate_kbits);
-  int bps_min = std::min((bps * 90) / 100, ROCKCHIP_MPP_BPS_MIN_LIMIT);
-  int bps_max = std::min(bps, ROCKCHIP_MPP_BPS_MAX_LIMIT);
+  const int bps_actual =
+      calculateRockchipMppEncoderBps(settings.h26x_bitrate_kbits);
+  const int bps_min = (bps_actual * 90) / 100;
+  const int bps_max = std::min(
+      (bps_actual * 110) / 100,
+      openhd::kbits_to_bits_per_second(ROCKCHIP_MPP_MAX_BITRATE_KBITS));
 
   if (settings.streamed_video_format.videoCodec == VideoCodec::H264) {
     ss << " mpph264enc name=mpp_encoder";
@@ -548,7 +550,7 @@ static std::string createRockchipEncoderPipeline(
     ss << " mpph265enc name=mpp_encoder";
   }
 
-  ss << " rc-mode=vbr";
+  ss << " rc-mode=cbr";
   ss << " bps=" << bps_actual;
   ss << " bps-max=" << bps_max;
   ss << " bps-min=" << bps_min;
@@ -1194,10 +1196,12 @@ static std::string createRv1126Stream(const CameraSettings& settings) {
 
   ss << fmt::format("v4l2src device=/dev/video0 ! ");
 
-  const int bps = openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
-  const int bps_actual = bps;
-  const int bps_min = (bps * 90) / 100;
-  const int bps_max = (bps * 110) / 100;
+  const int bps_actual =
+      calculateRockchipMppEncoderBps(settings.h26x_bitrate_kbits);
+  const int bps_min = (bps_actual * 90) / 100;
+  const int bps_max = std::min(
+      (bps_actual * 110) / 100,
+      openhd::kbits_to_bits_per_second(ROCKCHIP_MPP_MAX_BITRATE_KBITS));
 
   if (settings.streamed_video_format.videoCodec == VideoCodec::H264) {
     ss << " mpph264enc name=mpp_encoder";

@@ -56,6 +56,7 @@ struct GstBitrateControlElement {
   // Some encoders need related rate-control bounds updated with the target.
   // The percentage is relative to the raw property value, not kbit/s.
   std::vector<std::pair<std::string, int>> extra_properties_percent;
+  int64_t max_raw_property_value = 0;
 };
 
 struct GstBitrateReadback {
@@ -298,12 +299,14 @@ get_dynamic_bitrate_control_element_in_pipeline(
     ret.property_name = "bps";
     ret.takes_kbit = false;
     ret.extra_properties_percent = {{"bps-min", 90}, {"bps-max", 110}};
+    ret.max_raw_property_value = 25000000;
   } else if (camera.requires_rockchip3_mpp_pipeline() ||
              camera.requires_rockchip5_mpp_pipeline()) {
     ret.encoder = gst_bin_get_by_name(GST_BIN(gst_pipeline), "mpp_encoder");
     ret.property_name = "bps";
     ret.takes_kbit = false;
     ret.extra_properties_percent = {{"bps-min", 90}, {"bps-max", 110}};
+    ret.max_raw_property_value = 25000000;
   } else if (camera.requires_nxp_imx8_v4l2_pipeline()) {
     ret.encoder = gst_bin_get_by_name(GST_BIN(gst_pipeline), "nxp_encoder");
     ret.property_name = "bitrate";
@@ -410,9 +413,14 @@ get_dynamic_qp_control_element_in_pipeline(GstElement* gst_pipeline,
 
 static bool change_bitrate(const GstBitrateControlElement& ctrl_el,
                            int bitrate_kbits) {
-  const auto target_raw_property_value =
+  auto target_raw_property_value =
       ctrl_el.takes_kbit ? bitrate_kbits
                          : openhd::kbits_to_bits_per_second(bitrate_kbits);
+  if (ctrl_el.max_raw_property_value > 0) {
+    target_raw_property_value =
+        std::min<int64_t>(target_raw_property_value,
+                          ctrl_el.max_raw_property_value);
+  }
   if (ctrl_el.uses_extra_controls_video_bitrate) {
     set_extra_controls_ints(ctrl_el.encoder, ctrl_el.property_name,
                             {{"video_bitrate", target_raw_property_value}});
@@ -423,8 +431,12 @@ static bool change_bitrate(const GstBitrateControlElement& ctrl_el,
     }
   }
   for (const auto& extra : ctrl_el.extra_properties_percent) {
-    const int64_t bounded_value =
+    int64_t bounded_value =
         static_cast<int64_t>(target_raw_property_value) * extra.second / 100;
+    if (ctrl_el.max_raw_property_value > 0) {
+      bounded_value =
+          std::min<int64_t>(bounded_value, ctrl_el.max_raw_property_value);
+    }
     if (!set_integer_property(G_OBJECT(ctrl_el.encoder), extra.first,
                               bounded_value)) {
       return false;

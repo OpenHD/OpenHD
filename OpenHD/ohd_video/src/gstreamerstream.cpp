@@ -1221,6 +1221,13 @@ void GStreamerStream::handle_change_bitrate_request(
     // kbits_per_second_to_string(MIN_BITRATE_KBITS));
     bitrate_for_encoder_kbits = MIN_BITRATE_KBITS;
   }
+  const auto& camera = m_camera_holder->get_camera();
+  if (camera.requires_rockchip1126_mpp_pipeline() ||
+      camera.requires_rockchip3_mpp_pipeline() ||
+      camera.requires_rockchip5_mpp_pipeline()) {
+    bitrate_for_encoder_kbits =
+        OHDGstHelper::clampRockchipMppEncoderKbits(bitrate_for_encoder_kbits);
+  }
   // The gst thread is responsible for changing the bitrate - it will be applied
   // (as long as the cam is not bugged or the OS is overloaded) after a max
   // delay of 40ms
