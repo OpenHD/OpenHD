@@ -933,7 +933,7 @@ std::string GStreamerStream::create_source_encode_pipeline(
     pipeline << OHDGstHelper::createRv1126TestsrcStream(setting);
   } else {
     openhd::log::get_default()->warn("UNKNOWN CAMERA TYPE");
-    pipeline << OHDGstHelper::createDummyStreamX(setting);
+    pipeline << "ERROR";
   }
 
   return pipeline.str();
@@ -1040,6 +1040,7 @@ bool GStreamerStream::setup() {
     openhd::LinkActionHandler::instance().set_cam_info(index, cam_info);
   }
   const auto full_pipeline = pipeline_content.str();
+  m_console->debug("Starting pipeline:[{}]", full_pipeline);
   send_pipeline_debug_over_mavlink(m_camera_holder->get_camera().index,
                                    full_pipeline);
   // Protect against unwanted use - stop and free the pipeline first
