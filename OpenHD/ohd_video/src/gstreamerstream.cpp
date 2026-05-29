@@ -1226,6 +1226,7 @@ void GStreamerStream::handle_change_bitrate_request(
   }
   const auto& camera = m_camera_holder->get_camera();
   if (camera.requires_rockchip1126_mpp_csi_pipeline() ||
+      camera.requires_rockchip1126_mpp_testsrc_pipeline() ||
       camera.requires_rockchip3_mpp_pipeline() ||
       camera.requires_rockchip5_mpp_pipeline()) {
     bitrate_for_encoder_kbits =
