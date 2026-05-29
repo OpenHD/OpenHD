@@ -925,9 +925,12 @@ std::string GStreamerStream::create_source_encode_pipeline(
   } else if (camera.camera_type == X_CAM_TYPE_ROCKCHIP_RV110X) {
     openhd::log::get_default()->warn("Using Rockchip RV camera type.");
     pipeline << OHDGstHelper::createRv1106Stream(setting);
-  } else if (camera.camera_type == X_CAM_TYPE_ROCKCHIP_RV1126) {
-    openhd::log::get_default()->warn("Using Rockchip RV1126 camera type.");
+  } else if (camera.requires_rockchip1126_mpp_csi_pipeline()) {
+    openhd::log::get_default()->warn("Using Rockchip RV1126 CSI camera type.");
     pipeline << OHDGstHelper::createRv1126Stream(setting);
+  } else if (camera.requires_rockchip1126_mpp_testsrc_pipeline()) {
+    openhd::log::get_default()->warn("Using Rockchip RV1126 TESTSRC camera type.");
+    pipeline << OHDGstHelper::createRv1126TestsrcStream(setting);
   } else {
     openhd::log::get_default()->warn("UNKNOWN CAMERA TYPE");
     pipeline << OHDGstHelper::createDummyStreamX(setting);
@@ -1222,7 +1225,7 @@ void GStreamerStream::handle_change_bitrate_request(
     bitrate_for_encoder_kbits = MIN_BITRATE_KBITS;
   }
   const auto& camera = m_camera_holder->get_camera();
-  if (camera.requires_rockchip1126_mpp_pipeline() ||
+  if (camera.requires_rockchip1126_mpp_csi_pipeline() ||
       camera.requires_rockchip3_mpp_pipeline() ||
       camera.requires_rockchip5_mpp_pipeline()) {
     bitrate_for_encoder_kbits =

@@ -139,7 +139,7 @@ AirCameraGenericSettings AirCameraGenericSettingsHolder::create_default()
     ret.primary_camera_type = X_CAM_TYPE_ROCKCHIP_RV110X;
   } else if (OHDPlatform::instance().platform_type ==
              X_PLATFORM_TYPE_OPENHD_X21) {
-    ret.primary_camera_type = X_CAM_TYPE_ROCKCHIP_RV1126;
+    ret.primary_camera_type = X_CAM_TYPE_ROCKCHIP_RV1126_CSI;
   }
 
   return ret;

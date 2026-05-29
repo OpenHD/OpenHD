@@ -1221,5 +1221,41 @@ static std::string createRv1126Stream(const CameraSettings& settings) {
   return ss.str();
 }
 
+static std::string createRv1126TestsrcStream(const CameraSettings& settings) {
+  std::stringstream ss;
+
+  ss << fmt::format("videotestsrc is-live=true ! ");
+
+  ss << fmt::format(
+    "video/x-raw, width={}, height={}, framerate={}/1 ! ",
+    settings.streamed_video_format.width,
+    settings.streamed_video_format.height,
+    settings.streamed_video_format.framerate);
+
+  const int bps_actual =
+      calculateRockchipMppEncoderBps(settings.h26x_bitrate_kbits);
+  const int bps_min = (bps_actual * 90) / 100;
+  const int bps_max = std::min(
+      (bps_actual * 110) / 100,
+      openhd::kbits_to_bits_per_second(ROCKCHIP_MPP_MAX_BITRATE_KBITS));
+
+  if (settings.streamed_video_format.videoCodec == VideoCodec::H264) {
+    ss << " mpph264enc name=mpp_encoder";
+  } else {
+    ss << " mpph265enc name=mpp_encoder";
+  }
+
+  ss << " rc-mode=cbr bps=" << bps_actual;
+  ss << " bps-max=" << bps_max;
+  ss << " bps-min=" << bps_min;
+  ss << " qp-min=" << settings.qp_min;
+  ss << " qp-max=" << settings.qp_max;
+
+  ss << " gop=5";
+
+  ss << " ! ";
+  return ss.str();
+}
+
 }  // namespace OHDGstHelper
 #endif  // OPENHD_OHDGSTHELPER_H

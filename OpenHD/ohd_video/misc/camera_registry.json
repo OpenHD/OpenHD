@@ -650,11 +650,25 @@
       ]
     },
     {
-      "key": "X_CAM_TYPE_ROCKCHIP_RV1126",
+      "key": "X_CAM_TYPE_ROCKCHIP_RV1126_CSI",
       "id": 141,
-      "name": "OHD_ARDUCAM",
-      "ui_label": "ARDUCAM",
+      "name": "RV1126B_CSI",
+      "ui_label": "RV1126B CSI",
       "resolutions": [
+        {"width": 1280, "height": 720, "fps": 60}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_ROCKCHIP_RV1126_TEST",
+      "id": 142,
+      "name": "RV1126B_TEST",
+      "ui_label": "RV1126B TEST",
+      "resolutions": [
+        {"width": 3840, "height": 2160, "fps": 30},
+        {"width": 1920, "height": 1080, "fps": 120},
+        {"width": 1920, "height": 1080, "fps": 60},
+        {"width": 1280, "height": 720, "fps": 240},
+        {"width": 1280, "height": 720, "fps": 120},
         {"width": 1280, "height": 720, "fps": 60}
       ]
     },
@@ -830,10 +844,17 @@
       ]
     },
     {
-      "key": "ARDUCAM",
-      "name": "ARDUCAM",
+      "key": "ROCKCHIP_RV1126_CSI",
+      "name": "ROCKCHIP_RV1126_CSI",
       "cameras": [
-        "X_CAM_TYPE_ROCKCHIP_RV1126"
+        "X_CAM_TYPE_ROCKCHIP_RV1126_CSI"
+      ]
+    },
+    {
+      "key": "ROCKCHIP_RV1126_TEST",
+      "name": "ROCKCHIP_RV1126_TEST",
+      "cameras": [
+        "X_CAM_TYPE_ROCKCHIP_RV1126_TEST"
       ]
     }
   ],
@@ -896,7 +917,7 @@
     },
     {
       "platform": "X_PLATFORM_TYPE_OPENHD_X21",
-      "manufacturers": ["ARDUCAM"]
+      "manufacturers": ["ROCKCHIP_RV1126_CSI", "ROCKCHIP_RV1126_TEST"]
     }
   ],
   "secondary_choices": ["DISABLE", "USB", "DEBUG"],

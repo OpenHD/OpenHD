@@ -294,7 +294,7 @@ get_dynamic_bitrate_control_element_in_pipeline(
     ret.encoder = gst_bin_get_by_name(GST_BIN(gst_pipeline), "rkmpih264enc");
     ret.property_name = "bitrate";
     ret.takes_kbit = true;
-  } else if (camera.requires_rockchip1126_mpp_pipeline()) {
+  } else if (camera.requires_rockchip1126_mpp_csi_pipeline()) {
     ret.encoder = gst_bin_get_by_name(GST_BIN(gst_pipeline), "mpp_encoder");
     ret.property_name = "bps";
     ret.takes_kbit = false;
@@ -389,7 +389,7 @@ get_dynamic_qp_control_element_in_pipeline(GstElement* gst_pipeline,
   }
   if (camera.requires_rockchip3_mpp_pipeline() ||
       camera.requires_rockchip5_mpp_pipeline() ||
-      camera.requires_rockchip1126_mpp_pipeline()) {
+      camera.requires_rockchip1126_mpp_csi_pipeline()) {
     if (auto ret = try_qp_control("mpp_encoder", false, "qp-min", "qp-max")) {
       return ret;
     }
