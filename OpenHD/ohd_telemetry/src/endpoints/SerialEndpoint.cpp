@@ -436,10 +436,10 @@ std::string platform_default_for(SerialPortRole role) {
     }
     return "/dev/serial0";
   }
-  if (platform.is_rock()) {
+  if (platform.is_x20() || platform.is_rock()) {
     return "/dev/ttyS2";
   }
-  if (platform.is_x20()) {
+  if (platform.is_x21()) {
     return "/dev/ttyS4";
   }
   if (platform.is_luckfox_pico()) {
