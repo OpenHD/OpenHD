@@ -933,7 +933,7 @@ std::string GStreamerStream::create_source_encode_pipeline(
     pipeline << OHDGstHelper::createRv1126TestsrcStream(setting);
   } else {
     openhd::log::get_default()->warn("UNKNOWN CAMERA TYPE");
-    pipeline << "ERROR";
+    pipeline << OHDGstHelper::createDummyStreamX(setting);
   }
 
   return pipeline.str();
