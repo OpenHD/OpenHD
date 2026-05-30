@@ -93,8 +93,12 @@ struct XCamera {
     return camera_type >= 130 && camera_type < 140;
   }
   bool requires_rockchip_rv_pipeline() const { return camera_type == 140; }
-  bool requires_rockchip1126_mpp_csi_pipeline() const { return camera_type == 141; }
-  bool requires_rockchip1126_mpp_testsrc_pipeline() const { return camera_type == 141; }
+  bool requires_rockchip1126_mpp_csi_pipeline() const {
+    return camera_type == X_CAM_TYPE_ROCKCHIP_RV1126_CSI;
+  }
+  bool requires_rockchip1126_mpp_testsrc_pipeline() const {
+    return camera_type == X_CAM_TYPE_ROCKCHIP_RV1126_TEST;
+  }
   std::string cam_type_as_verbose_string() const {
     return x_cam_type_to_string(camera_type);
   }
