@@ -140,6 +140,7 @@ void AirTelemetry::on_messages_fc(std::vector<MavlinkMessage>& messages) {
   //  Note: No OpenHD component ever talks to the FC, FC is completely passed
   //  through
   // debugMavlinkMessages(messages,"FC");
+  MavlinkHelpers::maybe_sync_system_time_from_gps(messages);
   record_mavlink_messages(messages, "received", "flight_controller",
                           "openhd_air");
   send_messages_ground_unit(messages);

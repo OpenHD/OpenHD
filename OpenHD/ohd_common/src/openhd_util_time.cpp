@@ -23,7 +23,14 @@
 
 #include "openhd_util_time.h"
 
+#include <cerrno>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
+#include <mutex>
 #include <sstream>
+
+#include "openhd_spdlog.h"
 
 std::string openhd::util::verbose_timespan(
     const std::chrono::steady_clock::duration& duration) {
@@ -116,4 +123,87 @@ void openhd::util::store_air_unit_time_offset_us(int64_t offset_us) {
 }
 int64_t openhd::util::get_air_unit_time_offset_us() {
   return get_air_ts().load();
+}
+
+namespace {
+
+constexpr uint64_t kUnixUsPerSecond = 1000ULL * 1000ULL;
+constexpr uint64_t kMinTrustedUnixUs = 1704067200ULL * kUnixUsPerSecond;
+constexpr uint64_t kMaxTrustedUnixUs = 2114380800ULL * kUnixUsPerSecond;
+constexpr int64_t kMinStepOffsetUs = 6LL * 60LL * 60LL * 1000LL * 1000LL;
+
+struct GpsTimeSyncState {
+  std::mutex mutex;
+  bool adjusted = false;
+  bool logged_small_offset = false;
+  bool logged_invalid = false;
+  bool logged_set_failure = false;
+};
+
+GpsTimeSyncState& gps_time_sync_state() {
+  static GpsTimeSyncState state;
+  return state;
+}
+
+bool is_sane_unix_time_us(uint64_t unix_time_us) {
+  return unix_time_us >= kMinTrustedUnixUs && unix_time_us <= kMaxTrustedUnixUs;
+}
+
+uint64_t system_time_unix_us() {
+  const auto now = std::chrono::system_clock::now().time_since_epoch();
+  return static_cast<uint64_t>(
+      std::chrono::duration_cast<std::chrono::microseconds>(now).count());
+}
+
+}  // namespace
+
+bool openhd::util::maybe_adjust_system_time_from_unix_us(
+    uint64_t unix_time_us, const std::string& source) {
+  auto& state = gps_time_sync_state();
+  std::lock_guard<std::mutex> lock(state.mutex);
+  if (state.adjusted) {
+    return true;
+  }
+  auto logger = openhd::log::create_or_get("time_sync");
+  if (!is_sane_unix_time_us(unix_time_us)) {
+    if (!state.logged_invalid) {
+      logger->warn("Ignoring invalid {} time {}us", source, unix_time_us);
+      state.logged_invalid = true;
+    }
+    return false;
+  }
+  const uint64_t current_us = system_time_unix_us();
+  const int64_t delta_us = static_cast<int64_t>(unix_time_us) -
+                           static_cast<int64_t>(current_us);
+  if (std::llabs(delta_us) < kMinStepOffsetUs) {
+    if (!state.logged_small_offset) {
+      logger->info(
+          "System time close enough to {} time (offset {}s), not stepping",
+          source, delta_us / static_cast<int64_t>(kUnixUsPerSecond));
+      state.logged_small_offset = true;
+    }
+    return true;
+  }
+
+#ifdef __linux__
+  timespec ts{};
+  ts.tv_sec = static_cast<time_t>(unix_time_us / kUnixUsPerSecond);
+  ts.tv_nsec =
+      static_cast<long>((unix_time_us % kUnixUsPerSecond) * 1000ULL);
+  if (clock_settime(CLOCK_REALTIME, &ts) != 0) {
+    if (!state.logged_set_failure) {
+      logger->warn("Failed to set system time from {}: {}", source,
+                   std::strerror(errno));
+      state.logged_set_failure = true;
+    }
+    return true;
+  }
+  state.adjusted = true;
+  logger->warn("Stepped system time from {} by {}s", source,
+               delta_us / static_cast<int64_t>(kUnixUsPerSecond));
+  return true;
+#else
+  (void)source;
+  return false;
+#endif
 }

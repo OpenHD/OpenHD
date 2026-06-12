@@ -25,11 +25,13 @@
 #define XMAVLINKSERVICE_MAV_HELPER_H
 
 #include <chrono>
+#include <cstdint>
 #include <iostream>
 #include <sstream>
 
 #include "mav_include.h"
 #include "openhd_spdlog.h"
+#include "openhd_util_time.h"
 
 namespace MExampleMessage {
 // mostly from
@@ -83,6 +85,37 @@ static MavlinkMessage createHeartbeat(const int sys_id, const int comp_id) {
 }  // namespace OHDMessages
 
 namespace MavlinkHelpers {
+
+static void maybe_sync_system_time_from_gps(
+    const std::vector<MavlinkMessage>& messages) {
+  static bool gps_time_checked_this_boot = false;
+  if (gps_time_checked_this_boot) {
+    return;
+  }
+  for (const auto& msg : messages) {
+    if (msg.m.msgid == MAVLINK_MSG_ID_GPS_RAW_INT) {
+      mavlink_gps_raw_int_t gps{};
+      mavlink_msg_gps_raw_int_decode(&msg.m, &gps);
+      if (gps.fix_type >= GPS_FIX_TYPE_3D_FIX &&
+          gps.satellites_visible != UINT8_MAX && gps.satellites_visible >= 4) {
+        gps_time_checked_this_boot =
+            openhd::util::maybe_adjust_system_time_from_unix_us(
+                gps.time_usec, "GPS_RAW_INT");
+      }
+      continue;
+    }
+    if (msg.m.msgid == MAVLINK_MSG_ID_GPS2_RAW) {
+      mavlink_gps2_raw_t gps{};
+      mavlink_msg_gps2_raw_decode(&msg.m, &gps);
+      if (gps.fix_type >= GPS_FIX_TYPE_3D_FIX &&
+          gps.satellites_visible != UINT8_MAX && gps.satellites_visible >= 4) {
+        gps_time_checked_this_boot =
+            openhd::util::maybe_adjust_system_time_from_unix_us(
+                gps.time_usec, "GPS2_RAW");
+      }
+    }
+  }
+}
 
 static std::string mavlink_status_to_string(
     const mavlink_status_t& mavlink_status) {

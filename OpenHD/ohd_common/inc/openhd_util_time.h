@@ -25,6 +25,7 @@
 #define OPENHD_OPENHD_UTIL_TIME_H
 
 #include <chrono>
+#include <cstdint>
 #include <string>
 
 namespace openhd::util {
@@ -45,6 +46,14 @@ uint32_t get_micros(std::chrono::nanoseconds ns);
 
 void store_air_unit_time_offset_us(int64_t offset_us);
 int64_t get_air_unit_time_offset_us();
+
+// Conservatively step the system wall clock from a trusted external Unix
+// timestamp. Intended for GPS-derived time: invalid/empty timestamps are
+// rejected, small offsets are ignored, and the clock is stepped at most once per
+// process. Returns true once the timestamp was sane enough to stop retrying for
+// this boot, regardless of whether a step was required.
+bool maybe_adjust_system_time_from_unix_us(uint64_t unix_time_us,
+                                           const std::string& source);
 
 }  // namespace openhd::util
 

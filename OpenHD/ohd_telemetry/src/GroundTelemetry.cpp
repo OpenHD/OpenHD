@@ -135,6 +135,7 @@ GroundTelemetry::~GroundTelemetry() {
 
 void GroundTelemetry::on_messages_air_unit(
     const std::vector<MavlinkMessage>& messages) {
+  MavlinkHelpers::maybe_sync_system_time_from_gps(messages);
   record_mavlink_messages(messages, "received", "air_unit", "openhd_ground");
   // All messages we get from the Air pi (they might come from the AirPi itself
   // or the FC connected to the air pi) get forwarded straight to all the
