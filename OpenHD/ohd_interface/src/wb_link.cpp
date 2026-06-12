@@ -320,8 +320,6 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
   assert(m_console);
   m_frame_drop_helper.set_console(m_console);
   m_console->info("Broadcast cards:{}", debug_cards(m_broadcast_cards));
-  m_video_crypto = std::make_unique<openhd::VideoCrypto>(m_console);
-  m_video_crypto->load(m_profile.is_air);
   // sanity checks
   if (m_broadcast_cards.empty()) {
     // NOTE: Here we crash, since it would be a programmer(s) error
@@ -427,6 +425,7 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
   }
   m_wb_txrx =
       std::make_shared<WBTxRx>(tmp_wifi_cards, txrx_options, m_tx_header_2);
+  m_video_crypto_available = m_wb_txrx->load_external_encryption_plugin();
   m_wb_txrx->m_fatal_error_cb = [this](int error) {
     on_wifi_card_fatal_error();
   };
@@ -2216,8 +2215,12 @@ void WBLink::transmit_video_data(
   // m_console->debug("Got {}",fragmented_video_frame.rtp_fragments.size());
   auto& tx = *m_wb_video_tx_list[stream_index];
   tx.set_encryption(false);
+  const bool use_external_video_crypto =
+      fragmented_video_frame.enable_ultra_secure_encryption &&
+      m_video_crypto_available;
+  tx.set_external_crypto(use_external_video_crypto);
   if (fragmented_video_frame.enable_ultra_secure_encryption &&
-      (!m_video_crypto || !m_video_crypto->is_loaded())) {
+      !m_video_crypto_available) {
     if (!m_logged_missing_video_crypto) {
       m_console->warn(
           "Video encryption requested but is not available in the community "
