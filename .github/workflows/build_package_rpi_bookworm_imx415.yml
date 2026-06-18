@@ -41,6 +41,8 @@ jobs:
             touch /usr/local/share/openhd/joyconfig.txt
 
             # ── 1. Build libcamera-openhd 1.3.0-imx415 from our fork ───────────
+            # Note: arducam SDK requires libstdc++6 >= 11 (unavailable on Bullseye).
+            # Our meson.build already strips arducam cam_helpers so no SDK needed.
             sudo apt-get update -qq
             sudo apt-get install -y \
               libboost-dev git python3-pip ruby-dev libgnutls28-dev openssl \
@@ -55,13 +57,6 @@ jobs:
             python3 -m pip install --upgrade meson
             gem install fpm
 
-            curl -s --compressed "https://arducam.github.io/arducam_ppa/KEY.gpg" | sudo apt-key add -
-            sudo curl -s --compressed \
-              -o /etc/apt/sources.list.d/arducam_list_files.list \
-              "https://arducam.github.io/arducam_ppa/arducam_list_files.list"
-            sudo apt-get update -qq
-            sudo apt-get install -y arducam-pivariety-sdk-dev
-
             git clone --depth=1 --branch feature/add-imx415 \
               https://github.com/JFullerFPV/libcamera.git /tmp/libcamera-src
             cd /tmp/libcamera-src
@@ -74,10 +69,6 @@ jobs:
               -Ddocumentation=disabled -Dpycamera=enabled \
               -Dlibexecdir=/usr/lib/arm-linux-gnueabihf --prefix=/usr
             DESTDIR=/tmp/libcamera-install ninja -C build install
-            cp -r tuning/* /tmp/libcamera-install/usr/share/libcamera/ipa/rpi/vc4/
-
-            sudo apt-get download arducam-pivariety-sdk-dev
-            dpkg -x arducam-pivariety-sdk-dev*.deb /tmp/libcamera-install
 
             fpm -a armhf -s dir -t deb -n libcamera-openhd -v 1.3.0-imx415 \
               -C /tmp/libcamera-install \
@@ -88,7 +79,7 @@ jobs:
 
             # ── 2. Build OpenHD against our IMX415-enabled libcamera ────────────
             # install_build_dep.sh adds cloudsmith repo but apt will not downgrade
-            # libcamera-openhd since our 1.3.0-imx415 > cloudsmith's 1.2.7
+            # libcamera-openhd since our 1.3.0-imx415 > cloudsmith 1.2.7
             cd /opt/OpenHD
             sudo ./install_build_dep.sh rpi
             chown -R root:root /opt/OpenHD
