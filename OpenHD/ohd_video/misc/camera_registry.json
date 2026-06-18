@@ -234,6 +234,17 @@
       ]
     },
     {
+      "key": "X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX415",
+      "id": 48,
+      "name": "ARDUCAM_IMX415",
+      "ui_label": "IMX415 4K",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 60},
+        {"width": 1920, "height": 1080, "fps": 30},
+        {"width": 3840, "height": 2160, "fps": 15}
+      ]
+    },
+    {
       "key": "X_CAM_TYPE_RPI_V4L2_VEYE_2MP",
       "id": 60,
       "name": "VEYE_2MP",
@@ -671,7 +682,8 @@
         "X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX327",
         "X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX290",
         "X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX462_LOWLIGHT_MINI",
-        "X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX662"
+        "X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX662",
+        "X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX415"
       ]
     },
     {
