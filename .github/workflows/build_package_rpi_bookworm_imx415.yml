@@ -30,11 +30,8 @@ jobs:
     - uses: pguyot/arm-runner-action@98b8d5a3228f504a8bd54913ab1e23d70f369c6e
       id: build_image
       with:
-        # Bullseye is required: libcamera-openhd on cloudsmith is only built for
-        # raspbian/bullseye. IMX415 kernel+libcamera support is installed at
-        # runtime on the target Pi via scripts/setup_rpi_imx415.sh.
         base_image: raspios_lite:2023-05-03
-        image_additional_mb: 4000
+        image_additional_mb: 6000
         copy_repository_path: /opt
         copy_artifact_path: OpenHD
         copy_artifacts_on_fail: yes
@@ -42,12 +39,61 @@ jobs:
         commands: |
             mkdir -p /usr/local/share/openhd/
             touch /usr/local/share/openhd/joyconfig.txt
+
+            # ── 1. Build libcamera-openhd 1.3.0-imx415 from our fork ───────────
+            sudo apt-get update -qq
+            sudo apt-get install -y \
+              libboost-dev git python3-pip ruby-dev libgnutls28-dev openssl \
+              libtiff5-dev meson libegl1-mesa-dev cmake \
+              libboost-program-options-dev libdrm-dev libexif-dev \
+              libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
+              python3-pybind11 ninja-build
+
+            python3 -m pip install --upgrade pip setuptools wheel
+            python3 -m pip install 'MarkupSafe<3.0'
+            python3 -m pip install pyyaml ply jinja2
+            python3 -m pip install --upgrade meson
+            gem install fpm
+
+            curl -s --compressed "https://arducam.github.io/arducam_ppa/KEY.gpg" | sudo apt-key add -
+            sudo curl -s --compressed \
+              -o /etc/apt/sources.list.d/arducam_list_files.list \
+              "https://arducam.github.io/arducam_ppa/arducam_list_files.list"
+            sudo apt-get update -qq
+            sudo apt-get install -y arducam-pivariety-sdk-dev=1.0.5
+
+            git clone --depth=1 --branch feature/add-imx415 \
+              https://github.com/JFullerFPV/libcamera.git /tmp/libcamera-src
+            cd /tmp/libcamera-src
+
+            mkdir -p /tmp/libcamera-install
+            meson build --buildtype=release \
+              -Dpipelines=rpi/vc4 -Dipas=rpi/vc4 \
+              -Dv4l2=true -Dgstreamer=enabled -Dtest=false \
+              -Dlc-compliance=disabled -Dcam=disabled -Dqcam=disabled \
+              -Ddocumentation=disabled -Dpycamera=enabled \
+              -Dlibexecdir=/usr/lib/arm-linux-gnueabihf --prefix=/usr
+            DESTDIR=/tmp/libcamera-install ninja -C build install
+            cp -r tuning/* /tmp/libcamera-install/usr/share/libcamera/ipa/rpi/vc4/
+
+            sudo apt-get download arducam-pivariety-sdk-dev
+            dpkg -x arducam-pivariety-sdk-dev*.deb /tmp/libcamera-install
+
+            fpm -a armhf -s dir -t deb -n libcamera-openhd -v 1.3.0-imx415 \
+              -C /tmp/libcamera-install \
+              -p /opt/OpenHD/libcamera-openhd-imx415_armhf.deb \
+              --conflicts "libcamera-dev" --conflicts "libcamera0"
+            sudo dpkg -i /opt/OpenHD/libcamera-openhd-imx415_armhf.deb
+
+            # ── 2. Build OpenHD against our IMX415-enabled libcamera ────────────
+            # install_build_dep.sh adds cloudsmith repo but apt will not downgrade
+            # libcamera-openhd since our 1.3.0-imx415 > cloudsmith's 1.2.7
             cd /opt/OpenHD
             sudo ./install_build_dep.sh rpi
             chown -R root:root /opt/OpenHD
             sudo ./package.sh standard armhf raspbian bullseye
 
-    - name: Upload .deb artifact
+    - name: Upload .deb artifacts
       uses: actions/upload-artifact@v4
       with:
         name: openhd-rpi-imx415
