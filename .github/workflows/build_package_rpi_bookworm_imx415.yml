@@ -42,11 +42,10 @@ jobs:
         commands: |
             mkdir -p /usr/local/share/openhd/
             touch /usr/local/share/openhd/joyconfig.txt
-            cd /opt
+            cd /opt/OpenHD
             sudo ./install_build_dep.sh rpi
-            chown -R root:root /opt
+            chown -R root:root /opt/OpenHD
             sudo ./package.sh standard armhf raspbian bullseye
-            cp /out/*.deb /opt/OpenHD/
 
     - name: Upload .deb artifact
       uses: actions/upload-artifact@v4
