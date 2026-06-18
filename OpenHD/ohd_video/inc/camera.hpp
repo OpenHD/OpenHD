@@ -286,8 +286,9 @@ static std::vector<ManufacturerForPlatform> get_camera_choices_for_platform(
     return to_manufacturers(platform_entry->manufacturers,
                             platform_entry->manufacturer_count);
   }
-  return to_manufacturers(openhd::camera_registry::kFallbackManufacturers.data(),
-                          openhd::camera_registry::kFallbackManufacturerCount);
+  return to_manufacturers(
+      openhd::camera_registry::kFallbackManufacturers.data(),
+      openhd::camera_registry::kFallbackManufacturerCount);
 }
 
 #endif  // OPENHD_CAMERA_HPP
