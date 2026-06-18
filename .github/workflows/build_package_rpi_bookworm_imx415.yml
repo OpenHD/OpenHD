@@ -60,7 +60,7 @@ jobs:
               -o /etc/apt/sources.list.d/arducam_list_files.list \
               "https://arducam.github.io/arducam_ppa/arducam_list_files.list"
             sudo apt-get update -qq
-            sudo apt-get install -y arducam-pivariety-sdk-dev=1.0.5
+            sudo apt-get install -y arducam-pivariety-sdk-dev
 
             git clone --depth=1 --branch feature/add-imx415 \
               https://github.com/JFullerFPV/libcamera.git /tmp/libcamera-src
@@ -83,6 +83,7 @@ jobs:
               -C /tmp/libcamera-install \
               -p /opt/OpenHD/libcamera-openhd-imx415_armhf.deb \
               --conflicts "libcamera-dev" --conflicts "libcamera0"
+            sudo apt-get purge -y python3-libcamera libcamera0 || true
             sudo dpkg -i /opt/OpenHD/libcamera-openhd-imx415_armhf.deb
 
             # ── 2. Build OpenHD against our IMX415-enabled libcamera ────────────
