@@ -30,24 +30,28 @@ jobs:
     - uses: pguyot/arm-runner-action@98b8d5a3228f504a8bd54913ab1e23d70f369c6e
       id: build_image
       with:
-        # Bookworm image (kernel 6.12+, libcamera 0.5+, imx415 driver included)
-        base_image: raspios_lite:2024-11-19
+        # Bullseye is required: libcamera-openhd on cloudsmith is only built for
+        # raspbian/bullseye. IMX415 kernel+libcamera support is installed at
+        # runtime on the target Pi via scripts/setup_rpi_imx415.sh.
+        base_image: raspios_lite:2023-05-03
         image_additional_mb: 4000
         copy_repository_path: /opt
         copy_artifact_path: OpenHD
+        copy_artifacts_on_fail: yes
         import_github_env: true
         commands: |
-            cd /opt/OpenHD
             mkdir -p /usr/local/share/openhd/
             touch /usr/local/share/openhd/joyconfig.txt
+            cd /opt
             sudo ./install_build_dep.sh rpi
-            chown -R root:root /opt/OpenHD
-            sudo ./package.sh standard armhf raspbian bookworm
+            chown -R root:root /opt
+            sudo ./package.sh standard armhf raspbian bullseye
+            cp /out/*.deb /opt/OpenHD/
 
     - name: Upload .deb artifact
       uses: actions/upload-artifact@v4
       with:
-        name: openhd-rpi-bookworm-imx415
+        name: openhd-rpi-imx415
         path: OpenHD/*.deb
         if-no-files-found: error
         retention-days: 30
