@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: Maximize build space
-      uses: easimon/maximize-build-space@master
+      uses: easimon/maximize-build-space@c28619d8999a147d5e09c1199f84ff6af6ad5794
       with:
         root-reserve-mb: 512
         swap-size-mb: 1024
