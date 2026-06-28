@@ -187,6 +187,19 @@ Acquire::IndexTargets::deb::DEP-11-icons-small::DefaultEnabled "false";
 Acquire::IndexTargets::deb::DEP-11-icons::DefaultEnabled "false";
 Acquire::IndexTargets::deb::DEP-11-icons-hidpi::DefaultEnabled "false";
 EOF
+    mkdir -p /etc/dpkg/dpkg.cfg.d
+    cat >/etc/dpkg/dpkg.cfg.d/99openhd-ci-lean <<'EOF'
+path-exclude=/usr/share/doc/*
+path-exclude=/usr/share/man/*
+path-exclude=/usr/share/locale/*
+path-include=/usr/share/doc/*/copyright
+EOF
+    if command -v mandb >/dev/null 2>&1 && [[ ! -e /usr/bin/mandb.distrib ]]; then
+        dpkg-divert --local --rename --add /usr/bin/mandb || true
+    fi
+    if [[ -e /usr/bin/mandb.distrib ]]; then
+        ln -sf /bin/true /usr/bin/mandb || true
+    fi
     apt-get clean || true
     rm -rf /var/cache/apt/archives/*.deb /var/cache/man/* /var/lib/apt/lists/* || true
     rm -rf /usr/share/doc/* /usr/share/man/* /usr/share/locale/* || true

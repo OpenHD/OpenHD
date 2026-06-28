@@ -1,6 +1,7 @@
 name: build_package_radxa_arm64_debian
 
 on:
+  workflow_dispatch:
   push:
    branches:
       - "2.7-evo"
@@ -17,7 +18,17 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - image_type: radxa-zero3w
+            release: bookworm
+          - image_type: orangepi-zero3w-lite
+            release: bookworm
+          - image_type: radxa-cubie
+            release: bullseye
+          - image_type: rock5a
+            release: bookworm
           - image_type: rock5b
+            release: bookworm
+          - image_type: radxa-cm5
             release: bookworm
     env:
       CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
@@ -104,10 +115,15 @@ jobs:
           build_sh = Path("/opt/OpenHD-ChrootCompiler/build.sh")
           text = build_sh.read_text()
           original = text
+          text = text.replace(
+              "git clone https://github.com/OpenHD/OpenHD-ImageBuilder",
+              "git clone -b dev-release https://github.com/OpenHD/OpenHD-ImageBuilder",
+              1,
+          )
           image_needle = "mv OpenHD-ImageBuilder/images .\n"
           image_patch = (
               image_needle
-              + "for board in rock5a rock5b radxa-cm5 radxa-zero3w; do\n"
+              + "for board in radxa-zero3w orangepi-zero3w-lite radxa-cubie rock5a rock5b radxa-cm5; do\n"
               + "  if [ ! -f \"images/${board}\" ] && [ -f \"images/${board}_base\" ]; then\n"
               + "    cp \"images/${board}_base\" \"images/${board}\"\n"
               + "  fi\n"
@@ -129,6 +145,7 @@ jobs:
           patch = (
               needle
               + "sed -i 's/WANTEDSIZE=\"6800000000\"/WANTEDSIZE=\"15000000000\"/' stages/01-Baseimage/01-run.sh\n"
+              + "sed -i 's/WANTEDSIZE=\"5632000000\"/WANTEDSIZE=\"15000000000\"/' stages/01-Baseimage/01-run.sh\n"
           )
           if "WANTEDSIZE=\"15000000000\"" not in text:
               if needle not in text:
@@ -146,20 +163,29 @@ jobs:
       - name: Upload to Github
         uses: 'actions/upload-artifact@v4'
         with:
-          name: "OpenHD-${{ matrix.release }}-arm64"
+          name: "OpenHD-${{ matrix.image_type }}-${{ matrix.release }}-arm64"
           path: |
             *.deb
 
+      - name: Resolve Cloudsmith target repo
+        id: cloudsmith_repo
+        run: |
+          if [[ "${GITHUB_REF_NAME}" == "openhd-3.0" ]]; then
+            echo "name=dev-release" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Push
         id: push
-        if: github.ref_name == 'release' || github.ref_name == 'dev-release'
+        if: github.ref_name == 'release' || github.ref_name == 'dev-release' || github.ref_name == 'openhd-3.0'
         uses: cloudsmith-io/action@master
         with:
           api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
           command: "push"
           format: "deb"
           owner: "openhd"
-          repo: ${{ github.ref_name }}
+          repo: ${{ steps.cloudsmith_repo.outputs.name }}
           distro: "debian"
           release: "${{ matrix.release }}"
           republish: "true" # needed ONLY if version is not changing
