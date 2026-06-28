@@ -161,6 +161,7 @@ class WBLink : public OHDLink {
   // also via RC channel (if enabled)
   void wt_perform_mcs_via_rc_channel_if_enabled();
   void wt_perform_bw_via_rc_channel_if_enabled();
+  void wt_perform_tx_mode_via_rc_channel_if_enabled();
   // Time out to go from wifibroadcast mode to wifi hotspot mode
   void wt_perform_air_hotspot_after_timeout();
   // X20 only, thermal protection
@@ -252,7 +253,8 @@ class WBLink : public OHDLink {
   bool m_is_armed = false;
   std::atomic_bool m_request_apply_tx_power = false;
   std::atomic_bool m_request_apply_tx_mcs_index = false;
-  std::atomic_bool m_request_apply_air_bw = false;
+  std::atomic<int> m_pending_rc_channel_width = 0;
+  std::atomic<int> m_rc_tx_mode_override = -1;
   std::chrono::steady_clock::time_point m_last_log_key_mismatch =
       std::chrono::steady_clock::now();
   // We store tx power for easy access in stats

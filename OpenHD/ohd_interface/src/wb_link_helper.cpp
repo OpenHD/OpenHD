@@ -475,6 +475,8 @@ void openhd::wb::RCChannelHelper::set_rc_channels(
 
 std::optional<uint8_t> openhd::wb::RCChannelHelper::get_bw_from_rc_channel(
     int channel_index) {
+  if (channel_index <= openhd::WB_BW_VIA_RC_CHANNEL_OFF) return std::nullopt;
+  channel_index--;
   if (channel_index < 0 || channel_index >= 18) return std::nullopt;
   const auto rc_channels_opt = get_fc_reported_rc_channels();
   if (!rc_channels_opt.has_value()) {
@@ -492,6 +494,30 @@ std::optional<uint8_t> openhd::wb::RCChannelHelper::get_bw_from_rc_channel(
     // most likely invalid data, discard
     return std::nullopt;
   }
-  if (bw_channel_value_pwm > 1500) return 40;
-  return 20;
+  if (bw_channel_value_pwm > 1700) return 40;
+  if (bw_channel_value_pwm > 1300) return 20;
+  return 10;
+}
+
+std::optional<openhd::wb::RCChannelHelper::TxMode>
+openhd::wb::RCChannelHelper::get_tx_mode_from_rc_channel(int channel_index) {
+  if (channel_index <= openhd::WB_TX_MODE_VIA_RC_CHANNEL_OFF) {
+    return std::nullopt;
+  }
+  channel_index--;
+  if (channel_index < 0 || channel_index >= 18) return std::nullopt;
+  const auto rc_channels_opt = get_fc_reported_rc_channels();
+  if (!rc_channels_opt.has_value()) {
+    return std::nullopt;
+  }
+  const auto tx_mode_channel_value_pwm = rc_channels_opt.value()[channel_index];
+  if (tx_mode_channel_value_pwm == UINT16_MAX) {
+    return std::nullopt;
+  }
+  if (tx_mode_channel_value_pwm < 900 || tx_mode_channel_value_pwm > 2100) {
+    return std::nullopt;
+  }
+  if (tx_mode_channel_value_pwm > 1700) return TxMode::NORMAL;
+  if (tx_mode_channel_value_pwm > 1300) return TxMode::PIT;
+  return TxMode::OFF;
 }

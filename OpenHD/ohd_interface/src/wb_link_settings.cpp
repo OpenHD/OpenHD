@@ -36,7 +36,9 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
     wb_tx_power_mw_per_card, wb_tx_power_mw_armed_per_card,
     wb_tx_power_idx_per_card, wb_tx_power_idx_armed_per_card,
     wb_video_fec_percentage, wb_video_rate_for_mcs_adjustment_percent,
-    wb_max_fec_block_size, wb_mcs_index_via_rc_channel, wb_bw_via_rc_channel,
+    wb_max_fec_block_size, wb_enable_rc_openhd_control,
+    wb_mcs_index_via_rc_channel, wb_bw_via_rc_channel,
+    wb_tx_mode_via_rc_channel,
     enable_wb_video_variable_bitrate, wb_enable_listen_only_mode, wb_pit_mode,
     wb_dev_air_set_high_retransmit_count, wb_enable_redundant_tx,
     wb_enable_retransmission, wb_enable_retransmission_video,
@@ -93,10 +95,15 @@ std::optional<WBLinkSettings> openhd::WBLinkSettingsHolder::impl_deserialize(
                      settings.wb_video_rate_for_mcs_adjustment_percent);
     settings.wb_max_fec_block_size =
         parsed.value("wb_max_fec_block_size", settings.wb_max_fec_block_size);
+    settings.wb_enable_rc_openhd_control =
+        parsed.value("wb_enable_rc_openhd_control",
+                     settings.wb_enable_rc_openhd_control);
     settings.wb_mcs_index_via_rc_channel = parsed.value(
         "wb_mcs_index_via_rc_channel", settings.wb_mcs_index_via_rc_channel);
     settings.wb_bw_via_rc_channel =
         parsed.value("wb_bw_via_rc_channel", settings.wb_bw_via_rc_channel);
+    settings.wb_tx_mode_via_rc_channel = parsed.value(
+        "wb_tx_mode_via_rc_channel", settings.wb_tx_mode_via_rc_channel);
     settings.enable_wb_video_variable_bitrate =
         parsed.value("enable_wb_video_variable_bitrate",
                      settings.enable_wb_video_variable_bitrate);

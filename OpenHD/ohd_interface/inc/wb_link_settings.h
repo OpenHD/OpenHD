@@ -91,6 +91,7 @@ static constexpr uint32_t DEFAULT_MAX_FEC_BLK_SIZE = -1;
 // otherwise
 static constexpr auto WB_MCS_INDEX_VIA_RC_CHANNEL_OFF = 0;
 static constexpr auto WB_BW_VIA_RC_CHANNEL_OFF = 0;
+static constexpr auto WB_TX_MODE_VIA_RC_CHANNEL_OFF = 0;
 
 static constexpr auto MAX_WIFI_CARDS = 4;
 
@@ -142,10 +143,14 @@ struct WBLinkSettings {
   int wb_video_rate_for_mcs_adjustment_percent = 100;
   // NOTE: -1 means use whatever is the openhd recommendation for this platform
   int wb_max_fec_block_size = DEFAULT_MAX_FEC_BLK_SIZE;
+  // Master switch for RC-driven OpenHD link controls.
+  bool wb_enable_rc_openhd_control = false;
   // change mcs index via RC channel
   uint32_t wb_mcs_index_via_rc_channel = WB_MCS_INDEX_VIA_RC_CHANNEL_OFF;
   // change bw via RC channel
   int wb_bw_via_rc_channel = WB_BW_VIA_RC_CHANNEL_OFF;
+  // change tx mode via RC channel: low=off, mid=pit, high=normal
+  int wb_tx_mode_via_rc_channel = WB_TX_MODE_VIA_RC_CHANNEL_OFF;
   // wb link recommends bitrate(s) to the encoder.
   bool enable_wb_video_variable_bitrate = true;
   int wb_qp_max = 17;
@@ -243,8 +248,10 @@ static constexpr auto WB_QP_MIN = "QP_MIN";
 static constexpr auto WB_ENABLE_STBC = "WB_E_STBC";
 static constexpr auto WB_ENABLE_LDPC = "WB_E_LDPC";
 static constexpr auto WB_ENABLE_SHORT_GUARD = "WB_E_SHORT_GUARD";
+static constexpr auto WB_ENABLE_RC_OPENHD_CONTROL = "RC_OHD_CTRL";
 static constexpr auto WB_MCS_INDEX_VIA_RC_CHANNEL = "MCS_VIA_RC";
 static constexpr auto WB_BW_VIA_RC_CHANNEL = "BW_VIA_RC";
+static constexpr auto WB_TX_MODE_VIA_RC_CHANNEL = "TXMODE_VIA_RC";
 static constexpr auto WB_PASSIVE_MODE = "WB_PASSIVE_MODE";
 static constexpr auto WB_PIT_MODE = "WB_PIT_MODE";
 static constexpr auto WB_DEV_AIR_SET_HIGH_RETRANSMIT_COUNT = "DEV_HIGH_RETR";
