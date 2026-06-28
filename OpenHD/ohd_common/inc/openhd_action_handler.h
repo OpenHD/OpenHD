@@ -189,6 +189,7 @@ class LinkActionHandler {
     action_request_bitrate_change_register(nullptr);
     wb_cmd_scan_channels = nullptr;
     wb_cmd_analyze_channels = nullptr;
+    wb_cmd_apply_radio_settings = nullptr;
     wb_get_supported_channels = nullptr;
   }
 
@@ -328,6 +329,13 @@ class LinkActionHandler {
  public:
   std::function<std::vector<uint16_t>()> wb_get_supported_channels = nullptr;
   std::function<bool(int)> wb_cmd_analyze_channels = nullptr;
+  struct RadioSettingsParam {
+    bool enable_rc_openhd_control = false;
+    uint8_t mcs_via_rc_channel = 0;
+    uint8_t bw_via_rc_channel = 0;
+    uint8_t tx_mode_via_rc_channel = 0;
+  };
+  std::function<bool(RadioSettingsParam)> wb_cmd_apply_radio_settings = nullptr;
 
  public:
   std::atomic<int> scan_channels_air_unit_progress = -1;

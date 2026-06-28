@@ -618,6 +618,10 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
     return request_start_analyze_channels(channels_to_scan);
   };
   openhd::LinkActionHandler::instance().wb_cmd_analyze_channels = cb_analyze;
+  openhd::LinkActionHandler::instance().wb_cmd_apply_radio_settings =
+      [this](openhd::LinkActionHandler::RadioSettingsParam radio_settings) {
+        return apply_radio_settings(radio_settings);
+      };
   if (m_profile.is_air) {
     // MCS is only changed on air
     auto cb_channel = [this](const std::array<int, 18>& rc_channels) {
@@ -658,6 +662,7 @@ WBLink::~WBLink() {
       WB_LINK_ARM_CHANGED_TX_POWER_TAG);
   openhd::LinkActionHandler::instance().wb_cmd_scan_channels = nullptr;
   openhd::LinkActionHandler::instance().wb_cmd_analyze_channels = nullptr;
+  openhd::LinkActionHandler::instance().wb_cmd_apply_radio_settings = nullptr;
   m_wb_txrx->stop_receiving();
   // stop all the receiver/transmitter instances, after that, give card back to
   // network manager
@@ -984,6 +989,32 @@ bool WBLink::request_set_tx_power_level(int level) {
   m_settings->unsafe_get_settings().wb_tx_power_level = level;
   m_settings->persist();
   m_request_apply_tx_power = true;
+  return true;
+}
+
+bool WBLink::apply_radio_settings(
+    openhd::LinkActionHandler::RadioSettingsParam radio_settings) {
+  if (radio_settings.mcs_via_rc_channel > 18 ||
+      radio_settings.bw_via_rc_channel > 18 ||
+      radio_settings.tx_mode_via_rc_channel > 18) {
+    m_console->warn("Invalid RC channel in radio settings");
+    return false;
+  }
+
+  auto& settings = m_settings->unsafe_get_settings();
+  settings.wb_enable_rc_openhd_control =
+      radio_settings.enable_rc_openhd_control;
+  settings.wb_mcs_index_via_rc_channel = radio_settings.mcs_via_rc_channel;
+  settings.wb_bw_via_rc_channel = radio_settings.bw_via_rc_channel;
+  settings.wb_tx_mode_via_rc_channel = radio_settings.tx_mode_via_rc_channel;
+  m_settings->persist();
+
+  if (!settings.wb_enable_rc_openhd_control) {
+    m_pending_rc_channel_width = 0;
+    m_rc_tx_mode_override = -1;
+    re_enable_injection_unless_user_passive_mode_enabled();
+    m_request_apply_tx_power = true;
+  }
   return true;
 }
 

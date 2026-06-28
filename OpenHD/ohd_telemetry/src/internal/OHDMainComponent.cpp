@@ -100,6 +100,31 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_messages(
         }
         // TODO have an ack response.
       } break;
+      case MAVLINK_MSG_ID_OPENHD_WIFBROADCAST_RADIO_SETTINGS: {
+        mavlink_openhd_wifbroadcast_radio_settings_t radio_settings;
+        mavlink_msg_openhd_wifbroadcast_radio_settings_decode(
+            &msg.m, &radio_settings);
+        const bool target_matches =
+            radio_settings.target_system == m_sys_id &&
+            (radio_settings.target_component == 0 ||
+             radio_settings.target_component == m_comp_id);
+        if (target_matches &&
+            openhd::LinkActionHandler::instance()
+                .wb_cmd_apply_radio_settings) {
+          openhd::LinkActionHandler::RadioSettingsParam param{};
+          param.enable_rc_openhd_control =
+              radio_settings.enable_rc_openhd_control != 0;
+          param.mcs_via_rc_channel = radio_settings.mcs_via_rc_channel;
+          param.bw_via_rc_channel = radio_settings.bw_via_rc_channel;
+          param.tx_mode_via_rc_channel =
+              radio_settings.tx_mode_via_rc_channel;
+          const bool success =
+              openhd::LinkActionHandler::instance()
+                  .wb_cmd_apply_radio_settings(param);
+          m_console->debug("OPENHD_WIFBROADCAST_RADIO_SETTINGS result: {}",
+                           success);
+        }
+      } break;
       case MAVLINK_MSG_ID_GLOBAL_POSITION_INT: {
         // Writes last known position to file(s) for crash recovery
         mavlink_global_position_int_t global_position_int;

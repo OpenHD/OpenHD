@@ -121,6 +121,8 @@ class WBLink : public OHDLink {
   bool set_air_enable_wb_video_variable_bitrate(int value);
   bool set_air_max_fec_block_size_for_platform(int value);
   bool set_air_wb_video_rate_for_mcs_adjustment_percent(int value);
+  bool apply_radio_settings(
+      openhd::LinkActionHandler::RadioSettingsParam radio_settings);
   bool set_dev_air_set_high_retransmit_count(int value);
   bool request_set_ground_rx_channel_width(int channel_width);
   // Initiate channel scan / channel analyze.
