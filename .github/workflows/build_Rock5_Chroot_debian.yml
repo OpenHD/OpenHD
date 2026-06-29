@@ -198,7 +198,7 @@ jobs:
           PY
           export OPENHD_EXPAND_IMAGE_FOR_CI=1
           export OPENHD_CI_IMAGE_SIZE=15G
-          sudo bash build.sh "${{ matrix.image_type }}" "$API_KEY" debian "${{ matrix.release }}"
+          sudo OPENHD_EXPAND_IMAGE_FOR_CI="$OPENHD_EXPAND_IMAGE_FOR_CI" OPENHD_CI_IMAGE_SIZE="$OPENHD_CI_IMAGE_SIZE" bash build.sh "${{ matrix.image_type }}" "$API_KEY" debian "${{ matrix.release }}"
     
       - name: debug
         run:
