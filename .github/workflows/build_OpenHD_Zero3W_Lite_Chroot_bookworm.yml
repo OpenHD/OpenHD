@@ -80,8 +80,59 @@ jobs:
           cd /opt/OpenHD-ChrootCompiler/
           sudo apt update
           sudo bash install_dep.sh
+          export OPENHD_CHROOT_HOST_OUT_DIR="$GITHUB_WORKSPACE/chroot-out/zero3w-lite"
+          mkdir -p "$OPENHD_CHROOT_HOST_OUT_DIR"
           python3 - <<'PY'
           from pathlib import Path
+
+          common_sh = Path("/opt/OpenHD-ChrootCompiler/scripts/common.sh")
+          common_text = common_sh.read_text()
+          workspace_out_marker = "OPENHD_CHROOT_HOST_OUT_DIR"
+          if workspace_out_marker not in common_text:
+              old_out_block = (
+                  "    cd ../../\n"
+                  "    mkdir out\n"
+                  "    cd out\n"
+                  "    echo \"$PWD\"  > ../additionalFiles/pwd.txt\n"
+                  "    cat ../additionalFiles/pwd.txt\n"
+                  "    cd ..\n"
+                  "    cd $(cat pwd1.txt)\n"
+              )
+              new_out_block = (
+                  "    cd ../../\n"
+                  "    mkdir -p \"${OPENHD_CHROOT_HOST_OUT_DIR}\"\n"
+                  "    cd \"${OPENHD_CHROOT_HOST_OUT_DIR}\"\n"
+                  "    echo \"$PWD\" > \"${STAGE_DIR}/../../additionalFiles/pwd.txt\"\n"
+                  "    echo \"$PWD\" > \"${STAGE_DIR}/../../additionalFiles/host_out_dir.txt\"\n"
+                  "    cat \"${STAGE_DIR}/../../additionalFiles/pwd.txt\"\n"
+                  "    cd \"$(cat \"${STAGE_DIR}/../../pwd1.txt\")\"\n"
+              )
+              if old_out_block not in common_text:
+                  raise SystemExit("Could not find ChrootCompiler out directory block in common.sh")
+              common_text = common_text.replace(old_out_block, new_out_block, 1)
+              old_capsh_block = (
+                  "    cp -r \"${STAGE_DIR}/../../additionalFiles\" \"${MNT_DIR}/opt\"\n"
+                  "    capsh --drop=cap_setfcap \"--chroot=${MNT_DIR}/\" -- \"$@\"\n"
+                  "\n"
+                  "    umount -l \"${MNT_DIR}/etc/resolv.conf\"\n"
+              )
+              new_capsh_block = (
+                  "    cp -r \"${STAGE_DIR}/../../additionalFiles\" \"${MNT_DIR}/opt\"\n"
+                  "    if [[ -n \"${OPENHD_CHROOT_HOST_OUT_DIR:-}\" ]]; then\n"
+                  "        mkdir -p \"${OPENHD_CHROOT_HOST_OUT_DIR}\" \"${MNT_DIR}/out\"\n"
+                  "        mountpoint -q \"${MNT_DIR}/out\" || mount --bind \"${OPENHD_CHROOT_HOST_OUT_DIR}\" \"${MNT_DIR}/out\"\n"
+                  "    fi\n"
+                  "    capsh --drop=cap_setfcap \"--chroot=${MNT_DIR}/\" -- \"$@\"\n"
+                  "\n"
+                  "    if mount | grep -q \"${MNT_DIR}/out\"; then\n"
+                  "        umount -l \"${MNT_DIR}/out\"\n"
+                  "    fi\n"
+                  "    umount -l \"${MNT_DIR}/etc/resolv.conf\"\n"
+              )
+              if old_capsh_block not in common_text:
+                  raise SystemExit("Could not find ChrootCompiler capsh block in common.sh")
+              common_text = common_text.replace(old_capsh_block, new_capsh_block, 1)
+              common_sh.write_text(common_text)
 
           chroot_build = Path("/opt/OpenHD-ChrootCompiler/additionalFiles/build_chroot.sh")
           chroot_text = chroot_build.read_text()
@@ -197,6 +248,36 @@ jobs:
           packages_stage = Path("/opt/OpenHD-ChrootCompiler/stages/02-Packages/00-run-chroot.sh")
           packages_text = packages_stage.read_text()
           packages_changed = False
+          bind_out_marker = "[openhd] Bind-mounted host output directory"
+          if bind_out_marker not in packages_text:
+              old_mount_block = (
+                  "HOST=$(cat /opt/additionalFiles/mount.txt)\n"
+                  "mkdir /host\n"
+                  "mount $HOST /host\n"
+                  "INDIR=$(cat /opt/additionalFiles/pwd.txt)\n"
+                  "OUTDIR=\"/host\"$INDIR\n"
+                  "ln -s $OUTDIR /out\n"
+                  "rm -Rf /out/*\n"
+              )
+              new_mount_block = (
+                  "if [[ -f /opt/additionalFiles/host_out_dir.txt ]]; then\n"
+                  "  HOST_OUT_DIR=$(cat /opt/additionalFiles/host_out_dir.txt)\n"
+                  "  mkdir -p /out\n"
+                  f"  echo \"{bind_out_marker}: ${{HOST_OUT_DIR}} -> /out\"\n"
+                  "else\n"
+                  "  HOST=$(cat /opt/additionalFiles/mount.txt)\n"
+                  "  mkdir /host\n"
+                  "  mount $HOST /host\n"
+                  "  INDIR=$(cat /opt/additionalFiles/pwd.txt)\n"
+                  "  OUTDIR=\"/host\"$INDIR\n"
+                  "  ln -s $OUTDIR /out\n"
+                  "fi\n"
+                  "rm -Rf /out/*\n"
+              )
+              if old_mount_block not in packages_text:
+                  raise SystemExit("Could not find ChrootCompiler /out mount block")
+              packages_text = packages_text.replace(old_mount_block, new_mount_block, 1)
+              packages_changed = True
           resize_marker = "[openhd] Expanding mounted root filesystem"
           if resize_marker not in packages_text:
               resize_patch = (
@@ -272,7 +353,7 @@ jobs:
 
       - name: Collect artifacts
         run: |
-          cp -r /opt/OpenHD-ChrootCompiler/out/* .
+          cp -r "$GITHUB_WORKSPACE/chroot-out/zero3w-lite"/*.deb .
 
       - name: Upload to Github
         uses: actions/upload-artifact@v4
