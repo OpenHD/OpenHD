@@ -121,7 +121,7 @@ function extract_rock_gstreamer_dev_files {
     install_x86_packages
 elif [[ "${PLATFORM}" == "rock5" ]] ; then
     install_rock_packages
-    for package in clang-format libsdl2-dev; do
+    for package in clang-format; do
         BASE_PACKAGES="${BASE_PACKAGES/${package}/}"
     done
     for package in ruby ruby-rubygems; do
