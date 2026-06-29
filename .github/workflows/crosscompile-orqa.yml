@@ -8,8 +8,6 @@ on:
   push:
     branches:
       - dev-release
-    branches-ignore:
-      - openhd-3.0
 
 jobs:
   build:
