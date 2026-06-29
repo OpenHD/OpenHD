@@ -67,26 +67,39 @@ PLATFORM_PACKAGES_REMOVE=""
 function extract_rock_gstreamer_dev_files {
     echo "Extracting GStreamer development files without Mesa dev dependencies..."
     tmpdir="$(mktemp -d)"
+    trap 'rm -rf "${tmpdir}"' RETURN
     (
         cd "${tmpdir}"
         apt-get clean
-        apt-get download \
-            libgstreamer1.0-dev \
-            libgstreamer-plugins-base1.0-dev \
-            librga-dev \
-            liborc-0.4-dev \
-            liborc-0.4-dev-bin \
-            libunwind-dev \
-            libdw-dev \
-            libelf-dev \
-            zlib1g-dev \
-            libzstd-dev \
-            liblzma-dev \
+        download_packages=(
+            libgstreamer1.0-dev
+            libgstreamer-plugins-base1.0-dev
+            liborc-0.4-dev
+            liborc-0.4-dev-bin
+            libunwind-dev
+            libdw-dev
+            libelf-dev
+            zlib1g-dev
+            libzstd-dev
+            liblzma-dev
             libbz2-dev
+        )
+        optional_download_packages=(
+            librga-dev
+        )
+        for package in "${optional_download_packages[@]}"; do
+            if apt-cache show "${package}" >/dev/null 2>&1; then
+                download_packages+=("${package}")
+            else
+                echo "Skipping optional ${package}; package is not available in this image's apt sources."
+            fi
+        done
+        apt-get download "${download_packages[@]}"
         for deb in ./*.deb; do
             dpkg-deb -x "${deb}" /
         done
     )
+    trap - RETURN
     rm -rf "${tmpdir}"
     mkdir -p /usr/lib/pkgconfig
     find /usr/lib/aarch64-linux-gnu/pkgconfig -name '*.pc' -exec cp -a {} /usr/lib/pkgconfig/ \;
