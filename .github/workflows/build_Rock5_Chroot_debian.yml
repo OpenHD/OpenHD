@@ -100,8 +100,32 @@ jobs:
           cd /opt/OpenHD-ChrootCompiler/
           sudo apt update
           sudo bash install_dep.sh
+          sudo apt install -y --no-install-recommends parted gdisk e2fsprogs
           python3 - <<'PY'
           from pathlib import Path
+
+          common_sh = Path("/opt/OpenHD-ChrootCompiler/scripts/common.sh")
+          common_text = common_sh.read_text()
+          mount_image_needle = '    PARTED_OUT=$(parted -s "${IMG_FILE}" unit b print)\n'
+          mount_image_patch = (
+              '    if [[ "${OPENHD_EXPAND_IMAGE_FOR_CI:-0}" == "1" ]]; then\n'
+              '        target_size="${OPENHD_CI_IMAGE_SIZE:-15G}"\n'
+              '        log "Expanding ${IMG_FILE} to ${target_size} for CI package build"\n'
+              '        truncate -s "${target_size}" "${IMG_FILE}"\n'
+              '        if command -v sgdisk >/dev/null 2>&1; then\n'
+              '            sgdisk -e "${IMG_FILE}" || true\n'
+              '        fi\n'
+              '        parted -s "${IMG_FILE}" resizepart "${ROOT_PART}" 100% || true\n'
+              '        sync\n'
+              '        parted -s "${IMG_FILE}" unit b print\n'
+              '    fi\n'
+              '\n'
+              '    PARTED_OUT=$(parted -s "${IMG_FILE}" unit b print)\n'
+          )
+          if mount_image_patch not in common_text:
+              if mount_image_needle not in common_text:
+                  raise SystemExit("Could not find ChrootCompiler PARTED_OUT line in common.sh")
+              common_sh.write_text(common_text.replace(mount_image_needle, mount_image_patch, 1))
 
           packages_stage = Path("/opt/OpenHD-ChrootCompiler/stages/02-Packages/00-run-chroot.sh")
           packages_text = packages_stage.read_text()
@@ -154,6 +178,8 @@ jobs:
           if text != original:
               build_sh.write_text(text)
           PY
+          export OPENHD_EXPAND_IMAGE_FOR_CI=1
+          export OPENHD_CI_IMAGE_SIZE=15G
           sudo bash build.sh "${{ matrix.image_type }}" "$API_KEY" debian "${{ matrix.release }}"
     
       - name: debug
