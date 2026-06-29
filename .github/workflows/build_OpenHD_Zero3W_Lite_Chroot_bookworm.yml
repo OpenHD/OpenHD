@@ -80,6 +80,7 @@ jobs:
           cd /opt/OpenHD-ChrootCompiler/
           sudo apt update
           sudo bash install_dep.sh
+          sudo apt install -y --no-install-recommends parted gdisk e2fsprogs
           export OPENHD_CHROOT_HOST_OUT_DIR="$GITHUB_WORKSPACE/chroot-out/zero3w-lite"
           mkdir -p "$OPENHD_CHROOT_HOST_OUT_DIR"
           python3 - <<'PY'
@@ -132,6 +133,25 @@ jobs:
               if old_capsh_block not in common_text:
                   raise SystemExit("Could not find ChrootCompiler capsh block in common.sh")
               common_text = common_text.replace(old_capsh_block, new_capsh_block, 1)
+              mount_image_needle = '    PARTED_OUT=$(parted -s "${IMG_FILE}" unit b print)\n'
+              mount_image_patch = (
+                  '    if [[ "${OPENHD_EXPAND_IMAGE_FOR_CI:-0}" == "1" ]]; then\n'
+                  '        target_size="${OPENHD_CI_IMAGE_SIZE:-15G}"\n'
+                  '        log "Expanding ${IMG_FILE} to ${target_size} for CI package build"\n'
+                  '        truncate -s "${target_size}" "${IMG_FILE}"\n'
+                  '        if command -v sgdisk >/dev/null 2>&1; then\n'
+                  '            sgdisk -e "${IMG_FILE}" || true\n'
+                  '        fi\n'
+                  '        parted -s "${IMG_FILE}" resizepart "${ROOT_PART}" 100% || true\n'
+                  '        sync\n'
+                  '        parted -s "${IMG_FILE}" unit b print\n'
+                  '    fi\n'
+                  '\n'
+                  '    PARTED_OUT=$(parted -s "${IMG_FILE}" unit b print)\n'
+              )
+              if mount_image_needle not in common_text:
+                  raise SystemExit("Could not find ChrootCompiler PARTED_OUT line in common.sh")
+              common_text = common_text.replace(mount_image_needle, mount_image_patch, 1)
               common_sh.write_text(common_text)
 
           chroot_build = Path("/opt/OpenHD-ChrootCompiler/additionalFiles/build_chroot.sh")
@@ -396,6 +416,8 @@ jobs:
           if text != original:
               build_sh.write_text(text)
           PY
+          export OPENHD_EXPAND_IMAGE_FOR_CI=1
+          export OPENHD_CI_IMAGE_SIZE=15G
           sudo bash build.sh radxa-zero3w-lite "$API_KEY" debian bookworm
 
       - name: Collect artifacts
