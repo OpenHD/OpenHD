@@ -192,6 +192,53 @@ jobs:
               if chroot_needle not in chroot_text:
                   raise SystemExit("Could not find apt update block in build_chroot.sh")
               chroot_text = chroot_text.replace(chroot_needle, chroot_patch + chroot_needle, 1)
+          if "prepare_apt_space_for_ci()" not in chroot_text:
+              apt_space_patch = (
+                  "prepare_apt_space_for_ci() {\n"
+                  "    echo \"Preparing lean apt/dpkg state for CI package build.\"\n"
+                  "    cat >/etc/apt/apt.conf.d/99openhd-ci-lean <<'EOF'\n"
+                  "Acquire::Languages \"none\";\n"
+                  "Acquire::IndexTargets::deb::Contents-deb::DefaultEnabled \"false\";\n"
+                  "Acquire::IndexTargets::deb::DEP-11::DefaultEnabled \"false\";\n"
+                  "Acquire::IndexTargets::deb::DEP-11-icons-small::DefaultEnabled \"false\";\n"
+                  "Acquire::IndexTargets::deb::DEP-11-icons::DefaultEnabled \"false\";\n"
+                  "Acquire::IndexTargets::deb::DEP-11-icons-hidpi::DefaultEnabled \"false\";\n"
+                  "EOF\n"
+                  "    mkdir -p /etc/dpkg/dpkg.cfg.d\n"
+                  "    cat >/etc/dpkg/dpkg.cfg.d/99openhd-ci-lean <<'EOF'\n"
+                  "path-exclude=/usr/share/doc/*\n"
+                  "path-exclude=/usr/share/man/*\n"
+                  "path-exclude=/usr/share/locale/*\n"
+                  "path-include=/usr/share/doc/*/copyright\n"
+                  "EOF\n"
+                  "    apt-get clean || true\n"
+                  "    rm -rf /var/cache/apt/archives/*.deb /var/cache/man/* /var/lib/apt/lists/* || true\n"
+                  "    rm -rf /usr/share/doc/* /usr/share/man/* /usr/share/locale/* || true\n"
+                  "\n"
+                  "    local purge_packages=\"\"\n"
+                  "    purge_packages=\"$(dpkg-query -W -f='${binary:Package}\\n' 2>/dev/null \\\n"
+                  "        | grep -E '^(akonadi|baloo|calligra|kde|kio|kmail|konsole|kscreen|kwin|libreoffice|plasma|sddm|xorg|xserver-xorg)' \\\n"
+                  "        | tr '\\n' ' ' || true)\"\n"
+                  "    if [[ -n \"${purge_packages}\" ]]; then\n"
+                  "        apt-get purge -y ${purge_packages} || true\n"
+                  "        apt-get autoremove -y || true\n"
+                  "        apt-get clean || true\n"
+                  "        rm -rf /var/cache/apt/archives/*.deb /var/cache/man/* /var/lib/apt/lists/* || true\n"
+                  "    fi\n"
+                  "\n"
+                  "    df -h /\n"
+                  "}\n"
+                  "\n"
+              )
+              if chroot_needle not in chroot_text:
+                  raise SystemExit("Could not find apt update block for apt space patch in build_chroot.sh")
+              chroot_text = chroot_text.replace(chroot_needle, apt_space_patch + chroot_needle, 1)
+          if "prepare_apt_space_for_ci\n\n# Update package lists" not in chroot_text:
+              chroot_text = chroot_text.replace(
+                  "# Update package lists and install necessary packages as root\n",
+                  "prepare_apt_space_for_ci\n\n# Update package lists and install necessary packages as root\n",
+                  1,
+              )
           if "free_chroot_space_for_ci()" not in chroot_text:
               cleanup_needle = "ensure_artosyn_cmake() {\n"
               cleanup_patch = (

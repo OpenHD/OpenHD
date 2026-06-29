@@ -46,6 +46,11 @@ sanitize_radxa_sources_for_current_distro() {
             sed -i -E '/dl\.cloudsmith\.io\/public\/openhd\/.*\/deb\/debian/s/^[[:space:]]*deb/# deb/' "$source_file"
             sed -i -E '/URIs:.*dl\.cloudsmith\.io\/public\/openhd\/.*\/deb\/debian/,/^$/s/^/# /' "$source_file"
         fi
+        if grep -Eq 'download\.vscodium\.com/debs' "$source_file"; then
+            echo "Disabling VSCodium apt source in ${source_file}"
+            sed -i -E '/download\.vscodium\.com\/debs/s/^[[:space:]]*deb/# deb/' "$source_file"
+            sed -i -E '/URIs:.*download\.vscodium\.com\/debs/,/^$/s/^/# /' "$source_file"
+        fi
         if grep -Eq 'radxa-repo\.github\.io' "$source_file"; then
             if grep -Eq '^[[:space:]]*deb[[:space:]]+(\[[^]]+\][[:space:]]+)?https?://radxa-repo\.github\.io/bullseye/?[[:space:]]+bullseye[[:space:]]' "$source_file"; then
                 echo "Disabling stale Radxa plain Bullseye apt source in ${source_file}"
@@ -104,8 +109,44 @@ EOF
     fi
 }
 
+prepare_apt_space_for_ci() {
+    echo "Preparing lean apt/dpkg state for CI package build."
+    cat >/etc/apt/apt.conf.d/99openhd-ci-lean <<'EOF'
+Acquire::Languages "none";
+Acquire::IndexTargets::deb::Contents-deb::DefaultEnabled "false";
+Acquire::IndexTargets::deb::DEP-11::DefaultEnabled "false";
+Acquire::IndexTargets::deb::DEP-11-icons-small::DefaultEnabled "false";
+Acquire::IndexTargets::deb::DEP-11-icons::DefaultEnabled "false";
+Acquire::IndexTargets::deb::DEP-11-icons-hidpi::DefaultEnabled "false";
+EOF
+    mkdir -p /etc/dpkg/dpkg.cfg.d
+    cat >/etc/dpkg/dpkg.cfg.d/99openhd-ci-lean <<'EOF'
+path-exclude=/usr/share/doc/*
+path-exclude=/usr/share/man/*
+path-exclude=/usr/share/locale/*
+path-include=/usr/share/doc/*/copyright
+EOF
+    apt-get clean || true
+    rm -rf /var/cache/apt/archives/*.deb /var/cache/man/* /var/lib/apt/lists/* || true
+    rm -rf /usr/share/doc/* /usr/share/man/* /usr/share/locale/* || true
+
+    local purge_packages=""
+    purge_packages="$(dpkg-query -W -f='${binary:Package}\n' 2>/dev/null \
+        | grep -E '^(akonadi|baloo|calligra|kde|kio|kmail|konsole|kscreen|kwin|libreoffice|plasma|sddm|xorg|xserver-xorg)' \
+        | tr '\n' ' ' || true)"
+    if [[ -n "${purge_packages}" ]]; then
+        apt-get purge -y ${purge_packages} || true
+        apt-get autoremove -y || true
+        apt-get clean || true
+        rm -rf /var/cache/apt/archives/*.deb /var/cache/man/* /var/lib/apt/lists/* || true
+    fi
+
+    df -h /
+}
+
 sanitize_radxa_sources_for_current_distro
 ensure_debian_sources_for_current_distro
+prepare_apt_space_for_ci
 
 # Update package lists and install necessary packages as root
 su -c "apt-get -o Acquire::Check-Valid-Until=false update --fix-missing && apt-get install -y sudo" || { echo "Failed to update and install sudo"; exit 1; }
@@ -235,40 +276,13 @@ fi
 
 free_chroot_space_for_ci() {
     echo "Freeing image space for CI package build."
-    cat >/etc/apt/apt.conf.d/99openhd-ci-lean <<'EOF'
-Acquire::Languages "none";
-Acquire::IndexTargets::deb::Contents-deb::DefaultEnabled "false";
-Acquire::IndexTargets::deb::DEP-11::DefaultEnabled "false";
-Acquire::IndexTargets::deb::DEP-11-icons-small::DefaultEnabled "false";
-Acquire::IndexTargets::deb::DEP-11-icons::DefaultEnabled "false";
-Acquire::IndexTargets::deb::DEP-11-icons-hidpi::DefaultEnabled "false";
-EOF
-    mkdir -p /etc/dpkg/dpkg.cfg.d
-    cat >/etc/dpkg/dpkg.cfg.d/99openhd-ci-lean <<'EOF'
-path-exclude=/usr/share/doc/*
-path-exclude=/usr/share/man/*
-path-exclude=/usr/share/locale/*
-path-include=/usr/share/doc/*/copyright
-EOF
+    prepare_apt_space_for_ci
     if command -v mandb >/dev/null 2>&1 && [[ ! -e /usr/bin/mandb.distrib ]]; then
         dpkg-divert --local --rename --add /usr/bin/mandb || true
     fi
     if [[ -e /usr/bin/mandb.distrib ]]; then
         ln -sf /bin/true /usr/bin/mandb || true
     fi
-    apt-get clean || true
-    rm -rf /var/cache/apt/archives/*.deb /var/cache/man/* /var/lib/apt/lists/* || true
-    rm -rf /usr/share/doc/* /usr/share/man/* /usr/share/locale/* || true
-
-    local purge_packages=""
-    purge_packages="$(dpkg-query -W -f='${binary:Package}\n' 2>/dev/null \
-        | grep -E '^(akonadi|baloo|calligra|kde|kio|kmail|konsole|kscreen|kwin|libreoffice|plasma|sddm|xorg|xserver-xorg)' \
-        | tr '\n' ' ' || true)"
-    if [[ -n "${purge_packages}" ]]; then
-        apt-get purge -y ${purge_packages} || true
-        apt-get autoremove -y || true
-    fi
-
     apt-get clean || true
     rm -rf /var/cache/apt/archives/*.deb /var/cache/man/* || true
     df -h /
