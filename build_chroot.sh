@@ -47,6 +47,15 @@ sanitize_radxa_sources_for_current_distro() {
             sed -i -E '/URIs:.*dl\.cloudsmith\.io\/public\/openhd\/.*\/deb\/debian/,/^$/s/^/# /' "$source_file"
         fi
         if grep -Eq 'radxa-repo\.github\.io' "$source_file"; then
+            if grep -Eq '^[[:space:]]*deb[[:space:]]+(\[[^]]+\][[:space:]]+)?https?://radxa-repo\.github\.io/bullseye/?[[:space:]]+bullseye[[:space:]]' "$source_file"; then
+                echo "Disabling stale Radxa plain Bullseye apt source in ${source_file}"
+                sed -i -E '\|^[[:space:]]*deb[[:space:]]+(\[[^]]+\][[:space:]]+)?https?://radxa-repo\.github\.io/bullseye/?[[:space:]]+bullseye[[:space:]]|s/^[[:space:]]*deb/# deb/' "$source_file"
+            fi
+            if grep -Eq '^[[:space:]]*URIs:.*radxa-repo\.github\.io/bullseye/?' "$source_file" \
+                && grep -Eq '^[[:space:]]*Suites:[[:space:]]+bullseye([[:space:]]|$)' "$source_file"; then
+                echo "Disabling stale Radxa plain Bullseye deb822 apt source in ${source_file}"
+                sed -i -E '/URIs:.*radxa-repo\.github\.io\/bullseye\/?/,/^$/s/^/# /' "$source_file"
+            fi
             if grep -E '^[[:space:]]*deb[[:space:]].*radxa-repo\.github\.io' "$source_file" | grep -Ev 'signed-by=' >/dev/null; then
                 echo "Disabling unsigned Radxa apt source in ${source_file}"
                 sed -i -E '/radxa-repo\.github\.io/{/signed-by=/!s/^[[:space:]]*deb/# deb/}' "$source_file"

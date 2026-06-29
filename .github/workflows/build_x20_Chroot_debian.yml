@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-22.04
     env:
       CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
+      OPENHD_SUBMODULE_TOKEN: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
     steps:
       - name: Maximize build space
         uses: easimon/maximize-build-space@master
@@ -31,12 +32,26 @@ jobs:
       - name: Checkout repository and submodules
         uses: actions/checkout@v4
         with:
-          submodules: recursive
+          submodules: false
+          persist-credentials: false
+          token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
       - name: Building OpenHD in CHROOT
         run: |
           git clone https://github.com/OpenHD/OpenHD-ChrootCompiler /opt/OpenHD-ChrootCompiler
           mkdir -p /opt/OpenHD-ChrootCompiler/additionalFiles
-          git clone https://github.com/OpenHD/OpenHD -b ${{ github.ref_name }} /opt/OpenHD-ChrootCompiler/additionalFiles/ --recursive
+          if [ -z "${OPENHD_SUBMODULE_TOKEN}" ]; then
+            echo "OPENHD_SUBMODULE_TOKEN is required for recursive submodules"
+            exit 1
+          fi
+          cleanup_git_auth() {
+            git config --global --unset-all url."https://x-access-token:${OPENHD_SUBMODULE_TOKEN}@github.com/".insteadOf || true
+          }
+          trap cleanup_git_auth EXIT
+          git config --global url."https://x-access-token:${OPENHD_SUBMODULE_TOKEN}@github.com/".insteadOf "https://github.com/"
+          git clone https://github.com/OpenHD/OpenHD -b ${{ github.ref_name }} /opt/OpenHD-ChrootCompiler/additionalFiles/
+          git -C /opt/OpenHD-ChrootCompiler/additionalFiles submodule sync --recursive
+          git -C /opt/OpenHD-ChrootCompiler/additionalFiles submodule update --init --recursive
+          git -C /opt/OpenHD-ChrootCompiler/additionalFiles submodule status --recursive
           echo $CLOUDSMITH_API_KEY > /opt/OpenHD-ChrootCompiler/additionalFiles/cloudsmith_api_key.txt
           echo "true" > /opt/OpenHD-ChrootCompiler/additionalFiles/custom.txt
           echo "armhf" > /opt/OpenHD-ChrootCompiler/additionalFiles/arch.txt

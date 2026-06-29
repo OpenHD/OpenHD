@@ -40,8 +40,20 @@ jobs:
 
       - name: Clone OpenHD
         run: |
-          git clone -b ${{ github.ref_name }} https://github.com/OpenHD/OpenHD --recursive
-          cd OpenHD  
+          if [ -z "${OPENHD_SUBMODULE_TOKEN}" ]; then
+            echo "OPENHD_SUBMODULE_TOKEN is required for recursive submodules"
+            exit 1
+          fi
+          cleanup_git_auth() {
+            git config --global --unset-all url."https://x-access-token:${OPENHD_SUBMODULE_TOKEN}@github.com/".insteadOf || true
+          }
+          trap cleanup_git_auth EXIT
+          git config --global url."https://x-access-token:${OPENHD_SUBMODULE_TOKEN}@github.com/".insteadOf "https://github.com/"
+          git clone -b ${{ github.ref_name }} https://github.com/OpenHD/OpenHD
+          cd OpenHD
+          git submodule sync --recursive
+          git submodule update --init --recursive
+          git submodule status --recursive
 
       - name: Install Dependencies
         run: |
