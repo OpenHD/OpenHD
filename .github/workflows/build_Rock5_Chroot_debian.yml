@@ -233,5 +233,5 @@ jobs:
           distro: "debian"
           release: "${{ matrix.release }}"
           republish: "true" # needed ONLY if version is not changing
+          no-wait-for-sync: "true"
           file: "*.deb"
-
