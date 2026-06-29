@@ -39,20 +39,56 @@ sanitize_radxa_sources_for_current_distro() {
     codename="$(. /etc/os-release; echo "${VERSION_CODENAME:-}")"
     [[ -n "${codename}" ]] || return 0
 
-    for source_file in /etc/apt/sources.list /etc/apt/sources.list.d/*.list; do
+    for source_file in /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources; do
         [[ -f "$source_file" ]] || continue
+        if grep -Eq 'dl\.cloudsmith\.io/public/openhd/.*/deb/debian' "$source_file"; then
+            echo "Disabling stale OpenHD Cloudsmith apt source in ${source_file}"
+            sed -i -E '/dl\.cloudsmith\.io\/public\/openhd\/.*\/deb\/debian/s/^[[:space:]]*deb/# deb/' "$source_file"
+            sed -i -E '/URIs:.*dl\.cloudsmith\.io\/public\/openhd\/.*\/deb\/debian/,/^$/s/^/# /' "$source_file"
+        fi
         if [[ "${codename}" == "bookworm" ]]; then
-            sed -i -E '/radxa-repo\.github\.io\/bullseye|radxa-repo\.github\.io[[:space:]]+bullseye/s/^[[:space:]]*deb/# deb/' "$source_file"
+            if grep -Eq 'radxa-repo\.github\.io.*bullseye' "$source_file"; then
+                echo "Disabling stale Bullseye apt source in ${source_file}"
+                sed -i -E '/radxa-repo\.github\.io.*bullseye/s/^[[:space:]]*deb/# deb/' "$source_file"
+                sed -i -E '/URIs:.*radxa-repo\.github\.io.*bullseye/,/^$/s/^/# /' "$source_file"
+            fi
         elif [[ "${codename}" == "bullseye" ]]; then
             sed -i -E '/radxa-repo\.github\.io\/bookworm|radxa-repo\.github\.io\/rk3566-bookworm|radxa-repo\.github\.io[[:space:]]+bookworm|radxa-repo\.github\.io[[:space:]]+rk3566-bookworm/s/^[[:space:]]*deb/# deb/' "$source_file"
         fi
     done
 }
 
+ensure_debian_sources_for_current_distro() {
+    local codename=""
+    codename="$(. /etc/os-release; echo "${VERSION_CODENAME:-}")"
+    [[ -n "${codename}" ]] || return 0
+
+    mkdir -p /etc/apt/sources.list.d
+    if grep -RqsE "^[[:space:]]*deb[[:space:]].*[[:space:]]${codename}[[:space:]-]" /etc/apt/sources.list /etc/apt/sources.list.d 2>/dev/null; then
+        return 0
+    fi
+
+    echo "Adding minimal Debian ${codename} apt sources."
+    if [[ "${codename}" == "bookworm" ]]; then
+        cat >/etc/apt/sources.list.d/openhd-bookworm-ci.list <<'EOF'
+deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware
+deb http://deb.debian.org/debian bookworm-updates main contrib non-free non-free-firmware
+deb http://security.debian.org/debian-security bookworm-security main contrib non-free non-free-firmware
+EOF
+    elif [[ "${codename}" == "bullseye" ]]; then
+        cat >/etc/apt/sources.list.d/openhd-bullseye-ci.list <<'EOF'
+deb http://archive.debian.org/debian bullseye main contrib non-free
+deb http://archive.debian.org/debian bullseye-updates main contrib non-free
+deb https://security.debian.org/debian-security bullseye-security main contrib non-free
+EOF
+    fi
+}
+
 sanitize_radxa_sources_for_current_distro
+ensure_debian_sources_for_current_distro
 
 # Update package lists and install necessary packages as root
-su -c "apt-get update --fix-missing && apt-get install -y sudo" || { echo "Failed to update and install sudo"; exit 1; }
+su -c "apt-get -o Acquire::Check-Valid-Until=false update --fix-missing && apt-get install -y sudo" || { echo "Failed to update and install sudo"; exit 1; }
 
 # Install required packages for the script
 apt-get install -y python3-pip git || { echo "Failed to install python3-pip and git"; exit 1; }
