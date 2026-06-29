@@ -2,7 +2,7 @@
 set -euo pipefail
 
 if [[ $# -lt 1 ]]; then
-  echo "Usage: $0 <sdk-root> [poco-archive] [libsodium-archive]" >&2
+  echo "Usage: $0 <sdk-root> [poco-archive] [libsodium-archive] [sdl2-archive]" >&2
   exit 1
 fi
 
@@ -37,6 +37,15 @@ else
 fi
 
 libsodium_archive="$(make_absolute_path "$libsodium_archive")"
+
+sdl2_archive="${1:-}"
+if [[ -n "$sdl2_archive" ]]; then
+  shift || true
+else
+  sdl2_archive="$sdk_root/sdl2-libraries.zip"
+fi
+
+sdl2_archive="$(make_absolute_path "$sdl2_archive")"
 
 if [[ ! -d "$sdk_root" ]]; then
   echo "SDK root '$sdk_root' does not exist" >&2
@@ -153,6 +162,43 @@ package_libsodium_libs() {
   echo "Packaged libsodium libraries into $archive"
 }
 
+package_sdl2_libs() {
+  ensure_zip_available
+
+  local archive="$1"
+  local lib_dir="$SDKTARGETSYSROOT/usr/lib"
+  if [[ ! -d "$lib_dir" ]]; then
+    echo "SDL2 library directory '$lib_dir' does not exist" >&2
+    exit 1
+  fi
+
+  local libs=()
+  while IFS= read -r -d '' lib; do
+    libs+=("$lib")
+  done < <(find "$lib_dir" -maxdepth 1 \
+    \( -name 'libSDL2*.so*' -o -name 'libSDL2*.a' \) -print0)
+
+  if [[ ${#libs[@]} -eq 0 ]]; then
+    echo "No SDL2 libraries were found in '$lib_dir'" >&2
+    exit 1
+  fi
+
+  local staging_dir="$work_dir/sdl2_libs"
+  rm -rf "$staging_dir"
+  mkdir -p "$staging_dir"
+
+  for lib in "${libs[@]}"; do
+    cp -a "$lib" "$staging_dir/"
+  done
+
+  mkdir -p "$(dirname "$archive")"
+  rm -f "$archive"
+  pushd "$staging_dir" >/dev/null
+  zip -9 -r "$archive" ./* >/dev/null
+  popd >/dev/null
+  echo "Packaged SDL2 libraries into $archive"
+}
+
 build_libsodium() {
   local version="1.0.19"
   local tarball="libsodium-${version}.tar.gz"
@@ -169,6 +215,40 @@ build_libsodium() {
   fi
   pushd "$src_dir" >/dev/null
   ./configure --host="${OECORE_TARGET_ARCH}-poky-linux" --prefix="$SDKTARGETSYSROOT/usr"
+  make -j"$jobs"
+  make install
+  popd >/dev/null
+}
+
+build_sdl2() {
+  local version="2.30.12"
+  local tarball="SDL2-${version}.tar.gz"
+  local url="https://github.com/libsdl-org/SDL/releases/download/release-${version}/${tarball}"
+  local archive="$work_dir/$tarball"
+
+  download "$url" "$archive"
+  tar -xf "$archive" -C "$work_dir"
+  local src_dir="$work_dir/SDL2-${version}"
+  if [[ ! -d "$src_dir" ]]; then
+    echo "Failed to locate extracted SDL2 sources" >&2
+    exit 1
+  fi
+
+  pushd "$src_dir" >/dev/null
+  ./configure \
+    --host="${OECORE_TARGET_ARCH}-poky-linux" \
+    --prefix="$SDKTARGETSYSROOT/usr" \
+    --disable-static \
+    --enable-shared \
+    --disable-video \
+    --disable-render \
+    --disable-audio \
+    --disable-haptic \
+    --disable-power \
+    --disable-sensor \
+    --disable-dbus \
+    --disable-ibus \
+    --disable-fcitx
   make -j"$jobs"
   make install
   popd >/dev/null
@@ -217,6 +297,8 @@ build_poco() {
 }
 
 build_libsodium
+build_sdl2
 build_poco
 package_poco_libs "$output_archive"
 package_libsodium_libs "$libsodium_archive"
+package_sdl2_libs "$sdl2_archive"
