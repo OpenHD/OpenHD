@@ -111,6 +111,17 @@ EOF
 
 prepare_apt_space_for_ci() {
     echo "Preparing lean apt/dpkg state for CI package build."
+    if [[ -f /var/lib/dpkg/info/radxa-sddm-theme.postrm ]]; then
+        echo "Neutralizing broken radxa-sddm-theme postrm for CI cleanup."
+        cat >/var/lib/dpkg/info/radxa-sddm-theme.postrm <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+        chmod 755 /var/lib/dpkg/info/radxa-sddm-theme.postrm
+    fi
+    mkdir -p /usr/share/sddm/themes/breeze || true
+    touch /usr/share/sddm/themes/breeze/Main.qml || true
+
     cat >/etc/apt/apt.conf.d/99openhd-ci-lean <<'EOF'
 Acquire::Languages "none";
 Acquire::IndexTargets::deb::Contents-deb::DefaultEnabled "false";

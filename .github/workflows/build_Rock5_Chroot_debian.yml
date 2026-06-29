@@ -129,12 +129,30 @@ jobs:
 
           packages_stage = Path("/opt/OpenHD-ChrootCompiler/stages/02-Packages/00-run-chroot.sh")
           packages_text = packages_stage.read_text()
+          cloudsmith_marker = "[openhd] Disabling stale OpenHD Cloudsmith apt sources before package preflight"
+          if cloudsmith_marker not in packages_text:
+              preflight_needle = 'echo "_______________________Starting build____________________________"\n\n'
+              preflight_patch = (
+                  preflight_needle
+                  + f'echo "{cloudsmith_marker}"\n'
+                  + "sudo sed -i -E '/dl\\.cloudsmith\\.io\\/public\\/openhd\\/.*\\/deb\\/debian/s/^[[:space:]]*deb/# deb/' /etc/apt/sources.list || true\n"
+                  + "sudo find /etc/apt/sources.list.d -name '*.list' -print0 2>/dev/null \\\n"
+                  + "  | xargs -0 -r sudo sed -i -E '/dl\\.cloudsmith\\.io\\/public\\/openhd\\/.*\\/deb\\/debian/s/^[[:space:]]*deb/# deb/' || true\n"
+                  + "sudo find /etc/apt/sources.list.d -name '*.sources' -print0 2>/dev/null \\\n"
+                  + "  | xargs -0 -r sudo sed -i -E '/URIs:.*dl\\.cloudsmith\\.io\\/public\\/openhd\\/.*\\/deb\\/debian/,/^$/s/^/# /' || true\n"
+                  + "\n"
+              )
+              if preflight_needle not in packages_text:
+                  raise SystemExit("Could not find package-stage preflight insertion point")
+              packages_text = packages_text.replace(preflight_needle, preflight_patch, 1)
+
           packages_old = 'if [[ "${OS}" == "radxa-debian-rock5a" ]] || [[ "${OS}" == "radxa-debian-rock5b" ]]; then'
           packages_new = 'if [[ "${DISTRO}" == "bullseye" ]] && { [[ "${OS}" == "radxa-debian-rock5a" ]] || [[ "${OS}" == "radxa-debian-rock5b" ]]; }; then'
           if packages_new not in packages_text:
               if packages_old not in packages_text:
                   raise SystemExit("Could not find Rock5 package-preflight block in ChrootCompiler")
-              packages_stage.write_text(packages_text.replace(packages_old, packages_new, 1))
+              packages_text = packages_text.replace(packages_old, packages_new, 1)
+          packages_stage.write_text(packages_text)
 
           build_sh = Path("/opt/OpenHD-ChrootCompiler/build.sh")
           text = build_sh.read_text()
