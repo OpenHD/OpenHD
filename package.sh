@@ -140,6 +140,8 @@ build_and_stage_gst_perf() {
   local gst_perf_ref="${GST_PERF_REF:-}"
   local gst_perf_src="/out/gst-perf-src"
   local gst_perf_prefix="/out/gst-perf-install"
+  local make_jobs
+  make_jobs="$(nproc 2>/dev/null || echo 1)"
   rm -rf "${gst_perf_src}" "${gst_perf_prefix}"
 
   echo "Building bundled gst-perf from ${gst_perf_repo}${gst_perf_ref:+ at ${gst_perf_ref}}..."
@@ -153,7 +155,7 @@ build_and_stage_gst_perf() {
     cd "${gst_perf_src}"
     ./autogen.sh
     ./configure --prefix=/usr --libdir="/usr/lib/${multiarch}"
-    make --parallel "$(nproc)"
+    make -j"${make_jobs}"
     make install DESTDIR="${gst_perf_prefix}"
   )
 
