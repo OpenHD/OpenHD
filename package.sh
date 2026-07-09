@@ -76,6 +76,20 @@ build_deb_package() {
   dpkg-deb --build "${PKGDIR}" "${package_name}_${VERSION}_${package_arch}.deb"
 }
 
+require_staged_gst_perf() {
+  if [[ "${OPENHD_BUNDLE_GST_PERF:-1}" == "0" ]]; then
+    return
+  fi
+  local matches=()
+  mapfile -t matches < <(find "${PKGDIR}usr/lib" -path "*/gstreamer-1.0/libgstperf.so" -type f 2>/dev/null)
+  if [[ "${#matches[@]}" -ne 1 ]]; then
+    echo "Expected exactly one staged gst-perf plugin in package tree, found ${#matches[@]}." >&2
+    find "${PKGDIR}" -path "*/gstreamer-1.0/*" -type f -print >&2 || true
+    exit 1
+  fi
+  echo "Verified staged gst-perf plugin: ${matches[0]}"
+}
+
 # Function to create the package directory structure
 create_package_directory() {
   echo "Creating package directory structure..."
@@ -107,6 +121,60 @@ create_package_directory() {
   fi
 
   # hardware.config support removed; no package copy needed.
+}
+
+build_and_stage_gst_perf() {
+  if [[ "${OPENHD_BUNDLE_GST_PERF:-1}" == "0" ]]; then
+    echo "Skipping bundled gst-perf because OPENHD_BUNDLE_GST_PERF=0."
+    return
+  fi
+
+  local multiarch
+  multiarch="$(dpkg-architecture -qDEB_HOST_MULTIARCH)"
+  if [[ -z "${multiarch}" ]]; then
+    echo "Could not determine Debian multiarch triplet for gst-perf install." >&2
+    exit 1
+  fi
+
+  local gst_perf_repo="${GST_PERF_REPO:-https://github.com/RidgeRun/gst-perf.git}"
+  local gst_perf_ref="${GST_PERF_REF:-}"
+  local gst_perf_src="/out/gst-perf-src"
+  local gst_perf_prefix="/out/gst-perf-install"
+  rm -rf "${gst_perf_src}" "${gst_perf_prefix}"
+
+  echo "Building bundled gst-perf from ${gst_perf_repo}${gst_perf_ref:+ at ${gst_perf_ref}}..."
+  git clone --depth 1 "${gst_perf_repo}" "${gst_perf_src}"
+  if [[ -n "${gst_perf_ref}" ]]; then
+    git -C "${gst_perf_src}" fetch --depth 1 origin "${gst_perf_ref}"
+    git -C "${gst_perf_src}" checkout FETCH_HEAD
+  fi
+
+  (
+    cd "${gst_perf_src}"
+    ./autogen.sh
+    ./configure --prefix=/usr --libdir="/usr/lib/${multiarch}"
+    make --parallel "$(nproc)"
+    make install DESTDIR="${gst_perf_prefix}"
+  )
+
+  local plugin_src="${gst_perf_prefix}/usr/lib/${multiarch}/gstreamer-1.0/libgstperf.so"
+  if [[ ! -f "${plugin_src}" ]]; then
+    echo "gst-perf build did not produce ${plugin_src}" >&2
+    find "${gst_perf_prefix}" -maxdepth 6 -type f -print >&2 || true
+    exit 1
+  fi
+
+  local plugin_dst="${PKGDIR}usr/lib/${multiarch}/gstreamer-1.0"
+  mkdir -p "${plugin_dst}"
+  install -m 0644 "${plugin_src}" "${plugin_dst}/libgstperf.so"
+
+  mkdir -p "${PKGDIR}usr/share/doc/openhd"
+  if [[ -f "${gst_perf_src}/LICENSE" ]]; then
+    install -m 0644 "${gst_perf_src}/LICENSE" \
+      "${PKGDIR}usr/share/doc/openhd/gst-perf-LICENSE"
+  fi
+
+  echo "Bundled gst-perf plugin staged at ${plugin_dst}/libgstperf.so"
 }
 
 
@@ -182,6 +250,7 @@ build_package() {
   mkdir -p "${PKGDIR}usr/local/bin/"
   cp "${build_dir}/openhd" "${PKGDIR}usr/local/bin/"
   mkdir -p "${PKGDIR}usr/local/lib/"
+  build_and_stage_gst_perf
 
   if [[ "${artosyn_enabled}" -eq 1 ]]; then
     local daemon_candidates=(
@@ -305,6 +374,7 @@ build_package() {
 
   if command -v fpm >/dev/null 2>&1; then
     # Build the package using fpm
+    require_staged_gst_perf
     fpm -a "${PACKAGE_ARCH}" -s dir -t deb -n "${package_name}" -v "${VERSION}" -C "${PKGDIR}" \
       -p "${package_name}_${VERSION}_${PACKAGE_ARCH}.deb" \
       --after-install after-install.sh \
@@ -312,6 +382,7 @@ build_package() {
       -d "$(IFS=','; echo "${packages[*]}")"
   else
     echo "fpm not available; building package with dpkg-deb."
+    require_staged_gst_perf
     build_deb_package "${package_name}" "${PACKAGE_ARCH}" "${packages[@]}"
   fi
 
