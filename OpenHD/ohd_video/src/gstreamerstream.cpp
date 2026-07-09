@@ -379,6 +379,18 @@ bool GStreamerStream::setup_perf_element() {
                     m_camera_holder->get_camera().index));
     return false;
   }
+  m_perf_signal_id =
+      g_signal_connect(m_perf_element, "on-bitrate",
+                       G_CALLBACK(&GStreamerStream::on_perf_bitrate_signal),
+                       this);
+  if (m_perf_signal_id == 0) {
+    report_required_perf_problem(
+        "gst_perf_signal_failed",
+        fmt::format("gst-perf is required but attaching camera {} bitrate "
+                    "signal failed",
+                    m_camera_holder->get_camera().index));
+    return false;
+  }
   return true;
 }
 
@@ -396,6 +408,10 @@ void GStreamerStream::cleanup_perf_element() {
     m_perf_probe_pad = nullptr;
   }
   if (m_perf_element != nullptr) {
+    if (m_perf_signal_id != 0) {
+      g_signal_handler_disconnect(m_perf_element, m_perf_signal_id);
+      m_perf_signal_id = 0;
+    }
     gst_object_unref(m_perf_element);
     m_perf_element = nullptr;
   }
@@ -423,12 +439,30 @@ bool GStreamerStream::handle_perf_info_message(const char* info_text) {
              now_ms - m_perf_first_message_ms < kPerfBitrateWarmupMs) {
     return true;
   }
-  m_last_perf_message_ms.store(steady_clock_ms(), std::memory_order_relaxed);
-  openhd::LinkActionHandler::instance().set_cam_info_perf(
-      m_camera_holder->get_camera().index, bitrate_bps, fps);
-  update_qp_pid_controller(bitrate_bps, now_ms);
-  update_rockchip_bitrate_pid_controller(bitrate_bps, now_ms);
+  update_perf_telemetry(bitrate_bps, fps, now_ms, true);
   return true;
+}
+
+void GStreamerStream::on_perf_bitrate_signal(GstElement* /*element*/,
+                                             gdouble bitrate_bps,
+                                             gpointer user_data) {
+  auto* self = static_cast<GStreamerStream*>(user_data);
+  if (self != nullptr) {
+    self->handle_perf_bitrate_signal(static_cast<double>(bitrate_bps));
+  }
+}
+
+void GStreamerStream::handle_perf_bitrate_signal(double bitrate_bps) {
+  if (!std::isfinite(bitrate_bps)) {
+    return;
+  }
+  const double clamped_bitrate =
+      std::clamp(bitrate_bps, 0.0,
+                 static_cast<double>(std::numeric_limits<uint32_t>::max()));
+  const auto rounded_bitrate =
+      static_cast<uint32_t>(std::llround(clamped_bitrate));
+  const auto fps = m_last_perf_fps.load(std::memory_order_relaxed);
+  update_perf_telemetry(rounded_bitrate, fps, steady_clock_ms(), true);
 }
 
 GstPadProbeReturn GStreamerStream::on_perf_pad_probe(GstPad* /*pad*/,
@@ -482,19 +516,35 @@ void GStreamerStream::handle_perf_pad_probe(GstPadProbeInfo* info) {
   const uint16_t frame_rate =
       static_cast<uint16_t>(std::llround(std::min(fps, fps_max)));
 
-  if (bitrate_bps > 0) {
-    m_perf_seen_nonzero_bitrate.store(true, std::memory_order_relaxed);
-  }
   m_perf_probe_reported.store(true, std::memory_order_relaxed);
-  m_last_perf_message_ms.store(now_ms, std::memory_order_relaxed);
-  openhd::LinkActionHandler::instance().set_cam_info_perf(
-      m_camera_holder->get_camera().index, bitrate_bps, frame_rate);
-  update_qp_pid_controller(bitrate_bps, now_ms);
-  update_rockchip_bitrate_pid_controller(bitrate_bps, now_ms);
+  m_last_perf_fps.store(frame_rate, std::memory_order_relaxed);
+  const auto gst_perf_bitrate =
+      m_last_gst_perf_bitrate_bps.load(std::memory_order_relaxed);
+  update_perf_telemetry(gst_perf_bitrate > 0 ? gst_perf_bitrate : bitrate_bps,
+                        frame_rate, now_ms, gst_perf_bitrate > 0);
 
   m_perf_probe_window_start_ms = now_ms;
   m_perf_probe_window_bytes = 0;
   m_perf_probe_window_buffers = 0;
+}
+
+void GStreamerStream::update_perf_telemetry(uint32_t bitrate_bps, uint16_t fps,
+                                            int64_t now_ms,
+                                            bool bitrate_from_gst_perf) {
+  if (bitrate_from_gst_perf) {
+    m_last_gst_perf_bitrate_bps.store(bitrate_bps, std::memory_order_relaxed);
+  }
+  if (fps > 0) {
+    m_last_perf_fps.store(fps, std::memory_order_relaxed);
+  }
+  if (bitrate_bps > 0) {
+    m_perf_seen_nonzero_bitrate.store(true, std::memory_order_relaxed);
+  }
+  m_last_perf_message_ms.store(now_ms, std::memory_order_relaxed);
+  openhd::LinkActionHandler::instance().set_cam_info_perf(
+      m_camera_holder->get_camera().index, bitrate_bps, fps);
+  update_qp_pid_controller(bitrate_bps, now_ms);
+  update_rockchip_bitrate_pid_controller(bitrate_bps, now_ms);
 }
 
 void GStreamerStream::reset_qp_pid_controller() {
@@ -951,6 +1001,8 @@ bool GStreamerStream::setup() {
   m_perf_seen_nonzero_bitrate.store(false, std::memory_order_relaxed);
   m_perf_probe_active.store(false, std::memory_order_relaxed);
   m_perf_probe_reported.store(false, std::memory_order_relaxed);
+  m_last_gst_perf_bitrate_bps.store(0, std::memory_order_relaxed);
+  m_last_perf_fps.store(0, std::memory_order_relaxed);
   m_perf_probe_window_start_ms = 0;
   m_perf_probe_window_bytes = 0;
   m_perf_probe_window_buffers = 0;

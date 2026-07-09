@@ -88,9 +88,14 @@ class GStreamerStream : public CameraStream {
   bool setup_perf_element();
   void cleanup_perf_element();
   bool handle_perf_info_message(const char* info_text);
+  static void on_perf_bitrate_signal(GstElement* element, gdouble bitrate_bps,
+                                     gpointer user_data);
+  void handle_perf_bitrate_signal(double bitrate_bps);
   static GstPadProbeReturn on_perf_pad_probe(GstPad* pad, GstPadProbeInfo* info,
                                              gpointer user_data);
   void handle_perf_pad_probe(GstPadProbeInfo* info);
+  void update_perf_telemetry(uint32_t bitrate_bps, uint16_t fps,
+                             int64_t now_ms, bool bitrate_from_gst_perf);
   void update_qp_pid_controller(uint32_t measured_bitrate_bps, int64_t now_ms);
   void reset_qp_pid_controller();
   void update_rockchip_bitrate_pid_controller(uint32_t measured_bitrate_bps,
@@ -116,6 +121,7 @@ class GStreamerStream : public CameraStream {
   GstElement* m_perf_element = nullptr;
   GstPad* m_perf_probe_pad = nullptr;
   gulong m_perf_probe_id = 0;
+  gulong m_perf_signal_id = 0;
   GstBus* m_gst_bus = nullptr;
   // If a pipeline is started with air recording enabled, the file name the
   // recording is written to is stored here otherwise, it is set to std::nullopt
@@ -144,6 +150,8 @@ class GStreamerStream : public CameraStream {
   std::atomic_bool m_perf_seen_nonzero_bitrate = false;
   std::atomic_bool m_perf_probe_active = false;
   std::atomic_bool m_perf_probe_reported = false;
+  std::atomic<uint32_t> m_last_gst_perf_bitrate_bps = 0;
+  std::atomic<uint16_t> m_last_perf_fps = 0;
   int64_t m_perf_probe_window_start_ms = 0;
   uint64_t m_perf_probe_window_bytes = 0;
   uint32_t m_perf_probe_window_buffers = 0;
