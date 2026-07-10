@@ -1,5 +1,10 @@
 #include "artosyn_link.h"
 
+#include <Poco/Exception.h>
+#include <Poco/Net/SocketAddress.h>
+#include <Poco/Net/StreamSocket.h>
+#include <Poco/Timespan.h>
+
 #include <chrono>
 #include <cerrno>
 #include <cstring>
@@ -220,7 +225,29 @@ static bool is_openhd_debug_mode_enabled_cached(int64_t now_ms) {
   return cached;
 }
 
+// The Artosyn SDK writes connection failures directly to stderr. Check the
+// daemon endpoint quietly first so normal startup does not emit SDK errors
+// while the daemon is absent or still starting.
+static bool is_tcp_endpoint_reachable_quietly(
+    const std::string& address, int port,
+    std::chrono::milliseconds timeout = std::chrono::milliseconds(100)) {
+  try {
+    Poco::Net::SocketAddress endpoint(address, port);
+    Poco::Net::StreamSocket socket;
+    const Poco::Timespan connect_timeout(
+        0, static_cast<long>(timeout.count()) * 1000);
+    socket.connect(endpoint, connect_timeout);
+    socket.close();
+    return true;
+  } catch (const Poco::Exception&) {
+    return false;
+  }
+}
+
 static bool probe_artosyn_daemon_once(const ArtosynLink::Config& cfg) {
+  if (!is_tcp_endpoint_reachable_quietly(cfg.addr, cfg.port)) {
+    return false;
+  }
   if (bb_host_connect_test(cfg.addr.c_str(), cfg.port) != 0) {
     return false;
   }
