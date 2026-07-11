@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - openhd-3.0
-      - openhd-3.0-test
   pull_request:
     branches:
       - openhd-3.0
@@ -129,3 +128,32 @@ jobs:
           done
           ps -ef | grep -v grep | grep -E "openhd_sys_utils|openhd-sys-utils" || true
           sudo ./OpenHD/build/openhd -g --run-time-seconds 10 --emulate-monitor-card
+
+      - name: Checkout X21 Buildroot
+        if: github.event_name == 'push' && github.ref == 'refs/heads/openhd-3.0'
+        uses: actions/checkout@v4
+        with:
+          repository: OpenHD/openhd_x21b_buildroot
+          ref: master
+          token: ${{ secrets.BUILDROOT_REPOSITORY_TOKEN }}
+          path: buildroot-package-update
+
+      - name: Update OpenHD version in X21 Buildroot
+        if: github.event_name == 'push' && github.ref == 'refs/heads/openhd-3.0'
+        working-directory: buildroot-package-update
+        run: |
+          package_file="package/OpenHD/openhd.mk"
+          sed -i -E \
+            "s|^OPENHD_VERSION[[:space:]]*=.*$|OPENHD_VERSION = ${GITHUB_SHA}|" \
+            "${package_file}"
+
+          if git diff --quiet -- "${package_file}"; then
+            echo "Buildroot already points to ${GITHUB_SHA}"
+            exit 0
+          fi
+
+          git config user.name "OpenHD-Automation"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "${package_file}"
+          git commit -m "package/OpenHD: update to ${GITHUB_SHA}"
+          git push origin HEAD:master
