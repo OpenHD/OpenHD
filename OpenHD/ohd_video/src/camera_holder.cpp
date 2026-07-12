@@ -126,6 +126,8 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
       m_camera.requires_rockchip5_mpp_pipeline() ||
       m_camera.requires_rockchip3_mpp_pipeline() ||
       m_camera.requires_rockchip_rv_pipeline() ||
+      m_camera.requires_rockchip1126_mpp_csi_pipeline() ||
+      m_camera.requires_rockchip1126_mpp_testsrc_pipeline() ||
       m_camera.camera_type == X_CAM_TYPE_DEVELOPMENT_FILESRC;
   if (supports_rotation_vflip_hflip) {
     auto c_rotation = [this](std::string, int value) {
