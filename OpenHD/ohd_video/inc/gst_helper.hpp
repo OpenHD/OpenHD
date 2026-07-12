@@ -1215,7 +1215,15 @@ static std::string createRv1126Stream(const CameraSettings& settings) {
   ss << " qp-min=" << settings.qp_min;
   ss << " qp-max=" << settings.qp_max;
 
-  ss << " gop=5";
+  ss << " gop=" << settings.h26x_keyframe_interval;
+
+  if (settings.h26x_intra_refresh_type != -1) {
+    ss << " gdr-mode=col gdr-slices=" << settings.h26x_num_slices;
+  }
+
+  if (settings.camera_rotation_degree != 0) {
+    ss << "rotation=" << settings.camera_rotation_degree << " ";
+  }
 
   ss << " ! ";
   return ss.str();
@@ -1251,7 +1259,15 @@ static std::string createRv1126TestsrcStream(const CameraSettings& settings) {
   ss << " qp-min=" << settings.qp_min;
   ss << " qp-max=" << settings.qp_max;
 
-  ss << " gop=5";
+  ss << " gop=" << settings.h26x_keyframe_interval;
+
+  if (settings.h26x_intra_refresh_type != -1) {
+    ss << " gdr-mode=col gdr-slices=" << settings.h26x_num_slices;
+  }
+
+  if (settings.camera_rotation_degree != 0) {
+    ss << "rotation=" << settings.camera_rotation_degree << " ";
+  }
 
   ss << " ! ";
   return ss.str();
