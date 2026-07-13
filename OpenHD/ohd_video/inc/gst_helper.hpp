@@ -1266,7 +1266,7 @@ static std::string createRv1126TestsrcStream(const CameraSettings& settings) {
   }
 
   if (settings.camera_rotation_degree != 0) {
-    ss << "rotation=" << settings.camera_rotation_degree << " ";
+    ss << " rotation=" << settings.camera_rotation_degree << " ";
   }
 
   ss << " ! ";
