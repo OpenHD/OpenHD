@@ -1041,7 +1041,6 @@ bool GStreamerStream::setup() {
     pipeline_content <<
     OHDGstHelper::create_caps_nal(setting.streamed_video_format.videoCodec);
     pipeline_content << " queue ! ";*/
-    pipeline_content << " queue ! ";
     /*pipeline_content << OHDGstHelper::create_parse_for_codec(
         setting.streamed_video_format.videoCodec);
     pipeline_content << OHDGstHelper::create_caps_nal(

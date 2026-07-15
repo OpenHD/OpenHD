@@ -867,14 +867,12 @@ static std::string createV4l2SrcRawAndSwEncodeStream(
 static std::string create_parse_and_rtp_packetize(
     const VideoCodec videoCodec, int rtp_fragment_size = 1024) {
   std::stringstream ss;
-  ss << "queue ! ";
   ss << create_parse_for_codec(videoCodec);
   ss << create_rtp_packetize_for_codec(videoCodec, rtp_fragment_size);
   return ss.str();
 }
 static std::string create_queue_and_parse(const VideoCodec videoCodec) {
   std::stringstream ss;
-  ss << "queue ! ";
   ss << create_parse_for_codec(videoCodec);
   return ss.str();
 }
@@ -906,9 +904,7 @@ static constexpr auto kEncoderPerfElementName = "openhd_perf";
 // Add gst-perf right after encoding so bitrate/fps are measured on the encoder
 // output before packetization.
 static std::string createEncoderPerfElement() {
-  // Keep a queue directly after perf, matching the known-good standalone test
-  // pipeline shape used for debugging bitrate measurements.
-  return fmt::format(" perf name={} bitrate-interval=1000 ! queue ! ",
+  return fmt::format(" perf name={} bitrate-interval=1000 ! ",
                      kEncoderPerfElementName);
 }
 
