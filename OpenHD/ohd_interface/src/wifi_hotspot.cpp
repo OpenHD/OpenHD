@@ -90,7 +90,9 @@ static bool create_hotspot_connection_file(
   OHDUtil::run_command("nmcli",
                        {"con modify ", OHD_WIFI_HOTSPOT_CONNECTION_NAME,
                         " 802-11-wireless.mode ap", "802-11-wireless.band",
-                        use_5g_channel ? "a" : "bg", "ipv4.method shared"});
+                        use_5g_channel ? "a" : "bg",
+                        "802-11-wireless.channel",
+                        use_5g_channel ? "36" : "1", "ipv4.method shared"});
   OHDUtil::run_command("nmcli",
                        {"con modify ", OHD_WIFI_HOTSPOT_CONNECTION_NAME,
                         " wifi-sec.key-mgmt wpa-psk"});
