@@ -186,7 +186,8 @@ build_package() {
   local package_name="openhd"
   local packages=()
 
-  if [[ "${PACKAGE_ARCH}" == "armhf" || "${PACKAGE_ARCH}" == "arm64" ]]; then
+  if [[ "${PACKAGE_ARCH}" == "armhf" ||
+        ( "${PACKAGE_ARCH}" == "arm64" && "${OS}" == "raspbian" ) ]]; then
     if [[ "${CUSTOM}" == "standard" ]]; then
       package_name="openhd"
       packages+=(
