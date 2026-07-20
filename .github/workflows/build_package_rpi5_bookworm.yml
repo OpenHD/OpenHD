@@ -1,0 +1,84 @@
+name: build_package_rpi5_bookworm
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "dev-release"
+      - "release"
+      - "openhd-3.0"
+      - "openhd-3.0-test"
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    env:
+      CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
+      DOWNLOAD_KEY: ${{ secrets.DOWNLOAD_KEY }}
+      DOWNLOAD_URL: ${{ secrets.DOWNLOAD_URL }}
+      OPENHD_SUBMODULE_TOKEN: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+      ARTLINK_REPO: https://github.com/OpenHD-Technologies/OpenHD-ArtLink.git
+      ARTLINK_BRANCH: sdk
+      ARTLINK_FETCH_MODE: git-only
+      ARTLINK_GIT_AUTH_USERNAME: raphael@openhdfpv.org
+      ARTLINK_GIT_AUTH: "raphael@openhdfpv.org:${{ secrets.OPENHD_SUBMODULE_TOKEN }}"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+
+      - name: Build arm64 Bookworm package
+        uses: pguyot/arm-runner-action@98b8d5a3228f504a8bd54913ab1e23d70f369c6e
+        with:
+          base_image: https://downloads.raspberrypi.com/raspios_lite_arm64/images/raspios_lite_arm64-2025-05-13/2025-05-13-raspios-bookworm-arm64-lite.img.xz
+          cpu: cortex-a76
+          image_additional_mb: 5000
+          copy_repository_path: /opt
+          copy_artifact_path: OpenHD
+          import_github_env: true
+          shell: /bin/bash -euo pipefail
+          commands: |
+            cd /opt/OpenHD
+            mkdir -p /usr/local/share/openhd
+            touch /usr/local/share/openhd/joyconfig.txt
+            ./install_build_dep.sh rpi
+            chown -R root:root /opt/OpenHD
+            ./package.sh standard arm64 raspbian bookworm
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenHD-RPi5-Bookworm-arm64
+          path: OpenHD/*_arm64.deb
+          if-no-files-found: error
+
+      - name: Push package
+        uses: cloudsmith-io/action@master
+        continue-on-error: true
+        with:
+          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
+          command: push
+          format: deb
+          owner: openhd
+          repo: ${{ github.ref_name }}
+          distro: raspbian
+          release: bookworm
+          republish: "true"
+          file: OpenHD/*_arm64.deb
+
+      - name: Push package to dev-release
+        uses: cloudsmith-io/action@master
+        with:
+          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
+          command: push
+          format: deb
+          owner: openhd
+          repo: dev-release
+          distro: raspbian
+          release: bookworm
+          republish: "true"
+          file: OpenHD/*_arm64.deb

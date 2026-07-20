@@ -52,8 +52,15 @@ EOF
 }
 
 function install_pi_packages {
-PLATFORM_PACKAGES="libcamera-openhd"
-PLATFORM_PACKAGES_REMOVE="python3-libcamera libcamera0"
+if grep -Eq 'VERSION_CODENAME=bookworm|VERSION_ID="?12"?' /etc/os-release; then
+    # Pi 5 requires Bookworm's PiSP-enabled standard libcamera stack. The
+    # legacy OpenHD libcamera fork is only published for Bullseye/armhf.
+    PLATFORM_PACKAGES="libcamera-dev gstreamer1.0-libcamera gstreamer1.0-plugins-ugly"
+    PLATFORM_PACKAGES_REMOVE=""
+else
+    PLATFORM_PACKAGES="libcamera-openhd gstreamer1.0-plugins-ugly"
+    PLATFORM_PACKAGES_REMOVE="python3-libcamera libcamera0"
+fi
 }
 function install_x86_packages {
 PLATFORM_PACKAGES="libunwind-dev gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly"
@@ -151,13 +158,13 @@ fi
  # Install platform-specific packages
  echo "Removing platform-specific packages..."
  for package in ${PLATFORM_PACKAGES_REMOVE}; do
-     echo "Removing ${package}..."
-     apt purge -y ${package}
-     if [ $? -ne 0 ]; then
-         echo "Failed to remove ${package}!"
-         exit 1
+     if dpkg-query -W -f='${db:Status-Abbrev}' "${package}" 2>/dev/null | grep -q '^ii'; then
+         echo "Removing ${package}..."
+         apt purge -y "${package}"
+         free_package_install_space
+     else
+         echo "Skipping ${package}; it is not installed on this image."
      fi
-     free_package_install_space
  done
 
  # Install platform-specific packages

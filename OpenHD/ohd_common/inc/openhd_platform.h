@@ -34,14 +34,15 @@ static constexpr int X_PLATFORM_TYPE_UNKNOWN = 0;
 // Generic X86
 static constexpr int X_PLATFORM_TYPE_X86 = 1;
 // Numbers 10..20 are reserved for rpi
-// Right now we are only interested if it is an RPI of the
-// generation RPI 4 / RPI CM4 or the generation before -
-// NOTE: RPI 5 is currently not supported due to the complete lack of suitable
-// HW acceleration
+// Raspberry Pi generations need separate ids because their camera and codec
+// capabilities differ. In particular, Pi 5 has no V4L2 H.264 encoder and uses
+// the PiSP libcamera pipeline.
 static constexpr int X_PLATFORM_TYPE_RPI_OLD = 10;
 static constexpr int X_PLATFORM_TYPE_RPI_4 = 11;
 static constexpr int X_PLATFORM_TYPE_RPI_CM4 = 12;
-static constexpr int X_PLATFORM_TYPE_RPI_5 = 12;
+static constexpr int X_PLATFORM_TYPE_RPI_5 = 13;
+static_assert(X_PLATFORM_TYPE_RPI_CM4 != X_PLATFORM_TYPE_RPI_5,
+              "Raspberry Pi platform ids must be unique");
 
 // Numbers 20..30 are reserved for rockchip
 static constexpr int X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W =
@@ -95,6 +96,7 @@ struct OHDPlatform {
   [[nodiscard]] std::string to_string() const;
   static const OHDPlatform& instance();
   bool is_rpi() const;
+  bool is_rpi5() const;
   bool is_rock() const;
   bool is_zero3w() const;
   bool is_radxa_cm3() const;

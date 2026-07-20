@@ -186,15 +186,20 @@ build_package() {
   local package_name="openhd"
   local packages=()
 
-  if [[ "${PACKAGE_ARCH}" == "armhf" ]]; then
+  if [[ "${PACKAGE_ARCH}" == "armhf" || "${PACKAGE_ARCH}" == "arm64" ]]; then
     if [[ "${CUSTOM}" == "standard" ]]; then
       package_name="openhd"
       packages+=(
-        libpoco-dev libcamera-openhd gst-openhd-plugins iw nmap aircrack-ng
-        i2c-tools libv4l-dev libusb-1.0-0 libpcap-dev libnl-3-dev libnl-genl-3-dev
+        libpoco-dev iw nmap aircrack-ng i2c-tools libv4l-dev libusb-1.0-0
+        libpcap-dev libnl-3-dev libnl-genl-3-dev
         libsdl2-2.0-0 libsodium-dev gstreamer1.0-plugins-{base,good,bad,ugly}
         gstreamer1.0-{tools,alsa,pulseaudio}
       )
+      if [[ "${PACKAGE_ARCH}" == "arm64" ]]; then
+        packages+=(gstreamer1.0-libcamera gstreamer1.0-libav openhd-sys-utils)
+      else
+        packages+=(libcamera-openhd gst-openhd-plugins)
+      fi
     else
       package_name="openhd-x20"
       packages+=(

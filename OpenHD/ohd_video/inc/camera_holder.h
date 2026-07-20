@@ -328,6 +328,9 @@ class CameraHolder :
   std::string imp_serialize(const CameraSettings& data) const override;
   [[nodiscard]] CameraSettings create_default() const override {
     auto ret = CameraSettings{};
+    if (OHDPlatform::instance().is_rpi5()) {
+      ret.force_sw_encode = true;
+    }
     auto default_resolution = m_camera.get_default_resolution_fps();
     ret.streamed_video_format.width = default_resolution.width_px;
     ret.streamed_video_format.height = default_resolution.height_px;

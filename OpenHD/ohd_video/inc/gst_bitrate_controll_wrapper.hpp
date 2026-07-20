@@ -263,12 +263,13 @@ get_dynamic_bitrate_control_element_in_pipeline(
   auto settings = camera_holder.get_settings();
   GstBitrateControlElement ret{};
   ret.encoder = nullptr;
-  if (camera.requires_rpi_mmal_pipeline()) {
+  if (camera.requires_rpi_mmal_pipeline() &&
+      !OHDPlatform::instance().is_rpi5()) {
     ret.encoder = gst_bin_get_by_name(GST_BIN(gst_pipeline), "rpicamsrc");
     ret.property_name = "bitrate";
     ret.takes_kbit = false;
   } else if (camera.requires_rpi_libcamera_pipeline() &&
-             !settings.force_sw_encode &&
+             !settings.force_sw_encode && !OHDPlatform::instance().is_rpi5() &&
              settings.streamed_video_format.videoCodec == VideoCodec::H264) {
     ret.encoder =
         gst_bin_get_by_name(GST_BIN(gst_pipeline), "rpi_v4l2_encoder");
@@ -276,7 +277,8 @@ get_dynamic_bitrate_control_element_in_pipeline(
     ret.takes_kbit = false;
     ret.uses_extra_controls_video_bitrate = true;
   } else if (camera.camera_type == X_CAM_TYPE_DUMMY_SW ||
-             is_usb_camera(camera.camera_type) || settings.force_sw_encode) {
+             is_usb_camera(camera.camera_type) || settings.force_sw_encode ||
+             OHDPlatform::instance().is_rpi5()) {
     ret.encoder = gst_bin_get_by_name(GST_BIN(gst_pipeline), "swencoder");
     ret.property_name = "bitrate";
 #ifdef EXPERIMENTAL_USE_OPENH264_ENCODER
@@ -372,7 +374,8 @@ get_dynamic_qp_control_element_in_pipeline(GstElement* gst_pipeline,
     return ret;
   };
 
-  if (camera.requires_rpi_mmal_pipeline()) {
+  if (camera.requires_rpi_mmal_pipeline() &&
+      !OHDPlatform::instance().is_rpi5()) {
     if (auto ret = try_qp_control("rpicamsrc", false, "qp-min", "qp-max")) {
       return ret;
     }
@@ -380,7 +383,7 @@ get_dynamic_qp_control_element_in_pipeline(GstElement* gst_pipeline,
   if ((camera.requires_rpi_libcamera_pipeline() ||
        camera.requires_rpi_veye_pipeline() ||
        OHDPlatform::instance().is_rpi()) &&
-      !settings.force_sw_encode &&
+      !settings.force_sw_encode && !OHDPlatform::instance().is_rpi5() &&
       settings.streamed_video_format.videoCodec == VideoCodec::H264) {
     if (auto ret =
             try_qp_control("rpi_v4l2_encoder", true, "h264_minimum_qp_value",
@@ -402,7 +405,8 @@ get_dynamic_qp_control_element_in_pipeline(GstElement* gst_pipeline,
     }
   }
   if (camera.camera_type == X_CAM_TYPE_DUMMY_SW ||
-      is_usb_camera(camera.camera_type) || settings.force_sw_encode) {
+      is_usb_camera(camera.camera_type) || settings.force_sw_encode ||
+      OHDPlatform::instance().is_rpi5()) {
     if (auto ret = try_qp_control("swencoder", false, "qp-min", "qp-max")) {
       return ret;
     }
@@ -419,9 +423,8 @@ static bool change_bitrate(const GstBitrateControlElement& ctrl_el,
       ctrl_el.takes_kbit ? bitrate_kbits
                          : openhd::kbits_to_bits_per_second(bitrate_kbits);
   if (ctrl_el.max_raw_property_value > 0) {
-    target_raw_property_value =
-        std::min<int64_t>(target_raw_property_value,
-                          ctrl_el.max_raw_property_value);
+    target_raw_property_value = std::min<int64_t>(
+        target_raw_property_value, ctrl_el.max_raw_property_value);
   }
   if (ctrl_el.uses_extra_controls_video_bitrate) {
     set_extra_controls_ints(ctrl_el.encoder, ctrl_el.property_name,

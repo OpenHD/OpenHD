@@ -872,6 +872,10 @@
       "manufacturers": ["RPI_ARDUCAM", "RPI_VEYE", "RPI_RPIF", "RPI_HDMI", "USB", "DEBUG"]
     },
     {
+      "platform": "X_PLATFORM_TYPE_RPI_5",
+      "manufacturers": ["RPI_ARDUCAM", "RPI_VEYE", "RPI_RPIF", "USB", "DEBUG"]
+    },
+    {
       "platform": "X_PLATFORM_TYPE_ALWINNER_X20",
       "manufacturers": ["X20_HDZERO", "X20_RUNCAM"]
     },

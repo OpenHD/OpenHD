@@ -107,6 +107,13 @@ static std::string createSwEncoder(const CameraSettings& settings) {
   return ss.str();
 }
 
+// Pi 5 deliberately dropped the hardware H.264 encoder exposed by
+// v4l2h264enc. Keep the user override, but make software encoding mandatory on
+// Pi 5 so no camera path can accidentally construct an invalid pipeline.
+static bool use_rpi_software_encoder(const CameraSettings& settings) {
+  return settings.force_sw_encode || OHDPlatform::instance().is_rpi5();
+}
+
 static std::string gst_create_rtp_caps(const VideoCodec& videoCodec) {
   std::stringstream ss;
   if (videoCodec == VideoCodec::H264) {
@@ -229,7 +236,7 @@ static std::string createRpicamsrcStream(
   // specific area (which is not really of use to use)
   ss << " ! ";
   if (settings.streamed_video_format.videoCodec == VideoCodec::H264) {
-    if (settings.force_sw_encode) {
+    if (use_rpi_software_encoder(settings)) {
       openhd::log::get_default()->warn("Forced SW encode");
       ss << fmt::format("video/x-raw, width={}, height={}, framerate={}/1 ! ",
                         settings.streamed_video_format.width,
@@ -386,7 +393,12 @@ static std::string create_rpi_hdmi_v4l2_stream(const CameraSettings& settings) {
   // ss << "v4l2src io-mode=5 ! ";
   ss << "v4l2src  io-mode=dmabuf ! ";
   ss << "video/x-raw,framerate=30/1,format=UYVY ! ";
-  ss << create_rpi_v4l2_h264_encoder(settings);
+  if (use_rpi_software_encoder(settings)) {
+    ss << "videoconvert ! video/x-raw,format=I420 ! ";
+    ss << createSwEncoder(settings);
+  } else {
+    ss << create_rpi_v4l2_h264_encoder(settings);
+  }
   return ss.str();
 }
 
@@ -401,58 +413,66 @@ static std::string createLibcamerasrcStream(const CameraSettings& settings) {
   // NOTE: those options require openhd/arducam lbcamera !!
   // We make sure not to write them out explicitly when default(s) are still in
   // use
+  const bool supports_openhd_libcamera_properties =
+      !OHDPlatform::instance().is_rpi5();
   const auto rotation_degree = libcamera::get_rotation_degree(settings);
-  if (rotation_degree.has_value()) {
+  if (supports_openhd_libcamera_properties && rotation_degree.has_value()) {
     ss << "rotation=" << rotation_degree.value() << " ";
   }
-  if (requires_hflip(settings)) {
+  if (supports_openhd_libcamera_properties && requires_hflip(settings)) {
     ss << "hflip=1 ";
   }
-  if (requires_vflip(settings)) {
+  if (supports_openhd_libcamera_properties && requires_vflip(settings)) {
     ss << "vflip=1 ";
   }
   const auto brightness = libcamera::get_brightness(settings);
-  if (brightness.has_value()) {
+  if (supports_openhd_libcamera_properties && brightness.has_value()) {
     ss << fmt::format("brightness={} ", brightness.value());
   }
   const auto sharpness = libcamera::get_sharpness(settings);
-  if (sharpness.has_value()) {
+  if (supports_openhd_libcamera_properties && sharpness.has_value()) {
     ss << fmt::format("sharpness={} ", sharpness.value());
   }
   const auto saturation = libcamera::get_saturation(settings);
-  if (saturation.has_value()) {
+  if (supports_openhd_libcamera_properties && saturation.has_value()) {
     ss << fmt::format("saturation={} ", saturation.value());
   }
   const auto contrast = libcamera::get_contrast(settings);
-  if (contrast.has_value()) {
+  if (supports_openhd_libcamera_properties && contrast.has_value()) {
     ss << fmt::format("contrast={} ", contrast.value());
   }
-  if (openhd::validate_rpi_libcamera_ev_value(
+  if (supports_openhd_libcamera_properties &&
+      openhd::validate_rpi_libcamera_ev_value(
           settings.rpi_libcamera_ev_value) &&
       settings.rpi_libcamera_ev_value != RPI_LIBCAMERA_DEFAULT_EV) {
     ss << fmt::format("ev={} ", settings.rpi_libcamera_ev_value);
   }
-  if (openhd::validate_rpi_libcamera_doenise_index(
+  if (supports_openhd_libcamera_properties &&
+      openhd::validate_rpi_libcamera_doenise_index(
           settings.rpi_libcamera_denoise_index) &&
       settings.rpi_libcamera_denoise_index != 0) {
     ss << fmt::format("denoise={} ", settings.rpi_libcamera_denoise_index);
   }
-  if (openhd::validate_rpi_libcamera_awb_index(
+  if (supports_openhd_libcamera_properties &&
+      openhd::validate_rpi_libcamera_awb_index(
           settings.rpi_libcamera_awb_index) &&
       settings.rpi_libcamera_awb_index != 0) {
     ss << fmt::format("awb={} ", settings.rpi_libcamera_awb_index);
   }
-  if (openhd::validate_rpi_libcamera_metering_index(
+  if (supports_openhd_libcamera_properties &&
+      openhd::validate_rpi_libcamera_metering_index(
           settings.rpi_libcamera_metering_index) &&
       settings.rpi_libcamera_metering_index != 0) {
     ss << fmt::format("metering={} ", settings.rpi_libcamera_metering_index);
   }
-  if (openhd::validate_rpi_libcamera_exposure_index(
+  if (supports_openhd_libcamera_properties &&
+      openhd::validate_rpi_libcamera_exposure_index(
           settings.rpi_libcamera_exposure_index) &&
       settings.rpi_libcamera_exposure_index != 0) {
     ss << fmt::format("exposure={} ", settings.rpi_libcamera_exposure_index);
   }
-  if (openhd::validate_rpi_libcamera_shutter_microseconds(
+  if (supports_openhd_libcamera_properties &&
+      openhd::validate_rpi_libcamera_shutter_microseconds(
           settings.rpi_libcamera_shutter_microseconds) &&
       settings.rpi_libcamera_shutter_microseconds != 0) {
     ss << fmt::format("shutter={} ",
@@ -470,8 +490,11 @@ static std::string createLibcamerasrcStream(const CameraSettings& settings) {
         settings.streamed_video_format.width,
         settings.streamed_video_format.height,
         settings.streamed_video_format.framerate);
-    if (settings.force_sw_encode) {
-      openhd::log::get_default()->warn("Forced SW encode");
+    if (use_rpi_software_encoder(settings)) {
+      openhd::log::get_default()->warn(
+          OHDPlatform::instance().is_rpi5()
+              ? "Using mandatory Pi 5 software H.264 encoding"
+              : "Forced SW encode");
       ss << createSwEncoder(settings);
     } else {
       // We got rid of the v4l2convert - see
@@ -507,7 +530,12 @@ static std::string create_veye_vl2_stream(const CameraSettings& settings,
       settings.streamed_video_format.height,
       settings.streamed_video_format.framerate);
   if (settings.streamed_video_format.videoCodec == VideoCodec::H264) {
-    ss << create_rpi_v4l2_h264_encoder(settings);
+    if (use_rpi_software_encoder(settings)) {
+      ss << "videoconvert ! video/x-raw,format=I420 ! ";
+      ss << createSwEncoder(settings);
+    } else {
+      ss << create_rpi_v4l2_h264_encoder(settings);
+    }
   } else {
     openhd::log::get_default()->warn(
         "No h265 encoder on rpi, using SW encode (will almost 100% result in "
@@ -781,9 +809,8 @@ static std::string create_orqa_camera1_stream(const int device_index,
   std::ostringstream ss;
   // ORCA V2 validated capture path
   ss << "v4l2src device=/dev/video" << device_index
-     << " io-mode=mmap do-timestamp=true ! "
-     << "video/x-raw,width=" << width << ",height=" << height
-     << ",framerate=" << framerate << "/1 ! "
+     << " io-mode=mmap do-timestamp=true ! " << "video/x-raw,width=" << width
+     << ",height=" << height << ",framerate=" << framerate << "/1 ! "
      << "queue max-size-buffers=4 leaky=downstream ! " << encoder_name
      << " bitrate=" << bitrate_kbits << " gop-size=" << keyframe_interval
      << aud_parameter << " ! ";
@@ -871,6 +898,7 @@ static std::string create_parse_and_rtp_packetize(
   ss << create_rtp_packetize_for_codec(videoCodec, rtp_fragment_size);
   return ss.str();
 }
+
 static std::string create_queue_and_parse(const VideoCodec videoCodec) {
   std::stringstream ss;
   ss << create_parse_for_codec(videoCodec);
@@ -973,7 +1001,7 @@ static std::string createDummyStreamX(const CameraSettings& settings) {
       settings.streamed_video_format.width,
       settings.streamed_video_format.height,
       settings.streamed_video_format.framerate);
-  if (settings.force_sw_encode) {
+  if (use_rpi_software_encoder(settings)) {
     ss << createSwEncoder(settings);
   } else {
     if (platform.is_rpi()) {
@@ -1040,7 +1068,7 @@ static std::string create_dummy_filesrc_stream(const CameraSettings& settings) {
                       settings.streamed_video_format.framerate);
   }
   // ss<<createSwEncoder(settings);
-  if (settings.force_sw_encode) {
+  if (use_rpi_software_encoder(settings)) {
     ss << createSwEncoder(settings);
   } else {
     if (platform.is_rpi()) {
@@ -1230,11 +1258,10 @@ static std::string createRv1126TestsrcStream(const CameraSettings& settings) {
 
   ss << fmt::format("videotestsrc is-live=true ! ");
 
-  ss << fmt::format(
-    "video/x-raw, width={}, height={}, framerate={}/1 ! ",
-    settings.streamed_video_format.width,
-    settings.streamed_video_format.height,
-    settings.streamed_video_format.framerate);
+  ss << fmt::format("video/x-raw, width={}, height={}, framerate={}/1 ! ",
+                    settings.streamed_video_format.width,
+                    settings.streamed_video_format.height,
+                    settings.streamed_video_format.framerate);
 
   const int bps_actual =
       calculateRockchipMppEncoderBps(settings.h26x_bitrate_kbits);

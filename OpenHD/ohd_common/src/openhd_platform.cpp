@@ -56,6 +56,13 @@ std::optional<int> read_cached_platform_type() {
   if (!parsed["platform_type"].is_number_integer()) {
     return std::nullopt;
   }
+  // Older builds used id 12 for both CM4 and Pi 5 and consequently cached
+  // both as "RPI 5". Force one fresh sysutils lookup to migrate that cache to
+  // the now-unique CM4 (12) or Pi 5 (13) id.
+  if (parsed["platform_type"].get<int>() == 12 &&
+      parsed.value("platform_name", "") == "RPI 5") {
+    return std::nullopt;
+  }
   return parsed["platform_type"].get<int>();
 }
 
@@ -100,6 +107,8 @@ std::string x_platform_type_to_string(int platform_type) {
       return "RPI<=3";
     case X_PLATFORM_TYPE_RPI_4:
       return "RPI 4";
+    case X_PLATFORM_TYPE_RPI_CM4:
+      return "RPI CM4";
     case X_PLATFORM_TYPE_RPI_5:
       return "RPI 5";
     case X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W:
@@ -145,7 +154,8 @@ int get_fec_max_block_size_for_platform() {
   auto platform_type = OHDPlatform::instance().platform_type;
 
   if (platform_type == X_PLATFORM_TYPE_RPI_4 ||
-      platform_type == X_PLATFORM_TYPE_RPI_CM4) {
+      platform_type == X_PLATFORM_TYPE_RPI_CM4 ||
+      platform_type == X_PLATFORM_TYPE_RPI_5) {
     return 50;
   }
   if (platform_type == X_PLATFORM_TYPE_RPI_OLD) {
@@ -195,6 +205,10 @@ std::string OHDPlatform::to_string() const {
 
 bool OHDPlatform::is_rpi() const {
   return platform_type >= 10 && platform_type < 20;
+}
+
+bool OHDPlatform::is_rpi5() const {
+  return platform_type == X_PLATFORM_TYPE_RPI_5;
 }
 
 bool OHDPlatform::is_rock() const {
