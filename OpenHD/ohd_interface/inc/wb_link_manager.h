@@ -34,6 +34,13 @@
 
 #include "../lib/wifibroadcast/wifibroadcast/src/WBTxRx.h"
 
+struct FrequencyChangeRequest {
+  uint32_t transaction_id;
+  int old_frequency_mhz;
+  int target_frequency_mhz;
+  int channel_width_mhz;
+};
+
 /**
  * Quite a lot of complicated code to implement 40Mhz without sync of air and
  * ground worth it, though ;) We have public std::atomic members, since the data
@@ -54,6 +61,13 @@ class ManagementAir {
   // at which the management frames are sent
   void set_frequency(int frequency);
   void set_channel_width(uint8_t bw);
+  uint32_t begin_frequency_change(int target_frequency, uint8_t channel_width);
+  void commit_frequency_change(uint32_t transaction_id);
+  void finish_frequency_change(uint32_t transaction_id, bool success,
+                               int fallback_frequency);
+  bool is_frequency_change_ready(uint32_t transaction_id) const;
+  bool is_frequency_change_confirmed(uint32_t transaction_id) const;
+  bool has_frequency_change_failed(uint32_t transaction_id) const;
 
  public:
   std::atomic<uint32_t> m_curr_frequency_mhz;
@@ -72,6 +86,15 @@ class ManagementAir {
   std::atomic<int> m_last_received_packet_timestamp_ms = 0;
   std::chrono::steady_clock::time_point m_increase_interval_tp;
   std::atomic<int> m_last_change_timestamp_ms;
+  std::atomic<uint32_t> m_next_frequency_transaction_id{1};
+  std::atomic<uint32_t> m_frequency_transaction_id{0};
+  std::atomic<uint32_t> m_frequency_transaction_old_mhz{0};
+  std::atomic<uint32_t> m_frequency_transaction_target_mhz{0};
+  std::atomic<uint8_t> m_frequency_transaction_width_mhz{20};
+  std::atomic<uint8_t> m_frequency_transaction_phase{0};
+  std::atomic<uint32_t> m_ground_ready_transaction_id{0};
+  std::atomic<uint32_t> m_ground_confirmed_transaction_id{0};
+  std::atomic<uint32_t> m_ground_failed_transaction_id{0};
 };
 
 class ManagementGround {
@@ -88,6 +111,14 @@ class ManagementGround {
   std::atomic<int> m_air_reported_curr_frequency = -1;
   std::atomic<int> m_air_reported_curr_channel_width = -1;
   int get_last_received_packet_ts_ms();
+  std::optional<FrequencyChangeRequest> get_prepare_request() const;
+  std::optional<FrequencyChangeRequest> get_commit_request() const;
+  void mark_frequency_change_ready(uint32_t transaction_id,
+                                   int target_frequency);
+  void mark_frequency_change_switched(uint32_t transaction_id,
+                                      int target_frequency, bool success);
+  void mark_frequency_change_confirmed(uint32_t transaction_id,
+                                       int target_frequency);
 
  private:
   void loop();
@@ -96,6 +127,14 @@ class ManagementGround {
   std::atomic<bool> m_tx_thread_run = true;
   std::unique_ptr<std::thread> m_tx_thread;
   std::atomic<int> m_last_received_packet_timestamp_ms = 0;
+  std::atomic<uint32_t> m_frequency_transaction_id{0};
+  std::atomic<uint32_t> m_frequency_transaction_old_mhz{0};
+  std::atomic<uint32_t> m_frequency_transaction_target_mhz{0};
+  std::atomic<uint8_t> m_frequency_transaction_width_mhz{20};
+  std::atomic<uint8_t> m_frequency_transaction_phase{0};
+  std::atomic<uint32_t> m_ack_transaction_id{0};
+  std::atomic<uint32_t> m_ack_target_frequency_mhz{0};
+  std::atomic<uint8_t> m_ack_state{0};
   // 40Mhz / 20Mhz link management
   void on_new_management_packet(const uint8_t *data, int data_len);
 };

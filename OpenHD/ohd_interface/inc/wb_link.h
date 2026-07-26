@@ -158,7 +158,8 @@ class WBLink : public OHDLink {
   void gnd_note_channel_switch_attempt(int previous_frequency,
                                        int previous_channel_width,
                                        int new_frequency,
-                                       int new_channel_width);
+                                       int new_channel_width,
+                                       uint32_t transaction_id = 0);
   // this is special, mcs index can not only be changed via mavlink param, but
   // also via RC channel (if enabled)
   void wt_perform_mcs_via_rc_channel_if_enabled();
@@ -281,13 +282,22 @@ class WBLink : public OHDLink {
     int previous_channel_width = openhd::DEFAULT_GND_RX_CHANNEL_WIDTH;
     int attempted_frequency = -1;
     int attempted_channel_width = -1;
+    uint32_t transaction_id = 0;
     int64_t baseline_count_p_valid = 0;
     std::chrono::steady_clock::time_point switch_tp =
         std::chrono::steady_clock::now();
   };
   GroundSwitchRollbackState m_gnd_switch_rollback_state{};
+  uint32_t m_gnd_last_prepared_frequency_transaction = 0;
+  uint32_t m_gnd_last_committed_frequency_transaction = 0;
+  static constexpr auto FREQUENCY_PREPARE_TIMEOUT =
+      std::chrono::milliseconds(3000);
+  static constexpr auto FREQUENCY_COMMIT_GRACE_PERIOD =
+      std::chrono::milliseconds(500);
+  static constexpr auto FREQUENCY_CONFIRM_TIMEOUT =
+      std::chrono::milliseconds(4000);
   static constexpr auto GND_SWITCH_ROLLBACK_TIMEOUT =
-      std::chrono::milliseconds(2000);
+      std::chrono::milliseconds(7000);
   // Allows temporarily closing the video input
   std::atomic_bool m_air_close_video_in = false;
   const int m_recommended_max_fec_blk_size_for_this_platform;

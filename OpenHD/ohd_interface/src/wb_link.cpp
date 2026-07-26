@@ -701,10 +701,14 @@ int WBLink::get_configured_tx_mcs_index() const {
 
 bool WBLink::request_set_frequency(int frequency) {
   m_console->debug("request_set_frequency {}", frequency);
+  if (m_profile.is_ground()) {
+    m_console->warn(
+        "Rejecting direct ground frequency change to avoid desync; change "
+        "WB_FREQUENCY on air and ground will follow its transaction");
+    return false;
+  }
   const int current_channel_width =
-      m_profile.is_air
-          ? static_cast<int>(m_settings->get_settings().wb_air_tx_channel_width)
-          : m_gnd_curr_rx_channel_width.load();
+      static_cast<int>(m_settings->get_settings().wb_air_tx_channel_width);
   if (!openhd::wb::validate_frequency_change(
           frequency, current_channel_width, m_broadcast_cards, m_console)) {
     return false;
@@ -716,19 +720,79 @@ bool WBLink::request_set_frequency(int frequency) {
   auto work_item = std::make_shared<WorkItem>(
       fmt::format("SET_FREQ:{}", frequency),
       [this, frequency]() {
+        const auto settings_before = m_settings->get_settings();
+        const int previous_frequency = settings_before.wb_frequency;
+        const int channel_width = settings_before.wb_air_tx_channel_width;
+        if (previous_frequency == frequency) {
+          return;
+        }
+        m_air_close_video_in = true;
+        const uint32_t transaction_id =
+            m_management_air->begin_frequency_change(frequency, channel_width);
+        const auto prepare_deadline =
+            std::chrono::steady_clock::now() + FREQUENCY_PREPARE_TIMEOUT;
+        while (std::chrono::steady_clock::now() < prepare_deadline &&
+               !m_management_air->is_frequency_change_ready(transaction_id)) {
+          std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        }
+        if (!m_management_air->is_frequency_change_ready(transaction_id)) {
+          m_console->warn(
+              "Frequency transaction {} timed out waiting for ground READY; "
+              "staying on {}MHz",
+              transaction_id, previous_frequency);
+          m_management_air->finish_frequency_change(
+              transaction_id, false, previous_frequency);
+          m_air_close_video_in = false;
+          return;
+        }
+
+        m_management_air->commit_frequency_change(transaction_id);
+        std::this_thread::sleep_for(FREQUENCY_COMMIT_GRACE_PERIOD);
+        const bool applied = apply_frequency_and_channel_width(
+            frequency, channel_width, channel_width);
+        if (!applied) {
+          m_console->warn(
+              "Frequency transaction {} failed to apply {}MHz on air; "
+              "rolling back to {}MHz",
+              transaction_id, frequency, previous_frequency);
+          m_management_air->finish_frequency_change(
+              transaction_id, false, previous_frequency);
+          apply_frequency_and_channel_width(previous_frequency, channel_width,
+                                            channel_width);
+          m_air_close_video_in = false;
+          return;
+        }
+
+        const auto confirm_deadline =
+            std::chrono::steady_clock::now() + FREQUENCY_CONFIRM_TIMEOUT;
+        while (std::chrono::steady_clock::now() < confirm_deadline &&
+               !m_management_air->is_frequency_change_confirmed(
+                   transaction_id) &&
+               !m_management_air->has_frequency_change_failed(
+                   transaction_id)) {
+          std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        }
+        if (!m_management_air->is_frequency_change_confirmed(transaction_id)) {
+          m_console->warn(
+              "Frequency transaction {} got no ground confirmation on "
+              "{}MHz; rolling air back to {}MHz",
+              transaction_id, frequency, previous_frequency);
+          m_management_air->finish_frequency_change(
+              transaction_id, false, previous_frequency);
+          apply_frequency_and_channel_width(previous_frequency, channel_width,
+                                            channel_width);
+          m_air_close_video_in = false;
+          return;
+        }
+
+        m_management_air->finish_frequency_change(transaction_id, true,
+                                                  previous_frequency);
         m_settings->unsafe_get_settings().wb_frequency = frequency;
         m_settings->persist();
-        if (m_profile.is_air) {
-          // temporarily disable video streaming to free up BW
-          m_air_close_video_in = true;
-          m_management_air->set_frequency(frequency);
-          // We need to delay the change to make sure at least one management
-          // packet goes through ..
-          std::this_thread::sleep_for(std::chrono::seconds(2));
-          m_air_close_video_in = false;
-        }
-        apply_frequency_and_channel_width_from_settings();
         m_rate_adjustment_frequency_changed = true;
+        m_air_close_video_in = false;
+        m_console->info("Frequency transaction {} confirmed on {}MHz",
+                        transaction_id, frequency);
       },
       std::chrono::steady_clock::now());
   return try_schedule_work_item(work_item);
@@ -2729,11 +2793,12 @@ void WBLink::update_arming_state(bool armed) {
 void WBLink::gnd_note_channel_switch_attempt(int previous_frequency,
                                              int previous_channel_width,
                                              int new_frequency,
-                                             int new_channel_width) {
+                                             int new_channel_width,
+                                             uint32_t transaction_id) {
   if (!m_profile.is_ground()) {
     return;
   }
-  if (previous_frequency == new_frequency &&
+  if (transaction_id == 0 && previous_frequency == new_frequency &&
       previous_channel_width == new_channel_width) {
     m_gnd_switch_rollback_state.active = false;
     return;
@@ -2744,6 +2809,7 @@ void WBLink::gnd_note_channel_switch_attempt(int previous_frequency,
   state.previous_channel_width = previous_channel_width;
   state.attempted_frequency = new_frequency;
   state.attempted_channel_width = new_channel_width;
+  state.transaction_id = transaction_id;
   state.baseline_count_p_valid = m_wb_txrx->get_rx_stats().count_p_valid;
   state.switch_tp = std::chrono::steady_clock::now();
   m_console->debug(
@@ -2764,9 +2830,6 @@ void WBLink::wt_gnd_perform_channel_switch_rollback_check() {
   }
   const auto elapsed_since_switch =
       std::chrono::steady_clock::now() - state.switch_tp;
-  if (elapsed_since_switch < GND_SWITCH_ROLLBACK_TIMEOUT) {
-    return;
-  }
   const auto rx_stats = m_wb_txrx->get_rx_stats();
   const bool got_new_valid_packets =
       rx_stats.count_p_valid > state.baseline_count_p_valid;
@@ -2776,6 +2839,18 @@ void WBLink::wt_gnd_perform_channel_switch_rollback_check() {
         state.attempted_frequency, state.attempted_channel_width,
         state.baseline_count_p_valid, rx_stats.count_p_valid);
     state.active = false;
+    m_settings->unsafe_get_settings().wb_frequency =
+        state.attempted_frequency;
+    m_settings->unsafe_get_settings().wb_gnd_rx_channel_width =
+        state.attempted_channel_width;
+    m_settings->persist(false);
+    if (state.transaction_id != 0 && m_management_gnd) {
+      m_management_gnd->mark_frequency_change_confirmed(
+          state.transaction_id, state.attempted_frequency);
+    }
+    return;
+  }
+  if (elapsed_since_switch < GND_SWITCH_ROLLBACK_TIMEOUT) {
     return;
   }
   m_console->warn(
@@ -2802,6 +2877,10 @@ void WBLink::wt_gnd_perform_channel_switch_rollback_check() {
   m_settings->persist(false);
   state.active = false;
   if (m_management_gnd) {
+    if (state.transaction_id != 0) {
+      m_management_gnd->mark_frequency_change_switched(
+          state.transaction_id, state.attempted_frequency, false);
+    }
     m_management_gnd->m_air_reported_curr_frequency = -1;
     m_management_gnd->m_air_reported_curr_channel_width = -1;
   }
@@ -2817,6 +2896,69 @@ void WBLink::wt_gnd_perform_channel_switch_rollback_check() {
 void WBLink::wt_gnd_perform_channel_management() {
   if (m_profile.is_ground()) {
     wt_gnd_perform_channel_switch_rollback_check();
+    const auto prepare_request = m_management_gnd->get_prepare_request();
+    if (prepare_request.has_value() &&
+        prepare_request->transaction_id !=
+            m_gnd_last_prepared_frequency_transaction) {
+      const bool valid = openhd::wb::validate_frequency_change(
+          prepare_request->target_frequency_mhz,
+          prepare_request->channel_width_mhz, m_broadcast_cards, m_console);
+      if (valid) {
+        m_gnd_last_prepared_frequency_transaction =
+            prepare_request->transaction_id;
+        m_management_gnd->mark_frequency_change_ready(
+            prepare_request->transaction_id,
+            prepare_request->target_frequency_mhz);
+        m_console->info(
+            "Ground READY for frequency transaction {}: {}MHz -> {}MHz",
+            prepare_request->transaction_id,
+            prepare_request->old_frequency_mhz,
+            prepare_request->target_frequency_mhz);
+      }
+    }
+    const auto commit_request = m_management_gnd->get_commit_request();
+    if (commit_request.has_value() &&
+        commit_request->transaction_id ==
+            m_gnd_last_prepared_frequency_transaction &&
+        commit_request->transaction_id !=
+            m_gnd_last_committed_frequency_transaction) {
+      const int previous_frequency =
+          m_gnd_curr_rx_frequency > 0
+              ? m_gnd_curr_rx_frequency.load()
+              : static_cast<int>(m_settings->get_settings().wb_frequency);
+      const int previous_channel_width = m_gnd_curr_rx_channel_width.load();
+      const bool switched = apply_frequency_and_channel_width(
+          commit_request->target_frequency_mhz,
+          commit_request->channel_width_mhz,
+          openhd::DEFAULT_GND_RX_CHANNEL_WIDTH);
+      m_management_gnd->mark_frequency_change_switched(
+          commit_request->transaction_id,
+          commit_request->target_frequency_mhz, switched);
+      m_gnd_last_committed_frequency_transaction =
+          commit_request->transaction_id;
+      if (switched) {
+        m_gnd_curr_rx_frequency = commit_request->target_frequency_mhz;
+        m_gnd_curr_rx_channel_width = commit_request->channel_width_mhz;
+        gnd_note_channel_switch_attempt(
+            previous_frequency, previous_channel_width,
+            commit_request->target_frequency_mhz,
+            commit_request->channel_width_mhz,
+            commit_request->transaction_id);
+      } else {
+        m_console->warn(
+            "Ground failed frequency transaction {} apply for {}MHz",
+            commit_request->transaction_id,
+            commit_request->target_frequency_mhz);
+        const bool recovered = apply_frequency_and_channel_width(
+            previous_frequency, previous_channel_width,
+            openhd::DEFAULT_GND_RX_CHANNEL_WIDTH);
+        if (!recovered) {
+          m_console->warn(
+              "Ground also failed to restore {}MHz after transaction {}",
+              previous_frequency, commit_request->transaction_id);
+        }
+      }
+    }
     const int last_management_packet_ts_ms =
         m_management_gnd ? m_management_gnd->get_last_received_packet_ts_ms()
                          : 0;
@@ -2829,8 +2971,8 @@ void WBLink::wt_gnd_perform_channel_management() {
             static_cast<int>(GND_SWITCH_ROLLBACK_TIMEOUT.count());
     // Ground: Listen on the channel width the air reports (always works due to
     // management always on 20Mhz) And switch "up" to 40Mhz if needed
-    // AND react to (announced) frequency changes (right now without any
-    // recovery protocol)
+    // AND retain legacy support for air units that only announce frequency.
+    // New air units use the prepare/commit/confirm transaction above.
     const int air_reported_channel_width =
         m_management_gnd->m_air_reported_curr_channel_width;
     const int air_reported_frequency =
@@ -2851,16 +2993,12 @@ void WBLink::wt_gnd_perform_channel_management() {
         m_console->debug("air_reported_frequency: {}", air_reported_frequency);
         m_console->debug("air_reported_channel_width: {}",
                          air_reported_channel_width);
-        m_gnd_curr_rx_frequency = air_reported_frequency;
-        m_gnd_curr_rx_channel_width = air_reported_channel_width;
-        m_settings->unsafe_get_settings().wb_frequency = air_reported_frequency;
-        m_settings->unsafe_get_settings().wb_gnd_rx_channel_width =
-            air_reported_channel_width;
-        m_settings->persist(false);
         const bool switched =
             apply_frequency_and_channel_width(air_reported_frequency,
                                               air_reported_channel_width, 20);
         if (switched) {
+          m_gnd_curr_rx_frequency = air_reported_frequency;
+          m_gnd_curr_rx_channel_width = air_reported_channel_width;
           gnd_note_channel_switch_attempt(previous_frequency,
                                           previous_channel_width,
                                           air_reported_frequency,
