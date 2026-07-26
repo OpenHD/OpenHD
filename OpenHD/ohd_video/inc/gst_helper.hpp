@@ -892,8 +892,11 @@ static std::string createV4l2SrcRawAndSwEncodeStream(
  * @return the gstreamer pipeline part.
  */
 static std::string create_parse_and_rtp_packetize(
-    const VideoCodec videoCodec, int rtp_fragment_size = 1024) {
+    const VideoCodec videoCodec, int rtp_fragment_size = 1024, bool add_queue = false) {
   std::stringstream ss;
+  if(add_queue) {
+    ss << "queue leaky=downstream max-size-buffers=10 ! ";
+  }
   ss << create_parse_for_codec(videoCodec);
   ss << create_rtp_packetize_for_codec(videoCodec, rtp_fragment_size);
   return ss.str();

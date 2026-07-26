@@ -1052,7 +1052,7 @@ bool GStreamerStream::setup() {
     const int rtp_fragment_size = 1440;
     m_console->debug("Using {} for rtp fragmentation", rtp_fragment_size);
     pipeline_content << OHDGstHelper::create_parse_and_rtp_packetize(
-        setting.streamed_video_format.videoCodec, rtp_fragment_size);
+        setting.streamed_video_format.videoCodec, rtp_fragment_size, ADD_RECORDING_TO_PIPELINE);
     pipeline_content << OHDGstHelper::createOutputAppSink();
   }
   if (ADD_RECORDING_TO_PIPELINE) {
