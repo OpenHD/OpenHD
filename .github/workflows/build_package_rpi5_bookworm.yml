@@ -32,7 +32,7 @@ jobs:
           token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
 
       - name: Build arm64 Bookworm package
-        uses: pguyot/arm-runner-action@98b8d5a3228f504a8bd54913ab1e23d70f369c6e
+        uses: pguyot/arm-runner-action@e1773de1ed6eb61848f5693de824d836f0b0ea25
         with:
           base_image: https://downloads.raspberrypi.com/raspios_lite_arm64/images/raspios_lite_arm64-2025-05-13/2025-05-13-raspios-bookworm-arm64-lite.img.xz
           cpu: cortex-a76
