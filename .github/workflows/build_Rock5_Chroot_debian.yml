@@ -165,8 +165,11 @@ jobs:
           image_needle = "mv OpenHD-ImageBuilder/images .\n"
           image_patch = (
               image_needle
+              + 'target_release="${{ matrix.release }}"\n'
               + "for board in radxa-zero3w orangepi-zero3w-lite radxa-cubie rock5a rock5b radxa-cm5; do\n"
-              + "  if [ ! -f \"images/${board}\" ] && [ -f \"images/${board}_base\" ]; then\n"
+              + "  if [ \"${target_release}\" = \"bookworm\" ] && [ -f \"images/${board}-lite_base\" ]; then\n"
+              + "    cp \"images/${board}-lite_base\" \"images/${board}\"\n"
+              + "  elif [ -f \"images/${board}_base\" ]; then\n"
               + "    cp \"images/${board}_base\" \"images/${board}\"\n"
               + "  fi\n"
               + "done\n"
