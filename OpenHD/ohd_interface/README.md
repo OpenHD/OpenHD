@@ -13,6 +13,10 @@ sides then configure the existing Ethernet video and telemetry forwarding path.
 Discovery continues in the background so DHCP address changes and reconnections
 are handled without restarting OpenHD.
 
+Automatic Ethernet uses dedicated link ports `5910` for video and `5920` for
+telemetry, avoiding OpenHD's local video/client ports. An explicit
+`ethernet.txt` configuration may override them.
+
 If a connected Ethernet interface has no usable DHCP address after a short
 grace period, OpenHD configures a direct-link `/24`: air uses `192.168.8.1` and
 ground uses `192.168.8.2`. These addresses are applied at runtime and allow a

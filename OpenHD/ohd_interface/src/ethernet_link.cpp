@@ -258,8 +258,6 @@ void EthernetLink::initialize(bool auto_discovery) {
   std::cout << "ethernet starting " << std::endl;
 
   if (auto_discovery) {
-    VIDEO_PORT = m_config.VIDEO_PORT;
-    TELEMETRY_PORT = m_config.TELEMETRY_PORT;
     std::cout << "Ethernet auto-discovery using video port " << VIDEO_PORT
               << " and telemetry port " << TELEMETRY_PORT << std::endl;
   } else if (OHDFilesystemUtil::exists(ETHERNET_FILE_PATH)) {
