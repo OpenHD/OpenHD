@@ -90,6 +90,7 @@ class EthernetLink : public OHDLink {
   std::thread m_discovery_thread;
   std::mutex m_forwarders_mutex;
   std::string m_peer_ip;
+  std::atomic<int64_t> m_last_discovery_response_ms{0};
   std::atomic<bool> m_stats_running{false};
   std::thread m_stats_thread;
   std::atomic<uint64_t> m_tx_total_bytes{0};

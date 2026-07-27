@@ -54,6 +54,8 @@ constexpr int ETHERNET_DISCOVERY_PORT = 49891;
 constexpr const char* ETHERNET_DISCOVERY_PING = "OPENHD_ETHERNET_V1 PING";
 constexpr const char* ETHERNET_DISCOVERY_PONG_PREFIX =
     "OPENHD_ETHERNET_V1 PONG";
+constexpr uint32_t MAX_UNICAST_DISCOVERY_HOSTS = 1024;
+constexpr int64_t DISCOVERY_PEER_TIMEOUT_MS = 5000;
 
 int16_t clamp_int16(int value) {
   if (value > std::numeric_limits<int16_t>::max()) {
@@ -82,7 +84,33 @@ void set_receive_timeout(int socket_fd, int milliseconds) {
   setsockopt(socket_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
 }
 
-std::set<uint32_t> local_broadcast_addresses() {
+void add_unicast_subnet_addresses(std::set<uint32_t>& result,
+                                  uint32_t address_network_order,
+                                  uint32_t netmask_network_order) {
+  const uint32_t address = ntohl(address_network_order);
+  const uint32_t netmask = ntohl(netmask_network_order);
+  uint32_t network = address & netmask;
+  uint32_t broadcast = network | ~netmask;
+  if (broadcast <= network + 1) {
+    return;
+  }
+
+  const uint64_t host_count =
+      static_cast<uint64_t>(broadcast) - network - 1;
+  if (host_count > MAX_UNICAST_DISCOVERY_HOSTS) {
+    // Avoid flooding unusually large corporate/VPN subnets. The local /24 is
+    // the useful neighborhood for a directly connected OpenHD pair.
+    network = address & 0xffffff00U;
+    broadcast = network | 0x000000ffU;
+  }
+  for (uint32_t host = network + 1; host < broadcast; ++host) {
+    if (host != address) {
+      result.insert(htonl(host));
+    }
+  }
+}
+
+std::set<uint32_t> local_discovery_addresses(bool include_unicast) {
   std::set<uint32_t> result{INADDR_BROADCAST};
   ifaddrs* interfaces = nullptr;
   if (getifaddrs(&interfaces) != 0) {
@@ -105,6 +133,14 @@ std::set<uint32_t> local_broadcast_addresses() {
       const auto* destination =
           reinterpret_cast<const sockaddr_in*>(current->ifa_dstaddr);
       result.insert(destination->sin_addr.s_addr);
+    }
+    if (include_unicast && current->ifa_netmask != nullptr) {
+      const auto* address =
+          reinterpret_cast<const sockaddr_in*>(current->ifa_addr);
+      const auto* netmask =
+          reinterpret_cast<const sockaddr_in*>(current->ifa_netmask);
+      add_unicast_subnet_addresses(result, address->sin_addr.s_addr,
+                                   netmask->sin_addr.s_addr);
     }
   }
   freeifaddrs(interfaces);
@@ -511,6 +547,8 @@ void EthernetLink::air_discovery_loop(int socket_fd) {
                   sender_ip.size()) == nullptr) {
       continue;
     }
+    m_last_discovery_response_ms.store(
+        openhd::util::steady_clock_time_epoch_ms(), std::memory_order_relaxed);
     configure_peer(sender_ip.data(), VIDEO_PORT, TELEMETRY_PORT);
     const auto response =
         fmt::format("{} video={} telemetry={}", ETHERNET_DISCOVERY_PONG_PREFIX,
@@ -525,8 +563,32 @@ void EthernetLink::ground_discovery_loop(int socket_fd) {
       "Ethernet fallback scanning local networks on UDP {}",
       ETHERNET_DISCOVERY_PORT);
   std::array<char, 256> buffer{};
+  uint32_t scan_number = 0;
   while (m_discovery_running) {
-    for (const auto address : local_broadcast_addresses()) {
+    const int64_t now_ms = openhd::util::steady_clock_time_epoch_ms();
+    const int64_t last_response_ms =
+        m_last_discovery_response_ms.load(std::memory_order_relaxed);
+    const bool peer_is_recent =
+        last_response_ms > 0 &&
+        (now_ms - last_response_ms) <= DISCOVERY_PEER_TIMEOUT_MS;
+    // Sweep every local host until connected. Once connected, use cheap
+    // broadcast keepalives and periodically sweep again for DHCP changes.
+    const bool include_unicast = !peer_is_recent || (scan_number % 10 == 0);
+    auto destinations = local_discovery_addresses(include_unicast);
+    {
+      std::lock_guard<std::mutex> lock(m_forwarders_mutex);
+      in_addr peer_address{};
+      if (!m_peer_ip.empty() &&
+          inet_pton(AF_INET, m_peer_ip.c_str(), &peer_address) == 1) {
+        destinations.insert(peer_address.s_addr);
+      }
+    }
+    if (include_unicast) {
+      openhd::log::get_default()->debug(
+          "Ethernet discovery probing {} local IPv4 destinations",
+          destinations.size());
+    }
+    for (const auto address : destinations) {
       sockaddr_in destination{};
       destination.sin_family = AF_INET;
       destination.sin_addr.s_addr = address;
@@ -561,12 +623,16 @@ void EthernetLink::ground_discovery_loop(int socket_fd) {
       }
       try {
         configure_peer(sender_ip.data(), ports->first, ports->second);
+        m_last_discovery_response_ms.store(
+            openhd::util::steady_clock_time_epoch_ms(),
+            std::memory_order_relaxed);
       } catch (const std::exception& error) {
         openhd::log::get_default()->warn(
             "Cannot configure discovered Ethernet air unit {}: {}",
             sender_ip.data(), error.what());
       }
     }
+    ++scan_number;
     for (int i = 0; i < 5 && m_discovery_running; ++i) {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }

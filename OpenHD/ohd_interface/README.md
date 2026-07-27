@@ -6,11 +6,12 @@ ground hotspot, ...
 
 When no wifibroadcast, Artosyn, or Microhard link is detected, OpenHD
 automatically falls back to an IP/Ethernet link. Air listens for discovery
-requests on UDP port `49891`. Ground probes every active local IPv4 network;
-the air response supplies its IP address and the video and telemetry UDP ports.
-Both sides then configure the existing Ethernet video and telemetry forwarding
-path. Discovery continues in the background so DHCP address changes and
-reconnections are handled without restarting OpenHD.
+requests on UDP port `49891`. Ground probes every active local IPv4 network
+using both directed broadcasts and bounded unicast subnet scans; the air
+response supplies its IP address and the video and telemetry UDP ports. Both
+sides then configure the existing Ethernet video and telemetry forwarding path.
+Discovery continues in the background so DHCP address changes and reconnections
+are handled without restarting OpenHD.
 
 If a connected Ethernet interface has no usable DHCP address after a short
 grace period, OpenHD configures a direct-link `/24`: air uses `192.168.8.1` and
