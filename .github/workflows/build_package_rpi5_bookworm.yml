@@ -2,6 +2,11 @@ name: build_package_rpi5_bookworm
 
 on:
   workflow_dispatch:
+    inputs:
+      artifact_run_id:
+        description: Existing successful run ID to republish without rebuilding
+        required: false
+        type: string
   push:
     branches:
       - "dev-release"
@@ -11,6 +16,10 @@ on:
 
 env:
   BUILD_TYPE: Release
+
+permissions:
+  actions: read
+  contents: read
 
 jobs:
   build:
@@ -32,6 +41,7 @@ jobs:
           token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
 
       - name: Build arm64 Bookworm package
+        if: github.event_name != 'workflow_dispatch' || inputs.artifact_run_id == ''
         uses: pguyot/arm-runner-action@e1773de1ed6eb61848f5693de824d836f0b0ea25
         with:
           base_image: https://downloads.raspberrypi.com/raspios_lite_arm64/images/raspios_lite_arm64-2025-05-13/2025-05-13-raspios-bookworm-arm64-lite.img.xz
@@ -50,11 +60,21 @@ jobs:
             ./package.sh standard arm64 raspbian bookworm
 
       - name: Upload package
+        if: github.event_name != 'workflow_dispatch' || inputs.artifact_run_id == ''
         uses: actions/upload-artifact@v4
         with:
           name: OpenHD-RPi5-Bookworm-arm64
           path: OpenHD/*_arm64.deb
           if-no-files-found: error
+
+      - name: Download existing package artifact
+        if: github.event_name == 'workflow_dispatch' && inputs.artifact_run_id != ''
+        uses: actions/download-artifact@v4
+        with:
+          name: OpenHD-RPi5-Bookworm-arm64
+          path: OpenHD
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.artifact_run_id }}
 
       - name: Resolve Cloudsmith target repo
         id: cloudsmith_repo
