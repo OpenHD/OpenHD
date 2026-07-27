@@ -68,7 +68,7 @@ jobs:
               ;;
           esac
 
-      - name: Push package
+      - name: Push package for Raspbian Bookworm
         uses: cloudsmith-io/action@master
         with:
           api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
@@ -77,6 +77,19 @@ jobs:
           owner: openhd
           repo: ${{ steps.cloudsmith_repo.outputs.name }}
           distro: raspbian
+          release: bookworm
+          republish: "true"
+          file: OpenHD/*_arm64.deb
+
+      - name: Push package for Debian Bookworm
+        uses: cloudsmith-io/action@master
+        with:
+          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
+          command: push
+          format: deb
+          owner: openhd
+          repo: ${{ steps.cloudsmith_repo.outputs.name }}
+          distro: debian
           release: bookworm
           republish: "true"
           file: OpenHD/*_arm64.deb
