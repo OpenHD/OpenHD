@@ -99,6 +99,8 @@ jobs:
           echo "${{ github.ref_name }}" > /opt/OpenHD-ChrootCompiler/additionalFiles/repo.txt
 
           cd /opt/OpenHD-ChrootCompiler/
+          # Ubuntu 24.04 removed the legacy qemu meta-package.
+          sed -i 's/ git qemu qemu-user-static/ git qemu-system qemu-user-static/' install_dep.sh
           sudo apt update
           sudo bash install_dep.sh
           sudo apt install -y --no-install-recommends parted gdisk e2fsprogs
