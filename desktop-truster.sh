@@ -20,7 +20,7 @@
 # https://github.com/OpenHD
 # 
 # © OpenHD, All Rights Reserved.
-################################################################################
+###############################################################################
 
 # Trust all desktop files
 for i in ~/Desktop/*.desktop; do
