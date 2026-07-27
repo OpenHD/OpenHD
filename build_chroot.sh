@@ -448,6 +448,52 @@ else
     if [[ "${ARCH}" == "arm64" ]]; then
         chmod +x ./install_build_dep.sh
         free_chroot_space_for_ci
+        normalize_bookworm_graphics_for_build() {
+            [[ "${FLAVOR}" == "bookworm" ]] || return 0
+
+            # Some Zero3W base images contain Mesa from Radxa/Oibaf and libdrm
+            # from bookworm-backports. Debian's development packages require
+            # their runtime libraries to have the exact same version.
+            if apt-get -s install libsdl2-dev >/tmp/openhd-libsdl2-apt-check.log 2>&1; then
+                return 0
+            fi
+
+            echo "[apt-preflight] Mixed Bookworm graphics ABI detected."
+            cat /tmp/openhd-libsdl2-apt-check.log || true
+            echo "[apt-preflight] Aligning Mesa and libdrm with Debian Bookworm."
+
+            cat >/etc/apt/preferences.d/99openhd-bookworm-graphics <<'EOF'
+Package: libdrm-common libdrm2 libdrm-amdgpu1 libdrm-nouveau2 libdrm-radeon1
+Pin: release o=Debian,n=bookworm
+Pin-Priority: 1001
+
+Package: libegl-mesa0 libgbm1 libgl1-mesa-dri libglapi-mesa libglx-mesa0 libosmesa6 mesa-va-drivers mesa-vdpau-drivers mesa-vulkan-drivers
+Pin: release o=Debian,n=bookworm
+Pin-Priority: 1001
+EOF
+
+            apt-get -o Acquire::Check-Valid-Until=false update --fix-missing
+            apt-get install -y \
+                --allow-downgrades \
+                --allow-change-held-packages \
+                libdrm-common \
+                libdrm2 \
+                libdrm-amdgpu1 \
+                libdrm-nouveau2 \
+                libdrm-radeon1 \
+                libegl-mesa0 \
+                libgbm1 \
+                libgl1-mesa-dri \
+                libglapi-mesa \
+                libglx-mesa0 \
+                libosmesa6 \
+                mesa-va-drivers \
+                mesa-vdpau-drivers \
+                mesa-vulkan-drivers
+
+            apt-get -s install libsdl2-dev
+        }
+        normalize_bookworm_graphics_for_build
         ./install_build_dep.sh rock5 || { echo "Failed to install build dependencies"; exit 1; }
     elif [[ "${DISTRO}" == "focal" ]]; then
         apt-get update || { echo "Failed to update and upgrade packages"; exit 1; }
