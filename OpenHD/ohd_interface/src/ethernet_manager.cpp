@@ -23,13 +23,11 @@
 
 #include "ethernet_manager.h"
 
-#include <regex>
 #include <utility>
 
 #include "networking_settings.h"
 #include "openhd_config.h"
 #include "openhd_external_device.h"
-#include "openhd_platform.h"
 #include "openhd_profile.h"
 #include "openhd_util.h"
 #include "openhd_util_async.h"
@@ -53,26 +51,6 @@ static bool check_eth_adapter_up(const std::string& eth_device_name = "eth0") {
   return false;
 }
 
-// find / get the ip address in the given string with the following layout
-// ...(192.168.2.158)... where "192.168.2.158" can be any ip address
-static std::string get_ip_address_in_between_brackets(
-    const std::string& s, const bool debug = false) {
-  const std::regex base_regex("\\((.*)\\)");
-  std::smatch base_match;
-  std::string matched;
-  if (std::regex_search(s, base_match, base_regex)) {
-    // The first sub_match is the whole string; the next
-    // sub_match is the first parenthesized expression.
-    if (base_match.size() == 2) {
-      matched = base_match[1].str();
-    }
-  }
-  if (debug) {
-    openhd::log::get_default()->warn("Given:[{}] Result:[{}]", s, matched);
-  }
-  return matched;
-}
-
 }  // namespace openhd::ethernet
 
 /**
@@ -88,49 +66,52 @@ static std::string get_ip_address_in_between_brackets(
  */
 static constexpr auto OHD_ETHERNET_HOTSPOT_CONNECTION_NAME = "ohd_eth_hotspot";
 
-static std::string get_ohd_eth_hotspot_connection_nm_filename() {
-  return fmt::format("/etc/NetworkManager/system-connections/{}.nmconnection",
-                     OHD_ETHERNET_HOTSPOT_CONNECTION_NAME);
-}
-
 static void delete_existing_hotspot_connection() {
-  const auto filename = get_ohd_eth_hotspot_connection_nm_filename();
-  if (OHDFilesystemUtil::exists(filename)) {
-    OHDUtil::run_command(
-        "nmcli", {"con", "delete", OHD_ETHERNET_HOTSPOT_CONNECTION_NAME});
-  }
+  // Delete through NetworkManager even if the expected keyfile is missing.
+  // Profiles can use a different filename or still be loaded in memory.
+  OHDUtil::run_command(
+      "nmcli", {"con", "delete", OHD_ETHERNET_HOTSPOT_CONNECTION_NAME},
+      false);
 }
 
 static void create_ethernet_hotspot_connection_if_needed(
     const std::shared_ptr<spdlog::logger>& m_console,
     const std::string& eth_device_name) {
-  // sudo nmcli con add type ethernet con-name "ohd_eth_hotspot" ipv4.method
-  // shared ifname eth0 ipv4.addresses 192.168.2.1/24 gw4 192.168.2.1 sudo nmcli
-  // con add type ethernet ifname eth0 con-name ohd_eth_hotspot autoconnect no
-  // sudo nmcli con modify ohd_eth_hotspot ipv4.method shared ifname eth0
-  // ipv4.addresses 192.168.2.1/24 gw4 192.168.2.1
-  if (OHDFilesystemUtil::exists(get_ohd_eth_hotspot_connection_nm_filename())) {
-    m_console->warn("Eth hs connection already exists");
+  // Recreate the profile so images upgraded from older OpenHD releases do not
+  // retain a profile bound to eth0. Rock 5B commonly uses enP4p65s0 and newer
+  // kernels may choose another predictable interface name.
+  delete_existing_hotspot_connection();
+  m_console->warn("Creating Ethernet hotspot on {}", eth_device_name);
+  const auto create_result = OHDUtil::run_command(
+      "nmcli",
+      {"con", "add", "type", "ethernet", "ifname", eth_device_name,
+       "con-name", OHD_ETHERNET_HOTSPOT_CONNECTION_NAME,
+       "connection.autoconnect", "yes", "connection.autoconnect-priority",
+       "100", "ipv4.method", "shared", "ipv4.addresses", "192.168.2.1/24",
+       "ipv6.method", "disabled"});
+  if (create_result != 0) {
+    m_console->error("Cannot create Ethernet hotspot on {}", eth_device_name);
     return;
   }
-  m_console->warn("begin create hotspot connection");
-  OHDUtil::run_command(
-      "nmcli", {"con add type ethernet ifname", eth_device_name, "con-name",
-                OHD_ETHERNET_HOTSPOT_CONNECTION_NAME});
-  OHDUtil::run_command("nmcli",
-                       {"con modify", OHD_ETHERNET_HOTSPOT_CONNECTION_NAME,
-                        "ipv4.method shared ifname eth0 ipv4.addresses "
-                        "192.168.2.1/24 gw4 192.168.2.1"});
-  m_console->warn("end create hotspot connection");
+  const auto activate_result = OHDUtil::run_command(
+      "nmcli", {"con", "up", OHD_ETHERNET_HOTSPOT_CONNECTION_NAME, "ifname",
+                eth_device_name});
+  if (activate_result != 0) {
+    m_console->error("Cannot activate Ethernet hotspot on {}", eth_device_name);
+    return;
+  }
+  m_console->warn("Ethernet hotspot active on {} at 192.168.2.1",
+                  eth_device_name);
 }
 
 static std::optional<std::string> find_ethernet_device_name() {
   auto devices = OHDFilesystemUtil::getAllEntriesFilenameOnlyInDirectory(
       "/sys/class/net/");
   for (auto& device : devices) {
-    if (OHDUtil::startsWith(device, "enx") ||
-        OHDUtil::startsWith(device, "eth") ||
-        OHDUtil::startsWith(device, "enp")) {
+    // Linux predictable Ethernet names include eno*, ens*, enp*, enx* and,
+    // on Rock 5B, enP*. Some Rockchip kernels also expose eth*.
+    if (OHDUtil::startsWith(device, "en") ||
+        OHDUtil::startsWith(device, "eth")) {
       return device;
     }
   }
@@ -155,16 +136,18 @@ void EthernetManager::loop(int operating_mode) {
   // First, we need to find the ethernet adapter. On some platforms, it's name
   // is fixed (built in) If a usb to ethernet is used, that's not the case
   std::optional<std::string> opt_ethernet_card = std::nullopt;
-  const auto platform = OHDPlatform::instance();
   const auto config = openhd::load_config();
   if (openhd::nw_ethernet_card_manual_active(config)) {
-    opt_ethernet_card = config.NW_ETHERNET_CARD;
-  } else if (platform.is_rpi()) {
-    opt_ethernet_card = std::string("eth0");
-  } else if (platform.is_rock5_b()) {
-    opt_ethernet_card = "enP4p65s0";
-  } else if (platform.is_rock5_a()) {
-    opt_ethernet_card = "eth0";
+    const auto configured_card = config.NW_ETHERNET_CARD;
+    const auto configured_path =
+        fmt::format("/sys/class/net/{}", configured_card);
+    if (OHDFilesystemUtil::exists(configured_path)) {
+      opt_ethernet_card = configured_card;
+    } else {
+      m_console->warn(
+          "Configured Ethernet interface {} does not exist, auto-detecting",
+          configured_card);
+    }
   }
   if (opt_ethernet_card == std::nullopt) {
     // We need to figure out the ethernet card ourselves
