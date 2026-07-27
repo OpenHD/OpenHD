@@ -125,15 +125,10 @@ OHDInterface::OHDInterface(OHDProfile profile1, bool disable_wifi_hotspot)
   // instantiate wb_link (no wifibroadcast connectivity at all)
   if (m_monitor_mode_cards.empty()) {
     m_console->warn(
-        "Cannot start ohd_interface, no wifi card for monitor mode");
-    const std::string message_for_user = "No WiFi card found, please reboot";
-    m_console->warn(message_for_user);
-    openhd::Reporter::instance().report_status(
-        "no_wifi_card", "No WiFi card found for monitor mode", 10000);
-    // TODO reason what to do. We do not support dynamically adding wifi cards
-    // at run time, so somehow we need to signal to the user that something is
-    // completely wrong. However, as an Ground pi, we can still run QOpenHD and
-    // OpenHD, just it will never connect to an Air PI
+        "No monitor-mode WiFi card found; enabling automatic Ethernet link");
+    m_ethernet_link = std::make_shared<EthernetLink>(m_profile, true);
+    openhd::LinkActionHandler::instance().set_primary_link_type(
+        openhd::LinkActionHandler::PRIMARY_LINK_ETHERNET);
   } else {
     // Set the card(s) we have into monitor mode
     openhd::wb::takeover_cards_monitor_mode(m_monitor_mode_cards, m_console);

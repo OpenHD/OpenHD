@@ -4,9 +4,21 @@ This submodule is responsible for starting and configuring all the OpenHD
 interfaces - aka all OpenHD links like wifibroadcast (communication between air and ground),
 ground hotspot, ...
 
-For now, it requires at least one wifi card connected to the system - this might change in the 
-future when we add other hardware types for data communication between ground and air pi
-like LTE cards.
+When no wifibroadcast, Artosyn, or Microhard link is detected, OpenHD
+automatically falls back to an IP/Ethernet link. Air listens for discovery
+requests on UDP port `49891`. Ground probes every active local IPv4 network;
+the air response supplies its IP address and the video and telemetry UDP ports.
+Both sides then configure the existing Ethernet video and telemetry forwarding
+path. Discovery continues in the background so DHCP address changes and
+reconnections are handled without restarting OpenHD.
+
+If a connected Ethernet interface has no usable DHCP address after a short
+grace period, OpenHD configures a direct-link `/24`: air uses `192.168.8.1` and
+ground uses `192.168.8.2`. These addresses are applied at runtime and allow a
+plain Ethernet cable or an unmanaged switch to work without a DHCP server.
+
+An explicit `ethernet.txt` configuration remains authoritative and bypasses
+automatic discovery.
 
 Note that some modules handle HW connection(s) themselves, for example telemetry does the UART
 connection to the FC (even though one could reason UART is a HW interface).

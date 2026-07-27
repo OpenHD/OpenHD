@@ -24,9 +24,11 @@
 #ifndef OPENHD_ETHERNET_LINK_H
 #define OPENHD_ETHERNET_LINK_H
 
-#include <memory>
 #include <atomic>
 #include <cstdint>
+#include <memory>
+#include <mutex>
+#include <string>
 #include <thread>
 
 #include "non_wb_video_bitrate_meter.h"
@@ -39,6 +41,7 @@ class EthernetLink : public OHDLink {
  public:
   EthernetLink(const openhd::Config& config, OHDProfile profile);
   EthernetLink(OHDProfile profile);
+  EthernetLink(OHDProfile profile, bool auto_discovery);
   ~EthernetLink();
 
   // OHDLink implementations
@@ -57,14 +60,23 @@ class EthernetLink : public OHDLink {
   int VIDEO_PORT = 5910;
   int TELEMETRY_PORT = 5920;
 
-  std::unique_ptr<openhd::UDPForwarder> m_video_tx;  // Video transmitter
+  std::shared_ptr<openhd::UDPForwarder> m_video_tx;  // Video transmitter
   std::unique_ptr<openhd::UDPReceiver> m_video_rx;   // Video receiver
-  std::unique_ptr<openhd::UDPForwarder>
+  std::shared_ptr<openhd::UDPForwarder>
       m_telemetry_tx;                                   // Telemetry transmitter
   std::unique_ptr<openhd::UDPReceiver> m_telemetry_rx;  // Telemetry receiver
 
+  void initialize(bool auto_discovery);
   void initialize_air_unit();
   void initialize_ground_unit();
+  void configure_peer(const std::string& peer_ip, int video_port,
+                      int telemetry_port);
+  void start_discovery();
+  void stop_discovery();
+  void discovery_loop();
+  void configure_static_address_if_dhcp_is_unavailable();
+  void air_discovery_loop(int socket_fd);
+  void ground_discovery_loop(int socket_fd);
   void start_stats_thread();
   void stop_stats_thread();
   void stats_loop();
@@ -73,6 +85,11 @@ class EthernetLink : public OHDLink {
   void handle_video_data(int stream_index, const uint8_t* data, int data_len);
   void handle_telemetry_data(const uint8_t* data, int data_len);
 
+  bool m_auto_discovery = false;
+  std::atomic<bool> m_discovery_running{false};
+  std::thread m_discovery_thread;
+  std::mutex m_forwarders_mutex;
+  std::string m_peer_ip;
   std::atomic<bool> m_stats_running{false};
   std::thread m_stats_thread;
   std::atomic<uint64_t> m_tx_total_bytes{0};
