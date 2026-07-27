@@ -99,32 +99,29 @@ jobs:
           OpenHD/*.deb
         if-no-files-found: error
 
+    - name: Resolve Cloudsmith target repo
+      id: cloudsmith_repo
+      run: |
+        case "${GITHUB_REF_NAME}" in
+          openhd-3.0|openhd-3.0-test)
+            echo "name=dev-release" >> "$GITHUB_OUTPUT"
+            ;;
+          *)
+            echo "name=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+            ;;
+        esac
+
     - name: Push
       id: push
       uses: cloudsmith-io/action@master
-      continue-on-error: true
       with:
         api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
         command: "push"
         format: "deb"
         owner: "openhd"
-        repo: ${{ github.ref_name }}
+        repo: ${{ steps.cloudsmith_repo.outputs.name }}
         distro: "raspbian"
         release: "bullseye"
         republish: "true" # needed ONLY if version is not changing
         file: "OpenHD/*.deb"
       if: ${{ github.ref != 'refs/heads/2.5-evo' }}
-
-    - name: Push (dev-release)
-      uses: cloudsmith-io/action@master
-      with:
-        api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
-        command: "push"
-        format: "deb"
-        owner: "openhd"
-        repo: "dev-release"
-        distro: "raspbian"
-        release: "bullseye"
-        republish: "true" # needed ONLY if version is not changing
-        file: "OpenHD/*.deb"
-      if: ${{ always() && github.ref != 'refs/heads/2.5-evo' }}

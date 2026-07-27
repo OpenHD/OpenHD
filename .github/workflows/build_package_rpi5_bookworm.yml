@@ -56,28 +56,26 @@ jobs:
           path: OpenHD/*_arm64.deb
           if-no-files-found: error
 
+      - name: Resolve Cloudsmith target repo
+        id: cloudsmith_repo
+        run: |
+          case "${GITHUB_REF_NAME}" in
+            openhd-3.0|openhd-3.0-test)
+              echo "name=dev-release" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "name=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+
       - name: Push package
         uses: cloudsmith-io/action@master
-        continue-on-error: true
         with:
           api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
           command: push
           format: deb
           owner: openhd
-          repo: ${{ github.ref_name }}
-          distro: raspbian
-          release: bookworm
-          republish: "true"
-          file: OpenHD/*_arm64.deb
-
-      - name: Push package to dev-release
-        uses: cloudsmith-io/action@master
-        with:
-          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
-          command: push
-          format: deb
-          owner: openhd
-          repo: dev-release
+          repo: ${{ steps.cloudsmith_repo.outputs.name }}
           distro: raspbian
           release: bookworm
           republish: "true"
