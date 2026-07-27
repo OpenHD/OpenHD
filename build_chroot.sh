@@ -463,11 +463,11 @@ else
             echo "[apt-preflight] Aligning Mesa and libdrm with Debian Bookworm."
 
             cat >/etc/apt/preferences.d/99openhd-bookworm-graphics <<'EOF'
-Package: libdrm-common libdrm2 libdrm-amdgpu1 libdrm-nouveau2 libdrm-radeon1
+Package: libdrm-common libdrm2 libdrm-amdgpu1 libdrm-nouveau2 libdrm-radeon1 libdrm-dev
 Pin: release o=Debian,n=bookworm
 Pin-Priority: 1001
 
-Package: libegl-mesa0 libgbm1 libgl1-mesa-dri libglapi-mesa libglx-mesa0 libosmesa6 mesa-va-drivers mesa-vdpau-drivers mesa-vulkan-drivers
+Package: libegl-mesa0 libgbm1 libgbm-dev libgl1-mesa-dri libglapi-mesa libglx-mesa0 libosmesa6 mesa-va-drivers mesa-vdpau-drivers mesa-vulkan-drivers
 Pin: release o=Debian,n=bookworm
 Pin-Priority: 1001
 EOF
@@ -481,8 +481,10 @@ EOF
                 libdrm-amdgpu1 \
                 libdrm-nouveau2 \
                 libdrm-radeon1 \
+                libdrm-dev \
                 libegl-mesa0 \
                 libgbm1 \
+                libgbm-dev \
                 libgl1-mesa-dri \
                 libglapi-mesa \
                 libglx-mesa0 \
@@ -491,9 +493,16 @@ EOF
                 mesa-vdpau-drivers \
                 mesa-vulkan-drivers
 
-            apt-get -s install libsdl2-dev
+            if ! apt-get -s install libsdl2-dev; then
+                echo "[apt-preflight] ERROR: Bookworm graphics development packages are still inconsistent."
+                apt-cache policy \
+                    libdrm-dev libdrm2 libdrm-radeon1 libdrm-nouveau2 libdrm-amdgpu1 \
+                    libgbm-dev libgbm1 libegl-mesa0
+                return 1
+            fi
         }
-        normalize_bookworm_graphics_for_build
+        normalize_bookworm_graphics_for_build \
+            || { echo "Failed to normalize Bookworm graphics dependencies"; exit 1; }
         ./install_build_dep.sh rock5 || { echo "Failed to install build dependencies"; exit 1; }
     elif [[ "${DISTRO}" == "focal" ]]; then
         apt-get update || { echo "Failed to update and upgrade packages"; exit 1; }
