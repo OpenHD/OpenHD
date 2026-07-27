@@ -68,9 +68,20 @@ append_elf_runtime_dependencies() {
     exit 1
   fi
 
-  local library=""
-  while IFS= read -r library; do
-    [[ -n "${library}" ]] || continue
+  local soname=""
+  while IFS= read -r soname; do
+    [[ -n "${soname}" ]] || continue
+    local library=""
+    library="$(
+      awk -v soname="${soname}" '
+        $1 == soname && $2 == "=>" && $3 ~ /^\// { print $3; exit }
+        $1 == soname && $2 ~ /^\// { print $2; exit }
+      ' <<<"${ldd_output}"
+    )"
+    if [[ -z "${library}" ]]; then
+      echo "Direct shared library ${soname} could not be resolved for ${binary}." >&2
+      exit 1
+    fi
     if [[ "${library}" == "${PKGDIR}"* ]]; then
       # This dependency is bundled inside the OpenHD package and its own
       # external dependencies are validated when that staged ELF is scanned.
@@ -80,22 +91,18 @@ append_elf_runtime_dependencies() {
     local owner=""
     resolved_library="$(readlink -f "${library}")"
     owner="$(dpkg-query -S "${resolved_library}" 2>/dev/null \
-      | awk -F': ' 'NR == 1 { sub(/:[^:]+$/, "", $1); print $1 }')"
+      | awk -F': ' 'NR == 1 { sub(/:[^:]+$/, "", $1); print $1 }' || true)"
     if [[ -z "${owner}" ]]; then
       owner="$(dpkg-query -S "${library}" 2>/dev/null \
-        | awk -F': ' 'NR == 1 { sub(/:[^:]+$/, "", $1); print $1 }')"
+        | awk -F': ' 'NR == 1 { sub(/:[^:]+$/, "", $1); print $1 }' || true)"
     fi
     if [[ -z "${owner}" ]]; then
       echo "Shared library ${library} is not owned by a Debian package." >&2
       exit 1
     fi
     dependency_array+=("${owner}")
-  done < <(
-    awk '
-      $2 == "=>" && $3 ~ /^\// { print $3 }
-      $1 ~ /^\// { print $1 }
-    ' <<<"${ldd_output}" | sort -u
-  )
+  done < <(readelf -d "${binary}" \
+    | awk -F'[][]' '/NEEDED/ { print $2 }' | sort -u)
 }
 
 verify_packaged_poco_abi() {
