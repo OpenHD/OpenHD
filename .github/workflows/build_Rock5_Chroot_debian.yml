@@ -12,8 +12,9 @@ on:
 
 jobs:
   build:
-    #runs-on: ubuntu-18.04
-    runs-on: ubuntu-22.04
+    # Bookworm Radxa images use ext4 features that require e2fsprogs 1.47+
+    # when the CI image filesystem is expanded.
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
