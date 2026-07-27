@@ -30,6 +30,7 @@ cd "${SCRIPT_DIR}"
 CUSTOM="${1:-}"
 PACKAGE_ARCH="${2:-}"
 OS="${3:-}"
+TARGET_RELEASE="${4:-}"
 
 PKGDIR="/out/openhd-installdir/"
 VERSION="3.0-alpha-$(date '+%Y%m%d%H%M')-$(git rev-parse --short HEAD)"
@@ -38,6 +39,126 @@ join_by() {
   local IFS="$1"
   shift
   echo "$*"
+}
+
+resolve_system_poco_dir() {
+  local poco_config=""
+  poco_config="$(dpkg-query -L libpoco-dev 2>/dev/null \
+    | awk '/\/PocoConfig\.cmake$/ { print; exit }')"
+  if [[ -z "${poco_config}" || ! -f "${poco_config}" ]]; then
+    echo "Cannot locate the distro-provided PocoConfig.cmake from libpoco-dev." >&2
+    exit 1
+  fi
+  dirname "${poco_config}"
+}
+
+append_elf_runtime_dependencies() {
+  local binary="$1"
+  local dependency_array_name="$2"
+  local -n dependency_array="${dependency_array_name}"
+  local ldd_output=""
+
+  ldd_output="$(
+    LD_LIBRARY_PATH="${PKGDIR}usr/local/lib:${LD_LIBRARY_PATH:-}" \
+      ldd "${binary}"
+  )"
+  echo "${ldd_output}"
+  if grep -q "not found" <<<"${ldd_output}"; then
+    echo "OpenHD has unresolved shared-library dependencies." >&2
+    exit 1
+  fi
+
+  local library=""
+  while IFS= read -r library; do
+    [[ -n "${library}" ]] || continue
+    if [[ "${library}" == "${PKGDIR}"* ]]; then
+      # This dependency is bundled inside the OpenHD package and its own
+      # external dependencies are validated when that staged ELF is scanned.
+      continue
+    fi
+    local resolved_library=""
+    local owner=""
+    resolved_library="$(readlink -f "${library}")"
+    owner="$(dpkg-query -S "${resolved_library}" 2>/dev/null \
+      | awk -F': ' 'NR == 1 { sub(/:[^:]+$/, "", $1); print $1 }')"
+    if [[ -z "${owner}" ]]; then
+      owner="$(dpkg-query -S "${library}" 2>/dev/null \
+        | awk -F': ' 'NR == 1 { sub(/:[^:]+$/, "", $1); print $1 }')"
+    fi
+    if [[ -z "${owner}" ]]; then
+      echo "Shared library ${library} is not owned by a Debian package." >&2
+      exit 1
+    fi
+    dependency_array+=("${owner}")
+  done < <(
+    awk '
+      $2 == "=>" && $3 ~ /^\// { print $3 }
+      $1 ~ /^\// { print $1 }
+    ' <<<"${ldd_output}" | sort -u
+  )
+}
+
+verify_packaged_poco_abi() {
+  local binary="$1"
+  local expected_soversion=""
+  case "${TARGET_RELEASE}" in
+    bookworm)
+      expected_soversion="80"
+      ;;
+    bullseye)
+      expected_soversion="70"
+      ;;
+  esac
+
+  local needed=""
+  needed="$(readelf -d "${binary}" \
+    | awk -F'[][]' '/NEEDED.*libPoco(Foundation|Net)\.so/ { print $2 }')"
+  echo "OpenHD Poco ELF dependencies:"
+  echo "${needed}"
+  if [[ -z "${needed}" ]]; then
+    echo "OpenHD does not declare its expected Poco dependencies." >&2
+    exit 1
+  fi
+  if [[ -n "${expected_soversion}" ]] &&
+     grep -Evq "\.so\.${expected_soversion}$" <<<"${needed}"; then
+    echo "OpenHD was linked against the wrong Poco ABI for ${TARGET_RELEASE}; expected .so.${expected_soversion}." >&2
+    exit 1
+  fi
+}
+
+append_staged_elf_runtime_dependencies() {
+  local package_root="$1"
+  local dependency_array_name="$2"
+  local staged_file=""
+
+  while IFS= read -r -d '' staged_file; do
+    if ! readelf -d "${staged_file}" 2>/dev/null | grep -q "NEEDED"; then
+      continue
+    fi
+    echo "Validating staged ELF runtime: ${staged_file#${package_root}}"
+    if readelf -d "${staged_file}" 2>/dev/null \
+      | grep -q "NEEDED.*libPoco"; then
+      verify_packaged_poco_abi "${staged_file}"
+    fi
+    append_elf_runtime_dependencies "${staged_file}" \
+      "${dependency_array_name}"
+  done < <(find "${package_root}" -type f -print0)
+}
+
+deduplicate_dependencies() {
+  local dependency_array_name="$1"
+  local -n dependency_array="${dependency_array_name}"
+  local unique=()
+  local dependency=""
+  declare -A seen=()
+  for dependency in "${dependency_array[@]}"; do
+    [[ -n "${dependency}" ]] || continue
+    if [[ -z "${seen[${dependency}]:-}" ]]; then
+      unique+=("${dependency}")
+      seen["${dependency}"]=1
+    fi
+  done
+  dependency_array=("${unique[@]}")
 }
 
 build_deb_package() {
@@ -191,7 +312,7 @@ build_package() {
     if [[ "${CUSTOM}" == "standard" ]]; then
       package_name="openhd"
       packages+=(
-        libpoco-dev iw nmap aircrack-ng i2c-tools libv4l-dev libusb-1.0-0
+        iw nmap aircrack-ng i2c-tools libv4l-dev libusb-1.0-0
         libpcap-dev libnl-3-dev libnl-genl-3-dev
         libsdl2-2.0-0 libsodium-dev gstreamer1.0-plugins-{base,good,bad,ugly}
         gstreamer1.0-{tools,alsa,pulseaudio}
@@ -204,14 +325,21 @@ build_package() {
     else
       package_name="openhd-x20"
       packages+=(
-        libpoco-dev iw i2c-tools libv4l-dev libusb-1.0-0 libpcap-dev
+        iw i2c-tools libv4l-dev libusb-1.0-0 libpcap-dev
         libnl-3-dev libnl-genl-3-dev libsdl2-2.0-0 libsodium-dev
         gstreamer1.0-plugins-{base,good,bad} gstreamer1.0-tools
       )
     fi
+  elif [[ "${PACKAGE_ARCH}" == "arm64" ]]; then
+    packages+=(
+      iw nmap aircrack-ng i2c-tools libv4l-dev libusb-1.0-0 libpcap-dev
+      libnl-3-dev libnl-genl-3-dev libsdl2-2.0-0 libsodium-dev
+      gstreamer1.0-plugins-{base,good,bad,ugly}
+      gstreamer1.0-tools
+    )
   elif [[ "${PACKAGE_ARCH}" == "x86_64" ]]; then
     packages+=(
-      libpoco-dev dkms qopenhd git iw nmap aircrack-ng i2c-tools libv4l-dev
+      dkms qopenhd git iw nmap aircrack-ng i2c-tools libv4l-dev
       libusb-1.0-0 libpcap-dev libnl-3-dev libnl-genl-3-dev libsdl2-2.0-0
       libsodium-dev gstreamer1.0-plugins-{base,good,bad,ugly}
       gstreamer1.0-{tools,alsa,pulseaudio}
@@ -247,8 +375,12 @@ build_package() {
   rm -rf "${build_dir}" "${build_tmp}"
   mkdir -p "${build_dir}" "${build_tmp}"
   export TMPDIR="${build_tmp}"
+  local poco_dir=""
+  poco_dir="$(resolve_system_poco_dir)"
+  echo "Using distro Poco package configuration: ${poco_dir}"
 
   cmake -S OpenHD/ -B "${build_dir}" \
+    -DPoco_DIR="${poco_dir}" \
     -DARTOSYN_SDK_ROOT="${ARTOSYN_SDK_ROOT}" \
     -DARTOSYN_SDK_LIB="${ARTOSYN_SDK_LIB}" \
     -DARTOSYN_SDK_DAEMON="${ARTOSYN_SDK_DAEMON:-}" \
@@ -257,6 +389,7 @@ build_package() {
 
   mkdir -p "${PKGDIR}usr/local/bin/"
   cp "${build_dir}/openhd" "${PKGDIR}usr/local/bin/"
+  verify_packaged_poco_abi "${PKGDIR}usr/local/bin/openhd"
   mkdir -p "${PKGDIR}usr/local/lib/"
   build_and_stage_gst_perf
 
@@ -379,6 +512,10 @@ build_package() {
   else
     echo "Artosyn SDK not resolved; skipping Artosyn daemon/runtime library packaging." >&2
   fi
+
+  append_staged_elf_runtime_dependencies "${PKGDIR}" packages
+  deduplicate_dependencies packages
+  echo "Final package dependencies: $(join_by ', ' "${packages[@]}")"
 
   if command -v fpm >/dev/null 2>&1; then
     # Build the package using fpm
