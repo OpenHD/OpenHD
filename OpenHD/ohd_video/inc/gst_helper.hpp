@@ -825,7 +825,10 @@ static std::string create_orqa_rekindle_stream(
   native_capture_settings.streamed_video_format.width = 960;
   native_capture_settings.streamed_video_format.height = 720;
   native_capture_settings.streamed_video_format.framerate = 60;
-  return create_orqa_camera1_stream(device_index, native_capture_settings);
+  // Rekindle exposes V4L2_PIX_FMT_NV12M ("NM12"). Pinning NV12 in the caps is
+  // required so imxvpuenc does not negotiate an incompatible chroma layout.
+  return create_nxp_imx8_v4l2_stream(native_capture_settings, device_index,
+                                     false);
 }
 
 /**
