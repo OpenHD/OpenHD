@@ -825,10 +825,41 @@ static std::string create_orqa_rekindle_stream(
   native_capture_settings.streamed_video_format.width = 960;
   native_capture_settings.streamed_video_format.height = 720;
   native_capture_settings.streamed_video_format.framerate = 60;
-  // Rekindle exposes V4L2_PIX_FMT_NV12M ("NM12"). Pinning NV12 in the caps is
-  // required so imxvpuenc does not negotiate an incompatible chroma layout.
-  return create_nxp_imx8_v4l2_stream(native_capture_settings, device_index,
-                                     false);
+
+  const bool use_h264 =
+      native_capture_settings.streamed_video_format.videoCodec ==
+      VideoCodec::H264;
+  const auto encoder_name = use_h264 ? "v4l2h264enc" : "v4l2h265enc";
+  const auto profile_control =
+      use_h264 ? "h264_profile=1" : "hevc_profile=0";
+  const int bitrate_bps = openhd::kbits_to_bits_per_second(
+      native_capture_settings.h26x_bitrate_kbits);
+  const int keyframe_interval =
+      native_capture_settings.h26x_keyframe_interval > 0
+          ? native_capture_settings.h26x_keyframe_interval
+          : DEFAULT_KEYFRAME_INTERVAL;
+
+  std::string slicing_controls;
+  if (native_capture_settings.h26x_num_slices >= 2) {
+    const int mbs_per_slice = nxp_calculate_number_of_mbs_in_a_slice(
+        720, native_capture_settings.h26x_num_slices);
+    slicing_controls =
+        fmt::format(",slice_partitioning_method=1,"
+                    "number_of_mbs_in_a_slice={}",
+                    mbs_per_slice);
+  }
+
+  std::stringstream ss;
+  ss << fmt::format(
+      "v4l2src device=/dev/video{} io-mode=dmabuf do-timestamp=true ! "
+      "video/x-raw,format=NV12,width=960,height=720,framerate=60/1 ! "
+      "queue max-size-buffers=4 leaky=downstream ! "
+      "{} output-io-mode=dmabuf-import capture-io-mode=dmabuf "
+      "extra-controls=\"controls,video_bitrate_mode=1,video_bitrate={},"
+      "video_gop_size={},repeat_sequence_header=1,{}{}\" ! ",
+      device_index, encoder_name, bitrate_bps, keyframe_interval,
+      profile_control, slicing_controls);
+  return ss.str();
 }
 
 /**
