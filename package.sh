@@ -385,9 +385,15 @@ build_package() {
   local poco_dir=""
   poco_dir="$(resolve_system_poco_dir)"
   echo "Using distro Poco package configuration: ${poco_dir}"
+  local enable_libcamera="OFF"
+  if [[ "${OS}" == "raspbian" ]]; then
+    enable_libcamera="ON"
+  fi
+  echo "OpenHD libcamera support: ${enable_libcamera}"
 
   cmake -S OpenHD/ -B "${build_dir}" \
     -DPoco_DIR="${poco_dir}" \
+    -DENABLE_LIBCAMERA="${enable_libcamera}" \
     -DARTOSYN_SDK_ROOT="${ARTOSYN_SDK_ROOT}" \
     -DARTOSYN_SDK_LIB="${ARTOSYN_SDK_LIB}" \
     -DARTOSYN_SDK_DAEMON="${ARTOSYN_SDK_DAEMON:-}" \
@@ -522,6 +528,16 @@ build_package() {
 
   append_staged_elf_runtime_dependencies "${PKGDIR}" packages
   deduplicate_dependencies packages
+  if [[ "${enable_libcamera}" == "OFF" ]]; then
+    local dependency=""
+    for dependency in "${packages[@]}"; do
+      if [[ "${dependency}" == libcamera* ||
+            "${dependency}" == "gstreamer1.0-libcamera" ]]; then
+        echo "Non-Raspberry-Pi package unexpectedly depends on ${dependency}." >&2
+        exit 1
+      fi
+    done
+  fi
   echo "Final package dependencies: $(join_by ', ' "${packages[@]}")"
 
   if command -v fpm >/dev/null 2>&1; then
