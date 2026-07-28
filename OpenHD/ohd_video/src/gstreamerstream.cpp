@@ -1575,26 +1575,46 @@ void GStreamerStream::stream_once() {
         openhd::LinkActionHandler::instance().set_cam_info_status(
             m_camera_holder->get_camera().index, CAM_STATUS_STREAMING);
       }
-      GstBuffer* buffer = gst_sample_get_buffer(sample);
-      // tmp declaration for give sample back early optimization
-      std::shared_ptr<std::vector<uint8_t>> fragment_data = nullptr;
-      uint64_t buffer_dts = 0;
-      if (buffer && gst_buffer_get_size(buffer) > 0) {
-        fragment_data = openhd::gst_copy_buffer(buffer);
-        buffer_dts = buffer->dts;
+      // RTP payloaders may expose one packet as a GstBuffer or several packets
+      // as a GstBufferList. Newer GStreamer versions increasingly use buffer
+      // lists, so only looking at gst_sample_get_buffer() silently drops all
+      // video on those systems.
+      std::vector<openhd::GstBufferX> fragment_buffers;
+      GstBufferList* buffer_list = gst_sample_get_buffer_list(sample);
+      if (buffer_list != nullptr) {
+        const guint buffer_count = gst_buffer_list_length(buffer_list);
+        fragment_buffers.reserve(buffer_count);
+        for (guint i = 0; i < buffer_count; ++i) {
+          GstBuffer* buffer = gst_buffer_list_get(buffer_list, i);
+          if (buffer != nullptr && gst_buffer_get_size(buffer) > 0) {
+            fragment_buffers.push_back(
+                {openhd::gst_copy_buffer(buffer), buffer->dts});
+          }
+        }
+      } else {
+        GstBuffer* buffer = gst_sample_get_buffer(sample);
+        if (buffer != nullptr && gst_buffer_get_size(buffer) > 0) {
+          fragment_buffers.push_back(
+              {openhd::gst_copy_buffer(buffer), buffer->dts});
+        }
       }
       // Optimization: Give the buffer back to gstreamer as soon as possible.
       // After copying the data from the sample, unref it first, then forward
       // the data via cb
       gst_sample_unref(sample);
       sample = nullptr;
-      if (fragment_data && !fragment_data->empty()) {
+      for (auto& fragment_buffer : fragment_buffers) {
+        auto& fragment_data = fragment_buffer.buffer;
+        if (!fragment_data || fragment_data->empty()) {
+          continue;
+        }
         // If we got a new sample, aggregate then forward
         if (dirty_use_raw) {
           m_rtp_helper->feed_multiple_nalu(fragment_data->data(),
                                            fragment_data->size());
         } else {
-          on_new_rtp_frame_fragment(std::move(fragment_data), buffer_dts);
+          on_new_rtp_frame_fragment(std::move(fragment_data),
+                                    fragment_buffer.buffer_dts);
         }
         m_last_camera_frame = std::chrono::steady_clock::now();
       }
