@@ -2,7 +2,7 @@
 set -euo pipefail
 
 if [[ $# -lt 1 ]]; then
-  echo "Usage: $0 <sdk-root> [poco-archive] [libsodium-archive] [sdl2-archive]" >&2
+  echo "Usage: $0 <sdk-root> [poco-archive] [libsodium-archive] [gst-perf-archive]" >&2
   exit 1
 fi
 
@@ -38,14 +38,14 @@ fi
 
 libsodium_archive="$(make_absolute_path "$libsodium_archive")"
 
-sdl2_archive="${1:-}"
-if [[ -n "$sdl2_archive" ]]; then
+gst_perf_archive="${1:-}"
+if [[ -n "$gst_perf_archive" ]]; then
   shift || true
 else
-  sdl2_archive="$sdk_root/sdl2-libraries.zip"
+  gst_perf_archive="$sdk_root/gst-perf-plugin.zip"
 fi
 
-sdl2_archive="$(make_absolute_path "$sdl2_archive")"
+gst_perf_archive="$(make_absolute_path "$gst_perf_archive")"
 
 if [[ ! -d "$sdk_root" ]]; then
   echo "SDK root '$sdk_root' does not exist" >&2
@@ -162,41 +162,27 @@ package_libsodium_libs() {
   echo "Packaged libsodium libraries into $archive"
 }
 
-package_sdl2_libs() {
+package_gst_perf_plugin() {
   ensure_zip_available
 
   local archive="$1"
-  local lib_dir="$SDKTARGETSYSROOT/usr/lib"
-  if [[ ! -d "$lib_dir" ]]; then
-    echo "SDL2 library directory '$lib_dir' does not exist" >&2
+  local plugin="$SDKTARGETSYSROOT/usr/lib/gstreamer-1.0/libgstperf.so"
+  if [[ ! -f "$plugin" ]]; then
+    echo "gst-perf plugin '$plugin' does not exist" >&2
     exit 1
   fi
 
-  local libs=()
-  while IFS= read -r -d '' lib; do
-    libs+=("$lib")
-  done < <(find "$lib_dir" -maxdepth 1 \
-    \( -name 'libSDL2*.so*' -o -name 'libSDL2*.a' \) -print0)
-
-  if [[ ${#libs[@]} -eq 0 ]]; then
-    echo "No SDL2 libraries were found in '$lib_dir'" >&2
-    exit 1
-  fi
-
-  local staging_dir="$work_dir/sdl2_libs"
+  local staging_dir="$work_dir/gst_perf_plugin"
   rm -rf "$staging_dir"
-  mkdir -p "$staging_dir"
-
-  for lib in "${libs[@]}"; do
-    cp -a "$lib" "$staging_dir/"
-  done
+  mkdir -p "$staging_dir/usr/lib/gstreamer-1.0"
+  cp -a "$plugin" "$staging_dir/usr/lib/gstreamer-1.0/"
 
   mkdir -p "$(dirname "$archive")"
   rm -f "$archive"
   pushd "$staging_dir" >/dev/null
-  zip -9 -r "$archive" ./* >/dev/null
+  zip -9 -r "$archive" ./usr >/dev/null
   popd >/dev/null
-  echo "Packaged SDL2 libraries into $archive"
+  echo "Packaged gst-perf plugin into $archive"
 }
 
 build_libsodium() {
@@ -220,42 +206,40 @@ build_libsodium() {
   popd >/dev/null
 }
 
-build_sdl2() {
-  local version="2.30.12"
-  local tarball="SDL2-${version}.tar.gz"
-  local url="https://github.com/libsdl-org/SDL/releases/download/release-${version}/${tarball}"
+build_gst_perf() {
+  # v0.3.1 provides the perf element, bitrate-interval property and
+  # on-bitrate signal consumed by GStreamerStream.
+  local version="0.3.1"
+  local tarball="gst-perf-${version}.tar.gz"
+  local url="https://github.com/RidgeRun/gst-perf/archive/refs/tags/v${version}.tar.gz"
   local archive="$work_dir/$tarball"
 
   download "$url" "$archive"
   tar -xf "$archive" -C "$work_dir"
-  local src_dir="$work_dir/SDL2-${version}"
+  local src_dir="$work_dir/gst-perf-${version}"
   if [[ ! -d "$src_dir" ]]; then
-    echo "Failed to locate extracted SDL2 sources" >&2
+    echo "Failed to locate extracted gst-perf sources" >&2
     exit 1
   fi
 
   pushd "$src_dir" >/dev/null
+  ./autogen.sh
   ./configure \
     --host="${OECORE_TARGET_ARCH}-poky-linux" \
-    --prefix="$SDKTARGETSYSROOT/usr" \
-    --disable-static \
-    --enable-shared \
-    --disable-video \
-    --disable-render \
-    --disable-audio \
-    --disable-haptic \
-    --disable-power \
-    --disable-sensor \
-    --disable-dbus \
-    --disable-ibus \
-    --disable-fcitx
+    --prefix=/usr \
+    --libdir=/usr/lib
   make -j"$jobs"
-  make install
+  make DESTDIR="$SDKTARGETSYSROOT" install
   popd >/dev/null
+
+  "$STRIP" --strip-unneeded \
+    "$SDKTARGETSYSROOT/usr/lib/gstreamer-1.0/libgstperf.so"
 }
 
 build_poco() {
-  local version="1.12.4-release"
+  # Match poco-dev on the ORQA 6.6-scarthgap image. This release provides
+  # libPocoFoundation.so.95 and libPocoNet.so.95.
+  local version="1.12.5p2-release"
   local tarball="poco-${version}.tar.gz"
   local url="https://github.com/pocoproject/poco/archive/refs/tags/${tarball}"
   local archive="$work_dir/$tarball"
@@ -297,8 +281,8 @@ build_poco() {
 }
 
 build_libsodium
-build_sdl2
+build_gst_perf
 build_poco
 package_poco_libs "$output_archive"
 package_libsodium_libs "$libsodium_archive"
-package_sdl2_libs "$sdl2_archive"
+package_gst_perf_plugin "$gst_perf_archive"

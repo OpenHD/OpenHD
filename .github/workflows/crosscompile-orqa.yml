@@ -74,10 +74,14 @@ jobs:
           SDK_INSTALL_DIR: ${{ runner.temp }}/orqa-sdk
           POCO_ARCHIVE: ${{ runner.temp }}/poco-libraries.zip
           LIBSODIUM_ARCHIVE: ${{ runner.temp }}/libsodium-libraries.zip
-          SDL2_ARCHIVE: ${{ runner.temp }}/sdl2-libraries.zip
+          GST_PERF_ARCHIVE: ${{ runner.temp }}/gst-perf-plugin.zip
         run: |
           set -euo pipefail
-          OpenHD/scripts/setup_orqa_sdk.sh "$SDK_INSTALL_DIR" "$POCO_ARCHIVE" "$LIBSODIUM_ARCHIVE" "$SDL2_ARCHIVE"
+          OpenHD/scripts/setup_orqa_sdk.sh \
+            "$SDK_INSTALL_DIR" \
+            "$POCO_ARCHIVE" \
+            "$LIBSODIUM_ARCHIVE" \
+            "$GST_PERF_ARCHIVE"
 
       - name: Configure OpenHD (Release)
         env:
@@ -85,7 +89,9 @@ jobs:
         run: |
           set -euo pipefail
           source "$SDK_INSTALL_DIR/environment-setup-armv8a-poky-linux"
-          cmake -S OpenHD -B build-sdk -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake -S OpenHD -B build-sdk -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_DISABLE_FIND_PACKAGE_SDL2=TRUE
 
       - name: Build OpenHD
         env:
@@ -95,11 +101,38 @@ jobs:
           source "$SDK_INSTALL_DIR/environment-setup-armv8a-poky-linux"
           cmake --build build-sdk --parallel
 
+      - name: Verify Orqa runtime ABI and strip binary
+        env:
+          SDK_INSTALL_DIR: ${{ runner.temp }}/orqa-sdk
+        run: |
+          set -euo pipefail
+          source "$SDK_INSTALL_DIR/environment-setup-armv8a-poky-linux"
+          "$READELF" -d build-sdk/openhd | tee build-sdk/openhd-needed.txt
+          grep -q 'Shared library: \[libPocoFoundation.so.95\]' build-sdk/openhd-needed.txt
+          grep -q 'Shared library: \[libPocoNet.so.95\]' build-sdk/openhd-needed.txt
+          grep -q 'Shared library: \[libsodium.so.26\]' build-sdk/openhd-needed.txt
+          if grep -q 'Shared library: \[libSDL2' build-sdk/openhd-needed.txt; then
+            echo "SDL2 is optional and is not installed on the Orqa target image"
+            exit 1
+          fi
+          gst_perf_plugin="$SDKTARGETSYSROOT/usr/lib/gstreamer-1.0/libgstperf.so"
+          test -f "$gst_perf_plugin"
+          "$READELF" -d "$gst_perf_plugin" | tee build-sdk/gst-perf-needed.txt
+          grep -q 'Shared library: \[libgstreamer-1.0.so.0\]' build-sdk/gst-perf-needed.txt
+          grep -q 'Shared library: \[libgstbase-1.0.so.0\]' build-sdk/gst-perf-needed.txt
+          strings "$gst_perf_plugin" > build-sdk/gst-perf-strings.txt
+          grep -qx 'on-bitrate' build-sdk/gst-perf-strings.txt
+          grep -qx 'bitrate-interval' build-sdk/gst-perf-strings.txt
+          "$STRIP" --strip-unneeded build-sdk/openhd
+
       - name: Package cross-compiled binary
         uses: actions/upload-artifact@v4
         with:
           name: openhd-aarch64
-          path: build-sdk/openhd
+          path: |
+            build-sdk/openhd
+            build-sdk/openhd-needed.txt
+            build-sdk/gst-perf-needed.txt
 
       - name: Upload Poco libraries archive
         uses: actions/upload-artifact@v4
@@ -113,8 +146,8 @@ jobs:
           name: libsodium-libraries
           path: ${{ runner.temp }}/libsodium-libraries.zip
 
-      - name: Upload SDL2 libraries archive
+      - name: Upload gst-perf runtime plugin
         uses: actions/upload-artifact@v4
         with:
-          name: sdl2-libraries
-          path: ${{ runner.temp }}/sdl2-libraries.zip
+          name: gst-perf-plugin
+          path: ${{ runner.temp }}/gst-perf-plugin.zip
