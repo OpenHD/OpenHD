@@ -53,6 +53,20 @@ class CameraHolder :
             openhd::get_video_settings_directory()) {
     // read previous settings or create default ones
     init();
+    // Rekindle's CSI media graph has a fixed 960x720@60 mode. Migrate values
+    // persisted by older releases so CamInfo and RESOLUTION_FPS match capture.
+    if (m_camera.camera_type == X_CAM_TYPE_ORQA_REKINDLE) {
+      const auto native_format = m_camera.get_default_resolution_fps();
+      auto& configured_format = unsafe_get_settings().streamed_video_format;
+      if (configured_format.width != native_format.width_px ||
+          configured_format.height != native_format.height_px ||
+          configured_format.framerate != native_format.fps) {
+        configured_format.width = native_format.width_px;
+        configured_format.height = native_format.height_px;
+        configured_format.framerate = native_format.fps;
+        persist(false);
+      }
+    }
   }
   [[nodiscard]] const XCamera& get_camera() const { return m_camera; }
   using VIDEO_BITRATE_CHANGED_CALLBACK = std::function<void(int bitrate_kbits)>;
@@ -76,6 +90,14 @@ class CameraHolder :
   bool set_video_width_height_framerate(int width, int height, int framerate) {
     if (!openhd::validate_video_width_height_fps(width, height, framerate)) {
       return false;
+    }
+    if (m_camera.camera_type == X_CAM_TYPE_ORQA_REKINDLE) {
+      const auto native_format = m_camera.get_default_resolution_fps();
+      if (width != native_format.width_px ||
+          height != native_format.height_px ||
+          framerate != native_format.fps) {
+        return false;
+      }
     }
     unsafe_get_settings().streamed_video_format.width = width;
     unsafe_get_settings().streamed_video_format.height = height;

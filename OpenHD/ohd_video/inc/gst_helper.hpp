@@ -817,6 +817,17 @@ static std::string create_orqa_camera1_stream(const int device_index,
   return ss.str();
 }
 
+static std::string create_orqa_rekindle_stream(
+    const int device_index, const CameraSettings& settings) {
+  // Do not trust settings persisted by pre-3.0 images: a 1280-pixel capture
+  // cap on Rekindle causes a mismatched stride and green/mangled frames.
+  CameraSettings native_capture_settings = settings;
+  native_capture_settings.streamed_video_format.width = 960;
+  native_capture_settings.streamed_video_format.height = 720;
+  native_capture_settings.streamed_video_format.framerate = 60;
+  return create_orqa_camera1_stream(device_index, native_capture_settings);
+}
+
 /**
  * For Qualcomm Cameras
  */

@@ -604,7 +604,7 @@
       "name": "ORQA_REKINDLE",
       "ui_label": "REKINDLE",
       "resolutions": [
-        {"width": 1280, "height": 720, "fps": 60}
+        {"width": 960, "height": 720, "fps": 60}
       ]
     },
     {

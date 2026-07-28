@@ -73,6 +73,29 @@ static constexpr int kRockchipBitratePidMaxStepKbits = 750;
 static constexpr int kRockchipBitratePidMaxEncoderKbits = 50000;
 static constexpr double kRockchipBitratePidDeadband = 0.05;
 static constexpr double kRockchipBitratePidKp = 0.8;
+
+bool configure_orqa_rekindle_capture() {
+  const std::array<std::pair<const char*, const char*>, 3> pad_formats{{
+      {"/dev/v4l-subdev2",
+       "pad=0,width=960,height=720,code=UYVY8_2X8"},
+      {"/dev/v4l-subdev1",
+       "pad=0,width=960,height=720,code=UYVY8_2X8"},
+      {"/dev/v4l-subdev1",
+       "pad=4,width=960,height=720,code=UYVY8_2X8"},
+  }};
+  for (const auto& [device, format] : pad_formats) {
+    if (OHDUtil::run_command(
+            "v4l2-ctl",
+            {"-d", device, "--set-subdev-fmt", format}, true) != 0) {
+      openhd::log::get_default()->error(
+          "ORQA Rekindle capture: failed to configure {} {}", device, format);
+      return false;
+    }
+  }
+  openhd::log::get_default()->info(
+      "ORQA Rekindle capture: configured sensor and CSI-2 pads for 960x720");
+  return true;
+}
 static constexpr double kRockchipBitratePidKi = 0.2;
 static constexpr double kRockchipBitratePidKd = 0.1;
 static constexpr double kRockchipBitratePidIntegralLimit = 4.0;
@@ -940,7 +963,11 @@ std::string GStreamerStream::create_source_encode_pipeline(
     openhd::log::get_default()->debug(
         "Camera requires ORQA pipeline. Using ORQA capture pipeline on "
         "/dev/video3 (io-mode=mmap).");
-    pipeline << OHDGstHelper::create_orqa_camera1_stream(3, setting);
+    if (camera.camera_type == X_CAM_TYPE_ORQA_REKINDLE) {
+      pipeline << OHDGstHelper::create_orqa_rekindle_stream(3, setting);
+    } else {
+      pipeline << OHDGstHelper::create_orqa_camera1_stream(3, setting);
+    }
   } else if (camera.requires_nxp_imx8_v4l2_pipeline()) {
     openhd::log::get_default()->debug(
         "Camera requires NXP i.MX8 V4L2 pipeline.");
@@ -1016,6 +1043,14 @@ bool GStreamerStream::setup() {
     return false;
   }
   gst_object_unref(perf_factory);
+  const auto& camera = m_camera_holder->get_camera();
+  if (OHDPlatform::instance().is_orqa() &&
+      camera.camera_type == X_CAM_TYPE_ORQA_REKINDLE &&
+      !configure_orqa_rekindle_capture()) {
+    m_console->error(
+        "Refusing to start ORQA Rekindle with an invalid CSI media graph");
+    return false;
+  }
   pipeline_content << create_source_encode_pipeline(*m_camera_holder);
   pipeline_content << OHDGstHelper::createEncoderPerfElement();
   // quick check,here the pipeline should end with a "! ";
