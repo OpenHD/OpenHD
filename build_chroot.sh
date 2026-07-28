@@ -463,7 +463,7 @@ else
             echo "[apt-preflight] Aligning Mesa and libdrm with Debian Bookworm."
 
             cat >/etc/apt/preferences.d/99openhd-bookworm-graphics <<'EOF'
-Package: libdrm-common libdrm2 libdrm-amdgpu1 libdrm-nouveau2 libdrm-radeon1 libdrm-dev
+Package: libdrm-common libdrm2 libdrm-amdgpu1 libdrm-etnaviv1 libdrm-freedreno1 libdrm-nouveau2 libdrm-radeon1 libdrm-tegra0 libdrm-dev
 Pin: release o=Debian,n=bookworm
 Pin-Priority: 1001
 
@@ -479,8 +479,11 @@ EOF
                 libdrm-common \
                 libdrm2 \
                 libdrm-amdgpu1 \
+                libdrm-etnaviv1 \
+                libdrm-freedreno1 \
                 libdrm-nouveau2 \
                 libdrm-radeon1 \
+                libdrm-tegra0 \
                 libdrm-dev \
                 libegl-mesa0 \
                 libgbm1 \
@@ -497,6 +500,7 @@ EOF
                 echo "[apt-preflight] ERROR: Bookworm graphics development packages are still inconsistent."
                 apt-cache policy \
                     libdrm-dev libdrm2 libdrm-radeon1 libdrm-nouveau2 libdrm-amdgpu1 \
+                    libdrm-etnaviv1 libdrm-freedreno1 libdrm-tegra0 \
                     libgbm-dev libgbm1 libegl-mesa0
                 return 1
             fi
