@@ -53,9 +53,10 @@ class CameraHolder :
             openhd::get_video_settings_directory()) {
     // read previous settings or create default ones
     init();
-    // Rekindle's CSI media graph has a fixed 960x720@60 mode. Migrate values
-    // persisted by older releases so CamInfo and RESOLUTION_FPS match capture.
-    if (m_camera.camera_type == X_CAM_TYPE_ORQA_REKINDLE) {
+    // Hornet and Rekindle expose fixed CSI modes. Migrate values persisted by
+    // older releases so CamInfo and RESOLUTION_FPS match the native capture.
+    if (m_camera.camera_type == X_CAM_TYPE_ORQA_HORNET ||
+        m_camera.camera_type == X_CAM_TYPE_ORQA_REKINDLE) {
       const auto native_format = m_camera.get_default_resolution_fps();
       auto& configured_format = unsafe_get_settings().streamed_video_format;
       if (configured_format.width != native_format.width_px ||
@@ -91,7 +92,8 @@ class CameraHolder :
     if (!openhd::validate_video_width_height_fps(width, height, framerate)) {
       return false;
     }
-    if (m_camera.camera_type == X_CAM_TYPE_ORQA_REKINDLE) {
+    if (m_camera.camera_type == X_CAM_TYPE_ORQA_HORNET ||
+        m_camera.camera_type == X_CAM_TYPE_ORQA_REKINDLE) {
       const auto native_format = m_camera.get_default_resolution_fps();
       if (width != native_format.width_px ||
           height != native_format.height_px ||

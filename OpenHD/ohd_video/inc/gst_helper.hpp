@@ -817,14 +817,16 @@ static std::string create_orqa_camera1_stream(const int device_index,
   return ss.str();
 }
 
-static std::string create_orqa_rekindle_stream(
-    const int device_index, const CameraSettings& settings) {
-  // Do not trust settings persisted by pre-3.0 images: a 1280-pixel capture
-  // cap on Rekindle causes a mismatched stride and green/mangled frames.
+static std::string create_orqa_zero_copy_stream(
+    const int device_index, const CameraSettings& settings,
+    const int native_framerate) {
+  // Hornet and Rekindle deliver the NXP ISI's native NV12/NM12 layout. Sending
+  // it through imxvpuenc causes a layout mismatch and green/mangled frames.
+  // The kernel encoder imports the capture DMABUF directly without conversion.
   CameraSettings native_capture_settings = settings;
   native_capture_settings.streamed_video_format.width = 960;
   native_capture_settings.streamed_video_format.height = 720;
-  native_capture_settings.streamed_video_format.framerate = 60;
+  native_capture_settings.streamed_video_format.framerate = native_framerate;
 
   const bool use_h264 =
       native_capture_settings.streamed_video_format.videoCodec ==
@@ -852,12 +854,13 @@ static std::string create_orqa_rekindle_stream(
   std::stringstream ss;
   ss << fmt::format(
       "v4l2src device=/dev/video{} io-mode=dmabuf do-timestamp=true ! "
-      "video/x-raw,format=NV12,width=960,height=720,framerate=60/1 ! "
+      "video/x-raw,format=NV12,width=960,height=720,framerate={}/1 ! "
       "queue max-size-buffers=4 leaky=downstream ! "
       "{} output-io-mode=dmabuf-import capture-io-mode=dmabuf "
       "extra-controls=\"controls,video_bitrate_mode=1,video_bitrate={},"
       "video_gop_size={},repeat_sequence_header=1,{}{}\" ! ",
-      device_index, encoder_name, bitrate_bps, keyframe_interval,
+      device_index, native_framerate, encoder_name, bitrate_bps,
+      keyframe_interval,
       profile_control, slicing_controls);
   return ss.str();
 }
