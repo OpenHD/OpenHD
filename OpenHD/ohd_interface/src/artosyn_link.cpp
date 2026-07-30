@@ -1356,8 +1356,18 @@ void ArtosynLink::update_link_stats() {
         clamp_uint8(bandwidth_enum_to_mhz(bw));
     const int tx_mhz = tx_freq_khz > 0 ? tx_freq_khz / 1000 : 0;
     stats.monitor_mode_link.curr_tx_channel_mhz = clamp_uint16(tx_mhz);
+    // The vendor status API reports physical and "real" throughput in bit/s,
+    // while tx_tp_th and the MAVLink curr_rate field use kbit/s. Passing the
+    // raw real-throughput value used to saturate the uint16 MAVLink field at
+    // 65535, which made ground UIs display a bogus ~66 Mbit/s.
+    const int tx_real_kbits =
+        tx_real_tp > 0 ? (tx_real_tp + 500) / 1000 : -1;
     const int rate_kbits =
-        tx_real_tp > 0 ? tx_real_tp : (tx_tp_th > 0 ? tx_tp_th : tx_phy_tp);
+        tx_real_kbits > 0
+            ? tx_real_kbits
+            : (tx_tp_th > 0
+                   ? tx_tp_th
+                   : (tx_phy_tp > 0 ? (tx_phy_tp + 500) / 1000 : -1));
     stats.monitor_mode_link.curr_rate_kbits = clamp_uint16(rate_kbits);
   }
   const bool artosyn_debug_stats_enabled =
@@ -1369,8 +1379,14 @@ void ArtosynLink::update_link_stats() {
     const int tx_phy_rate_mbps =
         tx_phy_tp > 0 ? ((tx_phy_tp + 500) / 1000) : -1;
     stats.monitor_mode_link.dummy1 = clamp_int16(tx_phy_rate_mbps);
+    const int rx_real_kbits =
+        rx_real_tp > 0 ? (rx_real_tp + 500) / 1000 : -1;
     const int rx_rate_kbits =
-        rx_real_tp > 0 ? rx_real_tp : (rx_tp_th > 0 ? rx_tp_th : rx_phy_tp);
+        rx_real_kbits > 0
+            ? rx_real_kbits
+            : (rx_tp_th > 0
+                   ? rx_tp_th
+                   : (rx_phy_tp > 0 ? (rx_phy_tp + 500) / 1000 : -1));
     stats.monitor_mode_link.dummy2 = clamp_int32(rx_rate_kbits);
   } else {
     // Keep legacy semantics (non-Artosyn links use dummy1 for foreign pps).
