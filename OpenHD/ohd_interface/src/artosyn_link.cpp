@@ -1592,6 +1592,23 @@ void ArtosynLink::apply_link_settings() {
     (void)timed_ioctl_set(BB_SET_MCS_RANGE, &range, "BB_SET_MCS_RANGE");
   }
 
+  // Select the RF band before applying a channel index. Channel indices are
+  // band-specific in the Artosyn firmware; setting channel 11 while the radio
+  // is still in 2 GHz mode can silently select a 2.4 GHz channel instead of
+  // the intended 5225 MHz entry.
+  if (s.band_mode >= 0) {
+    bb_set_band_mode_t band_mode{};
+    band_mode.auto_mode = (s.band_mode != 0);
+    (void)timed_ioctl_set(BB_SET_BAND_MODE, &band_mode, "BB_SET_BAND_MODE");
+  }
+  if (s.band_value >= 0) {
+    bb_set_band_t band{};
+    band.target_band = static_cast<uint8_t>(s.band_value);
+    if (timed_ioctl_set(BB_SET_BAND, &band, "BB_SET_BAND") == 0) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(250));
+    }
+  }
+
   bb_set_bandwidth_mode_t bw_mode{};
   bw_mode.slot = static_cast<uint8_t>(m_cfg.slot);
   bw_mode.mode = (s.bw_mode != 0);
@@ -1610,7 +1627,10 @@ void ArtosynLink::apply_link_settings() {
 
   bb_set_chan_mode_t chan_mode{};
   chan_mode.auto_mode = (s.chan_mode != 0);
-  (void)timed_ioctl_set(BB_SET_CHAN_MODE, &chan_mode, "BB_SET_CHAN_MODE");
+  if (timed_ioctl_set(BB_SET_CHAN_MODE, &chan_mode, "BB_SET_CHAN_MODE") ==
+      0) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(250));
+  }
 
   if (s.chan_mode == 0 && s.chan_index >= 0) {
     bb_set_chan_t chan{};
@@ -1630,16 +1650,6 @@ void ArtosynLink::apply_link_settings() {
     (void)timed_ioctl_set(BB_SET_POWER, &pwr, "BB_SET_POWER");
   }
 
-  if (s.band_mode >= 0) {
-    bb_set_band_mode_t band_mode{};
-    band_mode.auto_mode = (s.band_mode != 0);
-    (void)timed_ioctl_set(BB_SET_BAND_MODE, &band_mode, "BB_SET_BAND_MODE");
-  }
-  if (s.band_value >= 0) {
-    bb_set_band_t band{};
-    band.target_band = static_cast<uint8_t>(s.band_value);
-    (void)timed_ioctl_set(BB_SET_BAND, &band, "BB_SET_BAND");
-  }
   if (s.compliance_mode >= 0) {
     bb_set_compliance_mode_t cmp{};
     cmp.enable = (s.compliance_mode != 0);
