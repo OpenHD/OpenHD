@@ -5,6 +5,7 @@
 #include <Poco/Net/StreamSocket.h>
 #include <Poco/Timespan.h>
 
+#include <algorithm>
 #include <chrono>
 #include <cerrno>
 #include <cstring>
@@ -303,11 +304,13 @@ ArtosynLink::ArtosynLink(OHDProfile profile)
     m_console->warn("Artosyn settings changed, restarting link");
     stop_connect_worker();
     stop_stats_thread();
+    stop_video_tx_thread();
     stop_rx_threads();
     shutdown_device();
     m_cfg = config_from_settings(m_settings->get_settings());
     if (init_device()) {
       start_rx_threads();
+      start_video_tx_thread();
       start_stats_thread();
     } else {
       m_console->warn("Artosyn reconnect will continue in background.");
@@ -320,6 +323,7 @@ ArtosynLink::ArtosynLink(OHDProfile profile)
     start_connect_worker();
   } else {
     start_rx_threads();
+    start_video_tx_thread();
     start_stats_thread();
   }
 }
@@ -327,6 +331,7 @@ ArtosynLink::ArtosynLink(OHDProfile profile)
 ArtosynLink::~ArtosynLink() {
   stop_connect_worker();
   stop_stats_thread();
+  stop_video_tx_thread();
   stop_rx_threads();
   shutdown_device();
 }
@@ -482,10 +487,11 @@ void ArtosynLink::shutdown_device() {
     bb_socket_close(m_video_fd);
     m_video_fd = -1;
   }
-  if (m_telemetry_fd >= 0) {
+  if (m_telemetry_fd >= 0 && !m_shared_socket) {
     bb_socket_close(m_telemetry_fd);
-    m_telemetry_fd = -1;
   }
+  m_telemetry_fd = -1;
+  m_shared_socket = false;
   if (m_dev) {
     if (m_bb_started_by_openhd) {
       bb_stop(m_dev);
@@ -508,9 +514,11 @@ int ArtosynLink::open_socket(int port, bool want_tx, bool want_rx,
   if (!m_dev) return -1;
 
   auto make_flags = [want_tx, want_rx](bool use_datagram) {
-    uint32_t flags = 0;
-    if (want_tx) flags |= BB_SOCK_FLAG_TX;
-    if (want_rx) flags |= BB_SOCK_FLAG_RX;
+    (void)want_tx;
+    (void)want_rx;
+    // The P401 USB-data firmware requires a bidirectional socket even for a
+    // logically one-way OpenHD endpoint.
+    uint32_t flags = BB_SOCK_FLAG_TX | BB_SOCK_FLAG_RX;
     if (use_datagram) flags |= BB_SOCK_FLAG_DATAGRAM;
     return flags;
   };
@@ -582,6 +590,19 @@ void ArtosynLink::open_configured_sockets(bool allow_legacy_fallback,
     return;
   }
   bool any_failed = false;
+  if (m_cfg.telemetry_port == m_cfg.video_port) {
+    if (m_video_fd < 0 || m_telemetry_fd < 0) {
+      m_console->info("Artosyn init step: open shared socket ({})", reason);
+      const int fd = open_socket(m_cfg.video_port, true, true,
+                                 allow_legacy_fallback);
+      m_video_fd = fd;
+      m_telemetry_fd = fd;
+      m_shared_socket = fd >= 0;
+      any_failed = fd < 0;
+    }
+    m_next_socket_probe_ms = any_failed ? now_ms + 3000 : 0;
+    return;
+  }
   if (m_telemetry_fd < 0) {
     m_console->info("Artosyn init step: open telemetry socket ({})", reason);
     m_telemetry_fd = open_socket(m_cfg.telemetry_port, m_profile.is_air,
@@ -706,6 +727,11 @@ void ArtosynLink::try_open_sockets_if_ready() {
 }
 
 void ArtosynLink::start_rx_threads() {
+  if (m_profile.is_ground() && m_shared_socket && m_video_fd >= 0 &&
+      !m_rx_video_thread.joinable()) {
+    m_rx_video_thread = std::thread([this]() { rx_loop_shared(); });
+    return;
+  }
   if (m_profile.is_ground() && m_video_fd >= 0 &&
       !m_rx_video_thread.joinable()) {
     m_rx_video_thread = std::thread([this]() { rx_loop_video(); });
@@ -783,6 +809,85 @@ void ArtosynLink::rx_loop_telemetry() {
   }
 }
 
+void ArtosynLink::rx_loop_shared() {
+  std::vector<uint8_t> read_buf(static_cast<size_t>(m_cfg.rx_buf_size));
+  std::vector<uint8_t> stream_buf(256U * 1024U);
+  size_t stream_used = 0;
+  while (m_running) {
+    const int n = bb_socket_read(m_video_fd, read_buf.data(),
+                                 static_cast<uint32_t>(read_buf.size()),
+                                 m_cfg.read_timeout_ms);
+    if (n <= 0) {
+      continue;
+    }
+    if (stream_used + static_cast<size_t>(n) > stream_buf.size()) {
+      stream_used = 0;
+    }
+    std::memcpy(stream_buf.data() + stream_used, read_buf.data(),
+                static_cast<size_t>(n));
+    stream_used += static_cast<size_t>(n);
+    while (stream_used >= 7U) {
+      if (std::memcmp(stream_buf.data(), "P401", 4) != 0) {
+        std::memmove(stream_buf.data(), stream_buf.data() + 1,
+                     --stream_used);
+        continue;
+      }
+      const uint8_t stream_id = stream_buf[4];
+      const uint32_t payload_size =
+          (static_cast<uint32_t>(stream_buf[5]) << 8U) | stream_buf[6];
+      const size_t frame_size = static_cast<size_t>(payload_size) + 7U;
+      if (stream_used < frame_size) {
+        break;
+      }
+      m_rx_total_bytes.fetch_add(payload_size, std::memory_order_relaxed);
+      m_rx_total_packets.fetch_add(1, std::memory_order_relaxed);
+      m_last_rx_packet_ts_ms.store(
+          openhd::util::steady_clock_time_epoch_ms(),
+          std::memory_order_relaxed);
+      if (stream_id == 2) {
+        on_receive_video_data(0, stream_buf.data() + 7, payload_size);
+      } else if (stream_id == 1) {
+        m_rx_tele_bytes.fetch_add(payload_size, std::memory_order_relaxed);
+        m_rx_tele_packets.fetch_add(1, std::memory_order_relaxed);
+        auto shared = std::make_shared<std::vector<uint8_t>>(
+            stream_buf.begin() + 7,
+            stream_buf.begin() + static_cast<ptrdiff_t>(frame_size));
+        on_receive_telemetry_data(shared);
+      }
+      std::memmove(stream_buf.data(), stream_buf.data() + frame_size,
+                   stream_used - frame_size);
+      stream_used -= frame_size;
+    }
+  }
+}
+
+int ArtosynLink::write_stream_packet(int fd, uint8_t stream_id,
+                                     const uint8_t* data, uint32_t size) {
+  // Keep the application queue bounded instead of using a near-zero write
+  // timeout. Once a complete video frame is admitted, finish writing it so
+  // the receiver never gets a deliberately truncated H.264 frame.
+  const int write_timeout_ms = m_cfg.read_timeout_ms;
+  std::lock_guard<std::mutex> write_lock(m_radio_write_mutex);
+  if (!m_shared_socket) {
+    const int written =
+        bb_socket_write(fd, data, size, write_timeout_ms);
+    return written == static_cast<int>(size) ? written : -1;
+  }
+  if (size > 65535U) {
+    return -1;
+  }
+  std::vector<uint8_t> framed(size + 7U);
+  std::memcpy(framed.data(), "P401", 4);
+  framed[4] = stream_id;
+  framed[5] = static_cast<uint8_t>((size >> 8U) & 0xffU);
+  framed[6] = static_cast<uint8_t>(size & 0xffU);
+  std::memcpy(framed.data() + 7, data, size);
+  const int written = bb_socket_write(
+      fd, framed.data(), static_cast<uint32_t>(framed.size()),
+      write_timeout_ms);
+  return written == static_cast<int>(framed.size()) ? written : -1;
+}
+
 void ArtosynLink::log_tx_error_throttled(const char* stream, int ret) {
   const int64_t now_ms = openhd::util::steady_clock_time_epoch_ms();
   const int64_t last_ms = m_last_tx_error_log_ms.load();
@@ -803,9 +908,8 @@ void ArtosynLink::transmit_telemetry_data(TelemetryTxPacket packet) {
   int injections = packet.n_injections < 1 ? 1 : packet.n_injections;
   for (int i = 0; i < injections; ++i) {
     const int written =
-        bb_socket_write(m_telemetry_fd, packet.data->data(),
-                        static_cast<uint32_t>(packet.data->size()),
-                        m_cfg.read_timeout_ms);
+        write_stream_packet(m_telemetry_fd, 1, packet.data->data(),
+                            static_cast<uint32_t>(packet.data->size()));
     if (written < 0) {
       log_tx_error_throttled("telemetry", written);
       continue;
@@ -827,21 +931,154 @@ void ArtosynLink::transmit_video_data(
     return;
   }
   if (m_video_fd < 0) return;
-  for (const auto& fragment : fragmented_video_frame.rtp_fragments) {
-    const int written =
-        bb_socket_write(m_video_fd, fragment->data(),
-                        static_cast<uint32_t>(fragment->size()),
-                        m_cfg.read_timeout_ms);
-    if (written < 0) {
-      log_tx_error_throttled("video", written);
-      continue;
+  {
+    std::lock_guard<std::mutex> lock(m_video_tx_mutex);
+    const bool is_recovery_frame = fragmented_video_frame.is_intra_stream ||
+                                   fragmented_video_frame.is_idr_frame;
+    if (m_video_tx_wait_for_idr && !is_recovery_frame) {
+      ++m_video_tx_dropped_frames;
+      return;
     }
-    const auto accounted_bytes =
-        static_cast<uint64_t>(written > 0 ? written : fragment->size());
-    m_video_bitrate_meter.on_tx_fragment(
-        stream_index, accounted_bytes);
-    m_tx_total_bytes.fetch_add(accounted_bytes, std::memory_order_relaxed);
-    m_tx_total_packets.fetch_add(1, std::memory_order_relaxed);
+    if (!m_pending_video_frame.has_value() || is_recovery_frame) {
+      // This mirrors WBStreamTx's two-block queue policy: keep at most the
+      // frame currently being sent plus one pending frame. An IDR/intra frame
+      // may evict the queued frame so decoder recovery is never delayed.
+      if (m_pending_video_frame.has_value()) {
+        ++m_video_tx_dropped_frames;
+      }
+      m_pending_video_frame =
+          std::make_pair(stream_index, fragmented_video_frame);
+    } else {
+      // Preserve the already queued dependency chain. Replacing every queued
+      // P-frame with the newest one produces low latency but undecodable video.
+      ++m_video_tx_dropped_frames;
+      return;
+    }
+  }
+  m_video_tx_cv.notify_one();
+}
+
+void ArtosynLink::start_video_tx_thread() {
+  if (!m_profile.is_air || m_video_tx_thread.joinable()) {
+    return;
+  }
+  {
+    std::lock_guard<std::mutex> lock(m_video_tx_mutex);
+    m_stop_video_tx = false;
+    m_video_tx_wait_for_idr = false;
+    m_video_tx_dropped_frames = 0;
+  }
+  m_video_tx_thread = std::thread([this]() { video_tx_loop(); });
+}
+
+void ArtosynLink::stop_video_tx_thread() {
+  {
+    std::lock_guard<std::mutex> lock(m_video_tx_mutex);
+    m_stop_video_tx = true;
+    m_pending_video_frame.reset();
+  }
+  m_video_tx_cv.notify_all();
+  if (m_video_tx_thread.joinable()) {
+    m_video_tx_thread.join();
+  }
+}
+
+void ArtosynLink::video_tx_loop() {
+  while (true) {
+    std::pair<int, openhd::FragmentedVideoFrame> pending;
+    {
+      std::unique_lock<std::mutex> lock(m_video_tx_mutex);
+      m_video_tx_cv.wait(lock, [this]() {
+        return m_stop_video_tx || m_pending_video_frame.has_value();
+      });
+      if (m_stop_video_tx) {
+        return;
+      }
+      pending = std::move(m_pending_video_frame.value());
+      m_pending_video_frame.reset();
+    }
+    bool complete = true;
+    if (m_shared_socket) {
+      // The vendor stream API acknowledges every bb_socket_write call. Sending
+      // one call per ~1400-byte RTP packet limits throughput to a few dozen
+      // packets/s even when the RF link has plenty of capacity. Coalesce all
+      // framed RTP records belonging to this OpenHD frame. The ground parser
+      // already treats the byte stream as a sequence of P401 records and
+      // restores the original UDP packet boundaries.
+      size_t batch_size = 0;
+      for (const auto& fragment : pending.second.rtp_fragments) {
+        batch_size += 7U + fragment->size();
+      }
+      std::vector<uint8_t> batch;
+      batch.reserve(batch_size);
+      for (const auto& fragment : pending.second.rtp_fragments) {
+        if (fragment->empty() || fragment->size() > 65535U) {
+          complete = false;
+          break;
+        }
+        const auto size = static_cast<uint16_t>(fragment->size());
+        batch.insert(batch.end(), {'P', '4', '0', '1', 2});
+        batch.push_back(static_cast<uint8_t>((size >> 8U) & 0xffU));
+        batch.push_back(static_cast<uint8_t>(size & 0xffU));
+        batch.insert(batch.end(), fragment->begin(), fragment->end());
+      }
+      int written = -1;
+      if (complete && !batch.empty()) {
+        std::lock_guard<std::mutex> write_lock(m_radio_write_mutex);
+        // A large IDR may need longer than the normal control-message timeout,
+        // but this remains bounded so shutdown/reconnect cannot hang forever.
+        const int video_timeout_ms = std::max(500, m_cfg.read_timeout_ms);
+        written = bb_socket_write(m_video_fd, batch.data(),
+                                  static_cast<uint32_t>(batch.size()),
+                                  video_timeout_ms);
+        complete = written == static_cast<int>(batch.size());
+      }
+      if (!complete) {
+        log_tx_error_throttled("video frame", written);
+      } else {
+        for (const auto& fragment : pending.second.rtp_fragments) {
+          const auto accounted_bytes =
+              static_cast<uint64_t>(fragment->size() + 7U);
+          m_video_bitrate_meter.on_tx_fragment(pending.first, accounted_bytes);
+          m_tx_total_bytes.fetch_add(accounted_bytes,
+                                     std::memory_order_relaxed);
+          m_tx_total_packets.fetch_add(1, std::memory_order_relaxed);
+        }
+      }
+    } else {
+      for (const auto& fragment : pending.second.rtp_fragments) {
+        const int written =
+            write_stream_packet(m_video_fd, 2, fragment->data(),
+                                static_cast<uint32_t>(fragment->size()));
+        if (written < 0) {
+          log_tx_error_throttled("video", written);
+          complete = false;
+          break;
+        }
+        const auto accounted_bytes =
+            static_cast<uint64_t>(written > 0 ? written : fragment->size());
+        m_video_bitrate_meter.on_tx_fragment(pending.first, accounted_bytes);
+        m_tx_total_bytes.fetch_add(accounted_bytes, std::memory_order_relaxed);
+        m_tx_total_packets.fetch_add(1, std::memory_order_relaxed);
+      }
+    }
+    {
+      std::lock_guard<std::mutex> lock(m_video_tx_mutex);
+      const bool is_recovery_frame = pending.second.is_intra_stream ||
+                                     pending.second.is_idr_frame;
+      if (!complete) {
+        m_video_tx_wait_for_idr = true;
+        if (m_pending_video_frame.has_value()) {
+          const auto& queued = m_pending_video_frame->second;
+          if (!queued.is_intra_stream && !queued.is_idr_frame) {
+            m_pending_video_frame.reset();
+            ++m_video_tx_dropped_frames;
+          }
+        }
+      } else if (is_recovery_frame) {
+        m_video_tx_wait_for_idr = false;
+      }
+    }
   }
 }
 
@@ -886,6 +1123,7 @@ void ArtosynLink::connect_loop() {
     if (init_device()) {
       m_console->warn("Artosyn daemon connected.");
       start_rx_threads();
+      start_video_tx_thread();
       start_stats_thread();
       return;
     }

@@ -107,6 +107,22 @@ static std::string createSwEncoder(const CameraSettings& settings) {
   return ss.str();
 }
 
+static std::string create_rpi5_imx708_low_latency_encoder(
+    const CameraSettings& settings) {
+  return fmt::format(
+      "queue max-size-buffers=2 max-size-bytes=0 max-size-time=0 "
+      "leaky=downstream ! "
+      "x264enc name=swencoder bitrate={} speed-preset=ultrafast "
+      "tune=zerolatency pass=cbr vbv-buf-capacity=50 key-int-max={} "
+      "bframes=0 ref=1 cabac=false dct8x8=false sliced-threads=true threads=0 "
+      "option-string=\"scenecut=0:weightp=0:subme=0:me=dia:"
+      "partitions=none:sync-lookahead=0:rc-lookahead=0\" ! "
+      "video/x-h264,stream-format=byte-stream,alignment=au,"
+      "profile=baseline ! ",
+      settings.h26x_bitrate_kbits,
+      settings.h26x_keyframe_interval);
+}
+
 // Pi 5 deliberately dropped the hardware H.264 encoder exposed by
 // v4l2h264enc. Keep the user override, but make software encoding mandatory on
 // Pi 5 so no camera path can accidentally construct an invalid pipeline.
@@ -242,7 +258,11 @@ static std::string createRpicamsrcStream(
                         settings.streamed_video_format.width,
                         settings.streamed_video_format.height,
                         settings.streamed_video_format.framerate);
-      ss << createSwEncoder(settings);
+      if (OHDPlatform::instance().is_rpi5()) {
+        ss << create_rpi5_imx708_low_latency_encoder(settings);
+      } else {
+        ss << createSwEncoder(settings);
+      }
     } else {
       ss << fmt::format(
           "video/x-h264, profile=constrained-baseline, width={}, height={}, "
@@ -495,7 +515,11 @@ static std::string createLibcamerasrcStream(const CameraSettings& settings) {
           OHDPlatform::instance().is_rpi5()
               ? "Using mandatory Pi 5 software H.264 encoding"
               : "Forced SW encode");
-      ss << createSwEncoder(settings);
+      if (OHDPlatform::instance().is_rpi5()) {
+        ss << create_rpi5_imx708_low_latency_encoder(settings);
+      } else {
+        ss << createSwEncoder(settings);
+      }
     } else {
       // We got rid of the v4l2convert - see
       // https://github.com/raspberrypi/libcamera/issues/30

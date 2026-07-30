@@ -3,8 +3,11 @@
 
 #include <atomic>
 #include <chrono>
+#include <condition_variable>
 #include <cstdint>
 #include <memory>
+#include <mutex>
+#include <optional>
 #include <string>
 #include <thread>
 #include <vector>
@@ -72,6 +75,12 @@ class ArtosynLink : public OHDLink {
 
   void rx_loop_video();
   void rx_loop_telemetry();
+  void rx_loop_shared();
+  int write_stream_packet(int fd, uint8_t stream_id, const uint8_t* data,
+                          uint32_t size);
+  void start_video_tx_thread();
+  void stop_video_tx_thread();
+  void video_tx_loop();
   void log_tx_error_throttled(const char* stream, int ret);
 
   void apply_link_settings();
@@ -128,11 +137,21 @@ class ArtosynLink : public OHDLink {
 
   int m_video_fd = -1;
   int m_telemetry_fd = -1;
+  bool m_shared_socket = false;
 
   std::thread m_rx_video_thread;
   std::thread m_rx_telemetry_thread;
+  std::thread m_video_tx_thread;
   std::thread m_stats_thread;
   std::thread m_connect_thread;
+  std::mutex m_radio_write_mutex;
+  std::mutex m_video_tx_mutex;
+  std::condition_variable m_video_tx_cv;
+  std::optional<std::pair<int, openhd::FragmentedVideoFrame>>
+      m_pending_video_frame;
+  bool m_stop_video_tx = false;
+  bool m_video_tx_wait_for_idr = false;
+  uint64_t m_video_tx_dropped_frames = 0;
   std::atomic<bool> m_stop_connect_worker{false};
   std::atomic<bool> m_legacy_init_retry_done{false};
   std::atomic<bool> m_bb_initialized_by_openhd{false};
