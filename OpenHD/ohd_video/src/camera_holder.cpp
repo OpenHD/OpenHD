@@ -56,6 +56,11 @@ std::optional<CameraSettings> CameraHolder::impl_deserialize(
       parsed_json.is_discarded() ||
       !parsed_json.contains("rk_bitrate_pid_enable");
   auto parsed_settings = openhd_json_parse<CameraSettings>(file_as_string);
+  if (parsed_settings.has_value()) {
+    parsed_settings->h26x_bitrate_kbits =
+        std::clamp(parsed_settings->h26x_bitrate_kbits, 1000,
+                   get_max_video_bitrate_kbits());
+  }
   if (parsed_settings.has_value() && OHDPlatform::instance().is_rpi5()) {
     parsed_settings->force_sw_encode = true;
   }

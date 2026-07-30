@@ -121,8 +121,18 @@ class CameraHolder :
       return false;
     }
     const auto previous_kbits = get_settings().h26x_bitrate_kbits;
-    unsafe_get_settings().h26x_bitrate_kbits =
+    const auto requested_kbits =
         openhd::mbits_to_kbits_per_second(bitrate_mbits);
+    unsafe_get_settings().h26x_bitrate_kbits =
+        clamp_video_bitrate_kbits(requested_kbits);
+    if (requested_kbits != unsafe_get_settings().h26x_bitrate_kbits) {
+      openhd::log::get_default()->warn(
+          "Camera{} bitrate request {} kbit/s limited to platform/camera "
+          "maximum "
+          "{} kbit/s",
+          m_camera.index, requested_kbits,
+          get_max_video_bitrate_kbits());
+    }
     openhd::log::get_default()->debug(
         "Camera{} BITRATE_MBITS request:{} old_kbits:{} new_kbits:{}",
         m_camera.index, bitrate_mbits, previous_kbits,
@@ -134,6 +144,14 @@ class CameraHolder :
           unsafe_get_settings().h26x_bitrate_kbits);
     }
     return true;
+  }
+  [[nodiscard]] int get_max_video_bitrate_kbits() const {
+    return m_camera.get_max_video_bitrate_kbits(
+        OHDPlatform::instance().platform_type);
+  }
+  [[nodiscard]] int clamp_video_bitrate_kbits(int bitrate_kbits) const {
+    return std::clamp(bitrate_kbits, 1000,
+                      get_max_video_bitrate_kbits());
   }
   bool set_qp_min(int value) {
     if (!openhd::validate_h26x_qp(value)) {

@@ -782,7 +782,9 @@ void GStreamerStream::update_rockchip_bitrate_pid_controller(
       std::max(std::max(base_encoder_kbits * 3, target_kbits * 2),
                base_encoder_kbits + 1000);
   max_encoder_kbits =
-      std::clamp(max_encoder_kbits, 1000, kRockchipBitratePidMaxEncoderKbits);
+      std::clamp(max_encoder_kbits, 1000,
+                 std::min(kRockchipBitratePidMaxEncoderKbits,
+                          m_camera_holder->get_max_video_bitrate_kbits()));
   const int min_encoder_kbits = std::max(250, base_encoder_kbits / 4);
   int target_encoder_kbits =
       base_encoder_kbits +
@@ -880,6 +882,8 @@ std::string GStreamerStream::create_source_encode_pipeline(
     const CameraHolder& cam_holder) {
   const auto& camera = cam_holder.get_camera();
   CameraSettings setting = cam_holder.get_settings();
+  setting.h26x_bitrate_kbits =
+      cam_holder.clamp_video_bitrate_kbits(setting.h26x_bitrate_kbits);
 
   const bool RPI_HDMI_TO_CSI_USE_V4l2 = OHDFilesystemUtil::exists(
       std::string(getConfigBasePath()) + "hdmi_v4l2.txt");
@@ -1326,6 +1330,16 @@ void GStreamerStream::handle_change_bitrate_request(
       camera.requires_rockchip5_mpp_pipeline()) {
     bitrate_for_encoder_kbits =
         OHDGstHelper::clampRockchipMppEncoderKbits(bitrate_for_encoder_kbits);
+  }
+  const int unclamped_bitrate_kbits = bitrate_for_encoder_kbits;
+  bitrate_for_encoder_kbits =
+      m_camera_holder->clamp_video_bitrate_kbits(bitrate_for_encoder_kbits);
+  if (unclamped_bitrate_kbits != bitrate_for_encoder_kbits) {
+    m_console->warn(
+        "Camera{} runtime bitrate request {} kbit/s limited to per-video "
+        "maximum {} kbit/s",
+        m_camera_holder->get_camera().index, unclamped_bitrate_kbits,
+        m_camera_holder->get_max_video_bitrate_kbits());
   }
   // The gst thread is responsible for changing the bitrate - it will be applied
   // (as long as the cam is not bugged or the OS is overloaded) after a max

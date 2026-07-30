@@ -54,6 +54,8 @@ struct ResolutionFramerate {
 };
 
 struct XCamera {
+  static constexpr int DEFAULT_MAX_VIDEO_BITRATE_KBITS = 20000;
+
   int camera_type = X_CAM_TYPE_DUMMY_SW;
   // 0 for primary camera, 1 for secondary camera
   int index;
@@ -98,6 +100,15 @@ struct XCamera {
   }
   bool requires_rockchip1126_mpp_testsrc_pipeline() const {
     return camera_type == X_CAM_TYPE_ROCKCHIP_RV1126_TEST;
+  }
+  // Platform/camera-stream capability limit. Keep the selection here, next to
+  // the other immutable camera capabilities, so individual platforms, camera
+  // types, or primary/secondary streams can receive different budgets later.
+  [[nodiscard]] int get_max_video_bitrate_kbits(int platform_type) const {
+    (void)platform_type;
+    (void)camera_type;
+    (void)index;
+    return DEFAULT_MAX_VIDEO_BITRATE_KBITS;
   }
   std::string cam_type_as_verbose_string() const {
     return x_cam_type_to_string(camera_type);
