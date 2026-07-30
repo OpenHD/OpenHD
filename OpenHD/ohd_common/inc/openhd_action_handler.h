@@ -121,6 +121,10 @@ class LinkActionHandler {
   // Link bitrate change request
   struct LinkBitrateInformation {
     int recommended_encoder_bitrate_kbits;
+    // Capacity-driven recommendations must not overwrite BITRATE_MBITS. That
+    // setting remains the user-selected ceiling and can still be changed at
+    // runtime; the link only applies a temporary encoder limit beneath it.
+    bool is_link_capacity_limit = false;
   };
   typedef std::function<void(LinkBitrateInformation link_bitrate_info)>
       ACTION_REQUEST_BITRATE_CHANGE;

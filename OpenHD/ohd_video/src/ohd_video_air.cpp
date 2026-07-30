@@ -249,9 +249,9 @@ void OHDVideoAir::handle_change_bitrate_request(
     const int bitrate_secondary_kbits =
         lb.recommended_encoder_bitrate_kbits - bitrate_primary_kbits;
     openhd::LinkActionHandler::LinkBitrateInformation lb1{
-        bitrate_primary_kbits};
+        bitrate_primary_kbits, lb.is_link_capacity_limit};
     openhd::LinkActionHandler::LinkBitrateInformation lb2{
-        bitrate_secondary_kbits};
+        bitrate_secondary_kbits, lb.is_link_capacity_limit};
     m_camera_streams[0]->handle_change_bitrate_request(lb1);
     m_camera_streams[1]->handle_change_bitrate_request(lb2);
     return;

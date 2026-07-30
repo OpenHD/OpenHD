@@ -1171,6 +1171,82 @@ void ArtosynLink::stats_loop() {
   }
 }
 
+void ArtosynLink::update_video_bitrate_recommendation(int capacity_kbits,
+                                                      int64_t now_ms) {
+  if (!m_profile.is_air || capacity_kbits <= 0) {
+    return;
+  }
+
+  // The MCS throughput table is a capacity estimate. Do not use measured TX
+  // traffic here: doing so would make every encoder reduction lower the next
+  // recommendation and create a downward feedback spiral.
+  if (m_bitrate_capacity_ema_kbits <= 0) {
+    m_bitrate_capacity_ema_kbits = capacity_kbits;
+  } else if (capacity_kbits < m_bitrate_capacity_ema_kbits) {
+    // React immediately when the radio loses capacity.
+    m_bitrate_capacity_ema_kbits = capacity_kbits;
+  } else {
+    // Require several good samples before using newly available capacity.
+    m_bitrate_capacity_ema_kbits =
+        (m_bitrate_capacity_ema_kbits * 3 + capacity_kbits) / 4;
+  }
+
+  static constexpr int kUtilizationPercent = 88;
+  static constexpr int kProtocolAndTelemetryReserveKbits = 250;
+  static constexpr int kMinEncoderBitrateKbits = 1000;
+  static constexpr int kMaxEncoderBitrateKbits = 20000;
+  static constexpr int kIncreasePerSecondKbits = 500;
+  static constexpr int kChangeHysteresisKbits = 250;
+  static constexpr int64_t kRefreshIntervalMs = 2000;
+
+  int target_kbits =
+      m_bitrate_capacity_ema_kbits * kUtilizationPercent / 100 -
+      kProtocolAndTelemetryReserveKbits;
+  target_kbits = std::clamp(target_kbits, kMinEncoderBitrateKbits,
+                            kMaxEncoderBitrateKbits);
+
+  int recommendation_kbits = target_kbits;
+  if (m_last_recommended_bitrate_kbits > 0 &&
+      target_kbits > m_last_recommended_bitrate_kbits) {
+    const int64_t elapsed_ms =
+        m_last_bitrate_calculation_ms > 0
+            ? std::max<int64_t>(1, now_ms - m_last_bitrate_calculation_ms)
+            : 1;
+    const int max_increase_kbits = std::max<int>(
+        1, static_cast<int>(elapsed_ms * kIncreasePerSecondKbits / 1000));
+    recommendation_kbits =
+        std::min(target_kbits,
+                 m_last_recommended_bitrate_kbits + max_increase_kbits);
+  }
+  m_last_bitrate_calculation_ms = now_ms;
+
+  const bool meaningful_change =
+      m_last_recommended_bitrate_kbits <= 0 ||
+      std::abs(recommendation_kbits - m_last_recommended_bitrate_kbits) >=
+          kChangeHysteresisKbits;
+  const bool refresh =
+      m_last_bitrate_announcement_ms <= 0 ||
+      (now_ms - m_last_bitrate_announcement_ms) >= kRefreshIntervalMs;
+  if (!meaningful_change && !refresh) {
+    return;
+  }
+
+  if (meaningful_change) {
+    m_console->info(
+        "Artosyn bitrate control: capacity={} kbit/s filtered={} kbit/s "
+        "encoder_limit={} kbit/s",
+        capacity_kbits, m_bitrate_capacity_ema_kbits,
+        recommendation_kbits);
+  }
+  m_last_recommended_bitrate_kbits = recommendation_kbits;
+  m_last_bitrate_announcement_ms = now_ms;
+  openhd::LinkActionHandler::LinkBitrateInformation bitrate_info{};
+  bitrate_info.recommended_encoder_bitrate_kbits = recommendation_kbits;
+  bitrate_info.is_link_capacity_limit = true;
+  openhd::LinkActionHandler::instance().action_request_bitrate_change_handle(
+      bitrate_info);
+}
+
 void ArtosynLink::update_link_stats() {
   if (!m_dev) return;
   const int64_t now_ms = openhd::util::steady_clock_time_epoch_ms();
@@ -1264,6 +1340,15 @@ void ArtosynLink::update_link_stats() {
   (void)rx_bw;
   if (!first_sample) {
     (void)read_mcs_throughput(&tx_tp_th, &rx_tp_th);
+  }
+  // Prefer the vendor MCS throughput ceiling. Physical throughput is a safe
+  // fallback; current/real traffic is deliberately not used for control.
+  const int bitrate_capacity_kbits =
+      tx_tp_th > 0
+          ? tx_tp_th
+          : (tx_phy_tp > 0 ? (tx_phy_tp + 500) / 1000 : -1);
+  if (!first_sample && have_metrics && bitrate_capacity_kbits > 0) {
+    update_video_bitrate_recommendation(bitrate_capacity_kbits, now_ms);
   }
   if (have_metrics) {
     stats.monitor_mode_link.curr_tx_mcs_index = clamp_uint8(tx_mcs);

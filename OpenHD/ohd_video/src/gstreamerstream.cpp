@@ -1309,6 +1309,11 @@ void GStreamerStream::handle_change_bitrate_request(
   //  We do some safety checks first - the link might recommend too much / too
   //  little
   auto bitrate_for_encoder_kbits = lb.recommended_encoder_bitrate_kbits;
+  if (lb.is_link_capacity_limit) {
+    bitrate_for_encoder_kbits =
+        std::min(bitrate_for_encoder_kbits,
+                 m_camera_holder->get_settings().h26x_bitrate_kbits);
+  }
   // m_console->debug(
   //     "Received bitrate update request: {} kBit/s (current target: {}
   //     kBit/s)", bitrate_for_encoder_kbits,
@@ -1345,8 +1350,9 @@ void GStreamerStream::handle_change_bitrate_request(
   // (as long as the cam is not bugged or the OS is overloaded) after a max
   // delay of 40ms
   m_curr_dynamic_bitrate_kbits = bitrate_for_encoder_kbits;
-  if (m_camera_holder->get_settings().h26x_bitrate_kbits !=
-      bitrate_for_encoder_kbits) {
+  if (!lb.is_link_capacity_limit &&
+      m_camera_holder->get_settings().h26x_bitrate_kbits !=
+          bitrate_for_encoder_kbits) {
     m_camera_holder->unsafe_get_settings().h26x_bitrate_kbits =
         bitrate_for_encoder_kbits;
     m_camera_holder->persist(false);

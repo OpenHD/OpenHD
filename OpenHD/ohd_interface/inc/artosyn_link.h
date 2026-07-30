@@ -118,6 +118,8 @@ class ArtosynLink : public OHDLink {
   void stop_stats_thread();
   void stats_loop();
   void update_link_stats();
+  void update_video_bitrate_recommendation(int capacity_kbits,
+                                           int64_t now_ms);
   void start_connect_worker();
   void stop_connect_worker();
   void connect_loop();
@@ -172,6 +174,10 @@ class ArtosynLink : public OHDLink {
   std::atomic<int64_t> m_last_tx_error_log_ms{0};
 
   int64_t m_last_stats_ts_ms = 0;
+  int m_bitrate_capacity_ema_kbits = 0;
+  int m_last_recommended_bitrate_kbits = -1;
+  int64_t m_last_bitrate_calculation_ms = 0;
+  int64_t m_last_bitrate_announcement_ms = 0;
   uint64_t m_last_stats_tx_bytes = 0;
   uint64_t m_last_stats_tx_packets = 0;
   uint64_t m_last_stats_rx_bytes = 0;
