@@ -55,6 +55,7 @@ struct ResolutionFramerate {
 
 struct XCamera {
   static constexpr int DEFAULT_MAX_VIDEO_BITRATE_KBITS = 20000;
+  static constexpr int RPI5_IMX708_MAX_VIDEO_BITRATE_KBITS = 30000;
 
   int camera_type = X_CAM_TYPE_DUMMY_SW;
   // 0 for primary camera, 1 for secondary camera
@@ -105,9 +106,11 @@ struct XCamera {
   // the other immutable camera capabilities, so individual platforms, camera
   // types, or primary/secondary streams can receive different budgets later.
   [[nodiscard]] int get_max_video_bitrate_kbits(int platform_type) const {
-    (void)platform_type;
-    (void)camera_type;
-    (void)index;
+    if (platform_type == X_PLATFORM_TYPE_RPI_5 &&
+        camera_type == X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V3_IMX708 &&
+        index == 0) {
+      return RPI5_IMX708_MAX_VIDEO_BITRATE_KBITS;
+    }
     return DEFAULT_MAX_VIDEO_BITRATE_KBITS;
   }
   std::string cam_type_as_verbose_string() const {
