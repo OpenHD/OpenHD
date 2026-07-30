@@ -939,18 +939,18 @@ void ArtosynLink::transmit_video_data(
       ++m_video_tx_dropped_frames;
       return;
     }
-    if (!m_pending_video_frame.has_value() || is_recovery_frame) {
-      // This mirrors WBStreamTx's two-block queue policy: keep at most the
-      // frame currently being sent plus one pending frame. An IDR/intra frame
-      // may evict the queued frame so decoder recovery is never delayed.
-      if (m_pending_video_frame.has_value()) {
-        ++m_video_tx_dropped_frames;
-      }
-      m_pending_video_frame =
-          std::make_pair(stream_index, fragmented_video_frame);
+    constexpr size_t kMaxPendingFrames = 4;
+    if (is_recovery_frame) {
+      // Like WBStreamTx::enqueue_block_dropping(), prioritize an IDR over
+      // dependent frames already waiting in a congested queue.
+      m_video_tx_dropped_frames += m_pending_video_frames.size();
+      m_pending_video_frames.clear();
+      m_pending_video_frames.emplace_back(stream_index, fragmented_video_frame);
+    } else if (m_pending_video_frames.size() < kMaxPendingFrames) {
+      m_pending_video_frames.emplace_back(stream_index, fragmented_video_frame);
     } else {
-      // Preserve the already queued dependency chain. Replacing every queued
-      // P-frame with the newest one produces low latency but undecodable video.
+      // Preserve the queued dependency chain instead of replacing an older
+      // P-frame with a newer frame which depends on the dropped one.
       ++m_video_tx_dropped_frames;
       return;
     }
@@ -975,7 +975,7 @@ void ArtosynLink::stop_video_tx_thread() {
   {
     std::lock_guard<std::mutex> lock(m_video_tx_mutex);
     m_stop_video_tx = true;
-    m_pending_video_frame.reset();
+    m_pending_video_frames.clear();
   }
   m_video_tx_cv.notify_all();
   if (m_video_tx_thread.joinable()) {
@@ -985,17 +985,29 @@ void ArtosynLink::stop_video_tx_thread() {
 
 void ArtosynLink::video_tx_loop() {
   while (true) {
-    std::pair<int, openhd::FragmentedVideoFrame> pending;
+    std::vector<std::pair<int, openhd::FragmentedVideoFrame>> pending;
     {
       std::unique_lock<std::mutex> lock(m_video_tx_mutex);
       m_video_tx_cv.wait(lock, [this]() {
-        return m_stop_video_tx || m_pending_video_frame.has_value();
+        return m_stop_video_tx || !m_pending_video_frames.empty();
       });
       if (m_stop_video_tx) {
         return;
       }
-      pending = std::move(m_pending_video_frame.value());
-      m_pending_video_frame.reset();
+      // At 120 fps four frames arrive in about 25ms. A single vendor call for
+      // the group avoids the per-call acknowledgement ceiling while placing a
+      // hard bound on both application queue depth and aggregation latency.
+      m_video_tx_cv.wait_for(lock, std::chrono::milliseconds(25), [this]() {
+        return m_stop_video_tx || m_pending_video_frames.size() >= 4;
+      });
+      if (m_stop_video_tx) {
+        return;
+      }
+      pending.reserve(m_pending_video_frames.size());
+      while (!m_pending_video_frames.empty()) {
+        pending.emplace_back(std::move(m_pending_video_frames.front()));
+        m_pending_video_frames.pop_front();
+      }
     }
     bool complete = true;
     if (m_shared_socket) {
@@ -1006,21 +1018,28 @@ void ArtosynLink::video_tx_loop() {
       // already treats the byte stream as a sequence of P401 records and
       // restores the original UDP packet boundaries.
       size_t batch_size = 0;
-      for (const auto& fragment : pending.second.rtp_fragments) {
-        batch_size += 7U + fragment->size();
+      for (const auto& frame : pending) {
+        for (const auto& fragment : frame.second.rtp_fragments) {
+          batch_size += 7U + fragment->size();
+        }
       }
       std::vector<uint8_t> batch;
       batch.reserve(batch_size);
-      for (const auto& fragment : pending.second.rtp_fragments) {
-        if (fragment->empty() || fragment->size() > 65535U) {
-          complete = false;
+      for (const auto& frame : pending) {
+        for (const auto& fragment : frame.second.rtp_fragments) {
+          if (fragment->empty() || fragment->size() > 65535U) {
+            complete = false;
+            break;
+          }
+          const auto size = static_cast<uint16_t>(fragment->size());
+          batch.insert(batch.end(), {'P', '4', '0', '1', 2});
+          batch.push_back(static_cast<uint8_t>((size >> 8U) & 0xffU));
+          batch.push_back(static_cast<uint8_t>(size & 0xffU));
+          batch.insert(batch.end(), fragment->begin(), fragment->end());
+        }
+        if (!complete) {
           break;
         }
-        const auto size = static_cast<uint16_t>(fragment->size());
-        batch.insert(batch.end(), {'P', '4', '0', '1', 2});
-        batch.push_back(static_cast<uint8_t>((size >> 8U) & 0xffU));
-        batch.push_back(static_cast<uint8_t>(size & 0xffU));
-        batch.insert(batch.end(), fragment->begin(), fragment->end());
       }
       int written = -1;
       if (complete && !batch.empty()) {
@@ -1036,46 +1055,52 @@ void ArtosynLink::video_tx_loop() {
       if (!complete) {
         log_tx_error_throttled("video frame", written);
       } else {
-        for (const auto& fragment : pending.second.rtp_fragments) {
+        for (const auto& frame : pending) {
+          for (const auto& fragment : frame.second.rtp_fragments) {
+            const auto accounted_bytes =
+                static_cast<uint64_t>(fragment->size() + 7U);
+            m_video_bitrate_meter.on_tx_fragment(frame.first,
+                                                 accounted_bytes);
+            m_tx_total_bytes.fetch_add(accounted_bytes,
+                                       std::memory_order_relaxed);
+            m_tx_total_packets.fetch_add(1, std::memory_order_relaxed);
+          }
+        }
+      }
+    } else {
+      for (const auto& frame : pending) {
+        for (const auto& fragment : frame.second.rtp_fragments) {
+          const int written =
+              write_stream_packet(m_video_fd, 2, fragment->data(),
+                                  static_cast<uint32_t>(fragment->size()));
+          if (written < 0) {
+            log_tx_error_throttled("video", written);
+            complete = false;
+            break;
+          }
           const auto accounted_bytes =
-              static_cast<uint64_t>(fragment->size() + 7U);
-          m_video_bitrate_meter.on_tx_fragment(pending.first, accounted_bytes);
+              static_cast<uint64_t>(written > 0 ? written : fragment->size());
+          m_video_bitrate_meter.on_tx_fragment(frame.first, accounted_bytes);
           m_tx_total_bytes.fetch_add(accounted_bytes,
                                      std::memory_order_relaxed);
           m_tx_total_packets.fetch_add(1, std::memory_order_relaxed);
         }
-      }
-    } else {
-      for (const auto& fragment : pending.second.rtp_fragments) {
-        const int written =
-            write_stream_packet(m_video_fd, 2, fragment->data(),
-                                static_cast<uint32_t>(fragment->size()));
-        if (written < 0) {
-          log_tx_error_throttled("video", written);
-          complete = false;
+        if (!complete) {
           break;
         }
-        const auto accounted_bytes =
-            static_cast<uint64_t>(written > 0 ? written : fragment->size());
-        m_video_bitrate_meter.on_tx_fragment(pending.first, accounted_bytes);
-        m_tx_total_bytes.fetch_add(accounted_bytes, std::memory_order_relaxed);
-        m_tx_total_packets.fetch_add(1, std::memory_order_relaxed);
       }
     }
     {
       std::lock_guard<std::mutex> lock(m_video_tx_mutex);
-      const bool is_recovery_frame = pending.second.is_intra_stream ||
-                                     pending.second.is_idr_frame;
+      const bool contains_recovery_frame =
+          std::any_of(pending.begin(), pending.end(), [](const auto& frame) {
+            return frame.second.is_intra_stream || frame.second.is_idr_frame;
+          });
       if (!complete) {
         m_video_tx_wait_for_idr = true;
-        if (m_pending_video_frame.has_value()) {
-          const auto& queued = m_pending_video_frame->second;
-          if (!queued.is_intra_stream && !queued.is_idr_frame) {
-            m_pending_video_frame.reset();
-            ++m_video_tx_dropped_frames;
-          }
-        }
-      } else if (is_recovery_frame) {
+        m_video_tx_dropped_frames += m_pending_video_frames.size();
+        m_pending_video_frames.clear();
+      } else if (contains_recovery_frame) {
         m_video_tx_wait_for_idr = false;
       }
     }

@@ -5,9 +5,9 @@
 #include <chrono>
 #include <condition_variable>
 #include <cstdint>
+#include <deque>
 #include <memory>
 #include <mutex>
-#include <optional>
 #include <string>
 #include <thread>
 #include <vector>
@@ -147,8 +147,8 @@ class ArtosynLink : public OHDLink {
   std::mutex m_radio_write_mutex;
   std::mutex m_video_tx_mutex;
   std::condition_variable m_video_tx_cv;
-  std::optional<std::pair<int, openhd::FragmentedVideoFrame>>
-      m_pending_video_frame;
+  std::deque<std::pair<int, openhd::FragmentedVideoFrame>>
+      m_pending_video_frames;
   bool m_stop_video_tx = false;
   bool m_video_tx_wait_for_idr = false;
   uint64_t m_video_tx_dropped_frames = 0;
