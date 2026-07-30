@@ -939,14 +939,16 @@ void ArtosynLink::transmit_video_data(
       ++m_video_tx_dropped_frames;
       return;
     }
-    constexpr size_t kMaxPendingFrames = 4;
-    if (is_recovery_frame) {
-      // Like WBStreamTx::enqueue_block_dropping(), prioritize an IDR over
-      // dependent frames already waiting in a congested queue.
+    constexpr size_t kMaxPendingFrames = 8;
+    if (m_pending_video_frames.size() < kMaxPendingFrames) {
+      // WBStreamTx only evicts queued frames for an IDR when the queue is
+      // actually full. Clearing healthy pending P-frames on every periodic IDR
+      // creates an artificial RTP sequence gap once per GOP.
+      m_pending_video_frames.emplace_back(stream_index, fragmented_video_frame);
+    } else if (is_recovery_frame) {
+      // Congested queue: prioritize decoder recovery over stale dependencies.
       m_video_tx_dropped_frames += m_pending_video_frames.size();
       m_pending_video_frames.clear();
-      m_pending_video_frames.emplace_back(stream_index, fragmented_video_frame);
-    } else if (m_pending_video_frames.size() < kMaxPendingFrames) {
       m_pending_video_frames.emplace_back(stream_index, fragmented_video_frame);
     } else {
       // Preserve the queued dependency chain instead of replacing an older
