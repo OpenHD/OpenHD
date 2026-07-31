@@ -23,6 +23,7 @@
 
 #include "OHDMainComponent.h"
 
+#include <array>
 #include <iostream>
 #include <openhd_global_constants.hpp>
 #include <utility>
@@ -31,6 +32,7 @@
 #include "OnboardComputerStatusProvider.h"
 #include "openhd_config.h"
 #include "openhd_reboot_util.h"
+#include "openhd_sock.h"
 #include "openhd_spdlog_include.h"
 #include "openhd_util_time.h"
 
@@ -54,7 +56,11 @@ OHDMainComponent::OHDMainComponent(uint8_t parent_sys_id, bool runsOnAir)
   }
 }
 
-OHDMainComponent::~OHDMainComponent() {}
+OHDMainComponent::~OHDMainComponent() {
+  if (m_storage_format_thread.joinable()) {
+    m_storage_format_thread.join();
+  }
+}
 
 void OHDMainComponent::set_fc_sys_id(uint8_t sys_id) {
   m_configured_fc_sys_id = sys_id;
@@ -75,6 +81,7 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mavlink_messages() {
   //"HelloGround");
   const auto logs = generateLogMessages();
   OHDUtil::vec_append(ret, logs);
+  OHDUtil::vec_append(ret, take_async_messages());
   // OHDUtil::vec_append(ret, perform_time_synchronisation());
   return ret;
 }
@@ -295,6 +302,108 @@ MavlinkMessage OHDMainComponent::ack_command(const uint8_t source_sys_id,
   return ret;
 }
 
+MavlinkMessage OHDMainComponent::ack_command_result(
+    const uint8_t source_sys_id, const uint8_t source_comp_id,
+    const uint16_t command_id, const uint8_t result, const uint8_t progress) {
+  MavlinkMessage ret{};
+  mavlink_msg_command_ack_pack(m_sys_id, m_comp_id, &ret.m, command_id, result,
+                               progress, 0, source_sys_id, source_comp_id);
+  return ret;
+}
+
+std::vector<MavlinkMessage> OHDMainComponent::take_async_messages() {
+  std::vector<MavlinkMessage> result;
+  std::lock_guard<std::mutex> lock(m_async_messages_mutex);
+  while (!m_async_messages.empty()) {
+    result.push_back(m_async_messages.front());
+    m_async_messages.pop();
+  }
+  return result;
+}
+
+void OHDMainComponent::start_storage_action(
+    const uint8_t source_sys_id, const uint8_t source_comp_id,
+    const uint16_t command_id, const uint8_t storage_id,
+    const std::string& action) {
+  std::lock_guard<std::mutex> lock(m_storage_format_mutex);
+  if (m_storage_format_thread.joinable()) {
+    m_storage_format_thread.join();
+  }
+  m_storage_format_owner_sys_id = source_sys_id;
+  m_storage_format_owner_comp_id = source_comp_id;
+  m_storage_action_command_id = command_id;
+  m_storage_action_id = storage_id;
+  m_storage_action_name = action;
+  m_storage_format_completed = false;
+  m_storage_format_running = true;
+  m_console->info("Storage action {} started for ID {}", action, storage_id);
+  m_storage_format_thread =
+      std::thread([this, source_sys_id, source_comp_id, command_id, storage_id,
+                   action]() {
+    const auto result =
+        openhd::request_sysutil_storage_action(storage_id, action);
+    const auto final_ack = ack_command_result(
+        source_sys_id, source_comp_id, command_id,
+        result.ok ? MAV_RESULT_ACCEPTED : MAV_RESULT_FAILED);
+    const auto refreshed_storage = generate_storage_information();
+    {
+      std::lock_guard<std::mutex> queue_lock(m_async_messages_mutex);
+      m_async_messages.push(final_ack);
+      for (const auto& message : refreshed_storage) {
+        m_async_messages.push(message);
+      }
+    }
+    if (result.ok) {
+      m_console->info("Storage action complete: {}", result.message);
+    } else {
+      m_console->error("Storage action failed: {}", result.message);
+    }
+    m_storage_format_result =
+        result.ok ? MAV_RESULT_ACCEPTED : MAV_RESULT_FAILED;
+    m_storage_format_completed_at = std::chrono::steady_clock::now();
+    m_storage_format_completed = true;
+    m_storage_format_running = false;
+  });
+}
+
+std::vector<MavlinkMessage> OHDMainComponent::generate_storage_information() {
+  const auto entries = openhd::request_sysutil_storage_list();
+  if (!entries) {
+    return {};
+  }
+  std::vector<MavlinkMessage> messages;
+  messages.reserve(entries->size());
+  for (const auto& entry : *entries) {
+    const float total_mib =
+        static_cast<float>(entry.size_bytes / 1048576.0);
+    const float available_mib =
+        static_cast<float>(entry.free_bytes / 1048576.0);
+    const float used_mib =
+        available_mib <= total_mib ? total_mib - available_mib : 0.0F;
+    const bool is_disk = entry.kind == "disk";
+    const uint8_t status =
+        is_disk ? STORAGE_STATUS_NOT_SUPPORTED
+                : (entry.filesystem.empty() ? STORAGE_STATUS_UNFORMATTED
+                                            : STORAGE_STATUS_READY);
+    const std::string name =
+        std::string(is_disk ? "D " : "P ") + entry.device;
+    std::array<char, 32> storage_name{};
+    std::memcpy(storage_name.data(), name.data(),
+                std::min(name.size(), storage_name.size() - 1));
+    MavlinkMessage message{};
+    mavlink_msg_storage_information_pack(
+        m_sys_id, m_comp_id, &message.m, 0, entry.id,
+        static_cast<uint8_t>(entries->size()), status, total_mib, used_mib,
+        available_mib, 0.0F, 0.0F,
+        is_disk ? STORAGE_TYPE_HD : STORAGE_TYPE_OTHER, storage_name.data(),
+        entry.mounted_at_video
+            ? STORAGE_USAGE_FLAG_SET | STORAGE_USAGE_FLAG_VIDEO
+            : STORAGE_USAGE_FLAG_SET);
+    messages.push_back(message);
+  }
+  return messages;
+}
+
 std::optional<MavlinkMessage> OHDMainComponent::handle_timesync_message(
     const MavlinkMessage& message) {
   const auto msg = message.m;
@@ -442,6 +551,42 @@ void OHDMainComponent::process_command_self(
   assert(command.target_component == m_comp_id);
   m_console->debug("Got MAVLINK_MSG_ID_COMMAND_LONG: {} {}", command.command,
                    static_cast<uint32_t>(command.param1));
+  const auto handle_storage_action =
+      [this, source_sys_id, source_comp_id, &message_buffer](
+          const uint16_t command_id, const uint8_t storage_id,
+          const std::string& action) {
+        if (m_storage_format_running) {
+          const bool same_sender =
+              m_storage_format_owner_sys_id == source_sys_id &&
+              m_storage_format_owner_comp_id == source_comp_id &&
+              m_storage_action_command_id == command_id &&
+              m_storage_action_id == storage_id &&
+              m_storage_action_name == action;
+          message_buffer.push_back(ack_command_result(
+              source_sys_id, source_comp_id, command_id,
+              same_sender ? MAV_RESULT_IN_PROGRESS
+                          : MAV_RESULT_TEMPORARILY_REJECTED,
+              same_sender ? 10 : 255));
+        } else if (m_storage_format_completed &&
+                   m_storage_format_owner_sys_id == source_sys_id &&
+                   m_storage_format_owner_comp_id == source_comp_id &&
+                   m_storage_action_command_id == command_id &&
+                   m_storage_action_id == storage_id &&
+                   m_storage_action_name == action &&
+                   std::chrono::steady_clock::now() -
+                           m_storage_format_completed_at <
+                       std::chrono::seconds(30)) {
+          message_buffer.push_back(ack_command_result(
+              source_sys_id, source_comp_id, command_id,
+              m_storage_format_result));
+        } else {
+          message_buffer.push_back(ack_command_result(
+              source_sys_id, source_comp_id, command_id,
+              MAV_RESULT_IN_PROGRESS, 0));
+          start_storage_action(source_sys_id, source_comp_id, command_id,
+                               storage_id, action);
+        }
+      };
   if (command.command == MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN) {
     // https://mavlink.io/en/messages/common.html#MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN
     m_console->debug("Got shutdown command");
@@ -483,8 +628,52 @@ void OHDMainComponent::process_command_self(
       } else {
         m_console->warn("Cannot get channels from wb (no handler");
       }
+    } else if (requested_message_id == MAVLINK_MSG_ID_STORAGE_INFORMATION &&
+               RUNS_ON_AIR) {
+      const auto storage = generate_storage_information();
+      OHDUtil::vec_append(message_buffer, storage);
+      message_buffer.push_back(
+          ack_command(source_sys_id, source_comp_id, command.command));
     } else {
       m_console->info("Message {} request not supported", requested_message_id);
+    }
+  } else if (command.command == MAV_CMD_STORAGE_FORMAT) {
+    if (!RUNS_ON_AIR) {
+      message_buffer.push_back(ack_command_result(
+          source_sys_id, source_comp_id, command.command,
+          MAV_RESULT_UNSUPPORTED));
+    } else if (static_cast<int>(command.param1) < 1 ||
+               static_cast<int>(command.param1) > 254 ||
+               static_cast<int>(command.param2) != 1) {
+      message_buffer.push_back(ack_command_result(
+          source_sys_id, source_comp_id, command.command, MAV_RESULT_DENIED));
+    } else {
+      handle_storage_action(command.command,
+                            static_cast<uint8_t>(command.param1), "format");
+    }
+  } else if (command.command == OPENHD_CMD_STORAGE_MANAGE) {
+    if (!RUNS_ON_AIR) {
+      message_buffer.push_back(ack_command_result(
+          source_sys_id, source_comp_id, command.command,
+          MAV_RESULT_UNSUPPORTED));
+    } else {
+      const int action = static_cast<int>(command.param1);
+      const int storage_id = static_cast<int>(command.param2);
+      if (action == 1) {
+        OHDUtil::vec_append(message_buffer, generate_storage_information());
+        message_buffer.push_back(
+            ack_command(source_sys_id, source_comp_id, command.command));
+      } else if ((action == 2 || action == 3) && storage_id >= 1 &&
+                 storage_id <= 254 &&
+                 static_cast<int>(command.param3) == 1) {
+        handle_storage_action(
+            command.command, static_cast<uint8_t>(storage_id),
+            action == 2 ? "repartition" : "mount");
+      } else {
+        message_buffer.push_back(ack_command_result(
+            source_sys_id, source_comp_id, command.command,
+            MAV_RESULT_DENIED));
+      }
     }
   } else if (command.command == OPENHD_CMD_INITIATE_CHANNEL_SEARCH) {
     if (RUNS_ON_AIR) {

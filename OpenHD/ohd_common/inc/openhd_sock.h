@@ -25,6 +25,7 @@
 #define OPENHD_SOCK_H
 
 #include <chrono>
+#include <cstdint>
 #include <condition_variable>
 #include <mutex>
 #include <optional>
@@ -175,6 +176,38 @@ bool request_sysutil_wifi_refresh(
     std::chrono::milliseconds timeout = std::chrono::seconds(2));
 bool request_sysutil_artosyn_restart(
     std::chrono::milliseconds timeout = std::chrono::seconds(3));
+
+struct SysutilStorageFormatResult {
+  bool ok = false;
+  std::string message;
+};
+
+struct SysutilStorageEntry {
+  uint8_t id = 0;
+  std::string device;
+  std::string kind;
+  std::string filesystem;
+  std::string label;
+  std::string mountpoint;
+  uint64_t size_bytes = 0;
+  uint64_t free_bytes = 0;
+  bool mounted_at_video = false;
+  bool can_format = false;
+  bool can_repartition = false;
+  bool can_mount = false;
+};
+
+std::optional<std::vector<SysutilStorageEntry>> request_sysutil_storage_list(
+    std::chrono::milliseconds timeout = std::chrono::seconds(5));
+
+SysutilStorageFormatResult request_sysutil_storage_action(
+    uint8_t storage_id, const std::string& action,
+    std::chrono::milliseconds timeout = std::chrono::minutes(2));
+
+// Asks the privileged sysutils daemon to format the RECORDINGS storage.
+SysutilStorageFormatResult request_sysutil_storage_format(
+    uint8_t storage_id = 1,
+    std::chrono::milliseconds timeout = std::chrono::minutes(2));
 
 }  // namespace openhd
 

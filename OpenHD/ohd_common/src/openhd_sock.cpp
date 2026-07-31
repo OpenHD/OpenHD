@@ -1023,4 +1023,151 @@ bool wait_for_sysutils(std::chrono::milliseconds timeout,
   }
 }
 
+SysutilStorageFormatResult request_sysutil_storage_format(
+    uint8_t storage_id, std::chrono::milliseconds timeout) {
+  SysutilStorageFormatResult result{};
+  nlohmann::json request;
+  request["type"] = "sysutil.storage.format.request";
+  request["storage_id"] = storage_id;
+  request["confirm"] = true;
+  auto serialized = request.dump();
+  serialized.push_back('\n');
+
+  const int fd = ::socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
+  if (fd < 0) {
+    result.message = "Cannot create sysutils socket.";
+    return result;
+  }
+
+  sockaddr_un addr{};
+  addr.sun_family = AF_UNIX;
+  std::strncpy(addr.sun_path, kSocketPath, sizeof(addr.sun_path) - 1);
+  if (::connect(fd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
+    result.message = "Cannot connect to sysutils.";
+    ::close(fd);
+    return result;
+  }
+  if (!write_all(fd, serialized.data(), serialized.size())) {
+    result.message = "Cannot send format request to sysutils.";
+    ::close(fd);
+    return result;
+  }
+
+  const auto line = read_line_with_timeout(fd, timeout);
+  ::close(fd);
+  if (!line) {
+    result.message = "Sysutils format request timed out.";
+    return result;
+  }
+  const auto parsed = nlohmann::json::parse(*line, nullptr, false);
+  if (parsed.is_discarded() ||
+      parsed.value("type", "") != "sysutil.storage.format.response") {
+    result.message = "Invalid sysutils format response.";
+    return result;
+  }
+  result.ok = parsed.value("ok", false);
+  result.message = parsed.value(
+      "message", result.ok ? "SD card format complete." : "SD card format failed.");
+  return result;
+}
+
+std::optional<std::vector<SysutilStorageEntry>> request_sysutil_storage_list(
+    std::chrono::milliseconds timeout) {
+  nlohmann::json request;
+  request["type"] = "sysutil.storage.list.request";
+  auto serialized = request.dump();
+  serialized.push_back('\n');
+
+  const int fd = ::socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
+  if (fd < 0) {
+    return std::nullopt;
+  }
+  sockaddr_un addr{};
+  addr.sun_family = AF_UNIX;
+  std::strncpy(addr.sun_path, kSocketPath, sizeof(addr.sun_path) - 1);
+  if (::connect(fd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0 ||
+      !write_all(fd, serialized.data(), serialized.size())) {
+    ::close(fd);
+    return std::nullopt;
+  }
+  const auto line = read_line_with_timeout(fd, timeout);
+  ::close(fd);
+  if (!line) {
+    return std::nullopt;
+  }
+  const auto parsed = nlohmann::json::parse(*line, nullptr, false);
+  if (parsed.is_discarded() ||
+      parsed.value("type", "") != "sysutil.storage.list.response" ||
+      !parsed.contains("entries") || !parsed["entries"].is_array()) {
+    return std::nullopt;
+  }
+
+  std::vector<SysutilStorageEntry> entries;
+  for (const auto& item : parsed["entries"]) {
+    if (!item.is_object()) {
+      continue;
+    }
+    SysutilStorageEntry entry;
+    entry.id = static_cast<uint8_t>(item.value("id", 0));
+    entry.device = item.value("device", "");
+    entry.kind = item.value("kind", "");
+    entry.filesystem = item.value("filesystem", "");
+    entry.label = item.value("label", "");
+    entry.mountpoint = item.value("mountpoint", "");
+    entry.size_bytes = item.value("size_bytes", uint64_t{0});
+    entry.free_bytes = item.value("free_bytes", uint64_t{0});
+    entry.mounted_at_video = item.value("mounted_at_video", false);
+    entry.can_format = item.value("can_format", false);
+    entry.can_repartition = item.value("can_repartition", false);
+    entry.can_mount = item.value("can_mount", false);
+    if (entry.id != 0 && !entry.device.empty()) {
+      entries.push_back(std::move(entry));
+    }
+  }
+  return entries;
+}
+
+SysutilStorageFormatResult request_sysutil_storage_action(
+    uint8_t storage_id, const std::string& action,
+    std::chrono::milliseconds timeout) {
+  SysutilStorageFormatResult result{};
+  nlohmann::json request;
+  request["type"] = "sysutil.storage.action.request";
+  request["storage_id"] = storage_id;
+  request["action"] = action;
+  request["confirm"] = true;
+  auto serialized = request.dump();
+  serialized.push_back('\n');
+
+  const int fd = ::socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
+  if (fd < 0) {
+    result.message = "Cannot create sysutils socket.";
+    return result;
+  }
+  sockaddr_un addr{};
+  addr.sun_family = AF_UNIX;
+  std::strncpy(addr.sun_path, kSocketPath, sizeof(addr.sun_path) - 1);
+  if (::connect(fd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0 ||
+      !write_all(fd, serialized.data(), serialized.size())) {
+    result.message = "Cannot send storage action to sysutils.";
+    ::close(fd);
+    return result;
+  }
+  const auto line = read_line_with_timeout(fd, timeout);
+  ::close(fd);
+  if (!line) {
+    result.message = "Sysutils storage action timed out.";
+    return result;
+  }
+  const auto parsed = nlohmann::json::parse(*line, nullptr, false);
+  if (parsed.is_discarded() ||
+      parsed.value("type", "") != "sysutil.storage.action.response") {
+    result.message = "Invalid sysutils storage response.";
+    return result;
+  }
+  result.ok = parsed.value("ok", false);
+  result.message = parsed.value("message", "Storage action failed.");
+  return result;
+}
+
 }  // namespace openhd

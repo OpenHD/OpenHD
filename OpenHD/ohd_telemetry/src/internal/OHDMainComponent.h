@@ -25,10 +25,12 @@
 #define XMAVLINKSERVICE_INTERNALTELEMETRY_H
 
 #include <atomic>
+#include <chrono>
 #include <map>
 #include <mutex>
 #include <optional>
 #include <queue>
+#include <thread>
 #include <vector>
 
 #include "../mav_helper.h"
@@ -103,12 +105,34 @@ class OHDMainComponent : public MavlinkComponent {
       m_onboard_computer_status_provider;
   MavlinkMessage ack_command(uint8_t source_sys_id, uint8_t source_comp_id,
                              uint16_t command_id, bool success = true);
+  MavlinkMessage ack_command_result(uint8_t source_sys_id,
+                                    uint8_t source_comp_id,
+                                    uint16_t command_id, uint8_t result,
+                                    uint8_t progress = 255);
+  void start_storage_action(uint8_t source_sys_id, uint8_t source_comp_id,
+                            uint16_t command_id, uint8_t storage_id,
+                            const std::string& action);
+  std::vector<MavlinkMessage> generate_storage_information();
+  std::vector<MavlinkMessage> take_async_messages();
   std::shared_ptr<spdlog::logger> m_console;
   std::unique_ptr<LastKnowPosition> m_last_known_position = nullptr;
   // Only set / used on air, where we have a uart connection to the FC and
   // therefore can be 100% sure about the FC sys id
   std::atomic_int16_t m_air_fc_sys_id = -1;
   std::atomic_int16_t m_configured_fc_sys_id = OHD_SYS_ID_FC;
+  std::atomic_bool m_storage_format_running = false;
+  std::atomic_bool m_storage_format_completed = false;
+  std::atomic_uint8_t m_storage_format_result = MAV_RESULT_FAILED;
+  std::chrono::steady_clock::time_point m_storage_format_completed_at{};
+  std::mutex m_storage_format_mutex;
+  std::thread m_storage_format_thread;
+  uint8_t m_storage_format_owner_sys_id = 0;
+  uint8_t m_storage_format_owner_comp_id = 0;
+  uint16_t m_storage_action_command_id = 0;
+  uint8_t m_storage_action_id = 0;
+  std::string m_storage_action_name;
+  std::mutex m_async_messages_mutex;
+  std::queue<MavlinkMessage> m_async_messages;
 
  private:
   std::vector<MavlinkMessage> perform_time_synchronisation();
