@@ -20,6 +20,10 @@ static constexpr auto AR_TXBUF = "AR_TXBUF";
 static constexpr auto AR_RDTMO = "AR_RDTMO";
 static constexpr auto AR_DMN_AUTO = "AR_DMN_AUTO";
 static constexpr auto AR_DMN_CMD = "AR_DMN_CMD";
+// Ephemeral MAVLink actions. Writing 1 executes the action; values are not
+// persisted and read back as 0.
+static constexpr auto AR_RESET_CMD = "AR_RESET_CMD";
+static constexpr auto AR_PAIR_CMD = "AR_PAIR_CMD";
 static constexpr auto AR_MCS_MD = "AR_MCS_MD";
 static constexpr auto AR_MCS_VAL = "AR_MCS_VAL";
 static constexpr auto AR_MCS_MIN = "AR_MCS_MIN";

@@ -2066,6 +2066,30 @@ std::vector<openhd::Setting> ArtosynLink::get_all_settings() {
   ret.push_back(
       create_read_only_string(AR_DMN_CMD, "managed-by-sysutils (daemon+tunnel)"));
 
+  auto cb_reset = [this](std::string, int value) {
+    if (value != 1) return false;
+    m_console->warn("Artosyn reset requested via MAVLink");
+    return openhd::request_sysutil_artosyn_restart(std::chrono::seconds(4));
+  };
+  ret.push_back(Setting{AR_RESET_CMD, IntSetting{0, cb_reset}});
+
+  auto cb_pair = [this](std::string, int value) {
+    if ((value != 0 && value != 1) || !m_dev) return false;
+    bb_set_pair_mode_t pair{};
+    pair.start = static_cast<uint8_t>(value);
+    pair.slot_bmp = static_cast<uint8_t>(1U << std::clamp(m_cfg.slot, 0, 7));
+    const int result = bb_ioctl(m_dev, BB_SET_PAIR_MODE, &pair, nullptr);
+    if (result != 0) {
+      m_console->warn("Artosyn pair command failed value={} ret={}", value,
+                      result);
+      return false;
+    }
+    m_console->warn("Artosyn pairing {} via MAVLink",
+                    value == 1 ? "started" : "stopped");
+    return true;
+  };
+  ret.push_back(Setting{AR_PAIR_CMD, IntSetting{0, cb_pair}});
+
   auto cb_mcs_mode = [this](std::string, int value) {
     m_settings->unsafe_get_settings().mcs_mode = value ? 1 : 0;
     m_settings->persist(false);
