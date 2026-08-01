@@ -40,6 +40,7 @@
 #include "gst_appsink_helper.h"
 #include "gst_debug_helper.h"
 #include "gst_helper.hpp"
+#include "ip_camera_network.h"
 #include "gst_recording_demuxer.h"
 #include "nalu/CodecConfigFinder.hpp"
 #include "nalu/fragment_helper.h"
@@ -104,6 +105,20 @@ static constexpr double kRockchipBitratePidIntegralLimit = 4.0;
 static constexpr double kRockchipBitratePidCorrectionLimit = 2.0;
 static constexpr size_t kPipelineDebugMaxChars = 1200;
 static constexpr size_t kPipelineDebugChunkChars = 34;
+
+std::string normalize_custom_source_pipeline(std::string pipeline) {
+  while (!pipeline.empty() &&
+         std::isspace(static_cast<unsigned char>(pipeline.back())) != 0) {
+    pipeline.pop_back();
+  }
+  if (!pipeline.empty() && pipeline.back() != '!') {
+    pipeline += " !";
+  }
+  if (!pipeline.empty()) {
+    pipeline += " ";
+  }
+  return pipeline;
+}
 
 int64_t steady_clock_ms() {
   return std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -991,9 +1006,33 @@ std::string GStreamerStream::create_source_encode_pipeline(
     pipeline << OHDGstHelper::createDummyStreamX(setting);
   } else if (camera.camera_type == X_CAM_TYPE_EXTERNAL ||
              camera.camera_type == X_CAM_TYPE_EXTERNAL_IP) {
-    openhd::log::get_default()->warn(
-        "Using external camera or external IP camera.");
-    pipeline << OHDGstHelper::create_input_custom_udp_rtp_port(setting);
+    if (camera.camera_type == X_CAM_TYPE_EXTERNAL_IP &&
+        !setting.ip_camera_pipeline.empty()) {
+      auto source_pipeline = setting.ip_camera_pipeline;
+      if (source_pipeline.find("{IP}") != std::string::npos) {
+        auto address = setting.ip_camera_address;
+        if (!address.empty()) {
+          ensure_ip_camera_route(address);
+          std::size_t position = 0;
+          while ((position = source_pipeline.find("{IP}", position)) !=
+                 std::string::npos) {
+            source_pipeline.replace(position, 4, address);
+            position += address.size();
+          }
+        } else {
+          openhd::log::get_default()->error(
+              "No IP_CAM_ADDRESS configured for camera slot {}",
+              camera.index + 1);
+        }
+      }
+      openhd::log::get_default()->info(
+          "Using MAVLink-configured managed IP camera pipeline.");
+      pipeline << normalize_custom_source_pipeline(source_pipeline);
+    } else {
+      openhd::log::get_default()->warn(
+          "Using legacy external camera UDP input.");
+      pipeline << OHDGstHelper::create_input_custom_udp_rtp_port(setting);
+    }
   } else if (camera.camera_type == X_CAM_TYPE_DEVELOPMENT_FILESRC) {
     openhd::log::get_default()->warn(
         "Using development file source camera type.");

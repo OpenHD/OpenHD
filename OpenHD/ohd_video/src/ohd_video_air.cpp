@@ -23,12 +23,14 @@
 
 #include "ohd_video_air.h"
 
+#include <algorithm>
 #include <utility>
 
 #include "camera_discovery.h"
 #include "camera_enums.hpp"
 #include "gstaudiostream.h"
 #include "gstreamerstream.h"
+#include "ip_camera_network.h"
 #include "nalu/fragment_helper.h"
 #include "openhd_config.h"
 #include "openhd_reboot_util.h"
@@ -67,6 +69,15 @@ OHDVideoAir::OHDVideoAir(std::vector<XCamera> cameras,
   std::vector<std::shared_ptr<CameraHolder>> camera_holders;
   for (const auto& camera : cameras) {
     camera_holders.emplace_back(std::make_unique<CameraHolder>(camera));
+  }
+  for (const auto& holder : camera_holders) {
+    if (holder->get_camera().camera_type == X_CAM_TYPE_EXTERNAL_IP &&
+        !holder->get_settings().ip_camera_address.empty()) {
+      ensure_ip_camera_route(holder->get_settings().ip_camera_address);
+      // Also writes migrated defaults so direct JSON editors expose the
+      // per-camera address immediately.
+      holder->persist(false);
+    }
   }
   if (m_record_only) {
     for (auto& camera_holder : camera_holders) {
@@ -202,19 +213,40 @@ std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
             cb_switch_primary_and_secondary}});
   }
   if (n_cameras > 1) {
-    auto cb = [this](std::string, int value) {
-      if (!is_valid_dualcam_primary_video_allocated_bandwidth(value))
-        return false;
-      m_generic_settings->unsafe_get_settings()
-          .dualcam_primary_video_allocated_bandwidth_perc = value;
-      m_generic_settings->persist();
-      return true;
-    };
-    ret.push_back(openhd::Setting{
-        "V_PRIMARY_PERC",
-        openhd::IntSetting{m_generic_settings->get_settings()
-                               .dualcam_primary_video_allocated_bandwidth_perc,
-                           cb}});
+    const bool has_ip_camera =
+        m_generic_settings->get_settings().primary_camera_type ==
+            X_CAM_TYPE_EXTERNAL_IP ||
+        m_generic_settings->get_settings().secondary_camera_type ==
+            X_CAM_TYPE_EXTERNAL_IP;
+    if (has_ip_camera) {
+      auto cb = [this](std::string, int value) {
+        if (!is_valid_ip_camera_bitrate_mbits(value)) return false;
+        m_generic_settings->unsafe_get_settings().ip_camera_bitrate_mbits =
+            value;
+        m_generic_settings->persist();
+        return true;
+      };
+      ret.push_back(openhd::Setting{
+          "V_IP_CAM_MBITS",
+          openhd::IntSetting{m_generic_settings->get_settings()
+                                 .ip_camera_bitrate_mbits,
+                             cb}});
+    } else {
+      auto cb = [this](std::string, int value) {
+        if (!is_valid_dualcam_primary_video_allocated_bandwidth(value))
+          return false;
+        m_generic_settings->unsafe_get_settings()
+            .dualcam_primary_video_allocated_bandwidth_perc = value;
+        m_generic_settings->persist();
+        return true;
+      };
+      ret.push_back(openhd::Setting{
+          "V_PRIMARY_PERC",
+          openhd::IntSetting{
+              m_generic_settings->get_settings()
+                  .dualcam_primary_video_allocated_bandwidth_perc,
+              cb}});
+    }
   }
   if (!OHDPlatform::instance().is_x20()) {
     auto cb_audio = [this](std::string, int value) {
@@ -239,6 +271,32 @@ void OHDVideoAir::handle_change_bitrate_request(
     return;
   }
   if (m_camera_streams.size() == 2) {
+    // Use the actual stream order here. It can differ from the persisted
+    // primary/secondary order when V_SWITCH_CAM is enabled.
+    const bool primary_is_ip =
+        m_camera_streams[0]->m_camera_holder->get_camera().camera_type ==
+        X_CAM_TYPE_EXTERNAL_IP;
+    const bool secondary_is_ip =
+        m_camera_streams[1]->m_camera_holder->get_camera().camera_type ==
+        X_CAM_TYPE_EXTERNAL_IP;
+    if (primary_is_ip || secondary_is_ip) {
+      const int fixed_ip_kbits =
+          m_generic_settings->get_settings().ip_camera_bitrate_mbits * 1000;
+      const int managed_camera_kbits =
+          std::max(1000,
+                   lb.recommended_encoder_bitrate_kbits - fixed_ip_kbits);
+      if (!primary_is_ip) {
+        m_camera_streams[0]->handle_change_bitrate_request(
+            {managed_camera_kbits, lb.is_link_capacity_limit});
+      }
+      if (!secondary_is_ip) {
+        m_camera_streams[1]->handle_change_bitrate_request(
+            {managed_camera_kbits, lb.is_link_capacity_limit});
+      }
+      // The IP-camera encoder is unmanaged. Its actual bitrate must be set in
+      // the camera WebUI and kept at or below the reserved link budget.
+      return;
+    }
     // Just split the available bitrate between primary and secondary cam,
     // according to the user's preferences
     const auto primary_perc =

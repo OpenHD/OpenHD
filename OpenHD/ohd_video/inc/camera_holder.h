@@ -37,6 +37,7 @@
 #include "openhd_settings_directories.h"
 #include "openhd_settings_imp.h"
 #include "openhd_settings_persistent.h"
+#include "openhd_util.h"
 #include "openhd_sock.h"
 #include "usb_thermal_cam_helper.h"
 
@@ -83,6 +84,23 @@ class CameraHolder :
   bool set_enable_streaming(int enable) {
     if (!openhd::validate_yes_or_no(enable)) return false;
     unsafe_get_settings().enable_streaming = static_cast<bool>(enable);
+    persist();
+    return true;
+  }
+  bool set_ip_camera_pipeline(const std::string& pipeline) {
+    // MAVLink PARAM_EXT_VALUE has a 128-byte payload. Keep one byte available
+    // for a terminator so every MAVLink implementation can handle the value.
+    if (pipeline.size() > 127 || pipeline.find('\n') != std::string::npos ||
+        pipeline.find('\r') != std::string::npos) {
+      return false;
+    }
+    unsafe_get_settings().ip_camera_pipeline = pipeline;
+    persist();
+    return true;
+  }
+  bool set_ip_camera_address(const std::string& address) {
+    if (!OHDUtil::is_valid_ip(address)) return false;
+    unsafe_get_settings().ip_camera_address = address;
     persist();
     return true;
   }
@@ -370,6 +388,10 @@ class CameraHolder :
   std::string imp_serialize(const CameraSettings& data) const override;
   [[nodiscard]] CameraSettings create_default() const override {
     auto ret = CameraSettings{};
+    if (m_camera.camera_type == X_CAM_TYPE_EXTERNAL_IP) {
+      ret.ip_camera_pipeline = DEFAULT_IP_CAMERA_PIPELINE;
+      ret.ip_camera_address = DEFAULT_IP_CAMERA_ADDRESS;
+    }
     if (OHDPlatform::instance().is_rpi5()) {
       ret.force_sw_encode = true;
     }

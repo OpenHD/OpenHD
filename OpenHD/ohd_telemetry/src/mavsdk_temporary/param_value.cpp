@@ -1,6 +1,8 @@
 #include "param_value.h"
 
+#include <algorithm>
 #include <cassert>
+#include <iterator>
 
 namespace mavsdk {
 
@@ -178,8 +180,10 @@ bool ParamValue::set_from_mavlink_param_ext_set(
       _value = temp;
     } break;
     case MAV_PARAM_EXT_TYPE_CUSTOM: {
-      std::size_t len =
-          std::min(std::size_t(128), strlen(mavlink_ext_set.param_value));
+      const auto begin = std::begin(mavlink_ext_set.param_value);
+      const auto end = std::end(mavlink_ext_set.param_value);
+      const std::size_t len =
+          static_cast<std::size_t>(std::find(begin, end, '\0') - begin);
       _value = std::string(mavlink_ext_set.param_value,
                            mavlink_ext_set.param_value + len);
     } break;

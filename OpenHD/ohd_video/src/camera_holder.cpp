@@ -35,10 +35,11 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(VideoFormat, videoCodec, width, height,
                                    framerate)
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
-    CameraSettings, enable_streaming, qp_max, qp_min, qp_pid_enable,
-    rk_bitrate_pid_enable, streamed_video_format, h26x_bitrate_kbits,
-    h26x_keyframe_interval, h26x_intra_refresh_type, h26x_num_slices,
-    nxp_enable_aud, air_recording, camera_rotation_degree, openhd_flip,
+    CameraSettings, enable_streaming, ip_camera_pipeline, ip_camera_address,
+    qp_max, qp_min, qp_pid_enable, rk_bitrate_pid_enable, streamed_video_format,
+    h26x_bitrate_kbits, h26x_keyframe_interval, h26x_intra_refresh_type,
+    h26x_num_slices, nxp_enable_aud, air_recording, camera_rotation_degree,
+    openhd_flip,
     openhd_brightness, openhd_sharpness, openhd_saturation, openhd_contrast,
     // rpi libcamera specific IQ params begin
     rpi_libcamera_ev_value, rpi_libcamera_denoise_index,
@@ -55,7 +56,29 @@ std::optional<CameraSettings> CameraHolder::impl_deserialize(
   const bool missing_rk_bitrate_pid =
       parsed_json.is_discarded() ||
       !parsed_json.contains("rk_bitrate_pid_enable");
+  const bool missing_ip_camera_pipeline =
+      parsed_json.is_discarded() ||
+      !parsed_json.contains("ip_camera_pipeline");
+  const bool missing_ip_camera_address =
+      parsed_json.is_discarded() ||
+      !parsed_json.contains("ip_camera_address");
   auto parsed_settings = openhd_json_parse<CameraSettings>(file_as_string);
+  if (parsed_settings.has_value() && missing_ip_camera_pipeline &&
+      m_camera.camera_type == X_CAM_TYPE_EXTERNAL_IP) {
+    parsed_settings->ip_camera_pipeline = DEFAULT_IP_CAMERA_PIPELINE;
+  }
+  if (parsed_settings.has_value() &&
+      parsed_settings->ip_camera_pipeline ==
+          LEGACY_T010_IP_CAMERA_PIPELINE) {
+    parsed_settings->ip_camera_pipeline = DEFAULT_IP_CAMERA_PIPELINE;
+    parsed_settings->ip_camera_address = DEFAULT_IP_CAMERA_ADDRESS;
+  }
+  if (parsed_settings.has_value() &&
+      m_camera.camera_type == X_CAM_TYPE_EXTERNAL_IP &&
+      (missing_ip_camera_address ||
+       parsed_settings->ip_camera_address.empty())) {
+    parsed_settings->ip_camera_address = DEFAULT_IP_CAMERA_ADDRESS;
+  }
   if (parsed_settings.has_value()) {
     parsed_settings->h26x_bitrate_kbits =
         std::clamp(parsed_settings->h26x_bitrate_kbits, 1000,
@@ -79,6 +102,22 @@ std::string CameraHolder::imp_serialize(const CameraSettings &data) const {
 
 std::vector<openhd::Setting> CameraHolder::get_all_settings() {
   std::vector<openhd::Setting> ret;
+  if (m_camera.camera_type == X_CAM_TYPE_EXTERNAL_IP) {
+    auto c_ip_camera_address = [this](std::string, std::string value) {
+      return set_ip_camera_address(value);
+    };
+    ret.push_back(openhd::Setting{
+        "IP_CAM_ADDRESS",
+        openhd::StringSetting{get_settings().ip_camera_address,
+                              c_ip_camera_address}});
+    auto c_ip_camera_pipeline = [this](std::string, std::string value) {
+      return set_ip_camera_pipeline(value);
+    };
+    ret.push_back(openhd::Setting{
+        "IP_CAM_PIPELINE",
+        openhd::StringSetting{get_settings().ip_camera_pipeline,
+                              c_ip_camera_pipeline}});
+  }
   if (!OHDPlatform::instance().is_x20()) {
     auto c_width_height_framerate = [this](std::string, std::string value) {
       auto tmp_opt = parse_video_format(value);

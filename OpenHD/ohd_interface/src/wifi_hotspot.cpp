@@ -93,6 +93,15 @@ static bool create_hotspot_connection_file(
                         use_5g_channel ? "a" : "bg",
                         "802-11-wireless.channel",
                         use_5g_channel ? "36" : "1", "ipv4.method shared"});
+  // Hotspot clients are trusted local users. Marking this connection trusted
+  // prevents firewalld from rejecting forwarding to another local interface,
+  // notably the Ethernet subnet used by IP cameras and their web interfaces.
+  // NetworkManager's shared IPv4 mode supplies forwarding and masquerading so
+  // the camera does not need a route back to 192.168.3.0/24.
+  OHDUtil::run_command(
+      "nmcli", {"con modify", OHD_WIFI_HOTSPOT_CONNECTION_NAME,
+                "connection.zone trusted", "ipv4.never-default yes",
+                "ipv6.method disabled"});
   OHDUtil::run_command("nmcli",
                        {"con modify ", OHD_WIFI_HOTSPOT_CONNECTION_NAME,
                         " wifi-sec.key-mgmt wpa-psk"});

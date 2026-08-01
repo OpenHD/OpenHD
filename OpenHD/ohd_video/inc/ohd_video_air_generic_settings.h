@@ -41,6 +41,9 @@ struct AirCameraGenericSettings {
   // we need to split that up into bitrate for primary and secondary video
   int dualcam_primary_video_allocated_bandwidth_perc =
       60;  // Default X%:Y split
+  // Fixed link budget reserved for an unmanaged IP camera. OpenHD
+  // cannot change the encoder bitrate of this camera.
+  int ip_camera_bitrate_mbits = 2;
   // Default camera type(s) depend on platform - see below
   int primary_camera_type = 0;
   int secondary_camera_type = 0;
@@ -53,6 +56,10 @@ static bool is_valid_dualcam_primary_video_allocated_bandwidth(
     int dualcam_primary_video_allocated_bandwidth_perc) {
   return dualcam_primary_video_allocated_bandwidth_perc >= 10 &&
          dualcam_primary_video_allocated_bandwidth_perc <= 90;
+}
+
+static bool is_valid_ip_camera_bitrate_mbits(int bitrate_mbits) {
+  return bitrate_mbits >= 1 && bitrate_mbits <= 20;
 }
 
 class AirCameraGenericSettingsHolder

@@ -24,6 +24,8 @@
 #ifndef OPENHD_CAMERA_H
 #define OPENHD_CAMERA_H
 
+#include <string>
+
 #include "camera_enums.hpp"
 #include "validate_settings.h"
 
@@ -48,6 +50,15 @@ static constexpr int DEFAULT_KEYFRAME_INTERVAL = 5;
 static constexpr auto MINIMUM_AMOUNT_FREE_SPACE_FOR_AIR_RECORDING_MB = 300;
 static constexpr int RPI_LIBCAMERA_DEFAULT_EV = 0;
 
+// Temporary managed T010 IP-camera source used for field testing.
+static constexpr auto DEFAULT_IP_CAMERA_PIPELINE =
+    "rtspsrc location=rtsp://{IP}:554/stream=0 latency=0 ! "
+    "rtph264depay";
+static constexpr auto DEFAULT_IP_CAMERA_ADDRESS = "192.168.144.108";
+static constexpr auto LEGACY_T010_IP_CAMERA_PIPELINE =
+    "rtspsrc location=rtsp://192.168.144.108:554/stream=0 latency=0 ! "
+    "rtph264depay";
+
 static constexpr int OPENHD_BRIGHTNESS_DEFAULT = 100;
 static constexpr int OPENHD_SATURATION_DEFAULT = 100;
 static constexpr int OPENHD_CONTRAST_DEFAULT = 100;
@@ -68,6 +79,13 @@ struct CameraSettings {
   // using only telemetry / HUD. Default to true, otherwise we'd have conflicts
   // with the "always a picture without changing any settings" paradigm.
   bool enable_streaming = true;
+  // Managed source pipeline for an EXTERNAL_IP camera. It must produce an
+  // elementary H264/H265 stream matching streamed_video_format.videoCodec.
+  // OpenHD appends its normal perf, RTP, recording and link pipeline. An empty
+  // value keeps the legacy UDP 5500 input for backwards compatibility.
+  std::string ip_camera_pipeline;
+  // Address substituted for {IP} in the managed source pipeline.
+  std::string ip_camera_address;
   int qp_max = 51;
   int qp_min = 5;
   bool qp_pid_enable = false;

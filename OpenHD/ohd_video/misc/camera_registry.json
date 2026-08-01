@@ -12,7 +12,7 @@
       ]
     },
     {"key": "X_CAM_TYPE_EXTERNAL", "id": 2, "name": "EXTERNAL", "ui_label": "External (DEV)"},
-    {"key": "X_CAM_TYPE_EXTERNAL_IP", "id": 3, "name": "EXTERNAL_IP", "ui_label": "External IP (DEV)"},
+    {"key": "X_CAM_TYPE_EXTERNAL_IP", "id": 3, "name": "EXTERNAL_IP", "ui_label": "External IP"},
     {
       "key": "X_CAM_TYPE_DEVELOPMENT_FILESRC",
       "id": 4,
