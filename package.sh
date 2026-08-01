@@ -133,6 +133,76 @@ verify_packaged_poco_abi() {
   fi
 }
 
+resolve_package_name() {
+  local package_arch="$1"
+  local custom="$2"
+
+  if [[ "${package_arch}" == "armhf" && "${custom}" != "standard" ]]; then
+    echo "openhd-x20"
+    return
+  fi
+  case "${package_arch}" in
+    arm64)
+      echo "openhd-arm64"
+      ;;
+    armhf)
+      echo "openhd-armhf"
+      ;;
+    x86_64|amd64)
+      echo "openhd-amd64"
+      ;;
+    *)
+      echo "openhd"
+      ;;
+  esac
+}
+
+normalize_debian_arch() {
+  case "$1" in
+    x86_64)
+      echo "amd64"
+      ;;
+    *)
+      echo "$1"
+      ;;
+  esac
+}
+
+bundle_poco_runtime() {
+  local binary="$1"
+  local bundle_dir="${PKGDIR}usr/local/lib"
+  local soname=""
+  local library=""
+  local bundled=0
+
+  mkdir -p "${bundle_dir}"
+  while IFS= read -r soname; do
+    [[ -n "${soname}" ]] || continue
+    library="$(
+      ldd "${binary}" \
+        | awk -v soname="${soname}" '
+            $1 == soname && $2 == "=>" && $3 ~ /^\// { print $3; exit }
+          '
+    )"
+    if [[ -z "${library}" || ! -f "${library}" ]]; then
+      echo "Cannot resolve ${soname} for portable OpenHD package." >&2
+      exit 1
+    fi
+    install -m 0644 "$(readlink -f "${library}")" "${bundle_dir}/${soname}"
+    echo "Bundled ${soname} from ${library}"
+    bundled=$((bundled + 1))
+  done < <(
+    readelf -d "${binary}" \
+      | awk -F'[][]' '/NEEDED.*libPoco.*\.so/ { print $2 }' \
+      | sort -u
+  )
+
+  if [[ "${bundled}" -eq 0 ]]; then
+    echo "OpenHD has no Poco runtime libraries to bundle." >&2
+    exit 1
+  fi
+}
+
 append_staged_elf_runtime_dependencies() {
   local package_root="$1"
   local dependency_array_name="$2"
@@ -185,6 +255,13 @@ build_deb_package() {
     echo "Priority: optional"
     echo "Architecture: ${package_arch}"
     echo "Maintainer: OpenHD <openhd@openhdfpv.org>"
+    if [[ "${package_name}" == "openhd-arm64" ||
+          "${package_name}" == "openhd-armhf" ||
+          "${package_name}" == "openhd-amd64" ]]; then
+      echo "Provides: openhd"
+      echo "Conflicts: openhd"
+      echo "Replaces: openhd"
+    fi
     if [[ "${#dependencies[@]}" -gt 0 ]]; then
       echo "Depends: $(join_by ', ' "${dependencies[@]}")"
     fi
@@ -233,10 +310,11 @@ create_package_directory() {
     if [[ "${PACKAGE_ARCH}" == "armhf" && "${OS}" == "raspbian" ]]; then
       echo "Using Raspberry Pi-specific systemd service for armhf Bullseye"
       cp systemd/openhd_rpi.service "${PKGDIR}etc/systemd/system/openhd.service"
-    elif [[ "${CUSTOM}" == "standard" ]]; then
-      cp systemd/openhd.service "${PKGDIR}etc/systemd/system/openhd.service"
-    else
+    elif [[ "${PACKAGE_ARCH}" == "armhf" &&
+            "${CUSTOM}" != "standard" ]]; then
       cp systemd/openhd-x20.service "${PKGDIR}etc/systemd/system/openhd.service"
+    else
+      cp systemd/openhd.service "${PKGDIR}etc/systemd/system/openhd.service"
     fi
   else
     mkdir -p "${PKGDIR}usr/share/applications/"
@@ -311,50 +389,35 @@ build_and_stage_gst_perf() {
 # Function to build the package
 build_package() {
   echo "Building package..."
-  local package_name="openhd"
+  local package_name=""
+  local debian_arch=""
   local packages=()
 
-  if [[ "${PACKAGE_ARCH}" == "armhf" ||
-        ( "${PACKAGE_ARCH}" == "arm64" && "${OS}" == "raspbian" ) ]]; then
-    if [[ "${CUSTOM}" == "standard" ]]; then
-      package_name="openhd"
+  package_name="$(resolve_package_name "${PACKAGE_ARCH}" "${CUSTOM}")"
+  debian_arch="$(normalize_debian_arch "${PACKAGE_ARCH}")"
+
+  if [[ "${PACKAGE_ARCH}" == "armhf" && "${CUSTOM}" != "standard" ]]; then
+    packages+=(
+      iw i2c-tools libv4l-dev libusb-1.0-0 libpcap-dev
+      libnl-3-dev libnl-genl-3-dev libsdl2-2.0-0 libsodium-dev
+      gstreamer1.0-plugins-{base,good,bad} gstreamer1.0-tools
+    )
+  elif [[ "${PACKAGE_ARCH}" == "armhf" ||
+          "${PACKAGE_ARCH}" == "arm64" ]]; then
       packages+=(
         iw nmap aircrack-ng i2c-tools libv4l-dev libusb-1.0-0
         libpcap-dev libnl-3-dev libnl-genl-3-dev
         libsdl2-2.0-0 libsodium-dev gstreamer1.0-plugins-{base,good,bad,ugly}
         gstreamer1.0-{tools,alsa,pulseaudio}
       )
-      if [[ "${PACKAGE_ARCH}" == "arm64" ]]; then
-        packages+=(gstreamer1.0-libcamera gstreamer1.0-libav openhd-sys-utils)
-      else
-        packages+=(libcamera-openhd gst-openhd-plugins)
-      fi
-    else
-      package_name="openhd-x20"
-      packages+=(
-        iw i2c-tools libv4l-dev libusb-1.0-0 libpcap-dev
-        libnl-3-dev libnl-genl-3-dev libsdl2-2.0-0 libsodium-dev
-        gstreamer1.0-plugins-{base,good,bad} gstreamer1.0-tools
-      )
-    fi
-  elif [[ "${PACKAGE_ARCH}" == "arm64" ]]; then
-    packages+=(
-      iw nmap aircrack-ng i2c-tools libv4l-dev libusb-1.0-0 libpcap-dev
-      libnl-3-dev libnl-genl-3-dev libsdl2-2.0-0 libsodium-dev
-      gstreamer1.0-plugins-{base,good,bad,ugly}
-      gstreamer1.0-tools
-    )
-  elif [[ "${PACKAGE_ARCH}" == "x86_64" ]]; then
+  elif [[ "${PACKAGE_ARCH}" == "x86_64" ||
+          "${PACKAGE_ARCH}" == "amd64" ]]; then
     packages+=(
       dkms qopenhd git iw nmap aircrack-ng i2c-tools libv4l-dev
       libusb-1.0-0 libpcap-dev libnl-3-dev libnl-genl-3-dev libsdl2-2.0-0
       libsodium-dev gstreamer1.0-plugins-{base,good,bad,ugly}
       gstreamer1.0-{tools,alsa,pulseaudio}
     )
-  fi
-
-  if dpkg -l | grep -q "qti-gstreamer1.0-plugins-bad-waylandsink"; then
-    package_name="${package_name}-QCom"
   fi
 
   source "${SCRIPT_DIR}/OpenHD/scripts/resolve_artosyn_sdk.sh"
@@ -376,7 +439,8 @@ build_package() {
     exit 1
   fi
 
-  rm -f "${package_name}_${VERSION}_${PACKAGE_ARCH}.deb"
+  # Avoid uploading a stale package with the former generic package name.
+  rm -f ./openhd*.deb
   local build_dir="/out/openhd-build"
   local build_tmp="/out/openhd-build-tmp"
   rm -rf "${build_dir}" "${build_tmp}"
@@ -385,10 +449,10 @@ build_package() {
   local poco_dir=""
   poco_dir="$(resolve_system_poco_dir)"
   echo "Using distro Poco package configuration: ${poco_dir}"
+  # Camera backends are GStreamer plugins supplied by the image. Keeping the
+  # core free of a direct libcamera link makes one binary usable on every board
+  # of the same architecture (for example Pi 5, Rockchip and Allwinner arm64).
   local enable_libcamera="OFF"
-  if [[ "${OS}" == "raspbian" ]]; then
-    enable_libcamera="ON"
-  fi
   echo "OpenHD libcamera support: ${enable_libcamera}"
 
   cmake -S OpenHD/ -B "${build_dir}" \
@@ -402,8 +466,8 @@ build_package() {
 
   mkdir -p "${PKGDIR}usr/local/bin/"
   cp "${build_dir}/openhd" "${PKGDIR}usr/local/bin/"
+  bundle_poco_runtime "${PKGDIR}usr/local/bin/openhd"
   verify_packaged_poco_abi "${PKGDIR}usr/local/bin/openhd"
-  mkdir -p "${PKGDIR}usr/local/lib/"
   build_and_stage_gst_perf
 
   if [[ "${artosyn_enabled}" -eq 1 ]]; then
@@ -543,20 +607,32 @@ build_package() {
   if command -v fpm >/dev/null 2>&1; then
     # Build the package using fpm
     require_staged_gst_perf
-    fpm -a "${PACKAGE_ARCH}" -s dir -t deb -n "${package_name}" -v "${VERSION}" -C "${PKGDIR}" \
-      -p "${package_name}_${VERSION}_${PACKAGE_ARCH}.deb" \
+    local package_relationships=()
+    if [[ "${package_name}" == "openhd-arm64" ||
+          "${package_name}" == "openhd-armhf" ||
+          "${package_name}" == "openhd-amd64" ]]; then
+      package_relationships+=(
+        --provides openhd
+        --conflicts openhd
+        --replaces openhd
+      )
+    fi
+    fpm -a "${debian_arch}" -s dir -t deb -n "${package_name}" -v "${VERSION}" -C "${PKGDIR}" \
+      -p "${package_name}_${VERSION}_${debian_arch}.deb" \
       --after-install after-install.sh \
       --before-install before-install.sh \
+      "${package_relationships[@]}" \
       -d "$(IFS=','; echo "${packages[*]}")"
   else
     echo "fpm not available; building package with dpkg-deb."
     require_staged_gst_perf
-    build_deb_package "${package_name}" "${PACKAGE_ARCH}" "${packages[@]}"
+    build_deb_package "${package_name}" "${debian_arch}" "${packages[@]}"
   fi
 
   cp *.deb /out/
 }
 
-# Main execution
-create_package_directory
-build_package
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  create_package_directory
+  build_package
+fi

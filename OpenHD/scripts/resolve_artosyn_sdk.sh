@@ -53,6 +53,16 @@ _artlink_git() {
   fi
 }
 
+_artlink_cmake_configure() {
+  local toolchain_args=()
+  if [[ -n "${OPENHD_CMAKE_TOOLCHAIN_FILE:-}" ]]; then
+    toolchain_args+=(
+      -DCMAKE_TOOLCHAIN_FILE="${OPENHD_CMAKE_TOOLCHAIN_FILE}"
+    )
+  fi
+  cmake "$@" "${toolchain_args[@]}"
+}
+
 _extract_archive() {
   local archive="$1"
   local extract_dir="$2"
@@ -215,7 +225,7 @@ _configure_host_drv_build_dir() {
     return 1
   fi
   rm -rf "${build_dir}" || return 1
-  cmake -S "${host_drv_dir}" -B "${build_dir}" \
+  _artlink_cmake_configure -S "${host_drv_dir}" -B "${build_dir}" \
     -DAPP_STATIC_LIB=ON \
     -DBUILD_TEST_APP=OFF \
     -DBUILD_ARTOSYN_EXAMPLE=OFF \
@@ -459,7 +469,7 @@ _build_tuntap_from_source() {
   fi
 
   rm -rf "${build_dir}" || return 1
-  cmake -S "${host_drv_dir}" -B "${build_dir}" \
+  _artlink_cmake_configure -S "${host_drv_dir}" -B "${build_dir}" \
     -DAPP_STATIC_LIB=ON \
     -DBUILD_TEST_APP=OFF \
     -DBUILD_ARTOSYN_EXAMPLE=OFF \
@@ -520,6 +530,12 @@ resolve_artosyn_sdk() {
   local sdk_daemon="${ARTOSYN_SDK_DAEMON:-}"
   local sdk_tuntap="${ARTOSYN_SDK_TUNTAP:-}"
   local fetch_mode="${ARTLINK_FETCH_MODE:-auto}"
+  local force_source_build="${OPENHD_ARTOSYN_FORCE_SOURCE_BUILD:-0}"
+  if [[ "${force_source_build}" == "1" ]]; then
+    sdk_lib=""
+    sdk_daemon=""
+    sdk_tuntap=""
+  fi
   echo "[Artosyn] Resolving SDK (mode=${fetch_mode})." >&2
 
   # Keep git repo explicit for git fetch flow. DOWNLOAD_URL is treated as archive input only.
@@ -626,7 +642,8 @@ resolve_artosyn_sdk() {
     esac
   fi
 
-  if [[ -n "${sdk_root}" && -z "${sdk_lib}" ]]; then
+  if [[ -n "${sdk_root}" && -z "${sdk_lib}" &&
+        "${force_source_build}" != "1" ]]; then
     local lib_candidates=(
       "${sdk_root}/host_drv/install/bin/libar8030_client.a"
       "${sdk_root}/host_drv/install/bin/libar8030_client.so"
@@ -648,7 +665,8 @@ resolve_artosyn_sdk() {
     done
   fi
 
-  if [[ -n "${sdk_root}" && -z "${sdk_lib}" ]]; then
+  if [[ -n "${sdk_root}" && -z "${sdk_lib}" &&
+        "${force_source_build}" != "1" ]]; then
     # Fallback for SDK trees that keep prebuilt libs in non-standard host_drv paths.
     sdk_lib="$(find "${sdk_root}/host_drv" -type f \( -name "libar8030_client.a" -o -name "libar8030_client.so" \) | head -n 1 || true)"
   fi
@@ -657,7 +675,8 @@ resolve_artosyn_sdk() {
     sdk_lib="$(_build_client_lib_from_source "${sdk_root}" || true)"
   fi
 
-  if [[ -n "${sdk_root}" && -z "${sdk_daemon}" ]]; then
+  if [[ -n "${sdk_root}" && -z "${sdk_daemon}" &&
+        "${force_source_build}" != "1" ]]; then
     sdk_daemon="$(_find_daemon_binary_in_tree "${sdk_root}" || true)"
   fi
 
@@ -665,7 +684,8 @@ resolve_artosyn_sdk() {
     sdk_daemon="$(_build_daemon_from_source "${sdk_root}" || true)"
   fi
 
-  if [[ -n "${sdk_root}" && -z "${sdk_tuntap}" ]]; then
+  if [[ -n "${sdk_root}" && -z "${sdk_tuntap}" &&
+        "${force_source_build}" != "1" ]]; then
     sdk_tuntap="$(_find_tuntap_binary_in_tree "${sdk_root}" || true)"
   fi
 

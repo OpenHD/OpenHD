@@ -1,0 +1,66 @@
+name: prepare_cross_sysroots
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "openhd-3.0"
+    paths:
+      - "scripts/create_cross_sysroot.sh"
+      - ".github/workflows/prepare_cross_sysroots.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  sysroot:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - architecture: arm64
+            triplet: aarch64-linux-gnu
+            compiler_packages: gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+          - architecture: armhf
+            triplet: arm-linux-gnueabihf
+            compiler_packages: gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install sysroot tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            mmdebstrap debian-archive-keyring zstd pkg-config \
+            ${{ matrix.compiler_packages }}
+
+      - name: Create Bullseye sysroot without QEMU
+        run: |
+          sudo ./scripts/create_cross_sysroot.sh \
+            "${{ matrix.architecture }}" \
+            "sysroot-${{ matrix.architecture }}" \
+            bullseye
+          sudo tar --numeric-owner --owner=0 --group=0 \
+            -C "sysroot-${{ matrix.architecture }}" \
+            -I 'zstd -19 -T0' \
+            -cf "openhd-sysroot-bullseye-${{ matrix.architecture }}.tar.zst" .
+          sudo chown "$(id -u):$(id -g)" "openhd-sysroot-bullseye-${{ matrix.architecture }}.tar.zst"
+          sha256sum "openhd-sysroot-bullseye-${{ matrix.architecture }}.tar.zst" \
+            > "openhd-sysroot-bullseye-${{ matrix.architecture }}.tar.zst.sha256"
+
+      - name: Validate headers and linker without executing target code
+        run: |
+          ./scripts/validate_cross_sysroot.sh \
+            "${{ matrix.architecture }}" \
+            "sysroot-${{ matrix.architecture }}"
+
+      - name: Upload hostable sysroot
+        uses: actions/upload-artifact@v4
+        with:
+          name: openhd-sysroot-bullseye-${{ matrix.architecture }}
+          path: |
+            openhd-sysroot-bullseye-${{ matrix.architecture }}.tar.zst
+            openhd-sysroot-bullseye-${{ matrix.architecture }}.tar.zst.sha256
+          if-no-files-found: error
+          retention-days: 30
