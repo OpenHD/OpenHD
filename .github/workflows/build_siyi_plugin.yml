@@ -1,6 +1,7 @@
 name: Build SIYI plugin
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - openhd-3.0
