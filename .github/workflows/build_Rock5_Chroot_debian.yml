@@ -3,7 +3,7 @@ name: build_package_radxa_arm64_debian
 on:
   workflow_dispatch:
   push:
-   branches:
+    branches:
       - "2.7-evo"
       - "dev-release"
       - "release"
