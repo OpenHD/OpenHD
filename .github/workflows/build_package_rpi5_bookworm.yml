@@ -9,9 +9,7 @@ on:
         type: string
   push:
     branches:
-      - "dev-release"
       - "release"
-      - "openhd-3.0"
       - "openhd-3.0-test"
 
 env:
