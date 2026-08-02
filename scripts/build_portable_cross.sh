@@ -31,6 +31,12 @@ export OPENHD_CROSS_TRIPLET="${triplet}"
 toolchain_file="$(pwd)/OpenHD/cmake/portable-linux-toolchain.cmake"
 export OPENHD_CMAKE_TOOLCHAIN_FILE="${toolchain_file}"
 export OPENHD_ARTOSYN_FORCE_SOURCE_BUILD=1
+poco_config="$(find "${sysroot}/usr" -name PocoConfig.cmake -print -quit)"
+if [[ -z "${poco_config}" ]]; then
+  echo "PocoConfig.cmake is missing from the target sysroot." >&2
+  exit 1
+fi
+poco_dir="$(dirname "${poco_config}")"
 
 source OpenHD/scripts/resolve_artosyn_sdk.sh
 resolve_artosyn_sdk
@@ -44,6 +50,7 @@ rm -rf "${build_dir}"
 cmake -S OpenHD -B "${build_dir}" \
   -DCMAKE_TOOLCHAIN_FILE="${toolchain_file}" \
   -DCMAKE_BUILD_TYPE=Release \
+  -DPoco_DIR="${poco_dir}" \
   -DENABLE_LIBCAMERA=OFF \
   -DARTOSYN_SDK_ROOT="${ARTOSYN_SDK_ROOT:-}" \
   -DARTOSYN_SDK_LIB="${ARTOSYN_SDK_LIB:-}" \
