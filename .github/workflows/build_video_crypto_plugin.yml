@@ -3,20 +3,115 @@ name: Build private video crypto plugin
 on:
   workflow_dispatch:
   push:
-    branches:
-      - openhd-3.0
+    branches: [openhd-3.0]
 
 permissions:
   contents: read
 
+concurrency:
+  group: video-crypto-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-and-publish:
-    uses: OpenHD-Technologies/video_crypto_private/.github/workflows/build.yml@main
-    with:
-      openhd_ref: ${{ github.sha }}
-      plugin_ref: main
-      cloudsmith_repo: dev-release
-      publish: true
-    secrets:
-      PRIVATE_REPO_TOKEN: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
-      CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
+    name: package-${{ matrix.architecture }}
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - architecture: amd64
+            distro: ubuntu
+            release: jammy
+          - architecture: arm64
+            triplet: aarch64-linux-gnu
+            compiler_package: g++-10-aarch64-linux-gnu
+            distro: debian
+            release: bullseye
+          - architecture: armhf
+            triplet: arm-linux-gnueabihf
+            compiler_package: g++-10-arm-linux-gnueabihf
+            distro: raspbian
+            release: bullseye
+    steps:
+      - name: Checkout OpenHD
+        uses: actions/checkout@v4
+        with:
+          path: openhd
+
+      - name: Checkout private plugin
+        uses: actions/checkout@v4
+        with:
+          repository: OpenHD-Technologies/video_crypto_private
+          ref: main
+          token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+          path: plugin
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake curl dpkg-dev pkg-config zstd ${{ matrix.compiler_package }}
+
+      - name: Install native dependencies
+        if: matrix.architecture == 'amd64'
+        run: sudo apt-get install -y libsodium-dev
+
+      - name: Fetch verified OpenHD sysroot
+        if: matrix.architecture != 'amd64'
+        run: |
+          archive="openhd-sysroot-bullseye-${{ matrix.architecture }}.tar.zst"
+          base="https://dl.cloudsmith.io/public/openhd/dev-release/raw/files"
+          checksum="$(curl -fsSL "${base}/${archive}.sha256" | awk 'NR == 1 { print $1 }')"
+          test "${#checksum}" -eq 64
+          ./openhd/scripts/fetch_cross_sysroot.sh \
+            "${base}/${archive}" "${checksum}" \
+            "${RUNNER_TEMP}/sysroot-${{ matrix.architecture }}"
+
+      - name: Configure
+        working-directory: plugin
+        run: |
+          args=(-S . -B build -DCMAKE_BUILD_TYPE=Release)
+          if [[ "${{ matrix.architecture }}" != "amd64" ]]; then
+            sysroot="${RUNNER_TEMP}/sysroot-${{ matrix.architecture }}"
+            export PKG_CONFIG_SYSROOT_DIR="${sysroot}"
+            export PKG_CONFIG_LIBDIR="${sysroot}/usr/lib/${{ matrix.triplet }}/pkgconfig:${sysroot}/usr/lib/pkgconfig:${sysroot}/usr/share/pkgconfig"
+            args+=(
+              -DCMAKE_SYSTEM_NAME=Linux
+              -DCMAKE_SYSROOT="${sysroot}"
+              -DCMAKE_C_COMPILER=${{ matrix.triplet }}-gcc-10
+              -DCMAKE_CXX_COMPILER=${{ matrix.triplet }}-g++-10
+            )
+          fi
+          cmake "${args[@]}"
+
+      - name: Build and package
+        id: package
+        working-directory: plugin
+        run: |
+          cmake --build build --parallel
+          version="1.0.0+git$(git rev-parse --short=8 HEAD)"
+          chmod +x package.sh
+          package="$(./package.sh build '${{ matrix.architecture }}' "${version}" | tail -n1)"
+          dpkg-deb -f "${package}" Package Version Architecture Depends
+          dpkg-deb -c "${package}" | grep -q 'usr/local/lib/openhd/plugins/libopenhd_video_crypto.so'
+          echo "file=${package}" >> "${GITHUB_OUTPUT}"
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: openhd-plugin-video-crypto-${{ matrix.architecture }}
+          path: plugin/${{ steps.package.outputs.file }}
+          if-no-files-found: error
+
+      - name: Publish to Cloudsmith
+        uses: cloudsmith-io/action@master
+        with:
+          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
+          command: push
+          format: deb
+          owner: openhd
+          repo: dev-release
+          distro: ${{ matrix.distro }}
+          release: ${{ matrix.release }}
+          republish: "true"
+          file: plugin/${{ steps.package.outputs.file }}
