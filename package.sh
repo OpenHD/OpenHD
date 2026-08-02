@@ -141,20 +141,7 @@ resolve_package_name() {
     echo "openhd-x20"
     return
   fi
-  case "${package_arch}" in
-    arm64)
-      echo "openhd-arm64"
-      ;;
-    armhf)
-      echo "openhd-armhf"
-      ;;
-    x86_64|amd64)
-      echo "openhd-amd64"
-      ;;
-    *)
-      echo "openhd"
-      ;;
-  esac
+  echo "openhd"
 }
 
 normalize_debian_arch() {
@@ -259,12 +246,9 @@ build_deb_package() {
     echo "Priority: optional"
     echo "Architecture: ${package_arch}"
     echo "Maintainer: OpenHD <openhd@openhdfpv.org>"
-    if [[ "${package_name}" == "openhd-arm64" ||
-          "${package_name}" == "openhd-armhf" ||
-          "${package_name}" == "openhd-amd64" ]]; then
-      echo "Provides: openhd"
-      echo "Conflicts: openhd"
-      echo "Replaces: openhd"
+    if [[ "${package_name}" == "openhd" ]]; then
+      echo "Conflicts: openhd-${package_arch}"
+      echo "Replaces: openhd-${package_arch}"
     fi
     if [[ "${#dependencies[@]}" -gt 0 ]]; then
       echo "Depends: $(join_by ', ' "${dependencies[@]}")"
@@ -643,13 +627,10 @@ build_package() {
     # Build the package using fpm
     require_staged_gst_perf
     local package_relationships=()
-    if [[ "${package_name}" == "openhd-arm64" ||
-          "${package_name}" == "openhd-armhf" ||
-          "${package_name}" == "openhd-amd64" ]]; then
+    if [[ "${package_name}" == "openhd" ]]; then
       package_relationships+=(
-        --provides openhd
-        --conflicts openhd
-        --replaces openhd
+        --conflicts "openhd-${debian_arch}"
+        --replaces "openhd-${debian_arch}"
       )
     fi
     fpm -a "${debian_arch}" -s dir -t deb -n "${package_name}" -v "${VERSION}" -C "${PKGDIR}" \

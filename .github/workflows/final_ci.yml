@@ -109,8 +109,9 @@ jobs:
 
       - name: Validate package identity
         run: |
-          package="$(find . -maxdepth 1 -name 'openhd-*.deb' -print -quit)"
+          package="$(find . -maxdepth 1 -name 'openhd_*.deb' -print -quit)"
           test -n "${package}"
+          test "$(dpkg-deb -f "${package}" Package)" = "openhd"
           test "$(dpkg-deb -f "${package}" Architecture)" = "${{ matrix.architecture }}"
           dpkg-deb -f "${package}" Package Version Architecture Depends
           dpkg-deb -c "${package}" | grep -q 'usr/local/bin/openhd'
@@ -126,7 +127,7 @@ jobs:
         with:
           name: openhd-${{ matrix.architecture }}
           path: |
-            openhd-*.deb
+            openhd_*.deb
             openhd-needed.txt
           if-no-files-found: error
 
@@ -149,24 +150,10 @@ jobs:
           format: deb
           owner: openhd
           repo: ${{ steps.cloudsmith.outputs.repo }}
-          distro: ${{ matrix.distro }}
-          release: ${{ matrix.release }}
+          distro: any-distro
+          release: any-version
           republish: "true"
-          file: "openhd-*.deb"
-
-      - name: Publish ARM64 package for Raspberry Pi
-        if: github.event_name != 'pull_request' && matrix.architecture == 'arm64'
-        uses: cloudsmith-io/action@master
-        with:
-          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
-          command: push
-          format: deb
-          owner: openhd
-          repo: ${{ steps.cloudsmith.outputs.repo }}
-          distro: raspbian
-          release: bullseye
-          republish: "true"
-          file: "openhd-*.deb"
+          file: "openhd_*.deb"
 
   x20:
     name: package-x20
