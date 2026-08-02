@@ -8,6 +8,12 @@ on:
       - "release"
       - "openhd-3.0"
       - "openhd-3.0-test"
+    paths-ignore:
+      - "cross_compiling.md"
+      - "scripts/*cross_sysroot.sh"
+      - "scripts/build_portable_cross.sh"
+      - "OpenHD/cmake/portable-linux-toolchain.cmake"
+      - ".github/workflows/prepare_cross_sysroots.yml"
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)

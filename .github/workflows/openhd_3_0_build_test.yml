@@ -4,6 +4,12 @@ on:
   push:
     branches:
       - openhd-3.0
+    paths-ignore:
+      - "cross_compiling.md"
+      - "scripts/*cross_sysroot.sh"
+      - "scripts/build_portable_cross.sh"
+      - "OpenHD/cmake/portable-linux-toolchain.cmake"
+      - ".github/workflows/prepare_cross_sysroots.yml"
   pull_request:
     branches:
       - openhd-3.0

@@ -76,4 +76,15 @@ jobs:
           owner: openhd
           repo: dev-release
           republish: "true"
-          file: "openhd-sysroot-bullseye-${{ matrix.architecture }}.tar.zst*"
+          file: "openhd-sysroot-bullseye-${{ matrix.architecture }}.tar.zst"
+
+      - name: Publish stable sysroot checksums to Cloudsmith
+        uses: cloudsmith-io/action@master
+        with:
+          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
+          command: push
+          format: raw
+          owner: openhd
+          repo: dev-release
+          republish: "true"
+          file: "openhd-sysroot-bullseye-${{ matrix.architecture }}.tar.zst.sha256"
