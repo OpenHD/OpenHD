@@ -1012,7 +1012,10 @@ std::string GStreamerStream::create_source_encode_pipeline(
       if (source_pipeline.find("{IP}") != std::string::npos) {
         auto address = setting.ip_camera_address;
         if (!address.empty()) {
-          ensure_ip_camera_route(address);
+          if (!ensure_ip_camera_route(address)) {
+            openhd::log::get_default()->error(
+                "Cannot configure an Ethernet route to IP camera {}", address);
+          }
           std::size_t position = 0;
           while ((position = source_pipeline.find("{IP}", position)) !=
                  std::string::npos) {

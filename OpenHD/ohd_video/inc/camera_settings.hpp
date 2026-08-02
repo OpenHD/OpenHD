@@ -79,7 +79,7 @@ struct CameraSettings {
   // using only telemetry / HUD. Default to true, otherwise we'd have conflicts
   // with the "always a picture without changing any settings" paradigm.
   bool enable_streaming = true;
-  // Managed source pipeline for an EXTERNAL_IP camera. It must produce an
+  // Managed source pipeline for an IP camera. It must produce an
   // elementary H264/H265 stream matching streamed_video_format.videoCodec.
   // OpenHD appends its normal perf, RTP, recording and link pipeline. An empty
   // value keeps the legacy UDP 5500 input for backwards compatibility.

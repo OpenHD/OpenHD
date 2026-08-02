@@ -12,7 +12,7 @@
       ]
     },
     {"key": "X_CAM_TYPE_EXTERNAL", "id": 2, "name": "EXTERNAL", "ui_label": "External (DEV)"},
-    {"key": "X_CAM_TYPE_EXTERNAL_IP", "id": 3, "name": "EXTERNAL_IP", "ui_label": "External IP"},
+    {"key": "X_CAM_TYPE_EXTERNAL_IP", "id": 3, "name": "IP_CAMERA", "ui_label": "IP Camera"},
     {
       "key": "X_CAM_TYPE_DEVELOPMENT_FILESRC",
       "id": 4,
@@ -676,6 +676,13 @@
   ],
   "manufacturer_groups": [
     {
+      "key": "IP_CAMERA",
+      "name": "IP CAMERA",
+      "cameras": [
+        "X_CAM_TYPE_EXTERNAL_IP"
+      ]
+    },
+    {
       "key": "USB",
       "name": "USB",
       "cameras": [
@@ -861,69 +868,69 @@
   "platform_choices": [
     {
       "platform": "X_PLATFORM_TYPE_RPI_OLD",
-      "manufacturers": ["RPI_ARDUCAM", "RPI_VEYE", "RPI_RPIF", "RPI_HDMI", "USB", "DEBUG"]
+      "manufacturers": ["RPI_ARDUCAM", "RPI_VEYE", "RPI_RPIF", "RPI_HDMI", "IP_CAMERA", "USB", "DEBUG"]
     },
     {
       "platform": "X_PLATFORM_TYPE_RPI_4",
-      "manufacturers": ["RPI_ARDUCAM", "RPI_VEYE", "RPI_RPIF", "RPI_HDMI", "USB", "DEBUG"]
+      "manufacturers": ["RPI_ARDUCAM", "RPI_VEYE", "RPI_RPIF", "RPI_HDMI", "IP_CAMERA", "USB", "DEBUG"]
     },
     {
       "platform": "X_PLATFORM_TYPE_RPI_CM4",
-      "manufacturers": ["RPI_ARDUCAM", "RPI_VEYE", "RPI_RPIF", "RPI_HDMI", "USB", "DEBUG"]
+      "manufacturers": ["RPI_ARDUCAM", "RPI_VEYE", "RPI_RPIF", "RPI_HDMI", "IP_CAMERA", "USB", "DEBUG"]
     },
     {
       "platform": "X_PLATFORM_TYPE_RPI_5",
-      "manufacturers": ["RPI_ARDUCAM", "RPI_VEYE", "RPI_RPIF", "USB", "DEBUG"]
+      "manufacturers": ["RPI_ARDUCAM", "RPI_VEYE", "RPI_RPIF", "IP_CAMERA", "USB", "DEBUG"]
     },
     {
       "platform": "X_PLATFORM_TYPE_ALWINNER_X20",
-      "manufacturers": ["X20_HDZERO", "X20_RUNCAM"]
+      "manufacturers": ["X20_HDZERO", "X20_RUNCAM", "IP_CAMERA"]
     },
     {
       "platform": "X_PLATFORM_TYPE_ALWINNER_CUBIE_A7Z",
-      "manufacturers": ["A733_ALLWINNER", "USB", "DEBUG"]
+      "manufacturers": ["A733_ALLWINNER", "IP_CAMERA", "USB", "DEBUG"]
     },
     {
       "platform": "X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W",
-      "manufacturers": ["ROCK3_ARDUCAM", "USB", "DEBUG"]
+      "manufacturers": ["ROCK3_ARDUCAM", "IP_CAMERA", "USB", "DEBUG"]
     },
     {
       "platform": "X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3",
-      "manufacturers": ["ROCK3_ARDUCAM", "USB", "DEBUG"]
+      "manufacturers": ["ROCK3_ARDUCAM", "IP_CAMERA", "USB", "DEBUG"]
     },
     {
       "platform": "X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A",
-      "manufacturers": ["ROCK5_A_GENERIC", "USB", "DEBUG"]
+      "manufacturers": ["ROCK5_A_GENERIC", "IP_CAMERA", "USB", "DEBUG"]
     },
     {
       "platform": "X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B",
-      "manufacturers": ["ROCK5_B_GENERIC", "USB", "DEBUG"]
+      "manufacturers": ["ROCK5_B_GENERIC", "IP_CAMERA", "USB", "DEBUG"]
     },
     {
       "platform": "X_PLATFORM_TYPE_X86",
-      "manufacturers": ["USB", "DEBUG"]
+      "manufacturers": ["IP_CAMERA", "USB", "DEBUG"]
     },
     {
       "platform": "X_PLATFORM_TYPE_NVIDIA_XAVIER",
-      "manufacturers": ["NVIDIA_LEOPARD", "USB", "DEBUG"]
+      "manufacturers": ["NVIDIA_LEOPARD", "IP_CAMERA", "USB", "DEBUG"]
     },
     {
       "platform": "X_PLATFORM_TYPE_ORQA",
-      "manufacturers": ["ORQA", "USB", "DEBUG"]
+      "manufacturers": ["ORQA", "IP_CAMERA", "USB", "DEBUG"]
     },
     {
       "platform": "X_PLATFORM_TYPE_NXP_IMX8",
-      "manufacturers": ["NXP", "USB", "DEBUG"]
+      "manufacturers": ["NXP", "IP_CAMERA", "USB", "DEBUG"]
     },
     {
       "platform": "X_PLATFORM_TYPE_LUCKFOX_RV110X",
-      "manufacturers": ["LUCKFOX"]
+      "manufacturers": ["LUCKFOX", "IP_CAMERA"]
     },
     {
       "platform": "X_PLATFORM_TYPE_OPENHD_X21",
-      "manufacturers": ["ROCKCHIP_RV1126_CSI", "ROCKCHIP_RV1126_TEST"]
+      "manufacturers": ["ROCKCHIP_RV1126_CSI", "ROCKCHIP_RV1126_TEST", "IP_CAMERA"]
     }
   ],
-  "secondary_choices": ["DISABLE", "USB", "DEBUG"],
-  "fallback_choices": ["DEBUG"]
+  "secondary_choices": ["DISABLE", "IP_CAMERA", "USB", "DEBUG"],
+  "fallback_choices": ["IP_CAMERA", "DEBUG"]
 }

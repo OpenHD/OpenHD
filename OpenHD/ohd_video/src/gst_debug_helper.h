@@ -162,10 +162,25 @@ static gboolean my_bus_callback(GstBus *bus, GstMessage *message,
   openhd::log::get_default()->debug("Got gst message [{}]",
                                     GST_MESSAGE_TYPE_NAME(message));
   switch (GST_MESSAGE_TYPE(message)) {
-    case GST_MESSAGE_ERROR:
-      openhd::log::get_default()->debug("we received an error!");
+    case GST_MESSAGE_ERROR: {
+      GError* error = nullptr;
+      gchar* debug = nullptr;
+      gst_message_parse_error(message, &error, &debug);
+      const char* source = GST_MESSAGE_SRC(message) != nullptr
+                               ? GST_OBJECT_NAME(GST_MESSAGE_SRC(message))
+                               : "unknown";
+      openhd::log::get_default()->error(
+          "GStreamer error from {}: {}", source,
+          error != nullptr && error->message != nullptr ? error->message
+                                                        : "unknown error");
+      if (debug != nullptr && debug[0] != '\0') {
+        openhd::log::get_default()->error("GStreamer details: {}", debug);
+      }
+      if (error != nullptr) g_error_free(error);
+      if (debug != nullptr) g_free(debug);
       // g_main_loop_quit (loop);
       break;
+    }
     case GST_MESSAGE_EOS:
       openhd::log::get_default()->debug("we reached EOS");
       // g_main_loop_quit (loop);

@@ -27,7 +27,7 @@ without packet drops
 
 ## Managed IP cameras
 
-Select camera type `EXTERNAL_IP` (3) as either camera, then set that component's
+Select camera type `IP_CAMERA` (3) as either camera, then set that component's
 `IP_CAM_PIPELINE` extended MAVLink parameter. The value is the source portion
 of a GStreamer pipeline and must produce an elementary stream matching
 `VIDEO_CODEC`. OpenHD appends the normal performance monitoring, recording,
