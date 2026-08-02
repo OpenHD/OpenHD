@@ -113,6 +113,13 @@ jobs:
           test -n "${package}"
           test "$(dpkg-deb -f "${package}" Package)" = "openhd"
           test "$(dpkg-deb -f "${package}" Architecture)" = "${{ matrix.architecture }}"
+          members="$(ar t "${package}")"
+          grep -qx 'control.tar.xz' <<<"${members}"
+          grep -qx 'data.tar.xz' <<<"${members}"
+          if grep -q '\.zst$' <<<"${members}"; then
+            echo "Zstandard-compressed Debian members are incompatible with Bullseye dpkg."
+            exit 1
+          fi
           dpkg-deb -f "${package}" Package Version Architecture Depends
           dpkg-deb -c "${package}" | grep -q 'usr/local/bin/openhd'
           dpkg-deb -x "${package}" "${RUNNER_TEMP}/package-root"
@@ -203,6 +210,19 @@ jobs:
           sudo bash install_dep.sh
           sudo bash ./build.sh x20-compile "${CLOUDSMITH_API_KEY}" debian bullseye
           cp /opt/OpenHD-ChrootCompiler/out/*.deb "${GITHUB_WORKSPACE}/"
+      - name: Validate X20 package compatibility
+        run: |
+          package="$(find . -maxdepth 1 -name 'openhd-x20*.deb' -print -quit)"
+          test -n "${package}"
+          test "$(dpkg-deb -f "${package}" Package)" = "openhd-x20"
+          test "$(dpkg-deb -f "${package}" Architecture)" = "armhf"
+          members="$(ar t "${package}")"
+          grep -qx 'control.tar.xz' <<<"${members}"
+          grep -qx 'data.tar.xz' <<<"${members}"
+          if grep -q '\.zst$' <<<"${members}"; then
+            echo "Zstandard-compressed Debian members are incompatible with Bullseye dpkg."
+            exit 1
+          fi
       - uses: actions/upload-artifact@v4
         with:
           name: openhd-x20

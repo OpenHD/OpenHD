@@ -76,6 +76,11 @@ append_elf_runtime_dependencies() {
       awk -v soname="${soname}" '
         $1 == soname && $2 == "=>" && $3 ~ /^\// { print $3; exit }
         $1 == soname && $2 ~ /^\// { print $2; exit }
+        $1 ~ /^\// {
+          direct_name = $1
+          sub(/^.*\//, "", direct_name)
+          if (direct_name == soname) { print $1; exit }
+        }
       ' <<<"${ldd_output}"
     )"
     if [[ -z "${library}" ]]; then
@@ -266,7 +271,10 @@ build_deb_package() {
     chmod 0755 "${debian_dir}/postinst"
   fi
 
-  dpkg-deb --build "${PKGDIR}" "${package_name}_${VERSION}_${package_arch}.deb"
+  # Bullseye-era dpkg cannot read control.tar.zst. Force XZ so the same
+  # package remains installable on all supported OpenHD base images.
+  dpkg-deb -Zxz --build "${PKGDIR}" \
+    "${package_name}_${VERSION}_${package_arch}.deb"
 }
 
 require_staged_gst_perf() {
@@ -635,6 +643,7 @@ build_package() {
     fi
     fpm -a "${debian_arch}" -s dir -t deb -n "${package_name}" -v "${VERSION}" -C "${PKGDIR}" \
       -p "${package_name}_${VERSION}_${debian_arch}.deb" \
+      --deb-compression xz \
       --after-install after-install.sh \
       --before-install before-install.sh \
       "${package_relationships[@]}" \
