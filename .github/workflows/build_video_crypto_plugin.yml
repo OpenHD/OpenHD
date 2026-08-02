@@ -80,6 +80,7 @@ jobs:
               -DCMAKE_SYSROOT="${sysroot}"
               -DCMAKE_C_COMPILER=${{ matrix.triplet }}-gcc-10
               -DCMAKE_CXX_COMPILER=${{ matrix.triplet }}-g++-10
+              -DPKG_CONFIG_EXECUTABLE=/usr/bin/pkg-config
             )
           fi
           cmake "${args[@]}"
