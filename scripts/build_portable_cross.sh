@@ -74,4 +74,11 @@ fi
 
 file "${binary}"
 readelf -d "${binary}" | grep NEEDED
+env_file="${build_dir}/openhd-cross.env"
+{
+  printf 'export ARTOSYN_SDK_ROOT=%q\n' "${ARTOSYN_SDK_ROOT:-}"
+  printf 'export ARTOSYN_SDK_LIB=%q\n' "${ARTOSYN_SDK_LIB:-}"
+  printf 'export ARTOSYN_SDK_DAEMON=%q\n' "${ARTOSYN_SDK_DAEMON:-}"
+  printf 'export ARTOSYN_SDK_TUNTAP=%q\n' "${ARTOSYN_SDK_TUNTAP:-}"
+} >"${env_file}"
 echo "Portable ${architecture} core built at ${binary}"

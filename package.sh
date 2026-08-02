@@ -178,12 +178,16 @@ bundle_poco_runtime() {
   mkdir -p "${bundle_dir}"
   while IFS= read -r soname; do
     [[ -n "${soname}" ]] || continue
-    library="$(
-      ldd "${binary}" \
-        | awk -v soname="${soname}" '
-            $1 == soname && $2 == "=>" && $3 ~ /^\// { print $3; exit }
-          '
-    )"
+    if [[ -n "${OPENHD_SYSROOT:-}" ]]; then
+      library="$(find "${OPENHD_SYSROOT}" -name "${soname}" -print -quit)"
+    else
+      library="$(
+        ldd "${binary}" \
+          | awk -v soname="${soname}" '
+              $1 == soname && $2 == "=>" && $3 ~ /^\// { print $3; exit }
+            '
+      )"
+    fi
     if [[ -z "${library}" || ! -f "${library}" ]]; then
       echo "Cannot resolve ${soname} for portable OpenHD package." >&2
       exit 1
@@ -298,7 +302,9 @@ require_staged_gst_perf() {
 # Function to create the package directory structure
 create_package_directory() {
   echo "Creating package directory structure..."
-  rm -rf /tmp/openhd-installdir
+  # Hosted runners are normally fresh, but local/reusable runners must never
+  # leak files from a package built for another architecture.
+  rm -rf "${PKGDIR}"
   mkdir -p \
     "${PKGDIR}usr/local/bin" \
     "${PKGDIR}tmp" \
@@ -336,7 +342,7 @@ build_and_stage_gst_perf() {
   fi
 
   local multiarch
-  multiarch="$(dpkg-architecture -qDEB_HOST_MULTIARCH)"
+  multiarch="${OPENHD_CROSS_TRIPLET:-$(dpkg-architecture -qDEB_HOST_MULTIARCH)}"
   if [[ -z "${multiarch}" ]]; then
     echo "Could not determine Debian multiarch triplet for gst-perf install." >&2
     exit 1
@@ -357,13 +363,32 @@ build_and_stage_gst_perf() {
     git -C "${gst_perf_src}" checkout FETCH_HEAD
   fi
 
-  (
+  if [[ -n "${OPENHD_SYSROOT:-}" && -n "${OPENHD_CROSS_TRIPLET:-}" ]]; then
+    local cross_cc="${OPENHD_CROSS_TRIPLET}-gcc-10"
+    command -v "${cross_cc}" >/dev/null
+    (
+      cd "${gst_perf_src}"
+      ./autogen.sh
+      PKG_CONFIG_SYSROOT_DIR="${OPENHD_SYSROOT}" \
+      PKG_CONFIG_LIBDIR="${OPENHD_SYSROOT}/usr/lib/${OPENHD_CROSS_TRIPLET}/pkgconfig:${OPENHD_SYSROOT}/usr/lib/pkgconfig:${OPENHD_SYSROOT}/usr/share/pkgconfig" \
+      CC="${cross_cc} --sysroot=${OPENHD_SYSROOT}" \
+        ./configure \
+          --host="${OPENHD_CROSS_TRIPLET}" \
+          --with-sysroot="${OPENHD_SYSROOT}" \
+          --prefix=/usr \
+          --libdir="/usr/lib/${multiarch}"
+      make -j"${make_jobs}"
+      make install DESTDIR="${gst_perf_prefix}"
+    )
+  else
+    (
     cd "${gst_perf_src}"
     ./autogen.sh
     ./configure --prefix=/usr --libdir="/usr/lib/${multiarch}"
     make -j"${make_jobs}"
     make install DESTDIR="${gst_perf_prefix}"
-  )
+    )
+  fi
 
   local plugin_src="${gst_perf_prefix}/usr/lib/${multiarch}/gstreamer-1.0/libgstperf.so"
   if [[ ! -f "${plugin_src}" ]]; then
@@ -446,23 +471,29 @@ build_package() {
   rm -rf "${build_dir}" "${build_tmp}"
   mkdir -p "${build_dir}" "${build_tmp}"
   export TMPDIR="${build_tmp}"
-  local poco_dir=""
-  poco_dir="$(resolve_system_poco_dir)"
-  echo "Using distro Poco package configuration: ${poco_dir}"
   # Camera backends are GStreamer plugins supplied by the image. Keeping the
   # core free of a direct libcamera link makes one binary usable on every board
   # of the same architecture (for example Pi 5, Rockchip and Allwinner arm64).
   local enable_libcamera="OFF"
   echo "OpenHD libcamera support: ${enable_libcamera}"
 
-  cmake -S OpenHD/ -B "${build_dir}" \
-    -DPoco_DIR="${poco_dir}" \
-    -DENABLE_LIBCAMERA="${enable_libcamera}" \
-    -DARTOSYN_SDK_ROOT="${ARTOSYN_SDK_ROOT}" \
-    -DARTOSYN_SDK_LIB="${ARTOSYN_SDK_LIB}" \
-    -DARTOSYN_SDK_DAEMON="${ARTOSYN_SDK_DAEMON:-}" \
-    -DARTOSYN_SDK_TUNTAP="${ARTOSYN_SDK_TUNTAP:-}"
-  cmake --build "${build_dir}" --parallel "$(nproc)"
+  if [[ -n "${OPENHD_PREBUILT_BINARY:-}" ]]; then
+    test -f "${OPENHD_PREBUILT_BINARY}"
+    cp "${OPENHD_PREBUILT_BINARY}" "${build_dir}/openhd"
+    echo "Using prebuilt ${PACKAGE_ARCH} OpenHD binary: ${OPENHD_PREBUILT_BINARY}"
+  else
+    local poco_dir=""
+    poco_dir="$(resolve_system_poco_dir)"
+    echo "Using distro Poco package configuration: ${poco_dir}"
+    cmake -S OpenHD/ -B "${build_dir}" \
+      -DPoco_DIR="${poco_dir}" \
+      -DENABLE_LIBCAMERA="${enable_libcamera}" \
+      -DARTOSYN_SDK_ROOT="${ARTOSYN_SDK_ROOT}" \
+      -DARTOSYN_SDK_LIB="${ARTOSYN_SDK_LIB}" \
+      -DARTOSYN_SDK_DAEMON="${ARTOSYN_SDK_DAEMON:-}" \
+      -DARTOSYN_SDK_TUNTAP="${ARTOSYN_SDK_TUNTAP:-}"
+    cmake --build "${build_dir}" --parallel "$(nproc)"
+  fi
 
   mkdir -p "${PKGDIR}usr/local/bin/"
   cp "${build_dir}/openhd" "${PKGDIR}usr/local/bin/"
@@ -590,7 +621,11 @@ build_package() {
     echo "Artosyn SDK not resolved; skipping Artosyn daemon/runtime library packaging." >&2
   fi
 
-  append_staged_elf_runtime_dependencies "${PKGDIR}" packages
+  if [[ -z "${OPENHD_PREBUILT_BINARY:-}" ]]; then
+    append_staged_elf_runtime_dependencies "${PKGDIR}" packages
+  else
+    echo "Cross package uses the reviewed architecture dependency baseline."
+  fi
   deduplicate_dependencies packages
   if [[ "${enable_libcamera}" == "OFF" ]]; then
     local dependency=""

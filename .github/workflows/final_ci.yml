@@ -1,0 +1,312 @@
+name: final_ci
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - openhd-3.0
+  pull_request:
+    branches:
+      - openhd-3.0
+
+concurrency:
+  group: final-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  OPENHD_SUBMODULE_TOKEN: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+  ARTLINK_REPO: https://github.com/OpenHD-Technologies/OpenHD-ArtLink.git
+  ARTLINK_BRANCH: sdk
+  ARTLINK_FETCH_MODE: git-only
+  ARTLINK_GIT_AUTH_USERNAME: raphael@openhdfpv.org
+  ARTLINK_GIT_AUTH: "raphael@openhdfpv.org:${{ secrets.OPENHD_SUBMODULE_TOKEN }}"
+
+jobs:
+  architecture-packages:
+    name: package-${{ matrix.architecture }}
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        include:
+          - architecture: amd64
+            package_arch: x86_64
+            distro: ubuntu
+            release: jammy
+          - architecture: arm64
+            package_arch: arm64
+            triplet: aarch64-linux-gnu
+            compiler_packages: gcc-10-aarch64-linux-gnu g++-10-aarch64-linux-gnu
+            distro: debian
+            release: bullseye
+          - architecture: armhf
+            package_arch: armhf
+            triplet: arm-linux-gnueabihf
+            compiler_packages: gcc-10-arm-linux-gnueabihf g++-10-arm-linux-gnueabihf
+            distro: raspbian
+            release: bullseye
+    steps:
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+
+      - name: Install native package dependencies
+        if: matrix.architecture == 'amd64'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpoco-dev
+          sudo ./install_build_dep.sh ubuntu-x86
+
+      - name: Build native AMD64 package
+        if: matrix.architecture == 'amd64'
+        run: |
+          export OPENHD_REQUIRE_ARTOSYN=1
+          export OPENHD_REQUIRE_ARTOSYN_DAEMON=1
+          sudo -E ./package.sh standard x86_64 ubuntu jammy
+
+      - name: Install cross-package dependencies
+        if: matrix.architecture != 'amd64'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            ${{ matrix.compiler_packages }} \
+            autoconf automake cmake curl dpkg-dev git libtool make pkg-config zstd
+
+      - name: Fetch verified Cloudsmith sysroot
+        if: matrix.architecture != 'amd64'
+        run: |
+          archive="openhd-sysroot-bullseye-${{ matrix.architecture }}.tar.zst"
+          base="https://dl.cloudsmith.io/public/openhd/dev-release/raw/files"
+          checksum="$(curl -fsSL "${base}/${archive}.sha256" | awk 'NR == 1 { print $1 }')"
+          test "${#checksum}" -eq 64
+          ./scripts/fetch_cross_sysroot.sh \
+            "${base}/${archive}" \
+            "${checksum}" \
+            "${RUNNER_TEMP}/sysroot-${{ matrix.architecture }}"
+
+      - name: Cross-build and package OpenHD
+        if: matrix.architecture != 'amd64'
+        run: |
+          sysroot="${RUNNER_TEMP}/sysroot-${{ matrix.architecture }}"
+          build_dir="${RUNNER_TEMP}/build-${{ matrix.architecture }}"
+          export OPENHD_REQUIRE_ARTOSYN=1
+          export OPENHD_REQUIRE_ARTOSYN_DAEMON=1
+          ./scripts/build_portable_cross.sh \
+            "${{ matrix.architecture }}" "${sysroot}" "${build_dir}"
+          source "${build_dir}/openhd-cross.env"
+          export OPENHD_SYSROOT="${sysroot}"
+          export OPENHD_CROSS_TRIPLET="${{ matrix.triplet }}"
+          export OPENHD_PREBUILT_BINARY="${build_dir}/openhd"
+          sudo -E ./package.sh \
+            standard "${{ matrix.package_arch }}" "${{ matrix.distro }}" bullseye
+
+      - name: Validate package identity
+        run: |
+          package="$(find . -maxdepth 1 -name 'openhd-*.deb' -print -quit)"
+          test -n "${package}"
+          test "$(dpkg-deb -f "${package}" Architecture)" = "${{ matrix.architecture }}"
+          dpkg-deb -f "${package}" Package Version Architecture Depends
+          dpkg-deb -c "${package}" | grep -q 'usr/local/bin/openhd'
+          dpkg-deb -x "${package}" "${RUNNER_TEMP}/package-root"
+          readelf -d "${RUNNER_TEMP}/package-root/usr/local/bin/openhd" | tee openhd-needed.txt
+          if grep -qi libcamera openhd-needed.txt; then
+            echo "Portable package must not link libcamera directly."
+            exit 1
+          fi
+
+      - name: Upload architecture package
+        uses: actions/upload-artifact@v4
+        with:
+          name: openhd-${{ matrix.architecture }}
+          path: |
+            openhd-*.deb
+            openhd-needed.txt
+          if-no-files-found: error
+
+      - name: Resolve Cloudsmith target
+        if: github.event_name != 'pull_request'
+        id: cloudsmith
+        run: |
+          if [[ "${GITHUB_REF_NAME}" == "openhd-3.0" ]]; then
+            echo "repo=dev-release" >> "${GITHUB_OUTPUT}"
+          else
+            echo "repo=${GITHUB_REF_NAME}" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Publish architecture package
+        if: github.event_name != 'pull_request'
+        uses: cloudsmith-io/action@master
+        with:
+          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
+          command: push
+          format: deb
+          owner: openhd
+          repo: ${{ steps.cloudsmith.outputs.repo }}
+          distro: ${{ matrix.distro }}
+          release: ${{ matrix.release }}
+          republish: "true"
+          file: "openhd-*.deb"
+
+      - name: Publish ARM64 package for Raspberry Pi
+        if: github.event_name != 'pull_request' && matrix.architecture == 'arm64'
+        uses: cloudsmith-io/action@master
+        with:
+          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
+          command: push
+          format: deb
+          owner: openhd
+          repo: ${{ steps.cloudsmith.outputs.repo }}
+          distro: raspbian
+          release: bullseye
+          republish: "true"
+          file: "openhd-*.deb"
+
+  x20:
+    name: package-x20
+    if: github.event_name != 'pull_request'
+    needs: architecture-packages
+    runs-on: ubuntu-22.04
+    env:
+      CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
+    steps:
+      - name: Maximize build space
+        uses: easimon/maximize-build-space@master
+        with:
+          root-reserve-mb: 512
+          swap-size-mb: 1024
+          remove-dotnet: "true"
+          remove-android: "true"
+          remove-haskell: "true"
+          overprovision-lvm: "true"
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+          persist-credentials: false
+          token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+      - name: Build X20 package in its legacy target chroot
+        run: |
+          git clone https://github.com/OpenHD/OpenHD-ChrootCompiler /opt/OpenHD-ChrootCompiler
+          mkdir -p /opt/OpenHD-ChrootCompiler/additionalFiles
+          cleanup_git_auth() {
+            git config --global --unset-all url."https://x-access-token:${OPENHD_SUBMODULE_TOKEN}@github.com/".insteadOf || true
+          }
+          trap cleanup_git_auth EXIT
+          git config --global url."https://x-access-token:${OPENHD_SUBMODULE_TOKEN}@github.com/".insteadOf "https://github.com/"
+          git clone "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}" -b "${GITHUB_REF_NAME}" \
+            /opt/OpenHD-ChrootCompiler/additionalFiles
+          git -C /opt/OpenHD-ChrootCompiler/additionalFiles submodule update --init --recursive
+          git clone --recurse-submodules \
+            https://github.com/OpenHD-Technologies/OpenHD-ArtLink.git \
+            /opt/OpenHD-ChrootCompiler/additionalFiles/OpenHD-ArtLink
+          printf '%s\n' "${CLOUDSMITH_API_KEY}" > /opt/OpenHD-ChrootCompiler/additionalFiles/cloudsmith_api_key.txt
+          echo true > /opt/OpenHD-ChrootCompiler/additionalFiles/custom.txt
+          echo armhf > /opt/OpenHD-ChrootCompiler/additionalFiles/arch.txt
+          echo debian > /opt/OpenHD-ChrootCompiler/additionalFiles/distro.txt
+          echo bullseye > /opt/OpenHD-ChrootCompiler/additionalFiles/flavor.txt
+          echo "${GITHUB_REF_NAME}" > /opt/OpenHD-ChrootCompiler/additionalFiles/repo.txt
+          cd /opt/OpenHD-ChrootCompiler
+          sudo apt-get update
+          sudo bash install_dep.sh
+          sudo bash ./build.sh x20-compile "${CLOUDSMITH_API_KEY}" debian bullseye
+          cp /opt/OpenHD-ChrootCompiler/out/*.deb "${GITHUB_WORKSPACE}/"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openhd-x20
+          path: openhd-x20*.deb
+          if-no-files-found: error
+      - name: Resolve Cloudsmith target
+        id: cloudsmith
+        run: |
+          if [[ "${GITHUB_REF_NAME}" == "openhd-3.0" ]]; then
+            echo "repo=dev-release" >> "${GITHUB_OUTPUT}"
+          else
+            echo "repo=${GITHUB_REF_NAME}" >> "${GITHUB_OUTPUT}"
+          fi
+      - name: Publish X20 package
+        uses: cloudsmith-io/action@master
+        with:
+          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
+          command: push
+          format: deb
+          owner: openhd
+          repo: ${{ steps.cloudsmith.outputs.repo }}
+          distro: debian
+          release: bullseye
+          republish: "true"
+          file: "openhd-x20*.deb"
+
+  orqa:
+    name: build-orqa
+    if: github.event_name != 'pull_request'
+    needs: architecture-packages
+    runs-on: ubuntu-22.04
+    env:
+      DOWNLOAD_KEY: ${{ secrets.DOWNLOAD_KEY }}
+      DOWNLOAD_URL: ${{ secrets.DOWNLOAD_URL }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+      - name: Install SDK tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            autoconf automake curl libtool ninja-build pkg-config xz-utils zip
+      - name: Install Orqa SDK and dependencies
+        run: |
+          mkdir -p "${RUNNER_TEMP}/orqa-sdk"
+          curl -fsSL -u "${DOWNLOAD_KEY}" "${DOWNLOAD_URL}" \
+            -o "${RUNNER_TEMP}/orqa-sdk-installer.sh"
+          sh "${RUNNER_TEMP}/orqa-sdk-installer.sh" -y -d "${RUNNER_TEMP}/orqa-sdk"
+          OpenHD/scripts/setup_orqa_sdk.sh \
+            "${RUNNER_TEMP}/orqa-sdk" \
+            "${RUNNER_TEMP}/poco-libraries.zip" \
+            "${RUNNER_TEMP}/libsodium-libraries.zip" \
+            "${RUNNER_TEMP}/gst-perf-plugin.zip"
+      - name: Cross-build and verify Orqa binary
+        run: |
+          source "${RUNNER_TEMP}/orqa-sdk/environment-setup-armv8a-poky-linux"
+          cmake -S OpenHD -B build-orqa -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_DISABLE_FIND_PACKAGE_SDL2=TRUE
+          cmake --build build-orqa --parallel
+          "${READELF}" -d build-orqa/openhd | tee build-orqa/openhd-needed.txt
+          grep -q 'Shared library: \[libPocoFoundation.so.95\]' build-orqa/openhd-needed.txt
+          grep -q 'Shared library: \[libPocoNet.so.95\]' build-orqa/openhd-needed.txt
+          grep -q 'Shared library: \[libsodium.so.26\]' build-orqa/openhd-needed.txt
+          test -f "${SDKTARGETSYSROOT}/usr/lib/gstreamer-1.0/libgstperf.so"
+          "${STRIP}" --strip-unneeded build-orqa/openhd
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openhd-orqa
+          path: |
+            build-orqa/openhd
+            build-orqa/openhd-needed.txt
+            ${{ runner.temp }}/poco-libraries.zip
+            ${{ runner.temp }}/libsodium-libraries.zip
+            ${{ runner.temp }}/gst-perf-plugin.zip
+
+  trigger-images:
+    name: trigger-image-matrix
+    if: github.event_name == 'push'
+    needs:
+      - architecture-packages
+      - x20
+      - orqa
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Start ImageBuilder after packages are published
+        env:
+          GH_TOKEN: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+        run: |
+          gh api --method POST \
+            /repos/OpenHD/OpenHD-ImageBuilder/actions/workflows/update-image.yml/dispatches \
+            -f ref=dev-release
