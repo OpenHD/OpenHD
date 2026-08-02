@@ -31,6 +31,9 @@ fi
 
 rm -rf "${output_dir}"
 mkdir -p "${output_dir}"
-tar --zstd -xf "${archive}" -C "${output_dir}"
+# The extract-only mmdebstrap archive may contain harmless /dev placeholders.
+# Hosted GitHub runners cannot create device nodes and the compiler sysroot does
+# not need them, so leave that subtree out when unpacking.
+tar --zstd --exclude='./dev/*' -xf "${archive}" -C "${output_dir}"
 test -f "${output_dir}/openhd-sysroot.manifest"
 echo "Installed verified OpenHD sysroot at ${output_dir}"
