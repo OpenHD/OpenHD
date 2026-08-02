@@ -66,3 +66,14 @@ jobs:
             openhd-sysroot-bullseye-${{ matrix.architecture }}.tar.zst.sha256
           if-no-files-found: error
           retention-days: 30
+
+      - name: Publish stable sysroot files to Cloudsmith
+        uses: cloudsmith-io/action@master
+        with:
+          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
+          command: push
+          format: raw
+          owner: openhd
+          repo: dev-release
+          republish: "true"
+          file: "openhd-sysroot-bullseye-${{ matrix.architecture }}.tar.zst*"
