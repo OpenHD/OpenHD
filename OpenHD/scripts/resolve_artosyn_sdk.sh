@@ -8,6 +8,7 @@
 #          -DARTOSYN_SDK_DAEMON="${ARTOSYN_SDK_DAEMON}"
 #          -DARTOSYN_SDK_TUNTAP="${ARTOSYN_SDK_TUNTAP}"
 
+ARTLINK_RESOLVER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ARTLINK_REPO_DEFAULT="https://github.com/OpenHD-Technologies/OpenHD-ArtLink.git"
 ARTLINK_REPO=${ARTLINK_REPO:-${ARTLINK_REPO_DEFAULT}}
 ARTLINK_BRANCH=${ARTLINK_BRANCH:-sdk}
@@ -581,6 +582,7 @@ resolve_artosyn_sdk() {
   if [[ -z "${sdk_root}" ]]; then
     local candidates=(
       "${ARTLINK_SOURCE_DIR:-}"
+      "${ARTLINK_RESOLVER_DIR}/../../${ARTLINK_REPO_DIR}"
       "${OPENHD_KERNEL_BUILDER_DIR:-}/workdir/mods/${ARTLINK_REPO_DIR}"
       "${OPENHD_KERNEL_BUILDER_DIR:-}/workdir/mods/OpenHD-ArtLink"
       "/opt/openhd-private/artosyn_sdk"

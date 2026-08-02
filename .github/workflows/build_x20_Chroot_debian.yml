@@ -53,6 +53,9 @@ jobs:
           git -C /opt/OpenHD-ChrootCompiler/additionalFiles submodule sync --recursive
           git -C /opt/OpenHD-ChrootCompiler/additionalFiles submodule update --init --recursive
           git -C /opt/OpenHD-ChrootCompiler/additionalFiles submodule status --recursive
+          git clone --recurse-submodules \
+            https://github.com/OpenHD-Technologies/OpenHD-ArtLink.git \
+            /opt/OpenHD-ChrootCompiler/additionalFiles/OpenHD-ArtLink
           echo $CLOUDSMITH_API_KEY > /opt/OpenHD-ChrootCompiler/additionalFiles/cloudsmith_api_key.txt
           echo "true" > /opt/OpenHD-ChrootCompiler/additionalFiles/custom.txt
           echo "armhf" > /opt/OpenHD-ChrootCompiler/additionalFiles/arch.txt
