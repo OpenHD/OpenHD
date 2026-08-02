@@ -131,6 +131,15 @@ std::size_t PluginManager::load_plugins(
         dlsym(library, OPENHD_PLUGIN_ENTRYPOINT));
     const char* symbol_error = dlerror();
     if (symbol_error || !get_descriptor) {
+      // Crypto providers share the plugin directory but have a dedicated ABI
+      // and are consumed directly by wifibroadcast's packet hot path.
+      dlerror();
+      if (dlsym(library, "openhd_crypto_get_provider") != nullptr) {
+        logger->debug("Leaving crypto provider {} for wifibroadcast",
+                      path.string());
+        dlclose(library);
+        continue;
+      }
       logger->error("Ignoring plugin {}: missing {} ({})", path.string(),
                     OPENHD_PLUGIN_ENTRYPOINT,
                     symbol_error ? symbol_error : "unknown error");

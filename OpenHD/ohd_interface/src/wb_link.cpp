@@ -2363,10 +2363,11 @@ void WBLink::transmit_video_data(
   // m_console->debug("Got {}",fragmented_video_frame.rtp_fragments.size());
   auto& tx = *m_wb_video_tx_list[stream_index];
   tx.set_encryption(false);
-  const bool use_external_video_crypto =
-      fragmented_video_frame.enable_ultra_secure_encryption &&
-      m_video_crypto_available;
-  tx.set_external_crypto(use_external_video_crypto);
+  // Preserve the user's encryption intent even when the optional provider is
+  // absent. WBTxRx then drops these video packets rather than falling back to
+  // plaintext. Binding, telemetry, and video without this flag are unaffected.
+  tx.set_external_crypto(
+      fragmented_video_frame.enable_ultra_secure_encryption);
   if (fragmented_video_frame.enable_ultra_secure_encryption &&
       !m_video_crypto_available) {
     if (!m_logged_missing_video_crypto) {

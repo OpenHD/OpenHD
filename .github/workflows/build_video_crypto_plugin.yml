@@ -1,0 +1,22 @@
+name: Build private video crypto plugin
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - openhd-3.0
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-publish:
+    uses: OpenHD-Technologies/video_crypto_private/.github/workflows/build.yml@main
+    with:
+      openhd_ref: ${{ github.sha }}
+      plugin_ref: main
+      cloudsmith_repo: dev-release
+      publish: true
+    secrets:
+      PRIVATE_REPO_TOKEN: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+      CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
