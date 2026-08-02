@@ -148,7 +148,7 @@ jobs:
             echo "repo=${GITHUB_REF_NAME}" >> "${GITHUB_OUTPUT}"
           fi
 
-      - name: Publish architecture package
+      - name: Publish universal architecture package
         if: github.event_name != 'pull_request'
         uses: cloudsmith-io/action@master
         with:
@@ -159,6 +159,76 @@ jobs:
           repo: ${{ steps.cloudsmith.outputs.repo }}
           distro: any-distro
           release: any-version
+          republish: "true"
+          file: "openhd_*.deb"
+
+      - name: Publish architecture package for its build distribution
+        if: github.event_name != 'pull_request'
+        uses: cloudsmith-io/action@master
+        with:
+          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
+          command: push
+          format: deb
+          owner: openhd
+          repo: ${{ steps.cloudsmith.outputs.repo }}
+          distro: ${{ matrix.distro }}
+          release: ${{ matrix.release }}
+          republish: "true"
+          file: "openhd_*.deb"
+
+      - name: Publish ARM64 package for Debian Bookworm
+        if: github.event_name != 'pull_request' && matrix.architecture == 'arm64'
+        uses: cloudsmith-io/action@master
+        with:
+          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
+          command: push
+          format: deb
+          owner: openhd
+          repo: ${{ steps.cloudsmith.outputs.repo }}
+          distro: debian
+          release: bookworm
+          republish: "true"
+          file: "openhd_*.deb"
+
+      - name: Publish ARM64 package for Raspbian Bullseye
+        if: github.event_name != 'pull_request' && matrix.architecture == 'arm64'
+        uses: cloudsmith-io/action@master
+        with:
+          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
+          command: push
+          format: deb
+          owner: openhd
+          repo: ${{ steps.cloudsmith.outputs.repo }}
+          distro: raspbian
+          release: bullseye
+          republish: "true"
+          file: "openhd_*.deb"
+
+      - name: Publish ARM64 package for Raspbian Bookworm
+        if: github.event_name != 'pull_request' && matrix.architecture == 'arm64'
+        uses: cloudsmith-io/action@master
+        with:
+          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
+          command: push
+          format: deb
+          owner: openhd
+          repo: ${{ steps.cloudsmith.outputs.repo }}
+          distro: raspbian
+          release: bookworm
+          republish: "true"
+          file: "openhd_*.deb"
+
+      - name: Publish AMD64 package for Ubuntu Noble
+        if: github.event_name != 'pull_request' && matrix.architecture == 'amd64'
+        uses: cloudsmith-io/action@master
+        with:
+          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
+          command: push
+          format: deb
+          owner: openhd
+          repo: ${{ steps.cloudsmith.outputs.repo }}
+          distro: ubuntu
+          release: noble
           republish: "true"
           file: "openhd_*.deb"
 
