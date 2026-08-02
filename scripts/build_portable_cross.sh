@@ -37,6 +37,12 @@ if [[ -z "${poco_config}" ]]; then
   exit 1
 fi
 poco_dir="$(dirname "${poco_config}")"
+sdl2_config="$(find "${sysroot}/usr" \( -name sdl2-config.cmake -o -name SDL2Config.cmake \) -print -quit)"
+if [[ -z "${sdl2_config}" ]]; then
+  echo "SDL2 CMake configuration is missing from the target sysroot." >&2
+  exit 1
+fi
+sdl2_dir="$(dirname "${sdl2_config}")"
 
 source OpenHD/scripts/resolve_artosyn_sdk.sh
 resolve_artosyn_sdk
@@ -51,6 +57,7 @@ cmake -S OpenHD -B "${build_dir}" \
   -DCMAKE_TOOLCHAIN_FILE="${toolchain_file}" \
   -DCMAKE_BUILD_TYPE=Release \
   -DPoco_DIR="${poco_dir}" \
+  -DSDL2_DIR="${sdl2_dir}" \
   -DENABLE_LIBCAMERA=OFF \
   -DARTOSYN_SDK_ROOT="${ARTOSYN_SDK_ROOT:-}" \
   -DARTOSYN_SDK_LIB="${ARTOSYN_SDK_LIB:-}" \
