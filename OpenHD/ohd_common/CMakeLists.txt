@@ -46,6 +46,7 @@ target_link_libraries(OHDCommonLib PUBLIC nlohmann_json::nlohmann_json)
 # Add pthread support
 find_package(Threads REQUIRED)
 target_link_libraries(OHDCommonLib PUBLIC Threads::Threads)
+target_link_libraries(OHDCommonLib PUBLIC ${CMAKE_DL_LIBS})
 
 #----------------------------------------------------------------------------------------------------------------------
 # Sources
@@ -74,6 +75,7 @@ set(sources
     "src/openhd_util_time.cpp"
     "src/openhd_bitrate.cpp"
     "src/openhd_thermal.cpp"
+    "src/openhd_plugin_manager.cpp"
 )
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
@@ -83,6 +85,8 @@ source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
 #----------------------------------------------------------------------------------------------------------------------
 target_sources(OHDCommonLib PRIVATE ${sources})
 target_include_directories(OHDCommonLib PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc/>")
+
+install(FILES inc/openhd_plugin.h DESTINATION include/openhd)
 
 set_target_properties(OHDCommonLib PROPERTIES
     SOVERSION ${PROJECT_VERSION_MAJOR}
@@ -111,3 +115,8 @@ target_link_libraries(test_openhd_async OHDCommonLib)
 
 add_executable(test_tcp_server test/test_tcp_server.cpp)
 target_link_libraries(test_tcp_server OHDCommonLib)
+
+add_executable(test_openhd_plugin
+    test/test_openhd_plugin.cpp
+    src/config_paths.cpp)
+target_link_libraries(test_openhd_plugin OHDCommonLib)

@@ -54,6 +54,7 @@
 #include "openhd_buttons.h"
 #include "openhd_global_constants.hpp"
 #include "openhd_platform.h"
+#include "openhd_plugin_manager.h"
 #include "openhd_profile.h"
 #include "openhd_sock.h"
 #include "openhd_spdlog.h"
@@ -547,6 +548,7 @@ int main(int argc, char *argv[]) {
     // But if we are air, we have at least one camera, sw if no camera was found
     const auto profile = DProfile::discover(options.run_as_air);
     write_profile_manifest(profile);
+    openhd::PluginManager::instance().load_plugins(profile.is_air);
 
     {  // Print all the arguments the OHD main executable is started with
       bool validLicense = false;
@@ -771,6 +773,7 @@ int main(int argc, char *argv[]) {
       m_console->debug("Terminating ohd_video_air - end");
     }
 #endif
+    openhd::PluginManager::instance().shutdown();
     if (ohd_video_ground) {
       m_console->debug("Terminating ohd_video_ground- begin");
       ohd_video_ground.reset();

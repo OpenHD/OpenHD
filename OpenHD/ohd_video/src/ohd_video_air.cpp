@@ -78,6 +78,8 @@ OHDVideoAir::OHDVideoAir(std::vector<XCamera> cameras,
       // per-camera address immediately.
       holder->persist(false);
     }
+    // Apply persisted settings to plugin-managed cameras at startup.
+    holder->notify_plugin_bitrate_changed();
   }
   if (m_record_only) {
     for (auto& camera_holder : camera_holders) {

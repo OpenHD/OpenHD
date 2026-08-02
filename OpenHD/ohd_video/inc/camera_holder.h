@@ -34,6 +34,7 @@
 #include "camera_settings.hpp"
 #include "openhd_action_handler.h"
 #include "openhd_bitrate.h"
+#include "openhd_plugin_manager.h"
 #include "openhd_settings_directories.h"
 #include "openhd_settings_imp.h"
 #include "openhd_settings_persistent.h"
@@ -161,7 +162,24 @@ class CameraHolder :
       m_video_bitrate_changed_callback(
           unsafe_get_settings().h26x_bitrate_kbits);
     }
+    if (unsafe_get_settings().h26x_bitrate_kbits != previous_kbits) {
+      notify_plugin_bitrate_changed();
+    }
     return true;
+  }
+  void notify_plugin_bitrate_changed() const {
+    const auto& settings = get_settings();
+    const auto& format = settings.streamed_video_format;
+    const openhd_plugin_video_bitrate_event event{
+        sizeof(openhd_plugin_video_bitrate_event),
+        static_cast<uint32_t>(m_camera.index),
+        m_camera.camera_type,
+        settings.h26x_bitrate_kbits,
+        static_cast<int32_t>(format.videoCodec),
+        static_cast<uint16_t>(format.width),
+        static_cast<uint16_t>(format.height),
+        settings.ip_camera_address.c_str()};
+    openhd::PluginManager::instance().notify_video_bitrate_changed(event);
   }
   [[nodiscard]] int get_max_video_bitrate_kbits() const {
     return m_camera.get_max_video_bitrate_kbits(
