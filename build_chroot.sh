@@ -190,10 +190,6 @@ if [[ -f cloudsmith_api_key.txt && -f distro.txt && -f flavor.txt && -f repo.txt
     REPO=$(cat repo.txt)
     CUSTOM=$(cat custom.txt)
     ARCH=$(cat arch.txt)
-    QCOM=""
-    if [[ -f qcom.txt ]]; then
-        QCOM=$(tr -d '\r\n' < qcom.txt)
-    fi
 else
     echo "One or more required configuration files are missing."
     exit 1
@@ -204,7 +200,6 @@ echo "Distro: ${DISTRO}"
 echo "Flavor: ${FLAVOR}"
 echo "Custom: ${CUSTOM}"
 echo "Arch: ${ARCH}"
-echo "Arch: ${QCOM}"
 
 read_optional_file() {
     local file_path="$1"
@@ -414,37 +409,6 @@ if [[ "${OPENHD_REQUIRE_ARTOSYN:-0}" == "1" ]]; then
 fi
 
 # Install dependencies based on DISTRO or ARCH
-if [[ "${QCOM}" == "coretronic" ]]; then
-
-# Create a directory for the downloaded .deb files
-mkdir -p poco_debs
-
-# Clean the APT cache
-apt-get clean
-
-# Download only the required package without installing
-apt-get --download-only install -y libpoco-dev
-
-# Copy all .deb files to the poco_debs directory
-cp /var/cache/apt/archives/*.deb poco_debs/
-
-# Create a directory to extract the .deb files
-mkdir -p poco_debs_extracted
-
-# Extract all .deb files into the poco_debs_extracted directory
-for deb in poco_debs/*.deb; do
-    dpkg-deb -x "$deb" poco_debs_extracted/
-done
-
-# Create a tarball of the extracted files
-tar -cvf poco_debs_extracted.tar poco_debs_extracted
-
-# Rename the tarball with the .deb extension
-cp poco_debs_extracted.tar /out/poco_debs.deb
-
-# Cleanup (optional)
-rm -rf poco_debs poco_debs_extracted poco_debs_extracted.tar
-else
     if [[ "${ARCH}" == "arm64" ]]; then
         chmod +x ./install_build_dep.sh
         free_chroot_space_for_ci
@@ -522,4 +486,3 @@ EOF
     ./package.sh "${CUSTOM}" "${ARCH}" "${DISTRO}" "${FLAVOR}" || { echo "Packaging failed"; exit 1; }
 
     echo "Script execution completed successfully."
-fi
