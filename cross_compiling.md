@@ -16,7 +16,7 @@ Fetch a hosted sysroot and verify it before extraction:
 Install the matching GNU crosscompiler on the build host and build OpenHD:
 
 ```bash
-sudo apt-get install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu cmake pkg-config
+sudo apt-get install gcc-10-aarch64-linux-gnu g++-10-aarch64-linux-gnu cmake pkg-config
 OPENHD_SUBMODULE_TOKEN=<token> \
   ./scripts/build_portable_cross.sh \
   arm64 /opt/openhd-sysroots/bullseye-arm64

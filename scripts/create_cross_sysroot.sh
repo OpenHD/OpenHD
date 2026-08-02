@@ -61,6 +61,20 @@ mmdebstrap \
   "${output_dir}" \
   "${mirror}"
 
+# Debian development packages contain absolute linker symlinks such as
+# libpthread.so -> /lib/<triplet>/libpthread.so.0. Outside a chroot the host
+# linker follows those into the host filesystem and may silently fall back to
+# the static archive. Make only links whose targets exist inside this sysroot
+# relative, so --sysroot works without mounting or entering a chroot.
+while IFS= read -r -d '' link; do
+  target="$(readlink "${link}")"
+  [[ "${target}" == /* ]] || continue
+  target_in_sysroot="${output_dir}${target}"
+  [[ -e "${target_in_sysroot}" || -L "${target_in_sysroot}" ]] || continue
+  relative_target="$(realpath -m --relative-to="$(dirname "${link}")" "${target_in_sysroot}")"
+  ln -sfn "${relative_target}" "${link}"
+done < <(find "${output_dir}" -type l -print0)
+
 printf '%s\n' \
   "format=1" \
   "suite=${suite}" \

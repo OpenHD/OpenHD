@@ -14,7 +14,8 @@ case "${architecture}" in
 esac
 
 grep -qx "architecture=${architecture}" "${sysroot}/openhd-sysroot.manifest"
-command -v "${triplet}-g++" >/dev/null
+compiler="${triplet}-g++-10"
+command -v "${compiler}" >/dev/null
 
 export PKG_CONFIG_SYSROOT_DIR="${sysroot}"
 export PKG_CONFIG_LIBDIR="${sysroot}/usr/lib/${triplet}/pkgconfig:${sysroot}/usr/lib/pkgconfig:${sysroot}/usr/share/pkgconfig"
@@ -30,7 +31,7 @@ printf '%s\n' \
   '#include <Poco/Net/IPAddress.h>' \
   '#include <gst/gst.h>' \
   'int main() { Poco::Net::IPAddress address; gst_init(nullptr, nullptr); return address.isWildcard(); }' \
-  | "${triplet}-g++" --sysroot="${sysroot}" -x c++ - \
+  | "${compiler}" --sysroot="${sysroot}" -x c++ - \
       $(pkg-config --cflags --libs gstreamer-1.0) \
       -L"${gcc_runtime_dir}" \
       -L"${sysroot}/usr/lib/${triplet}" \

@@ -24,7 +24,7 @@ esac
 
 test -f "${sysroot}/openhd-sysroot.manifest"
 grep -qx "architecture=${architecture}" "${sysroot}/openhd-sysroot.manifest"
-command -v "${triplet}-g++" >/dev/null
+command -v "${triplet}-g++-10" >/dev/null
 
 export OPENHD_SYSROOT="${sysroot}"
 export OPENHD_CROSS_TRIPLET="${triplet}"

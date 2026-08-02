@@ -14,17 +14,17 @@ permissions:
 
 jobs:
   sysroot:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
         include:
           - architecture: arm64
             triplet: aarch64-linux-gnu
-            compiler_packages: gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+            compiler_packages: gcc-10-aarch64-linux-gnu g++-10-aarch64-linux-gnu
           - architecture: armhf
             triplet: arm-linux-gnueabihf
-            compiler_packages: gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+            compiler_packages: gcc-10-arm-linux-gnueabihf g++-10-arm-linux-gnueabihf
     steps:
       - uses: actions/checkout@v4
 
