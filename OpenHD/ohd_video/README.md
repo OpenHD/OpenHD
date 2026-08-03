@@ -37,12 +37,13 @@ pipeline automatically when the parameter changes.
 An IP camera in either slot gets this T010-compatible H264 default:
 
 ```text
-rtspsrc location=rtsp://{IP}:554/stream=0 latency=0 ! rtph264depay
+rtspsrc location=rtsp://{IP}:554/stream=0 latency=0 ! rtp{CODEC}depay
 ```
 
 `{IP}` is replaced with the per-camera `IP_CAM_ADDRESS`, which defaults to
 `192.168.144.108` for the T010 test. The address is editable through MAVLink
-and each supported GUI. When its `/24` is not already configured, OpenHD adds
+and each supported GUI. `{CODEC}` is replaced with `h264` or `h265` from the
+MAVLink `VIDEO_CODEC` setting. When its `/24` is not already configured, OpenHD adds
 a secondary local address (host `.20`, or `.21` if required). It does not
 replace the existing Ethernet address, routes, or NetworkManager profile. The
 pipeline is persisted and limited to 127 bytes by MAVLink. Clearing it restores

@@ -7,6 +7,7 @@
 #include <dlfcn.h>
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdlib>
 #include <exception>
 #include <filesystem>
@@ -157,7 +158,8 @@ std::size_t PluginManager::load_plugins(
       continue;
     }
     if (!descriptor ||
-        descriptor->struct_size < sizeof(openhd_plugin_descriptor) ||
+        descriptor->struct_size <
+            offsetof(openhd_plugin_descriptor, on_video_settings_changed) ||
         descriptor->abi_version != OPENHD_PLUGIN_ABI_VERSION ||
         !descriptor->name) {
       logger->error("Ignoring incompatible plugin {}", path.string());
@@ -213,6 +215,34 @@ void PluginManager::notify_video_bitrate_changed(
     } catch (...) {
       logger->error("Plugin {} bitrate callback threw",
                     plugin->descriptor->name);
+    }
+  }
+}
+
+void PluginManager::notify_video_settings_changed(
+    const openhd_plugin_video_settings_event& event) noexcept {
+  const auto logger = openhd::log::create_or_get("plugins");
+  for (const auto& plugin : m_plugins) {
+    const auto* descriptor = plugin->descriptor;
+    const bool has_settings_callback =
+        descriptor->struct_size >= sizeof(openhd_plugin_descriptor) &&
+        descriptor->on_video_settings_changed != nullptr;
+    try {
+      if (has_settings_callback) {
+        descriptor->on_video_settings_changed(&event);
+      } else if (descriptor->on_video_bitrate_changed) {
+        const openhd_plugin_video_bitrate_event legacy_event{
+            sizeof(openhd_plugin_video_bitrate_event), event.camera_index,
+            event.camera_type, event.bitrate_kbits, event.codec, event.width,
+            event.height, event.ip_address};
+        descriptor->on_video_bitrate_changed(&legacy_event);
+      }
+    } catch (const std::exception& ex) {
+      logger->error("Plugin {} video settings callback threw: {}",
+                    descriptor->name, ex.what());
+    } catch (...) {
+      logger->error("Plugin {} video settings callback threw",
+                    descriptor->name);
     }
   }
 }

@@ -29,6 +29,8 @@ class PluginManager {
 
   void notify_video_bitrate_changed(
       const openhd_plugin_video_bitrate_event& event) noexcept;
+  void notify_video_settings_changed(
+      const openhd_plugin_video_settings_event& event) noexcept;
   void shutdown() noexcept;
   [[nodiscard]] std::size_t loaded_plugin_count() const noexcept;
 

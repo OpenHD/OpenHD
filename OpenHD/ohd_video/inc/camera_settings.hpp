@@ -53,8 +53,11 @@ static constexpr int RPI_LIBCAMERA_DEFAULT_EV = 0;
 // Temporary managed T010 IP-camera source used for field testing.
 static constexpr auto DEFAULT_IP_CAMERA_PIPELINE =
     "rtspsrc location=rtsp://{IP}:554/stream=0 latency=0 ! "
-    "rtph264depay";
+    "rtp{CODEC}depay";
 static constexpr auto DEFAULT_IP_CAMERA_ADDRESS = "192.168.144.108";
+static constexpr auto LEGACY_MANAGED_T010_IP_CAMERA_PIPELINE =
+    "rtspsrc location=rtsp://{IP}:554/stream=0 latency=0 ! "
+    "rtph264depay";
 static constexpr auto LEGACY_T010_IP_CAMERA_PIPELINE =
     "rtspsrc location=rtsp://192.168.144.108:554/stream=0 latency=0 ! "
     "rtph264depay";
@@ -84,7 +87,7 @@ struct CameraSettings {
   // OpenHD appends its normal perf, RTP, recording and link pipeline. An empty
   // value keeps the legacy UDP 5500 input for backwards compatibility.
   std::string ip_camera_pipeline;
-  // Address substituted for {IP} in the managed source pipeline.
+  // Address substituted for {IP}; {CODEC} becomes h264 or h265.
   std::string ip_camera_address;
   int qp_max = 51;
   int qp_min = 5;

@@ -72,6 +72,14 @@ std::optional<CameraSettings> CameraHolder::impl_deserialize(
           LEGACY_T010_IP_CAMERA_PIPELINE) {
     parsed_settings->ip_camera_pipeline = DEFAULT_IP_CAMERA_PIPELINE;
     parsed_settings->ip_camera_address = DEFAULT_IP_CAMERA_ADDRESS;
+  } else if (parsed_settings.has_value() &&
+             parsed_settings->ip_camera_pipeline ==
+                 LEGACY_MANAGED_T010_IP_CAMERA_PIPELINE) {
+    parsed_settings->ip_camera_pipeline = DEFAULT_IP_CAMERA_PIPELINE;
+    if (missing_ip_camera_address ||
+        parsed_settings->ip_camera_address.empty()) {
+      parsed_settings->ip_camera_address = DEFAULT_IP_CAMERA_ADDRESS;
+    }
   }
   if (parsed_settings.has_value() &&
       m_camera.camera_type == X_CAM_TYPE_EXTERNAL_IP &&

@@ -54,6 +54,20 @@ struct openhd_plugin_video_bitrate_event {
   const char* ip_address;
 };
 
+/* Complete camera stream configuration. Added as an ABI-v1 extension; use
+ * struct_size before accessing fields so older hosts/plugins remain valid. */
+struct openhd_plugin_video_settings_event {
+  uint32_t struct_size;
+  uint32_t camera_index;
+  int32_t camera_type;
+  int32_t bitrate_kbits;
+  int32_t codec;
+  uint16_t width;
+  uint16_t height;
+  uint16_t framerate;
+  const char* ip_address;
+};
+
 struct openhd_plugin_descriptor {
   uint32_t struct_size;
   uint32_t abi_version;
@@ -65,6 +79,8 @@ struct openhd_plugin_descriptor {
   void (*shutdown)(void);
   void (*on_video_bitrate_changed)(
       const struct openhd_plugin_video_bitrate_event* event);
+  void (*on_video_settings_changed)(
+      const struct openhd_plugin_video_settings_event* event);
 };
 
 typedef const struct openhd_plugin_descriptor* (*openhd_plugin_get_descriptor_fn)(

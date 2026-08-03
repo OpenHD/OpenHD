@@ -1028,6 +1028,17 @@ std::string GStreamerStream::create_source_encode_pipeline(
               camera.index + 1);
         }
       }
+      const std::string codec_name =
+          setting.streamed_video_format.videoCodec == VideoCodec::H265
+              ? "h265"
+              : "h264";
+      std::size_t codec_position = 0;
+      while ((codec_position =
+                  source_pipeline.find("{CODEC}", codec_position)) !=
+             std::string::npos) {
+        source_pipeline.replace(codec_position, 7, codec_name);
+        codec_position += codec_name.size();
+      }
       openhd::log::get_default()->info(
           "Using MAVLink-configured managed IP camera pipeline.");
       pipeline << normalize_custom_source_pipeline(source_pipeline);

@@ -103,6 +103,7 @@ class CameraHolder :
     if (!OHDUtil::is_valid_ip(address)) return false;
     unsafe_get_settings().ip_camera_address = address;
     persist();
+    notify_plugin_video_settings_changed();
     return true;
   }
   // it is only possible to validate setting the video width,height and fps
@@ -124,6 +125,7 @@ class CameraHolder :
     unsafe_get_settings().streamed_video_format.height = height;
     unsafe_get_settings().streamed_video_format.framerate = framerate;
     persist();
+    notify_plugin_video_settings_changed();
     return true;
   }
   bool set_video_codec(int codec) {
@@ -133,6 +135,7 @@ class CameraHolder :
     unsafe_get_settings().streamed_video_format.videoCodec =
         video_codec_from_int(codec);
     persist();
+    notify_plugin_video_settings_changed();
     return true;
   }
   bool set_video_bitrate(int bitrate_mbits) {
@@ -163,23 +166,24 @@ class CameraHolder :
           unsafe_get_settings().h26x_bitrate_kbits);
     }
     if (unsafe_get_settings().h26x_bitrate_kbits != previous_kbits) {
-      notify_plugin_bitrate_changed();
+      notify_plugin_video_settings_changed();
     }
     return true;
   }
-  void notify_plugin_bitrate_changed() const {
+  void notify_plugin_video_settings_changed() const {
     const auto& settings = get_settings();
     const auto& format = settings.streamed_video_format;
-    const openhd_plugin_video_bitrate_event event{
-        sizeof(openhd_plugin_video_bitrate_event),
+    const openhd_plugin_video_settings_event event{
+        sizeof(openhd_plugin_video_settings_event),
         static_cast<uint32_t>(m_camera.index),
         m_camera.camera_type,
         settings.h26x_bitrate_kbits,
         static_cast<int32_t>(format.videoCodec),
         static_cast<uint16_t>(format.width),
         static_cast<uint16_t>(format.height),
+        static_cast<uint16_t>(format.framerate),
         settings.ip_camera_address.c_str()};
-    openhd::PluginManager::instance().notify_video_bitrate_changed(event);
+    openhd::PluginManager::instance().notify_video_settings_changed(event);
   }
   [[nodiscard]] int get_max_video_bitrate_kbits() const {
     return m_camera.get_max_video_bitrate_kbits(
