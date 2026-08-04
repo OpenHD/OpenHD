@@ -552,6 +552,29 @@ std::optional<SysutilSettings> request_sysutil_settings(
     settings.has_camera2_resolution_fps =
         parsed.value("has_camera2_resolution_fps", false);
   }
+  settings.ip_camera_address =
+      read_string("ip_camera_address", settings.ip_camera_address);
+  settings.has_ip_camera_address = parsed.value(
+      "has_ip_camera_address", parsed.contains("ip_camera_address"));
+  settings.ip_camera_pipeline =
+      read_string("ip_camera_pipeline", settings.ip_camera_pipeline);
+  settings.has_ip_camera_pipeline = parsed.value(
+      "has_ip_camera_pipeline", parsed.contains("ip_camera_pipeline"));
+  settings.camera2_ip_camera_address = read_string(
+      "camera2_ip_camera_address", settings.camera2_ip_camera_address);
+  settings.has_camera2_ip_camera_address =
+      parsed.value("has_camera2_ip_camera_address",
+                   parsed.contains("camera2_ip_camera_address"));
+  settings.camera2_ip_camera_pipeline = read_string(
+      "camera2_ip_camera_pipeline", settings.camera2_ip_camera_pipeline);
+  settings.has_camera2_ip_camera_pipeline =
+      parsed.value("has_camera2_ip_camera_pipeline",
+                   parsed.contains("camera2_ip_camera_pipeline"));
+  settings.ip_camera_bitrate_mbits =
+      read_int("ip_camera_bitrate_mbits", settings.ip_camera_bitrate_mbits);
+  settings.has_ip_camera_bitrate_mbits =
+      parsed.value("has_ip_camera_bitrate_mbits",
+                   parsed.contains("ip_camera_bitrate_mbits"));
 
   const auto run_mode = parsed.value("run_mode", "");
   if (run_mode == "air" || run_mode == "ground" || run_mode == "record") {
@@ -623,6 +646,11 @@ bool update_sysutil_settings(const SysutilSettingsUpdate& update,
       !update.camera2_type.has_value() &&
       !update.camera_resolution_fps.has_value() &&
       !update.camera2_resolution_fps.has_value() &&
+      !update.ip_camera_address.has_value() &&
+      !update.ip_camera_pipeline.has_value() &&
+      !update.camera2_ip_camera_address.has_value() &&
+      !update.camera2_ip_camera_pipeline.has_value() &&
+      !update.ip_camera_bitrate_mbits.has_value() &&
       !update.run_as_air.has_value() && !update.run_mode.has_value()) {
     return true;
   }
@@ -643,6 +671,23 @@ bool update_sysutil_settings(const SysutilSettingsUpdate& update,
   }
   if (update.camera2_resolution_fps.has_value()) {
     request["camera2_resolution_fps"] = update.camera2_resolution_fps.value();
+  }
+  if (update.ip_camera_address.has_value()) {
+    request["ip_camera_address"] = update.ip_camera_address.value();
+  }
+  if (update.ip_camera_pipeline.has_value()) {
+    request["ip_camera_pipeline"] = update.ip_camera_pipeline.value();
+  }
+  if (update.camera2_ip_camera_address.has_value()) {
+    request["camera2_ip_camera_address"] =
+        update.camera2_ip_camera_address.value();
+  }
+  if (update.camera2_ip_camera_pipeline.has_value()) {
+    request["camera2_ip_camera_pipeline"] =
+        update.camera2_ip_camera_pipeline.value();
+  }
+  if (update.ip_camera_bitrate_mbits.has_value()) {
+    request["ip_camera_bitrate_mbits"] = update.ip_camera_bitrate_mbits.value();
   }
   if (update.run_mode.has_value()) {
     request["run_mode"] = update.run_mode.value();

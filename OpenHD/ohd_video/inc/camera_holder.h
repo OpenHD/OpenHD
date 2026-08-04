@@ -407,6 +407,29 @@ class CameraHolder :
       return cached;
     }();
     if (sysutil_settings.has_value()) {
+      if (m_camera.camera_type == X_CAM_TYPE_EXTERNAL_IP) {
+        if (m_camera.index == 0) {
+          if (sysutil_settings->has_ip_camera_address &&
+              !sysutil_settings->ip_camera_address.empty()) {
+            ret.ip_camera_address = sysutil_settings->ip_camera_address;
+          }
+          if (sysutil_settings->has_ip_camera_pipeline &&
+              !sysutil_settings->ip_camera_pipeline.empty()) {
+            ret.ip_camera_pipeline = sysutil_settings->ip_camera_pipeline;
+          }
+        } else if (m_camera.index == 1) {
+          if (sysutil_settings->has_camera2_ip_camera_address &&
+              !sysutil_settings->camera2_ip_camera_address.empty()) {
+            ret.ip_camera_address = sysutil_settings->camera2_ip_camera_address;
+          }
+          if (sysutil_settings->has_camera2_ip_camera_pipeline &&
+              !sysutil_settings->camera2_ip_camera_pipeline.empty()) {
+            ret.ip_camera_pipeline =
+                sysutil_settings->camera2_ip_camera_pipeline;
+          }
+        }
+      }
+
       std::string requested_resolution_fps;
       if (m_camera.index == 0 && sysutil_settings->has_camera_resolution_fps) {
         requested_resolution_fps = sysutil_settings->camera_resolution_fps;

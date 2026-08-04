@@ -60,6 +60,7 @@ std::string AirCameraGenericSettingsHolder::imp_serialize(
 struct SysutilCameraOverrides {
   std::optional<int> primary;
   std::optional<int> secondary;
+  std::optional<int> ip_camera_bitrate_mbits;
 };
 
 static SysutilCameraOverrides get_sysutil_camera_overrides() {
@@ -76,6 +77,10 @@ static SysutilCameraOverrides get_sysutil_camera_overrides() {
   if (settings_opt->has_camera2_type &&
       is_valid_secondary_cam_type(settings_opt->camera2_type)) {
     overrides.secondary = settings_opt->camera2_type;
+  }
+  if (settings_opt->has_ip_camera_bitrate_mbits &&
+      is_valid_ip_camera_bitrate_mbits(settings_opt->ip_camera_bitrate_mbits)) {
+    overrides.ip_camera_bitrate_mbits = settings_opt->ip_camera_bitrate_mbits;
   }
   return overrides;
 }
@@ -98,6 +103,10 @@ AirCameraGenericSettings AirCameraGenericSettingsHolder::create_default()
   ret.secondary_camera_type = X_CAM_TYPE_DISABLED;
 
   const auto sysutil_overrides = get_sysutil_camera_overrides();
+  if (sysutil_overrides.ip_camera_bitrate_mbits.has_value()) {
+    ret.ip_camera_bitrate_mbits =
+        sysutil_overrides.ip_camera_bitrate_mbits.value();
+  }
   if (sysutil_overrides.primary.has_value()) {
     ret.primary_camera_type = sysutil_overrides.primary.value();
     if (OHDPlatform::instance().is_rpi5() &&
