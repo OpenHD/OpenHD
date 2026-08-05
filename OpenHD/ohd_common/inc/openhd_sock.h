@@ -96,6 +96,12 @@ struct SysutilSettings {
   std::string camera_resolution_fps;
   bool has_camera2_resolution_fps = false;
   std::string camera2_resolution_fps;
+  bool has_camera2_ip_camera_address = false;
+  std::string camera2_ip_camera_address;
+  bool has_camera2_ip_camera_pipeline = false;
+  std::string camera2_ip_camera_pipeline;
+  bool has_ip_camera_bitrate_mbits = false;
+  int ip_camera_bitrate_mbits = 0;
   bool has_run_mode = false;
   bool run_as_air = false;
   bool run_record_only = false;

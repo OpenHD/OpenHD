@@ -552,6 +552,24 @@ std::optional<SysutilSettings> request_sysutil_settings(
     settings.has_camera2_resolution_fps =
         parsed.value("has_camera2_resolution_fps", false);
   }
+  if (parsed.contains("camera2_ip_camera_address")) {
+    settings.camera2_ip_camera_address =
+        parsed.value("camera2_ip_camera_address", std::string{});
+    settings.has_camera2_ip_camera_address =
+        parsed.value("has_camera2_ip_camera_address", true);
+  }
+  if (parsed.contains("camera2_ip_camera_pipeline")) {
+    settings.camera2_ip_camera_pipeline =
+        parsed.value("camera2_ip_camera_pipeline", std::string{});
+    settings.has_camera2_ip_camera_pipeline =
+        parsed.value("has_camera2_ip_camera_pipeline", true);
+  }
+  if (parsed.contains("ip_camera_bitrate_mbits")) {
+    settings.ip_camera_bitrate_mbits =
+        parsed.value("ip_camera_bitrate_mbits", 0);
+    settings.has_ip_camera_bitrate_mbits =
+        parsed.value("has_ip_camera_bitrate_mbits", true);
+  }
 
   const auto run_mode = parsed.value("run_mode", "");
   if (run_mode == "air" || run_mode == "ground" || run_mode == "record") {

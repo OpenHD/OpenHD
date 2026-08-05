@@ -45,8 +45,9 @@ AirCameraGenericSettingsHolder::impl_deserialize(
   if (parsed.has_value() && OHDPlatform::instance().is_rpi5() &&
       parsed->primary_camera_type == X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI) {
     openhd::log::get_default()->warn(
-        "Migrating legacy MMAL camera setting to Pi 5 libcamera IMX708");
-    parsed->primary_camera_type = X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V3_IMX708;
+        "Pi 5 does not support the legacy MMAL camera pipeline; manual camera "
+        "selection is required");
+    parsed->primary_camera_type = X_CAM_TYPE_DUMMY_SW;
   }
   return parsed;
 }
@@ -60,6 +61,7 @@ std::string AirCameraGenericSettingsHolder::imp_serialize(
 struct SysutilCameraOverrides {
   std::optional<int> primary;
   std::optional<int> secondary;
+  std::optional<int> ip_camera_bitrate_mbits;
 };
 
 static SysutilCameraOverrides get_sysutil_camera_overrides() {
@@ -77,17 +79,18 @@ static SysutilCameraOverrides get_sysutil_camera_overrides() {
       is_valid_secondary_cam_type(settings_opt->camera2_type)) {
     overrides.secondary = settings_opt->camera2_type;
   }
+  if (settings_opt->has_ip_camera_bitrate_mbits &&
+      is_valid_ip_camera_bitrate_mbits(
+          settings_opt->ip_camera_bitrate_mbits)) {
+    overrides.ip_camera_bitrate_mbits =
+        settings_opt->ip_camera_bitrate_mbits;
+  }
   return overrides;
 }
 
-static int rpi_get_default_primary_cam_type(const OHDPlatform &platform) {
-  if (platform.is_rpi5()) {
-    openhd::log::get_default()->debug(
-        "No sysutils primary camera override on Pi 5, using libcamera IMX708");
-    return X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V3_IMX708;
-  }
+static int rpi_get_default_primary_cam_type() {
   openhd::log::get_default()->debug(
-      "No sysutils primary camera override, using MMAL");
+      "No sysutils primary camera override, using legacy MMAL autodetection");
   return X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI;
 }
 
@@ -98,14 +101,18 @@ AirCameraGenericSettings AirCameraGenericSettingsHolder::create_default()
   ret.secondary_camera_type = X_CAM_TYPE_DISABLED;
 
   const auto sysutil_overrides = get_sysutil_camera_overrides();
+  if (sysutil_overrides.ip_camera_bitrate_mbits.has_value()) {
+    ret.ip_camera_bitrate_mbits =
+        sysutil_overrides.ip_camera_bitrate_mbits.value();
+  }
   if (sysutil_overrides.primary.has_value()) {
     ret.primary_camera_type = sysutil_overrides.primary.value();
     if (OHDPlatform::instance().is_rpi5() &&
         ret.primary_camera_type == X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI) {
       openhd::log::get_default()->warn(
-          "Pi 5 does not support the legacy MMAL camera pipeline; using "
-          "libcamera IMX708 instead");
-      ret.primary_camera_type = X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V3_IMX708;
+          "Pi 5 does not support the legacy MMAL camera pipeline; manual "
+          "camera selection is required");
+      ret.primary_camera_type = X_CAM_TYPE_DUMMY_SW;
     }
     openhd::log::get_default()->debug(
         "Using sysutils primary camera type: {}",
@@ -123,8 +130,12 @@ AirCameraGenericSettings AirCameraGenericSettingsHolder::create_default()
   }
 
   if (OHDPlatform::instance().is_rpi()) {
-    ret.primary_camera_type =
-        rpi_get_default_primary_cam_type(OHDPlatform::instance());
+    if (OHDPlatform::instance().is_rpi5()) {
+      openhd::log::get_default()->warn(
+          "No manual camera selection for Pi 5, using dummy camera");
+    } else {
+      ret.primary_camera_type = rpi_get_default_primary_cam_type();
+    }
   } else if (OHDPlatform::instance().is_x20()) {
     ret.primary_camera_type = openhd::x20::detect_camera_type();
   } else if (OHDPlatform::instance().is_a733()) {
