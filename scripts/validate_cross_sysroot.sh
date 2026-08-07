@@ -50,10 +50,10 @@ printf '%s\n' \
   '  const GLubyte* gl_version = glGetString(GL_VERSION);' \
   '  FT_Library freetype = nullptr;' \
   '  int ft_status = FT_Init_FreeType(&freetype);' \
-  '  const char* zlib_version = zlibVersion();' \
+  '  const char* linked_zlib_version = zlibVersion();' \
   '  return address.isWildcard() + (drm_version != nullptr) + (gbm != nullptr)' \
   '      + (display != EGL_NO_DISPLAY) + (gl_version != nullptr) + ft_status' \
-  '      + (zlib_version == nullptr);' \
+  '      + (linked_zlib_version == nullptr);' \
   '}' \
   | "${compiler}" --sysroot="${sysroot}" -x c++ - \
       "${pkg_config_flags[@]}" \
