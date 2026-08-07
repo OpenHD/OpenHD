@@ -34,7 +34,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            mmdebstrap debian-archive-keyring zstd pkg-config \
+            mmdebstrap debian-archive-keyring gnupg zstd pkg-config \
             ${{ matrix.compiler_packages }}
 
       - name: Create Bullseye sysroot without QEMU

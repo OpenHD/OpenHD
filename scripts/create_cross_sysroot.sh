@@ -26,6 +26,10 @@ if ! command -v mmdebstrap >/dev/null 2>&1; then
   echo "mmdebstrap is required to create the cross sysroot." >&2
   exit 1
 fi
+if ! command -v gpg >/dev/null 2>&1; then
+  echo "gpg is required to verify the Debian archive used for the cross sysroot." >&2
+  exit 1
+fi
 
 packages=(
   libc6-dev
@@ -42,6 +46,12 @@ packages=(
   libgstreamer1.0-dev
   libgstreamer-plugins-base1.0-dev
   libv4l-dev
+  libdrm-dev
+  libgbm-dev
+  libegl1-mesa-dev
+  libgles2-mesa-dev
+  libfreetype6-dev
+  zlib1g-dev
 )
 package_csv="$(IFS=,; echo "${packages[*]}")"
 
@@ -86,6 +96,9 @@ printf '%s\n' \
 
 test -f "${output_dir}/usr/include/Poco/Poco.h"
 test -f "${output_dir}/usr/include/gstreamer-1.0/gst/gst.h"
+test -f "${output_dir}/usr/include/gbm.h"
+test -f "${output_dir}/usr/include/EGL/egl.h"
+test -f "${output_dir}/usr/include/GLES2/gl2.h"
 find "${output_dir}/usr/lib" -name 'libPocoFoundation.so*' -print -quit | grep -q .
 
 echo "Created ${suite}/${architecture} OpenHD sysroot at ${output_dir}"
