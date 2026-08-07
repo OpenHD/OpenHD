@@ -27,12 +27,36 @@ fi
 
 output="$(mktemp)"
 trap 'rm -f "${output}"' EXIT
+read -r -a pkg_config_flags <<<"$(
+  pkg-config --cflags --libs \
+    gstreamer-1.0 libdrm gbm egl glesv2 freetype2 zlib
+)"
 printf '%s\n' \
   '#include <Poco/Net/IPAddress.h>' \
   '#include <gst/gst.h>' \
-  'int main() { Poco::Net::IPAddress address; gst_init(nullptr, nullptr); return address.isWildcard(); }' \
+  '#include <xf86drm.h>' \
+  '#include <gbm.h>' \
+  '#include <EGL/egl.h>' \
+  '#include <GLES2/gl2.h>' \
+  '#include <ft2build.h>' \
+  '#include FT_FREETYPE_H' \
+  '#include <zlib.h>' \
+  'int main() {' \
+  '  Poco::Net::IPAddress address;' \
+  '  gst_init(nullptr, nullptr);' \
+  '  drmVersionPtr drm_version = drmGetVersion(-1);' \
+  '  gbm_device* gbm = gbm_create_device(-1);' \
+  '  EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);' \
+  '  const GLubyte* gl_version = glGetString(GL_VERSION);' \
+  '  FT_Library freetype = nullptr;' \
+  '  int ft_status = FT_Init_FreeType(&freetype);' \
+  '  const char* zlib_version = zlibVersion();' \
+  '  return address.isWildcard() + (drm_version != nullptr) + (gbm != nullptr)' \
+  '      + (display != EGL_NO_DISPLAY) + (gl_version != nullptr) + ft_status' \
+  '      + (zlib_version == nullptr);' \
+  '}' \
   | "${compiler}" --sysroot="${sysroot}" -x c++ - \
-      $(pkg-config --cflags --libs gstreamer-1.0) \
+      "${pkg_config_flags[@]}" \
       -L"${gcc_runtime_dir}" \
       -L"${sysroot}/usr/lib/${triplet}" \
       -L"${sysroot}/lib/${triplet}" \
