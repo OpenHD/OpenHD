@@ -68,6 +68,47 @@ struct openhd_plugin_video_settings_event {
   const char* ip_address;
 };
 
+/* Generic camera/gimbal controls. These are intentionally expressed without
+ * MAVLink types so independently-built plugins do not depend on OpenHD's
+ * generated MAVLink headers. Values use the units documented per action. */
+enum openhd_plugin_camera_control_action {
+  OPENHD_PLUGIN_GIMBAL_RATE = 0,       /* value1=pitch, value2=yaw; -1..1 */
+  OPENHD_PLUGIN_GIMBAL_ANGLE = 1,      /* value1=pitch, value2=yaw; degrees */
+  OPENHD_PLUGIN_GIMBAL_CENTER = 2,
+  OPENHD_PLUGIN_GIMBAL_MODE = 3,
+  /* value1: enum openhd_plugin_gimbal_mode */
+  OPENHD_PLUGIN_CAMERA_ZOOM_RATE = 4,  /* value1: -1, 0, or 1 */
+  OPENHD_PLUGIN_CAMERA_ZOOM_ABSOLUTE = 5, /* value1: zoom multiple */
+  OPENHD_PLUGIN_CAMERA_FOCUS_RATE = 6, /* value1: -1, 0, or 1 */
+  OPENHD_PLUGIN_CAMERA_AUTO_FOCUS = 7,
+  OPENHD_PLUGIN_CAMERA_TAKE_PHOTO = 8,
+  OPENHD_PLUGIN_CAMERA_RECORD_START = 9,
+  OPENHD_PLUGIN_CAMERA_RECORD_STOP = 10,
+  OPENHD_PLUGIN_CAMERA_IMAGE_TYPE = 11, /* value1: vendor image type */
+  OPENHD_PLUGIN_CAMERA_THERMAL_PALETTE = 12,
+  /* value1: vendor palette */
+  OPENHD_PLUGIN_CAMERA_ZOOM_PERCENT = 13, /* value1: 0..100 */
+};
+
+enum openhd_plugin_gimbal_mode {
+  OPENHD_PLUGIN_GIMBAL_MODE_LOCK = 0,
+  OPENHD_PLUGIN_GIMBAL_MODE_FOLLOW = 1,
+  OPENHD_PLUGIN_GIMBAL_MODE_FPV = 2,
+};
+
+enum openhd_plugin_camera_control_flags {
+  OPENHD_PLUGIN_CAMERA_CONTROL_YAW_LOCK = 1U << 0U,
+};
+
+struct openhd_plugin_camera_control_event {
+  uint32_t struct_size;
+  uint32_t camera_index;
+  int32_t action;
+  float value1;
+  float value2;
+  uint32_t flags;
+};
+
 struct openhd_plugin_descriptor {
   uint32_t struct_size;
   uint32_t abi_version;
@@ -81,6 +122,10 @@ struct openhd_plugin_descriptor {
       const struct openhd_plugin_video_bitrate_event* event);
   void (*on_video_settings_changed)(
       const struct openhd_plugin_video_settings_event* event);
+  /* Return 0 when accepted, a positive value when unsupported, and a negative
+   * value when the command could not be sent. Added as an ABI-v1 extension. */
+  int32_t (*on_camera_control)(
+      const struct openhd_plugin_camera_control_event* event);
 };
 
 typedef const struct openhd_plugin_descriptor* (*openhd_plugin_get_descriptor_fn)(

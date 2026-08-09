@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "openhd_plugin.h"
@@ -31,8 +32,11 @@ class PluginManager {
       const openhd_plugin_video_bitrate_event& event) noexcept;
   void notify_video_settings_changed(
       const openhd_plugin_video_settings_event& event) noexcept;
+  bool notify_camera_control(
+      const openhd_plugin_camera_control_event& event) noexcept;
   void shutdown() noexcept;
   [[nodiscard]] std::size_t loaded_plugin_count() const noexcept;
+  [[nodiscard]] bool is_plugin_loaded(std::string_view name) const noexcept;
 
  private:
   PluginManager();

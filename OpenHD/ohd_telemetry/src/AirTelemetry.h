@@ -103,6 +103,8 @@ class AirTelemetry : public MavlinkSystem {
   void on_messages_fc(std::vector<MavlinkMessage>& messages);
   // called every time one or more messages from the ground unit are received
   void on_messages_ground_unit(std::vector<MavlinkMessage>& messages);
+  std::vector<MavlinkMessage> process_plugin_camera_controls(
+      const std::vector<MavlinkMessage>& messages);
   // R.N only on air, and only FC uart settings
   [[nodiscard]] UartPriorityProfile get_openhd_uart_priority_profile() const;
   std::vector<openhd::Setting> get_all_settings();

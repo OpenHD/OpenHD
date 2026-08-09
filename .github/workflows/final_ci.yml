@@ -123,10 +123,43 @@ jobs:
           dpkg-deb -f "${package}" Package Version Architecture Depends
           dpkg-deb -c "${package}" | grep -q 'usr/local/bin/openhd'
           dpkg-deb -x "${package}" "${RUNNER_TEMP}/package-root"
-          readelf -d "${RUNNER_TEMP}/package-root/usr/local/bin/openhd" | tee openhd-needed.txt
+          package_root="${RUNNER_TEMP}/package-root"
+          openhd_binary="${package_root}/usr/local/bin/openhd"
+          readelf -d "${openhd_binary}" | tee openhd-needed.txt
           if grep -qi libcamera openhd-needed.txt; then
             echo "Portable package must not link libcamera directly."
             exit 1
+          fi
+          if ! grep -a -q 'Artosyn probe:' "${openhd_binary}"; then
+            echo "Packaged OpenHD binary does not contain the Artosyn link backend."
+            exit 1
+          fi
+          artosyn_daemon="$(find "${package_root}/usr/local/bin" -maxdepth 1 -type f \
+            \( -name artosyn_daemon -o -name ar8030_daemon -o -name artlinkd \
+               -o -name bbd -o -name bb_daemon \) -print -quit)"
+          if [[ -z "${artosyn_daemon}" ]]; then
+            echo "OpenHD package does not contain an Artosyn daemon."
+            exit 1
+          fi
+          case "${{ matrix.architecture }}" in
+            amd64) expected_machine='Advanced Micro Devices X86-64' ;;
+            arm64) expected_machine='AArch64' ;;
+            armhf) expected_machine='ARM' ;;
+          esac
+          actual_machine="$(readelf -h "${artosyn_daemon}" | \
+            sed -n 's/^[[:space:]]*Machine:[[:space:]]*//p' | head -n 1)"
+          if [[ "${actual_machine}" != "${expected_machine}" ]]; then
+            echo "Artosyn daemon target '${actual_machine}' does not match package target '${expected_machine}'."
+            exit 1
+          fi
+          artosyn_tuntap="${package_root}/usr/local/bin/tuntap_bb"
+          if [[ -f "${artosyn_tuntap}" ]]; then
+            actual_machine="$(readelf -h "${artosyn_tuntap}" | \
+              sed -n 's/^[[:space:]]*Machine:[[:space:]]*//p' | head -n 1)"
+            if [[ "${actual_machine}" != "${expected_machine}" ]]; then
+              echo "Artosyn tuntap target '${actual_machine}' does not match package target '${expected_machine}'."
+              exit 1
+            fi
           fi
 
       - name: Upload architecture package

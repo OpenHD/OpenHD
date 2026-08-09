@@ -7,11 +7,13 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <cerrno>
 #include <cstring>
 #include <cstdlib>
 #include <iomanip>
 #include <limits>
+#include <optional>
 #include <sstream>
 #include <utility>
 
@@ -102,6 +104,52 @@ int bandwidth_enum_to_mhz(int bw) {
       return 40;
     default:
       return 0;
+  }
+}
+
+// bb_api.h documents the vendor SNR value as a linear quantity with the
+// conversion 10*log10(snr/36). Zero means that the quality sample is invalid.
+std::optional<int> artosyn_snr_linear_to_db(int linear_snr) {
+  if (linear_snr <= 0) return std::nullopt;
+  return static_cast<int>(
+      std::lround(10.0 * std::log10(static_cast<double>(linear_snr) / 36.0)));
+}
+
+int artosyn_quality_percent(int snr_db, int ldpc_err, int ldpc_num) {
+  // Match QOpenHD's useful SNR range. Treat 5 dB as exhausted safety margin
+  // and 25 dB as excellent; the radio may still decode below the lower bound.
+  const double normalized =
+      std::clamp((static_cast<double>(snr_db) - 5.0) / 20.0, 0.0, 1.0);
+  int quality = static_cast<int>(std::lround(100.0 * normalized * normalized));
+  if (ldpc_num > 0 && ldpc_err >= 0) {
+    const int decode_quality = std::clamp(
+        100 - static_cast<int>((static_cast<int64_t>(ldpc_err) * 100 +
+                                ldpc_num / 2) /
+                               ldpc_num),
+        0, 100);
+    quality = std::min(quality, decode_quality);
+  }
+  return quality;
+}
+
+int artosyn_estimated_noise_floor_dbm(int bandwidth) {
+  // The SDK does not expose calibrated RSSI/noise in dBm. Use a conservative
+  // receiver noise-floor estimate adjusted by 3 dB for each bandwidth step.
+  switch (bandwidth) {
+    case BB_BW_1_25M:
+      return -107;
+    case BB_BW_2_5M:
+      return -104;
+    case BB_BW_5M:
+      return -101;
+    case BB_BW_10M:
+      return -98;
+    case BB_BW_20M:
+      return -95;
+    case BB_BW_40M:
+      return -92;
+    default:
+      return -95;
   }
 }
 
@@ -1419,6 +1467,71 @@ void ArtosynLink::update_link_stats() {
                         nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
                         nullptr);
 
+  int quality_snr_linear = -1;
+  int quality_ldpc_err = -1;
+  int quality_ldpc_num = -1;
+  int quality_gain_a = -1;
+  int quality_gain_b = -1;
+  bool have_quality = false;
+  if (!first_sample) {
+    const auto read_user = [&]() {
+      return read_quality_metrics(&quality_snr_linear, &quality_ldpc_err,
+                                  &quality_ldpc_num, &quality_gain_a,
+                                  &quality_gain_b) &&
+             quality_snr_linear > 0;
+    };
+    const auto read_peer = [&]() {
+      return read_peer_quality(&quality_snr_linear, &quality_ldpc_err,
+                               &quality_ldpc_num, &quality_gain_a,
+                               &quality_gain_b) &&
+             quality_snr_linear > 0;
+    };
+    // AP receives a physical user's signal; DEV receives its AP peer. Fall
+    // back to the other API because older firmware exposes only one of them.
+    const bool prefer_peer =
+        have_status ? role == BB_ROLE_DEV : m_profile.is_air;
+    have_quality = prefer_peer ? (read_peer() || read_user())
+                               : (read_user() || read_peer());
+    if (!have_quality) {
+      bb_info_t self{};
+      if (read_1v1_info(&self, nullptr) && self.snr > 0) {
+        quality_snr_linear = self.snr;
+        quality_ldpc_err = self.ldpc_tlv_err_ratio;
+        quality_ldpc_num = 10000;
+        quality_gain_a = self.gain_a;
+        quality_gain_b = self.gain_b;
+        have_quality = true;
+      }
+    }
+  }
+  const auto quality_snr_db =
+      have_quality ? artosyn_snr_linear_to_db(quality_snr_linear)
+                   : std::nullopt;
+  const int instantaneous_quality_percent =
+      quality_snr_db.has_value()
+          ? artosyn_quality_percent(quality_snr_db.value(), quality_ldpc_err,
+                                    quality_ldpc_num)
+          : -1;
+  if (instantaneous_quality_percent >= 0) {
+    m_quality_missing_samples = 0;
+    if (m_reported_link_quality_percent < 0 ||
+        instantaneous_quality_percent < m_reported_link_quality_percent) {
+      // A range/safety indicator must react immediately to a degrading link.
+      m_reported_link_quality_percent = instantaneous_quality_percent;
+    } else {
+      // Recover slowly so a short good sample cannot make the range bar jump.
+      m_reported_link_quality_percent =
+          (m_reported_link_quality_percent * 7 +
+           instantaneous_quality_percent + 4) /
+          8;
+    }
+  } else if (!rx_ok || ++m_quality_missing_samples >= 4) {
+    // Missing RF metrics for two seconds, or no packets for five seconds, is
+    // conservatively reported as no remaining link margin.
+    m_reported_link_quality_percent = 0;
+  }
+  const int reported_quality_percent = m_reported_link_quality_percent;
+
   const int tx_effective_kbits =
       tx_real_tp > 0 ? tx_real_tp : (tx_tp_th > 0 ? tx_tp_th : tx_phy_tp);
   const int rx_effective_kbits =
@@ -1456,14 +1569,18 @@ void ArtosynLink::update_link_stats() {
         "Artosyn diag: rx_ok={} metrics={} role={} mode={} sync={} "
         "sync_master={} cfg_sbmp=0x{:x} rt_sbmp=0x{:x} pair={} peer={} "
         "tx_mcs={} rx_mcs={} bw={} tx_real_kbit={} rx_real_kbit={} "
-        "tx_phy_kbit={} rx_phy_kbit={} tx_tp_th={} rx_tp_th={} tx_bps={} "
+        "tx_phy_kbit={} rx_phy_kbit={} tx_tp_th={} rx_tp_th={} snr_raw={} "
+        "snr_db={} quality_raw={} quality_bar={} gain_a={} gain_b={} tx_bps={} "
         "rx_bps={} tx_pps={} rx_pps={} tx_tele_bps={} rx_tele_bps={} "
         "video_fd={} tele_fd={}",
         rx_ok ? "yes" : "no", have_metrics ? "yes" : "no", role, mode,
         sync_mode, sync_master, cfg_sbmp, rt_sbmp, pair_state, peer_mac,
         tx_mcs, rx_mcs, bw, tx_real_tp, rx_real_tp, tx_phy_tp, rx_phy_tp,
-        tx_tp_th, rx_tp_th, tx_bps, rx_bps, tx_pps, rx_pps, tx_tele_bps,
-        rx_tele_bps, m_video_fd, m_telemetry_fd);
+        tx_tp_th, rx_tp_th, quality_snr_linear,
+        quality_snr_db.value_or(-128), instantaneous_quality_percent,
+        reported_quality_percent, quality_gain_a, quality_gain_b, tx_bps,
+        rx_bps, tx_pps, rx_pps, tx_tele_bps, rx_tele_bps, m_video_fd,
+        m_telemetry_fd);
   }
 
   stats.telemetry.curr_tx_bps = clamp_int32(tx_tele_bps);
@@ -1512,32 +1629,46 @@ void ArtosynLink::update_link_stats() {
   // Use card_sub_type to expose "HS mode" detail to UI if needed later.
   card.card_sub_type = artosyn_usb.hs_mode ? 1 : 0;
   card.tx_active = m_profile.is_air ? 1 : 0;
-  card.rx_rssi = -127;
-  card.rx_rssi_1 = -127;
-  card.rx_rssi_2 = -127;
-  card.rx_noise_adapter = 0;
-  card.rx_noise_antenna1 = 0;
-  card.rx_noise_antenna2 = 0;
-  card.rx_signal_quality_adapter = 0;
-  card.rx_signal_quality_antenna1 = 0;
-  card.rx_signal_quality_antenna2 = 0;
-  int snr = -1;
-  if (!first_sample) {
-    (void)read_quality_metrics(&snr, nullptr, nullptr, nullptr, nullptr);
-  }
-  if (snr >= 0) {
-    card.rx_snr_antenna1 = clamp_int8(snr);
-    card.rx_snr_antenna2 = clamp_int8(snr);
+  if (quality_snr_db.has_value()) {
+    const int noise_floor_dbm =
+        artosyn_estimated_noise_floor_dbm(rx_bw >= 0 ? rx_bw : bw);
+    const int estimated_rssi_dbm =
+        std::clamp(noise_floor_dbm + quality_snr_db.value(), -127, 0);
+    card.rx_rssi = clamp_int8(estimated_rssi_dbm);
+    card.rx_rssi_1 = clamp_int8(estimated_rssi_dbm);
+    card.rx_rssi_2 = clamp_int8(estimated_rssi_dbm);
+    card.rx_noise_adapter = clamp_int8(noise_floor_dbm);
+    card.rx_noise_antenna1 = clamp_int8(noise_floor_dbm);
+    card.rx_noise_antenna2 = clamp_int8(noise_floor_dbm);
+    card.rx_snr_antenna1 = clamp_int8(quality_snr_db.value());
+    card.rx_snr_antenna2 = clamp_int8(quality_snr_db.value());
   } else {
+    card.rx_rssi = -127;
+    card.rx_rssi_1 = -127;
+    card.rx_rssi_2 = -127;
+    card.rx_noise_adapter = -128;
+    card.rx_noise_antenna1 = -128;
+    card.rx_noise_antenna2 = -128;
     card.rx_snr_antenna1 = -128;
     card.rx_snr_antenna2 = -128;
   }
+  card.rx_signal_quality_adapter = clamp_int8(reported_quality_percent);
+  card.rx_signal_quality_antenna1 = clamp_int8(reported_quality_percent);
+  card.rx_signal_quality_antenna2 = clamp_int8(reported_quality_percent);
   card.card_temperature = 0;
   card.count_p_received =
       static_cast<uint32_t>(m_rx_total_packets.load());
   card.count_p_injected =
       static_cast<uint32_t>(m_tx_total_packets.load());
-  card.curr_rx_packet_loss_perc = 0;
+  card.curr_rx_packet_loss_perc =
+      quality_ldpc_num > 0 && quality_ldpc_err >= 0
+          ? clamp_int8(std::clamp(
+                static_cast<int>((static_cast<int64_t>(quality_ldpc_err) *
+                                      100 +
+                                  quality_ldpc_num / 2) /
+                                 quality_ldpc_num),
+                0, 100))
+          : -1;
   int pwr_dbm = -1;
   if (!first_sample) {
     (void)read_power_metrics(nullptr, &pwr_dbm);
@@ -1545,7 +1676,7 @@ void ArtosynLink::update_link_stats() {
   card.tx_power_current = pwr_dbm >= 0 ? clamp_int16(pwr_dbm) : 0;
   card.tx_power_armed = 0;
   card.tx_power_disarmed = 0;
-  card.curr_status = m_dev ? 0 : 1;
+  card.curr_status = m_dev && rx_ok && reported_quality_percent >= 0 ? 0 : 1;
 
   openhd::LinkActionHandler::instance().update_link_stats(stats);
 }
@@ -1745,11 +1876,15 @@ bool ArtosynLink::read_quality_metrics(int* snr, int* ldpc_err, int* ldpc_num,
   bb_get_user_quality_in_t q_in{};
   bb_get_user_quality_out_t q_out{};
   q_in.user_bmp = (1 << slot);
-  q_in.average = 0;
+  q_in.average = 1;
   if (bb_ioctl(m_dev, BB_GET_USER_QUALITY, &q_in, &q_out) != 0) {
     return false;
   }
   const auto& q = q_out.qualities[slot];
+  if (q.snr == 0 && q.ldpc_err == 0 && q.ldpc_num == 0 && q.gain_a == 0 &&
+      q.gain_b == 0) {
+    return false;
+  }
   if (snr) *snr = q.snr;
   if (ldpc_err) *ldpc_err = q.ldpc_err;
   if (ldpc_num) *ldpc_num = q.ldpc_num;
@@ -1880,7 +2015,9 @@ bool ArtosynLink::read_mcs_throughput(int* tx_tp_kbps, int* rx_tp_kbps) {
 bool ArtosynLink::read_peer_quality(int* snr, int* ldpc_err, int* ldpc_num,
                                     int* gain_a, int* gain_b) {
   if (!m_dev) return false;
-  const int slot = m_cfg.slot;
+  // On a DEV endpoint the peer is always addressed as the AP slot. AP-side
+  // fallback queries retain the configured physical-user slot.
+  const int slot = m_profile.is_air ? BB_SLOT_AP : m_cfg.slot;
   bb_get_peer_quality_in_t in{};
   bb_get_peer_quality_out_t out{};
   in.slot_bmp = (1 << slot);
@@ -1889,6 +2026,10 @@ bool ArtosynLink::read_peer_quality(int* snr, int* ldpc_err, int* ldpc_num,
     return false;
   }
   const auto& q = out.qualities[slot];
+  if (q.snr == 0 && q.ldpc_err == 0 && q.ldpc_num == 0 && q.gain_a == 0 &&
+      q.gain_b == 0) {
+    return false;
+  }
   if (snr) *snr = q.snr;
   if (ldpc_err) *ldpc_err = q.ldpc_err;
   if (ldpc_num) *ldpc_num = q.ldpc_num;

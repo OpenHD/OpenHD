@@ -247,6 +247,29 @@ void PluginManager::notify_video_settings_changed(
   }
 }
 
+bool PluginManager::notify_camera_control(
+    const openhd_plugin_camera_control_event& event) noexcept {
+  const auto logger = openhd::log::create_or_get("plugins");
+  bool accepted = false;
+  for (const auto& plugin : m_plugins) {
+    const auto* descriptor = plugin->descriptor;
+    const bool has_control_callback =
+        descriptor->struct_size >= sizeof(openhd_plugin_descriptor) &&
+        descriptor->on_camera_control != nullptr;
+    if (!has_control_callback) continue;
+    try {
+      accepted = descriptor->on_camera_control(&event) == 0 || accepted;
+    } catch (const std::exception& ex) {
+      logger->error("Plugin {} camera-control callback threw: {}",
+                    descriptor->name, ex.what());
+    } catch (...) {
+      logger->error("Plugin {} camera-control callback threw",
+                    descriptor->name);
+    }
+  }
+  return accepted;
+}
+
 void PluginManager::shutdown() noexcept {
   if (m_plugins.empty()) return;
   const auto logger = openhd::log::create_or_get("plugins");
@@ -265,6 +288,14 @@ void PluginManager::shutdown() noexcept {
 
 std::size_t PluginManager::loaded_plugin_count() const noexcept {
   return m_plugins.size();
+}
+
+bool PluginManager::is_plugin_loaded(std::string_view name) const noexcept {
+  return std::any_of(m_plugins.begin(), m_plugins.end(),
+                     [name](const auto& plugin) {
+                       return plugin->descriptor->name != nullptr &&
+                              name == plugin->descriptor->name;
+                     });
 }
 
 }  // namespace openhd

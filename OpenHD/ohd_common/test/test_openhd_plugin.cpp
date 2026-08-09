@@ -9,6 +9,7 @@ int main(int argc, char* argv[]) {
       true, {"/definitely/not/a/real/openhd/plugin/directory"});
   assert(missing_loaded == 0);
   assert(manager.loaded_plugin_count() == 0);
+  assert(!manager.is_plugin_loaded("siyi"));
   if (argc == 2) {
     const auto plugin_loaded = manager.load_plugins(true, {argv[1]});
     assert(plugin_loaded == 1);

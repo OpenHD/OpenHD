@@ -175,6 +175,8 @@ class ArtosynLink : public OHDLink {
 
   int64_t m_last_stats_ts_ms = 0;
   int m_bitrate_capacity_ema_kbits = 0;
+  int m_reported_link_quality_percent = -1;
+  int m_quality_missing_samples = 0;
   int m_last_recommended_bitrate_kbits = -1;
   int64_t m_last_bitrate_calculation_ms = 0;
   int64_t m_last_bitrate_announcement_ms = 0;

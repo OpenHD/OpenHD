@@ -277,6 +277,16 @@ static MTarget get_target_from_message_if_available(
     mavlink_msg_command_long_decode(&msg, &command);
     return {command.target_system, command.target_component};
   }
+  if (msg.msgid == MAVLINK_MSG_ID_GIMBAL_MANAGER_SET_PITCHYAW) {
+    mavlink_gimbal_manager_set_pitchyaw_t tmp;
+    mavlink_msg_gimbal_manager_set_pitchyaw_decode(&msg, &tmp);
+    return {tmp.target_system, tmp.target_component};
+  }
+  if (msg.msgid == MAVLINK_MSG_ID_GIMBAL_MANAGER_SET_MANUAL_CONTROL) {
+    mavlink_gimbal_manager_set_manual_control_t tmp;
+    mavlink_msg_gimbal_manager_set_manual_control_decode(&msg, &tmp);
+    return {tmp.target_system, tmp.target_component};
+  }
   if (msg.msgid == MAVLINK_MSG_ID_PARAM_EXT_SET) {
     mavlink_param_ext_set_t tmp;
     mavlink_msg_param_ext_set_decode(&msg, &tmp);

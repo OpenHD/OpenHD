@@ -23,16 +23,46 @@
 
 #include "AirTelemetry.h"
 
+#include <algorithm>
 #include <chrono>
+#include <cmath>
 
 #include "mav_helper.h"
 #include "mavsdk_temporary/XMavlinkParamProvider.h"
 #include "openhd_telemetry_recorder.h"
+#include "openhd_plugin_manager.h"
 #include "openhd_temporary_air_or_ground.h"
 #include "openhd_util.h"
 #include "openhd_util_time.h"
 
 namespace {
+
+constexpr float kHalfPi = 1.57079632679489661923F;
+constexpr float kRadiansToDegrees = 57.295779513082320876F;
+
+bool is_camera_component(uint8_t component) {
+  return component >= MAV_COMP_ID_CAMERA && component <= MAV_COMP_ID_CAMERA6;
+}
+
+bool is_gimbal_component(uint8_t component) {
+  return component == MAV_COMP_ID_GIMBAL ||
+         (component >= MAV_COMP_ID_GIMBAL2 && component <= MAV_COMP_ID_GIMBAL6);
+}
+
+uint32_t camera_index_for_component(uint8_t component) {
+  return is_camera_component(component) ? component - MAV_COMP_ID_CAMERA : 0;
+}
+
+MavlinkMessage camera_command_ack(uint8_t source_system,
+                                  uint8_t source_component,
+                                  uint16_t command, bool accepted) {
+  MavlinkMessage response{};
+  mavlink_msg_command_ack_pack(
+      OHD_SYS_ID_AIR, MAV_COMP_ID_CAMERA, &response.m, command,
+      accepted ? MAV_RESULT_ACCEPTED : MAV_RESULT_UNSUPPORTED, 255, 0,
+      source_system, source_component);
+  return response;
+}
 
 void record_mavlink_messages(const std::vector<MavlinkMessage>& messages,
                              const std::string& direction,
@@ -193,12 +223,183 @@ void AirTelemetry::on_messages_ground_unit(
   // any data created by an OpenHD component on the air pi only needs to be sent
   // to the ground pi, the FC cannot do anything with it anyways.
   std::lock_guard<std::mutex> guard(m_components_lock);
+  auto plugin_responses = process_plugin_camera_controls(messages);
+  send_messages_ground_unit(plugin_responses);
   for (auto& component : m_components) {
     std::vector<MavlinkMessage> responses{};
     OHDUtil::vec_append(responses,
                         component->process_mavlink_messages(messages));
     send_messages_ground_unit(responses);
   }
+}
+
+std::vector<MavlinkMessage> AirTelemetry::process_plugin_camera_controls(
+    const std::vector<MavlinkMessage>& messages) {
+  std::vector<MavlinkMessage> responses;
+  const auto send_control = [](uint32_t camera_index, int32_t action,
+                               float value1 = 0.0F, float value2 = 0.0F,
+                               uint32_t flags = 0U) {
+    const openhd_plugin_camera_control_event event{
+        sizeof(openhd_plugin_camera_control_event), camera_index, action,
+        value1, value2, flags};
+    return openhd::PluginManager::instance().notify_camera_control(event);
+  };
+
+  for (const auto& wrapped : messages) {
+    const auto& msg = wrapped.m;
+    if (msg.msgid == MAVLINK_MSG_ID_GIMBAL_MANAGER_SET_MANUAL_CONTROL) {
+      mavlink_gimbal_manager_set_manual_control_t control{};
+      mavlink_msg_gimbal_manager_set_manual_control_decode(&msg, &control);
+      if (control.target_system != OHD_SYS_ID_AIR ||
+          !(control.target_component == 0 ||
+            is_gimbal_component(control.target_component))) continue;
+      const float pitch =
+          std::isfinite(control.pitch_rate)
+              ? control.pitch_rate
+              : (std::isfinite(control.pitch) ? control.pitch : 0.0F);
+      const float yaw = std::isfinite(control.yaw_rate)
+                            ? control.yaw_rate
+                            : (std::isfinite(control.yaw) ? control.yaw : 0.0F);
+      const uint32_t flags =
+          (control.flags & GIMBAL_MANAGER_FLAGS_YAW_LOCK) != 0
+              ? OPENHD_PLUGIN_CAMERA_CONTROL_YAW_LOCK
+              : 0U;
+      send_control(0, OPENHD_PLUGIN_GIMBAL_RATE,
+                   std::clamp(pitch, -1.0F, 1.0F),
+                   std::clamp(yaw, -1.0F, 1.0F), flags);
+      continue;
+    }
+    if (msg.msgid == MAVLINK_MSG_ID_GIMBAL_MANAGER_SET_PITCHYAW) {
+      mavlink_gimbal_manager_set_pitchyaw_t control{};
+      mavlink_msg_gimbal_manager_set_pitchyaw_decode(&msg, &control);
+      if (control.target_system != OHD_SYS_ID_AIR ||
+          !(control.target_component == 0 ||
+            is_gimbal_component(control.target_component))) continue;
+      const uint32_t flags =
+          (control.flags & GIMBAL_MANAGER_FLAGS_YAW_LOCK) != 0
+              ? OPENHD_PLUGIN_CAMERA_CONTROL_YAW_LOCK
+              : 0U;
+      if (std::isfinite(control.pitch) || std::isfinite(control.yaw)) {
+        const float pitch = std::isfinite(control.pitch) ? control.pitch : 0.0F;
+        const float yaw = std::isfinite(control.yaw) ? control.yaw : 0.0F;
+        send_control(0, OPENHD_PLUGIN_GIMBAL_ANGLE,
+                     pitch * kRadiansToDegrees,
+                     yaw * kRadiansToDegrees, flags);
+      } else {
+        const float pitch_rate = std::isfinite(control.pitch_rate)
+                                     ? control.pitch_rate / kHalfPi : 0.0F;
+        const float yaw_rate = std::isfinite(control.yaw_rate)
+                                   ? control.yaw_rate / kHalfPi : 0.0F;
+        send_control(0, OPENHD_PLUGIN_GIMBAL_RATE,
+                     std::clamp(pitch_rate, -1.0F, 1.0F),
+                     std::clamp(yaw_rate, -1.0F, 1.0F), flags);
+      }
+      continue;
+    }
+    if (msg.msgid != MAVLINK_MSG_ID_COMMAND_LONG) continue;
+
+    mavlink_command_long_t command{};
+    mavlink_msg_command_long_decode(&msg, &command);
+    if (command.target_system != OHD_SYS_ID_AIR ||
+        !(command.target_component == 0 ||
+          is_camera_component(command.target_component) ||
+          is_gimbal_component(command.target_component))) continue;
+
+    const uint32_t camera_index =
+        camera_index_for_component(command.target_component);
+    bool recognized = true;
+    bool accepted = false;
+    switch (command.command) {
+      case MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW: {
+        const uint32_t flags =
+            (static_cast<uint32_t>(command.param5) &
+             GIMBAL_MANAGER_FLAGS_YAW_LOCK) != 0
+                ? OPENHD_PLUGIN_CAMERA_CONTROL_YAW_LOCK
+                : 0U;
+        if ((static_cast<uint32_t>(command.param5) &
+             GIMBAL_MANAGER_FLAGS_NEUTRAL) != 0) {
+          accepted = send_control(camera_index,
+                                  OPENHD_PLUGIN_GIMBAL_CENTER);
+        } else if (std::isfinite(command.param1) ||
+                   std::isfinite(command.param2)) {
+          accepted = send_control(
+              camera_index, OPENHD_PLUGIN_GIMBAL_ANGLE,
+              std::isfinite(command.param1) ? command.param1 : 0.0F,
+              std::isfinite(command.param2) ? command.param2 : 0.0F, flags);
+        } else {
+          accepted = send_control(
+              camera_index, OPENHD_PLUGIN_GIMBAL_RATE,
+              std::clamp((std::isfinite(command.param3) ? command.param3
+                                                        : 0.0F) /
+                             90.0F,
+                         -1.0F, 1.0F),
+              std::clamp((std::isfinite(command.param4) ? command.param4
+                                                        : 0.0F) /
+                             90.0F,
+                         -1.0F, 1.0F), flags);
+        }
+        break;
+      }
+      case MAV_CMD_DO_MOUNT_CONTROL:
+        if (static_cast<int>(command.param7) == MAV_MOUNT_MODE_NEUTRAL) {
+          accepted = send_control(camera_index,
+                                  OPENHD_PLUGIN_GIMBAL_CENTER);
+        } else {
+          accepted = send_control(camera_index, OPENHD_PLUGIN_GIMBAL_ANGLE,
+                                  command.param1, command.param3);
+        }
+        break;
+      case MAV_CMD_SET_CAMERA_ZOOM: {
+        const int zoom_type = static_cast<int>(command.param1);
+        if (zoom_type == ZOOM_TYPE_CONTINUOUS) {
+          accepted = send_control(camera_index,
+                                  OPENHD_PLUGIN_CAMERA_ZOOM_RATE,
+                                  command.param2);
+        } else if (zoom_type == ZOOM_TYPE_RANGE && command.param2 >= 0.0F &&
+                   command.param2 <= 100.0F) {
+          accepted = send_control(camera_index,
+                                  OPENHD_PLUGIN_CAMERA_ZOOM_PERCENT,
+                                  command.param2);
+        }
+        break;
+      }
+      case MAV_CMD_SET_CAMERA_FOCUS: {
+        const int focus_type = static_cast<int>(command.param1);
+        if (focus_type == FOCUS_TYPE_CONTINUOUS) {
+          accepted = send_control(camera_index,
+                                  OPENHD_PLUGIN_CAMERA_FOCUS_RATE,
+                                  command.param2);
+        } else if (focus_type == FOCUS_TYPE_AUTO ||
+                   focus_type == FOCUS_TYPE_AUTO_SINGLE) {
+          accepted = send_control(camera_index,
+                                  OPENHD_PLUGIN_CAMERA_AUTO_FOCUS);
+        }
+        break;
+      }
+      case MAV_CMD_IMAGE_START_CAPTURE:
+        if (command.param3 == 1.0F) {
+          accepted = send_control(camera_index,
+                                  OPENHD_PLUGIN_CAMERA_TAKE_PHOTO);
+        }
+        break;
+      case MAV_CMD_VIDEO_START_CAPTURE:
+        accepted = send_control(camera_index,
+                                OPENHD_PLUGIN_CAMERA_RECORD_START);
+        break;
+      case MAV_CMD_VIDEO_STOP_CAPTURE:
+        accepted = send_control(camera_index,
+                                OPENHD_PLUGIN_CAMERA_RECORD_STOP);
+        break;
+      default:
+        recognized = false;
+        break;
+    }
+    if (recognized) {
+      responses.push_back(camera_command_ack(msg.sysid, msg.compid,
+                                             command.command, accepted));
+    }
+  }
+  return responses;
 }
 
 void AirTelemetry::loop_infinite(bool& terminate,
@@ -490,6 +691,9 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
       openhd::IntSetting{
           static_cast<int>(m_air_settings->get_settings().sbus_update_rate_hz),
           c_sbus_rate}});
+  ret.push_back(openhd::create_read_only_int(
+      "SIYI_ACTIVE",
+      openhd::PluginManager::instance().is_plugin_loaded("siyi") ? 1 : 0));
   // and this allows an advanced user to change its air unit to a ground unit
   // only expose this setting if OpenHD uses the file workaround to figure out
   // air or ground.

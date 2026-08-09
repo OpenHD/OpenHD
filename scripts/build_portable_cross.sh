@@ -6,8 +6,14 @@ sysroot="$(realpath "${2:?Usage: build_portable_cross.sh <arm64|armhf> <sysroot>
 build_dir="${3:-/tmp/openhd-cross-${architecture}}"
 
 case "${architecture}" in
-  arm64) triplet="aarch64-linux-gnu" ;;
-  armhf) triplet="arm-linux-gnueabihf" ;;
+  arm64)
+    triplet="aarch64-linux-gnu"
+    expected_elf_machine="AArch64"
+    ;;
+  armhf)
+    triplet="arm-linux-gnueabihf"
+    expected_elf_machine="ARM"
+    ;;
   *)
     echo "Unsupported architecture: ${architecture}" >&2
     exit 1
@@ -51,6 +57,46 @@ if [[ "${OPENHD_REQUIRE_ARTOSYN:-1}" == "1" &&
   echo "Artosyn SDK is required but could not be cross-built." >&2
   exit 1
 fi
+if [[ "${OPENHD_REQUIRE_ARTOSYN_DAEMON:-0}" == "1" &&
+      ( -z "${ARTOSYN_SDK_DAEMON:-}" || ! -f "${ARTOSYN_SDK_DAEMON}" ) ]]; then
+  echo "Artosyn daemon is required but could not be cross-built." >&2
+  exit 1
+fi
+
+validate_target_artifact() {
+  local label="$1"
+  local artifact="$2"
+  local machines=""
+  [[ -f "${artifact}" ]] || {
+    echo "Missing ${label}: ${artifact}" >&2
+    return 1
+  }
+  machines="$(readelf -h "${artifact}" 2>/dev/null |
+    sed -n 's/^[[:space:]]*Machine:[[:space:]]*//p' | sort -u)"
+  if [[ -z "${machines}" ]]; then
+    echo "${label} is not an ELF binary or ELF archive: ${artifact}" >&2
+    return 1
+  fi
+  while IFS= read -r machine; do
+    if [[ "${machine}" != "${expected_elf_machine}" ]]; then
+      echo "${label} has target '${machine}', expected '${expected_elf_machine}': ${artifact}" >&2
+      return 1
+    fi
+  done <<<"${machines}"
+}
+
+if [[ -n "${ARTOSYN_SDK_LIB:-}" ]]; then
+  IFS=';' read -ra artosyn_sdk_libs <<<"${ARTOSYN_SDK_LIB}"
+  for artosyn_sdk_lib in "${artosyn_sdk_libs[@]}"; do
+    validate_target_artifact "Artosyn SDK library" "${artosyn_sdk_lib}"
+  done
+fi
+if [[ -n "${ARTOSYN_SDK_DAEMON:-}" ]]; then
+  validate_target_artifact "Artosyn daemon" "${ARTOSYN_SDK_DAEMON}"
+fi
+if [[ -n "${ARTOSYN_SDK_TUNTAP:-}" ]]; then
+  validate_target_artifact "Artosyn tuntap helper" "${ARTOSYN_SDK_TUNTAP}"
+fi
 
 rm -rf "${build_dir}"
 cmake -S OpenHD -B "${build_dir}" \
@@ -67,6 +113,11 @@ cmake --build "${build_dir}" --parallel "$(nproc)"
 
 binary="${build_dir}/openhd"
 test -f "${binary}"
+if ! find "${build_dir}" -type f -name 'artosyn_link.cpp.o' -print -quit |
+    grep -q .; then
+  echo "Cross-built OpenHD omitted the Artosyn link backend." >&2
+  exit 1
+fi
 if readelf -d "${binary}" | grep -qi libcamera; then
   echo "Cross-built OpenHD unexpectedly links libcamera." >&2
   exit 1
