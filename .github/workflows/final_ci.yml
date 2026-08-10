@@ -383,23 +383,20 @@ jobs:
             "${RUNNER_TEMP}/gst-perf-plugin.zip"
       - name: Cross-build and verify Orqa binary
         run: |
-          source "${RUNNER_TEMP}/orqa-sdk/environment-setup-armv8a-poky-linux"
-          cmake -S OpenHD -B build-orqa -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_DISABLE_FIND_PACKAGE_SDL2=TRUE
-          cmake --build build-orqa --parallel
-          "${READELF}" -d build-orqa/openhd | tee build-orqa/openhd-needed.txt
-          grep -q 'Shared library: \[libPocoFoundation.so.95\]' build-orqa/openhd-needed.txt
-          grep -q 'Shared library: \[libPocoNet.so.95\]' build-orqa/openhd-needed.txt
-          grep -q 'Shared library: \[libsodium.so.26\]' build-orqa/openhd-needed.txt
-          test -f "${SDKTARGETSYSROOT}/usr/lib/gstreamer-1.0/libgstperf.so"
-          "${STRIP}" --strip-unneeded build-orqa/openhd
+          bash ./scripts/build_orqa_cross.sh \
+            "${RUNNER_TEMP}/orqa-sdk" \
+            "${GITHUB_WORKSPACE}/build-orqa"
+          bash ./scripts/build_orqa_iwconfig.sh \
+            "${RUNNER_TEMP}/orqa-sdk" \
+            "${GITHUB_WORKSPACE}/build-orqa/iwconfig"
       - uses: actions/upload-artifact@v4
         with:
           name: openhd-orqa
           path: |
             build-orqa/openhd
+            build-orqa/iwconfig
             build-orqa/openhd-needed.txt
+            build-orqa/gst-perf-needed.txt
             ${{ runner.temp }}/poco-libraries.zip
             ${{ runner.temp }}/libsodium-libraries.zip
             ${{ runner.temp }}/gst-perf-plugin.zip

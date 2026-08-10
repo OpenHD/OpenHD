@@ -38,3 +38,26 @@ The cross build forces `ENABLE_LIBCAMERA=OFF`; camera and encoder backends stay
 dynamic GStreamer plugins installed by the target image. The Artosyn client,
 daemon, and tunnel helper are rebuilt with the same cross toolchain when the SDK
 credentials are available.
+
+## Orqa controller
+
+The Orqa controller is not compatible with the portable Debian ARM64 sysroot.
+It runs Yocto Scarthgap on AArch64 with glibc 2.39, so use the sysroot and cross
+compiler shipped together in the Orqa SDK. After installing the SDK and running
+`OpenHD/scripts/setup_orqa_sdk.sh` to add the OpenHD dependencies, build with:
+
+```bash
+bash ./scripts/build_orqa_cross.sh /opt/orqa-sdk /tmp/build-openhd-orqa
+```
+
+The builder sources `environment-setup-armv8a-poky-linux`, which sets
+`SDKTARGETSYSROOT` and the matching compiler tools. It also checks the Poco,
+libsodium, and gst-perf runtime ABIs against the controller image before
+producing the stripped `openhd` binary.
+
+The controller includes the modern `iw` tool but not the legacy `iwconfig`
+command. Build a compatible, self-contained `iwconfig` alongside OpenHD with:
+
+```bash
+bash ./scripts/build_orqa_iwconfig.sh /opt/orqa-sdk /tmp/build-openhd-orqa/iwconfig
+```
