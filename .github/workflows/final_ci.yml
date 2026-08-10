@@ -355,7 +355,6 @@ jobs:
   orqa:
     name: build-orqa
     if: github.event_name != 'pull_request'
-    needs: architecture-packages
     runs-on: ubuntu-22.04
     env:
       DOWNLOAD_KEY: ${{ secrets.DOWNLOAD_KEY }}
