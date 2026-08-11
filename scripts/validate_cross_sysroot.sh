@@ -82,5 +82,15 @@ if [[ "${architecture}" == "arm64" ]]; then
         -Wl,-rpath-link,"${sysroot}/usr/lib" \
         -o "${output}"
   readelf -d "${output}" | grep 'librockchip_mpp.so.1'
+  mpp_library="$(find "${sysroot}/usr/lib" -name 'librockchip_mpp.so.0' \
+    -print -quit)"
+  test -n "${mpp_library}"
+  newest_glibc="$(readelf --version-info "${mpp_library}" | \
+    grep -o 'GLIBC_[0-9.]*' | sort -V | tail -n 1)"
+  if [[ "$(printf '%s\n' GLIBC_2.31 "${newest_glibc}" | sort -V | tail -n 1)" \
+        != 'GLIBC_2.31' ]]; then
+    echo "Rockchip MPP requires ${newest_glibc}; Bullseye supports GLIBC_2.31." >&2
+    exit 1
+  fi
 fi
 echo "Validated ${architecture} OpenHD cross sysroot."
