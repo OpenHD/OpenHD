@@ -30,6 +30,9 @@
 #include "camera_enums.hpp"
 #include "gstaudiostream.h"
 #include "gstreamerstream.h"
+#ifdef OPENHD_ROCKCHIP_MPP_PRESENT
+#include "rockchip_mpp_stream.h"
+#endif
 #include "ip_camera_network.h"
 #include "nalu/fragment_helper.h"
 #include "openhd_config.h"
@@ -145,10 +148,19 @@ void OHDVideoAir::configure(
              const openhd::FragmentedVideoFrame& fragmented_video_frame) {
         this->on_video_data(stream_index, fragmented_video_frame);
       };
-  // R.N we use gstreamer for pretty much everything
-  // But this might change in the future
-  m_console->debug("GStreamerStream for Camera index:{}", camera.index);
-  auto stream = std::make_shared<GStreamerStream>(camera_holder, frame_cb);
+  std::shared_ptr<CameraStream> stream;
+#ifdef OPENHD_ROCKCHIP_MPP_PRESENT
+  if (camera.requires_rockchip1126_mpp_csi_pipeline() ||
+      camera.requires_rockchip1126_mpp_testsrc_pipeline()) {
+    m_console->info("Native Rockchip MPP stream for Camera index:{}",
+                    camera.index);
+    stream = std::make_shared<RockchipMppStream>(camera_holder, frame_cb);
+  } else
+#endif
+  {
+    m_console->debug("GStreamerStream for Camera index:{}", camera.index);
+    stream = std::make_shared<GStreamerStream>(camera_holder, frame_cb);
+  }
   stream->start_looping();
   m_camera_streams.push_back(stream);
 }

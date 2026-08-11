@@ -36,7 +36,10 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(VideoFormat, videoCodec, width, height,
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
     CameraSettings, enable_streaming, ip_camera_pipeline, ip_camera_address,
-    qp_max, qp_min, qp_pid_enable, rk_bitrate_pid_enable, streamed_video_format,
+    qp_max, qp_min, qp_pid_enable, rk_bitrate_pid_enable, mpp_roi_enable,
+    mpp_roi_x_percent, mpp_roi_y_percent, mpp_roi_width_percent,
+    mpp_roi_height_percent, mpp_roi_quality, mpp_record_bitrate_kbits,
+    mpp_record_qp_min, mpp_record_qp_max, streamed_video_format,
     h26x_bitrate_kbits, h26x_keyframe_interval, h26x_intra_refresh_type,
     h26x_num_slices, nxp_enable_aud, air_recording, camera_rotation_degree,
     openhd_flip,
@@ -280,6 +283,49 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
         openhd::IntSetting{
             static_cast<int>(get_settings().rk_bitrate_pid_enable),
             c_rk_bitrate_pid_enable}});
+  }
+  if (m_camera.requires_rockchip1126_mpp_csi_pipeline() ||
+      m_camera.requires_rockchip1126_mpp_testsrc_pipeline()) {
+    auto add_roi_param = [&ret](const char* name, int value, auto setter) {
+      ret.push_back(openhd::Setting{name, openhd::IntSetting{value, setter}});
+    };
+    add_roi_param("MPP_ROI_ENABLE", get_settings().mpp_roi_enable,
+                  [this](std::string, int value) {
+                    return set_mpp_roi_enable(value);
+                  });
+    add_roi_param("MPP_ROI_X", get_settings().mpp_roi_x_percent,
+                  [this](std::string, int value) {
+                    return set_mpp_roi_geometry(0, value);
+                  });
+    add_roi_param("MPP_ROI_Y", get_settings().mpp_roi_y_percent,
+                  [this](std::string, int value) {
+                    return set_mpp_roi_geometry(1, value);
+                  });
+    add_roi_param("MPP_ROI_W", get_settings().mpp_roi_width_percent,
+                  [this](std::string, int value) {
+                    return set_mpp_roi_geometry(2, value);
+                  });
+    add_roi_param("MPP_ROI_H", get_settings().mpp_roi_height_percent,
+                  [this](std::string, int value) {
+                    return set_mpp_roi_geometry(3, value);
+                  });
+    add_roi_param("MPP_ROI_QP", get_settings().mpp_roi_quality,
+                  [this](std::string, int value) {
+                    return set_mpp_roi_quality(value);
+                  });
+    add_roi_param("MPP_REC_MBPS",
+                  get_settings().mpp_record_bitrate_kbits / 1000,
+                  [this](std::string, int value) {
+                    return set_mpp_record_bitrate(value);
+                  });
+    add_roi_param("MPP_REC_QPMIN", get_settings().mpp_record_qp_min,
+                  [this](std::string, int value) {
+                    return set_mpp_record_qp_min(value);
+                  });
+    add_roi_param("MPP_REC_QPMAX", get_settings().mpp_record_qp_max,
+                  [this](std::string, int value) {
+                    return set_mpp_record_qp_max(value);
+                  });
   }
   if (true) {  // Always show intra, on libcamera without sw encode it
                // unfortunately is 'just not mapped' and ignored.

@@ -7,6 +7,7 @@ on:
       - "openhd-3.0"
     paths:
       - "scripts/create_cross_sysroot.sh"
+      - "scripts/install_rockchip_mpp_sysroot.sh"
       - "scripts/validate_cross_sysroot.sh"
       - "OpenHD/cmake/portable-linux-toolchain.cmake"
       - ".github/workflows/prepare_cross_sysroots.yml"

@@ -84,6 +84,22 @@ if(ENABLE_AIR)
     pkg_search_module(gstreamer REQUIRED IMPORTED_TARGET gstreamer-1.0>=1.4)
     pkg_search_module(gstreamer-app REQUIRED IMPORTED_TARGET gstreamer-app-1.0>=1.4)
     target_link_libraries(OHDVideoLib PRIVATE PkgConfig::gstreamer PkgConfig::gstreamer-app)
+
+    # Native RV1126(B) encoder. Set ROCKCHIP_MPP_INCLUDE_DIR explicitly when
+    # cross compiling against a runtime-only sysroot (which often contains the
+    # library but not the development headers).
+    find_path(ROCKCHIP_MPP_INCLUDE_DIR rk_mpi.h
+              PATH_SUFFIXES rockchip mpp)
+    find_library(ROCKCHIP_MPP_LIBRARY NAMES rockchip_mpp)
+    if(ROCKCHIP_MPP_INCLUDE_DIR AND ROCKCHIP_MPP_LIBRARY)
+        message(STATUS "Native Rockchip MPP encoder enabled")
+        list(APPEND sources src/rockchip_mpp_stream.cpp)
+        target_include_directories(OHDVideoLib PRIVATE ${ROCKCHIP_MPP_INCLUDE_DIR})
+        target_link_libraries(OHDVideoLib PRIVATE ${ROCKCHIP_MPP_LIBRARY})
+        target_compile_definitions(OHDVideoLib PUBLIC OPENHD_ROCKCHIP_MPP_PRESENT)
+    else()
+        message(STATUS "Native Rockchip MPP encoder unavailable; RV1126 uses GStreamer")
+    endif()
     # From libcamera-apps !! begin
     find_package(PkgConfig REQUIRED)
     if(ENABLE_LIBCAMERA)

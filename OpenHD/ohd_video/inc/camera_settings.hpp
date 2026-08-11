@@ -93,6 +93,20 @@ struct CameraSettings {
   int qp_min = 5;
   bool qp_pid_enable = false;
   bool rk_bitrate_pid_enable = false;
+  // Native Rockchip MPP region of interest. Geometry is expressed as a
+  // percentage of the encoded picture; negative quality values improve the
+  // selected region by lowering its QP.
+  bool mpp_roi_enable = false;
+  int mpp_roi_x_percent = 25;
+  int mpp_roi_y_percent = 25;
+  int mpp_roi_width_percent = 50;
+  int mpp_roi_height_percent = 50;
+  int mpp_roi_quality = -8;
+  // Independent native MPP recording channel. It intentionally does not
+  // follow the RF-link bitrate controller.
+  int mpp_record_bitrate_kbits = 40000;
+  int mpp_record_qp_min = 4;
+  int mpp_record_qp_max = 28;
   // The video format selected by the user. If the user sets a video format that
   // isn't supported (for example, he might select h264|1920x1080@120 but the
   // camera can only do 60fps) the camera might stop streaming, and the user has

@@ -74,11 +74,19 @@ class CameraHolder :
   [[nodiscard]] const XCamera& get_camera() const { return m_camera; }
   using VIDEO_BITRATE_CHANGED_CALLBACK = std::function<void(int bitrate_kbits)>;
   using VIDEO_QP_CHANGED_CALLBACK = std::function<void(int qp_min, int qp_max)>;
+  using VIDEO_ROI_CHANGED_CALLBACK = std::function<void()>;
+  using VIDEO_RECORDING_CHANGED_CALLBACK = std::function<void()>;
   void register_video_bitrate_listener(VIDEO_BITRATE_CHANGED_CALLBACK cb) {
     m_video_bitrate_changed_callback = std::move(cb);
   }
   void register_video_qp_listener(VIDEO_QP_CHANGED_CALLBACK cb) {
     m_video_qp_changed_callback = std::move(cb);
+  }
+  void register_video_roi_listener(VIDEO_ROI_CHANGED_CALLBACK cb) {
+    m_video_roi_changed_callback = std::move(cb);
+  }
+  void register_video_recording_listener(VIDEO_RECORDING_CHANGED_CALLBACK cb) {
+    m_video_recording_changed_callback = std::move(cb);
   }
   // Settings hacky begin
   std::vector<openhd::Setting> get_all_settings();
@@ -255,6 +263,69 @@ class CameraHolder :
     persist(false);
     return true;
   }
+  bool set_mpp_roi_enable(int value) {
+    if (!openhd::validate_yes_or_no(value)) return false;
+    unsafe_get_settings().mpp_roi_enable = value != 0;
+    persist(false);
+    if (m_video_roi_changed_callback) m_video_roi_changed_callback();
+    return true;
+  }
+  bool set_mpp_roi_geometry(int component, int value) {
+    if (value < 0 || value > 100 || component < 0 || component > 3) {
+      return false;
+    }
+    const auto& current = get_settings();
+    int x = current.mpp_roi_x_percent;
+    int y = current.mpp_roi_y_percent;
+    int w = current.mpp_roi_width_percent;
+    int h = current.mpp_roi_height_percent;
+    if (component == 0) x = value;
+    if (component == 1) y = value;
+    if (component == 2) w = value;
+    if (component == 3) h = value;
+    if (w <= 0 || h <= 0 || x + w > 100 || y + h > 100) return false;
+    auto& settings = unsafe_get_settings();
+    settings.mpp_roi_x_percent = x;
+    settings.mpp_roi_y_percent = y;
+    settings.mpp_roi_width_percent = w;
+    settings.mpp_roi_height_percent = h;
+    persist(false);
+    if (m_video_roi_changed_callback) m_video_roi_changed_callback();
+    return true;
+  }
+  bool set_mpp_roi_quality(int value) {
+    if (value < -51 || value > 51) return false;
+    unsafe_get_settings().mpp_roi_quality = value;
+    persist(false);
+    if (m_video_roi_changed_callback) m_video_roi_changed_callback();
+    return true;
+  }
+  bool set_mpp_record_bitrate(int value_mbits) {
+    if (value_mbits < 5 || value_mbits > 200) return false;
+    unsafe_get_settings().mpp_record_bitrate_kbits = value_mbits * 1000;
+    persist(false);
+    if (m_video_recording_changed_callback)
+      m_video_recording_changed_callback();
+    return true;
+  }
+  bool set_mpp_record_qp_min(int value) {
+    if (!openhd::validate_h26x_qp(value) ||
+        value > get_settings().mpp_record_qp_max) return false;
+    unsafe_get_settings().mpp_record_qp_min = value;
+    persist(false);
+    if (m_video_recording_changed_callback)
+      m_video_recording_changed_callback();
+    return true;
+  }
+  bool set_mpp_record_qp_max(int value) {
+    if (!openhd::validate_h26x_qp(value) ||
+        value < get_settings().mpp_record_qp_min) return false;
+    unsafe_get_settings().mpp_record_qp_max = value;
+    persist(false);
+    if (m_video_recording_changed_callback)
+      m_video_recording_changed_callback();
+    return true;
+  }
   bool set_air_recording(int recording_enable);
   // EXTRA - sets the air recording param to disabled when we run out of space -
   // this should be called in regular intervals
@@ -397,6 +468,8 @@ class CameraHolder :
   const XCamera m_camera;
   VIDEO_BITRATE_CHANGED_CALLBACK m_video_bitrate_changed_callback = nullptr;
   VIDEO_QP_CHANGED_CALLBACK m_video_qp_changed_callback = nullptr;
+  VIDEO_ROI_CHANGED_CALLBACK m_video_roi_changed_callback = nullptr;
+  VIDEO_RECORDING_CHANGED_CALLBACK m_video_recording_changed_callback = nullptr;
 
  private:
   [[nodiscard]] std::string get_unique_filename() const override {

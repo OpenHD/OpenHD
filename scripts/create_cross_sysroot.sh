@@ -94,6 +94,11 @@ printf '%s\n' \
   "generated_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
   >"${output_dir}/openhd-sysroot.manifest"
 
+if [[ "${architecture}" == "arm64" ]]; then
+  bash "$(dirname "$0")/install_rockchip_mpp_sysroot.sh" \
+    "${architecture}" "${output_dir}"
+fi
+
 test -f "${output_dir}/usr/include/Poco/Poco.h"
 test -f "${output_dir}/usr/include/gstreamer-1.0/gst/gst.h"
 test -f "${output_dir}/usr/include/gbm.h"

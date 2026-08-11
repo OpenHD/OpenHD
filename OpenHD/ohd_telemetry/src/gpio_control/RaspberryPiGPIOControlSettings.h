@@ -42,14 +42,12 @@ struct GPIOControlSettings {
   int gpio_26 = GPIO_LEAVE_UNTOUCHED;
 };
 
-static const std::string SETTINGS_DIRECTORY =
-    std::string(SETTINGS_BASE_PATH) + std::string("telemetry/");
-
 class GPIOControlSettingsHolder
     : public openhd::PersistentSettings<GPIOControlSettings> {
  public:
   GPIOControlSettingsHolder()
-      : openhd::PersistentSettings<GPIOControlSettings>(SETTINGS_DIRECTORY) {
+      : openhd::PersistentSettings<GPIOControlSettings>(
+            openhd::get_telemetry_settings_directory()) {
     init();
   }
 

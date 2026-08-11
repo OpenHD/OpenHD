@@ -68,4 +68,19 @@ printf '%s\n' \
 
 file "${output}"
 readelf -d "${output}" | grep NEEDED
+if [[ "${architecture}" == "arm64" ]]; then
+  grep -qx 'rockchip_mpp_commit=2e93ab791e0b2c803022622c30fea79b80450830' \
+    "${sysroot}/openhd-sysroot.manifest"
+  read -r -a mpp_flags <<<"$(pkg-config --cflags --libs rockchip_mpp)"
+  printf '%s\n' \
+    '#include <rk_mpi.h>' \
+    'int main() {' \
+    '  return mpp_check_support_format(MPP_CTX_ENC, MPP_VIDEO_CodingAVC);' \
+    '}' \
+    | "${compiler}" --sysroot="${sysroot}" -x c++ - \
+        "${mpp_flags[@]}" \
+        -Wl,-rpath-link,"${sysroot}/usr/lib" \
+        -o "${output}"
+  readelf -d "${output}" | grep 'librockchip_mpp.so.1'
+fi
 echo "Validated ${architecture} OpenHD cross sysroot."
