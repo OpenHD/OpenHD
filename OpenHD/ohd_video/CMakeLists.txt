@@ -11,6 +11,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(ENABLE_AIR "Enable air support" ON)
 option(ENABLE_USB_CAMERAS "USB cameras support" ON)
 option(ENABLE_LIBCAMERA "libcamera support" ON)
+option(OPENHD_MPP_ONLY "Build the RV1126 MPP video path without GStreamer" OFF)
+# The MPP-only image intentionally has no USB/GStreamer camera stack. USB
+# discovery also links libv4l2, which is not part of the minimal runtime image.
+if(OPENHD_MPP_ONLY)
+    set(ENABLE_USB_CAMERAS OFF CACHE BOOL "USB cameras support" FORCE)
+endif()
 find_package(PkgConfig REQUIRED)
 
 find_program(PYTHON_EXECUTABLE NAMES python3 python)
@@ -66,7 +72,6 @@ if(ENABLE_AIR)
     list(APPEND sources
             src/camerastream.cpp
             src/camera_discovery.cpp
-            src/gstreamerstream.cpp
             src/ip_camera_network.cpp
             src/ohd_video_air.cpp
             src/rtp_eof_helper.cpp
@@ -74,16 +79,19 @@ if(ENABLE_AIR)
             src/ohd_video_air_generic_settings.cpp
             src/validate_settings.cpp
             src/usb_thermal_cam_helper.cpp
-            src/gstaudiostream.cpp
     )
 
-    pkg_search_module(GST REQUIRED
-            gstreamer-1.0>=1.4
-            gstreamer-app-1.0>=1.4
-    )
-    pkg_search_module(gstreamer REQUIRED IMPORTED_TARGET gstreamer-1.0>=1.4)
-    pkg_search_module(gstreamer-app REQUIRED IMPORTED_TARGET gstreamer-app-1.0>=1.4)
-    target_link_libraries(OHDVideoLib PRIVATE PkgConfig::gstreamer PkgConfig::gstreamer-app)
+    if(NOT OPENHD_MPP_ONLY)
+        list(APPEND sources src/gstreamerstream.cpp src/gstaudiostream.cpp)
+        pkg_search_module(GST REQUIRED
+                gstreamer-1.0>=1.4
+                gstreamer-app-1.0>=1.4)
+        pkg_search_module(gstreamer REQUIRED IMPORTED_TARGET gstreamer-1.0>=1.4)
+        pkg_search_module(gstreamer-app REQUIRED IMPORTED_TARGET gstreamer-app-1.0>=1.4)
+        target_link_libraries(OHDVideoLib PRIVATE PkgConfig::gstreamer PkgConfig::gstreamer-app)
+    else()
+        target_compile_definitions(OHDVideoLib PUBLIC OPENHD_MPP_ONLY)
+    endif()
 
     # Native RV1126(B) encoder. Set ROCKCHIP_MPP_INCLUDE_DIR explicitly when
     # cross compiling against a runtime-only sysroot (which often contains the
@@ -98,6 +106,9 @@ if(ENABLE_AIR)
         target_link_libraries(OHDVideoLib PRIVATE ${ROCKCHIP_MPP_LIBRARY})
         target_compile_definitions(OHDVideoLib PUBLIC OPENHD_ROCKCHIP_MPP_PRESENT)
     else()
+        if(OPENHD_MPP_ONLY)
+            message(FATAL_ERROR "OPENHD_MPP_ONLY requires Rockchip MPP")
+        endif()
         message(STATUS "Native Rockchip MPP encoder unavailable; RV1126 uses GStreamer")
     endif()
     # From libcamera-apps !! begin
@@ -123,7 +134,7 @@ if(ENABLE_AIR)
     endif()
 endif ()
 
-if (ENABLE_AIR AND ENABLE_USB_CAMERAS)
+if (ENABLE_AIR AND ENABLE_USB_CAMERAS AND NOT OPENHD_MPP_ONLY)
     # FUCKING GSTREAMER !! begin
     pkg_search_module(GST REQUIRED
             gstreamer-sdp-1.0>=1.4

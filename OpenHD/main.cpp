@@ -77,7 +77,7 @@
 
 // A few run time options, only for development. Most configuration is provided
 // via sysutils (and exposed in the WebUI).
-static const char optstr[] = "?:agcorte:";
+static const char optstr[] = "?:agcoret:";
 static constexpr bool kRecordModeEnabled = false;
 static const struct option long_options[] = {
     {"air", no_argument, nullptr, 'a'},

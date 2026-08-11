@@ -28,8 +28,10 @@
 
 #include "camera_discovery.h"
 #include "camera_enums.hpp"
+#ifndef OPENHD_MPP_ONLY
 #include "gstaudiostream.h"
 #include "gstreamerstream.h"
+#endif
 #ifdef OPENHD_ROCKCHIP_MPP_PRESENT
 #include "rockchip_mpp_stream.h"
 #endif
@@ -98,6 +100,9 @@ OHDVideoAir::OHDVideoAir(std::vector<XCamera> cameras,
   }
   if (!m_record_only &&
       m_generic_settings->get_settings().enable_audio != OPENHD_AUDIO_DISABLE) {
+#ifdef OPENHD_MPP_ONLY
+    m_console->warn("Audio is unavailable in the GStreamer-free MPP build");
+#else
     m_audio_stream = std::make_unique<GstAudioStream>();
     auto audio_cb = [this](const openhd::AudioPacket& audioPacket) {
       on_audio_data(audioPacket);
@@ -109,6 +114,7 @@ OHDVideoAir::OHDVideoAir(std::vector<XCamera> cameras,
       m_audio_stream->openhd_enable_audio_test = false;
     }
     m_audio_stream->start_looping();
+#endif
   }
   openhd::LinkActionHandler::instance().action_request_bitrate_change_register(
       [this](openhd::LinkActionHandler::LinkBitrateInformation lb) {
@@ -157,10 +163,18 @@ void OHDVideoAir::configure(
     stream = std::make_shared<RockchipMppStream>(camera_holder, frame_cb);
   } else
 #endif
+#ifndef OPENHD_MPP_ONLY
   {
     m_console->debug("GStreamerStream for Camera index:{}", camera.index);
     stream = std::make_shared<GStreamerStream>(camera_holder, frame_cb);
   }
+#else
+  {
+    m_console->error("Camera type {} is unavailable in the MPP-only build",
+                     camera.camera_type);
+    return;
+  }
+#endif
   stream->start_looping();
   m_camera_streams.push_back(stream);
 }

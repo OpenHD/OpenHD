@@ -76,6 +76,7 @@ class CameraHolder :
   using VIDEO_QP_CHANGED_CALLBACK = std::function<void(int qp_min, int qp_max)>;
   using VIDEO_ROI_CHANGED_CALLBACK = std::function<void()>;
   using VIDEO_RECORDING_CHANGED_CALLBACK = std::function<void()>;
+  using VIDEO_DEBUG_CHANGED_CALLBACK = std::function<void()>;
   void register_video_bitrate_listener(VIDEO_BITRATE_CHANGED_CALLBACK cb) {
     m_video_bitrate_changed_callback = std::move(cb);
   }
@@ -87,6 +88,9 @@ class CameraHolder :
   }
   void register_video_recording_listener(VIDEO_RECORDING_CHANGED_CALLBACK cb) {
     m_video_recording_changed_callback = std::move(cb);
+  }
+  void register_video_debug_listener(VIDEO_DEBUG_CHANGED_CALLBACK cb) {
+    m_video_debug_changed_callback = std::move(cb);
   }
   // Settings hacky begin
   std::vector<openhd::Setting> get_all_settings();
@@ -326,6 +330,54 @@ class CameraHolder :
       m_video_recording_changed_callback();
     return true;
   }
+  bool set_mpp_debug_noise(int value) {
+    if (value < 0 || value > 100) return false;
+    unsafe_get_settings().mpp_debug_noise_percent = value;
+    persist(false);
+    notify_video_debug_changed();
+    return true;
+  }
+  bool set_mpp_debug_packet_loss(int value) {
+    if (value < 0 || value > 95) return false;
+    unsafe_get_settings().mpp_debug_packet_loss_percent = value;
+    persist(false);
+    notify_video_debug_changed();
+    return true;
+  }
+  bool set_mpp_debug_bitrate_sweep(int value) {
+    if (!openhd::validate_yes_or_no(value)) return false;
+    unsafe_get_settings().mpp_debug_bitrate_sweep = value != 0;
+    persist(false);
+    notify_video_debug_changed();
+    return true;
+  }
+  bool set_mpp_debug_bitrate_min(int value_mbits) {
+    if (value_mbits < 1 || value_mbits > 200 ||
+        value_mbits * 1000 > get_settings().mpp_debug_bitrate_max_kbits)
+      return false;
+    unsafe_get_settings().mpp_debug_bitrate_min_kbits =
+        clamp_video_bitrate_kbits(value_mbits * 1000);
+    persist(false);
+    notify_video_debug_changed();
+    return true;
+  }
+  bool set_mpp_debug_bitrate_max(int value_mbits) {
+    if (value_mbits < 1 || value_mbits > 200 ||
+        value_mbits * 1000 < get_settings().mpp_debug_bitrate_min_kbits)
+      return false;
+    unsafe_get_settings().mpp_debug_bitrate_max_kbits =
+        clamp_video_bitrate_kbits(value_mbits * 1000);
+    persist(false);
+    notify_video_debug_changed();
+    return true;
+  }
+  bool set_mpp_debug_bitrate_period(int seconds) {
+    if (seconds < 2 || seconds > 120) return false;
+    unsafe_get_settings().mpp_debug_bitrate_period_seconds = seconds;
+    persist(false);
+    notify_video_debug_changed();
+    return true;
+  }
   bool set_air_recording(int recording_enable);
   // EXTRA - sets the air recording param to disabled when we run out of space -
   // this should be called in regular intervals
@@ -464,12 +516,16 @@ class CameraHolder :
   }
   // Settings hacky end
  private:
+  void notify_video_debug_changed() {
+    if (m_video_debug_changed_callback) m_video_debug_changed_callback();
+  }
   // Camera info is immutable
   const XCamera m_camera;
   VIDEO_BITRATE_CHANGED_CALLBACK m_video_bitrate_changed_callback = nullptr;
   VIDEO_QP_CHANGED_CALLBACK m_video_qp_changed_callback = nullptr;
   VIDEO_ROI_CHANGED_CALLBACK m_video_roi_changed_callback = nullptr;
   VIDEO_RECORDING_CHANGED_CALLBACK m_video_recording_changed_callback = nullptr;
+  VIDEO_DEBUG_CHANGED_CALLBACK m_video_debug_changed_callback = nullptr;
 
  private:
   [[nodiscard]] std::string get_unique_filename() const override {

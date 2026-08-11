@@ -1,17 +1,23 @@
 #include "rockchip_mpp_stream.h"
 
-#include <gst/app/gstappsink.h>
-#include <gst/app/gstappsrc.h>
-#include <gst/gst.h>
+#include <fcntl.h>
+#include <linux/videodev2.h>
+#include <poll.h>
 #include <rk_mpi.h>
 #include <rk_mpp_cfg.h>
 #include <rk_venc_cmd.h>
 #include <rk_venc_rc.h>
 
+#include <sys/ioctl.h>
+#include <sys/mman.h>
+#include <unistd.h>
+
 #include <algorithm>
+#include <cerrno>
 #include <chrono>
+#include <cstdio>
 #include <cstring>
-#include <sstream>
+#include <vector>
 
 #include "air_recording_helper.hpp"
 #include "openhd_rtp.h"
@@ -19,22 +25,52 @@
 
 namespace {
 constexpr RK_U32 align16(RK_U32 value) { return (value + 15U) & ~15U; }
+
+int retry_ioctl(int fd, unsigned long request, void* argument) {
+  int result;
+  do {
+    result = ioctl(fd, request, argument);
+  } while (result < 0 && errno == EINTR);
+  return result;
+}
 }
 
 class RockchipMppStream::Impl {
  public:
+  struct CaptureBuffer {
+    void* data = nullptr;
+    size_t size = 0;
+  };
+
   Impl(RockchipMppStream& owner, std::shared_ptr<spdlog::logger> log)
       : owner(owner), log(std::move(log)) {
     const auto& settings = owner.m_camera_holder->get_settings();
     bitrate_kbits = settings.h26x_bitrate_kbits;
+    requested_bitrate_kbits = settings.h26x_bitrate_kbits;
     qp_min = settings.qp_min;
     qp_max = settings.qp_max;
     update_roi_snapshot();
     update_recording_snapshot();
+    update_debug_snapshot();
     rtp = std::make_shared<openhd::RTPHelper>(
         settings.streamed_video_format.videoCodec == VideoCodec::H265);
     rtp->set_out_cb([this](auto fragments) {
       if (!this->owner.m_output_cb || fragments.empty()) return;
+      const int loss_percent = debug_packet_loss_percent.load();
+      if (loss_percent > 0) {
+        fragments.erase(
+            std::remove_if(fragments.begin(), fragments.end(),
+                           [this, loss_percent](const auto&) {
+                             packet_loss_accumulator += loss_percent;
+                             if (packet_loss_accumulator >= 100) {
+                               packet_loss_accumulator -= 100;
+                               return true;
+                             }
+                             return false;
+                           }),
+            fragments.end());
+        if (fragments.empty()) return;
+      }
       const auto& s = this->owner.m_camera_holder->get_settings();
       openhd::FragmentedVideoFrame frame{
           std::move(fragments), std::chrono::steady_clock::now(),
@@ -180,57 +216,24 @@ class RockchipMppStream::Impl {
     mpp_buffer_put(packet_buffer);
   }
 
-  bool setup_record_mux() {
+  bool setup_record_file() {
     const auto codec = owner.m_camera_holder->get_settings()
                            .streamed_video_format.videoCodec;
-    recording_filename = openhd::video::create_unused_recording_filename(".mkv");
-    std::ostringstream text;
-    text << "appsrc name=mpp_record_source is-live=true format=time block=true "
-            "max-bytes=8388608 ! video/x-"
-         << (codec == VideoCodec::H265 ? "h265" : "h264")
-         << ",stream-format=byte-stream,alignment=au ! "
-         << (codec == VideoCodec::H265 ? "h265parse" : "h264parse")
-         << " config-interval=-1 ! matroskamux ! filesink location=\""
-         << recording_filename << "\"";
-    GError* error = nullptr;
-    record_pipeline = gst_parse_launch(text.str().c_str(), &error);
-    if (!record_pipeline) {
-      log->error("Cannot create MPP recording muxer: {}",
-                 error ? error->message : "unknown error");
-      if (error) g_error_free(error);
+    recording_filename = openhd::video::create_unused_recording_filename(
+        codec == VideoCodec::H265 ? ".h265" : ".h264");
+    record_file = std::fopen(recording_filename.c_str(), "wb");
+    if (!record_file) {
+      log->error("Cannot open MPP recording file {}: {}", recording_filename,
+                 std::strerror(errno));
       return false;
     }
-    record_source = gst_bin_get_by_name(GST_BIN(record_pipeline),
-                                        "mpp_record_source");
-    if (!record_source ||
-        gst_element_set_state(record_pipeline, GST_STATE_PLAYING) ==
-            GST_STATE_CHANGE_FAILURE) {
-      log->error("Cannot start MPP recording muxer");
-      return false;
-    }
-    record_frame_index = 0;
     return true;
   }
 
-  void push_record_data(const uint8_t* data, size_t length, bool header) {
-    if (!record_source || !data || !length) return;
-    GstBuffer* buffer = gst_buffer_new_allocate(nullptr, length, nullptr);
-    if (!buffer) return;
-    gst_buffer_fill(buffer, 0, data, length);
-    if (!header) {
-      const int fps = std::max(
-          1, owner.m_camera_holder->get_settings().streamed_video_format.framerate);
-      const GstClockTime duration = GST_SECOND / fps;
-      GST_BUFFER_PTS(buffer) = record_frame_index * duration;
-      GST_BUFFER_DTS(buffer) = GST_BUFFER_PTS(buffer);
-      GST_BUFFER_DURATION(buffer) = duration;
-    }
-    const auto result =
-        gst_app_src_push_buffer(GST_APP_SRC(record_source), buffer);
-    if (result != GST_FLOW_OK) {
-      log->warn("Recording muxer rejected MPP data ({})",
-                static_cast<int>(result));
-    }
+  void write_record_data(const uint8_t* data, size_t length) {
+    if (!record_file || !data || !length) return;
+    if (std::fwrite(data, 1, length, record_file) != length)
+      log->warn("Short write to MPP recording {}", recording_filename);
   }
 
   void emit_record_codec_header() {
@@ -241,9 +244,9 @@ class RockchipMppStream::Impl {
         mpp_packet_init_with_buffer(&packet, packet_buffer)) return;
     mpp_packet_set_length(packet, 0);
     if (!record_mpi->control(record_ctx, MPP_ENC_GET_HDR_SYNC, packet)) {
-      push_record_data(
+      write_record_data(
           static_cast<const uint8_t*>(mpp_packet_get_pos(packet)),
-          mpp_packet_get_length(packet), true);
+          mpp_packet_get_length(packet));
     }
     mpp_packet_deinit(&packet);
     mpp_buffer_put(packet_buffer);
@@ -251,7 +254,7 @@ class RockchipMppStream::Impl {
 
   bool start_recording() {
     if (record_ctx) return true;
-    if (!init_record_encoder() || !setup_record_mux()) {
+    if (!init_record_encoder() || !setup_record_file()) {
       stop_recording();
       return false;
     }
@@ -271,22 +274,8 @@ class RockchipMppStream::Impl {
   }
 
   void stop_recording() {
-    if (record_source) gst_app_src_end_of_stream(GST_APP_SRC(record_source));
-    if (record_pipeline) {
-      GstBus* bus = gst_element_get_bus(record_pipeline);
-      if (bus) {
-        GstMessage* message = gst_bus_timed_pop_filtered(
-            bus, 2 * GST_SECOND,
-            static_cast<GstMessageType>(GST_MESSAGE_EOS | GST_MESSAGE_ERROR));
-        if (message) gst_message_unref(message);
-        gst_object_unref(bus);
-      }
-      gst_element_set_state(record_pipeline, GST_STATE_NULL);
-    }
-    if (record_source) gst_object_unref(record_source);
-    if (record_pipeline) gst_object_unref(record_pipeline);
-    record_source = nullptr;
-    record_pipeline = nullptr;
+    if (record_file) std::fclose(record_file);
+    record_file = nullptr;
     destroy_record_encoder();
     if (!recording_filename.empty()) {
       log->info("High-quality MPP recording stopped: {}", recording_filename);
@@ -301,31 +290,150 @@ class RockchipMppStream::Impl {
   }
 
   bool setup_capture() {
-    gst_init(nullptr, nullptr);
     const auto& camera = owner.m_camera_holder->get_camera();
-    const auto& f = owner.m_camera_holder->get_settings().streamed_video_format;
-    std::ostringstream pipeline_text;
     if (camera.requires_rockchip1126_mpp_testsrc_pipeline()) {
-      pipeline_text << "videotestsrc is-live=true ! ";
-    } else {
-      pipeline_text << "v4l2src device=/dev/video0 ! ";
+      synthetic_capture = true;
+      synthetic_frame.resize(static_cast<size_t>(width) * height * 3 / 2);
+      return true;
     }
-    pipeline_text << "video/x-raw,format=NV12,width=" << f.width
-                  << ",height=" << f.height << ",framerate=" << f.framerate
-                  << "/1 ! appsink name=mpp_raw_sink sync=false max-buffers=2 "
-                     "drop=true";
-    GError* error = nullptr;
-    pipeline = gst_parse_launch(pipeline_text.str().c_str(), &error);
-    if (!pipeline) {
-      log->error("Cannot create MPP capture pipeline: {}",
-                 error ? error->message : "unknown error");
-      if (error) g_error_free(error);
+
+    capture_fd = open("/dev/video0", O_RDWR | O_NONBLOCK | O_CLOEXEC);
+    if (capture_fd < 0) {
+      log->error("Cannot open /dev/video0: {}", std::strerror(errno));
       return false;
     }
-    sink = gst_bin_get_by_name(GST_BIN(pipeline), "mpp_raw_sink");
-    if (!sink || gst_element_set_state(pipeline, GST_STATE_PLAYING) ==
-                     GST_STATE_CHANGE_FAILURE) {
-      log->error("Cannot start raw capture for native MPP encoder");
+    v4l2_format format{};
+    format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    format.fmt.pix.width = width;
+    format.fmt.pix.height = height;
+    format.fmt.pix.pixelformat = V4L2_PIX_FMT_NV12;
+    format.fmt.pix.field = V4L2_FIELD_NONE;
+    if (retry_ioctl(capture_fd, VIDIOC_S_FMT, &format) < 0 ||
+        format.fmt.pix.pixelformat != V4L2_PIX_FMT_NV12) {
+      log->error("/dev/video0 cannot provide NV12 {}x{}: {}", width, height,
+                 std::strerror(errno));
+      return false;
+    }
+    v4l2_requestbuffers request{};
+    request.count = 4;
+    request.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    request.memory = V4L2_MEMORY_MMAP;
+    if (retry_ioctl(capture_fd, VIDIOC_REQBUFS, &request) < 0 ||
+        request.count < 2) {
+      log->error("Cannot allocate V4L2 capture buffers: {}",
+                 std::strerror(errno));
+      return false;
+    }
+    capture_buffers.resize(request.count);
+    for (uint32_t index = 0; index < request.count; ++index) {
+      v4l2_buffer buffer{};
+      buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+      buffer.memory = V4L2_MEMORY_MMAP;
+      buffer.index = index;
+      if (retry_ioctl(capture_fd, VIDIOC_QUERYBUF, &buffer) < 0) return false;
+      capture_buffers[index].size = buffer.length;
+      capture_buffers[index].data =
+          mmap(nullptr, buffer.length, PROT_READ | PROT_WRITE, MAP_SHARED,
+               capture_fd, buffer.m.offset);
+      if (capture_buffers[index].data == MAP_FAILED) return false;
+      if (retry_ioctl(capture_fd, VIDIOC_QBUF, &buffer) < 0) return false;
+    }
+    v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    if (retry_ioctl(capture_fd, VIDIOC_STREAMON, &type) < 0) {
+      log->error("Cannot start V4L2 capture: {}", std::strerror(errno));
+      return false;
+    }
+    capture_streaming = true;
+    return true;
+  }
+
+  void fill_synthetic_frame(uint64_t frame_index) {
+    auto* y = synthetic_frame.data();
+    auto* uv = y + static_cast<size_t>(width) * height;
+    for (RK_U32 row = 0; row < height; ++row) {
+      for (RK_U32 column = 0; column < width; ++column) {
+        const bool bar = ((column + frame_index * 4) / 64) % 2;
+        y[static_cast<size_t>(row) * width + column] =
+            static_cast<uint8_t>((row * 180 / std::max<RK_U32>(1, height)) +
+                                 (bar ? 48 : 16));
+      }
+    }
+    for (RK_U32 row = 0; row < height / 2; ++row) {
+      for (RK_U32 column = 0; column < width; column += 2) {
+        uv[static_cast<size_t>(row) * width + column] =
+            static_cast<uint8_t>(96 + (frame_index / 2) % 64);
+        uv[static_cast<size_t>(row) * width + column + 1] =
+            static_cast<uint8_t>(160 - (frame_index / 3) % 64);
+      }
+    }
+  }
+
+  uint32_t next_noise_random() {
+    noise_prng ^= noise_prng << 13;
+    noise_prng ^= noise_prng >> 17;
+    noise_prng ^= noise_prng << 5;
+    return noise_prng;
+  }
+
+  void add_noise(uint8_t* destination) {
+    const int strength = debug_noise_percent.load();
+    if (!destination || strength <= 0) return;
+    const int amplitude = std::max(1, strength * 64 / 100);
+    auto alter = [this, amplitude](uint8_t value) {
+      const int delta = static_cast<int>(next_noise_random() %
+                                         (amplitude * 2 + 1)) - amplitude;
+      return static_cast<uint8_t>(std::clamp<int>(value + delta, 0, 255));
+    };
+    for (RK_U32 row = 0; row < height; ++row) {
+      auto* line = destination + row * hor_stride;
+      for (RK_U32 column = 0; column < width; ++column)
+        line[column] = alter(line[column]);
+    }
+    auto* uv = destination + hor_stride * ver_stride;
+    for (RK_U32 row = 0; row < height / 2; ++row) {
+      auto* line = uv + row * hor_stride;
+      for (RK_U32 column = 0; column < width; ++column)
+        line[column] = alter(line[column]);
+    }
+  }
+
+  void update_bitrate_sweep() {
+    if (!debug_bitrate_sweep.load()) return;
+    const int minimum = debug_bitrate_min_kbits.load();
+    const int maximum = std::max(minimum, debug_bitrate_max_kbits.load());
+    const int period_ms =
+        std::max(2, debug_bitrate_period_seconds.load()) * 1000;
+    const auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                            std::chrono::steady_clock::now().time_since_epoch())
+                            .count();
+    const auto elapsed_ms = now_ms - sweep_epoch_ms.load();
+    const double phase = static_cast<double>(elapsed_ms % period_ms) / period_ms;
+    const double triangle = phase < 0.5 ? phase * 2.0 : (1.0 - phase) * 2.0;
+    int target = minimum + static_cast<int>((maximum - minimum) * triangle);
+    target = ((target + 50) / 100) * 100;
+    if (target != bitrate_kbits.load()) {
+      bitrate_kbits = target;
+      rate_dirty = true;
+    }
+  }
+
+  bool capture_one_frame() {
+    pollfd descriptor{capture_fd, POLLIN, 0};
+    const int poll_result = poll(&descriptor, 1, 100);
+    if (poll_result <= 0) return poll_result == 0 || errno == EINTR;
+    v4l2_buffer buffer{};
+    buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    buffer.memory = V4L2_MEMORY_MMAP;
+    if (retry_ioctl(capture_fd, VIDIOC_DQBUF, &buffer) < 0) {
+      return errno == EAGAIN;
+    }
+    if (buffer.index < capture_buffers.size()) {
+      const auto& mapped = capture_buffers[buffer.index];
+      encode_nv12(static_cast<const uint8_t*>(mapped.data),
+                  std::min<size_t>(buffer.bytesused, mapped.size));
+    }
+    if (retry_ioctl(capture_fd, VIDIOC_QBUF, &buffer) < 0) {
+      log->error("Cannot requeue V4L2 buffer: {}", std::strerror(errno));
       return false;
     }
     return true;
@@ -350,17 +458,20 @@ class RockchipMppStream::Impl {
     openhd::LinkActionHandler::instance().set_cam_info_status(
         owner.m_camera_holder->get_camera().index,
         CameraStream::CAM_STATUS_STREAMING);
+    const int fps = std::max(
+        1, owner.m_camera_holder->get_settings().streamed_video_format.framerate);
+    const auto frame_period = std::chrono::microseconds(1000000 / fps);
+    auto next_frame = std::chrono::steady_clock::now();
+    uint64_t synthetic_index = 0;
     while (running) {
-      GstSample* sample = gst_app_sink_try_pull_sample(
-          GST_APP_SINK(sink), 100 * GST_MSECOND);
-      if (!sample) continue;
-      GstBuffer* buffer = gst_sample_get_buffer(sample);
-      GstMapInfo map{};
-      if (buffer && gst_buffer_map(buffer, &map, GST_MAP_READ)) {
-        encode_nv12(map.data, map.size);
-        gst_buffer_unmap(buffer, &map);
+      if (synthetic_capture) {
+        fill_synthetic_frame(synthetic_index++);
+        encode_nv12(synthetic_frame.data(), synthetic_frame.size());
+        next_frame += frame_period;
+        std::this_thread::sleep_until(next_frame);
+      } else if (!capture_one_frame()) {
+        break;
       }
-      gst_sample_unref(sample);
       const auto now = std::chrono::steady_clock::now();
       if (now - last_space_check >= std::chrono::seconds(5)) {
         last_space_check = now;
@@ -373,6 +484,7 @@ class RockchipMppStream::Impl {
   void encode_nv12(const uint8_t* source, size_t source_size) {
     const size_t packed_size = static_cast<size_t>(width) * height * 3 / 2;
     if (!source || source_size < packed_size) return;
+    update_bitrate_sweep();
     if (rate_dirty.exchange(false)) {
       apply_rate_control();
       if (mpi->control(ctx, MPP_ENC_SET_CFG, cfg))
@@ -391,6 +503,7 @@ class RockchipMppStream::Impl {
     for (RK_U32 row = 0; row < height / 2; ++row)
       std::memcpy(destination_uv + row * hor_stride,
                   source_uv + row * width, width);
+    add_noise(destination);
     mpp_buffer_sync_end(input_buffer);
 
     encode_context(ctx, mpi, true);
@@ -402,9 +515,8 @@ class RockchipMppStream::Impl {
             log->warn("MPP rejected a dynamic recording-quality update");
         }
         encode_context(record_ctx, record_mpi, false);
-        ++record_frame_index;
       }
-    } else if (record_ctx || record_pipeline) {
+    } else if (record_ctx || record_file) {
       stop_recording();
     }
   }
@@ -444,7 +556,7 @@ class RockchipMppStream::Impl {
         if (transmit)
           rtp->feed_multiple_nalu(data, static_cast<int>(length));
         else
-          push_record_data(data, length, false);
+          write_record_data(data, length);
       }
       mpp_packet_deinit(&packet);
     } while (!end_of_image);
@@ -484,13 +596,49 @@ class RockchipMppStream::Impl {
     record_rate_dirty = true;
   }
 
+  void update_debug_snapshot() {
+    const auto& s = owner.m_camera_holder->get_settings();
+    debug_noise_percent = s.mpp_debug_noise_percent;
+    debug_packet_loss_percent = s.mpp_debug_packet_loss_percent;
+    debug_bitrate_min_kbits = s.mpp_debug_bitrate_min_kbits;
+    debug_bitrate_max_kbits = s.mpp_debug_bitrate_max_kbits;
+    debug_bitrate_period_seconds = s.mpp_debug_bitrate_period_seconds;
+    const bool was_sweeping = debug_bitrate_sweep.exchange(
+        s.mpp_debug_bitrate_sweep);
+    sweep_epoch_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                         std::chrono::steady_clock::now().time_since_epoch())
+                         .count();
+    if (!s.mpp_debug_bitrate_sweep) {
+      bitrate_kbits = requested_bitrate_kbits.load();
+      rate_dirty = true;
+    } else if (!was_sweeping) {
+      bitrate_kbits = debug_bitrate_min_kbits.load();
+      rate_dirty = true;
+    }
+    log->info("MPP video test mode: noise {}%, RTP loss {}%, sweep {} "
+              "({}-{} kbit/s over {}s)",
+              debug_noise_percent.load(), debug_packet_loss_percent.load(),
+              debug_bitrate_sweep.load() ? "on" : "off",
+              debug_bitrate_min_kbits.load(), debug_bitrate_max_kbits.load(),
+              debug_bitrate_period_seconds.load());
+  }
+
   void cleanup() {
     stop_recording();
-    if (pipeline) gst_element_set_state(pipeline, GST_STATE_NULL);
-    if (sink) gst_object_unref(sink);
-    if (pipeline) gst_object_unref(pipeline);
-    sink = nullptr;
-    pipeline = nullptr;
+    if (capture_streaming) {
+      v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+      retry_ioctl(capture_fd, VIDIOC_STREAMOFF, &type);
+    }
+    for (auto& buffer : capture_buffers) {
+      if (buffer.data && buffer.data != MAP_FAILED)
+        munmap(buffer.data, buffer.size);
+    }
+    capture_buffers.clear();
+    if (capture_fd >= 0) close(capture_fd);
+    capture_fd = -1;
+    capture_streaming = false;
+    synthetic_capture = false;
+    synthetic_frame.clear();
     if (input_buffer) mpp_buffer_put(input_buffer);
     if (group) mpp_buffer_group_put(group);
     if (cfg) mpp_enc_cfg_deinit(cfg);
@@ -514,6 +662,7 @@ class RockchipMppStream::Impl {
   std::atomic_bool running{false};
   std::atomic_bool rate_dirty{false};
   std::atomic<int> bitrate_kbits{8000};
+  std::atomic<int> requested_bitrate_kbits{8000};
   std::atomic<int> qp_min{5};
   std::atomic<int> qp_max{51};
   std::atomic_bool roi_enable{false};
@@ -527,8 +676,20 @@ class RockchipMppStream::Impl {
   std::atomic<int> record_bitrate_kbits{40000};
   std::atomic<int> record_qp_min{4};
   std::atomic<int> record_qp_max{28};
-  GstElement* pipeline = nullptr;
-  GstElement* sink = nullptr;
+  std::atomic<int> debug_noise_percent{0};
+  std::atomic<int> debug_packet_loss_percent{0};
+  std::atomic_bool debug_bitrate_sweep{false};
+  std::atomic<int> debug_bitrate_min_kbits{2000};
+  std::atomic<int> debug_bitrate_max_kbits{12000};
+  std::atomic<int> debug_bitrate_period_seconds{10};
+  int packet_loss_accumulator = 0;
+  uint32_t noise_prng = 0x4f484431U;
+  std::atomic<int64_t> sweep_epoch_ms{0};
+  int capture_fd = -1;
+  bool capture_streaming = false;
+  bool synthetic_capture = false;
+  std::vector<CaptureBuffer> capture_buffers;
+  std::vector<uint8_t> synthetic_frame;
   MppCtx ctx = nullptr;
   MppApi* mpi = nullptr;
   MppEncCfg cfg = nullptr;
@@ -537,10 +698,8 @@ class RockchipMppStream::Impl {
   MppCtx record_ctx = nullptr;
   MppApi* record_mpi = nullptr;
   MppEncCfg record_cfg = nullptr;
-  GstElement* record_pipeline = nullptr;
-  GstElement* record_source = nullptr;
+  std::FILE* record_file = nullptr;
   std::string recording_filename;
-  uint64_t record_frame_index = 0;
   std::chrono::steady_clock::time_point last_space_check =
       std::chrono::steady_clock::now();
   MppCodingType coding = MPP_VIDEO_CodingAVC;
@@ -567,6 +726,8 @@ RockchipMppStream::RockchipMppStream(
       [this]() { m_impl->update_roi_snapshot(); });
   m_camera_holder->register_video_recording_listener(
       [this]() { m_impl->update_recording_snapshot(); });
+  m_camera_holder->register_video_debug_listener(
+      [this]() { m_impl->update_debug_snapshot(); });
 }
 
 RockchipMppStream::~RockchipMppStream() {
@@ -574,6 +735,7 @@ RockchipMppStream::~RockchipMppStream() {
   m_camera_holder->register_video_qp_listener(nullptr);
   m_camera_holder->register_video_roi_listener(nullptr);
   m_camera_holder->register_video_recording_listener(nullptr);
+  m_camera_holder->register_video_debug_listener(nullptr);
   terminate_looping();
 }
 
@@ -586,9 +748,12 @@ void RockchipMppStream::terminate_looping() { m_impl->stop(); }
 
 void RockchipMppStream::handle_change_bitrate_request(
     openhd::LinkActionHandler::LinkBitrateInformation lb) {
-  m_impl->bitrate_kbits = m_camera_holder->clamp_video_bitrate_kbits(
+  m_impl->requested_bitrate_kbits = m_camera_holder->clamp_video_bitrate_kbits(
       lb.recommended_encoder_bitrate_kbits);
-  m_impl->rate_dirty = true;
+  if (!m_impl->debug_bitrate_sweep.load()) {
+    m_impl->bitrate_kbits = m_impl->requested_bitrate_kbits.load();
+    m_impl->rate_dirty = true;
+  }
 }
 
 void RockchipMppStream::handle_update_arming_state(bool armed) {

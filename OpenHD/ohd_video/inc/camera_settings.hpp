@@ -107,6 +107,14 @@ struct CameraSettings {
   int mpp_record_bitrate_kbits = 40000;
   int mpp_record_qp_min = 4;
   int mpp_record_qp_max = 28;
+  // Opt-in native MPP video impairment controls for repeatable link testing.
+  // Packet loss is applied after RTP packetization and never affects telemetry.
+  int mpp_debug_noise_percent = 0;
+  int mpp_debug_packet_loss_percent = 0;
+  bool mpp_debug_bitrate_sweep = false;
+  int mpp_debug_bitrate_min_kbits = 2000;
+  int mpp_debug_bitrate_max_kbits = 12000;
+  int mpp_debug_bitrate_period_seconds = 10;
   // The video format selected by the user. If the user sets a video format that
   // isn't supported (for example, he might select h264|1920x1080@120 but the
   // camera can only do 60fps) the camera might stop streaming, and the user has

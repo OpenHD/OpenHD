@@ -39,7 +39,10 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
     qp_max, qp_min, qp_pid_enable, rk_bitrate_pid_enable, mpp_roi_enable,
     mpp_roi_x_percent, mpp_roi_y_percent, mpp_roi_width_percent,
     mpp_roi_height_percent, mpp_roi_quality, mpp_record_bitrate_kbits,
-    mpp_record_qp_min, mpp_record_qp_max, streamed_video_format,
+    mpp_record_qp_min, mpp_record_qp_max, mpp_debug_noise_percent,
+    mpp_debug_packet_loss_percent, mpp_debug_bitrate_sweep,
+    mpp_debug_bitrate_min_kbits, mpp_debug_bitrate_max_kbits,
+    mpp_debug_bitrate_period_seconds, streamed_video_format,
     h26x_bitrate_kbits, h26x_keyframe_interval, h26x_intra_refresh_type,
     h26x_num_slices, nxp_enable_aud, air_recording, camera_rotation_degree,
     openhd_flip,
@@ -94,6 +97,19 @@ std::optional<CameraSettings> CameraHolder::impl_deserialize(
     parsed_settings->h26x_bitrate_kbits =
         std::clamp(parsed_settings->h26x_bitrate_kbits, 1000,
                    get_max_video_bitrate_kbits());
+    parsed_settings->mpp_debug_noise_percent =
+        std::clamp(parsed_settings->mpp_debug_noise_percent, 0, 100);
+    parsed_settings->mpp_debug_packet_loss_percent =
+        std::clamp(parsed_settings->mpp_debug_packet_loss_percent, 0, 95);
+    parsed_settings->mpp_debug_bitrate_min_kbits = std::clamp(
+        parsed_settings->mpp_debug_bitrate_min_kbits, 1000,
+        get_max_video_bitrate_kbits());
+    parsed_settings->mpp_debug_bitrate_max_kbits = std::clamp(
+        parsed_settings->mpp_debug_bitrate_max_kbits,
+        parsed_settings->mpp_debug_bitrate_min_kbits,
+        get_max_video_bitrate_kbits());
+    parsed_settings->mpp_debug_bitrate_period_seconds = std::clamp(
+        parsed_settings->mpp_debug_bitrate_period_seconds, 2, 120);
   }
   if (parsed_settings.has_value() && OHDPlatform::instance().is_rpi5()) {
     parsed_settings->force_sw_encode = true;
@@ -325,6 +341,34 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
     add_roi_param("MPP_REC_QPMAX", get_settings().mpp_record_qp_max,
                   [this](std::string, int value) {
                     return set_mpp_record_qp_max(value);
+                  });
+    add_roi_param("DBG_NOISE", get_settings().mpp_debug_noise_percent,
+                  [this](std::string, int value) {
+                    return set_mpp_debug_noise(value);
+                  });
+    add_roi_param("DBG_PKT_LOSS",
+                  get_settings().mpp_debug_packet_loss_percent,
+                  [this](std::string, int value) {
+                    return set_mpp_debug_packet_loss(value);
+                  });
+    add_roi_param("DBG_BR_SWEEP", get_settings().mpp_debug_bitrate_sweep,
+                  [this](std::string, int value) {
+                    return set_mpp_debug_bitrate_sweep(value);
+                  });
+    add_roi_param("DBG_BR_MIN",
+                  get_settings().mpp_debug_bitrate_min_kbits / 1000,
+                  [this](std::string, int value) {
+                    return set_mpp_debug_bitrate_min(value);
+                  });
+    add_roi_param("DBG_BR_MAX",
+                  get_settings().mpp_debug_bitrate_max_kbits / 1000,
+                  [this](std::string, int value) {
+                    return set_mpp_debug_bitrate_max(value);
+                  });
+    add_roi_param("DBG_BR_PERIOD",
+                  get_settings().mpp_debug_bitrate_period_seconds,
+                  [this](std::string, int value) {
+                    return set_mpp_debug_bitrate_period(value);
                   });
   }
   if (true) {  // Always show intra, on libcamera without sw encode it
