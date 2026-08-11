@@ -304,6 +304,27 @@ class CameraHolder :
     if (m_video_roi_changed_callback) m_video_roi_changed_callback();
     return true;
   }
+  bool set_mpp_intra_refresh_enable(int value) {
+    if (!openhd::validate_yes_or_no(value)) return false;
+    unsafe_get_settings().mpp_intra_refresh_enable = value != 0;
+    persist(false);
+    if (m_video_roi_changed_callback) m_video_roi_changed_callback();
+    return true;
+  }
+  bool set_mpp_intra_refresh_mode(int value) {
+    if (value < 0 || value > 1) return false;
+    unsafe_get_settings().mpp_intra_refresh_mode = value;
+    persist(false);
+    if (m_video_roi_changed_callback) m_video_roi_changed_callback();
+    return true;
+  }
+  bool set_mpp_intra_refresh_num(int value) {
+    if (value < 1 || value > 32) return false;
+    unsafe_get_settings().mpp_intra_refresh_num = value;
+    persist(false);
+    if (m_video_roi_changed_callback) m_video_roi_changed_callback();
+    return true;
+  }
   bool set_mpp_record_bitrate(int value_mbits) {
     if (value_mbits < 5 || value_mbits > 200) return false;
     unsafe_get_settings().mpp_record_bitrate_kbits = value_mbits * 1000;

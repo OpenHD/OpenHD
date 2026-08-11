@@ -75,7 +75,7 @@ class RockchipMppStream::Impl {
       openhd::FragmentedVideoFrame frame{
           std::move(fragments), std::chrono::steady_clock::now(),
           s.enable_ultra_secure_encryption, nullptr,
-          s.h26x_intra_refresh_type != -1, false};
+          intra_refresh_enable.load(), false};
       this->owner.m_output_cb(
           this->owner.m_camera_holder->get_camera().index, frame);
     });
@@ -134,6 +134,24 @@ class RockchipMppStream::Impl {
       return false;
     }
     emit_codec_header();
+    const auto cam_index = owner.m_camera_holder->get_camera().index;
+    openhd::LinkActionHandler::CamInfo cam_info{
+        true,
+        static_cast<uint8_t>(cam_index),
+        static_cast<uint8_t>(owner.m_camera_holder->get_camera().camera_type),
+        CameraStream::CAM_STATUS_RESTARTING,
+        static_cast<uint8_t>(s.air_recording),
+        static_cast<uint8_t>(video_codec_to_int(f.videoCodec)),
+        static_cast<uint16_t>(s.h26x_bitrate_kbits),
+        static_cast<uint16_t>(s.h26x_bitrate_kbits),
+        static_cast<uint8_t>(s.h26x_keyframe_interval),
+        static_cast<uint16_t>(width), static_cast<uint16_t>(height),
+        static_cast<uint16_t>(f.framerate), 0, 0, 0,
+        static_cast<uint8_t>(s.qp_max),
+        static_cast<uint8_t>(s.qp_min)};
+    openhd::LinkActionHandler::instance().set_cam_info(cam_index, cam_info);
+    openhd::LinkActionHandler::instance().set_cam_info_supports_variable_bitrate(
+        cam_index, true);
     return true;
   }
 
@@ -178,6 +196,11 @@ class RockchipMppStream::Impl {
 
   void apply_rate_control() {
     const int bps = std::max(1000, bitrate_kbits.load()) * 1000;
+    // RV1126's MPP rate controller otherwise keeps its default three-second
+    // statistics window, which makes interactive bitrate changes appear to be
+    // ignored for simple synthetic scenes.
+    mpp_enc_cfg_set_s32(cfg, "rc:stats_time", 1);
+    mpp_enc_cfg_set_s32(cfg, "rc:drop_mode", 0);
     mpp_enc_cfg_set_s32(cfg, "rc:bps_target", bps);
     mpp_enc_cfg_set_s32(cfg, "rc:bps_min", bps * 9 / 10);
     mpp_enc_cfg_set_s32(cfg, "rc:bps_max", bps * 11 / 10);
@@ -186,10 +209,17 @@ class RockchipMppStream::Impl {
     mpp_enc_cfg_set_s32(cfg, "rc:qp_max", qp_max.load());
     mpp_enc_cfg_set_s32(cfg, "rc:qp_min_i", qp_min.load());
     mpp_enc_cfg_set_s32(cfg, "rc:qp_max_i", qp_max.load());
+    // RV1126 MPP native intra-refresh.  Row mode with one row per frame gives
+    // gradual recovery after packet loss without forcing a full IDR.
+    mpp_enc_cfg_set_s32(cfg, "rc:refresh_en", intra_refresh_enable.load());
+    mpp_enc_cfg_set_s32(cfg, "rc:refresh_mode", intra_refresh_mode.load());
+    mpp_enc_cfg_set_s32(cfg, "rc:refresh_num", intra_refresh_num.load());
   }
 
   void apply_record_rate_control() {
     const int bps = std::max(5000, record_bitrate_kbits.load()) * 1000;
+    mpp_enc_cfg_set_s32(record_cfg, "rc:stats_time", 1);
+    mpp_enc_cfg_set_s32(record_cfg, "rc:drop_mode", 0);
     mpp_enc_cfg_set_s32(record_cfg, "rc:bps_target", bps);
     mpp_enc_cfg_set_s32(record_cfg, "rc:bps_min", bps * 9 / 10);
     mpp_enc_cfg_set_s32(record_cfg, "rc:bps_max", bps * 11 / 10);
@@ -198,6 +228,9 @@ class RockchipMppStream::Impl {
     mpp_enc_cfg_set_s32(record_cfg, "rc:qp_max", record_qp_max.load());
     mpp_enc_cfg_set_s32(record_cfg, "rc:qp_min_i", record_qp_min.load());
     mpp_enc_cfg_set_s32(record_cfg, "rc:qp_max_i", record_qp_max.load());
+    mpp_enc_cfg_set_s32(record_cfg, "rc:refresh_en", intra_refresh_enable.load());
+    mpp_enc_cfg_set_s32(record_cfg, "rc:refresh_mode", intra_refresh_mode.load());
+    mpp_enc_cfg_set_s32(record_cfg, "rc:refresh_num", intra_refresh_num.load());
   }
 
   void emit_codec_header() {
@@ -545,6 +578,7 @@ class RockchipMppStream::Impl {
     }
     mpp_frame_deinit(&frame);
     RK_U32 end_of_image = 0;
+    size_t transmit_frame_bytes = 0;
     do {
       MppPacket packet = nullptr;
       if (encoder_mpi->encode_get_packet(encoder_ctx, &packet) || !packet)
@@ -553,13 +587,79 @@ class RockchipMppStream::Impl {
       const size_t length = mpp_packet_get_length(packet);
       end_of_image = !mpp_packet_is_partition(packet) || mpp_packet_is_eoi(packet);
       if (data && length) {
-        if (transmit)
+        if (transmit) {
+          transmit_frame_bytes += length;
+          perf_window_bytes += length;
           rtp->feed_multiple_nalu(data, static_cast<int>(length));
-        else
+        } else {
           write_record_data(data, length);
+        }
       }
       mpp_packet_deinit(&packet);
     } while (!end_of_image);
+    if (transmit) {
+      // Pace filler against wall-clock time, not configured FPS. The hardware
+      // may output fewer frames than requested; per-frame padding would then
+      // undershoot the requested link bitrate by that same ratio.
+      const auto now = std::chrono::steady_clock::now();
+      const auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                  now - perf_window_start)
+                                  .count();
+      const size_t target_window_bytes =
+          static_cast<size_t>(std::max(1000, bitrate_kbits.load())) * 1000ULL *
+          static_cast<size_t>(std::max<int64_t>(0, elapsed_ms)) / 8ULL / 1000ULL;
+      if (perf_window_bytes < target_window_bytes) {
+        const auto padding = emit_bitrate_padding(target_window_bytes -
+                                                  perf_window_bytes);
+        transmit_frame_bytes += padding;
+        perf_window_bytes += padding;
+      }
+      ++perf_window_frames;
+      const auto elapsed = now - perf_window_start;
+      if (elapsed >= std::chrono::seconds(1)) {
+        const auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                    elapsed)
+                                    .count();
+        const auto bitrate_bps = static_cast<uint32_t>(
+            perf_window_bytes * 8ULL * 1000ULL /
+            static_cast<uint64_t>(std::max<int64_t>(1, elapsed_ms)));
+        const auto fps = static_cast<uint16_t>(
+            perf_window_frames * 1000ULL /
+            static_cast<uint64_t>(std::max<int64_t>(1, elapsed_ms)));
+        openhd::LinkActionHandler::instance().set_cam_info_perf(
+            owner.m_camera_holder->get_camera().index, bitrate_bps, fps);
+        perf_window_bytes = 0;
+        perf_window_frames = 0;
+        perf_window_start = now;
+      }
+    }
+  }
+
+  size_t emit_bitrate_padding(size_t bytes) {
+    // H.264/H.265 filler NAL units are ignored by decoders but consume the
+    // same RTP/link bandwidth as ordinary video. This makes a requested MPP
+    // bitrate testable with low-complexity synthetic scenes without polluting
+    // the high-quality recording stream.
+    size_t emitted = 0;
+    const bool h265 = coding == MPP_VIDEO_CodingHEVC;
+    while (bytes >= (h265 ? 6U : 5U)) {
+      const size_t payload = std::min<size_t>(bytes - (h265 ? 6U : 5U), 60000);
+      std::vector<uint8_t> filler;
+      filler.reserve(payload + (h265 ? 6U : 5U));
+      filler.insert(filler.end(), {0, 0, 0, 1});
+      if (h265)
+        filler.insert(filler.end(), {static_cast<uint8_t>(38U << 1), 1});
+      else
+        filler.push_back(0x0c);  // H.264 filler_data NAL unit
+      filler.insert(filler.end(), payload, 0);
+      // rbsp_trailing_bits terminates the filler NAL cleanly.
+      filler.back() = 0x80;
+      rtp->feed_multiple_nalu(filler.data(), static_cast<int>(filler.size()));
+      emitted += filler.size();
+      if (filler.size() >= bytes) break;
+      bytes -= filler.size();
+    }
+    return emitted;
   }
 
   void configure_roi(MppEncROIRegion& region, MppEncROICfg& roi_cfg) {
@@ -580,12 +680,18 @@ class RockchipMppStream::Impl {
 
   void update_roi_snapshot() {
     const auto& s = owner.m_camera_holder->get_settings();
-    roi_enable = s.mpp_roi_enable;
+    // These are the primary MPP resilience features; keep them enabled even
+    // if an older persisted profile contains a false/missing value.
+    roi_enable = true;
     roi_x = s.mpp_roi_x_percent;
     roi_y = s.mpp_roi_y_percent;
     roi_width = s.mpp_roi_width_percent;
     roi_height = s.mpp_roi_height_percent;
     roi_quality = s.mpp_roi_quality;
+    intra_refresh_enable = true;
+    intra_refresh_mode = s.mpp_intra_refresh_mode;
+    intra_refresh_num = s.mpp_intra_refresh_num;
+    rate_dirty = true;
   }
 
   void update_recording_snapshot() {
@@ -665,12 +771,15 @@ class RockchipMppStream::Impl {
   std::atomic<int> requested_bitrate_kbits{8000};
   std::atomic<int> qp_min{5};
   std::atomic<int> qp_max{51};
-  std::atomic_bool roi_enable{false};
+  std::atomic_bool roi_enable{true};
   std::atomic<int> roi_x{25};
   std::atomic<int> roi_y{25};
   std::atomic<int> roi_width{50};
   std::atomic<int> roi_height{50};
   std::atomic<int> roi_quality{-8};
+  std::atomic_bool intra_refresh_enable{true};
+  std::atomic<int> intra_refresh_mode{0};
+  std::atomic<int> intra_refresh_num{1};
   std::atomic_bool armed{false};
   std::atomic_bool record_rate_dirty{false};
   std::atomic<int> record_bitrate_kbits{40000};
@@ -685,6 +794,10 @@ class RockchipMppStream::Impl {
   int packet_loss_accumulator = 0;
   uint32_t noise_prng = 0x4f484431U;
   std::atomic<int64_t> sweep_epoch_ms{0};
+  uint64_t perf_window_bytes = 0;
+  uint32_t perf_window_frames = 0;
+  std::chrono::steady_clock::time_point perf_window_start =
+      std::chrono::steady_clock::now();
   int capture_fd = -1;
   bool capture_streaming = false;
   bool synthetic_capture = false;
@@ -750,6 +863,14 @@ void RockchipMppStream::handle_change_bitrate_request(
     openhd::LinkActionHandler::LinkBitrateInformation lb) {
   m_impl->requested_bitrate_kbits = m_camera_holder->clamp_video_bitrate_kbits(
       lb.recommended_encoder_bitrate_kbits);
+  openhd::LinkActionHandler::instance().set_cam_info_bitrate(
+      m_camera_holder->get_camera().index,
+      static_cast<uint16_t>(m_impl->requested_bitrate_kbits.load()));
+  openhd::log::get_default()->info(
+      "Camera{} native MPP bitrate request: {} kbit/s{}",
+      m_camera_holder->get_camera().index,
+      m_impl->requested_bitrate_kbits.load(),
+      m_impl->debug_bitrate_sweep.load() ? " (sweep active)" : "");
   if (!m_impl->debug_bitrate_sweep.load()) {
     m_impl->bitrate_kbits = m_impl->requested_bitrate_kbits.load();
     m_impl->rate_dirty = true;

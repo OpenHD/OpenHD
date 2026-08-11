@@ -96,12 +96,19 @@ struct CameraSettings {
   // Native Rockchip MPP region of interest. Geometry is expressed as a
   // percentage of the encoded picture; negative quality values improve the
   // selected region by lowering its QP.
-  bool mpp_roi_enable = false;
+  // Keep the MPP test path exercising ROI by default. Legacy/GStreamer
+  // pipelines ignore this field, while RV1126 MPP applies it per frame.
+  bool mpp_roi_enable = true;
   int mpp_roi_x_percent = 25;
   int mpp_roi_y_percent = 25;
   int mpp_roi_width_percent = 50;
   int mpp_roi_height_percent = 50;
   int mpp_roi_quality = -8;
+  // Native MPP intra-refresh is enabled by default for link-resilience tests.
+  // mode 0 refreshes rows, mode 1 refreshes columns; num is the count per frame.
+  bool mpp_intra_refresh_enable = true;
+  int mpp_intra_refresh_mode = 0;
+  int mpp_intra_refresh_num = 1;
   // Independent native MPP recording channel. It intentionally does not
   // follow the RF-link bitrate controller.
   int mpp_record_bitrate_kbits = 40000;

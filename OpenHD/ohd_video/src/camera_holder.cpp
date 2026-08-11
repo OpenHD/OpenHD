@@ -38,7 +38,8 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
     CameraSettings, enable_streaming, ip_camera_pipeline, ip_camera_address,
     qp_max, qp_min, qp_pid_enable, rk_bitrate_pid_enable, mpp_roi_enable,
     mpp_roi_x_percent, mpp_roi_y_percent, mpp_roi_width_percent,
-    mpp_roi_height_percent, mpp_roi_quality, mpp_record_bitrate_kbits,
+    mpp_roi_height_percent, mpp_roi_quality, mpp_intra_refresh_enable,
+    mpp_intra_refresh_mode, mpp_intra_refresh_num, mpp_record_bitrate_kbits,
     mpp_record_qp_min, mpp_record_qp_max, mpp_debug_noise_percent,
     mpp_debug_packet_loss_percent, mpp_debug_bitrate_sweep,
     mpp_debug_bitrate_min_kbits, mpp_debug_bitrate_max_kbits,
@@ -328,6 +329,18 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
     add_roi_param("MPP_ROI_QP", get_settings().mpp_roi_quality,
                   [this](std::string, int value) {
                     return set_mpp_roi_quality(value);
+                  });
+    add_roi_param("MPP_IR_ENABLE", get_settings().mpp_intra_refresh_enable,
+                  [this](std::string, int value) {
+                    return set_mpp_intra_refresh_enable(value);
+                  });
+    add_roi_param("MPP_IR_MODE", get_settings().mpp_intra_refresh_mode,
+                  [this](std::string, int value) {
+                    return set_mpp_intra_refresh_mode(value);
+                  });
+    add_roi_param("MPP_IR_NUM", get_settings().mpp_intra_refresh_num,
+                  [this](std::string, int value) {
+                    return set_mpp_intra_refresh_num(value);
                   });
     add_roi_param("MPP_REC_MBPS",
                   get_settings().mpp_record_bitrate_kbits / 1000,
