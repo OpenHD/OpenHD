@@ -312,6 +312,7 @@ class RockchipMppStream::Impl {
       mpp_enc_cfg_set_s32(cfg, "h264:level", 42);
       mpp_enc_cfg_set_s32(cfg, "h264:cabac_en", 1);
     }
+    apply_chroma_qp_offset(cfg);
     apply_rate_control();
     if (mpi->control(ctx, MPP_ENC_SET_CFG, cfg)) {
       log->error("MPP rejected encoder configuration");
@@ -377,6 +378,7 @@ class RockchipMppStream::Impl {
       mpp_enc_cfg_set_s32(record_cfg, "h264:level", 42);
       mpp_enc_cfg_set_s32(record_cfg, "h264:cabac_en", 1);
     }
+    apply_chroma_qp_offset(record_cfg);
     apply_record_rate_control();
     if (record_mpi->control(record_ctx, MPP_ENC_SET_CFG, record_cfg)) {
       log->error("MPP rejected the recording-channel configuration");
@@ -384,6 +386,15 @@ class RockchipMppStream::Impl {
       return false;
     }
     return true;
+  }
+
+  void apply_chroma_qp_offset(MppEncCfg target) {
+    const char* cb = coding == MPP_VIDEO_CodingHEVC ? "h265:cb_qp_offset"
+                                                    : "h264:cb_qp_offset";
+    const char* cr = coding == MPP_VIDEO_CodingHEVC ? "h265:cr_qp_offset"
+                                                    : "h264:cr_qp_offset";
+    mpp_enc_cfg_set_s32(target, cb, -6);
+    mpp_enc_cfg_set_s32(target, cr, -6);
   }
 
   void apply_rate_control() {
