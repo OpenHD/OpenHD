@@ -655,7 +655,8 @@
       "name": "RV1126B_CSI",
       "ui_label": "RV1126B CSI",
       "resolutions": [
-        {"width": 1280, "height": 720, "fps": 60}
+        {"width": 1280, "height": 720, "fps": 60},
+        {"width": 720, "height": 540, "fps": 90}
       ]
     },
     {
