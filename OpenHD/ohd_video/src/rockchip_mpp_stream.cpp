@@ -15,8 +15,10 @@
 #include <algorithm>
 #include <cerrno>
 #include <chrono>
+#include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <string>
 #include <vector>
 
 #include "air_recording_helper.hpp"
@@ -33,6 +35,196 @@ int retry_ioctl(int fd, unsigned long request, void* argument) {
   } while (result < 0 && errno == EINTR);
   return result;
 }
+
+class MpegTsMuxer {
+ public:
+  ~MpegTsMuxer() { close(); }
+
+  bool open(const std::string& path, bool h265, int fps) {
+    m_file = std::fopen(path.c_str(), "wb");
+    if (!m_file) return false;
+    m_h265 = h265;
+    m_fps = fps > 0 ? fps : 30;
+    m_cc_pat = m_cc_pmt = m_cc_video = 0;
+    m_frame_index = 0;
+    m_frames_since_psi = 0;
+    return true;
+  }
+
+  bool is_open() const { return m_file != nullptr; }
+
+  void close() {
+    if (!m_file) return;
+    std::fflush(m_file);
+    std::fclose(m_file);
+    m_file = nullptr;
+  }
+
+  void write_access_unit(const uint8_t* header, size_t header_len,
+                         const uint8_t* au, size_t au_len, bool keyframe) {
+    if (!m_file || !au || !au_len) return;
+    const uint64_t pts =
+        static_cast<uint64_t>(m_frame_index) * 90000ULL / static_cast<uint64_t>(m_fps);
+    ++m_frame_index;
+    if (keyframe || m_frames_since_psi >= 20) {
+      write_pat();
+      write_pmt();
+      m_frames_since_psi = 0;
+    } else {
+      ++m_frames_since_psi;
+    }
+    write_pes(header, header_len, au, au_len, pts, keyframe);
+  }
+
+ private:
+  static constexpr int kPatPid = 0x0000;
+  static constexpr int kPmtPid = 0x1000;
+  static constexpr int kVideoPid = 0x0100;
+
+  static uint32_t crc32_mpeg(const uint8_t* data, size_t len) {
+    uint32_t crc = 0xFFFFFFFFU;
+    for (size_t i = 0; i < len; ++i) {
+      crc ^= static_cast<uint32_t>(data[i]) << 24;
+      for (int b = 0; b < 8; ++b)
+        crc = (crc & 0x80000000U) ? (crc << 1) ^ 0x04C11DB7U : (crc << 1);
+    }
+    return crc;
+  }
+
+  static void write_pts_field(uint8_t* p, uint8_t prefix, uint64_t pts) {
+    p[0] = (prefix << 4) | (((pts >> 30) & 0x7) << 1) | 0x1;
+    p[1] = (pts >> 22) & 0xFF;
+    p[2] = (((pts >> 15) & 0x7F) << 1) | 0x1;
+    p[3] = (pts >> 7) & 0xFF;
+    p[4] = ((pts & 0x7F) << 1) | 0x1;
+  }
+
+  void write_ts(const uint8_t* packet) { std::fwrite(packet, 1, 188, m_file); }
+
+  void write_psi(int pid, int& cc, const uint8_t* section, size_t len) {
+    uint8_t pkt[188];
+    std::memset(pkt, 0xFF, sizeof(pkt));
+    pkt[0] = 0x47;
+    pkt[1] = 0x40 | ((pid >> 8) & 0x1F);
+    pkt[2] = pid & 0xFF;
+    pkt[3] = 0x10 | (cc & 0x0F);
+    cc = (cc + 1) & 0x0F;
+    pkt[4] = 0x00;
+    std::memcpy(pkt + 5, section, len);
+    write_ts(pkt);
+  }
+
+  void write_pat() {
+    uint8_t s[16];
+    size_t n = 0;
+    s[n++] = 0x00;                 // table_id (PAT)
+    s[n++] = 0xB0;                 // section_syntax_indicator + length hi
+    s[n++] = 0x0D;                 // section_length = 13
+    s[n++] = 0x00; s[n++] = 0x01;  // transport_stream_id
+    s[n++] = 0xC1;                 // version 0, current_next = 1
+    s[n++] = 0x00;                 // section_number
+    s[n++] = 0x00;                 // last_section_number
+    s[n++] = 0x00; s[n++] = 0x01;  // program_number 1
+    s[n++] = 0xE0 | ((kPmtPid >> 8) & 0x1F);
+    s[n++] = kPmtPid & 0xFF;
+    const uint32_t crc = crc32_mpeg(s, n);
+    s[n++] = (crc >> 24) & 0xFF; s[n++] = (crc >> 16) & 0xFF;
+    s[n++] = (crc >> 8) & 0xFF;  s[n++] = crc & 0xFF;
+    write_psi(kPatPid, m_cc_pat, s, n);
+  }
+
+  void write_pmt() {
+    uint8_t s[24];
+    size_t n = 0;
+    s[n++] = 0x02;                 // table_id (PMT)
+    s[n++] = 0xB0;                 // section_syntax_indicator + length hi
+    s[n++] = 0x12;                 // section_length = 18
+    s[n++] = 0x00; s[n++] = 0x01;  // program_number
+    s[n++] = 0xC1;                 // version 0, current_next = 1
+    s[n++] = 0x00;                 // section_number
+    s[n++] = 0x00;                 // last_section_number
+    s[n++] = 0xE0 | ((kVideoPid >> 8) & 0x1F);  // PCR_PID
+    s[n++] = kVideoPid & 0xFF;
+    s[n++] = 0xF0; s[n++] = 0x00;  // program_info_length = 0
+    s[n++] = m_h265 ? 0x24 : 0x1B; // stream_type (HEVC / AVC)
+    s[n++] = 0xE0 | ((kVideoPid >> 8) & 0x1F);
+    s[n++] = kVideoPid & 0xFF;
+    s[n++] = 0xF0; s[n++] = 0x00;  // ES_info_length = 0
+    const uint32_t crc = crc32_mpeg(s, n);
+    s[n++] = (crc >> 24) & 0xFF; s[n++] = (crc >> 16) & 0xFF;
+    s[n++] = (crc >> 8) & 0xFF;  s[n++] = crc & 0xFF;
+    write_psi(kPmtPid, m_cc_pmt, s, n);
+  }
+
+  void write_pes(const uint8_t* header, size_t header_len, const uint8_t* au,
+                 size_t au_len, uint64_t pts, bool keyframe) {
+    m_pes.clear();
+    m_pes.insert(m_pes.end(), {0x00, 0x00, 0x01, 0xE0});
+    m_pes.insert(m_pes.end(), {0x00, 0x00});
+    m_pes.insert(m_pes.end(), {0x80, 0x80, 0x05});
+    uint8_t pts5[5];
+    write_pts_field(pts5, 0x2, pts);
+    m_pes.insert(m_pes.end(), pts5, pts5 + 5);
+    if (header && header_len)
+      m_pes.insert(m_pes.end(), header, header + header_len);
+    m_pes.insert(m_pes.end(), au, au + au_len);
+
+    size_t pos = 0;
+    bool first = true;
+    while (pos < m_pes.size()) {
+      uint8_t pkt[188];
+      size_t p = 0;
+      pkt[p++] = 0x47;
+      pkt[p++] = (first ? 0x40 : 0x00) | ((kVideoPid >> 8) & 0x1F);
+      pkt[p++] = kVideoPid & 0xFF;
+      const size_t remaining = m_pes.size() - pos;
+      const bool want_pcr = first;
+      if (want_pcr || remaining < 184) {
+        const size_t af_content = 1 + (want_pcr ? 6 : 0);
+        const size_t max_payload = 184 - 1 - af_content;
+        const size_t payload = remaining < max_payload ? remaining : max_payload;
+        const size_t stuffing = max_payload - payload;
+        pkt[p++] = 0x30 | (m_cc_video & 0x0F);
+        m_cc_video = (m_cc_video + 1) & 0x0F;
+        pkt[p++] = static_cast<uint8_t>(af_content + stuffing);
+        uint8_t flags = 0x00;
+        if (keyframe && first) flags |= 0x40;
+        if (want_pcr) flags |= 0x10;
+        pkt[p++] = flags;
+        if (want_pcr) {
+          const uint64_t base = pts;
+          pkt[p++] = (base >> 25) & 0xFF;
+          pkt[p++] = (base >> 17) & 0xFF;
+          pkt[p++] = (base >> 9) & 0xFF;
+          pkt[p++] = (base >> 1) & 0xFF;
+          pkt[p++] = ((base & 1) << 7) | 0x7E;
+          pkt[p++] = 0x00;
+        }
+        std::memset(pkt + p, 0xFF, stuffing);
+        p += stuffing;
+        std::memcpy(pkt + p, m_pes.data() + pos, payload);
+        p += payload;
+        pos += payload;
+      } else {
+        pkt[p++] = 0x10 | (m_cc_video & 0x0F);
+        m_cc_video = (m_cc_video + 1) & 0x0F;
+        std::memcpy(pkt + p, m_pes.data() + pos, 184);
+        p += 184;
+        pos += 184;
+      }
+      write_ts(pkt);
+      first = false;
+    }
+  }
+
+  std::FILE* m_file = nullptr;
+  bool m_h265 = false;
+  int m_fps = 30;
+  int m_cc_pat = 0, m_cc_pmt = 0, m_cc_video = 0;
+  uint64_t m_frame_index = 0;
+  int m_frames_since_psi = 0;
+  std::vector<uint8_t> m_pes;
+};
 }
 
 class RockchipMppStream::Impl {
@@ -250,12 +442,10 @@ class RockchipMppStream::Impl {
   }
 
   bool setup_record_file() {
-    const auto codec = owner.m_camera_holder->get_settings()
-                           .streamed_video_format.videoCodec;
-    recording_filename = openhd::video::create_unused_recording_filename(
-        codec == VideoCodec::H265 ? ".h265" : ".h264");
-    record_file = std::fopen(recording_filename.c_str(), "wb");
-    if (!record_file) {
+    const auto& f = owner.m_camera_holder->get_settings().streamed_video_format;
+    recording_filename = openhd::video::create_unused_recording_filename(".ts");
+    if (!record_muxer.open(recording_filename,
+                           f.videoCodec == VideoCodec::H265, f.framerate)) {
       log->error("Cannot open MPP recording file {}: {}", recording_filename,
                  std::strerror(errno));
       return false;
@@ -263,13 +453,8 @@ class RockchipMppStream::Impl {
     return true;
   }
 
-  void write_record_data(const uint8_t* data, size_t length) {
-    if (!record_file || !data || !length) return;
-    if (std::fwrite(data, 1, length, record_file) != length)
-      log->warn("Short write to MPP recording {}", recording_filename);
-  }
-
   void emit_record_codec_header() {
+    record_header.clear();
     MppBuffer packet_buffer = nullptr;
     MppPacket packet = nullptr;
     const size_t size = std::max<size_t>(width * height, 64 * 1024);
@@ -277,12 +462,33 @@ class RockchipMppStream::Impl {
         mpp_packet_init_with_buffer(&packet, packet_buffer)) return;
     mpp_packet_set_length(packet, 0);
     if (!record_mpi->control(record_ctx, MPP_ENC_GET_HDR_SYNC, packet)) {
-      write_record_data(
-          static_cast<const uint8_t*>(mpp_packet_get_pos(packet)),
-          mpp_packet_get_length(packet));
+      const auto* data = static_cast<const uint8_t*>(mpp_packet_get_pos(packet));
+      const auto length = mpp_packet_get_length(packet);
+      if (data && length) record_header.assign(data, data + length);
     }
     mpp_packet_deinit(&packet);
     mpp_buffer_put(packet_buffer);
+  }
+
+  bool is_keyframe_au(const uint8_t* au, size_t len) const {
+    for (size_t i = 0; i + 4 < len; ++i) {
+      if (au[i] != 0x00 || au[i + 1] != 0x00) continue;
+      size_t nal = 0;
+      if (au[i + 2] == 0x01)
+        nal = i + 3;
+      else if (au[i + 2] == 0x00 && au[i + 3] == 0x01)
+        nal = i + 4;
+      else
+        continue;
+      if (nal >= len) break;
+      if (coding == MPP_VIDEO_CodingHEVC) {
+        const int type = (au[nal] >> 1) & 0x3F;
+        if (type >= 16 && type <= 23) return true;
+      } else {
+        if ((au[nal] & 0x1F) == 5) return true;
+      }
+    }
+    return false;
   }
 
   bool start_recording() {
@@ -307,8 +513,9 @@ class RockchipMppStream::Impl {
   }
 
   void stop_recording() {
-    if (record_file) std::fclose(record_file);
-    record_file = nullptr;
+    record_muxer.close();
+    record_au.clear();
+    record_header.clear();
     destroy_record_encoder();
     if (!recording_filename.empty()) {
       log->info("High-quality MPP recording stopped: {}", recording_filename);
@@ -582,7 +789,7 @@ class RockchipMppStream::Impl {
         }
         encode_context(record_ctx, record_mpi, false);
       }
-    } else if (record_ctx || record_file) {
+    } else if (record_ctx || record_muxer.is_open()) {
       stop_recording();
     }
   }
@@ -625,11 +832,19 @@ class RockchipMppStream::Impl {
           perf_window_bytes += length;
           rtp->feed_multiple_nalu(data, static_cast<int>(length));
         } else {
-          write_record_data(data, length);
+          record_au.insert(record_au.end(), data, data + length);
         }
       }
       mpp_packet_deinit(&packet);
     } while (!end_of_image);
+    if (!transmit && !record_au.empty()) {
+      const bool keyframe = is_keyframe_au(record_au.data(), record_au.size());
+      record_muxer.write_access_unit(
+          keyframe ? record_header.data() : nullptr,
+          keyframe ? record_header.size() : 0, record_au.data(),
+          record_au.size(), keyframe);
+      record_au.clear();
+    }
     if (transmit) {
       // Pace filler against wall-clock time, not configured FPS. The hardware
       // may output fewer frames than requested; per-frame padding would then
@@ -850,7 +1065,9 @@ class RockchipMppStream::Impl {
   MppCtx record_ctx = nullptr;
   MppApi* record_mpi = nullptr;
   MppEncCfg record_cfg = nullptr;
-  std::FILE* record_file = nullptr;
+  MpegTsMuxer record_muxer;
+  std::vector<uint8_t> record_au;
+  std::vector<uint8_t> record_header;
   std::string recording_filename;
   std::chrono::steady_clock::time_point last_space_check =
       std::chrono::steady_clock::now();
