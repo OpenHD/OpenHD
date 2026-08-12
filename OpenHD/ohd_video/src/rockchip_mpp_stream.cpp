@@ -336,20 +336,30 @@ class RockchipMppStream::Impl {
       return false;
     }
     v4l2_format format{};
-    format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    format.fmt.pix.width = width;
-    format.fmt.pix.height = height;
-    format.fmt.pix.pixelformat = V4L2_PIX_FMT_NV12;
-    format.fmt.pix.field = V4L2_FIELD_NONE;
+    format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+    format.fmt.pix_mp.width = width;
+    format.fmt.pix_mp.height = height;
+    format.fmt.pix_mp.pixelformat = V4L2_PIX_FMT_NV12;
+    format.fmt.pix_mp.field = V4L2_FIELD_NONE;
+    format.fmt.pix_mp.num_planes = 1;
     if (retry_ioctl(capture_fd, VIDIOC_S_FMT, &format) < 0 ||
-        format.fmt.pix.pixelformat != V4L2_PIX_FMT_NV12) {
+        format.fmt.pix_mp.pixelformat != V4L2_PIX_FMT_NV12) {
       log->error("/dev/video0 cannot provide NV12 {}x{}: {}", width, height,
                  std::strerror(errno));
       return false;
     }
+    capture_num_planes = format.fmt.pix_mp.num_planes;
+    if (capture_num_planes < 1 || capture_num_planes > VIDEO_MAX_PLANES) {
+      log->error("/dev/video0 reported unsupported plane count {}",
+                 capture_num_planes);
+      return false;
+    }
+
+    capture_stride = std::max<uint32_t>(format.fmt.pix_mp.plane_fmt[0].bytesperline,
+                                        width);
     v4l2_requestbuffers request{};
     request.count = 4;
-    request.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    request.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
     request.memory = V4L2_MEMORY_MMAP;
     if (retry_ioctl(capture_fd, VIDIOC_REQBUFS, &request) < 0 ||
         request.count < 2) {
@@ -360,18 +370,21 @@ class RockchipMppStream::Impl {
     capture_buffers.resize(request.count);
     for (uint32_t index = 0; index < request.count; ++index) {
       v4l2_buffer buffer{};
-      buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+      v4l2_plane planes[VIDEO_MAX_PLANES]{};
+      buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
       buffer.memory = V4L2_MEMORY_MMAP;
       buffer.index = index;
+      buffer.m.planes = planes;
+      buffer.length = capture_num_planes;
       if (retry_ioctl(capture_fd, VIDIOC_QUERYBUF, &buffer) < 0) return false;
-      capture_buffers[index].size = buffer.length;
+      capture_buffers[index].size = planes[0].length;
       capture_buffers[index].data =
-          mmap(nullptr, buffer.length, PROT_READ | PROT_WRITE, MAP_SHARED,
-               capture_fd, buffer.m.offset);
+          mmap(nullptr, planes[0].length, PROT_READ | PROT_WRITE, MAP_SHARED,
+               capture_fd, planes[0].m.mem_offset);
       if (capture_buffers[index].data == MAP_FAILED) return false;
       if (retry_ioctl(capture_fd, VIDIOC_QBUF, &buffer) < 0) return false;
     }
-    v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
     if (retry_ioctl(capture_fd, VIDIOC_STREAMON, &type) < 0) {
       log->error("Cannot start V4L2 capture: {}", std::strerror(errno));
       return false;
@@ -455,15 +468,18 @@ class RockchipMppStream::Impl {
     const int poll_result = poll(&descriptor, 1, 100);
     if (poll_result <= 0) return poll_result == 0 || errno == EINTR;
     v4l2_buffer buffer{};
-    buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    v4l2_plane planes[VIDEO_MAX_PLANES]{};
+    buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
     buffer.memory = V4L2_MEMORY_MMAP;
+    buffer.m.planes = planes;
+    buffer.length = capture_num_planes;
     if (retry_ioctl(capture_fd, VIDIOC_DQBUF, &buffer) < 0) {
       return errno == EAGAIN;
     }
     if (buffer.index < capture_buffers.size()) {
       const auto& mapped = capture_buffers[buffer.index];
       encode_nv12(static_cast<const uint8_t*>(mapped.data),
-                  std::min<size_t>(buffer.bytesused, mapped.size));
+                  std::min<size_t>(planes[0].bytesused, mapped.size));
     }
     if (retry_ioctl(capture_fd, VIDIOC_QBUF, &buffer) < 0) {
       log->error("Cannot requeue V4L2 buffer: {}", std::strerror(errno));
@@ -515,8 +531,11 @@ class RockchipMppStream::Impl {
   }
 
   void encode_nv12(const uint8_t* source, size_t source_size) {
-    const size_t packed_size = static_cast<size_t>(width) * height * 3 / 2;
-    if (!source || source_size < packed_size) return;
+    const size_t src_stride = capture_stride ? capture_stride : width;
+    const size_t required_size =
+        src_stride * static_cast<size_t>(height) +
+        src_stride * static_cast<size_t>(height / 2);
+    if (!source || source_size < required_size) return;
     update_bitrate_sweep();
     if (rate_dirty.exchange(false)) {
       apply_rate_control();
@@ -530,12 +549,13 @@ class RockchipMppStream::Impl {
       return;
     }
     for (RK_U32 row = 0; row < height; ++row)
-      std::memcpy(destination + row * hor_stride, source + row * width, width);
-    const uint8_t* source_uv = source + width * height;
+      std::memcpy(destination + row * hor_stride,
+                  source + static_cast<size_t>(row) * src_stride, width);
+    const uint8_t* source_uv = source + src_stride * static_cast<size_t>(height);
     uint8_t* destination_uv = destination + hor_stride * ver_stride;
     for (RK_U32 row = 0; row < height / 2; ++row)
       std::memcpy(destination_uv + row * hor_stride,
-                  source_uv + row * width, width);
+                  source_uv + static_cast<size_t>(row) * src_stride, width);
     add_noise(destination);
     mpp_buffer_sync_end(input_buffer);
 
@@ -732,7 +752,7 @@ class RockchipMppStream::Impl {
   void cleanup() {
     stop_recording();
     if (capture_streaming) {
-      v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+      v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
       retry_ioctl(capture_fd, VIDIOC_STREAMOFF, &type);
     }
     for (auto& buffer : capture_buffers) {
@@ -742,6 +762,8 @@ class RockchipMppStream::Impl {
     capture_buffers.clear();
     if (capture_fd >= 0) close(capture_fd);
     capture_fd = -1;
+    capture_stride = 0;
+    capture_num_planes = 1;
     capture_streaming = false;
     synthetic_capture = false;
     synthetic_frame.clear();
@@ -799,6 +821,8 @@ class RockchipMppStream::Impl {
   std::chrono::steady_clock::time_point perf_window_start =
       std::chrono::steady_clock::now();
   int capture_fd = -1;
+  uint32_t capture_num_planes = 1;
+  uint32_t capture_stride = 0;
   bool capture_streaming = false;
   bool synthetic_capture = false;
   std::vector<CaptureBuffer> capture_buffers;
