@@ -357,6 +357,17 @@ class RockchipMppStream::Impl {
 
     capture_stride = std::max<uint32_t>(format.fmt.pix_mp.plane_fmt[0].bytesperline,
                                         width);
+    // The luma plane's height is aligned by the driver independently of
+    // `height` (e.g. 540 -> 544), so the interleaved UV plane does not begin at
+    // stride*height. Reading it there pulls 4 rows of zeroed luma padding into
+    // the chroma and paints a green bar across the top of the frame. Derive the
+    // real luma height from the driver-reported sizeimage (NV12 = stride * yh *
+    // 3/2), falling back to a 16-row alignment.
+    const uint32_t sizeimage = format.fmt.pix_mp.plane_fmt[0].sizeimage;
+    uint32_t luma_rows =
+        sizeimage ? (sizeimage / capture_stride) * 2 / 3 : align16(height);
+    if (luma_rows < height) luma_rows = align16(height);
+    capture_uv_offset = static_cast<size_t>(capture_stride) * luma_rows;
     v4l2_requestbuffers request{};
     request.count = 4;
     request.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
@@ -532,9 +543,11 @@ class RockchipMppStream::Impl {
 
   void encode_nv12(const uint8_t* source, size_t source_size) {
     const size_t src_stride = capture_stride ? capture_stride : width;
+    const size_t uv_offset = capture_uv_offset
+                                 ? capture_uv_offset
+                                 : src_stride * static_cast<size_t>(height);
     const size_t required_size =
-        src_stride * static_cast<size_t>(height) +
-        src_stride * static_cast<size_t>(height / 2);
+        uv_offset + src_stride * static_cast<size_t>(height / 2);
     if (!source || source_size < required_size) return;
     update_bitrate_sweep();
     if (rate_dirty.exchange(false)) {
@@ -551,7 +564,7 @@ class RockchipMppStream::Impl {
     for (RK_U32 row = 0; row < height; ++row)
       std::memcpy(destination + row * hor_stride,
                   source + static_cast<size_t>(row) * src_stride, width);
-    const uint8_t* source_uv = source + src_stride * static_cast<size_t>(height);
+    const uint8_t* source_uv = source + uv_offset;
     uint8_t* destination_uv = destination + hor_stride * ver_stride;
     for (RK_U32 row = 0; row < height / 2; ++row)
       std::memcpy(destination_uv + row * hor_stride,
@@ -763,6 +776,7 @@ class RockchipMppStream::Impl {
     if (capture_fd >= 0) close(capture_fd);
     capture_fd = -1;
     capture_stride = 0;
+    capture_uv_offset = 0;
     capture_num_planes = 1;
     capture_streaming = false;
     synthetic_capture = false;
@@ -823,6 +837,7 @@ class RockchipMppStream::Impl {
   int capture_fd = -1;
   uint32_t capture_num_planes = 1;
   uint32_t capture_stride = 0;
+  size_t capture_uv_offset = 0;
   bool capture_streaming = false;
   bool synthetic_capture = false;
   std::vector<CaptureBuffer> capture_buffers;
