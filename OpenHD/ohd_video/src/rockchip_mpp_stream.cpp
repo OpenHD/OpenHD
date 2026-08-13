@@ -249,16 +249,30 @@ class RockchipMppStream::Impl {
     rtp->set_out_cb([this](auto fragments) {
       if (!this->owner.m_output_cb || fragments.empty()) return;
       const int loss_percent = debug_packet_loss_percent.load();
-      if (loss_percent > 0) {
+      const int keyframe_loss_percent =
+          transmitting_keyframe.load() ? debug_keyframe_loss_percent.load() : 0;
+      if (loss_percent > 0 || keyframe_loss_percent > 0) {
         fragments.erase(
             std::remove_if(fragments.begin(), fragments.end(),
-                           [this, loss_percent](const auto&) {
-                             packet_loss_accumulator += loss_percent;
-                             if (packet_loss_accumulator >= 100) {
-                               packet_loss_accumulator -= 100;
-                               return true;
+                           [this, loss_percent,
+                            keyframe_loss_percent](const auto&) {
+                             bool drop = false;
+                             if (loss_percent > 0) {
+                               packet_loss_accumulator += loss_percent;
+                               if (packet_loss_accumulator >= 100) {
+                                 packet_loss_accumulator -= 100;
+                                 drop = true;
+                               }
                              }
-                             return false;
+                             if (keyframe_loss_percent > 0) {
+                               keyframe_loss_accumulator +=
+                                   keyframe_loss_percent;
+                               if (keyframe_loss_accumulator >= 100) {
+                                 keyframe_loss_accumulator -= 100;
+                                 drop = true;
+                               }
+                             }
+                             return drop;
                            }),
             fragments.end());
         if (fragments.empty()) return;
@@ -306,7 +320,10 @@ class RockchipMppStream::Impl {
     mpp_enc_cfg_set_s32(cfg, "rc:fps_out_flex", 0);
     mpp_enc_cfg_set_s32(cfg, "rc:fps_out_num", f.framerate);
     mpp_enc_cfg_set_s32(cfg, "rc:fps_out_denom", 1);
-    mpp_enc_cfg_set_s32(cfg, "rc:gop", std::max(1, s.h26x_keyframe_interval));
+    // Keep IDR cadence independent from cyclic intra refresh. In particular,
+    // sparse refresh must not turn every completed sweep into a full IDR.
+    mpp_enc_cfg_set_s32(cfg, "rc:gop",
+                        std::max(1, s.h26x_keyframe_interval));
     if (coding == MPP_VIDEO_CodingAVC) {
       mpp_enc_cfg_set_s32(cfg, "h264:profile", 100);
       mpp_enc_cfg_set_s32(cfg, "h264:level", 42);
@@ -412,8 +429,8 @@ class RockchipMppStream::Impl {
     mpp_enc_cfg_set_s32(cfg, "rc:qp_max", qp_max.load());
     mpp_enc_cfg_set_s32(cfg, "rc:qp_min_i", qp_min.load());
     mpp_enc_cfg_set_s32(cfg, "rc:qp_max_i", qp_max.load());
-    // RV1126 MPP native intra-refresh.  Row mode with one row per frame gives
-    // gradual recovery after packet loss without forcing a full IDR.
+    // RV1126 MPP native intra-refresh. Mode 2 is the OpenHD sparse-block mode
+    // and refreshes only refresh_num raster-ordered macroblocks per frame.
     mpp_enc_cfg_set_s32(cfg, "rc:refresh_en", intra_refresh_enable.load());
     mpp_enc_cfg_set_s32(cfg, "rc:refresh_mode", intra_refresh_mode.load());
     mpp_enc_cfg_set_s32(cfg, "rc:refresh_num", intra_refresh_num.load());
@@ -548,9 +565,13 @@ class RockchipMppStream::Impl {
       return true;
     }
 
-    capture_fd = open("/dev/video0", O_RDWR | O_NONBLOCK | O_CLOEXEC);
+    // The RV1126 CSI pipeline exposes the ISP's NV12 capture output on the
+    // main-path node. /dev/video0 is the rkaiisp control endpoint and does not
+    // implement V4L2 video capture ioctls.
+    constexpr const char* capture_device = "/dev/video13";
+    capture_fd = open(capture_device, O_RDWR | O_NONBLOCK | O_CLOEXEC);
     if (capture_fd < 0) {
-      log->error("Cannot open /dev/video0: {}", std::strerror(errno));
+      log->error("Cannot open {}: {}", capture_device, std::strerror(errno));
       return false;
     }
     v4l2_format format{};
@@ -562,13 +583,13 @@ class RockchipMppStream::Impl {
     format.fmt.pix_mp.num_planes = 1;
     if (retry_ioctl(capture_fd, VIDIOC_S_FMT, &format) < 0 ||
         format.fmt.pix_mp.pixelformat != V4L2_PIX_FMT_NV12) {
-      log->error("/dev/video0 cannot provide NV12 {}x{}: {}", width, height,
-                 std::strerror(errno));
+      log->error("{} cannot provide NV12 {}x{}: {}", capture_device, width,
+                 height, std::strerror(errno));
       return false;
     }
     capture_num_planes = format.fmt.pix_mp.num_planes;
     if (capture_num_planes < 1 || capture_num_planes > VIDEO_MAX_PLANES) {
-      log->error("/dev/video0 reported unsupported plane count {}",
+      log->error("{} reported unsupported plane count {}", capture_device,
                  capture_num_planes);
       return false;
     }
@@ -821,6 +842,10 @@ class RockchipMppStream::Impl {
       configure_roi(region, roi_cfg);
       mpp_meta_set_ptr(mpp_frame_get_meta(frame), KEY_ROI_DATA, &roi_cfg);
     }
+    if (transmit && force_keyframe_pending.exchange(false) &&
+        encoder_mpi->control(encoder_ctx, MPP_ENC_SET_IDR_FRAME, nullptr)) {
+      log->warn("MPP rejected the force-keyframe request");
+    }
     if (encoder_mpi->encode_put_frame(encoder_ctx, frame)) {
       log->warn("MPP {} channel failed to accept an input frame",
                 transmit ? "transmit" : "recording");
@@ -839,6 +864,12 @@ class RockchipMppStream::Impl {
       end_of_image = !mpp_packet_is_partition(packet) || mpp_packet_is_eoi(packet);
       if (data && length) {
         if (transmit) {
+          RK_S32 is_intra = 0;
+          MppMeta meta = mpp_packet_get_meta(packet);
+          if (meta)
+            mpp_meta_get_s32(meta, KEY_OUTPUT_INTRA, &is_intra);
+          if (is_intra || is_keyframe_au(data, length))
+            transmitting_keyframe = true;
           transmit_frame_bytes += length;
           perf_window_bytes += length;
           rtp->feed_multiple_nalu(data, static_cast<int>(length));
@@ -847,6 +878,7 @@ class RockchipMppStream::Impl {
         }
       }
       mpp_packet_deinit(&packet);
+      if (transmit && end_of_image) transmitting_keyframe = false;
     } while (!end_of_image);
     if (!transmit && !record_au.empty()) {
       const bool keyframe = is_keyframe_au(record_au.data(), record_au.size());
@@ -941,13 +973,13 @@ class RockchipMppStream::Impl {
     const auto& s = owner.m_camera_holder->get_settings();
     // These are the primary MPP resilience features; keep them enabled even
     // if an older persisted profile contains a false/missing value.
-    roi_enable = true;
+    roi_enable = s.mpp_roi_enable;
     roi_x = s.mpp_roi_x_percent;
     roi_y = s.mpp_roi_y_percent;
     roi_width = s.mpp_roi_width_percent;
     roi_height = s.mpp_roi_height_percent;
     roi_quality = s.mpp_roi_quality;
-    intra_refresh_enable = true;
+    intra_refresh_enable = s.mpp_intra_refresh_enable;
     intra_refresh_mode = s.mpp_intra_refresh_mode;
     intra_refresh_num = s.mpp_intra_refresh_num;
     rate_dirty = true;
@@ -965,6 +997,7 @@ class RockchipMppStream::Impl {
     const auto& s = owner.m_camera_holder->get_settings();
     debug_noise_percent = s.mpp_debug_noise_percent;
     debug_packet_loss_percent = s.mpp_debug_packet_loss_percent;
+    debug_keyframe_loss_percent = s.mpp_debug_keyframe_loss_percent;
     debug_bitrate_min_kbits = s.mpp_debug_bitrate_min_kbits;
     debug_bitrate_max_kbits = s.mpp_debug_bitrate_max_kbits;
     debug_bitrate_period_seconds = s.mpp_debug_bitrate_period_seconds;
@@ -980,9 +1013,11 @@ class RockchipMppStream::Impl {
       bitrate_kbits = debug_bitrate_min_kbits.load();
       rate_dirty = true;
     }
-    log->info("MPP video test mode: noise {}%, RTP loss {}%, sweep {} "
+    log->info("MPP video test mode: noise {}%, RTP loss {}%, keyframe loss "
+              "{}%, sweep {} "
               "({}-{} kbit/s over {}s)",
               debug_noise_percent.load(), debug_packet_loss_percent.load(),
+              debug_keyframe_loss_percent.load(),
               debug_bitrate_sweep.load() ? "on" : "off",
               debug_bitrate_min_kbits.load(), debug_bitrate_max_kbits.load(),
               debug_bitrate_period_seconds.load());
@@ -1033,15 +1068,15 @@ class RockchipMppStream::Impl {
   std::atomic<int> requested_bitrate_kbits{8000};
   std::atomic<int> qp_min{5};
   std::atomic<int> qp_max{51};
-  std::atomic_bool roi_enable{true};
+  std::atomic_bool roi_enable{false};
   std::atomic<int> roi_x{25};
   std::atomic<int> roi_y{25};
   std::atomic<int> roi_width{50};
   std::atomic<int> roi_height{50};
   std::atomic<int> roi_quality{-8};
-  std::atomic_bool intra_refresh_enable{true};
-  std::atomic<int> intra_refresh_mode{0};
-  std::atomic<int> intra_refresh_num{1};
+  std::atomic_bool intra_refresh_enable{false};
+  std::atomic<int> intra_refresh_mode{2};
+  std::atomic<int> intra_refresh_num{8};
   std::atomic_bool armed{false};
   std::atomic_bool record_rate_dirty{false};
   std::atomic<int> record_bitrate_kbits{40000};
@@ -1049,11 +1084,15 @@ class RockchipMppStream::Impl {
   std::atomic<int> record_qp_max{28};
   std::atomic<int> debug_noise_percent{0};
   std::atomic<int> debug_packet_loss_percent{0};
+  std::atomic<int> debug_keyframe_loss_percent{0};
+  std::atomic_bool transmitting_keyframe{false};
+  std::atomic_bool force_keyframe_pending{false};
   std::atomic_bool debug_bitrate_sweep{false};
   std::atomic<int> debug_bitrate_min_kbits{2000};
   std::atomic<int> debug_bitrate_max_kbits{12000};
   std::atomic<int> debug_bitrate_period_seconds{10};
   int packet_loss_accumulator = 0;
+  int keyframe_loss_accumulator = 0;
   uint32_t noise_prng = 0x4f484431U;
   std::atomic<int64_t> sweep_epoch_ms{0};
   uint64_t perf_window_bytes = 0;
@@ -1108,6 +1147,8 @@ RockchipMppStream::RockchipMppStream(
       [this]() { m_impl->update_recording_snapshot(); });
   m_camera_holder->register_video_debug_listener(
       [this]() { m_impl->update_debug_snapshot(); });
+  m_camera_holder->register_video_force_keyframe_listener(
+      [this]() { m_impl->force_keyframe_pending = true; });
 }
 
 RockchipMppStream::~RockchipMppStream() {
@@ -1116,6 +1157,7 @@ RockchipMppStream::~RockchipMppStream() {
   m_camera_holder->register_video_roi_listener(nullptr);
   m_camera_holder->register_video_recording_listener(nullptr);
   m_camera_holder->register_video_debug_listener(nullptr);
+  m_camera_holder->register_video_force_keyframe_listener(nullptr);
   terminate_looping();
 }
 

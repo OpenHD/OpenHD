@@ -41,7 +41,8 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
     mpp_roi_height_percent, mpp_roi_quality, mpp_intra_refresh_enable,
     mpp_intra_refresh_mode, mpp_intra_refresh_num, mpp_record_bitrate_kbits,
     mpp_record_qp_min, mpp_record_qp_max, mpp_debug_noise_percent,
-    mpp_debug_packet_loss_percent, mpp_debug_bitrate_sweep,
+    mpp_debug_packet_loss_percent, mpp_debug_keyframe_loss_percent,
+    mpp_debug_bitrate_sweep,
     mpp_debug_bitrate_min_kbits, mpp_debug_bitrate_max_kbits,
     mpp_debug_bitrate_period_seconds, streamed_video_format,
     h26x_bitrate_kbits, h26x_keyframe_interval, h26x_intra_refresh_type,
@@ -102,6 +103,8 @@ std::optional<CameraSettings> CameraHolder::impl_deserialize(
         std::clamp(parsed_settings->mpp_debug_noise_percent, 0, 100);
     parsed_settings->mpp_debug_packet_loss_percent =
         std::clamp(parsed_settings->mpp_debug_packet_loss_percent, 0, 95);
+    parsed_settings->mpp_debug_keyframe_loss_percent =
+        std::clamp(parsed_settings->mpp_debug_keyframe_loss_percent, 0, 95);
     parsed_settings->mpp_debug_bitrate_min_kbits = std::clamp(
         parsed_settings->mpp_debug_bitrate_min_kbits, 1000,
         get_max_video_bitrate_kbits());
@@ -364,6 +367,14 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
                   [this](std::string, int value) {
                     return set_mpp_debug_packet_loss(value);
                   });
+    add_roi_param("DBG_KEY_LOSS",
+                  get_settings().mpp_debug_keyframe_loss_percent,
+                  [this](std::string, int value) {
+                    return set_mpp_debug_keyframe_loss(value);
+                  });
+    add_roi_param("MPP_FORCE_IDR", 0, [this](std::string, int value) {
+      return force_mpp_keyframe(value);
+    });
     add_roi_param("DBG_BR_SWEEP", get_settings().mpp_debug_bitrate_sweep,
                   [this](std::string, int value) {
                     return set_mpp_debug_bitrate_sweep(value);

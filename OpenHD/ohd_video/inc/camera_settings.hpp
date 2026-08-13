@@ -105,10 +105,11 @@ struct CameraSettings {
   int mpp_roi_height_percent = 50;
   int mpp_roi_quality = -8;
   // Native MPP intra-refresh is enabled by default for link-resilience tests.
-  // mode 0 refreshes rows, mode 1 refreshes columns; num is the count per frame.
+  // mode 0 refreshes rows, mode 1 columns, and OpenHD MPP mode 2 refreshes
+  // individual raster-ordered macroblocks; num is the count per frame.
   bool mpp_intra_refresh_enable = true;
-  int mpp_intra_refresh_mode = 0;
-  int mpp_intra_refresh_num = 1;
+  int mpp_intra_refresh_mode = 2;
+  int mpp_intra_refresh_num = 8;
   // Independent native MPP recording channel. It intentionally does not
   // follow the RF-link bitrate controller.
   int mpp_record_bitrate_kbits = 40000;
@@ -118,6 +119,7 @@ struct CameraSettings {
   // Packet loss is applied after RTP packetization and never affects telemetry.
   int mpp_debug_noise_percent = 0;
   int mpp_debug_packet_loss_percent = 0;
+  int mpp_debug_keyframe_loss_percent = 0;
   bool mpp_debug_bitrate_sweep = false;
   int mpp_debug_bitrate_min_kbits = 2000;
   int mpp_debug_bitrate_max_kbits = 12000;

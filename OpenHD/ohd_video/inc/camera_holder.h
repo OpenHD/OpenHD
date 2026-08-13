@@ -77,6 +77,7 @@ class CameraHolder :
   using VIDEO_ROI_CHANGED_CALLBACK = std::function<void()>;
   using VIDEO_RECORDING_CHANGED_CALLBACK = std::function<void()>;
   using VIDEO_DEBUG_CHANGED_CALLBACK = std::function<void()>;
+  using VIDEO_FORCE_KEYFRAME_CALLBACK = std::function<void()>;
   void register_video_bitrate_listener(VIDEO_BITRATE_CHANGED_CALLBACK cb) {
     m_video_bitrate_changed_callback = std::move(cb);
   }
@@ -91,6 +92,9 @@ class CameraHolder :
   }
   void register_video_debug_listener(VIDEO_DEBUG_CHANGED_CALLBACK cb) {
     m_video_debug_changed_callback = std::move(cb);
+  }
+  void register_video_force_keyframe_listener(VIDEO_FORCE_KEYFRAME_CALLBACK cb) {
+    m_video_force_keyframe_callback = std::move(cb);
   }
   // Settings hacky begin
   std::vector<openhd::Setting> get_all_settings();
@@ -312,7 +316,7 @@ class CameraHolder :
     return true;
   }
   bool set_mpp_intra_refresh_mode(int value) {
-    if (value < 0 || value > 1) return false;
+    if (value < 0 || value > 2) return false;
     unsafe_get_settings().mpp_intra_refresh_mode = value;
     persist(false);
     if (m_video_roi_changed_callback) m_video_roi_changed_callback();
@@ -363,6 +367,18 @@ class CameraHolder :
     unsafe_get_settings().mpp_debug_packet_loss_percent = value;
     persist(false);
     notify_video_debug_changed();
+    return true;
+  }
+  bool set_mpp_debug_keyframe_loss(int value) {
+    if (value < 0 || value > 95) return false;
+    unsafe_get_settings().mpp_debug_keyframe_loss_percent = value;
+    persist(false);
+    notify_video_debug_changed();
+    return true;
+  }
+  bool force_mpp_keyframe(int value) {
+    if (value != 1 || !m_video_force_keyframe_callback) return false;
+    m_video_force_keyframe_callback();
     return true;
   }
   bool set_mpp_debug_bitrate_sweep(int value) {
@@ -547,6 +563,7 @@ class CameraHolder :
   VIDEO_ROI_CHANGED_CALLBACK m_video_roi_changed_callback = nullptr;
   VIDEO_RECORDING_CHANGED_CALLBACK m_video_recording_changed_callback = nullptr;
   VIDEO_DEBUG_CHANGED_CALLBACK m_video_debug_changed_callback = nullptr;
+  VIDEO_FORCE_KEYFRAME_CALLBACK m_video_force_keyframe_callback = nullptr;
 
  private:
   [[nodiscard]] std::string get_unique_filename() const override {
