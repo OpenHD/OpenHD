@@ -587,6 +587,29 @@ class RockchipMppStream::Impl {
                  height, std::strerror(errno));
       return false;
     }
+
+    // S_FMT selects the resolution, but the IMX415 exposes several modes with
+    // the same native size (30/60/90 fps). Propagate the requested rate through
+    // the ISP pipeline so the sensor driver's s_frame_interval callback can
+    // select the matching timing table.
+    const int requested_fps = std::max(
+        1, owner.m_camera_holder->get_settings().streamed_video_format.framerate);
+    v4l2_streamparm streamparm{};
+    streamparm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+    streamparm.parm.capture.timeperframe.numerator = 1;
+    streamparm.parm.capture.timeperframe.denominator = requested_fps;
+    if (retry_ioctl(capture_fd, VIDIOC_S_PARM, &streamparm) < 0) {
+      log->warn("{} rejected requested capture rate {} fps: {}", capture_device,
+                requested_fps, std::strerror(errno));
+    } else {
+      const auto& actual = streamparm.parm.capture.timeperframe;
+      const double actual_fps = actual.numerator
+                                    ? static_cast<double>(actual.denominator) /
+                                          actual.numerator
+                                    : 0.0;
+      log->info("{} capture rate requested {} fps, selected {:.2f} fps",
+                capture_device, requested_fps, actual_fps);
+    }
     capture_num_planes = format.fmt.pix_mp.num_planes;
     if (capture_num_planes < 1 || capture_num_planes > VIDEO_MAX_PLANES) {
       log->error("{} reported unsupported plane count {}", capture_device,
