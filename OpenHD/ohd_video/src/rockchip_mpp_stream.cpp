@@ -595,11 +595,8 @@ class RockchipMppStream::Impl {
     if (requested_fps < 60 || width > 1920 || height > 1080) return true;
 
     const bool use_720p120 = requested_fps >= 100 && width <= 1280 && height <= 720;
-    // These must exactly match the native sizes advertised by the IMX415
-    // kernel driver. Otherwise set_fmt() falls back to a different mode before
-    // s_frame_interval() tries to select the requested HFR timing table.
-    const uint32_t sensor_width = use_720p120 ? 1284 : 1932;
-    const uint32_t sensor_height = use_720p120 ? 720 : 1096;
+    const uint32_t sensor_width = use_720p120 ? 1284 : 1944;
+    const uint32_t sensor_height = use_720p120 ? 720 : 1097;
     constexpr uint32_t bus_code = MEDIA_BUS_FMT_SGBRG12_1X12;
     const std::string sensor = find_v4l2_subdev("imx415");
     if (!set_subdev_format(sensor, 0, sensor_width, sensor_height, bus_code)) {
