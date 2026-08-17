@@ -13,6 +13,7 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <unistd.h>
+#include <dlfcn.h>
 
 #include <algorithm>
 #include <cerrno>
@@ -47,6 +48,17 @@ std::string find_v4l2_subdev(const std::string& name_fragment) {
     std::string name;
     std::getline(name_file, name);
     if (name.find(name_fragment) != std::string::npos) return node;
+  }
+  return {};
+}
+
+std::string find_v4l2_entity(const std::string& name_fragment) {
+  for (int index = 0; index < 32; ++index) {
+    std::ifstream name_file("/sys/class/video4linux/v4l-subdev" +
+                            std::to_string(index) + "/name");
+    std::string name;
+    std::getline(name_file, name);
+    if (name.find(name_fragment) != std::string::npos) return name;
   }
   return {};
 }
@@ -334,6 +346,14 @@ class RockchipMppStream::Impl {
       log->error("Cannot initialize native Rockchip MPP encoder");
       return false;
     }
+    // RV1126 can expose the encoder in non-blocking output mode. A single
+    // immediate get_packet() then frequently races the hardware and silently
+    // drops the encoded access unit. Wait briefly for the packet belonging to
+    // each submitted frame.
+    RK_S64 output_timeout = MPP_POLL_BLOCK;
+    if (mpi->control(ctx, MPP_SET_OUTPUT_TIMEOUT, &output_timeout)) {
+      log->warn("MPP rejected the encoder output timeout");
+    }
     if (mpp_enc_cfg_init(&cfg) || mpi->control(ctx, MPP_ENC_GET_CFG, cfg)) {
       log->error("Cannot allocate native MPP encoder configuration");
       return false;
@@ -495,7 +515,10 @@ class RockchipMppStream::Impl {
     if (!mpi->control(ctx, MPP_ENC_GET_HDR_SYNC, packet)) {
       const auto* data = static_cast<const uint8_t*>(mpp_packet_get_pos(packet));
       const auto length = mpp_packet_get_length(packet);
-      if (data && length) rtp->feed_multiple_nalu(data, static_cast<int>(length));
+      if (data && length) {
+        codec_header.assign(data, data + length);
+        rtp->feed_multiple_nalu(data, static_cast<int>(length));
+      }
     }
     mpp_packet_deinit(&packet);
     mpp_buffer_put(packet_buffer);
@@ -604,7 +627,11 @@ class RockchipMppStream::Impl {
                  sensor_height, sensor);
       return false;
     }
-
+    RK_S64 output_timeout = MPP_POLL_BLOCK;
+    if (record_mpi->control(record_ctx, MPP_SET_OUTPUT_TIMEOUT,
+                            &output_timeout)) {
+      log->warn("MPP rejected the recording output timeout");
+    }
     const int sensor_fd = open(sensor.c_str(), O_RDWR | O_CLOEXEC);
     if (sensor_fd < 0) return false;
     v4l2_subdev_frame_interval interval{};
@@ -647,6 +674,80 @@ class RockchipMppStream::Impl {
     return true;
   }
 
+  bool start_rkaiq() {
+    constexpr const char* library_path = "/oem/usr/lib/librkaiq.so";
+    constexpr const char* iq_path = "/oem/usr/share/iqfiles";
+    const std::string sensor_entity = find_v4l2_entity("imx415");
+    if (sensor_entity.empty()) {
+      log->error("Cannot find the IMX415 media entity for RKAIQ");
+      return false;
+    }
+
+    rkaiq_library = dlopen(library_path, RTLD_NOW | RTLD_LOCAL);
+    if (!rkaiq_library) {
+      log->error("Cannot load {}: {}", library_path, dlerror());
+      return false;
+    }
+
+    rkaiq_init = reinterpret_cast<RkaiqInit>(
+        dlsym(rkaiq_library, "rk_aiq_uapi2_sysctl_init"));
+    rkaiq_prepare = reinterpret_cast<RkaiqPrepare>(
+        dlsym(rkaiq_library, "rk_aiq_uapi2_sysctl_prepare"));
+    rkaiq_start = reinterpret_cast<RkaiqStart>(
+        dlsym(rkaiq_library, "rk_aiq_uapi2_sysctl_start"));
+    rkaiq_stop = reinterpret_cast<RkaiqStop>(
+        dlsym(rkaiq_library, "rk_aiq_uapi2_sysctl_stop"));
+    rkaiq_deinit = reinterpret_cast<RkaiqDeinit>(
+        dlsym(rkaiq_library, "rk_aiq_uapi2_sysctl_deinit"));
+    if (!rkaiq_init || !rkaiq_prepare || !rkaiq_start || !rkaiq_stop ||
+        !rkaiq_deinit) {
+      log->error("{} does not expose the required RKAIQ uAPI2 symbols: {}",
+                 library_path, dlerror());
+      stop_rkaiq();
+      return false;
+    }
+
+    rkaiq_context = rkaiq_init(sensor_entity.c_str(), iq_path, nullptr, nullptr);
+    if (!rkaiq_context) {
+      log->error("RKAIQ initialization failed for sensor '{}' using {}",
+                 sensor_entity, iq_path);
+      stop_rkaiq();
+      return false;
+    }
+    // RK_AIQ_WORKING_MODE_NORMAL is zero. HDR modes are not used by the
+    // current IMX415 media graph.
+    if (rkaiq_prepare(rkaiq_context, width, height, 0) != 0) {
+      log->error("RKAIQ prepare failed for {}x{}", width, height);
+      stop_rkaiq();
+      return false;
+    }
+    if (rkaiq_start(rkaiq_context) != 0) {
+      log->error("RKAIQ start failed");
+      stop_rkaiq();
+      return false;
+    }
+    rkaiq_running = true;
+    log->info("RKAIQ ISP active for '{}' at {}x{} using {}", sensor_entity,
+              width, height, iq_path);
+    return true;
+  }
+
+  void stop_rkaiq() {
+    if (rkaiq_context) {
+      if (rkaiq_running && rkaiq_stop) rkaiq_stop(rkaiq_context, false);
+      if (rkaiq_deinit) rkaiq_deinit(rkaiq_context);
+    }
+    rkaiq_context = nullptr;
+    rkaiq_running = false;
+    rkaiq_init = nullptr;
+    rkaiq_prepare = nullptr;
+    rkaiq_start = nullptr;
+    rkaiq_stop = nullptr;
+    rkaiq_deinit = nullptr;
+    if (rkaiq_library) dlclose(rkaiq_library);
+    rkaiq_library = nullptr;
+  }
+
   bool setup_capture() {
     const auto& camera = owner.m_camera_holder->get_camera();
     if (camera.requires_rockchip1126_mpp_testsrc_pipeline()) {
@@ -655,7 +756,7 @@ class RockchipMppStream::Impl {
       return true;
     }
 
-    if (!configure_imx415_hfr()) return false;
+    if (!configure_imx415_hfr() || !start_rkaiq()) return false;
 
     // The RV1126 CSI pipeline exposes the ISP's NV12 capture output on the
     // main-path node. /dev/video0 is the rkaiisp control endpoint and does not
@@ -957,7 +1058,21 @@ class RockchipMppStream::Impl {
       configure_roi(region, roi_cfg);
       mpp_meta_set_ptr(mpp_frame_get_meta(frame), KEY_ROI_DATA, &roi_cfg);
     }
-    if (transmit && force_keyframe_pending.exchange(false) &&
+    const auto encode_now = std::chrono::steady_clock::now();
+    bool request_keyframe = transmit && force_keyframe_pending.exchange(false);
+    if (transmit && bootstrap_keyframes_remaining > 0 &&
+        encode_now >= next_bootstrap_keyframe) {
+      request_keyframe = true;
+      --bootstrap_keyframes_remaining;
+      next_bootstrap_keyframe = encode_now + std::chrono::seconds(5);
+    }
+    bool header_sent_for_frame = false;
+    if (request_keyframe && !codec_header.empty()) {
+      rtp->feed_multiple_nalu(codec_header.data(),
+                              static_cast<int>(codec_header.size()));
+      header_sent_for_frame = true;
+    }
+    if (request_keyframe &&
         encoder_mpi->control(encoder_ctx, MPP_ENC_SET_IDR_FRAME, nullptr)) {
       log->warn("MPP rejected the force-keyframe request");
     }
@@ -983,7 +1098,13 @@ class RockchipMppStream::Impl {
           MppMeta meta = mpp_packet_get_meta(packet);
           if (meta)
             mpp_meta_get_s32(meta, KEY_OUTPUT_INTRA, &is_intra);
-          if (is_intra || is_keyframe_au(data, length))
+          const bool is_keyframe = is_intra || is_keyframe_au(data, length);
+          if (is_keyframe && !header_sent_for_frame && !codec_header.empty()) {
+            rtp->feed_multiple_nalu(codec_header.data(),
+                                    static_cast<int>(codec_header.size()));
+            header_sent_for_frame = true;
+          }
+          if (is_keyframe)
             transmitting_keyframe = true;
           transmit_frame_bytes += length;
           perf_window_bytes += length;
@@ -1014,7 +1135,7 @@ class RockchipMppStream::Impl {
       const size_t target_window_bytes =
           static_cast<size_t>(std::max(1000, bitrate_kbits.load())) * 1000ULL *
           static_cast<size_t>(std::max<int64_t>(0, elapsed_ms)) / 8ULL / 1000ULL;
-      if (perf_window_bytes < target_window_bytes) {
+      if (synthetic_capture && perf_window_bytes < target_window_bytes) {
         const auto padding = emit_bitrate_padding(target_window_bytes -
                                                   perf_window_bytes);
         transmit_frame_bytes += padding;
@@ -1155,6 +1276,7 @@ class RockchipMppStream::Impl {
     capture_uv_offset = 0;
     capture_num_planes = 1;
     capture_streaming = false;
+    stop_rkaiq();
     synthetic_capture = false;
     synthetic_frame.clear();
     if (input_buffer) mpp_buffer_put(input_buffer);
@@ -1214,6 +1336,19 @@ class RockchipMppStream::Impl {
   uint32_t perf_window_frames = 0;
   std::chrono::steady_clock::time_point perf_window_start =
       std::chrono::steady_clock::now();
+  using RkaiqInit = void* (*)(const char*, const char*, void*, void*);
+  using RkaiqPrepare = int (*)(const void*, uint32_t, uint32_t, int);
+  using RkaiqStart = int (*)(const void*);
+  using RkaiqStop = int (*)(const void*, bool);
+  using RkaiqDeinit = void (*)(void*);
+  void* rkaiq_library = nullptr;
+  void* rkaiq_context = nullptr;
+  RkaiqInit rkaiq_init = nullptr;
+  RkaiqPrepare rkaiq_prepare = nullptr;
+  RkaiqStart rkaiq_start = nullptr;
+  RkaiqStop rkaiq_stop = nullptr;
+  RkaiqDeinit rkaiq_deinit = nullptr;
+  bool rkaiq_running = false;
   int capture_fd = -1;
   uint32_t capture_num_planes = 1;
   uint32_t capture_stride = 0;
@@ -1233,9 +1368,13 @@ class RockchipMppStream::Impl {
   MpegTsMuxer record_muxer;
   std::vector<uint8_t> record_au;
   std::vector<uint8_t> record_header;
+  std::vector<uint8_t> codec_header;
   std::string recording_filename;
   std::chrono::steady_clock::time_point last_space_check =
       std::chrono::steady_clock::now();
+  std::chrono::steady_clock::time_point next_bootstrap_keyframe =
+      std::chrono::steady_clock::now() + std::chrono::seconds(3);
+  int bootstrap_keyframes_remaining = 3;
   MppCodingType coding = MPP_VIDEO_CodingAVC;
   RK_U32 width = 0, height = 0, hor_stride = 0, ver_stride = 0;
 };

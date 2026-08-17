@@ -316,7 +316,9 @@ class CameraHolder :
     return true;
   }
   bool set_mpp_intra_refresh_mode(int value) {
-    if (value < 0 || value > 2) return false;
+    // Rockchip MPP exposes only row (0) and column (1) refresh. Its enum value
+    // 2 is the end sentinel, not a sparse-block mode.
+    if (value < 0 || value > 1) return false;
     unsafe_get_settings().mpp_intra_refresh_mode = value;
     persist(false);
     if (m_video_roi_changed_callback) m_video_roi_changed_callback();
