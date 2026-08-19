@@ -1,0 +1,651 @@
+{
+	"system": {},
+	"baseband": {
+		"basic": {
+			"role": "ap",
+			"ap": {
+				"mac": "66000000",
+				"clock": "200MHz",
+				"init_mcs": 0,
+				"sq_report": true,
+				"ant_num": 2,
+				"user_mode": {
+					"mode": "1V1",
+					"slot_bmp": "0x01",
+					"slot_mode": "fixed",
+					"compact_br": true
+				},
+				"candidate": {
+					"slot": [],
+					"help": "user name: slot0..slot7 and slot match all"
+				},
+				"mcs": {
+					"slot": {
+						"enable": true,
+						"init": "auto",
+						"mode": "auto",
+						"hold_time":500,
+						"max_wait_time": 2000,
+						"bw_auto": {
+							"enable": false,
+							"range": {
+								"low": "5",
+								"high": "20"
+							},
+							"threshold": {
+								"low": 3,
+								"high": 5
+							}
+						},
+						"mcs_tab": [
+						{
+							"mcs": -2,
+							"snr_up": 30,
+							"snr_dw": 0,
+							"ldpc_up_num": 2,
+							"ldpc_dw_num": 4,
+							"up_keep_time": 1000,
+							"dw_keep_time": 500
+						}, {
+							"mcs": -1,
+							"snr_up": 58,
+							"snr_dw": 37,
+							"ldpc_up_num": 2,
+							"ldpc_dw_num": 4,
+							"up_keep_time": 1000,
+							"dw_keep_time": 500
+						}, {
+							"mcs": 0,
+							"snr_up": 111,
+							"snr_dw": 70,
+							"ldpc_up_num": 2,
+							"ldpc_dw_num": 4,
+							"up_keep_time": 1000,
+							"dw_keep_time": 300
+						}, {
+							"mcs": 3,
+							"snr_up": 185,
+							"snr_dw": 116,
+							"ldpc_up_num": 2,
+							"ldpc_dw_num": 4,
+							"up_keep_time": 1000,
+							"dw_keep_time": 300
+						}, {
+							"mcs": 4,
+							"snr_up": 255,
+							"snr_dw": 161,
+							"ldpc_up_num": 2,
+							"ldpc_dw_num": 4,
+							"up_keep_time": 1000,
+							"dw_keep_time": 300
+						}, {
+							"mcs": 6,
+							"snr_up": 686,
+							"snr_dw": 433,
+							"ldpc_up_num": 2,
+							"ldpc_dw_num": 4,
+							"up_keep_time": 1000,
+							"dw_keep_time": 300
+						}, {
+							"mcs": 7,
+							"snr_up": 1038,
+							"snr_dw": 655,
+							"ldpc_up_num": 1,
+							"ldpc_dw_num": 4,
+							"up_keep_time": 1000,
+							"dw_keep_time": 300
+						},{
+							"mcs": 9,
+							"snr_up": 2324,
+							"snr_dw": 1467,
+							"ldpc_up_num": 1,
+							"ldpc_dw_num": 4,
+							"up_keep_time": 1000,
+							"dw_keep_time": 200
+						}
+						]
+					}
+				}
+			},
+			"dev": {
+				"mac": "66000001",
+				"clock": "200MHz",
+				"ap_mac": "66000000",
+				"init_mcs": -2,
+				"ant_num": 2,
+				"mcs": {
+					"slot": {
+						"enable": true,
+						"init": 0,
+						"mode": "manu",
+						"hold_time":5000,
+						"max_wait_time": 2000,
+						"mcs_tab": [
+							{
+								"mcs": -2,
+								"snr_up": 30,
+								"snr_dw": 0,
+								"ldpc_up_num": 0,
+								"ldpc_dw_num": 2,
+								"up_keep_time": 1000,
+								"dw_keep_time": 500
+							}, {
+								"mcs": -1,
+								"snr_up": 58,
+								"snr_dw": 37,
+								"ldpc_up_num": 0,
+								"ldpc_dw_num": 2,
+								"up_keep_time": 1000,
+								"dw_keep_time": 500
+							}, {
+								"mcs": 0,
+								"snr_up": 111,
+								"snr_dw": 70,
+								"ldpc_up_num": 0,
+								"ldpc_dw_num": 2,
+								"up_keep_time": 1000,
+								"dw_keep_time": 300
+							}, {
+								"mcs": 3,
+								"snr_up": 185,
+								"snr_dw": 116,
+								"ldpc_up_num": 0,
+								"ldpc_dw_num": 2,
+								"up_keep_time": 1000,
+								"dw_keep_time": 300
+							},{
+								"mcs": 5,
+								"snr_up": 306,
+								"snr_dw": 193,
+								"ldpc_up_num": 0,
+								"ldpc_dw_num": 2,
+								"up_keep_time": 1000,
+								"dw_keep_time": 300
+							}, {
+								"mcs": 6,
+								"snr_up": 686,
+								"snr_dw": 433,
+								"ldpc_up_num": 0,
+								"ldpc_dw_num": 2,
+								"up_keep_time": 1000,
+								"dw_keep_time": 300
+							}, {
+								"mcs": 7,
+								"snr_up": 1038,
+								"snr_dw": 655,
+								"ldpc_up_num": 0,
+								"ldpc_dw_num": 2,
+								"up_keep_time": 1000,
+								"dw_keep_time": 300
+							},{
+								"mcs": 9,
+								"snr_up": 2324,
+								"snr_dw": 1467,
+								"ldpc_up_num": 0,
+								"ldpc_dw_num": 4,
+								"up_keep_time": 1000,
+								"dw_keep_time": 200
+							}, {
+								"mcs": 10,
+								"snr_up": 3283,
+								"snr_dw": 2072,
+								"ldpc_up_num": 0,
+								"ldpc_dw_num": 4,
+								"up_keep_time": 1000,
+								"dw_keep_time": 200
+							}
+						]
+					}
+				}
+			},
+			"power": {
+				"mode":"closeloop",
+				"auto_init": 29,
+				"auto_reset": 29,
+				"manu_init": 29,
+				"manu_reset": 29,
+				"pwr_auto":"auto",
+				"link_auto":"follow",
+				"pwr_range":[15, 29]
+			},
+			"lna": {
+				"inner": {
+					"mode": "manu",
+					"manu": "on",
+					"auto": {
+						"on_thred": 90,
+						"off_thred": 87,
+						"keep": 60
+					}
+				},
+				"fem": {
+					"mode": "manu",
+					"manu": "on",
+					"auto": {
+						"on_must_thred": 87,
+						"on_thred": 70,
+						"off_thred": 62,
+						"on_fs_thred": -85,
+						"off_fs_thred": -75,
+						"keep": 60
+					},
+					"offset": 23
+				}
+			},
+			"para": {
+				"br": {
+					"tx": {
+						"payload": true,
+						"bandwidth": "2.5",
+						"enable_tintlv": true,
+						"tintlv_num": 1,
+						"tintlv_len": 24,
+						"fch_info_len": 96,
+						"tx_mode": "2TX_STBC",
+						"retx_count":6,
+						"pre_encode": "0@6"
+					},
+					"rx": {
+						"payload": true,
+						"bandwidth": "2.5",
+						"enable_tintlv": true,
+						"tintlv_num": 1,
+						"tintlv_len": 24,
+						"fch_info_len": 96,
+						"rx_mode": "2T2R_STBC",
+						"retx_count":6
+					}
+				},
+				"slot": {
+					"tx": {
+						"payload": true,
+						"bandwidth": "10",
+						"enable_tintlv": true,
+						"tintlv_num": 2,
+						"tintlv_len": 24,
+						"fch_info_len": 96,
+						"tx_mode": "2TX_STBC",
+						"retx_count": -1
+					},
+					"rx": {
+						"payload": true,
+						"bandwidth": "10",
+						"enable_tintlv": true,
+						"tintlv_num": 2,
+						"tintlv_len": 24,
+						"fch_info_len": 96,
+						"rx_mode": "2T2R_STBC"
+					}
+				},
+				"help": "user name: br, slot0..slot7"
+			},
+
+			"channel": {
+				"compliance_mode": false,
+				"band_mode": "band_2g_5g",
+				"init_chan": -1,
+				"init_band": "auto",
+				"mode": "auto",
+				"band_hop": "auto",
+				"bonus_low_band": 5,
+				"fs_bw": "5",
+				"freq": [	2411000, 2422000, 2433000, 2444000, 2455000, 2466000, 2477000,
+							5110000, 5155000, 5180000, 5225000, 5250000, 5270000, 5295000, 5315000,
+							5350000, 5380000, 5410000, 5480000, 5495000, 5515000, 5530000, 5555000,
+							5575000, 5595000, 5730000, 5750000, 5780000, 5800000, 5820000, 5840000],
+				"subchan": {
+					"enable": true,
+					"main_bw": "10",
+					"sub_bw": "1.25",
+					"chan_num": 8,
+					"offset": 0
+				},
+				"hop_ex": {
+					"stat_win_err": true,
+					"blind_hop": {
+						"at_err_cnt": 10,
+						"duration": 2000
+					}
+				},
+				"hop_para": [
+					{
+						"retx_cnt": 3,
+						"power_diff": 6
+					}, {
+						"retx_cnt": 6,
+						"power_diff": 3
+					}, {
+						"retx_cnt": 9,
+						"power_diff": 1
+					}, {
+						"retx_cnt": 16,
+						"power_diff": 1
+					}
+				],
+				"blind_hop": 25,
+				"auto_band": {
+					"same_band": {
+						"enable": false,
+						"master": "ap"
+					},
+					"snr_thred": 3880,
+					"scan_count": 7,
+					"scan_inr": 0,
+					"round_inr": 0,
+					"gain_thred": 150,
+					"noise_diff": 1,
+					"5g_to_2g": {
+						"snr_diff": 910,
+						"rssi_diff": 15,
+						"keep_count": 4
+					},
+					"2g_to_5g": {
+						"snr_diff": 1024,
+						"rssi_diff": 10,
+						"keep_count": 4
+					}
+				},
+				"br_hop": {
+					"policy": "hop_on_idle",
+					"hop_on_idle": {
+						"hop_duration": 100,
+						"direction": "both",
+						"policy": "round",
+						"band_switch": true
+					},
+					"help": "support fixed/follow_up_chan/hop_on_idle, detail in doxygen"
+				},
+				"rc_hop": {
+					"enable": true,
+					"rc_rx": "dev",
+					"max_freq_num": 4,
+					"stat_period": 5,
+					"remove_percent": 5,
+					"help": "if rc hop enable, it will overwrite the commopn hop poilicy"
+				},
+				"multi_mode": {
+					"enable": false,
+					"hop_para": {
+						"retx_cnt": 50,
+						"chan_inr": 1,
+						"power_diff": 20
+					}
+				},
+				"help": "band_mode support 'band_single' 'band_1g_2g 'band_1g_5g' 'band_2g_5g'"
+			},
+			"dist_calc": {
+				"enable": true,
+				"window": 3,
+				"timeout": 63,
+				"offset": 20
+			},
+			"power_save": {
+				"mode": "manu",
+				"manu": {
+					"period_fix": 1
+				},
+				"auto": {
+					"up_thred": 75,
+					"dw_thred": 25,
+					"keep": 6,
+					"period_max": 10
+				}
+			},
+			"rf_2tx": {
+				"mode": "manu",
+				"manu": "on",
+				"auto": {
+					"on_snr": 100,
+					"off_snr": 200,
+					"on_keep": 1000,
+					"off_keep": 2000
+				}
+			},
+			"pwr_auto2": {
+				"step": 1,
+				"policys": [
+					{
+						"up_interval": 30,
+						"down_interval": 2000,
+						"factors": [
+							{
+								"max": 13,
+								"min": 0
+							},
+							{
+								"max": 12,
+								"min": 0
+							},
+							{
+								"max": 111,
+								"min": 56
+							},
+							{
+								"max": 85,
+								"min": 70
+							}
+						]
+					}
+				]
+			}
+		},
+		"power_calibration": {
+			"3.0": {
+				"openloop": {
+					"5dbm"	: ["27", "25"],
+					"6dbm"	: ["26", "25"],
+					"7dbm"	: ["26", "24"],
+					"8dbm"	: ["25", "23"],
+					"9dbm"	: ["24", "22"],
+					"10dbm"	: ["24", "21"],
+					"11dbm" : ["23", "20"],
+					"12dbm" : ["22", "1F"],
+					"13dbm" : ["21", "1E"],
+					"14dbm" : ["20", "1D"],
+					"15dbm" : ["1F", "1C"],
+					"16dbm" : ["1E", "1B"],
+					"17dbm" : ["1D", "1B"],
+					"18dbm" : ["1C", "1A"],
+					"19dbm" : ["1B", "19"],
+					"20dbm" : ["1A", "18"],
+					"21dbm" : ["19", "17"],
+					"22dbm" : ["18", "16"],
+					"23dbm" : ["17", "15"],
+					"24dbm" : ["16", "14"],
+					"25dbm" : ["16", "13"],
+					"26dbm" : ["15", "11"],
+					"27dbm" : ["14", "0F"],
+					"28dbm" : ["12", "0C"],
+					"29dbm" : ["10", "0C"],
+					"30dbm" : ["0D", "0C"],
+					"31dbm" : ["0A", "0C"],
+					"32dbm" : ["0A", "0C"]
+				},
+				"closeloop": {
+					"5dbm" : [ "27", "18", "26", "33"],
+					"6dbm" : [ "27", "18", "26", "33"],
+					"7dbm" : [ "26", "1C", "25", "38"],
+					"8dbm" : [ "25", "20", "24", "3D"],
+					"9dbm" : [ "24", "24", "23", "42"],
+					"10dbm": [ "23", "28", "22", "47"],
+					"11dbm": [ "22", "2C", "21", "4C"],
+					"12dbm": [ "21", "32", "20", "51"],
+					"13dbm": [ "20", "38", "1F", "56"],
+					"14dbm": [ "1F", "3E", "1E", "5B"],
+					"15dbm": [ "1E", "44", "1D", "60"],
+					"16dbm": [ "1D", "4A", "1C", "64"],
+					"17dbm": [ "1C", "51", "1B", "68"],
+					"18dbm": [ "1B", "57", "1A", "6C"],
+					"19dbm": [ "1A", "5C", "19", "72"],
+					"20dbm": [ "19", "62", "18", "78"],
+					"21dbm": [ "18", "68", "17", "7E"],
+					"22dbm": [ "17", "6E", "16", "84"],
+					"23dbm": [ "16", "73", "15", "8A"],
+					"24dbm": [ "15", "78", "14", "90"],
+					"25dbm": [ "14", "7E", "13", "96"],
+					"26dbm": [ "13", "84", "12", "9C"],
+					"27dbm": [ "12", "8A", "12", "9C"],
+					"28dbm": [ "10", "92", "12", "9C"],
+					"29dbm": [ "0D", "A0", "12", "9C"],
+					"30dbm": [ "0A", "AA", "12", "9C"],
+					"31dbm": [ "0A", "AA", "12", "9C"],
+					"32dbm": [ "0A", "AA", "12", "9C"]
+				}
+			},
+			"default": {
+				"openloop": {
+					"5dbm"	: ["27", "25"],
+					"6dbm"	: ["26", "25"],
+					"7dbm"	: ["26", "24"],
+					"8dbm"	: ["25", "23"],
+					"9dbm"	: ["24", "22"],
+					"10dbm"	: ["24", "21"],
+					"11dbm" : ["23", "20"],
+					"12dbm" : ["22", "1F"],
+					"13dbm" : ["21", "1E"],
+					"14dbm" : ["20", "1D"],
+					"15dbm" : ["1F", "1C"],
+					"16dbm" : ["1E", "1B"],
+					"17dbm" : ["1D", "1B"],
+					"18dbm" : ["1C", "1A"],
+					"19dbm" : ["1B", "19"],
+					"20dbm" : ["1A", "18"],
+					"21dbm" : ["19", "17"],
+					"22dbm" : ["18", "16"],
+					"23dbm" : ["17", "15"],
+					"24dbm" : ["16", "14"],
+					"25dbm" : ["16", "13"],
+					"26dbm" : ["15", "11"],
+					"27dbm" : ["14", "0F"],
+					"28dbm" : ["12", "0C"],
+					"29dbm" : ["10", "0C"],
+					"30dbm" : ["0D", "0C"],
+					"31dbm" : ["0A", "0C"],
+					"32dbm" : ["0A", "0C"]
+				},
+				"closeloop": {
+					"5dbm" : [ "29", "10", "26", "34"],
+					"6dbm" : [ "29", "14", "26", "34"],
+					"7dbm" : [ "28", "18", "25", "3A"],
+					"8dbm" : [ "27", "1C", "24", "3E"],
+					"9dbm" : [ "26", "20", "23", "42"],
+					"10dbm": [ "25", "24", "22", "48"],
+					"11dbm": [ "24", "28", "21", "4C"],
+					"12dbm": [ "23", "2C", "20", "50"],
+					"13dbm": [ "22", "30", "1F", "54"],
+					"14dbm": [ "21", "34", "1E", "58"],
+					"15dbm": [ "20", "3A", "1D", "5C"],
+					"16dbm": [ "1F", "40", "1C", "60"],
+					"17dbm": [ "1E", "46", "1B", "64"],
+					"18dbm": [ "1D", "4C", "1A", "6A"],
+					"19dbm": [ "1C", "52", "19", "70"],
+					"20dbm": [ "1B", "5A", "18", "74"],
+					"21dbm": [ "1A", "60", "17", "7A"],
+					"22dbm": [ "19", "68", "16", "7E"],
+					"23dbm": [ "18", "70", "15", "84"],
+					"24dbm": [ "17", "76", "14", "8a"],
+					"25dbm": [ "16", "7E", "13", "90"],
+					"26dbm": [ "15", "86", "12", "98"],
+					"27dbm": [ "14", "8E", "12", "A0"],
+					"28dbm": [ "13", "98", "12", "A0"],
+					"29dbm": [ "13", "98", "12", "A0"],
+					"30dbm": [ "13", "98", "12", "A0"],
+					"31dbm": [ "13", "98", "12", "A0"],
+					"32dbm": [ "13", "98", "12", "A0"]
+				}
+			}
+		}
+	},
+	"uart1_config": {
+		"baudrate"    : 115200,
+		"data_bit"    : 8,
+		"parity"      : 0,
+		"stop_bit"    : 1,
+		"bypass_en"   : 1,
+		"bb_port_cfg" : 1,
+		"at_mode"     : 0,
+		"user_id"     : 0
+	},
+
+	"uart2_config": {
+		"baudrate"    : 115200,
+		"data_bit"    : 8,
+		"parity"      : 0,
+		"stop_bit"    : 1,
+		"bypass_en"   : 1,
+		"bb_port_cfg" : 1,
+		"at_mode"     : 0,
+		"user_id"     : 0
+	},
+
+	"uart3_config": {
+		"baudrate"    : 100000,
+		"data_bit"    : 8,
+		"parity"      : 1,
+		"stop_bit"    : 3,
+		"bypass_en"   : 1,
+		"bb_port_cfg" : 0,
+		"at_mode"     : 0,
+		"user_id"     : 0
+	},
+
+	"work_mode_config": {
+		"//mode": "0:mode0;1:mode1;2:mode2;3:p401-d",
+		"mode"    : 3
+	},
+
+	"eth_config": {
+		"bypass_en"    : 0,
+		"bb_port_cfg"  : 3,
+		"total_bd_num" : 90,
+		"rx_bd_num"    : 73,
+		"sock_tx_size" : 50,
+		"sock_rx_size" : 10,
+		"ap_total_bd_num" : 90,
+		"ap_rx_bd_num"    : 17,
+		"ap_sock_tx_size" : 10,
+		"ap_sock_rx_size" : 50
+	},
+	"sync_config": {
+		"//group": "0:GPIO_A;1:GPIO_B;2:GPIO_C;3:GPIO_D",
+		"group"    : 0,
+		"num"  : 1,
+		"delay" : 2,
+		"high_time" : 2,
+		"enable"	:1
+	},
+	"repeater_config": {
+		"sync_en"      : 0,
+		"sync_slot"    : 0
+	},
+	"xds_sync_config": {
+		"sync_en"      : 1,
+		"sync_param0"  : {
+			"sync_port" : 2,
+			"ap_sock_tx_size"  : 8000,
+			"ap_sock_rx_size"  : 1065,
+			"ap_buf_size"      : 1065,
+			"dev_sock_tx_size" : 1065,
+			"dev_sock_rx_size" : 8000,
+			"dev_buf_size"     : 2048
+		}
+	},
+	"pair_gpio_config": {
+		"//group": "0:GPIO_A;1:GPIO_B;2:GPIO_C;3:GPIO_D",
+		"enable"		: true,
+		"group"			: 0,
+		"num"  			: 1,
+		"idle_high" 	: true,
+		"pair_timeout"	: 100,
+		"trigger_time" 	: 3000
+	},
+	"led_config": {
+		"//group": "0:GPIO_A;1:GPIO_B;2:GPIO_C;3:GPIO_D",
+		"enable"		: true,
+		"group"			: 2,
+		"num"  			: 4,
+		"pair_interval" : 100,
+		"idle_interval" : 2000,
+		"idle_duration" : 100
+	}
+}

@@ -19,7 +19,7 @@ find_package(Poco REQUIRED COMPONENTS Foundation Net) # Add other components if 
 add_library(OHDInterfaceLib STATIC) # initialized below
 add_library(OHDInterfaceLib::OHDInterfaceLib ALIAS OHDInterfaceLib)
 
-set(ARTOSYN_SDK_ROOT "" CACHE PATH "Path to Artosyn host_drv SDK root")
+set(ARTOSYN_SDK_ROOT "" CACHE PATH "Path to Artosyn SDK root")
 set(ARTOSYN_SDK_LIB "" CACHE FILEPATH "Path to libar8030_client.a/.so")
 set(ARTOSYN_SDK_DAEMON "" CACHE FILEPATH "Path to Artosyn daemon binary")
 set(ARTOSYN_SDK_TUNTAP "" CACHE FILEPATH "Path to Artosyn tuntap_bb helper binary")
@@ -59,15 +59,29 @@ endif()
 set(_enable_artosyn OFF)
 set(_artosyn_sdk_libs)
 set(_artosyn_disable_reason "")
+set(_artosyn_source_root "")
+
+# Older vendor drops wrap the SDK in host_drv/.  The maintained L4 Linux SDK
+# uses app/, com/, daemon/, and install/ directly at its repository root.
+if (ARTOSYN_SDK_ROOT)
+    if (EXISTS "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030")
+        set(_artosyn_source_root "${ARTOSYN_SDK_ROOT}/host_drv")
+    elseif (EXISTS "${ARTOSYN_SDK_ROOT}/app/ar8030" AND
+            EXISTS "${ARTOSYN_SDK_ROOT}/com")
+        set(_artosyn_source_root "${ARTOSYN_SDK_ROOT}")
+    endif()
+endif()
 
 if (ARTOSYN_SDK_ROOT AND NOT ARTOSYN_SDK_LIB)
     set(_artosyn_lib_candidates
-        "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/libar8030_client.a"
-        "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/libar8030_client.so"
-        "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/libar8030_client.a"
-        "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/libar8030_client.so"
-        "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/libar8030_client.a"
-        "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/libar8030_client.so"
+        "${_artosyn_source_root}/install/bin/libar8030_client.a"
+        "${_artosyn_source_root}/install/bin/libar8030_client.so"
+        "${_artosyn_source_root}/install/lib/libar8030_client.a"
+        "${_artosyn_source_root}/install/lib/libar8030_client.so"
+        "${_artosyn_source_root}/build/app/ar8030/libar8030_client.a"
+        "${_artosyn_source_root}/build/app/ar8030/libar8030_client.so"
+        "${_artosyn_source_root}/app/ar8030/libar8030_client.a"
+        "${_artosyn_source_root}/app/ar8030/libar8030_client.so"
         "${ARTOSYN_SDK_ROOT}/lib/libar8030_client.a"
         "${ARTOSYN_SDK_ROOT}/lib/libar8030_client.so"
         "${ARTOSYN_SDK_ROOT}/libar8030_client.a"
@@ -83,16 +97,16 @@ endif()
 
 set(_artosyn_include_dirs)
 if (ARTOSYN_SDK_ROOT AND ARTOSYN_SDK_LIB)
-    if (NOT EXISTS "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030")
+    if (NOT _artosyn_source_root)
         set(_artosyn_disable_reason
-            "invalid ARTOSYN_SDK_ROOT (${ARTOSYN_SDK_ROOT}); expected host_drv/app/ar8030"
+            "invalid ARTOSYN_SDK_ROOT (${ARTOSYN_SDK_ROOT}); expected app/ar8030 directly or under host_drv"
         )
     endif()
     if (NOT _artosyn_disable_reason)
         set(_artosyn_include_candidates
-            "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030"
-            "${ARTOSYN_SDK_ROOT}/host_drv/com"
-            "${ARTOSYN_SDK_ROOT}/host_drv/install/include"
+            "${_artosyn_source_root}/app/ar8030"
+            "${_artosyn_source_root}/com"
+            "${_artosyn_source_root}/install/include"
         )
         foreach(_candidate IN LISTS _artosyn_include_candidates)
             if (EXISTS "${_candidate}" AND IS_DIRECTORY "${_candidate}")
@@ -102,7 +116,7 @@ if (ARTOSYN_SDK_ROOT AND ARTOSYN_SDK_LIB)
         list(REMOVE_DUPLICATES _artosyn_include_dirs)
         if (NOT _artosyn_include_dirs)
             set(_artosyn_disable_reason
-                "invalid ARTOSYN_SDK_ROOT (${ARTOSYN_SDK_ROOT}); expected Artosyn SDK include directories under host_drv"
+                "invalid ARTOSYN_SDK_ROOT (${ARTOSYN_SDK_ROOT}); expected Artosyn SDK include directories"
             )
         endif()
     endif()
@@ -140,24 +154,21 @@ endif()
 if (_enable_artosyn)
     if (NOT ARTOSYN_SDK_DAEMON)
         set(_artosyn_daemon_candidates
-            "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/artosyn_daemon"
-            "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/ar8030_daemon"
-            "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/artlinkd"
-            "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/bbd"
-            "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/bb_daemon"
-            "${ARTOSYN_SDK_ROOT}/host_drv/daemon/daemon"
-            "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/artosyn_daemon"
-            "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/ar8030_daemon"
-            "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/artlinkd"
-            "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/bbd"
-            "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/bb_daemon"
-            "${ARTOSYN_SDK_ROOT}/host_drv/build/daemon/daemon"
-            "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/artosyn_daemon"
-            "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/ar8030_daemon"
-            "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/artlinkd"
-            "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/bbd"
-            "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/bb_daemon"
-            "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/daemon"
+            "${_artosyn_source_root}/app/ar8030/artosyn_daemon"
+            "${_artosyn_source_root}/app/ar8030/ar8030_daemon"
+            "${_artosyn_source_root}/app/ar8030/artlinkd"
+            "${_artosyn_source_root}/app/ar8030/bbd"
+            "${_artosyn_source_root}/app/ar8030/bb_daemon"
+            "${_artosyn_source_root}/daemon/daemon"
+            "${_artosyn_source_root}/build/daemon/l4_daemon"
+            "${_artosyn_source_root}/build/daemon/daemon"
+            "${_artosyn_source_root}/install/bin/l4_daemon"
+            "${_artosyn_source_root}/install/bin/artosyn_daemon"
+            "${_artosyn_source_root}/install/bin/ar8030_daemon"
+            "${_artosyn_source_root}/install/bin/artlinkd"
+            "${_artosyn_source_root}/install/bin/bbd"
+            "${_artosyn_source_root}/install/bin/bb_daemon"
+            "${_artosyn_source_root}/install/bin/daemon"
         )
         foreach(_daemon_candidate IN LISTS _artosyn_daemon_candidates)
             if (EXISTS "${_daemon_candidate}" AND NOT IS_DIRECTORY "${_daemon_candidate}")
@@ -167,12 +178,13 @@ if (_enable_artosyn)
         endforeach()
         if (NOT ARTOSYN_SDK_DAEMON)
             file(GLOB_RECURSE _artosyn_daemon_recursive
-                "${ARTOSYN_SDK_ROOT}/host_drv/*artosyn_daemon*"
-                "${ARTOSYN_SDK_ROOT}/host_drv/*ar8030_daemon*"
-                "${ARTOSYN_SDK_ROOT}/host_drv/*artlinkd*"
-                "${ARTOSYN_SDK_ROOT}/host_drv/*bb_daemon*"
-                "${ARTOSYN_SDK_ROOT}/host_drv/*bbd"
-                "${ARTOSYN_SDK_ROOT}/host_drv/*/daemon")
+                "${_artosyn_source_root}/*l4_daemon*"
+                "${_artosyn_source_root}/*artosyn_daemon*"
+                "${_artosyn_source_root}/*ar8030_daemon*"
+                "${_artosyn_source_root}/*artlinkd*"
+                "${_artosyn_source_root}/*bb_daemon*"
+                "${_artosyn_source_root}/*bbd"
+                "${_artosyn_source_root}/*/daemon")
             foreach(_daemon_candidate IN LISTS _artosyn_daemon_recursive)
                 if (EXISTS "${_daemon_candidate}" AND NOT IS_DIRECTORY "${_daemon_candidate}")
                     set(ARTOSYN_SDK_DAEMON "${_daemon_candidate}" CACHE FILEPATH "Path to Artosyn daemon binary" FORCE)
@@ -183,9 +195,10 @@ if (_enable_artosyn)
     endif()
     if (NOT ARTOSYN_SDK_TUNTAP)
         set(_artosyn_tuntap_candidates
-            "${ARTOSYN_SDK_ROOT}/host_drv/install/dev_helper/tuntap_bb"
-            "${ARTOSYN_SDK_ROOT}/host_drv/dev_helper/tuntap_bb"
-            "${ARTOSYN_SDK_ROOT}/host_drv/build/dev_helper/tuntap_bb"
+            "${_artosyn_source_root}/install/bin/l4_tuntap"
+            "${_artosyn_source_root}/install/dev_helper/tuntap_bb"
+            "${_artosyn_source_root}/dev_helper/tuntap_bb"
+            "${_artosyn_source_root}/build/dev_helper/tuntap_bb"
         )
         foreach(_tuntap_candidate IN LISTS _artosyn_tuntap_candidates)
             if (EXISTS "${_tuntap_candidate}" AND NOT IS_DIRECTORY "${_tuntap_candidate}")
@@ -195,7 +208,8 @@ if (_enable_artosyn)
         endforeach()
         if (NOT ARTOSYN_SDK_TUNTAP)
             file(GLOB_RECURSE _artosyn_tuntap_recursive
-                "${ARTOSYN_SDK_ROOT}/host_drv/*tuntap_bb*")
+                "${_artosyn_source_root}/*l4_tuntap*"
+                "${_artosyn_source_root}/*tuntap_bb*")
             foreach(_tuntap_candidate IN LISTS _artosyn_tuntap_recursive)
                 if (EXISTS "${_tuntap_candidate}" AND NOT IS_DIRECTORY "${_tuntap_candidate}")
                     set(ARTOSYN_SDK_TUNTAP "${_tuntap_candidate}" CACHE FILEPATH "Path to Artosyn tuntap_bb helper binary" FORCE)
@@ -212,9 +226,9 @@ if (_enable_artosyn)
         endif()
     endforeach()
     set(_artosyn_extra_runtime_lib_candidates
-        "${ARTOSYN_SDK_ROOT}/host_drv/com/libcom.so"
-        "${ARTOSYN_SDK_ROOT}/host_drv/build/com/libcom.so"
-        "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/libcom.so"
+        "${_artosyn_source_root}/com/libcom.so"
+        "${_artosyn_source_root}/build/com/libcom.so"
+        "${_artosyn_source_root}/install/bin/libcom.so"
     )
     foreach(_candidate IN LISTS _artosyn_extra_runtime_lib_candidates)
         if (EXISTS "${_candidate}" AND NOT IS_DIRECTORY "${_candidate}")
@@ -222,16 +236,18 @@ if (_enable_artosyn)
         endif()
     endforeach()
     file(GLOB _artosyn_runtime_glob_candidates
-        "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/*.so"
-        "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/*.so.*"
-        "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/*.so"
-        "${ARTOSYN_SDK_ROOT}/host_drv/build/app/ar8030/*.so.*"
-        "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/*.so"
-        "${ARTOSYN_SDK_ROOT}/host_drv/install/bin/*.so.*"
-        "${ARTOSYN_SDK_ROOT}/host_drv/com/*.so"
-        "${ARTOSYN_SDK_ROOT}/host_drv/com/*.so.*"
-        "${ARTOSYN_SDK_ROOT}/host_drv/build/com/*.so"
-        "${ARTOSYN_SDK_ROOT}/host_drv/build/com/*.so.*")
+        "${_artosyn_source_root}/app/ar8030/*.so"
+        "${_artosyn_source_root}/app/ar8030/*.so.*"
+        "${_artosyn_source_root}/build/app/ar8030/*.so"
+        "${_artosyn_source_root}/build/app/ar8030/*.so.*"
+        "${_artosyn_source_root}/install/bin/*.so"
+        "${_artosyn_source_root}/install/bin/*.so.*"
+        "${_artosyn_source_root}/install/lib/*.so"
+        "${_artosyn_source_root}/install/lib/*.so.*"
+        "${_artosyn_source_root}/com/*.so"
+        "${_artosyn_source_root}/com/*.so.*"
+        "${_artosyn_source_root}/build/com/*.so"
+        "${_artosyn_source_root}/build/com/*.so.*")
     foreach(_candidate IN LISTS _artosyn_runtime_glob_candidates)
         if (EXISTS "${_candidate}" AND NOT IS_DIRECTORY "${_candidate}")
             list(APPEND _artosyn_runtime_libs "${_candidate}")
@@ -246,7 +262,8 @@ if (_enable_artosyn)
 
     if (ARTOSYN_SDK_DAEMON AND EXISTS "${ARTOSYN_SDK_DAEMON}")
         get_filename_component(_artosyn_daemon_name "${ARTOSYN_SDK_DAEMON}" NAME)
-        if (_artosyn_daemon_name STREQUAL "daemon")
+        if (_artosyn_daemon_name STREQUAL "daemon" OR
+            _artosyn_daemon_name STREQUAL "l4_daemon")
             install(PROGRAMS "${ARTOSYN_SDK_DAEMON}" DESTINATION bin RENAME artosyn_daemon)
         else()
             install(PROGRAMS "${ARTOSYN_SDK_DAEMON}" DESTINATION bin)

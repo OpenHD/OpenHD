@@ -56,6 +56,37 @@ constexpr const char* ETHERNET_DISCOVERY_PONG_PREFIX =
     "OPENHD_ETHERNET_V1 PONG";
 constexpr uint32_t MAX_UNICAST_DISCOVERY_HOSTS = 1024;
 constexpr int64_t DISCOVERY_PEER_TIMEOUT_MS = 5000;
+constexpr std::array<uint8_t, 6> VIDEO_MUX_HEADER = {'O', 'H', 'D', 'V', 1,
+                                                     0};
+
+std::vector<uint8_t> mux_video_fragment(
+    int stream_index, const std::vector<uint8_t>& fragment) {
+  auto header = VIDEO_MUX_HEADER;
+  header.back() = static_cast<uint8_t>(stream_index);
+  std::vector<uint8_t> packet;
+  packet.reserve(header.size() + fragment.size());
+  packet.insert(packet.end(), header.begin(), header.end());
+  packet.insert(packet.end(), fragment.begin(), fragment.end());
+  return packet;
+}
+
+struct DemuxedVideoFragment {
+  int stream_index;
+  const uint8_t* data;
+  std::size_t size;
+};
+
+DemuxedVideoFragment demux_video_fragment(const uint8_t* data,
+                                          std::size_t size) {
+  if (size >= VIDEO_MUX_HEADER.size() &&
+      std::equal(VIDEO_MUX_HEADER.begin(), VIDEO_MUX_HEADER.end() - 1, data) &&
+      data[VIDEO_MUX_HEADER.size() - 1] <= 1) {
+    return {static_cast<int>(data[VIDEO_MUX_HEADER.size() - 1]),
+            data + VIDEO_MUX_HEADER.size(), size - VIDEO_MUX_HEADER.size()};
+  }
+  // Older air units send bare RTP and can only represent the primary stream.
+  return {0, data, size};
+}
 
 int16_t clamp_int16(int value) {
   if (value > std::numeric_limits<int16_t>::max()) {
@@ -323,7 +354,8 @@ void EthernetLink::initialize_ground_unit() {
   // Initialize video receiver for receiving video from the air unit
   m_video_rx = std::make_unique<openhd::UDPReceiver>(
       "0.0.0.0", VIDEO_PORT, [this](const uint8_t* data, std::size_t len) {
-        handle_video_data(0, data, len);  // Process incoming video
+        const auto fragment = demux_video_fragment(data, len);
+        handle_video_data(fragment.stream_index, fragment.data, fragment.size);
       });
 
   if (!m_auto_discovery) {
@@ -377,7 +409,9 @@ void EthernetLink::configure_peer(const std::string& peer_ip, int video_port,
       m_video_rx = std::make_unique<openhd::UDPReceiver>(
           "0.0.0.0", VIDEO_PORT,
           [this](const uint8_t* data, std::size_t len) {
-            handle_video_data(0, data, len);
+            const auto fragment = demux_video_fragment(data, len);
+            handle_video_data(fragment.stream_index, fragment.data,
+                              fragment.size);
           });
       m_telemetry_rx = std::make_unique<openhd::UDPReceiver>(
           "0.0.0.0", TELEMETRY_PORT,
@@ -666,10 +700,11 @@ void EthernetLink::transmit_video_data(
   }
   if (video_tx) {
     for (const auto& fragment : fragmented_video_frame.rtp_fragments) {
-      video_tx->forwardPacketViaUDP(fragment->data(), fragment->size());
+      const auto packet = mux_video_fragment(stream_index, *fragment);
+      video_tx->forwardPacketViaUDP(packet.data(), packet.size());
       m_video_bitrate_meter.on_tx_fragment(
           stream_index, static_cast<uint64_t>(fragment->size()));
-      m_tx_total_bytes.fetch_add(static_cast<uint64_t>(fragment->size()),
+      m_tx_total_bytes.fetch_add(static_cast<uint64_t>(packet.size()),
                                  std::memory_order_relaxed);
       m_tx_total_packets.fetch_add(1, std::memory_order_relaxed);
     }

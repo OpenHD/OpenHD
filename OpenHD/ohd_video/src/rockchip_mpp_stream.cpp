@@ -63,6 +63,19 @@ std::string find_v4l2_entity(const std::string& name_fragment) {
   return {};
 }
 
+std::string find_v4l2_video(const std::string& name_fragment) {
+  for (int index = 0; index < 64; ++index) {
+    std::ifstream name_file("/sys/class/video4linux/video" +
+                            std::to_string(index) + "/name");
+    std::string name;
+    std::getline(name_file, name);
+    if (name.find(name_fragment) != std::string::npos) {
+      return "/dev/video" + std::to_string(index);
+    }
+  }
+  return {};
+}
+
 bool set_subdev_format(const std::string& node, uint32_t pad, uint32_t width,
                        uint32_t height, uint32_t code) {
   if (node.empty()) return false;
@@ -427,6 +440,11 @@ class RockchipMppStream::Impl {
       destroy_record_encoder();
       return false;
     }
+    RK_S64 output_timeout = MPP_POLL_BLOCK;
+    if (record_mpi->control(record_ctx, MPP_SET_OUTPUT_TIMEOUT,
+                            &output_timeout)) {
+      log->warn("MPP rejected the recording output timeout");
+    }
     mpp_enc_cfg_set_s32(record_cfg, "codec:type", coding);
     mpp_enc_cfg_set_s32(record_cfg, "prep:width", width);
     mpp_enc_cfg_set_s32(record_cfg, "prep:height", height);
@@ -622,15 +640,16 @@ class RockchipMppStream::Impl {
     const uint32_t sensor_height = use_720p120 ? 720 : 1097;
     constexpr uint32_t bus_code = MEDIA_BUS_FMT_SGBRG12_1X12;
     const std::string sensor = find_v4l2_subdev("imx415");
+    if (sensor.empty()) {
+      log->info(
+          "Camera supplies processed frames; skipping raw IMX415 HFR graph "
+          "configuration");
+      return true;
+    }
     if (!set_subdev_format(sensor, 0, sensor_width, sensor_height, bus_code)) {
       log->error("Cannot select IMX415 HFR format {}x{} on {}", sensor_width,
                  sensor_height, sensor);
       return false;
-    }
-    RK_S64 output_timeout = MPP_POLL_BLOCK;
-    if (record_mpi->control(record_ctx, MPP_SET_OUTPUT_TIMEOUT,
-                            &output_timeout)) {
-      log->warn("MPP rejected the recording output timeout");
     }
     const int sensor_fd = open(sensor.c_str(), O_RDWR | O_CLOEXEC);
     if (sensor_fd < 0) return false;
@@ -640,11 +659,18 @@ class RockchipMppStream::Impl {
     interval.interval.denominator = requested_fps;
     const bool interval_ok =
         retry_ioctl(sensor_fd, VIDIOC_SUBDEV_S_FRAME_INTERVAL, &interval) == 0;
+    const int interval_errno = errno;
     close(sensor_fd);
-    if (!interval_ok) {
+    if (!interval_ok && interval_errno != ENOTTY && interval_errno != EINVAL) {
       log->error("IMX415 rejected requested rate {} fps: {}", requested_fps,
-                 std::strerror(errno));
+                 std::strerror(interval_errno));
       return false;
+    }
+    if (!interval_ok) {
+      log->warn(
+          "IMX415 frame-interval ioctl unsupported; using the selected HFR "
+          "sensor mode for {} fps",
+          requested_fps);
     }
 
     // Keep every active pad in the RV1126B CSI -> CIF -> ISP graph consistent
@@ -661,8 +687,9 @@ class RockchipMppStream::Impl {
         set_subdev_format(cif, 0, width, height, bus_code) &&
         set_subdev_format(isp, 0, width, height, bus_code);
     if (!graph_ok) {
-      log->error("Cannot configure the RV1126B media graph for IMX415 HFR");
-      return false;
+      log->warn(
+          "Some RV1126B media-graph pads rejected explicit HFR formats; "
+          "continuing with the sensor mode and capture-node configuration");
     }
 
     const double actual_fps = interval.interval.numerator
@@ -675,9 +702,17 @@ class RockchipMppStream::Impl {
   }
 
   bool start_rkaiq() {
-    constexpr const char* library_path = "/oem/usr/lib/librkaiq.so";
-    constexpr const char* iq_path = "/oem/usr/share/iqfiles";
-    const std::string sensor_entity = find_v4l2_entity("imx415");
+    const char* library_path =
+        access("/oem/usr/lib/librkaiq.so", R_OK) == 0
+            ? "/oem/usr/lib/librkaiq.so"
+            : "/usr/lib/librkaiq.so";
+    const char* iq_path = access("/oem/usr/share/iqfiles", R_OK) == 0
+                              ? "/oem/usr/share/iqfiles"
+                              : "/etc/iqfiles";
+    std::string sensor_entity = find_v4l2_entity("imx415");
+    if (sensor_entity.empty()) {
+      sensor_entity = find_v4l2_entity("openhd_camera");
+    }
     if (sensor_entity.empty()) {
       log->error("Cannot find the IMX415 media entity for RKAIQ");
       return false;
@@ -756,13 +791,14 @@ class RockchipMppStream::Impl {
       return true;
     }
 
-    if (!configure_imx415_hfr() || !start_rkaiq()) return false;
+    if (!configure_imx415_hfr()) return false;
 
-    // The RV1126 CSI pipeline exposes the ISP's NV12 capture output on the
-    // main-path node. /dev/video0 is the rkaiisp control endpoint and does not
-    // implement V4L2 video capture ioctls.
-    constexpr const char* capture_device = "/dev/video13";
-    capture_fd = open(capture_device, O_RDWR | O_NONBLOCK | O_CLOEXEC);
+    // The X21 production image routes the camera's NV12 output through CIF.
+    // Discover it by entity name because video indices vary across images.
+    std::string capture_device = find_v4l2_video("stream_cif_mipi_id0");
+    if (capture_device.empty()) capture_device = "/dev/video0";
+    capture_fd =
+        open(capture_device.c_str(), O_RDWR | O_NONBLOCK | O_CLOEXEC);
     if (capture_fd < 0) {
       log->error("Cannot open {}: {}", capture_device, std::strerror(errno));
       return false;
@@ -1052,10 +1088,8 @@ class RockchipMppStream::Impl {
     mpp_frame_set_ver_stride(frame, ver_stride);
     mpp_frame_set_fmt(frame, MPP_FMT_YUV420SP);
     mpp_frame_set_buffer(frame, input_buffer);
-    MppEncROIRegion region{};
-    MppEncROICfg roi_cfg{};
     if (roi_enable.load()) {
-      configure_roi(region, roi_cfg);
+      configure_roi(roi_region, roi_cfg);
       mpp_meta_set_ptr(mpp_frame_get_meta(frame), KEY_ROI_DATA, &roi_cfg);
     }
     const auto encode_now = std::chrono::steady_clock::now();
@@ -1365,6 +1399,10 @@ class RockchipMppStream::Impl {
   MppCtx record_ctx = nullptr;
   MppApi* record_mpi = nullptr;
   MppEncCfg record_cfg = nullptr;
+  // MPP may consume ROI metadata after encode_put_frame returns, so its
+  // backing storage must outlive the encode_context stack frame.
+  MppEncROIRegion roi_region{};
+  MppEncROICfg roi_cfg{};
   MpegTsMuxer record_muxer;
   std::vector<uint8_t> record_au;
   std::vector<uint8_t> record_header;

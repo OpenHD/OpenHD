@@ -352,13 +352,11 @@ ArtosynLink::ArtosynLink(OHDProfile profile)
     m_console->warn("Artosyn settings changed, restarting link");
     stop_connect_worker();
     stop_stats_thread();
-    stop_video_tx_thread();
     stop_rx_threads();
     shutdown_device();
     m_cfg = config_from_settings(m_settings->get_settings());
     if (init_device()) {
       start_rx_threads();
-      start_video_tx_thread();
       start_stats_thread();
     } else {
       m_console->warn("Artosyn reconnect will continue in background.");
@@ -371,7 +369,6 @@ ArtosynLink::ArtosynLink(OHDProfile profile)
     start_connect_worker();
   } else {
     start_rx_threads();
-    start_video_tx_thread();
     start_stats_thread();
   }
 }
@@ -379,7 +376,6 @@ ArtosynLink::ArtosynLink(OHDProfile profile)
 ArtosynLink::~ArtosynLink() {
   stop_connect_worker();
   stop_stats_thread();
-  stop_video_tx_thread();
   stop_rx_threads();
   shutdown_device();
 }
@@ -775,16 +771,27 @@ void ArtosynLink::try_open_sockets_if_ready() {
 }
 
 void ArtosynLink::start_rx_threads() {
-  if (m_profile.is_ground() && m_shared_socket && m_video_fd >= 0 &&
-      !m_rx_video_thread.joinable()) {
-    m_rx_video_thread = std::thread([this]() { rx_loop_shared(); });
+  // A shared P401 socket is bidirectional. Ground receives video and
+  // telemetry, while air must receive telemetry/parameter requests. Starting
+  // this reader only on ground made the entire uplink silently disappear.
+  const bool shared_port = m_cfg.telemetry_port == m_cfg.video_port;
+  // P401 air firmware exposes the single bidirectional host-data transport on
+  // video_fd. Treat it as multiplexed even if stale settings/state briefly
+  // disagree during startup.
+  if ((shared_port || m_profile.is_air) && m_video_fd >= 0) {
+    m_shared_socket = true;
+    if (!m_rx_video_thread.joinable()) {
+      m_rx_video_thread = std::thread([this]() { rx_loop_shared(); });
+    }
+    // Never fall through and start a second reader on the same SDK socket.
+    // Competing readers split P401 records and corrupt both RTP and MAVLink.
     return;
   }
   if (m_profile.is_ground() && m_video_fd >= 0 &&
       !m_rx_video_thread.joinable()) {
     m_rx_video_thread = std::thread([this]() { rx_loop_video(); });
   }
-  if (m_profile.is_ground() && m_telemetry_fd >= 0 &&
+  if (m_telemetry_fd >= 0 &&
       !m_rx_telemetry_thread.joinable()) {
     m_rx_telemetry_thread = std::thread([this]() { rx_loop_telemetry(); });
   }
@@ -917,8 +924,9 @@ int ArtosynLink::write_stream_packet(int fd, uint8_t stream_id,
   const int write_timeout_ms = m_cfg.read_timeout_ms;
   std::lock_guard<std::mutex> write_lock(m_radio_write_mutex);
   if (!m_shared_socket) {
-    const int written =
-        bb_socket_write(fd, data, size, write_timeout_ms);
+    const int written = bb_socket_write(
+        fd, const_cast<void*>(static_cast<const void*>(data)), size,
+        write_timeout_ms);
     return written == static_cast<int>(size) ? written : -1;
   }
   if (size > 65535U) {
@@ -948,9 +956,6 @@ void ArtosynLink::log_tx_error_throttled(const char* stream, int ret) {
 }
 
 void ArtosynLink::transmit_telemetry_data(TelemetryTxPacket packet) {
-  if (!m_profile.is_air) {
-    return;
-  }
   if (m_telemetry_fd < 0) return;
   if (!packet.data || packet.data->empty()) return;
   int injections = packet.n_injections < 1 ? 1 : packet.n_injections;
@@ -979,87 +984,20 @@ void ArtosynLink::transmit_video_data(
     return;
   }
   if (m_video_fd < 0) return;
+  const bool is_recovery_frame = fragmented_video_frame.is_intra_stream ||
+                                 fragmented_video_frame.is_idr_frame;
   {
-    std::lock_guard<std::mutex> lock(m_video_tx_mutex);
-    const bool is_recovery_frame = fragmented_video_frame.is_intra_stream ||
-                                   fragmented_video_frame.is_idr_frame;
+    std::lock_guard<std::mutex> lock(m_video_tx_state_mutex);
     if (m_video_tx_wait_for_idr && !is_recovery_frame) {
       ++m_video_tx_dropped_frames;
       return;
     }
-    constexpr size_t kMaxPendingFrames = 8;
-    if (m_pending_video_frames.size() < kMaxPendingFrames) {
-      // WBStreamTx only evicts queued frames for an IDR when the queue is
-      // actually full. Clearing healthy pending P-frames on every periodic IDR
-      // creates an artificial RTP sequence gap once per GOP.
-      m_pending_video_frames.emplace_back(stream_index, fragmented_video_frame);
-    } else if (is_recovery_frame) {
-      // Congested queue: prioritize decoder recovery over stale dependencies.
-      m_video_tx_dropped_frames += m_pending_video_frames.size();
-      m_pending_video_frames.clear();
-      m_pending_video_frames.emplace_back(stream_index, fragmented_video_frame);
-    } else {
-      // Preserve the queued dependency chain instead of replacing an older
-      // P-frame with a newer frame which depends on the dropped one.
-      ++m_video_tx_dropped_frames;
-      return;
-    }
   }
-  m_video_tx_cv.notify_one();
-}
 
-void ArtosynLink::start_video_tx_thread() {
-  if (!m_profile.is_air || m_video_tx_thread.joinable()) {
-    return;
-  }
-  {
-    std::lock_guard<std::mutex> lock(m_video_tx_mutex);
-    m_stop_video_tx = false;
-    m_video_tx_wait_for_idr = false;
-    m_video_tx_dropped_frames = 0;
-  }
-  m_video_tx_thread = std::thread([this]() { video_tx_loop(); });
-}
-
-void ArtosynLink::stop_video_tx_thread() {
-  {
-    std::lock_guard<std::mutex> lock(m_video_tx_mutex);
-    m_stop_video_tx = true;
-    m_pending_video_frames.clear();
-  }
-  m_video_tx_cv.notify_all();
-  if (m_video_tx_thread.joinable()) {
-    m_video_tx_thread.join();
-  }
-}
-
-void ArtosynLink::video_tx_loop() {
-  while (true) {
-    std::vector<std::pair<int, openhd::FragmentedVideoFrame>> pending;
-    {
-      std::unique_lock<std::mutex> lock(m_video_tx_mutex);
-      m_video_tx_cv.wait(lock, [this]() {
-        return m_stop_video_tx || !m_pending_video_frames.empty();
-      });
-      if (m_stop_video_tx) {
-        return;
-      }
-      // At 120 fps four frames arrive in about 25ms. A single vendor call for
-      // the group avoids the per-call acknowledgement ceiling while placing a
-      // hard bound on both application queue depth and aggregation latency.
-      m_video_tx_cv.wait_for(lock, std::chrono::milliseconds(25), [this]() {
-        return m_stop_video_tx || m_pending_video_frames.size() >= 4;
-      });
-      if (m_stop_video_tx) {
-        return;
-      }
-      pending.reserve(m_pending_video_frames.size());
-      while (!m_pending_video_frames.empty()) {
-        pending.emplace_back(std::move(m_pending_video_frames.front()));
-        m_pending_video_frames.pop_front();
-      }
-    }
-    bool complete = true;
+  // Deliberately transmit in the encoder callback. There is no pending-frame
+  // queue and no aggregation timer, so congestion cannot turn into queued
+  // video latency. The vector below is only one bounded SDK transfer chunk.
+  bool complete = true;
     if (m_shared_socket) {
       // The vendor stream API acknowledges every bb_socket_write call. Sending
       // one call per ~1400-byte RTP packet limits throughput to a few dozen
@@ -1067,17 +1005,38 @@ void ArtosynLink::video_tx_loop() {
       // framed RTP records belonging to this OpenHD frame. The ground parser
       // already treats the byte stream as a sequence of P401 records and
       // restores the original UDP packet boundaries.
-      size_t batch_size = 0;
-      for (const auto& frame : pending) {
-        for (const auto& fragment : frame.second.rtp_fragments) {
-          batch_size += 7U + fragment->size();
-        }
-      }
       std::vector<uint8_t> batch;
-      batch.reserve(batch_size);
-      for (const auto& frame : pending) {
-        for (const auto& fragment : frame.second.rtp_fragments) {
-          if (fragment->empty() || fragment->size() > 65535U) {
+      // The SDK accepts writes larger than its configured socket buffer but a
+      // matching read only returns the first buffer-sized portion. Keep every
+      // write below both configured buffers and split only between P401 records
+      // so no RTP datagram is silently truncated.
+      const int configured_buffer =
+          std::max(4096, std::min(m_cfg.tx_buf_size, m_cfg.rx_buf_size));
+      const size_t max_batch_size =
+          static_cast<size_t>(configured_buffer - 256);
+      batch.reserve(max_batch_size);
+      int written = -1;
+      std::lock_guard<std::mutex> write_lock(m_radio_write_mutex);
+      auto flush_batch = [&]() {
+        if (batch.empty()) return true;
+        // A large IDR may need longer than the normal control-message timeout,
+        // but this remains bounded so shutdown/reconnect cannot hang forever.
+        const int video_timeout_ms = std::max(500, m_cfg.read_timeout_ms);
+        written = bb_socket_write(m_video_fd, batch.data(),
+                                   static_cast<uint32_t>(batch.size()),
+                                   video_timeout_ms);
+        const bool ok = written == static_cast<int>(batch.size());
+        batch.clear();
+        return ok;
+      };
+      for (const auto& fragment : fragmented_video_frame.rtp_fragments) {
+          const size_t record_size = 7U + fragment->size();
+          if (fragment->empty() || fragment->size() > 65535U ||
+              record_size > max_batch_size) {
+            complete = false;
+            break;
+          }
+          if (batch.size() + record_size > max_batch_size && !flush_batch()) {
             complete = false;
             break;
           }
@@ -1086,40 +1045,23 @@ void ArtosynLink::video_tx_loop() {
           batch.push_back(static_cast<uint8_t>((size >> 8U) & 0xffU));
           batch.push_back(static_cast<uint8_t>(size & 0xffU));
           batch.insert(batch.end(), fragment->begin(), fragment->end());
-        }
-        if (!complete) {
-          break;
-        }
+        if (!complete) break;
       }
-      int written = -1;
-      if (complete && !batch.empty()) {
-        std::lock_guard<std::mutex> write_lock(m_radio_write_mutex);
-        // A large IDR may need longer than the normal control-message timeout,
-        // but this remains bounded so shutdown/reconnect cannot hang forever.
-        const int video_timeout_ms = std::max(500, m_cfg.read_timeout_ms);
-        written = bb_socket_write(m_video_fd, batch.data(),
-                                  static_cast<uint32_t>(batch.size()),
-                                  video_timeout_ms);
-        complete = written == static_cast<int>(batch.size());
-      }
+      if (complete) complete = flush_batch();
       if (!complete) {
         log_tx_error_throttled("video frame", written);
       } else {
-        for (const auto& frame : pending) {
-          for (const auto& fragment : frame.second.rtp_fragments) {
+        for (const auto& fragment : fragmented_video_frame.rtp_fragments) {
             const auto accounted_bytes =
                 static_cast<uint64_t>(fragment->size() + 7U);
-            m_video_bitrate_meter.on_tx_fragment(frame.first,
-                                                 accounted_bytes);
+            m_video_bitrate_meter.on_tx_fragment(stream_index, accounted_bytes);
             m_tx_total_bytes.fetch_add(accounted_bytes,
                                        std::memory_order_relaxed);
             m_tx_total_packets.fetch_add(1, std::memory_order_relaxed);
-          }
         }
       }
     } else {
-      for (const auto& frame : pending) {
-        for (const auto& fragment : frame.second.rtp_fragments) {
+        for (const auto& fragment : fragmented_video_frame.rtp_fragments) {
           const int written =
               write_stream_packet(m_video_fd, 2, fragment->data(),
                                   static_cast<uint32_t>(fragment->size()));
@@ -1130,31 +1072,20 @@ void ArtosynLink::video_tx_loop() {
           }
           const auto accounted_bytes =
               static_cast<uint64_t>(written > 0 ? written : fragment->size());
-          m_video_bitrate_meter.on_tx_fragment(frame.first, accounted_bytes);
+          m_video_bitrate_meter.on_tx_fragment(stream_index, accounted_bytes);
           m_tx_total_bytes.fetch_add(accounted_bytes,
                                      std::memory_order_relaxed);
           m_tx_total_packets.fetch_add(1, std::memory_order_relaxed);
         }
-        if (!complete) {
-          break;
-        }
-      }
     }
     {
-      std::lock_guard<std::mutex> lock(m_video_tx_mutex);
-      const bool contains_recovery_frame =
-          std::any_of(pending.begin(), pending.end(), [](const auto& frame) {
-            return frame.second.is_intra_stream || frame.second.is_idr_frame;
-          });
+      std::lock_guard<std::mutex> lock(m_video_tx_state_mutex);
       if (!complete) {
         m_video_tx_wait_for_idr = true;
-        m_video_tx_dropped_frames += m_pending_video_frames.size();
-        m_pending_video_frames.clear();
-      } else if (contains_recovery_frame) {
+      } else if (is_recovery_frame) {
         m_video_tx_wait_for_idr = false;
       }
     }
-  }
 }
 
 void ArtosynLink::transmit_audio_data(
@@ -1198,7 +1129,6 @@ void ArtosynLink::connect_loop() {
     if (init_device()) {
       m_console->warn("Artosyn daemon connected.");
       start_rx_threads();
-      start_video_tx_thread();
       start_stats_thread();
       return;
     }
@@ -1239,10 +1169,12 @@ void ArtosynLink::update_video_bitrate_recommendation(int capacity_kbits,
         (m_bitrate_capacity_ema_kbits * 3 + capacity_kbits) / 4;
   }
 
-  static constexpr int kUtilizationPercent = 88;
-  static constexpr int kProtocolAndTelemetryReserveKbits = 250;
+  // Keep generous headroom in the baseband queue. Running near the reported
+  // MCS ceiling produces seconds of latency even though writes still succeed.
+  static constexpr int kUtilizationPercent = 55;
+  static constexpr int kProtocolAndTelemetryReserveKbits = 500;
   static constexpr int kMinEncoderBitrateKbits = 1000;
-  static constexpr int kMaxEncoderBitrateKbits = 20000;
+  static constexpr int kMaxEncoderBitrateKbits = 8000;
   static constexpr int kIncreasePerSecondKbits = 500;
   static constexpr int kChangeHysteresisKbits = 250;
   static constexpr int64_t kRefreshIntervalMs = 2000;
@@ -1383,7 +1315,6 @@ void ArtosynLink::update_link_stats() {
       read_metrics(&link_state, &rx_mcs, &tx_mcs, &bw, &tx_phy_tp, &tx_real_tp,
                    &tx_freq_khz, &rx_freq_khz, &rx_bw, &rx_phy_tp,
                    &rx_real_tp);
-  (void)link_state;
   (void)rx_freq_khz;
   (void)rx_bw;
   if (!first_sample) {
@@ -1447,8 +1378,11 @@ void ArtosynLink::update_link_stats() {
   const int64_t last_rx_ts =
       m_last_rx_packet_ts_ms.load(std::memory_order_relaxed);
   const bool rx_ok = last_rx_ts > 0 && (now_ms - last_rx_ts) <= 5000;
+  const bool link_connected =
+      have_metrics && link_state == BB_LINK_STATE_CONNECT;
   const auto bitfield = openhd::link_statistics::MonitorModeLinkBitfield{
-      false, false, false, rx_ok, true, artosyn_debug_stats_enabled, 0};
+      false, false, false, rx_ok || link_connected, true,
+      artosyn_debug_stats_enabled, 0};
   stats.monitor_mode_link.bitfield =
       openhd::link_statistics::write_monitor_link_bitfield(bitfield);
 
@@ -1525,7 +1459,7 @@ void ArtosynLink::update_link_stats() {
            instantaneous_quality_percent + 4) /
           8;
     }
-  } else if (!rx_ok || ++m_quality_missing_samples >= 4) {
+  } else if ((!rx_ok && !link_connected) || ++m_quality_missing_samples >= 4) {
     // Missing RF metrics for two seconds, or no packets for five seconds, is
     // conservatively reported as no remaining link margin.
     m_reported_link_quality_percent = 0;
@@ -1676,7 +1610,12 @@ void ArtosynLink::update_link_stats() {
   card.tx_power_current = pwr_dbm >= 0 ? clamp_int16(pwr_dbm) : 0;
   card.tx_power_armed = 0;
   card.tx_power_disarmed = 0;
-  card.curr_status = m_dev && rx_ok && reported_quality_percent >= 0 ? 0 : 1;
+  // Reverse application traffic can legitimately be idle on the air unit.
+  // Use the radio's link state rather than a five-second packet watchdog so
+  // QOpenHD does not report a connected Artosyn device as "air card 0
+  // disconnected".
+  card.curr_status =
+      m_dev && link_connected && reported_quality_percent >= 0 ? 0 : 1;
 
   openhd::LinkActionHandler::instance().update_link_stats(stats);
 }

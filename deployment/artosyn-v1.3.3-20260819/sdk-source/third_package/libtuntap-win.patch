@@ -1,0 +1,295 @@
+From 48b3a075e30ac2d88d953cafbbd43294a2086997 Mon Sep 17 00:00:00 2001
+From: ririyeye <200610237@qq.com>
+Date: Tue, 5 Dec 2023 10:03:21 +0800
+Subject: [PATCH] Merge commit 'c371e2d2ed85ff124fa17484725cef572f908396'
+
+---
+ .gitignore       |   6 ++
+ private.h        |   1 +
+ tuntap-windows.c | 202 ++++++++++++++++++++++++++++++++++++++++++-----
+ tuntap.c         |   3 +-
+ 4 files changed, 190 insertions(+), 22 deletions(-)
+ create mode 100644 .gitignore
+
+new file mode 100644
+index 0000000..941e495
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,6 @@
++.vs
++out
++compile_commands.json
++CMakeSettings.json
++.cache
++.clang-format
+index 50623d2..1da7cba 100644
+--- a/private.h
++++ b/private.h
+@@ -93,6 +93,7 @@ struct device {
+ 	int		flags;     /* ifr.ifr_flags on Unix */
+ 	unsigned char	hwaddr[ETHER_ADDR_LEN];
+ 	char		if_name[IF_NAMESIZE + 1];
++	void * private;
+ };
+ 
+ /*
+index 06b1b74..1c832a9 100644
+--- a/tuntap-windows.c
++++ b/tuntap-windows.c
+@@ -47,6 +47,90 @@
+ /* From OpenVPN tap driver, proto.h */
+ typedef unsigned long IPADDR;
+ 
++#define WIN_BUFF_NUM  10
++#define WIN_BUFF_SIZE 2048
++
++typedef enum {
++    sta_not_init = 0,
++    sta_idle     = 1,
++    sta_work     = 2,
++} buf_sta;
++typedef struct {
++    OVERLAPPED ov;
++    buf_sta    sta;
++    int        bufferlen;
++    char*      buffer;
++} win_async_node;
++
++typedef struct {
++    int             rdarray_len;
++    win_async_node* rdarray;
++	HANDLE        * rdhandles;
++    char*           rdbuff;
++    int             wrarray_len;
++    win_async_node* wrarray;
++	HANDLE        * wrhandles;
++    char*           wrbuff;
++} win_async_ctrl;
++
++static win_async_ctrl*
++ctrl_block_init(int rd_cnt, int rd_buf_len, int wr_cnt, int wr_buf_len) {
++    win_async_ctrl* ctrl = malloc(sizeof(win_async_ctrl));
++
++    int alloc_rd = (rd_buf_len + 31) / 32 * 32;
++    int alloc_wr = (wr_buf_len + 31) / 32 * 32;
++
++    ctrl->rdarray_len = rd_cnt;
++    ctrl->wrarray_len = wr_cnt;
++    ctrl->rdarray     = malloc(sizeof(win_async_node) * rd_cnt);
++    ctrl->wrarray     = malloc(sizeof(win_async_node) * wr_cnt);
++    ctrl->rdhandles   = malloc(sizeof(HANDLE) * rd_cnt);
++    ctrl->wrhandles   = malloc(sizeof(HANDLE) * wr_cnt);
++    ctrl->rdbuff      = _aligned_malloc(alloc_rd * rd_cnt, 32);
++    ctrl->wrbuff      = _aligned_malloc(alloc_wr * wr_cnt, 32);
++
++    for (int i = 0; i < rd_cnt; i++) {
++        ctrl->rdarray[i].bufferlen = rd_buf_len;
++        memset(&ctrl->rdarray[i].ov, 0, sizeof(OVERLAPPED));
++        ctrl->rdarray[i].ov.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
++
++        ctrl->rdarray[i].sta    = sta_idle;
++        ctrl->rdarray[i].buffer = ctrl->rdbuff + i * alloc_rd;
++    }
++    for (int i = 0; i < wr_cnt; i++) {
++        ctrl->wrarray[i].bufferlen = wr_buf_len;
++        memset(&ctrl->wrarray[i].ov, 0, sizeof(OVERLAPPED));
++        ctrl->wrarray[i].ov.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
++
++        ctrl->wrarray[i].sta    = sta_idle;
++        ctrl->wrarray[i].buffer = ctrl->wrbuff + i * alloc_wr;
++    }
++    return ctrl;
++}
++
++static void
++ctrl_block_destory(win_async_ctrl* ctrl) {
++    if (!ctrl) {
++        return;
++    }
++    // delete rd buff and handle
++    for (int i = 0; i < ctrl->rdarray_len; i++) {
++        (void)CloseHandle(ctrl->rdarray[i].ov.hEvent);
++    }
++    free(ctrl->rdarray);
++    free(ctrl->rdhandles);
++    _aligned_free(ctrl->rdbuff);
++    // delete wr buff and handle
++    for (int i = 0; i < ctrl->wrarray_len; i++) {
++        (void)CloseHandle(ctrl->wrarray[i].ov.hEvent);
++    }
++    free(ctrl->wrarray);
++    free(ctrl->wrhandles);
++    _aligned_free(ctrl->wrbuff);
++    // free ctrl block
++    free(ctrl);
++}
++
+ /* This one is from Fabien Pichot, in the tNETacle source code */
+ static LPWSTR
+ formated_error(LPWSTR pMessage, DWORD m, ...) {
+@@ -183,13 +267,20 @@ tuntap_start(struct device *dev, int mode, int tun) {
+ 	}
+ 
+ 	dev->tun_fd = tun_fd;
+-	return 0;
++
++	if(dev->private) {
++		return 0;
++	}
++
++    dev->private = ctrl_block_init(WIN_BUFF_NUM, WIN_BUFF_SIZE, WIN_BUFF_NUM, WIN_BUFF_SIZE);
++    return 0;
+ }
+ 
+ void
+ tuntap_release(struct device *dev) {
+ 	(void)CloseHandle(dev->tun_fd);
+-	free(dev);
++    ctrl_block_destory(dev->private);
++    free(dev);
+ }
+ 
+ char *
+@@ -263,7 +354,7 @@ tuntap_get_mtu(struct device *dev) {
+ 		tuntap_log(TUNTAP_LOG_ERR, (const char *)formated_error(L"%1%0", errcode));
+ 		return -1;
+     }
+-	return 0;
++	return mtu;
+ }
+ 
+ int
+@@ -307,30 +398,99 @@ tuntap_sys_set_ipv6(struct device *dev, t_tun_in6_addr *s, uint32_t mask) {
+ 
+ int
+ tuntap_read(struct device *dev, void *buf, size_t size) {
+-	DWORD len;
+-
+-	if (ReadFile(dev->tun_fd, buf, (DWORD)size, &len, NULL) == 0) {
+-		int errcode = GetLastError();
+-
+-		tuntap_log(TUNTAP_LOG_ERR, (const char *)formated_error(L"%1%0", errcode));
+-		return -1;
+-	}
+-
+-	return (int)len;
++    win_async_ctrl* ctrl       = (win_async_ctrl*)dev->private;
++    HANDLE*         wait_array = ctrl->rdhandles;
++    int             wait_index = 0;
++    // set all idle buff to readfile and set wait array
++    for (int i = 0; i < ctrl->rdarray_len; i++) {
++        switch (ctrl->rdarray[i].sta) {
++        case sta_idle: {
++            int sta = ReadFile(dev->tun_fd,
++                               ctrl->rdarray[i].buffer,
++                               (DWORD)ctrl->rdarray[i].bufferlen,
++                               NULL,
++                               &ctrl->rdarray[i].ov);
++
++            if (sta == 0 || (sta && GetLastError() == ERROR_IO_PENDING)) {
++                ctrl->rdarray[i].sta   = sta_work;
++                wait_array[wait_index] = ctrl->rdarray[i].ov.hEvent;
++                wait_index++;
++            } else {
++                // warning here there is something err
++                tuntap_log(TUNTAP_LOG_ERR, (const char*)formated_error(L"%1%0", GetLastError()));
++            }
++        } break;
++        case sta_work:
++            wait_array[wait_index] = ctrl->rdarray[i].ov.hEvent;
++            wait_index++;
++            break;
++        default:
++            // warning here there is something err
++            tuntap_log(TUNTAP_LOG_ERR, (const char*)formated_error(L"error sta %d", ctrl->rdarray[i].sta));
++            break;
++        }
++    }
++    // wait any readfile object is ok
++    DWORD index = WaitForMultipleObjects(wait_index, wait_array, FALSE, INFINITE);
++    // return the data
++    if (index >= WAIT_OBJECT_0 && index < WAIT_OBJECT_0 + wait_index) {
++        HANDLE evthd = wait_array[index - WAIT_OBJECT_0];
++        for (int i = 0; i < ctrl->rdarray_len; i++) {
++            if (ctrl->rdarray[i].ov.hEvent == evthd) {
++				// get output data and reset event
++                DWORD reslen;
++                int   res = GetOverlappedResult(dev->tun_fd,          // handle to pipe
++                                              &ctrl->rdarray[i].ov, // OVERLAPPED structure
++                                              &reslen,              // bytes transferred
++                                              FALSE);               // do not wait
++
++                ctrl->rdarray[i].sta = sta_idle;
++                memcpy(buf, ctrl->rdarray[i].buffer, reslen);
++                return (int)reslen;
++            }
++        }
++    }
++    return -1;
+ }
+ 
+ int
+ tuntap_write(struct device *dev, void *buf, size_t size) {
+-	DWORD len;
+-
+-	if (WriteFile(dev->tun_fd, buf, (DWORD)size, &len, NULL) == 0) {
+-		int errcode = GetLastError();
++    win_async_ctrl* ctrl = (win_async_ctrl*)dev->private;
++    // check if any buff can write
++    for (int i = 0; i < ctrl->wrarray_len; i++) {
++        if (ctrl->wrarray[i].sta == sta_idle) {
++            ctrl->wrarray[i].sta = sta_work;
++            memcpy(ctrl->wrarray[i].buffer, buf, size);
++            WriteFile(dev->tun_fd, ctrl->wrarray[i].buffer, (DWORD)size, NULL, &ctrl->wrarray[i].ov);
++            return (int)size;
++        }
++    }
+ 
+-		tuntap_log(TUNTAP_LOG_ERR, (const char *)formated_error(L"%1%0", errcode));
+-		return -1;
+-	}
++    // set wait array
++    HANDLE* wait_array = ctrl->wrhandles;
++    for (int i = 0; i < ctrl->wrarray_len; i++) {
++        wait_array[i] = ctrl->wrarray[i].ov.hEvent;
++    }
+ 
+-	return (int)len;
++    DWORD index = WaitForMultipleObjects(ctrl->wrarray_len, wait_array, FALSE, INFINITE);
++    // check object and set sta to idle
++    if (index >= WAIT_OBJECT_0 && index < WAIT_OBJECT_0 + ctrl->wrarray_len) {
++        HANDLE evthd = wait_array[index - WAIT_OBJECT_0];
++        for (int i = 0; i < ctrl->rdarray_len; i++) {
++            if (ctrl->wrarray[i].ov.hEvent == evthd) {
++                // reset event
++                DWORD reslen;
++                int   res            = GetOverlappedResult(dev->tun_fd,          // handle to pipe
++                                              &ctrl->wrarray[i].ov, // OVERLAPPED structure
++                                              &reslen,              // bytes transferred
++                                              FALSE);               // do not wait
++                ctrl->wrarray[i].sta = sta_idle;
++                break;
++            }
++        }
++    }
++    // restart write again
++    return tuntap_write(dev, buf, size);
+ }
+ 
+ int
+index 76a4616..67d6ef2 100644
+--- a/tuntap.c
++++ b/tuntap.c
+@@ -44,7 +44,8 @@ tuntap_init(void) {
+ 	(void)memset(dev->hwaddr, '\0', sizeof dev->hwaddr);
+ 	dev->tun_fd = TUNFD_INVALID_VALUE;
+ 	dev->ctrl_sock = -1;
+-	dev->flags = 0;
++	dev->flags     = 0;
++	dev->private   = 0;
+ 
+ 	tuntap_log = tuntap_log_default;
+ 	return dev;
+-- 
+2.39.1.windows.1
+

@@ -158,8 +158,10 @@ struct ArtosynLinkSettings {
   std::string addr = "127.0.0.1";
   int port = 50000;
   int slot = 0;
-  int video_port = 2;
-  int telemetry_port = 1;
+  // P401 USB firmware exposes transport 3 for host data. Keep both streams on
+  // that socket; ArtosynLink adds its own stream framing when the ports match.
+  int video_port = 3;
+  int telemetry_port = 3;
   int use_datagram = 1;
   int rx_buf_size = 64 * 1024;
   int tx_buf_size = 64 * 1024;

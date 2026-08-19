@@ -53,8 +53,10 @@ class ArtosynLink : public OHDLink {
     std::string addr = "127.0.0.1";
     int port = 50000;
     int slot = 0;
-    int video_port = 2;
-    int telemetry_port = 1;
+    // P401 USB firmware exposes transport 3 for host data. Video and
+    // telemetry share it and are multiplexed by ArtosynLink.
+    int video_port = 3;
+    int telemetry_port = 3;
     bool use_datagram = true;
     int rx_buf_size = 64 * 1024;
     int tx_buf_size = 64 * 1024;
@@ -78,9 +80,6 @@ class ArtosynLink : public OHDLink {
   void rx_loop_shared();
   int write_stream_packet(int fd, uint8_t stream_id, const uint8_t* data,
                           uint32_t size);
-  void start_video_tx_thread();
-  void stop_video_tx_thread();
-  void video_tx_loop();
   void log_tx_error_throttled(const char* stream, int ret);
 
   void apply_link_settings();
@@ -143,15 +142,10 @@ class ArtosynLink : public OHDLink {
 
   std::thread m_rx_video_thread;
   std::thread m_rx_telemetry_thread;
-  std::thread m_video_tx_thread;
   std::thread m_stats_thread;
   std::thread m_connect_thread;
   std::mutex m_radio_write_mutex;
-  std::mutex m_video_tx_mutex;
-  std::condition_variable m_video_tx_cv;
-  std::deque<std::pair<int, openhd::FragmentedVideoFrame>>
-      m_pending_video_frames;
-  bool m_stop_video_tx = false;
+  std::mutex m_video_tx_state_mutex;
   bool m_video_tx_wait_for_idr = false;
   uint64_t m_video_tx_dropped_frames = 0;
   std::atomic<bool> m_stop_connect_worker{false};
