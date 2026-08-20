@@ -1,8 +1,6 @@
 #include "rockchip_mpp_stream.h"
 
 #include <fcntl.h>
-#include <linux/media-bus-format.h>
-#include <linux/v4l2-subdev.h>
 #include <linux/videodev2.h>
 #include <poll.h>
 #include <rk_mpi.h>
@@ -13,7 +11,6 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <unistd.h>
-#include <dlfcn.h>
 
 #include <algorithm>
 #include <cerrno>
@@ -40,29 +37,6 @@ int retry_ioctl(int fd, unsigned long request, void* argument) {
   return result;
 }
 
-std::string find_v4l2_subdev(const std::string& name_fragment) {
-  for (int index = 0; index < 32; ++index) {
-    const std::string node = "/dev/v4l-subdev" + std::to_string(index);
-    std::ifstream name_file("/sys/class/video4linux/v4l-subdev" +
-                            std::to_string(index) + "/name");
-    std::string name;
-    std::getline(name_file, name);
-    if (name.find(name_fragment) != std::string::npos) return node;
-  }
-  return {};
-}
-
-std::string find_v4l2_entity(const std::string& name_fragment) {
-  for (int index = 0; index < 32; ++index) {
-    std::ifstream name_file("/sys/class/video4linux/v4l-subdev" +
-                            std::to_string(index) + "/name");
-    std::string name;
-    std::getline(name_file, name);
-    if (name.find(name_fragment) != std::string::npos) return name;
-  }
-  return {};
-}
-
 std::string find_v4l2_video(const std::string& name_fragment) {
   for (int index = 0; index < 64; ++index) {
     std::ifstream name_file("/sys/class/video4linux/video" +
@@ -74,23 +48,6 @@ std::string find_v4l2_video(const std::string& name_fragment) {
     }
   }
   return {};
-}
-
-bool set_subdev_format(const std::string& node, uint32_t pad, uint32_t width,
-                       uint32_t height, uint32_t code) {
-  if (node.empty()) return false;
-  const int fd = open(node.c_str(), O_RDWR | O_CLOEXEC);
-  if (fd < 0) return false;
-  v4l2_subdev_format format{};
-  format.which = V4L2_SUBDEV_FORMAT_ACTIVE;
-  format.pad = pad;
-  format.format.width = width;
-  format.format.height = height;
-  format.format.code = code;
-  format.format.field = V4L2_FIELD_NONE;
-  const bool ok = retry_ioctl(fd, VIDIOC_SUBDEV_S_FMT, &format) == 0;
-  close(fd);
-  return ok;
 }
 
 class MpegTsMuxer {
@@ -630,159 +587,6 @@ class RockchipMppStream::Impl {
            (mode == AIR_RECORDING_AUTO_ARM_DISARM && armed.load());
   }
 
-  bool configure_imx415_hfr() {
-    const int requested_fps = std::max(
-        1, owner.m_camera_holder->get_settings().streamed_video_format.framerate);
-    if (requested_fps < 60 || width > 1920 || height > 1080) return true;
-
-    const bool use_720p120 = requested_fps >= 100 && width <= 1280 && height <= 720;
-    const uint32_t sensor_width = use_720p120 ? 1284 : 1944;
-    const uint32_t sensor_height = use_720p120 ? 720 : 1097;
-    constexpr uint32_t bus_code = MEDIA_BUS_FMT_SGBRG12_1X12;
-    const std::string sensor = find_v4l2_subdev("imx415");
-    if (sensor.empty()) {
-      log->info(
-          "Camera supplies processed frames; skipping raw IMX415 HFR graph "
-          "configuration");
-      return true;
-    }
-    if (!set_subdev_format(sensor, 0, sensor_width, sensor_height, bus_code)) {
-      log->error("Cannot select IMX415 HFR format {}x{} on {}", sensor_width,
-                 sensor_height, sensor);
-      return false;
-    }
-    const int sensor_fd = open(sensor.c_str(), O_RDWR | O_CLOEXEC);
-    if (sensor_fd < 0) return false;
-    v4l2_subdev_frame_interval interval{};
-    interval.pad = 0;
-    interval.interval.numerator = 1;
-    interval.interval.denominator = requested_fps;
-    const bool interval_ok =
-        retry_ioctl(sensor_fd, VIDIOC_SUBDEV_S_FRAME_INTERVAL, &interval) == 0;
-    const int interval_errno = errno;
-    close(sensor_fd);
-    if (!interval_ok && interval_errno != ENOTTY && interval_errno != EINVAL) {
-      log->error("IMX415 rejected requested rate {} fps: {}", requested_fps,
-                 std::strerror(interval_errno));
-      return false;
-    }
-    if (!interval_ok) {
-      log->warn(
-          "IMX415 frame-interval ioctl unsupported; using the selected HFR "
-          "sensor mode for {} fps",
-          requested_fps);
-    }
-
-    // Keep every active pad in the RV1126B CSI -> CIF -> ISP graph consistent
-    // with the newly selected native sensor mode.
-    const std::string dphy = find_v4l2_subdev("rockchip-csi2-dphy0");
-    const std::string mipi = find_v4l2_subdev("rockchip-mipi-csi2");
-    const std::string cif = find_v4l2_subdev("rkcif-mipi-lvds");
-    const std::string isp = find_v4l2_subdev("rkisp-isp-subdev");
-    const bool graph_ok =
-        set_subdev_format(dphy, 0, sensor_width, sensor_height, bus_code) &&
-        set_subdev_format(dphy, 1, sensor_width, sensor_height, bus_code) &&
-        set_subdev_format(mipi, 0, sensor_width, sensor_height, bus_code) &&
-        set_subdev_format(mipi, 1, sensor_width, sensor_height, bus_code) &&
-        set_subdev_format(cif, 0, width, height, bus_code) &&
-        set_subdev_format(isp, 0, width, height, bus_code);
-    if (!graph_ok) {
-      log->warn(
-          "Some RV1126B media-graph pads rejected explicit HFR formats; "
-          "continuing with the sensor mode and capture-node configuration");
-    }
-
-    const double actual_fps = interval.interval.numerator
-                                  ? static_cast<double>(interval.interval.denominator) /
-                                        interval.interval.numerator
-                                  : 0.0;
-    log->info("IMX415 HFR selected: sensor {}x{} at {:.2f} fps, ISP {}x{}",
-              sensor_width, sensor_height, actual_fps, width, height);
-    return true;
-  }
-
-  bool start_rkaiq() {
-    const char* library_path =
-        access("/oem/usr/lib/librkaiq.so", R_OK) == 0
-            ? "/oem/usr/lib/librkaiq.so"
-            : "/usr/lib/librkaiq.so";
-    const char* iq_path = access("/oem/usr/share/iqfiles", R_OK) == 0
-                              ? "/oem/usr/share/iqfiles"
-                              : "/etc/iqfiles";
-    std::string sensor_entity = find_v4l2_entity("imx415");
-    if (sensor_entity.empty()) {
-      sensor_entity = find_v4l2_entity("openhd_camera");
-    }
-    if (sensor_entity.empty()) {
-      log->error("Cannot find the IMX415 media entity for RKAIQ");
-      return false;
-    }
-
-    rkaiq_library = dlopen(library_path, RTLD_NOW | RTLD_LOCAL);
-    if (!rkaiq_library) {
-      log->error("Cannot load {}: {}", library_path, dlerror());
-      return false;
-    }
-
-    rkaiq_init = reinterpret_cast<RkaiqInit>(
-        dlsym(rkaiq_library, "rk_aiq_uapi2_sysctl_init"));
-    rkaiq_prepare = reinterpret_cast<RkaiqPrepare>(
-        dlsym(rkaiq_library, "rk_aiq_uapi2_sysctl_prepare"));
-    rkaiq_start = reinterpret_cast<RkaiqStart>(
-        dlsym(rkaiq_library, "rk_aiq_uapi2_sysctl_start"));
-    rkaiq_stop = reinterpret_cast<RkaiqStop>(
-        dlsym(rkaiq_library, "rk_aiq_uapi2_sysctl_stop"));
-    rkaiq_deinit = reinterpret_cast<RkaiqDeinit>(
-        dlsym(rkaiq_library, "rk_aiq_uapi2_sysctl_deinit"));
-    if (!rkaiq_init || !rkaiq_prepare || !rkaiq_start || !rkaiq_stop ||
-        !rkaiq_deinit) {
-      log->error("{} does not expose the required RKAIQ uAPI2 symbols: {}",
-                 library_path, dlerror());
-      stop_rkaiq();
-      return false;
-    }
-
-    rkaiq_context = rkaiq_init(sensor_entity.c_str(), iq_path, nullptr, nullptr);
-    if (!rkaiq_context) {
-      log->error("RKAIQ initialization failed for sensor '{}' using {}",
-                 sensor_entity, iq_path);
-      stop_rkaiq();
-      return false;
-    }
-    // RK_AIQ_WORKING_MODE_NORMAL is zero. HDR modes are not used by the
-    // current IMX415 media graph.
-    if (rkaiq_prepare(rkaiq_context, width, height, 0) != 0) {
-      log->error("RKAIQ prepare failed for {}x{}", width, height);
-      stop_rkaiq();
-      return false;
-    }
-    if (rkaiq_start(rkaiq_context) != 0) {
-      log->error("RKAIQ start failed");
-      stop_rkaiq();
-      return false;
-    }
-    rkaiq_running = true;
-    log->info("RKAIQ ISP active for '{}' at {}x{} using {}", sensor_entity,
-              width, height, iq_path);
-    return true;
-  }
-
-  void stop_rkaiq() {
-    if (rkaiq_context) {
-      if (rkaiq_running && rkaiq_stop) rkaiq_stop(rkaiq_context, false);
-      if (rkaiq_deinit) rkaiq_deinit(rkaiq_context);
-    }
-    rkaiq_context = nullptr;
-    rkaiq_running = false;
-    rkaiq_init = nullptr;
-    rkaiq_prepare = nullptr;
-    rkaiq_start = nullptr;
-    rkaiq_stop = nullptr;
-    rkaiq_deinit = nullptr;
-    if (rkaiq_library) dlclose(rkaiq_library);
-    rkaiq_library = nullptr;
-  }
-
   bool setup_capture() {
     const auto& camera = owner.m_camera_holder->get_camera();
     if (camera.requires_rockchip1126_mpp_testsrc_pipeline()) {
@@ -790,8 +594,6 @@ class RockchipMppStream::Impl {
       synthetic_frame.resize(static_cast<size_t>(width) * height * 3 / 2);
       return true;
     }
-
-    if (!configure_imx415_hfr()) return false;
 
     // The X21 production image routes the camera's NV12 output through CIF.
     // Discover it by entity name because video indices vary across images.
@@ -817,10 +619,8 @@ class RockchipMppStream::Impl {
       return false;
     }
 
-    // S_FMT selects the resolution, but the IMX415 exposes several modes with
-    // the same native size (30/60/90 fps). Propagate the requested rate through
-    // the ISP pipeline so the sensor driver's s_frame_interval callback can
-    // select the matching timing table.
+    // Ask the processed-frame capture node for the configured stream rate.
+    // Sensor-specific mode selection belongs to the sensor's own driver.
     const int requested_fps = std::max(
         1, owner.m_camera_holder->get_settings().streamed_video_format.framerate);
     v4l2_streamparm streamparm{};
@@ -1310,7 +1110,6 @@ class RockchipMppStream::Impl {
     capture_uv_offset = 0;
     capture_num_planes = 1;
     capture_streaming = false;
-    stop_rkaiq();
     synthetic_capture = false;
     synthetic_frame.clear();
     if (input_buffer) mpp_buffer_put(input_buffer);
@@ -1370,19 +1169,6 @@ class RockchipMppStream::Impl {
   uint32_t perf_window_frames = 0;
   std::chrono::steady_clock::time_point perf_window_start =
       std::chrono::steady_clock::now();
-  using RkaiqInit = void* (*)(const char*, const char*, void*, void*);
-  using RkaiqPrepare = int (*)(const void*, uint32_t, uint32_t, int);
-  using RkaiqStart = int (*)(const void*);
-  using RkaiqStop = int (*)(const void*, bool);
-  using RkaiqDeinit = void (*)(void*);
-  void* rkaiq_library = nullptr;
-  void* rkaiq_context = nullptr;
-  RkaiqInit rkaiq_init = nullptr;
-  RkaiqPrepare rkaiq_prepare = nullptr;
-  RkaiqStart rkaiq_start = nullptr;
-  RkaiqStop rkaiq_stop = nullptr;
-  RkaiqDeinit rkaiq_deinit = nullptr;
-  bool rkaiq_running = false;
   int capture_fd = -1;
   uint32_t capture_num_planes = 1;
   uint32_t capture_stride = 0;
