@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Resolve private Artosyn SDK location without committing SDK sources to this repo.
+# Resolve the Artosyn L4 SDK location without committing SDK sources to this repo.
 # Expected usage:
 #   source scripts/resolve_artosyn_sdk.sh
 #   resolve_artosyn_sdk
@@ -9,10 +9,14 @@
 #          -DARTOSYN_SDK_TUNTAP="${ARTOSYN_SDK_TUNTAP}"
 
 ARTLINK_RESOLVER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ARTLINK_REPO_DEFAULT="https://github.com/OpenHD-Technologies/OpenHD-ArtLink.git"
+OPENHD_REPO_ROOT="$(cd "${ARTLINK_RESOLVER_DIR}/../.." && pwd)"
+ARTOSYN_WORK_ARCH=${OPENHD_CROSS_TRIPLET:-native}
+ARTOSYN_WORK_ROOT=${OPENHD_ARTOSYN_WORK_ROOT:-${OPENHD_REPO_ROOT}/out/build/artosyn-sdk/${ARTOSYN_WORK_ARCH}}
+
+ARTLINK_REPO_DEFAULT="https://github.com/KUTIAN-VT/L4_Linux_SDK.git"
 ARTLINK_REPO=${ARTLINK_REPO:-${ARTLINK_REPO_DEFAULT}}
-ARTLINK_BRANCH=${ARTLINK_BRANCH:-sdk}
-ARTLINK_REPO_DIR=${ARTLINK_REPO_DIR:-OpenHD-ArtLink}
+ARTLINK_BRANCH=${ARTLINK_BRANCH:-main}
+ARTLINK_REPO_DIR=${ARTLINK_REPO_DIR:-L4_Linux_SDK}
 
 # Reuse the kernel-builder/OpenHD secret contract when present.
 ARTLINK_DOWNLOAD_URL=${ARTLINK_DOWNLOAD_URL:-${DOWNLOAD_URL:-}}
@@ -110,6 +114,12 @@ _find_sdk_root() {
     echo "${search_root}"
     return 0
   fi
+  if [[ -f "${search_root}/CMakeLists.txt" && \
+        -d "${search_root}/app/ar8030" && -d "${search_root}/com" && \
+        -d "${search_root}/daemon" ]]; then
+    echo "${search_root}"
+    return 0
+  fi
   local hit
   while IFS= read -r hit; do
     local candidate_root
@@ -122,6 +132,15 @@ _find_sdk_root() {
   done < <(find "${search_root}" -type d \
     \( -path "*/host_drv/app/ar8030" -o -path "*/host_drv/install/include" \) \
     2>/dev/null)
+  while IFS= read -r hit; do
+    local candidate_root
+    candidate_root="$(dirname "$(dirname "${hit}")")"
+    if [[ -f "${candidate_root}/CMakeLists.txt" && \
+          -d "${candidate_root}/com" && -d "${candidate_root}/daemon" ]]; then
+      echo "${candidate_root}"
+      return 0
+    fi
+  done < <(find "${search_root}" -type d -path "*/app/ar8030" 2>/dev/null)
   return 1
 }
 
@@ -134,7 +153,7 @@ _fetch_from_download_url() {
     return 1
   fi
   echo "[Artosyn] Trying archive fetch path (DOWNLOAD_URL archive)." >&2
-  local fetch_root="/tmp/openhd_artosyn_sdk_fetch"
+  local fetch_root="${ARTOSYN_WORK_ROOT}/fetch"
   local archive_path="${fetch_root}/artlink-source.archive"
   local extract_dir="${fetch_root}/extract"
 
@@ -153,8 +172,8 @@ _fetch_from_download_url() {
 
 _fetch_from_git() {
   echo "[Artosyn] Trying git clone path for private ArtLink SDK." >&2
-  local repo_root="/tmp/openhd_artosyn_sdk_repo/${ARTLINK_REPO_DIR}"
-  local clone_manifest="/tmp/openhd_artlink_clone_manifest.log"
+  local repo_root="${ARTOSYN_WORK_ROOT}/source/${ARTLINK_REPO_DIR}"
+  local clone_manifest="${ARTOSYN_WORK_ROOT}/clone-manifest.log"
   rm -rf "${repo_root}" || return 1
   mkdir -p "$(dirname "${repo_root}")" || return 1
 
@@ -204,7 +223,7 @@ _fetch_from_git() {
     fi
     if [[ -n "${archive_hit}" ]]; then
       echo "[Artosyn] Found SDK archive in cloned repo: ${archive_hit}" >&2
-      local extract_dir="/tmp/openhd_artosyn_sdk_repo_extract/${ARTLINK_REPO_DIR}"
+      local extract_dir="${ARTOSYN_WORK_ROOT}/source-extract/${ARTLINK_REPO_DIR}"
       if _extract_archive "${archive_hit}" "${extract_dir}"; then
         resolved="$(_find_sdk_root "${extract_dir}" || true)"
       fi
@@ -247,20 +266,46 @@ _configure_host_drv_build_dir() {
     -DUSING_8030DRV=OFF >&2 || return 1
 }
 
+_sdk_source_dir() {
+  local sdk_root="$1"
+  if [[ -f "${sdk_root}/CMakeLists.txt" && -d "${sdk_root}/app/ar8030" ]]; then
+    echo "${sdk_root}"
+  elif [[ -f "${sdk_root}/host_drv/CMakeLists.txt" ]]; then
+    echo "${sdk_root}/host_drv"
+  else
+    return 1
+  fi
+}
+
+_configure_sdk_build_dir() {
+  local sdk_root="$1"
+  local build_dir="$2"
+  local source_dir
+  source_dir="$(_sdk_source_dir "${sdk_root}")" || return 1
+  if [[ "${source_dir}" == "${sdk_root}/host_drv" ]]; then
+    _configure_host_drv_build_dir "${source_dir}" "${build_dir}"
+    return
+  fi
+  _artlink_cmake_configure -S "${source_dir}" -B "${build_dir}" \
+    -DAPP_STATIC_LIB=ON \
+    -DUSING_8030USB=ON \
+    -DUSING_8030SDIO=OFF \
+    -DUSING_8030UART=OFF >&2
+}
+
 _build_client_lib_from_source() {
   local sdk_root="$1"
-  local host_drv_dir="${sdk_root}/host_drv"
-  if [[ ! -f "${host_drv_dir}/CMakeLists.txt" ]]; then
+  if ! _sdk_source_dir "${sdk_root}" >/dev/null; then
     return 1
   fi
   if ! command -v cmake >/dev/null 2>&1; then
     return 1
   fi
 
-  local build_dir="/tmp/openhd_artosyn_sdk_build_client"
+  local build_dir="${ARTOSYN_WORK_ROOT}/sdk"
   echo "[Artosyn] libar8030_client missing, building ar8030_client from source." >&2
 
-  _configure_host_drv_build_dir "${host_drv_dir}" "${build_dir}" || return 1
+  _configure_sdk_build_dir "${sdk_root}" "${build_dir}" || return 1
 
   cmake --build "${build_dir}" --target ar8030_client >&2 || return 1
 
@@ -275,6 +320,7 @@ _build_client_lib_from_source() {
   if [[ "${built_lib}" == *.a ]]; then
     local dep_candidates=(
       "${build_dir}/com/libcom.a"
+      "${sdk_root}/build/com/libcom.a"
       "${sdk_root}/host_drv/build/com/libcom.a"
       "${sdk_root}/host_drv/install/bin/libcom.a"
       "${sdk_root}/host_drv/com/libcom.a"
@@ -299,6 +345,12 @@ _find_daemon_binary_in_tree() {
     return 1
   fi
   local daemon_candidates=(
+    "${sdk_root}/install/arm64/bin/l4_daemon"
+    "${sdk_root}/install/armhf/bin/l4_daemon"
+    "${sdk_root}/install/x86_64/bin/l4_daemon"
+    "${sdk_root}/build/arm64/daemon/l4_daemon"
+    "${sdk_root}/build/armhf/daemon/l4_daemon"
+    "${sdk_root}/build/x86_64/daemon/l4_daemon"
     "${sdk_root}/host_drv/app/ar8030/artosyn_daemon"
     "${sdk_root}/host_drv/app/ar8030/ar8030_daemon"
     "${sdk_root}/host_drv/app/ar8030/artlinkd"
@@ -326,8 +378,8 @@ _find_daemon_binary_in_tree() {
     fi
   done
   local hit
-  hit="$(find "${sdk_root}/host_drv" -type f \
-    \( -iname "artosyn_daemon" -o -iname "ar8030_daemon" -o -iname "artlinkd" -o -iname "bbd" -o -iname "bb_daemon" -o -iname "daemon" \) \
+  hit="$(find "${sdk_root}" -type f \
+    \( -iname "l4_daemon" -o -iname "artosyn_daemon" -o -iname "ar8030_daemon" -o -iname "artlinkd" -o -iname "bbd" -o -iname "bb_daemon" -o -iname "daemon" \) \
     | head -n 1 || true)"
   if [[ -n "${hit}" ]]; then
     echo "${hit}"
@@ -342,6 +394,12 @@ _find_tuntap_binary_in_tree() {
     return 1
   fi
   local tuntap_candidates=(
+    "${sdk_root}/install/arm64/bin/l4_tuntap"
+    "${sdk_root}/install/armhf/bin/l4_tuntap"
+    "${sdk_root}/install/x86_64/bin/l4_tuntap"
+    "${sdk_root}/build/arm64/app/tuntap/l4_tuntap"
+    "${sdk_root}/build/armhf/app/tuntap/l4_tuntap"
+    "${sdk_root}/build/x86_64/app/tuntap/l4_tuntap"
     "${sdk_root}/host_drv/install/dev_helper/tuntap_bb"
     "${sdk_root}/host_drv/dev_helper/tuntap_bb"
     "${sdk_root}/host_drv/build/dev_helper/tuntap_bb"
@@ -355,7 +413,8 @@ _find_tuntap_binary_in_tree() {
     fi
   done
   local hit
-  hit="$(find "${sdk_root}/host_drv" -type f -name "tuntap_bb" | head -n 1 || true)"
+  hit="$(find "${sdk_root}" -type f \
+    \( -name "l4_tuntap" -o -name "tuntap_bb" \) | head -n 1 || true)"
   if [[ -n "${hit}" ]]; then
     echo "${hit}"
     return 0
@@ -365,17 +424,16 @@ _find_tuntap_binary_in_tree() {
 
 _build_daemon_from_source() {
   local sdk_root="$1"
-  local host_drv_dir="${sdk_root}/host_drv"
-  if [[ ! -f "${host_drv_dir}/CMakeLists.txt" ]]; then
+  if ! _sdk_source_dir "${sdk_root}" >/dev/null; then
     return 1
   fi
   if ! command -v cmake >/dev/null 2>&1; then
     return 1
   fi
-  local build_dir="/tmp/openhd_artosyn_sdk_build_daemon"
+  local build_dir="${ARTOSYN_WORK_ROOT}/sdk"
   echo "[Artosyn] daemon missing, trying to build daemon targets from source." >&2
 
-  _configure_host_drv_build_dir "${host_drv_dir}" "${build_dir}" || return 1
+  _configure_sdk_build_dir "${sdk_root}" "${build_dir}" || return 1
 
   local available_targets=""
   local targets_help_file="${build_dir}/.openhd_targets_help.txt"
@@ -384,6 +442,7 @@ _build_daemon_from_source() {
   fi
 
   local targets=(
+    "l4_daemon"
     "artosyn_daemon"
     "ar8030_daemon"
     "artlinkd"
@@ -391,7 +450,6 @@ _build_daemon_from_source() {
     "bb_daemon"
     "daemon"
   )
-  local target_declared
   target_declared() {
     local target_name="$1"
     if [[ -z "${available_targets}" ]]; then
@@ -411,7 +469,7 @@ _build_daemon_from_source() {
       built="$(_find_daemon_binary_in_tree "${sdk_root}" || true)"
       if [[ -z "${built}" ]]; then
         built="$(find "${build_dir}" -type f \
-          \( -iname "artosyn_daemon" -o -iname "ar8030_daemon" -o -iname "artlinkd" -o -iname "bbd" -o -iname "bb_daemon" -o -iname "daemon" \) \
+          \( -iname "l4_daemon" -o -iname "artosyn_daemon" -o -iname "ar8030_daemon" -o -iname "artlinkd" -o -iname "bbd" -o -iname "bb_daemon" -o -iname "daemon" \) \
           | head -n 1 || true)"
       fi
       if [[ -n "${built}" ]]; then
@@ -428,7 +486,7 @@ _build_daemon_from_source() {
   built="$(_find_daemon_binary_in_tree "${sdk_root}" || true)"
   if [[ -z "${built}" ]]; then
     built="$(find "${build_dir}" -type f \
-      \( -iname "artosyn_daemon" -o -iname "ar8030_daemon" -o -iname "artlinkd" -o -iname "bbd" -o -iname "bb_daemon" -o -iname "daemon" \) \
+      \( -iname "l4_daemon" -o -iname "artosyn_daemon" -o -iname "ar8030_daemon" -o -iname "artlinkd" -o -iname "bbd" -o -iname "bb_daemon" -o -iname "daemon" \) \
       | head -n 1 || true)"
   fi
   if [[ -n "${built}" ]]; then
@@ -440,55 +498,16 @@ _build_daemon_from_source() {
 
 _build_tuntap_from_source() {
   local sdk_root="$1"
-  local host_drv_dir="${sdk_root}/host_drv"
-  if [[ ! -f "${host_drv_dir}/CMakeLists.txt" ]]; then
+  if ! _sdk_source_dir "${sdk_root}" >/dev/null; then
     return 1
   fi
   if ! command -v cmake >/dev/null 2>&1; then
     return 1
   fi
-  local build_dir="/tmp/openhd_artosyn_sdk_build_tuntap"
-  echo "[Artosyn] tuntap_bb missing, trying to build tuntap target from source." >&2
+  local build_dir="${ARTOSYN_WORK_ROOT}/sdk"
+  echo "[Artosyn] tunnel helper missing, trying to build it from source." >&2
 
-  local tuntap_src="${host_drv_dir}/dev_helper/tuntap_bb/test_bb_tun.cpp"
-  if [[ -f "${tuntap_src}" ]]; then
-    if grep -Eq '^[[:space:]]*typedef[[:space:]]+unsigned[[:space:]]+.*uint(8|16|32|64)_t;[[:space:]]*$' "${tuntap_src}"; then
-      echo "[Artosyn] Applying uint*_t typedef compatibility patch for tuntap_bb source." >&2
-      local tmp_src="${tuntap_src}.openhdtmp"
-      awk '
-        BEGIN { patched = 0 }
-        /^[[:space:]]*typedef[[:space:]]+unsigned[[:space:]]+.*uint(8|16|32|64)_t;[[:space:]]*$/ {
-          if (patched == 0) {
-            print "// openhd-patch: use <stdint.h> typedefs for cross-arch compatibility";
-            patched = 1;
-          }
-          next;
-        }
-        { print }
-      ' "${tuntap_src}" > "${tmp_src}" && mv "${tmp_src}" "${tuntap_src}"
-    fi
-  fi
-
-  rm -rf "${build_dir}" || return 1
-  _artlink_cmake_configure -S "${host_drv_dir}" -B "${build_dir}" \
-    -DAPP_STATIC_LIB=ON \
-    -DBUILD_TEST_APP=OFF \
-    -DBUILD_ARTOSYN_EXAMPLE=OFF \
-    -DBUILD_RAM_INIT=OFF \
-    -DBUILD_TUNTAP=ON \
-    -DBUILD_BW_UPDATE_DEMO=OFF \
-    -DBUILD_IMG_UPGRADE=OFF \
-    -DBUILD_XDATA_TEST=OFF \
-    -DBUILD_REPEATER_TEST=OFF \
-    -DBUILD_BB_TEST=OFF \
-    -DBUILD_WORK_MODE_CFG=OFF \
-    -DBUILD_NET_DEV_DEMO=OFF \
-    -DENABLE_PYTHON=OFF \
-    -DENABLE_JAVA=OFF \
-    -DUSING_8030USB=ON \
-    -DUSING_8030SDIO=OFF \
-    -DUSING_8030UART=OFF \
-    -DUSING_8030DRV=OFF >&2 || return 1
+  _configure_sdk_build_dir "${sdk_root}" "${build_dir}" || return 1
 
   local available_targets=""
   local targets_help_file="${build_dir}/.openhd_targets_help_tuntap.txt"
@@ -496,27 +515,20 @@ _build_tuntap_from_source() {
     available_targets="$(tr '[:upper:]' '[:lower:]' < "${targets_help_file}")"
   fi
 
-  local target_declared=0
-  if [[ -z "${available_targets}" ]]; then
-    target_declared=1
-  elif grep -Eq "(^|[[:space:]])tuntap_bb([[:space:]]|$)" <<<"${available_targets}"; then
-    target_declared=1
-  fi
-
-  if [[ "${target_declared}" -eq 1 ]]; then
-    if ! cmake --build "${build_dir}" --target tuntap_bb >&2; then
-      echo "[Artosyn] Explicit tuntap_bb target build failed, trying default build." >&2
-      cmake --build "${build_dir}" >&2 || true
+  local target
+  for target in l4_tuntap tuntap_bb; do
+    if [[ -z "${available_targets}" ]] ||
+       grep -Eq "(^|[[:space:]])${target}([[:space:]]|$)" <<<"${available_targets}"; then
+      cmake --build "${build_dir}" --target "${target}" >&2 || continue
+      break
     fi
-  else
-    echo "[Artosyn] Target tuntap_bb not listed, trying default build." >&2
-    cmake --build "${build_dir}" >&2 || true
-  fi
+  done
 
   local built
   built="$(_find_tuntap_binary_in_tree "${sdk_root}" || true)"
   if [[ -z "${built}" ]]; then
-    built="$(find "${build_dir}" -type f -name "tuntap_bb" | head -n 1 || true)"
+    built="$(find "${build_dir}" -type f \
+      \( -name "l4_tuntap" -o -name "tuntap_bb" \) | head -n 1 || true)"
   fi
   if [[ -n "${built}" ]]; then
     echo "${built}"
@@ -543,14 +555,13 @@ resolve_artosyn_sdk() {
   echo "[Artosyn] Git repo: ${ARTLINK_REPO}" >&2
 
   # Optional archive injection for CI/private builders.
-  # If set, extract archive into /tmp/openhd_artosyn_sdk and use it as root.
   local sdk_archive="${ARTOSYN_SDK_ARCHIVE:-}"
   if [[ -z "${sdk_root}" && -n "${sdk_archive}" ]]; then
     if [[ ! -f "${sdk_archive}" ]]; then
       echo "ARTOSYN_SDK_ARCHIVE points to missing file: ${sdk_archive}" >&2
       return 1
     fi
-    local extract_root="/tmp/openhd_artosyn_sdk"
+    local extract_root="${ARTOSYN_WORK_ROOT}/archive"
     rm -rf "${extract_root}"
     mkdir -p "${extract_root}"
     case "${sdk_archive}" in
@@ -567,7 +578,8 @@ resolve_artosyn_sdk() {
         ;;
     esac
     # Assume archive either contains SDK root directly or one top-level dir.
-    if [[ -d "${extract_root}/host_drv" ]]; then
+    if [[ -d "${extract_root}/host_drv" || \
+          ( -d "${extract_root}/app/ar8030" && -d "${extract_root}/daemon" ) ]]; then
       sdk_root="${extract_root}"
     else
       local first_dir
@@ -582,6 +594,7 @@ resolve_artosyn_sdk() {
   if [[ -z "${sdk_root}" ]]; then
     local candidates=(
       "${ARTLINK_SOURCE_DIR:-}"
+      "${ARTLINK_RESOLVER_DIR}/../../out/vendor/L4_Linux_SDK"
       "${ARTLINK_RESOLVER_DIR}/../../${ARTLINK_REPO_DIR}"
       "${OPENHD_KERNEL_BUILDER_DIR:-}/workdir/mods/${ARTLINK_REPO_DIR}"
       "${OPENHD_KERNEL_BUILDER_DIR:-}/workdir/mods/OpenHD-ArtLink"
@@ -647,6 +660,18 @@ resolve_artosyn_sdk() {
   if [[ -n "${sdk_root}" && -z "${sdk_lib}" &&
         "${force_source_build}" != "1" ]]; then
     local lib_candidates=(
+      "${sdk_root}/install/arm64/lib/libar8030_client.a"
+      "${sdk_root}/install/arm64/lib/libar8030_client.so"
+      "${sdk_root}/install/armhf/lib/libar8030_client.a"
+      "${sdk_root}/install/armhf/lib/libar8030_client.so"
+      "${sdk_root}/install/x86_64/lib/libar8030_client.a"
+      "${sdk_root}/install/x86_64/lib/libar8030_client.so"
+      "${sdk_root}/build/arm64/app/ar8030/libar8030_client.a"
+      "${sdk_root}/build/arm64/app/ar8030/libar8030_client.so"
+      "${sdk_root}/build/armhf/app/ar8030/libar8030_client.a"
+      "${sdk_root}/build/armhf/app/ar8030/libar8030_client.so"
+      "${sdk_root}/build/x86_64/app/ar8030/libar8030_client.a"
+      "${sdk_root}/build/x86_64/app/ar8030/libar8030_client.so"
       "${sdk_root}/host_drv/install/bin/libar8030_client.a"
       "${sdk_root}/host_drv/install/bin/libar8030_client.so"
       "${sdk_root}/host_drv/build/app/ar8030/libar8030_client.a"
@@ -670,7 +695,7 @@ resolve_artosyn_sdk() {
   if [[ -n "${sdk_root}" && -z "${sdk_lib}" &&
         "${force_source_build}" != "1" ]]; then
     # Fallback for SDK trees that keep prebuilt libs in non-standard host_drv paths.
-    sdk_lib="$(find "${sdk_root}/host_drv" -type f \( -name "libar8030_client.a" -o -name "libar8030_client.so" \) | head -n 1 || true)"
+    sdk_lib="$(find "${sdk_root}" -type f \( -name "libar8030_client.a" -o -name "libar8030_client.so" \) | head -n 1 || true)"
   fi
 
   if [[ -n "${sdk_root}" && -z "${sdk_lib}" ]]; then
@@ -703,6 +728,9 @@ resolve_artosyn_sdk() {
     build_root="$(dirname "$(dirname "${lib_dir}")")"
     local dep_candidates=(
       "${build_root}/com/libcom.a"
+      "${sdk_root}/build/arm64/com/libcom.a"
+      "${sdk_root}/build/armhf/com/libcom.a"
+      "${sdk_root}/build/x86_64/com/libcom.a"
       "${sdk_root}/host_drv/build/com/libcom.a"
       "${sdk_root}/host_drv/install/bin/libcom.a"
       "${sdk_root}/host_drv/com/libcom.a"

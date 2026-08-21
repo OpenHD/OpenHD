@@ -155,6 +155,7 @@ static constexpr auto AR_T_TX_BS = "AR_T_TX_BS";
 static constexpr auto AR_T_TX_DS = "AR_T_TX_DS";
 
 struct ArtosynLinkSettings {
+  static constexpr int BANDWIDTH_20_MHZ = 4;  // bb_bandwidth_e::BB_BW_20M
   std::string addr = "127.0.0.1";
   int port = 50000;
   int slot = 0;
@@ -169,15 +170,18 @@ struct ArtosynLinkSettings {
   int daemon_autostart = 0;
   std::string daemon_start_cmd;
   // Link control
-  int mcs_mode = 1;      // 1 auto, 0 manual
+  // A negative mode leaves the module's paired firmware configuration alone.
+  int mcs_mode = -1;     // 1 auto, 0 manual, -1 unchanged
   int mcs_value = -1;    // valid when manual
   int mcs_min = -1;      // optional limit for auto
   int mcs_max = -1;      // optional limit for auto
-  int bw_mode = 1;       // 1 auto, 0 manual
-  int bw_value = -1;     // bb_bandwidth_e when manual
-  int chan_mode = 1;     // 1 auto, 0 manual
+  // The video direction uses 20 MHz by default. ArtosynLink applies this to
+  // air TX and ground RX only, preserving the module's telemetry-return width.
+  int bw_mode = 0;       // 1 auto, 0 manual, -1 unchanged
+  int bw_value = BANDWIDTH_20_MHZ;
+  int chan_mode = -1;    // 1 auto, 0 manual, -1 unchanged
   int chan_index = -1;   // valid when manual
-  int power_auto = 1;    // 1 auto, 0 manual
+  int power_auto = -1;   // 1 auto, 0 manual, -1 unchanged
   int tx_power_dbm = -1; // valid when manual, 0-31
   int band_mode = -1;    // 1 auto, 0 manual
   int band_value = -1;   // bb_band_e when manual

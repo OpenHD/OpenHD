@@ -1,0 +1,4 @@
+*.sh text eol=lf
+*.service text eol=lf
+systemd/openhd-artosyn-start text eol=lf
+Buildroot/init.d/* text eol=lf

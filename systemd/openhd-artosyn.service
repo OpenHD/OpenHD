@@ -1,0 +1,16 @@
+[Unit]
+Description=OpenHD Artosyn baseband daemon
+After=systemd-udev-settle.service
+Before=openhd.service openhd-sys-utils.service
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/default/openhd-artosyn
+ExecStart=/usr/local/libexec/openhd-artosyn-start
+Restart=on-failure
+RestartSec=2
+StandardOutput=null
+StandardError=null
+
+[Install]
+WantedBy=multi-user.target

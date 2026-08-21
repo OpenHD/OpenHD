@@ -62,6 +62,10 @@ define OPENHD_INSTALL_TARGET_CMDS
         daemon_src="$(ARTOSYN_SDK_DAEMON)"; \
         if [ -n "$$daemon_src" ] && [ ! -f "$$daemon_src" ]; then daemon_src=""; fi; \
         for candidate in \
+            "$(ARTOSYN_SDK_ROOT)/install/arm64/bin/l4_daemon" \
+            "$(ARTOSYN_SDK_ROOT)/install/armhf/bin/l4_daemon" \
+            "$(ARTOSYN_SDK_ROOT)/build/arm64/daemon/l4_daemon" \
+            "$(ARTOSYN_SDK_ROOT)/build/armhf/daemon/l4_daemon" \
             "$(ARTOSYN_SDK_ROOT)/host_drv/app/ar8030/artosyn_daemon" \
             "$(ARTOSYN_SDK_ROOT)/host_drv/app/ar8030/ar8030_daemon" \
             "$(ARTOSYN_SDK_ROOT)/host_drv/app/ar8030/artlinkd" \
@@ -84,7 +88,7 @@ define OPENHD_INSTALL_TARGET_CMDS
         done; \
         if [ -z "$$daemon_src" ]; then \
             daemon_src="$$(find "$(ARTOSYN_SDK_ROOT)/host_drv" -type f \
-                \( -iname "artosyn_daemon" -o -iname "ar8030_daemon" -o -iname "artlinkd" -o -iname "bbd" -o -iname "bb_daemon" -o -iname "daemon" \) \
+                \( -iname "l4_daemon" -o -iname "artosyn_daemon" -o -iname "ar8030_daemon" -o -iname "artlinkd" -o -iname "bbd" -o -iname "bb_daemon" -o -iname "daemon" \) \
                 | head -n 1)"; \
         fi; \
         if [ -n "$$daemon_src" ]; then \
@@ -98,13 +102,17 @@ define OPENHD_INSTALL_TARGET_CMDS
         tuntap_src=""; \
         for candidate in \
             "$(ARTOSYN_SDK_TUNTAP)" \
+            "$(ARTOSYN_SDK_ROOT)/install/arm64/bin/l4_tuntap" \
+            "$(ARTOSYN_SDK_ROOT)/install/armhf/bin/l4_tuntap" \
+            "$(ARTOSYN_SDK_ROOT)/build/arm64/app/tuntap/l4_tuntap" \
+            "$(ARTOSYN_SDK_ROOT)/build/armhf/app/tuntap/l4_tuntap" \
             "$(ARTOSYN_SDK_ROOT)/host_drv/install/dev_helper/tuntap_bb" \
             "$(ARTOSYN_SDK_ROOT)/host_drv/dev_helper/tuntap_bb" \
             "$(ARTOSYN_SDK_ROOT)/host_drv/build/dev_helper/tuntap_bb"; do \
             if [ -z "$$tuntap_src" ] && [ -n "$$candidate" ] && [ -f "$$candidate" ]; then tuntap_src="$$candidate"; break; fi; \
         done; \
         if [ -z "$$tuntap_src" ]; then \
-            tuntap_src="$$(find "$(ARTOSYN_SDK_ROOT)/host_drv" -type f -name "tuntap_bb" | head -n 1)"; \
+            tuntap_src="$$(find "$(ARTOSYN_SDK_ROOT)" -type f \( -name "l4_tuntap" -o -name "tuntap_bb" \) | head -n 1)"; \
         fi; \
         if [ -n "$$tuntap_src" ]; then \
             cp "$$tuntap_src" "$(TARGET_DIR)/usr/bin/tuntap_bb"; \

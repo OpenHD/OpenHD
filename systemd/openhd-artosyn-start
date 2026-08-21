@@ -1,0 +1,34 @@
+#!/bin/sh
+set -eu
+
+daemon=""
+for candidate in \
+  /usr/local/bin/artosyn_daemon \
+  /usr/bin/artosyn_daemon \
+  /usr/local/bin/ar8030_daemon \
+  /usr/bin/ar8030_daemon \
+  /usr/local/bin/l4_daemon \
+  /usr/bin/l4_daemon \
+  /usr/local/bin/artlinkd \
+  /usr/bin/artlinkd \
+  /usr/local/bin/bbd \
+  /usr/bin/bbd \
+  /usr/local/bin/bb_daemon \
+  /usr/bin/bb_daemon; do
+  if [ -x "$candidate" ]; then
+    daemon="$candidate"
+    break
+  fi
+done
+
+if [ -z "$daemon" ]; then
+  echo "No Artosyn daemon binary is installed" >&2
+  exit 1
+fi
+
+# USB is used by the X21 and Raspberry Pi units. An image can select another
+# SDK transport without modifying this script via /etc/default/openhd-artosyn.
+ARTOSYN_INTERFACE="${ARTOSYN_INTERFACE:-0}"
+ARTOSYN_PORT="${ARTOSYN_PORT:-50000}"
+
+exec "$daemon" -i "$ARTOSYN_INTERFACE" -p "$ARTOSYN_PORT"

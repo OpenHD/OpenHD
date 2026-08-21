@@ -494,7 +494,18 @@ build_package() {
   build_and_stage_gst_perf
 
   if [[ "${artosyn_enabled}" -eq 1 ]]; then
+    mkdir -p "${PKGDIR}usr/local/libexec"
+    cp systemd/openhd-artosyn-start \
+      "${PKGDIR}usr/local/libexec/openhd-artosyn-start"
+    chmod 0755 "${PKGDIR}usr/local/libexec/openhd-artosyn-start"
+    cp systemd/openhd-artosyn.service \
+      "${PKGDIR}etc/systemd/system/openhd-artosyn.service"
+
     local daemon_candidates=(
+      "${ARTOSYN_SDK_ROOT}/install/arm64/bin/l4_daemon"
+      "${ARTOSYN_SDK_ROOT}/install/armhf/bin/l4_daemon"
+      "${ARTOSYN_SDK_ROOT}/build/arm64/daemon/l4_daemon"
+      "${ARTOSYN_SDK_ROOT}/build/armhf/daemon/l4_daemon"
       "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/artosyn_daemon"
       "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/ar8030_daemon"
       "${ARTOSYN_SDK_ROOT}/host_drv/app/ar8030/artlinkd"
@@ -526,7 +537,7 @@ build_package() {
     done
     if [[ -z "${daemon_src}" && -d "${ARTOSYN_SDK_ROOT}/host_drv" ]]; then
       daemon_src="$(find "${ARTOSYN_SDK_ROOT}/host_drv" -type f \
-        \( -iname "artosyn_daemon" -o -iname "ar8030_daemon" -o -iname "artlinkd" -o -iname "bbd" -o -iname "bb_daemon" -o -iname "daemon" \) \
+        \( -iname "l4_daemon" -o -iname "artosyn_daemon" -o -iname "ar8030_daemon" -o -iname "artlinkd" -o -iname "bbd" -o -iname "bb_daemon" -o -iname "daemon" \) \
         | head -n 1 || true)"
     fi
     if [[ -n "${daemon_src}" ]]; then
@@ -547,6 +558,10 @@ build_package() {
 
     local tuntap_candidates=(
       "${ARTOSYN_SDK_TUNTAP:-}"
+      "${ARTOSYN_SDK_ROOT}/install/arm64/bin/l4_tuntap"
+      "${ARTOSYN_SDK_ROOT}/install/armhf/bin/l4_tuntap"
+      "${ARTOSYN_SDK_ROOT}/build/arm64/app/tuntap/l4_tuntap"
+      "${ARTOSYN_SDK_ROOT}/build/armhf/app/tuntap/l4_tuntap"
       "${ARTOSYN_SDK_ROOT}/host_drv/install/dev_helper/tuntap_bb"
       "${ARTOSYN_SDK_ROOT}/host_drv/dev_helper/tuntap_bb"
       "${ARTOSYN_SDK_ROOT}/host_drv/build/dev_helper/tuntap_bb"
@@ -559,7 +574,8 @@ build_package() {
       fi
     done
     if [[ -z "${tuntap_src}" && -d "${ARTOSYN_SDK_ROOT}/host_drv" ]]; then
-      tuntap_src="$(find "${ARTOSYN_SDK_ROOT}/host_drv" -type f -name "tuntap_bb" | head -n 1 || true)"
+      tuntap_src="$(find "${ARTOSYN_SDK_ROOT}" -type f \
+        \( -name "l4_tuntap" -o -name "tuntap_bb" \) | head -n 1 || true)"
     fi
     if [[ -n "${tuntap_src}" ]]; then
       cp "${tuntap_src}" "${PKGDIR}usr/local/bin/tuntap_bb"

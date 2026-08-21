@@ -435,3 +435,5 @@ FodyWeavers.xsd
 # End of https://www.toptal.com/developers/gitignore/api/visualstudio,visualstudiocode
 /QOpenHD
 OpenHD/ohd_interface/video_crypto_private.bak/
+/build
+/out

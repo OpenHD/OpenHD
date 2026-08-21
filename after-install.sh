@@ -25,6 +25,10 @@
 
 systemctl enable openhd.service
 
+if [[ -f /etc/systemd/system/openhd-artosyn.service ]]; then
+    systemctl enable openhd-artosyn.service
+fi
+
 if command -v ldconfig >/dev/null 2>&1; then
     ldconfig || true
 fi

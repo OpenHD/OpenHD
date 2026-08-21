@@ -1,0 +1,67 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          artosyn
+# Required-Start:    $network
+# Required-Stop:     $network
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Starts the OpenHD Artosyn baseband daemon
+### END INIT INFO
+
+PID_FILE=/var/run/openhd-artosyn.pid
+ARTOSYN_INTERFACE=${ARTOSYN_INTERFACE:-0}
+ARTOSYN_PORT=${ARTOSYN_PORT:-50000}
+
+find_daemon() {
+    for candidate in \
+        /usr/bin/l4_daemon \
+        /usr/local/bin/l4_daemon \
+        /usr/bin/artosyn_daemon \
+        /usr/local/bin/artosyn_daemon \
+        /usr/bin/ar8030_daemon \
+        /usr/local/bin/ar8030_daemon; do
+        if [ -x "$candidate" ]; then
+            echo "$candidate"
+            return 0
+        fi
+    done
+    return 1
+}
+
+start_artosyn() {
+    if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
+        return 0
+    fi
+    daemon=$(find_daemon) || {
+        echo "Artosyn daemon is not installed" >&2
+        return 1
+    }
+    "$daemon" -i "$ARTOSYN_INTERFACE" -p "$ARTOSYN_PORT" \
+        >/dev/null 2>&1 &
+    echo $! >"$PID_FILE"
+}
+
+stop_artosyn() {
+    if [ ! -f "$PID_FILE" ]; then
+        return 0
+    fi
+    pid=$(cat "$PID_FILE")
+    kill "$pid" 2>/dev/null || true
+    rm -f "$PID_FILE"
+}
+
+case "${1:-}" in
+    start) start_artosyn ;;
+    stop) stop_artosyn ;;
+    restart)
+        stop_artosyn
+        start_artosyn
+        ;;
+    status)
+        test -f "$PID_FILE" && kill -0 "$(cat "$PID_FILE")" 2>/dev/null
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart|status}" >&2
+        exit 1
+        ;;
+esac

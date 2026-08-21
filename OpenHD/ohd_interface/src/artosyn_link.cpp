@@ -248,14 +248,6 @@ static bool allow_artosyn_legacy_recovery() {
   return force_artosyn_bb_init_start() || (env && std::string(env) == "1");
 }
 
-static bool apply_artosyn_link_settings_on_init() {
-  const char* env = std::getenv("OHD_ARTOSYN_APPLY_SETTINGS");
-  if (!env) {
-    return false;
-  }
-  return std::string(env) == "1";
-}
-
 static bool expose_artosyn_diagnostic_settings() {
   const char* env = std::getenv("OHD_ARTOSYN_DIAG_PARAMS");
   if (!env) {
@@ -502,16 +494,9 @@ bool ArtosynLink::init_device() {
         "Artosyn init step: skip bb_init/bb_start (daemon-managed SDK flow). "
         "Set OHD_ARTOSYN_FORCE_BB_INIT=1 to force legacy behavior.");
   }
-  if (apply_artosyn_link_settings_on_init()) {
-    m_console->info("Artosyn init step: apply_link_settings");
-    apply_link_settings();
-    m_console->info("Artosyn init step ok: apply_link_settings");
-  } else {
-    m_console->info(
-        "Artosyn init step: skip apply_link_settings on init "
-        "(daemon-managed safe mode). Set OHD_ARTOSYN_APPLY_SETTINGS=1 "
-        "to enable init-time BB_SET_* ioctls.");
-  }
+  m_console->info("Artosyn init step: apply_link_settings");
+  apply_link_settings();
+  m_console->info("Artosyn init step ok: apply_link_settings");
 
   m_running = true;
   update_link_stats();
@@ -1171,10 +1156,10 @@ void ArtosynLink::update_video_bitrate_recommendation(int capacity_kbits,
 
   // Keep generous headroom in the baseband queue. Running near the reported
   // MCS ceiling produces seconds of latency even though writes still succeed.
-  static constexpr int kUtilizationPercent = 55;
+  static constexpr int kUtilizationPercent = 80;
   static constexpr int kProtocolAndTelemetryReserveKbits = 500;
   static constexpr int kMinEncoderBitrateKbits = 1000;
-  static constexpr int kMaxEncoderBitrateKbits = 8000;
+  static constexpr int kMaxEncoderBitrateKbits = 80000;
   static constexpr int kIncreasePerSecondKbits = 500;
   static constexpr int kChangeHysteresisKbits = 250;
   static constexpr int64_t kRefreshIntervalMs = 2000;
@@ -1642,10 +1627,12 @@ void ArtosynLink::apply_link_settings() {
   };
   m_console->info("Artosyn apply settings begin");
 
-  bb_set_mcs_mode_t mcs_mode{};
-  mcs_mode.slot = static_cast<uint8_t>(m_cfg.slot);
-  mcs_mode.auto_mode = (s.mcs_mode != 0);
-  (void)timed_ioctl_set(BB_SET_MCS_MODE, &mcs_mode, "BB_SET_MCS_MODE");
+  if (s.mcs_mode >= 0) {
+    bb_set_mcs_mode_t mcs_mode{};
+    mcs_mode.slot = static_cast<uint8_t>(m_cfg.slot);
+    mcs_mode.auto_mode = (s.mcs_mode != 0);
+    (void)timed_ioctl_set(BB_SET_MCS_MODE, &mcs_mode, "BB_SET_MCS_MODE");
+  }
 
   if (s.mcs_mode == 0 && s.mcs_value >= 0) {
     bb_set_mcs_t mcs{};
@@ -1679,27 +1666,33 @@ void ArtosynLink::apply_link_settings() {
     }
   }
 
-  bb_set_bandwidth_mode_t bw_mode{};
-  bw_mode.slot = static_cast<uint8_t>(m_cfg.slot);
-  bw_mode.mode = (s.bw_mode != 0);
-  (void)timed_ioctl_set(BB_SET_BANDWIDTH_MODE, &bw_mode,
-                        "BB_SET_BANDWIDTH_MODE");
+  if (s.bw_mode >= 0) {
+    bb_set_bandwidth_mode_t bw_mode{};
+    bw_mode.slot = static_cast<uint8_t>(m_cfg.slot);
+    bw_mode.mode = (s.bw_mode != 0);
+    (void)timed_ioctl_set(BB_SET_BANDWIDTH_MODE, &bw_mode,
+                          "BB_SET_BANDWIDTH_MODE");
+  }
 
   if (s.bw_mode == 0 && s.bw_value >= 0) {
     bb_set_bandwidth_t bw{};
     bw.slot = static_cast<uint8_t>(m_cfg.slot);
     bw.bandwidth = static_cast<uint8_t>(s.bw_value);
-    bw.dir = BB_DIR_TX;
-    (void)timed_ioctl_set(BB_SET_BANDWIDTH, &bw, "BB_SET_BANDWIDTH_TX");
-    bw.dir = BB_DIR_RX;
-    (void)timed_ioctl_set(BB_SET_BANDWIDTH, &bw, "BB_SET_BANDWIDTH_RX");
+    // Only change the high-rate video direction. The reverse direction may
+    // intentionally use a narrower channel for telemetry and parameters.
+    bw.dir = m_profile.is_air ? BB_DIR_TX : BB_DIR_RX;
+    (void)timed_ioctl_set(BB_SET_BANDWIDTH, &bw,
+                          m_profile.is_air ? "BB_SET_BANDWIDTH_TX"
+                                           : "BB_SET_BANDWIDTH_RX");
   }
 
-  bb_set_chan_mode_t chan_mode{};
-  chan_mode.auto_mode = (s.chan_mode != 0);
-  if (timed_ioctl_set(BB_SET_CHAN_MODE, &chan_mode, "BB_SET_CHAN_MODE") ==
-      0) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(250));
+  if (s.chan_mode >= 0) {
+    bb_set_chan_mode_t chan_mode{};
+    chan_mode.auto_mode = (s.chan_mode != 0);
+    if (timed_ioctl_set(BB_SET_CHAN_MODE, &chan_mode, "BB_SET_CHAN_MODE") ==
+        0) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(250));
+    }
   }
 
   if (s.chan_mode == 0 && s.chan_index >= 0) {
@@ -1709,9 +1702,11 @@ void ArtosynLink::apply_link_settings() {
     (void)timed_ioctl_set(BB_SET_CHAN, &chan, "BB_SET_CHAN");
   }
 
-  bb_set_pwr_auto_in_t pwr_auto{};
-  pwr_auto.pwr_auto = (s.power_auto != 0);
-  (void)timed_ioctl_set(BB_SET_POWER_AUTO, &pwr_auto, "BB_SET_POWER_AUTO");
+  if (s.power_auto >= 0) {
+    bb_set_pwr_auto_in_t pwr_auto{};
+    pwr_auto.pwr_auto = (s.power_auto != 0);
+    (void)timed_ioctl_set(BB_SET_POWER_AUTO, &pwr_auto, "BB_SET_POWER_AUTO");
+  }
 
   if (s.power_auto == 0 && s.tx_power_dbm >= 0) {
     bb_set_pwr_in_t pwr{};

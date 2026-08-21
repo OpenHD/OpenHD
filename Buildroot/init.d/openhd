@@ -1,8 +1,8 @@
 #!/bin/bash
 ### BEGIN INIT INFO
 # Provides:          openhd
-# Required-Start:    $network $remote_fs $syslog
-# Required-Stop:     $network $remote_fs $syslog
+# Required-Start:    $network $remote_fs $syslog artosyn
+# Required-Stop:     $network $remote_fs $syslog artosyn
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
 # Short-Description: Starts OpenHD
@@ -24,6 +24,10 @@ start_openhd() {
 
     stop_openhd  # Ensure no previous instance is running
 
+    if [[ -x /etc/init.d/artosyn ]]; then
+        /etc/init.d/artosyn start
+    fi
+
     # Run OpenHD in the background
     nohup $COMMAND >> "$LOG_FILE" 2>&1 &
     echo $! > "$PID_FILE"
@@ -44,6 +48,10 @@ stop_openhd() {
         rm -f "$PID_FILE"
     else
         echo "OpenHD is not running." | tee -a "$LOG_FILE"
+    fi
+
+    if [[ -x /etc/init.d/artosyn ]]; then
+        /etc/init.d/artosyn stop
     fi
 }
 
