@@ -201,6 +201,20 @@ class CameraHolder :
         settings.ip_camera_address.c_str()};
     openhd::PluginManager::instance().notify_video_settings_changed(event);
   }
+  void notify_plugin_video_bitrate_changed(int bitrate_kbits) const {
+    const auto& settings = get_settings();
+    const auto& format = settings.streamed_video_format;
+    const openhd_plugin_video_bitrate_event event{
+        sizeof(openhd_plugin_video_bitrate_event),
+        static_cast<uint32_t>(m_camera.index),
+        m_camera.camera_type,
+        bitrate_kbits,
+        static_cast<int32_t>(format.videoCodec),
+        static_cast<uint16_t>(format.width),
+        static_cast<uint16_t>(format.height),
+        settings.ip_camera_address.c_str()};
+    openhd::PluginManager::instance().notify_video_bitrate_changed(event);
+  }
   [[nodiscard]] int get_max_video_bitrate_kbits() const {
     return m_camera.get_max_video_bitrate_kbits(
         OHDPlatform::instance().platform_type);

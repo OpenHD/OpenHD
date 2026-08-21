@@ -1230,8 +1230,13 @@ bool GStreamerStream::setup() {
       m_gst_pipeline, *m_camera_holder);
   m_qp_ctrl_element = get_dynamic_qp_control_element_in_pipeline(
       m_gst_pipeline, *m_camera_holder);
+  const bool plugin_managed_ip_camera =
+      m_camera_holder->get_camera().camera_type == X_CAM_TYPE_EXTERNAL_IP &&
+      (openhd::PluginManager::instance().is_plugin_loaded("topotek") ||
+       openhd::PluginManager::instance().is_plugin_loaded("siyi"));
   openhd::LinkActionHandler::instance().set_cam_info_supports_variable_bitrate(
-      m_camera_holder->get_camera().index, m_bitrate_ctrl_element.has_value());
+      m_camera_holder->get_camera().index,
+      m_bitrate_ctrl_element.has_value() || plugin_managed_ip_camera);
   if (!setup_perf_element()) {
     cleanup_pipe();
     return false;
@@ -1402,7 +1407,13 @@ void GStreamerStream::handle_change_bitrate_request(
   // The gst thread is responsible for changing the bitrate - it will be applied
   // (as long as the cam is not bugged or the OS is overloaded) after a max
   // delay of 40ms
+  const int previous_dynamic_bitrate_kbits = m_curr_dynamic_bitrate_kbits.load();
   m_curr_dynamic_bitrate_kbits = bitrate_for_encoder_kbits;
+  if (camera.camera_type == X_CAM_TYPE_EXTERNAL_IP &&
+      previous_dynamic_bitrate_kbits != bitrate_for_encoder_kbits) {
+    m_camera_holder->notify_plugin_video_bitrate_changed(
+        bitrate_for_encoder_kbits);
+  }
   if (!lb.is_link_capacity_limit &&
       m_camera_holder->get_settings().h26x_bitrate_kbits !=
           bitrate_for_encoder_kbits) {

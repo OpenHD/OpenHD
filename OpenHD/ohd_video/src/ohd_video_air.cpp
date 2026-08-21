@@ -307,7 +307,10 @@ void OHDVideoAir::handle_change_bitrate_request(
     const bool secondary_is_ip =
         m_camera_streams[1]->m_camera_holder->get_camera().camera_type ==
         X_CAM_TYPE_EXTERNAL_IP;
-    if (primary_is_ip || secondary_is_ip) {
+    const bool plugin_managed_ip_camera =
+        openhd::PluginManager::instance().is_plugin_loaded("topotek") ||
+        openhd::PluginManager::instance().is_plugin_loaded("siyi");
+    if ((primary_is_ip || secondary_is_ip) && !plugin_managed_ip_camera) {
       const int fixed_ip_kbits =
           m_generic_settings->get_settings().ip_camera_bitrate_mbits * 1000;
       const int managed_camera_kbits =

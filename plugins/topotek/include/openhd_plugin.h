@@ -1,6 +1,6 @@
 /******************************************************************************
  * Minimal, versioned C ABI shared by OpenHD and independently-built plugins.
- * Keep this header C-compatible: plugins must not depend on OpenHD C++ types.
+ * This copy lets the plugin be packaged independently from the OpenHD source.
  ******************************************************************************/
 
 #ifndef OPENHD_PLUGIN_H
@@ -54,8 +54,6 @@ struct openhd_plugin_video_bitrate_event {
   const char* ip_address;
 };
 
-/* Complete camera stream configuration. Added as an ABI-v1 extension; use
- * struct_size before accessing fields so older hosts/plugins remain valid. */
 struct openhd_plugin_video_settings_event {
   uint32_t struct_size;
   uint32_t camera_index;
@@ -68,27 +66,22 @@ struct openhd_plugin_video_settings_event {
   const char* ip_address;
 };
 
-/* Generic camera/gimbal controls. These are intentionally expressed without
- * MAVLink types so independently-built plugins do not depend on OpenHD's
- * generated MAVLink headers. Values use the units documented per action. */
 enum openhd_plugin_camera_control_action {
-  OPENHD_PLUGIN_GIMBAL_RATE = 0,       /* value1=pitch, value2=yaw; -1..1 */
-  OPENHD_PLUGIN_GIMBAL_ANGLE = 1,      /* value1=pitch, value2=yaw; degrees */
+  OPENHD_PLUGIN_GIMBAL_RATE = 0,
+  OPENHD_PLUGIN_GIMBAL_ANGLE = 1,
   OPENHD_PLUGIN_GIMBAL_CENTER = 2,
   OPENHD_PLUGIN_GIMBAL_MODE = 3,
-  /* value1: enum openhd_plugin_gimbal_mode */
-  OPENHD_PLUGIN_CAMERA_ZOOM_RATE = 4,  /* value1: -1, 0, or 1 */
-  OPENHD_PLUGIN_CAMERA_ZOOM_ABSOLUTE = 5, /* value1: zoom multiple */
-  OPENHD_PLUGIN_CAMERA_FOCUS_RATE = 6, /* value1: -1, 0, or 1 */
+  OPENHD_PLUGIN_CAMERA_ZOOM_RATE = 4,
+  OPENHD_PLUGIN_CAMERA_ZOOM_ABSOLUTE = 5,
+  OPENHD_PLUGIN_CAMERA_FOCUS_RATE = 6,
   OPENHD_PLUGIN_CAMERA_AUTO_FOCUS = 7,
   OPENHD_PLUGIN_CAMERA_TAKE_PHOTO = 8,
   OPENHD_PLUGIN_CAMERA_RECORD_START = 9,
   OPENHD_PLUGIN_CAMERA_RECORD_STOP = 10,
-  OPENHD_PLUGIN_CAMERA_IMAGE_TYPE = 11, /* value1: vendor image type */
+  OPENHD_PLUGIN_CAMERA_IMAGE_TYPE = 11,
   OPENHD_PLUGIN_CAMERA_THERMAL_PALETTE = 12,
-  /* value1: vendor palette */
-  OPENHD_PLUGIN_CAMERA_ZOOM_PERCENT = 13, /* value1: 0..100 */
-  OPENHD_PLUGIN_GIMBAL_ROLL_RATE = 14, /* value1: -1..1 */
+  OPENHD_PLUGIN_CAMERA_ZOOM_PERCENT = 13,
+  OPENHD_PLUGIN_GIMBAL_ROLL_RATE = 14,
   OPENHD_PLUGIN_GIMBAL_CALIBRATE = 15,
 };
 
@@ -124,8 +117,6 @@ struct openhd_plugin_descriptor {
       const struct openhd_plugin_video_bitrate_event* event);
   void (*on_video_settings_changed)(
       const struct openhd_plugin_video_settings_event* event);
-  /* Return 0 when accepted, a positive value when unsupported, and a negative
-   * value when the command could not be sent. Added as an ABI-v1 extension. */
   int32_t (*on_camera_control)(
       const struct openhd_plugin_camera_control_event* event);
 };

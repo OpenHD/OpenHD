@@ -40,6 +40,14 @@ namespace {
 constexpr float kHalfPi = 1.57079632679489661923F;
 constexpr float kRadiansToDegrees = 57.295779513082320876F;
 
+// MAV_CMD_USER_1 subcommands used between QOpenHD and the OpenHD air unit.
+// Standard MAVLink camera commands remain in use wherever one exists.
+constexpr int kCameraPluginImageType = 1;
+constexpr int kCameraPluginThermalPalette = 2;
+constexpr int kCameraPluginGimbalMode = 3;
+constexpr int kCameraPluginRollRate = 4;
+constexpr int kCameraPluginCalibrate = 5;
+
 bool is_camera_component(uint8_t component) {
   return component >= MAV_COMP_ID_CAMERA && component <= MAV_COMP_ID_CAMERA6;
 }
@@ -390,6 +398,29 @@ std::vector<MavlinkMessage> AirTelemetry::process_plugin_camera_controls(
         accepted = send_control(camera_index,
                                 OPENHD_PLUGIN_CAMERA_RECORD_STOP);
         break;
+      case MAV_CMD_USER_1: {
+        const int subcommand = static_cast<int>(command.param1);
+        if (subcommand == kCameraPluginImageType) {
+          accepted = send_control(camera_index,
+                                  OPENHD_PLUGIN_CAMERA_IMAGE_TYPE,
+                                  command.param2);
+        } else if (subcommand == kCameraPluginThermalPalette) {
+          accepted = send_control(camera_index,
+                                  OPENHD_PLUGIN_CAMERA_THERMAL_PALETTE,
+                                  command.param2);
+        } else if (subcommand == kCameraPluginGimbalMode) {
+          accepted = send_control(camera_index, OPENHD_PLUGIN_GIMBAL_MODE,
+                                  command.param2);
+        } else if (subcommand == kCameraPluginRollRate) {
+          accepted = send_control(
+              camera_index, OPENHD_PLUGIN_GIMBAL_ROLL_RATE,
+              std::clamp(command.param2, -1.0F, 1.0F));
+        } else if (subcommand == kCameraPluginCalibrate) {
+          accepted = send_control(camera_index,
+                                  OPENHD_PLUGIN_GIMBAL_CALIBRATE);
+        }
+        break;
+      }
       default:
         recognized = false;
         break;
@@ -694,6 +725,15 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
   ret.push_back(openhd::create_read_only_int(
       "SIYI_ACTIVE",
       openhd::PluginManager::instance().is_plugin_loaded("siyi") ? 1 : 0));
+  ret.push_back(openhd::create_read_only_int(
+      "TOPOTEK_ACTIVE",
+      openhd::PluginManager::instance().is_plugin_loaded("topotek") ? 1 : 0));
+  ret.push_back(openhd::create_read_only_int(
+      "CAM_CTRL_ACTIVE",
+      (openhd::PluginManager::instance().is_plugin_loaded("siyi") ||
+       openhd::PluginManager::instance().is_plugin_loaded("topotek"))
+          ? 1
+          : 0));
   // and this allows an advanced user to change its air unit to a ground unit
   // only expose this setting if OpenHD uses the file workaround to figure out
   // air or ground.
