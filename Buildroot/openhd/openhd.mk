@@ -27,8 +27,8 @@ OPENHD_SITE = https://github.com/openhd/OpenHD.git
 OPENHD_SITE_METHOD = git
 OPENHD_GIT_SUBMODULES = YES
 
-# Set the version to the latest commit of the default branch
-OPENHD_VERSION = 428a3733d17d1cb51366d4023cfa3625fb4da00a
+# Pin the clean Artosyn image integration for reproducible Buildroot images.
+OPENHD_VERSION = 1b9526d8b4f19b9e73202e9955431ed23e12b77f
 
 # Enable Git submodules if the project requires them
 OPENHD_GIT_SUBMODULES = YES
