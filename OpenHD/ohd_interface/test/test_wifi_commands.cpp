@@ -106,9 +106,9 @@ int main(int argc, char* argv[]) {
   if (card.type == WiFiCardType::OPENHD_RTL_88X2AU) {
     // TODO
   } else {
-    const auto tx_power_mbm = openhd::milli_watt_to_mBm(2000, 1.0f);
-    wifi::commandhelper::openhd_driver_set_tx_power(card.device_name,
-                                                    tx_power_mbm);
+    const auto tx_power_mbm = openhd::milli_watt_to_mBm(2000, 1.0f, 1.0f);
+    wifi::commandhelper::openhd_driver_set_tx_power(
+        card.type, card.device_name, tx_power_mbm);
   }
   std::this_thread::sleep_for(std::chrono::seconds(1));
 

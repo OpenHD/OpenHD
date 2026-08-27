@@ -41,6 +41,9 @@ namespace wifi::commandhelper {
 
 // needed for enabling monitor mode
 bool ip_link_set_card_state(const std::string& device, bool up);
+// Restore a persistent interface name after a USB adapter re-enumerated with a
+// different temporary name.
+bool ip_link_rename(const std::string& old_name, const std::string& new_name);
 // unblock all cards, also needed for enabling monitor mode
 bool rfkill_unblock_all();
 

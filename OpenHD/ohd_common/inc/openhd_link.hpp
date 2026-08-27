@@ -37,9 +37,9 @@
  * ground unit and vice versa. Since we do not have a dependency between
  * ohd_interface and other modules, we loosely define a interface here (for
  * sending data and registering a callback for receiving data) It hides away the
- * underlying implementation (e.g. wifibroadcast aka wifi cards in monitor mode
- * or lte or ... ) However, r.n the only existing implementation is
- * wifibroadcast. What a openhd link MUST support to integrate is well defined:
+ * underlying implementation (e.g. wifibroadcast, UDP over Ethernet/LTE, or a
+ * fan-out facade combining several transports). What an OpenHD link MUST
+ * support to integrate is well defined:
  * 1) Send telemetry data from air to ground and vice versa
  *  => 1 bidirectional (aka air to ground and ground to air) but (recommended)
  * lossy (since mavlink deals with packet loss / retransmissions /) link 2) Send
@@ -48,8 +48,8 @@
  *  => 2x unidirectional (recommended lossy, but FEC protected) links for
  * primary and secondary video from air to ground
  *
- *  In general, there should be exactly one instance of ohd_link on the air unit
- * and one on the ground unit.
+ * Video and telemetry producers use one stable OHDLink handle. That handle may
+ * route every packet to multiple independent physical transports.
  */
 class OHDLink {
  public:

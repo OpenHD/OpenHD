@@ -40,7 +40,9 @@ set(sources
     src/wifi_client.cpp
     src/microhard_link.cpp
     src/ethernet_link.cpp
+    src/lte_link.cpp
     src/ethernet_manager.cpp
+    src/multi_link.cpp
 )
 
 if (NOT ARTOSYN_SDK_ROOT AND DEFINED ENV{ARTOSYN_SDK_ROOT})
@@ -332,3 +334,6 @@ target_link_libraries(test_wifi_commands OHDInterfaceLib)
 
 add_executable(test_wifi_set_channel test/test_wifi_set_channel.cpp)
 target_link_libraries(test_wifi_set_channel OHDInterfaceLib)
+
+add_executable(test_multi_link test/test_multi_link.cpp)
+target_link_libraries(test_multi_link OHDInterfaceLib)

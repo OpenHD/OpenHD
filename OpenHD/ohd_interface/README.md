@@ -4,8 +4,35 @@ This submodule is responsible for starting and configuring all the OpenHD
 interfaces - aka all OpenHD links like wifibroadcast (communication between air and ground),
 ground hotspot, ...
 
-When no wifibroadcast, Artosyn, or Microhard link is detected, OpenHD
-automatically falls back to an IP/Ethernet link. Air listens for discovery
+OpenHD routes traffic through a `MultiLink` facade. On standard Wi-Fi setups,
+wifibroadcast and IP/Ethernet are active simultaneously: each encoded RTP
+packet and telemetry packet is submitted to both transports. The ground facade
+forwards the first received RTP packet and suppresses copies arriving through
+the other transport. A transport can therefore disappear without changing the
+camera or encoder pipeline.
+
+Each transport has its own worker and bounded queues. Encoded buffers remain
+shared (there is no video payload copy), and a blocked transport can only fill
+its own queue. Video is capped at two pending frames per camera stream, so a
+failed or slow route drops stale frames locally instead of adding continuously
+growing latency or blocking the encoder and healthy routes. Telemetry queues
+retain RC packets preferentially under congestion.
+
+When any active WFB card disappears or injection reports `ENXIO`, WFB is
+quarantined without replacing the `WBLink` object. A background supervisor
+matches the replugged adapter by MAC address, restores its original interface
+name and monitor mode, and retries every two seconds. The existing `WBTxRx` instance
+then reopens its pcap/raw-socket handles in place, reapplies channel and power
+settings, and rejoins `MultiLink`. Camera, encoder, telemetry, settings
+callbacks, Ethernet, and other transports stay alive throughout recovery.
+
+Telemetry follows the same rule in both directions. Wifibroadcast may still
+honor its per-packet `n_injections` reliability hint, while Ethernet sends one
+UDP datagram for the same logical packet. Duplicate packets received through
+different links are removed before MAVLink parsing.
+
+When no wifibroadcast, Artosyn, or Microhard link is detected, the same
+IP/Ethernet transport remains available by itself. Air listens for discovery
 requests on UDP port `49891`. Ground probes every active local IPv4 network
 using both directed broadcasts and bounded unicast subnet scans; the air
 response supplies its IP address and the video and telemetry UDP ports. Both
@@ -23,7 +50,7 @@ ground uses `192.168.8.2`. These addresses are applied at runtime and allow a
 plain Ethernet cable or an unmanaged switch to work without a DHCP server.
 
 An explicit `ethernet.txt` configuration remains authoritative and bypasses
-automatic discovery.
+automatic discovery, but it no longer disables a detected wifibroadcast link.
 
 Note that some modules handle HW connection(s) themselves, for example telemetry does the UART
 connection to the FC (even though one could reason UART is a HW interface).

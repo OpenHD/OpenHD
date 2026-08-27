@@ -672,7 +672,9 @@ void EthernetLink::ground_discovery_loop(int socket_fd) {
 }
 
 void EthernetLink::transmit_telemetry_data(TelemetryTxPacket packet) {
-  // Send telemetry data to the destination
+  // Send one logical telemetry datagram. n_injections is a raw-radio
+  // reliability hint for wifibroadcast; duplicating it on a healthy IP link
+  // would only create avoidable UDP/MAVLink duplicates.
   std::shared_ptr<openhd::UDPForwarder> telemetry_tx;
   {
     std::lock_guard<std::mutex> lock(m_forwarders_mutex);

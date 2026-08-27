@@ -27,6 +27,8 @@
 #include <array>
 #include <chrono>
 #include <cstdint>
+#include <functional>
+#include <mutex>
 #include <optional>
 #include <utility>
 #include <vector>
@@ -75,6 +77,13 @@ class WBLink : public OHDLink {
   WBLink(const WBLink&) = delete;
   WBLink(const WBLink&&) = delete;
   ~WBLink();
+  void set_fatal_error_callback(std::function<void()> callback);
+  // Reopen the radio interfaces without replacing this WBLink. This preserves
+  // all settings callbacks registered by the telemetry component.
+  bool restart_after_card_replug(std::vector<WiFiCard> broadcast_cards);
+  [[nodiscard]] bool is_radio_available() const {
+    return m_radio_available.load();
+  }
   /**
    * @return all mavlink settings, values might change depending on air/ground
    * and/or the used hardware
@@ -154,6 +163,7 @@ class WBLink : public OHDLink {
   // Do rate adjustments, does nothing if variable bitrate is disabled
   void wt_perform_rate_adjustment();
   void wt_gnd_perform_channel_management();
+  void wt_air_perform_frequency_retry();
   void wt_gnd_perform_channel_switch_rollback_check();
   void gnd_note_channel_switch_attempt(int previous_frequency,
                                        int previous_channel_width,
@@ -232,7 +242,7 @@ class WBLink : public OHDLink {
   // We have one worker thread for asynchronously performing operation(s) like
   // changing the frequency but also recalculating statistics that are then
   // forwarded to openhd_telemetry for broadcast
-  bool m_work_thread_run;
+  std::atomic_bool m_work_thread_run = false;
   std::unique_ptr<std::thread> m_work_thread;
   std::mutex m_work_item_queue_mutex;
   // NOTE: We only support one active work item at a time,
@@ -276,6 +286,15 @@ class WBLink : public OHDLink {
   std::atomic<int> m_gnd_curr_rx_channel_width =
       openhd::DEFAULT_GND_RX_CHANNEL_WIDTH;
   std::atomic<int> m_gnd_curr_rx_frequency = -1;
+  // QOpenHD arms this target on ground after sending the request to air.  It
+  // lets ground follow when all five air RECEIVED packets are lost and the old
+  // link consequently disappears.
+  std::atomic<int> m_gnd_pending_frequency = -1;
+  std::atomic<int> m_gnd_pending_channel_width =
+      openhd::DEFAULT_GND_RX_CHANNEL_WIDTH;
+  std::atomic<int> m_gnd_pending_frequency_since_ms = 0;
+  std::atomic<int> m_gnd_last_no_received_warning_ms = 0;
+  uint32_t m_air_last_frequency_retry_transaction = 0;
   struct GroundSwitchRollbackState {
     bool active = false;
     int previous_frequency = -1;
@@ -290,18 +309,18 @@ class WBLink : public OHDLink {
   GroundSwitchRollbackState m_gnd_switch_rollback_state{};
   uint32_t m_gnd_last_prepared_frequency_transaction = 0;
   uint32_t m_gnd_last_committed_frequency_transaction = 0;
-  static constexpr auto FREQUENCY_PREPARE_TIMEOUT =
-      std::chrono::milliseconds(3000);
-  static constexpr auto FREQUENCY_COMMIT_GRACE_PERIOD =
-      std::chrono::milliseconds(500);
-  static constexpr auto FREQUENCY_CONFIRM_TIMEOUT =
-      std::chrono::milliseconds(4000);
+  static constexpr auto FREQUENCY_RECEIVED_BURST_TIMEOUT =
+      std::chrono::milliseconds(1000);
   static constexpr auto GND_SWITCH_ROLLBACK_TIMEOUT =
       std::chrono::milliseconds(7000);
   // Allows temporarily closing the video input
   std::atomic_bool m_air_close_video_in = false;
   const int m_recommended_max_fec_blk_size_for_this_platform;
-  bool m_wifi_card_error_has_been_handled = false;
+  std::atomic_bool m_wifi_card_error_has_been_handled = false;
+  std::atomic_bool m_radio_available = true;
+  std::mutex m_radio_restart_mutex;
+  std::mutex m_fatal_error_callback_mutex;
+  std::function<void()> m_fatal_error_callback;
   // We have 3 thermal protection levels - as of now, only on X20
   static constexpr uint8_t THERMAL_PROTECTION_NONE = 0;
   static constexpr uint8_t THERMAL_PROTECTION_RATE_REDUCED = 1;

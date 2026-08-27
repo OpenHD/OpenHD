@@ -24,9 +24,13 @@
 #ifndef OPENHD_OPENHD_INTERFACE_H
 #define OPENHD_OPENHD_INTERFACE_H
 
+#include <atomic>
+#include <condition_variable>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <string>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -45,6 +49,8 @@
 class WBLink;
 class MicrohardLink;
 class EthernetLink;
+class LteLink;
+class MultiLink;
 #ifdef OHD_ENABLE_ARTOSYN
 class ArtosynLink;
 #endif
@@ -113,6 +119,11 @@ class OHDInterface {
   bool start_wifi_client();
   std::string describe_wifi_interfaces();
   void update_wifi_hotspot_enable();
+  void start_wb_recovery_supervisor();
+  void stop_wb_recovery_supervisor();
+  void request_wb_recovery();
+  void wb_recovery_loop();
+  std::optional<std::vector<WiFiCard>> find_replugged_wb_cards();
 
  private:
   const OHDProfile m_profile;
@@ -126,6 +137,8 @@ class OHDInterface {
   std::unique_ptr<EthernetManager> m_ethernet_manager;
   std::unique_ptr<WifiHotspot> m_wifi_hotspot;
   std::shared_ptr<EthernetLink> m_ethernet_link;
+  std::shared_ptr<LteLink> m_lte_link;
+  std::shared_ptr<MultiLink> m_multi_link;
   std::vector<WiFiCard> m_monitor_mode_cards{};
   std::optional<WiFiCard> m_opt_hotspot_card = std::nullopt;
   std::vector<WiFiCard> m_discovered_wifi_cards{};
@@ -136,6 +149,11 @@ class OHDInterface {
   bool m_wifi_client_active = false;
   const bool m_disable_wifi_hotspot;
   NetworkingSettingsHolder m_nw_settings;
+  std::thread m_wb_recovery_thread;
+  std::mutex m_wb_recovery_mutex;
+  std::condition_variable m_wb_recovery_changed;
+  bool m_wb_recovery_requested = false;
+  bool m_wb_recovery_shutdown = false;
 };
 
 #endif  // OPENHD_OPENHD_INTERFACE_H

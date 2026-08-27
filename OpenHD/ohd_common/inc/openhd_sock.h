@@ -120,6 +120,14 @@ struct SysutilSettings {
   std::string air_unit_ip;
   int video_port = 5000;
   int telemetry_port = 5600;
+  bool lte_configured = false;
+  bool lte_active = false;
+  std::string lte_device_id;
+  std::string lte_fleetcontrol_address;
+  std::string lte_interface;
+  int lte_video_port = 0;
+  int lte_video2_port = 0;
+  int lte_telemetry_port = 0;
   bool disable_microhard_detection = false;
   bool force_microhard = false;
   std::string microhard_username = "admin";

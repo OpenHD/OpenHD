@@ -52,6 +52,16 @@ bool wifi::commandhelper::ip_link_set_card_state(const std::string &device,
   return success;
 }
 
+bool wifi::commandhelper::ip_link_rename(const std::string &old_name,
+                                         const std::string &new_name) {
+  if (old_name == new_name) return true;
+  get_logger()->info("ip_link_rename {} to {}", old_name, new_name);
+  if (!ip_link_set_card_state(old_name, false)) return false;
+  const std::vector<std::string> args{"link", "set", "dev", old_name, "name",
+                                      new_name};
+  return OHDUtil::run_command("ip", args);
+}
+
 bool wifi::commandhelper::iw_enable_monitor_mode(const std::string &device) {
   get_logger()->info("iw_enable_monitor_mode {}", device);
   std::vector<std::string> args{"dev", device, "set", "monitor", "otherbss"};

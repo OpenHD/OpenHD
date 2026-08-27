@@ -62,12 +62,10 @@ class ManagementAir {
   void set_frequency(int frequency);
   void set_channel_width(uint8_t bw);
   uint32_t begin_frequency_change(int target_frequency, uint8_t channel_width);
-  void commit_frequency_change(uint32_t transaction_id);
   void finish_frequency_change(uint32_t transaction_id, bool success,
                                int fallback_frequency);
-  bool is_frequency_change_ready(uint32_t transaction_id) const;
-  bool is_frequency_change_confirmed(uint32_t transaction_id) const;
-  bool has_frequency_change_failed(uint32_t transaction_id) const;
+  bool frequency_received_burst_sent(uint32_t transaction_id) const;
+  std::optional<FrequencyChangeRequest> get_ground_retry_request() const;
 
  public:
   std::atomic<uint32_t> m_curr_frequency_mhz;
@@ -92,9 +90,10 @@ class ManagementAir {
   std::atomic<uint32_t> m_frequency_transaction_target_mhz{0};
   std::atomic<uint8_t> m_frequency_transaction_width_mhz{20};
   std::atomic<uint8_t> m_frequency_transaction_phase{0};
-  std::atomic<uint32_t> m_ground_ready_transaction_id{0};
-  std::atomic<uint32_t> m_ground_confirmed_transaction_id{0};
-  std::atomic<uint32_t> m_ground_failed_transaction_id{0};
+  std::atomic<uint8_t> m_frequency_received_packets_remaining{0};
+  std::atomic<uint32_t> m_ground_retry_transaction_id{0};
+  std::atomic<uint32_t> m_ground_retry_target_mhz{0};
+  std::atomic<uint8_t> m_ground_retry_width_mhz{20};
 };
 
 class ManagementGround {
@@ -112,13 +111,7 @@ class ManagementGround {
   std::atomic<int> m_air_reported_curr_channel_width = -1;
   int get_last_received_packet_ts_ms();
   std::optional<FrequencyChangeRequest> get_prepare_request() const;
-  std::optional<FrequencyChangeRequest> get_commit_request() const;
-  void mark_frequency_change_ready(uint32_t transaction_id,
-                                   int target_frequency);
-  void mark_frequency_change_switched(uint32_t transaction_id,
-                                      int target_frequency, bool success);
-  void mark_frequency_change_confirmed(uint32_t transaction_id,
-                                       int target_frequency);
+  void retry_frequency_change(int target_frequency, int channel_width);
 
  private:
   void loop();
@@ -132,9 +125,11 @@ class ManagementGround {
   std::atomic<uint32_t> m_frequency_transaction_target_mhz{0};
   std::atomic<uint8_t> m_frequency_transaction_width_mhz{20};
   std::atomic<uint8_t> m_frequency_transaction_phase{0};
-  std::atomic<uint32_t> m_ack_transaction_id{0};
-  std::atomic<uint32_t> m_ack_target_frequency_mhz{0};
-  std::atomic<uint8_t> m_ack_state{0};
+  std::atomic<uint32_t> m_next_retry_transaction_id{1};
+  std::atomic<uint32_t> m_retry_transaction_id{0};
+  std::atomic<uint32_t> m_retry_target_frequency_mhz{0};
+  std::atomic<uint8_t> m_retry_channel_width_mhz{20};
+  std::atomic<uint8_t> m_retry_packets_remaining{0};
   // 40Mhz / 20Mhz link management
   void on_new_management_packet(const uint8_t *data, int data_len);
 };

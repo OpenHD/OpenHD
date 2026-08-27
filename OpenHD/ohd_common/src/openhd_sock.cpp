@@ -608,6 +608,15 @@ std::optional<SysutilSettings> request_sysutil_settings(
   settings.air_unit_ip = read_string("air_unit_ip", settings.air_unit_ip);
   settings.video_port = read_int("video_port", settings.video_port);
   settings.telemetry_port = read_int("telemetry_port", settings.telemetry_port);
+  settings.lte_configured = read_bool("lte_configured", false);
+  settings.lte_active = read_bool("lte_active", false);
+  settings.lte_device_id = read_string("lte_device_id", "");
+  settings.lte_fleetcontrol_address =
+      read_string("lte_fleetcontrol_address", "");
+  settings.lte_interface = read_string("lte_interface", "");
+  settings.lte_video_port = read_int("lte_video_port", 0);
+  settings.lte_video2_port = read_int("lte_video2_port", 0);
+  settings.lte_telemetry_port = read_int("lte_telemetry_port", 0);
   settings.disable_microhard_detection = read_bool(
       "disable_microhard_detection", settings.disable_microhard_detection);
   settings.force_microhard =

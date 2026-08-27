@@ -25,6 +25,7 @@
 
 #include <wifi_card_discovery.h>
 #include <wifi_client.h>
+#include <wifi_command_helper.h>
 
 #include <algorithm>
 #include <array>
@@ -33,10 +34,12 @@
 
 #include "config_paths.h"
 #include "ethernet_link.h"
+#include "lte_link.h"
 #ifdef OHD_ENABLE_ARTOSYN
 #include "artosyn_link.h"
 #endif
 #include "microhard_link.h"
+#include "multi_link.h"
 #include "openhd_config.h"
 #include "openhd_global_constants.hpp"
 #include "openhd_sock.h"
@@ -80,10 +83,27 @@ OHDInterface::OHDInterface(OHDProfile profile1, bool disable_wifi_hotspot)
   bool microhard_device_present = is_microhard_device_present();
   openhd::LinkActionHandler::instance().set_primary_link_type(
       openhd::LinkActionHandler::PRIMARY_LINK_NONE);
+  m_multi_link = std::make_shared<MultiLink>();
+
+  // SysUtils activates WireGuard before OpenHD starts and only exposes the
+  // non-secret routing metadata. LTE is an independent MultiLink transport.
+  if (const auto settings = openhd::request_sysutil_settings();
+      settings && settings->lte_configured && settings->lte_active &&
+      !settings->lte_device_id.empty() &&
+      !settings->lte_fleetcontrol_address.empty()) {
+    LteLinkConfig lte_config{settings->lte_device_id,
+                             settings->lte_fleetcontrol_address,
+                             settings->lte_video_port,
+                             settings->lte_video2_port,
+                             settings->lte_telemetry_port};
+    m_lte_link = std::make_shared<LteLink>(std::move(lte_config));
+    m_multi_link->add_link("LTE", m_lte_link);
+  }
 
 #ifdef OHD_ENABLE_ARTOSYN
   if (ArtosynLink::probe()) {
     m_artosyn_link = std::make_shared<ArtosynLink>(m_profile);
+    m_multi_link->add_link("ARTOSYN", m_artosyn_link);
     openhd::LinkActionHandler::instance().set_primary_link_type(
         openhd::LinkActionHandler::PRIMARY_LINK_ARTOSYN);
     m_console->warn("artosyn found");
@@ -97,18 +117,18 @@ OHDInterface::OHDInterface(OHDProfile profile1, bool disable_wifi_hotspot)
   if (OHDFilesystemUtil::exists(std::string(getConfigBasePath()) +
                                 "ethernet.txt")) {
     m_ethernet_link = std::make_shared<EthernetLink>(m_profile);
+    m_multi_link->add_link("ETHERNET", m_ethernet_link);
     openhd::LinkActionHandler::instance().set_primary_link_type(
         openhd::LinkActionHandler::PRIMARY_LINK_ETHERNET);
-    m_console->warn("eth found");
-    return;
+    m_console->warn("Configured Ethernet link enabled");
   }
 
   if (microhard_device_present) {
     m_microhard_link = std::make_shared<MicrohardLink>(m_profile);
+    m_multi_link->add_link("MICROHARD", m_microhard_link);
     openhd::LinkActionHandler::instance().set_primary_link_type(
         openhd::LinkActionHandler::PRIMARY_LINK_MICROHARD);
     m_console->warn("mc found");
-    return;
   }
 
   DWifiCards::main_discover_an_process_wifi_cards(
@@ -124,17 +144,29 @@ OHDInterface::OHDInterface(OHDProfile profile1, bool disable_wifi_hotspot)
   // We don't have at least one card for monitor mode, which means we cannot
   // instantiate wb_link (no wifibroadcast connectivity at all)
   if (m_monitor_mode_cards.empty()) {
-    m_console->warn(
-        "No monitor-mode WiFi card found; enabling automatic Ethernet link");
-    m_ethernet_link = std::make_shared<EthernetLink>(m_profile, true);
-    openhd::LinkActionHandler::instance().set_primary_link_type(
-        openhd::LinkActionHandler::PRIMARY_LINK_ETHERNET);
+    if (!m_ethernet_link && !m_microhard_link) {
+      m_console->warn(
+          "No monitor-mode WiFi card found; enabling automatic Ethernet link");
+      m_ethernet_link = std::make_shared<EthernetLink>(m_profile, true);
+      m_multi_link->add_link("ETHERNET", m_ethernet_link);
+      openhd::LinkActionHandler::instance().set_primary_link_type(
+          openhd::LinkActionHandler::PRIMARY_LINK_ETHERNET);
+    }
   } else {
     // Set the card(s) we have into monitor mode
     openhd::wb::takeover_cards_monitor_mode(m_monitor_mode_cards, m_console);
     m_wb_link = std::make_shared<WBLink>(m_profile, m_monitor_mode_cards);
+    m_multi_link->add_link("WIFIBROADCAST", m_wb_link);
+    m_wb_link->set_fatal_error_callback([this]() { request_wb_recovery(); });
+    start_wb_recovery_supervisor();
     openhd::LinkActionHandler::instance().set_primary_link_type(
         openhd::LinkActionHandler::PRIMARY_LINK_WIFIBROADCAST);
+    // Ethernet is an always-available secondary transport. It discovers its
+    // peer independently and silently drops packets until one is present.
+    if (!m_ethernet_link) {
+      m_ethernet_link = std::make_shared<EthernetLink>(m_profile, true);
+      m_multi_link->add_link("ETHERNET", m_ethernet_link);
+    }
   }
   // The USB tethering listener is always enabled on ground - it doesn't
   // interfere with anything
@@ -182,8 +214,18 @@ OHDInterface::OHDInterface(OHDProfile profile1, bool disable_wifi_hotspot)
 OHDInterface::~OHDInterface() {
   stop_wifi_client();
   m_wifi_hotspot = nullptr;
-  // Terminate the link first
+  if (m_wb_link) m_wb_link->set_fatal_error_callback(nullptr);
+  stop_wb_recovery_supervisor();
+  // Disconnect callbacks first, then stop endpoint threads while the stable
+  // facade and its callback gate are still alive.
+  if (m_multi_link) m_multi_link->clear_links();
   m_wb_link = nullptr;
+  m_ethernet_link = nullptr;
+  m_microhard_link = nullptr;
+#ifdef OHD_ENABLE_ARTOSYN
+  m_artosyn_link = nullptr;
+#endif
+  m_multi_link = nullptr;
   // Then give the card(s) back to the system (no monitor mode)
   // give the monitor mode cards back to network manager
   openhd::wb::giveback_cards_monitor_mode(m_monitor_mode_cards, m_console);
@@ -490,19 +532,29 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings() {
       return "ARTOSYN";
     }
 #endif
-    if (m_ethernet_link) {
-      return "ETHERNET";
-    }
     if (m_wb_link) {
       return "WIFIBROADCAST";
     }
     if (m_microhard_link) {
       return "MICROHARD";
     }
+    if (m_ethernet_link) {
+      return "ETHERNET";
+    }
     return "NONE";
   };
   ret.push_back(
       openhd::create_read_only_string("PRIMARY_LINK", get_primary_link()));
+  std::string active_links;
+  if (m_multi_link) {
+    for (const auto& name : m_multi_link->link_names()) {
+      if (!active_links.empty()) active_links += "+";
+      active_links += name;
+    }
+  }
+  if (active_links.empty()) active_links = "NONE";
+  ret.push_back(
+      openhd::create_read_only_string("ACTIVE_LINKS", active_links));
   auto cb_wifi_hotspot_mode = [this](std::string, int value) {
     if (!is_valid_wifi_hotspot_mode(value)) return false;
     m_nw_settings.unsafe_get_settings().wifi_hotspot_mode = value;
@@ -599,33 +651,109 @@ void OHDInterface::print_internal_fec_optimization_method() {
 }
 
 std::shared_ptr<OHDLink> OHDInterface::get_link_handle() {
-#ifdef OHD_ENABLE_ARTOSYN
-  if (m_artosyn_link) {
-    m_console->warn("Using alternative Link: Artosyn");
-    return m_artosyn_link;
+  return m_multi_link && m_multi_link->link_count() > 0 ? m_multi_link
+                                                        : nullptr;
+}
+
+void OHDInterface::start_wb_recovery_supervisor() {
+  if (m_wb_recovery_thread.joinable()) return;
+  {
+    std::lock_guard<std::mutex> lock(m_wb_recovery_mutex);
+    m_wb_recovery_shutdown = false;
+    m_wb_recovery_requested = false;
   }
-#endif
-  if (m_ethernet_link) {
-    m_console->warn("Using alternative Link: Ethernet");
-    return m_ethernet_link;
+  m_wb_recovery_thread =
+      std::thread(&OHDInterface::wb_recovery_loop, this);
+}
+
+void OHDInterface::stop_wb_recovery_supervisor() {
+  {
+    std::lock_guard<std::mutex> lock(m_wb_recovery_mutex);
+    m_wb_recovery_shutdown = true;
   }
-  if (m_wb_link) {
-    // m_console->warn("Using Link: OpenHD-WifiBroadCast");
-    return m_wb_link;
+  m_wb_recovery_changed.notify_all();
+  if (m_wb_recovery_thread.joinable()) m_wb_recovery_thread.join();
+}
+
+void OHDInterface::request_wb_recovery() {
+  // Quarantine WFB immediately. MultiLink's independent Ethernet/IP transport
+  // continues carrying video and telemetry while the supervisor re-probes.
+  if (m_multi_link && m_wb_link) m_multi_link->remove_link(m_wb_link);
+  {
+    std::lock_guard<std::mutex> lock(m_wb_recovery_mutex);
+    if (m_wb_recovery_shutdown) return;
+    m_wb_recovery_requested = true;
   }
-  if (m_microhard_link) {
-    m_console->warn("Using alternative Link: Microhard");
-    return m_microhard_link;
+  m_wb_recovery_changed.notify_all();
+}
+
+std::optional<std::vector<WiFiCard>>
+OHDInterface::find_replugged_wb_cards() {
+  const auto discovered = DWifiCards::discover_connected_wifi_cards();
+  std::vector<WiFiCard> recovered;
+  recovered.reserve(m_monitor_mode_cards.size());
+  for (const auto& expected : m_monitor_mode_cards) {
+    const auto found = std::find_if(
+        discovered.begin(), discovered.end(),
+        [&expected](const WiFiCard& candidate) {
+          if (!expected.mac.empty()) {
+            return candidate.mac == expected.mac;
+          }
+          return candidate.device_name == expected.device_name;
+        });
+    if (found == discovered.end()) return std::nullopt;
+    auto recovered_card = *found;
+    if (recovered_card.device_name != expected.device_name) {
+      m_console->warn("WFB card {} reappeared as {}; restoring its name",
+                      expected.mac, recovered_card.device_name);
+      if (!wifi::commandhelper::ip_link_rename(recovered_card.device_name,
+                                               expected.device_name)) {
+        return std::nullopt;
+      }
+      recovered_card.device_name = expected.device_name;
+    }
+    recovered.push_back(std::move(recovered_card));
   }
-  return nullptr;
+  return recovered;
+}
+
+void OHDInterface::wb_recovery_loop() {
+  std::unique_lock<std::mutex> lock(m_wb_recovery_mutex);
+  while (true) {
+    m_wb_recovery_changed.wait(lock, [this]() {
+      return m_wb_recovery_shutdown || m_wb_recovery_requested;
+    });
+    if (m_wb_recovery_shutdown) return;
+    lock.unlock();
+
+    const auto recovered_cards = find_replugged_wb_cards();
+    bool recovered = false;
+    if (recovered_cards) {
+      m_console->info("Replugged WFB card(s) found; restoring monitor mode");
+      openhd::wb::takeover_cards_monitor_mode(*recovered_cards, m_console);
+      recovered = m_wb_link &&
+                  m_wb_link->restart_after_card_replug(*recovered_cards);
+      if (recovered && m_multi_link) {
+        m_multi_link->add_link("WIFIBROADCAST", m_wb_link);
+        openhd::LinkActionHandler::instance().set_primary_link_type(
+            openhd::LinkActionHandler::PRIMARY_LINK_WIFIBROADCAST);
+        m_console->info(
+            "Wifibroadcast automatically rejoined the multi-link router");
+      }
+    }
+
+    lock.lock();
+    if (recovered) m_wb_recovery_requested = false;
+    if (!m_wb_recovery_requested) continue;
+    m_wb_recovery_changed.wait_for(
+        lock, std::chrono::seconds(2),
+        [this]() { return m_wb_recovery_shutdown; });
+    if (m_wb_recovery_shutdown) return;
+  }
 }
 
 bool OHDInterface::has_primary_link() const {
-#ifdef OHD_ENABLE_ARTOSYN
-  if (m_artosyn_link) return true;
-#endif
-  return static_cast<bool>(m_wb_link) || static_cast<bool>(m_microhard_link) ||
-         static_cast<bool>(m_ethernet_link);
+  return m_multi_link && m_multi_link->link_count() > 0;
 }
 
 bool OHDInterface::has_real_monitor_mode_cards() const {
