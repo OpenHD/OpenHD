@@ -302,7 +302,10 @@ _build_client_lib_from_source() {
     return 1
   fi
 
-  local build_dir="${ARTOSYN_WORK_ROOT}/sdk"
+  # Keep independently resolved artifacts in separate build trees. The host_drv
+  # configurator recreates its build directory, so a later daemon/tuntap probe
+  # must not delete a client library that was already selected for packaging.
+  local build_dir="${ARTOSYN_WORK_ROOT}/sdk-client"
   echo "[Artosyn] libar8030_client missing, building ar8030_client from source." >&2
 
   _configure_sdk_build_dir "${sdk_root}" "${build_dir}" || return 1
@@ -430,7 +433,7 @@ _build_daemon_from_source() {
   if ! command -v cmake >/dev/null 2>&1; then
     return 1
   fi
-  local build_dir="${ARTOSYN_WORK_ROOT}/sdk"
+  local build_dir="${ARTOSYN_WORK_ROOT}/sdk-daemon"
   echo "[Artosyn] daemon missing, trying to build daemon targets from source." >&2
 
   _configure_sdk_build_dir "${sdk_root}" "${build_dir}" || return 1
@@ -504,7 +507,9 @@ _build_tuntap_from_source() {
   if ! command -v cmake >/dev/null 2>&1; then
     return 1
   fi
-  local build_dir="${ARTOSYN_WORK_ROOT}/sdk"
+  # Tuntap is optional and is resolved last. Isolate its configure step so it
+  # cannot erase the required daemon and client-library artifacts.
+  local build_dir="${ARTOSYN_WORK_ROOT}/sdk-tuntap"
   echo "[Artosyn] tunnel helper missing, trying to build it from source." >&2
 
   _configure_sdk_build_dir "${sdk_root}" "${build_dir}" || return 1
