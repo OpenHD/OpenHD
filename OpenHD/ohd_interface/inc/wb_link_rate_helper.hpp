@@ -197,7 +197,8 @@ static uint32_t rtl8812au_get_max_rate_2G_kbits(uint16_t mcs_index,
 static uint32_t get_max_rate_possible_5G_kbits(const WiFiCard& card,
                                                uint16_t mcs_index,
                                                int channel_bw_mhz) {
-  if (card.type == WiFiCardType::OPENHD_RTL_88X2AU ||
+  if (card.devourer_wb_enabled ||
+      card.type == WiFiCardType::OPENHD_RTL_88X2AU ||
       card.type == WiFiCardType::OPENHD_RTL_88X2BU ||
       card.type == WiFiCardType::OPENHD_RTL_88X2CU ||
       card.type == WiFiCardType::OPENHD_RTL_88X2EU ||

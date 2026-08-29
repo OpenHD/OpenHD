@@ -357,6 +357,9 @@ target_link_libraries(test_wifi_commands OHDInterfaceLib)
 add_executable(test_wifi_set_channel test/test_wifi_set_channel.cpp)
 target_link_libraries(test_wifi_set_channel OHDInterfaceLib)
 
+add_executable(test_wb_link_rate_helper test/test_wb_link_rate_helper.cpp)
+target_link_libraries(test_wb_link_rate_helper OHDInterfaceLib)
+
 add_executable(test_multi_link test/test_multi_link.cpp)
 target_link_libraries(test_multi_link OHDInterfaceLib)
 
@@ -369,6 +372,7 @@ set(OPENHD_INTERFACE_TEST_TARGETS
     test_wifi_hotspot
     test_wifi_commands
     test_wifi_set_channel
+    test_wb_link_rate_helper
     test_multi_link)
 foreach(test_target IN LISTS OPENHD_INTERFACE_TEST_TARGETS)
     target_sources(${test_target} PRIVATE ../ohd_common/src/config_paths.cpp)
