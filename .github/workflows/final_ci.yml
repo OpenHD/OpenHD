@@ -54,7 +54,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          submodules: recursive
+          submodules: true
           token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
 
       - name: Install native package dependencies
@@ -298,7 +298,7 @@ jobs:
           git config --global url."https://x-access-token:${OPENHD_SUBMODULE_TOKEN}@github.com/".insteadOf "https://github.com/"
           git clone "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}" -b "${GITHUB_REF_NAME}" \
             /opt/OpenHD-ChrootCompiler/additionalFiles
-          git -C /opt/OpenHD-ChrootCompiler/additionalFiles submodule update --init --recursive
+          git -C /opt/OpenHD-ChrootCompiler/additionalFiles submodule update --init
           git clone --recurse-submodules \
             https://github.com/OpenHD-Technologies/OpenHD-ArtLink.git \
             /opt/OpenHD-ChrootCompiler/additionalFiles/OpenHD-ArtLink
@@ -362,7 +362,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: recursive
+          submodules: true
           token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
       - name: Install SDK tooling
         run: |
