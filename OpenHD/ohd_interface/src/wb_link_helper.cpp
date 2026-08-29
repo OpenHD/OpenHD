@@ -23,6 +23,9 @@
 
 #include "wb_link_helper.h"
 
+#include <algorithm>
+#include <cstdlib>
+
 #include "wb_link_rate_helper.hpp"
 #include "wifi_command_helper.h"
 // #include "wifi_command_helper2.h"
@@ -32,6 +35,28 @@
 bool openhd::wb::disable_all_frequency_checks() {
   return OHDFilesystemUtil::exists(std::string(getConfigBasePath()) +
                                    "disable_all_frequency_checks.txt");
+}
+
+bool openhd::wb::use_devourer_backend(const std::vector<WiFiCard>& cards) {
+#ifndef OHD_ENABLE_DEVOURER
+  (void)cards;
+  return false;
+#else
+  if (const char* configured = std::getenv("OPENHD_WB_BACKEND")) {
+    const auto value = OHDUtil::to_uppercase(std::string(configured));
+    if (value == "LINUX" || value == "KERNEL" || value == "PCAP") {
+      return false;
+    }
+    if (value != "DEVOURER" && value != "AUTO") {
+      openhd::log::get_default()->warn(
+          "Unknown OPENHD_WB_BACKEND={}, using automatic selection", value);
+    }
+  }
+  if (cards.empty()) return false;
+  return std::all_of(cards.begin(), cards.end(), [](const WiFiCard& card) {
+    return card.devourer_wb_enabled;
+  });
+#endif
 }
 
 bool openhd::wb::all_cards_support_frequency(
@@ -144,6 +169,10 @@ void openhd::wb::set_tx_power_for_card(int tx_power_mw,
         card.type == WiFiCardType::OPENHD_RTL_88X2CU ||
         card.type == WiFiCardType::OPENHD_RTL_88X2EU ||
         card.type == WiFiCardType::OPENHD_RTL_8852BU ||
+#ifdef OHD_ENABLE_DEVOURER
+        card.type == WiFiCardType::RTL_88X2AU ||
+        card.type == WiFiCardType::RTL_88X2BU ||
+#endif
         card.type == WiFiCardType::QUALCOMM) {
       wifi::commandhelper::openhd_driver_set_tx_power(
           card.type, card.device_name, tx_power_mbm);
@@ -223,7 +252,8 @@ std::vector<openhd::WifiChannel> openhd::wb::get_analyze_channels_frequencies(
 
 bool openhd::wb::has_any_rtl8812au(const std::vector<WiFiCard>& cards) {
   for (const auto& card : cards) {
-    if (card.type == WiFiCardType::OPENHD_RTL_88X2AU) {
+    if (card.type == WiFiCardType::OPENHD_RTL_88X2AU ||
+        card.type == WiFiCardType::DEVOURER_RTL8812A) {
       return true;
     }
   }
@@ -232,7 +262,8 @@ bool openhd::wb::has_any_rtl8812au(const std::vector<WiFiCard>& cards) {
 
 bool openhd::wb::has_any_non_rtl8812au(const std::vector<WiFiCard>& cards) {
   for (const auto& card : cards) {
-    if (card.type != WiFiCardType::OPENHD_RTL_88X2AU) {
+    if (card.type != WiFiCardType::OPENHD_RTL_88X2AU &&
+        card.type != WiFiCardType::DEVOURER_RTL8812A) {
       return true;
     }
   }
@@ -261,8 +292,19 @@ void openhd::wb::takeover_cards_monitor_mode(
       continue;  // Skip emulated cards
     }
 
+    if (card.driver_name == "devourer") {
+      continue;  // Direct USB discovery has no kernel netdev to manage.
+    }
+
     wifi::commandhelper::nmcli_set_device_managed_status(card.device_name,
                                                          false);
+  }
+
+  if (openhd::wb::use_devourer_backend(cards)) {
+    console->info(
+        "Devourer selected; skipping kernel monitor-mode setup before libusb "
+        "claims the USB devices");
+    return;
   }
 
   if (!emulate) {
@@ -318,6 +360,7 @@ void openhd::wb::giveback_cards_monitor_mode(
     if (card.type == WiFiCardType::OPENHD_EMULATED) {
       return;
     }
+    if (card.driver_name == "devourer") continue;
     wifi::commandhelper::nmcli_set_device_managed_status(card.device_name,
                                                          true);
   }

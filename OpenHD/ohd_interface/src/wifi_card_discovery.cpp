@@ -24,11 +24,19 @@
 #include "wifi_card_discovery.h"
 
 #include <algorithm>
+#include <array>
 #include <atomic>
+#include <cstdlib>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <list>
 #include <regex>
 #include <thread>
+#ifdef OHD_ENABLE_DEVOURER
+#include <libusb-1.0/libusb.h>
+#include "devourer_usb_device_probe.h"
+#endif
 
 #include "config_paths.h"
 #include "openhd_sock.h"
@@ -70,7 +78,7 @@ static WiFiCardType driver_to_wifi_card_type(const std::string& driver_name) {
     return WiFiCardType::ATHEROS;
   }
   if (OHDUtil::contains_after_uppercase(driver_name, "rt2800usb")) {
-    WiFiCardType::RALINK;
+    return WiFiCardType::RALINK;
   }
   if (OHDUtil::contains_after_uppercase(driver_name, "iwlwifi")) {
     return WiFiCardType::INTEL;
@@ -112,15 +120,24 @@ static std::vector<uint32_t> supported_frequencies(const int phy_index,
 static void apply_supported_frequencies(WiFiCard& card) {
   // RTL8812AU - since the openhd driver change, it reliably supports all wifi
   // frequencies, no matter what CRDA has to say
-  if (card.type == WiFiCardType::OPENHD_RTL_88X2AU ||
+  if (card.devourer_wb_enabled ||
+      card.type == WiFiCardType::OPENHD_RTL_88X2AU ||
       card.type == WiFiCardType::OPENHD_RTL_88X2CU ||
       card.type == WiFiCardType::OPENHD_RTL_88X2EU ||
-      card.type == WiFiCardType::OPENHD_RTL_8852BU) {
+      card.type == WiFiCardType::OPENHD_RTL_8852BU
+#ifdef OHD_ENABLE_DEVOURER
+      || card.type == WiFiCardType::RTL_88X2AU
+#endif
+  ) {
     card.supported_frequencies_2G = openhd::get_all_channel_frequencies(
         openhd::get_channels_2G_legal_at_least_one_country());
     card.supported_frequencies_5G = openhd::get_all_channel_frequencies(
         openhd::get_channels_5G_legal_at_least_one_country());
-  } else if (card.type == WiFiCardType::OPENHD_RTL_88X2BU) {
+  } else if (card.type == WiFiCardType::OPENHD_RTL_88X2BU
+#ifdef OHD_ENABLE_DEVOURER
+             || card.type == WiFiCardType::RTL_88X2BU
+#endif
+  ) {
     card.supported_frequencies_2G = openhd::get_all_channel_frequencies(
         openhd::get_channels_2G_legal_at_least_one_country());
     card.supported_frequencies_5G = openhd::get_all_channel_frequencies(
@@ -133,6 +150,195 @@ static void apply_supported_frequencies(WiFiCard& card) {
         supported_frequencies(card.phy80211_index, false);
   }
 }
+
+#ifdef OHD_ENABLE_DEVOURER
+namespace {
+
+using UsbLocation = std::pair<int, int>;
+
+struct DevourerCardPolicy {
+  devourer::UsbChip chip;
+  bool enabled;
+  const char* reason;
+};
+
+// OpenHD broadcast-radio admission policy. Detection remains available for
+// every Devourer family, but only explicitly enabled 2T2R-or-better silicon is
+// assigned to wifibroadcast. Change this table when a family has been validated
+// end-to-end in OpenHD; unsupported cards can still be ordinary hotspot cards
+// when a kernel netdev exists.
+constexpr std::array<DevourerCardPolicy, 10> kDevourerCardPolicies{{
+    {devourer::UsbChip::Rtl8812A, true, "2T2R Jaguar1"},
+    {devourer::UsbChip::Rtl8821A, false, "1T1R is unsupported by OpenHD"},
+    {devourer::UsbChip::Rtl8814A, true, "multi-chain Jaguar1"},
+    {devourer::UsbChip::Rtl8821C, false, "1T1R is unsupported by OpenHD"},
+    {devourer::UsbChip::Rtl8822B, true, "2T2R Jaguar2"},
+    {devourer::UsbChip::Rtl8822C, true, "2T2R Jaguar3"},
+    {devourer::UsbChip::Rtl8822E, true, "2T2R Jaguar3"},
+    {devourer::UsbChip::Rtl8733B, false, "1T1R is unsupported by OpenHD"},
+    {devourer::UsbChip::Rtl8852B, true, "2T2R Kestrel"},
+    {devourer::UsbChip::Rtl8852C, true, "2T2R Kestrel"},
+}};
+
+const DevourerCardPolicy* devourer_policy(const devourer::UsbChip chip) {
+  const auto it = std::find_if(
+      kDevourerCardPolicies.begin(), kDevourerCardPolicies.end(),
+      [chip](const DevourerCardPolicy& policy) { return policy.chip == chip; });
+  return it == kDevourerCardPolicies.end() ? nullptr : &*it;
+}
+
+bool is_known_8811au_usb_identity(const devourer::UsbDeviceProbe& probe) {
+  if (probe.vid != 0x0bda) return false;
+  return probe.pid == 0x0811 || probe.pid == 0xa811 || probe.pid == 0xb811;
+}
+
+bool devourer_card_enabled(const devourer::UsbDeviceProbe& probe,
+                           const char** reason) {
+  if (probe.chip == devourer::UsbChip::Rtl8812A &&
+      is_known_8811au_usb_identity(probe)) {
+    if (reason) *reason = "known RTL8811AU 1T1R USB identity";
+    return false;
+  }
+  const auto* policy = devourer_policy(probe.chip);
+  if (!policy) {
+    if (reason) *reason = "no OpenHD policy entry";
+    return false;
+  }
+  if (reason) *reason = policy->reason;
+  return policy->enabled;
+}
+
+std::optional<UsbLocation> usb_location_for_netdev(const std::string& name) {
+  std::error_code ec;
+  auto path = std::filesystem::canonical(
+      std::filesystem::path("/sys/class/net") / name / "device", ec);
+  if (ec) return std::nullopt;
+  for (int depth = 0; depth < 12 && !path.empty(); ++depth) {
+    std::ifstream bus_file(path / "busnum");
+    std::ifstream device_file(path / "devnum");
+    int bus = 0;
+    int device = 0;
+    if ((bus_file >> bus) && (device_file >> device)) {
+      return UsbLocation{bus, device};
+    }
+    const auto parent = path.parent_path();
+    if (parent == path) break;
+    path = parent;
+  }
+  return std::nullopt;
+}
+
+WiFiCardType devourer_card_type(const devourer::UsbDeviceProbe& probe) {
+  if (is_known_8811au_usb_identity(probe)) {
+    return WiFiCardType::DEVOURER_RTL8811A;
+  }
+  const auto chip = probe.chip;
+  switch (chip) {
+    case devourer::UsbChip::Rtl8812A:
+      return WiFiCardType::DEVOURER_RTL8812A;
+    case devourer::UsbChip::Rtl8821A:
+      return WiFiCardType::DEVOURER_RTL8821A;
+    case devourer::UsbChip::Rtl8814A:
+      return WiFiCardType::DEVOURER_RTL8814A;
+    case devourer::UsbChip::Rtl8821C:
+      return WiFiCardType::DEVOURER_RTL8821C;
+    case devourer::UsbChip::Rtl8822B:
+      return WiFiCardType::DEVOURER_RTL8822B;
+    case devourer::UsbChip::Rtl8822C:
+      return WiFiCardType::DEVOURER_RTL8822C;
+    case devourer::UsbChip::Rtl8822E:
+      return WiFiCardType::DEVOURER_RTL8822E;
+    case devourer::UsbChip::Rtl8733B:
+      return WiFiCardType::DEVOURER_RTL8733B;
+    case devourer::UsbChip::Rtl8852B:
+      return WiFiCardType::DEVOURER_RTL8852B;
+    case devourer::UsbChip::Rtl8852C:
+      return WiFiCardType::DEVOURER_RTL8852C;
+    default:
+      return WiFiCardType::UNKNOWN;
+  }
+}
+
+void apply_devourer_probe(WiFiCard& card,
+                          const devourer::UsbDeviceProbe& probe,
+                          const bool broadcast_enabled) {
+  card.type = devourer_card_type(probe);
+  card.chipset_name = probe.chip_name;
+  card.devourer_generation = devourer::generation_name(probe.generation);
+  card.devourer_chip_id = probe.chip_id;
+  card.devourer_wb_enabled = broadcast_enabled;
+  apply_supported_frequencies(card);
+}
+
+void apply_devourer_usb_detection(std::vector<WiFiCard>& cards) {
+  if (const char* backend = std::getenv("OPENHD_WB_BACKEND")) {
+    const auto value = OHDUtil::to_uppercase(std::string(backend));
+    if (value == "LINUX" || value == "KERNEL" || value == "PCAP") return;
+  }
+  libusb_context* context = nullptr;
+  if (libusb_init(&context) != 0) return;
+  libusb_device** devices = nullptr;
+  const auto count = libusb_get_device_list(context, &devices);
+  for (ssize_t i = 0; i < count; ++i) {
+    auto* device = devices[i];
+    const auto probe = devourer::probe_usb_device(device);
+    if (!probe) continue;
+    const UsbLocation location{libusb_get_bus_number(device),
+                               libusb_get_device_address(device)};
+    const auto represented = std::find_if(
+        cards.begin(), cards.end(), [&location](const WiFiCard& card) {
+          return usb_location_for_netdev(card.device_name) == location;
+        });
+    if (probe->chip == devourer::UsbChip::Unknown) {
+      if (represented != cards.end()) {
+        represented->type = WiFiCardType::UNKNOWN;
+        represented->chipset_name = "unknown";
+        represented->devourer_generation = "unknown";
+        represented->devourer_chip_id = probe->chip_id;
+      }
+      openhd::log::get_default()->warn(
+          "Devourer could not identify {:04x}:{:04x} at USB {}:{} (chip id "
+          "0x{:02x}); keeping it out of wifibroadcast",
+          probe->vid, probe->pid, location.first, location.second,
+          probe->chip_id);
+      continue;
+    }
+    const char* policy_reason = nullptr;
+    if (!probe->supported_by_build ||
+        devourer_card_type(*probe) == WiFiCardType::UNKNOWN ||
+        !devourer_card_enabled(*probe, &policy_reason)) {
+      if (represented != cards.end()) {
+        apply_devourer_probe(*represented, *probe, false);
+      }
+      openhd::log::get_default()->info(
+          "Devourer detected {} at USB {}:{}, but it is not enabled as an "
+          "OpenHD broadcast radio ({})",
+          probe->chip_name, location.first, location.second,
+          policy_reason ? policy_reason : "not compiled or unsupported");
+      continue;
+    }
+    if (represented != cards.end()) {
+      apply_devourer_probe(*represented, *probe, true);
+      openhd::log::get_default()->info(
+          "Devourer identified {} as {} ({}, chip id 0x{:02x})",
+          represented->device_name, probe->chip_name,
+          devourer::generation_name(probe->generation), probe->chip_id);
+      continue;
+    }
+    WiFiCard card{};
+    card.device_name =
+        fmt::format("devourer-usb-{}-{}", location.first, location.second);
+    card.driver_name = "devourer";
+    card.mac = "00:00:00:00:00:00";
+    apply_devourer_probe(card, *probe, true);
+    cards.push_back(std::move(card));
+  }
+  if (devices) libusb_free_device_list(devices, 1);
+  libusb_exit(context);
+}
+
+}  // namespace
+#endif
 
 static std::optional<WiFiCard> create_local_artosyn_pseudo_card() {
   std::string iface_name;
@@ -265,6 +471,9 @@ std::vector<WiFiCard> DWifiCards::discover_connected_wifi_cards() {
     openhd::log::get_default()->warn(
         "WiFi::discover_connected_wifi_cards: sysutils unavailable");
     append_local_artosyn_pseudo_if_missing(wifi_cards);
+#ifdef OHD_ENABLE_DEVOURER
+    apply_devourer_usb_detection(wifi_cards);
+#endif
     write_wificards_manifest(wifi_cards);
     return wifi_cards;
   }
@@ -282,6 +491,9 @@ std::vector<WiFiCard> DWifiCards::discover_connected_wifi_cards() {
     openhd::log::get_default()->warn(
         "WiFi::discover_connected_wifi_cards: sysutils unavailable after refresh");
     append_local_artosyn_pseudo_if_missing(wifi_cards);
+#ifdef OHD_ENABLE_DEVOURER
+    apply_devourer_usb_detection(wifi_cards);
+#endif
     write_wificards_manifest(wifi_cards);
     return wifi_cards;
   }
@@ -338,6 +550,9 @@ std::vector<WiFiCard> DWifiCards::discover_connected_wifi_cards() {
     wifi_cards.push_back(std::move(card));
   }
   append_local_artosyn_pseudo_if_missing(wifi_cards);
+#ifdef OHD_ENABLE_DEVOURER
+  apply_devourer_usb_detection(wifi_cards);
+#endif
   openhd::log::get_default()->trace(
       "WiFi::discover_connected_wifi_cards done, n cards: {}",
       wifi_cards.size());

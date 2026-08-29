@@ -41,12 +41,26 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
                       {WiFiCardType::INTEL, "INTEL"},
                       {WiFiCardType::BROADCOM, "BROADCOM"},
                       {WiFiCardType::AIC, "AIC"},
-                      {WiFiCardType::QUALCOMM, "QUALCOMM"}
+                      {WiFiCardType::QUALCOMM, "QUALCOMM"},
+                      {WiFiCardType::DEVOURER_RTL8812A, "DEVOURER_RTL8812A"},
+                      {WiFiCardType::DEVOURER_RTL8821A, "DEVOURER_RTL8821A"},
+                      {WiFiCardType::DEVOURER_RTL8814A, "DEVOURER_RTL8814A"},
+                      {WiFiCardType::DEVOURER_RTL8821C, "DEVOURER_RTL8821C"},
+                      {WiFiCardType::DEVOURER_RTL8822B, "DEVOURER_RTL8822B"},
+                      {WiFiCardType::DEVOURER_RTL8822C, "DEVOURER_RTL8822C"},
+                      {WiFiCardType::DEVOURER_RTL8822E, "DEVOURER_RTL8822E"},
+                      {WiFiCardType::DEVOURER_RTL8733B, "DEVOURER_RTL8733B"},
+                      {WiFiCardType::DEVOURER_RTL8852B, "DEVOURER_RTL8852B"},
+                      {WiFiCardType::DEVOURER_RTL8852C, "DEVOURER_RTL8852C"},
+                      {WiFiCardType::DEVOURER_RTL8811A, "DEVOURER_RTL8811A"}
                       //{WiFiCardType::, ""},
                   });
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WiFiCard, device_name, mac, phy80211_index,
-                                   driver_name, type, sub_type,
+                                   driver_name, type, chipset_name,
+                                   devourer_generation, devourer_chip_id,
+                                   devourer_wb_enabled,
+                                   sub_type,
                                    supported_frequencies_2G,
                                    supported_frequencies_5G)
 

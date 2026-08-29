@@ -4,6 +4,70 @@ This submodule is responsible for starting and configuring all the OpenHD
 interfaces - aka all OpenHD links like wifibroadcast (communication between air and ground),
 ground hotspot, ...
 
+## Devourer userspace Wi-Fi backend
+
+Supported Realtek USB radios use [OpenIPC Devourer](https://github.com/OpenIPC/devourer)
+by default. OpenHD keeps its existing wifibroadcast framing, FEC, encryption,
+multiplexing, retransmission, and statistics; only the low-level Linux
+pcap/raw-socket transport is replaced by direct libusb RX and TX.
+
+Devourer radios are discovered directly on USB, so no vendor kernel module or
+network interface is required. If a kernel module did bind first, OpenHD uses
+the netdev only to select the physical adapter, then Devourer detaches the
+driver and claims the USB interface. Channel and power changes are applied
+through Devourer's runtime API, and the kernel driver is reattached during a
+clean shutdown where the platform supports it.
+
+OpenHD performs a read-only SYS_CFG2/PID probe using Devourer's supported USB
+IDs and silicon-identification method. This leaves the upstream Devourer
+submodule unchanged while distinguishing devices that share a USB ID, including
+RTL8812AU and RTL8812EU variants using `0bda:8812`. The detected chip,
+generation, and chip ID are written to the Wi-Fi manifest. Broadcast admission
+is controlled by the `kDevourerCardPolicies` table in
+`wifi_card_discovery.cpp`:
+
+| Devourer chip | OpenHD broadcast default |
+| --- | --- |
+| RTL8812A / RTL8814A | Enabled (known RTL8811AU 1T1R USB IDs are denied) |
+| RTL8822B / RTL8822C / RTL8822E | Enabled |
+| RTL8852B / RTL8852C | Enabled |
+| RTL8821A / RTL8821C / RTL8733B | Disabled (1T1R) |
+
+Qualcomm, Ralink, and other non-Devourer adapters are never selected for
+wifibroadcast. When they expose a normal kernel network interface they remain
+eligible for hotspot/client networking.
+
+Build-time and runtime controls:
+
+- `OPENHD_ENABLE_DEVOURER=ON` (the CMake default) builds the backend. Set it to
+  `OFF` for images that intentionally exclude Devourer.
+- `OPENHD_WB_BACKEND=linux` selects the legacy monitor-mode pcap/raw-socket
+  backend. `OPENHD_WB_BACKEND=devourer` or an unset value selects Devourer for
+  supported Realtek cards and falls back to Linux for other hardware.
+
+The dependency is a git submodule. Initialize it together with the existing
+OpenHD submodules using `git submodule update --init --recursive`. Devourer
+requires CMake 3.15+, a C++20 compiler, and libusb-1.0; OpenHD's normal build
+dependencies already include libusb.
+
+### FHSS ownership contract
+
+FHSS timing belongs exclusively to Devourer. OpenHD must only pass policy
+(enabled state, hop channels, slot duration, and seed/key), start the radio
+backend, and forward backend status. It must never implement a hop clock or
+counter, schedule `FastRetune()`, issue per-hop channel commands, or require an
+uplink acknowledgement. Ground-side operation must follow Devourer's downlink
+sync and continue through a completely absent uplink.
+
+The currently pinned Devourer library exposes radio primitives but not the
+bidirectional FHSS session used by its `txdemo`/`rxdemo` executables. Those
+executables own their timing loops and do not together provide OpenHD's
+bidirectional packet transport. Consequently the OpenHD backend remains
+fixed-channel until Devourer exposes that self-contained session plus a status
+stream (acquire/track/lost, slot/channel, sync age/phase error, hopset
+generation, reacquisition, and retune timing). Do not reproduce the example
+state machines in OpenHD as a workaround.
+
 OpenHD routes traffic through a `MultiLink` facade. On standard Wi-Fi setups,
 wifibroadcast and IP/Ethernet are active simultaneously: each encoded RTP
 packet and telemetry packet is submitted to both transports. The ground facade

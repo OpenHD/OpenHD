@@ -692,18 +692,27 @@ OHDInterface::find_replugged_wb_cards() {
   const auto discovered = DWifiCards::discover_connected_wifi_cards();
   std::vector<WiFiCard> recovered;
   recovered.reserve(m_monitor_mode_cards.size());
+  std::vector<bool> used(discovered.size(), false);
   for (const auto& expected : m_monitor_mode_cards) {
     const auto found = std::find_if(
         discovered.begin(), discovered.end(),
-        [&expected](const WiFiCard& candidate) {
+        [&expected, &discovered, &used](const WiFiCard& candidate) {
+          const auto index = static_cast<size_t>(&candidate - discovered.data());
+          if (used[index]) return false;
+          if (expected.driver_name == "devourer") {
+            return candidate.driver_name == "devourer" &&
+                   candidate.type == expected.type;
+          }
           if (!expected.mac.empty()) {
             return candidate.mac == expected.mac;
           }
           return candidate.device_name == expected.device_name;
         });
     if (found == discovered.end()) return std::nullopt;
+    used[static_cast<size_t>(found - discovered.begin())] = true;
     auto recovered_card = *found;
-    if (recovered_card.device_name != expected.device_name) {
+    if (recovered_card.device_name != expected.device_name &&
+        expected.driver_name != "devourer") {
       m_console->warn("WFB card {} reappeared as {}; restoring its name",
                       expected.mac, recovered_card.device_name);
       if (!wifi::commandhelper::ip_link_rename(recovered_card.device_name,

@@ -221,7 +221,9 @@ class WBLink : public OHDLink {
 
  private:
   const OHDProfile m_profile;
-  const std::vector<WiFiCard> m_broadcast_cards;
+  // Direct-USB Devourer identities contain the transient USB bus/address and
+  // must be refreshed after a device re-enumerates.
+  std::vector<WiFiCard> m_broadcast_cards;
   std::shared_ptr<spdlog::logger> m_console;
   std::unique_ptr<openhd::WBLinkSettingsHolder> m_settings;
   std::shared_ptr<RadiotapHeaderTxHolder> m_tx_header_1;

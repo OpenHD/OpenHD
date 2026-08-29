@@ -10,6 +10,21 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules" ${CMAKE_MODULE_PATH})
 # Only needed when we build this submodule manually
 add_subdirectory(../ohd_common commonlib EXCLUDE_FROM_ALL)
 
+option(OPENHD_ENABLE_DEVOURER
+       "Use OpenIPC Devourer as the default backend for supported Realtek USB radios"
+       ON)
+if(OPENHD_ENABLE_DEVOURER)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/lib/devourer/CMakeLists.txt")
+        set(DEVOURER_PCIE OFF CACHE BOOL "" FORCE)
+        set(DEVOURER_LOG_MAX_LEVEL INFO CACHE STRING "" FORCE)
+        add_subdirectory(lib/devourer devourer EXCLUDE_FROM_ALL)
+    else()
+        message(WARNING
+            "OPENHD_ENABLE_DEVOURER=ON but lib/devourer is missing; run git submodule update --init --recursive")
+        set(OPENHD_ENABLE_DEVOURER OFF)
+    endif()
+endif()
+
 # Build and include wifibroadcast
 include(lib/wifibroadcast/wifibroadcast/WBLib.cmake)
 
@@ -44,6 +59,10 @@ set(sources
     src/ethernet_manager.cpp
     src/multi_link.cpp
 )
+
+if(OPENHD_ENABLE_DEVOURER)
+    list(APPEND sources src/devourer_usb_device_probe.cpp)
+endif()
 
 if (NOT ARTOSYN_SDK_ROOT AND DEFINED ENV{ARTOSYN_SDK_ROOT})
     set(ARTOSYN_SDK_ROOT "$ENV{ARTOSYN_SDK_ROOT}" CACHE PATH "Path to Artosyn host_drv SDK root" FORCE)
@@ -310,6 +329,9 @@ target_link_libraries(OHDInterfaceLib PUBLIC ${CMAKE_DL_LIBS})
 
 target_include_directories(OHDInterfaceLib PUBLIC inc/)
 target_link_libraries(OHDInterfaceLib PUBLIC ${WB_TARGET_LINK_LIBRARIES})
+if(OPENHD_ENABLE_DEVOURER)
+    target_compile_definitions(OHDInterfaceLib PUBLIC OHD_ENABLE_DEVOURER=1)
+endif()
 # target_include_directories(OHDInterfaceLib PUBLIC ${WB_INCLUDE_DIRECTORIES})
 
 # For some reason, otherwise pi complains about threads
@@ -337,3 +359,17 @@ target_link_libraries(test_wifi_set_channel OHDInterfaceLib)
 
 add_executable(test_multi_link test/test_multi_link.cpp)
 target_link_libraries(test_multi_link OHDInterfaceLib)
+
+# The production OpenHD executable supplies these platform paths at its top
+# level. Standalone interface tests need the same implementation themselves.
+set(OPENHD_INTERFACE_TEST_TARGETS
+    test_interface
+    test_usb_tether_listener
+    test_ethernet_listener
+    test_wifi_hotspot
+    test_wifi_commands
+    test_wifi_set_channel
+    test_multi_link)
+foreach(test_target IN LISTS OPENHD_INTERFACE_TEST_TARGETS)
+    target_sources(${test_target} PRIVATE ../ohd_common/src/config_paths.cpp)
+endforeach()

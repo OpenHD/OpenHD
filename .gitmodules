@@ -13,3 +13,6 @@
 [submodule "OpenHD/ohd_interface/video_crypto_private"]
 	path = OpenHD/ohd_interface/video_crypto_private
 	url = https://github.com/OpenHD-Technologies/video_crypto_private
+[submodule "OpenHD/ohd_interface/lib/devourer"]
+	path = OpenHD/ohd_interface/lib/devourer
+	url = https://github.com/OpenIPC/devourer.git

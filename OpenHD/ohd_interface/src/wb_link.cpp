@@ -301,12 +301,32 @@ bool is_valid_power_value(int value, bool use_index) {
   return openhd::is_valid_tx_power_milli_watt(value);
 }
 
+bool card_uses_tx_power_index(const WiFiCard& card) {
+  return card.devourer_wb_enabled ||
+         card.type == WiFiCardType::OPENHD_RTL_88X2AU;
+}
+
+constexpr int8_t devourer_thermal_status_code(const bool valid,
+                                               const int delta) {
+  if (!valid) return 0;
+  if (delta < 8) return 1;
+  if (delta < 15) return 2;
+  if (delta < 25) return 3;
+  return 4;
+}
+
+static_assert(devourer_thermal_status_code(false, 0) == 0);
+static_assert(devourer_thermal_status_code(true, 7) == 1);
+static_assert(devourer_thermal_status_code(true, 8) == 2);
+static_assert(devourer_thermal_status_code(true, 15) == 3);
+static_assert(devourer_thermal_status_code(true, 25) == 4);
+
 std::string resolve_power_mode(const SysutilPowerProfile& profile,
                                const WiFiCard& card) {
   if (!profile.mode.empty()) {
     return profile.mode;
   }
-  return card.type == WiFiCardType::OPENHD_RTL_88X2AU ? "INDEX" : "MW";
+  return card_uses_tx_power_index(card) ? "INDEX" : "MW";
 }
 
 }  // namespace
@@ -379,6 +399,17 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
       tmp_wifi_cards.push_back(
           wifibroadcast::WifiCard{card.device_name, wb_type});
     }
+  }
+  txrx_options.use_devourer =
+      openhd::wb::use_devourer_backend(m_broadcast_cards);
+  if (txrx_options.use_devourer) {
+    const auto settings = m_settings->get_settings();
+    txrx_options.devourer_frequency_mhz = settings.wb_frequency;
+    txrx_options.devourer_channel_width_mhz =
+        m_profile.is_air
+            ? static_cast<int>(settings.wb_air_tx_channel_width)
+            : m_gnd_curr_rx_channel_width.load();
+    m_console->info("Selected OpenIPC Devourer userspace WiFi backend");
   }
   m_tx_header_1 = std::make_shared<RadiotapHeaderTxHolder>();
   m_tx_header_2 = std::make_shared<RadiotapHeaderTxHolder>();
@@ -1089,8 +1120,12 @@ bool WBLink::apply_frequency_and_channel_width(int frequency,
   m_wb_txrx->set_passive_mode(true);
   std::this_thread::sleep_for(std::chrono::milliseconds(
       100));  // Dirty - wait for any tx packets to drain
-  const auto res = openhd::wb::set_frequency_and_channel_width_for_all_cards(
-      frequency, channel_width_rx, m_broadcast_cards, m_profile.is_air);
+  const auto res = m_wb_txrx->uses_devourer()
+                       ? m_wb_txrx->set_devourer_channel(frequency,
+                                                        channel_width_rx)
+                       : openhd::wb::set_frequency_and_channel_width_for_all_cards(
+                             frequency, channel_width_rx, m_broadcast_cards,
+                             m_profile.is_air);
   m_tx_header_1->update_channel_width(channel_width_tx);
   // Keep management/session-key packets on 20MHz (if possible) to allow re-sync after BW changes.
   // For 10MHz operation, we must also transmit management at 10MHz.
@@ -1176,7 +1211,7 @@ void WBLink::apply_txpower() {
         const auto mode = resolve_power_mode(profile, card);
         if (mode != "FIXED") {
           bool use_index = (mode == "INDEX");
-          if (use_index && card.type != WiFiCardType::OPENHD_RTL_88X2AU) {
+          if (use_index && !card_uses_tx_power_index(card)) {
             use_index = false;
           }
           int level = settings.wb_tx_power_level;
@@ -1207,7 +1242,9 @@ void WBLink::apply_txpower() {
 
     // Special logic for Air unit 40Mhz power reduction
     if (m_profile.is_air) {
-      if (m_broadcast_cards.at(i).type == WiFiCardType::OPENHD_RTL_88X2AU &&
+      if ((m_broadcast_cards.at(i).type == WiFiCardType::OPENHD_RTL_88X2AU ||
+           m_broadcast_cards.at(i).type ==
+               WiFiCardType::DEVOURER_RTL8812A) &&
           card_pwr_idx > 50 && settings.wb_air_tx_channel_width == 40) {
         m_console->debug("Reducing TX power to 50 tpi due to 40Mhz for card {}",
                          i);
@@ -1216,8 +1253,20 @@ void WBLink::apply_txpower() {
     }
 
     // Apply the power setting to this specific card
-    openhd::wb::set_tx_power_for_card(card_pwr_mw, card_pwr_idx,
-                                      m_broadcast_cards.at(i));
+    if (m_wb_txrx->uses_devourer()) {
+      // Devourer exposes the chip's calibrated absolute TXAGC index. The
+      // existing OpenHD index setting maps directly and is consistent across
+      // all supported Realtek generations.
+      const int devourer_index =
+          card_pwr_idx == openhd::DEFAULT_RTL8812AU_TX_POWER_INDEX &&
+                  !rc_tx_mode_pit && !use_power_levels
+              ? -1  // OpenHD's zero default means "use calibrated table".
+              : static_cast<int>(card_pwr_idx);
+      m_wb_txrx->set_devourer_tx_power_index_override(i, devourer_index);
+    } else {
+      openhd::wb::set_tx_power_for_card(card_pwr_mw, card_pwr_idx,
+                                        m_broadcast_cards.at(i));
+    }
     if (!applied_first) {
       applied_mw = card_pwr_mw;
       applied_idx = card_pwr_idx;
@@ -1852,7 +1901,7 @@ void WBLink::wt_update_statistics() {
         const auto mode = resolve_power_mode(profile, card);
         if (mode != "FIXED") {
           bool use_index = (mode == "INDEX");
-          if (use_index && card.type != WiFiCardType::OPENHD_RTL_88X2AU) {
+          if (use_index && !card_uses_tx_power_index(card)) {
             use_index = false;
           }
           int level = curr_settings.wb_tx_power_level;
@@ -2047,7 +2096,8 @@ void WBLink::wt_update_statistics() {
     card_stats.NON_MAVLINK_CARD_ACTIVE = true;
     auto rxStatsCard = m_wb_txrx->get_rx_stats_for_card(i);
     auto rf_rx_stats = m_wb_txrx->get_rx_rf_stats_for_card(i);
-    if (m_broadcast_cards[i].type == WiFiCardType::OPENHD_RTL_88X2AU ||
+    if (card.devourer_wb_enabled ||
+        m_broadcast_cards[i].type == WiFiCardType::OPENHD_RTL_88X2AU ||
         m_broadcast_cards[i].type == WiFiCardType::OPENHD_RTL_88X2BU ||
         m_broadcast_cards[i].type == WiFiCardType::OPENHD_RTL_88X2CU ||
         m_broadcast_cards[i].type == WiFiCardType::OPENHD_RTL_88X2EU ||
@@ -2072,7 +2122,14 @@ void WBLink::wt_update_statistics() {
     card_stats.rx_snr_antenna1 = -128;
     card_stats.rx_snr_antenna2 = -128;
     card_stats.card_temperature = 0;
-    {
+    if (m_wb_txrx->uses_devourer()) {
+      // Devourer's meter is not calibrated in Celsius. Reuse the existing
+      // byte for its native health buckets: unknown/cool/warm/hot/critical.
+      if (const auto thermal = m_wb_txrx->get_devourer_thermal_status(i)) {
+        card_stats.card_temperature =
+            devourer_thermal_status_code(thermal->valid, thermal->delta);
+      }
+    } else {
       const auto proc_base_opt =
           resolve_proc_base_dir(card.driver_name, card.device_name);
       if (proc_base_opt.has_value()) {
@@ -2094,15 +2151,15 @@ void WBLink::wt_update_statistics() {
     card_stats.count_p_received = rxStatsCard.count_p_valid;
     card_stats.count_p_injected = 0;
     card_stats.curr_rx_packet_loss_perc = rxStatsCard.curr_packet_loss;
-    card_stats.tx_power_current = card.type == WiFiCardType::OPENHD_RTL_88X2AU
+    card_stats.tx_power_current = card_uses_tx_power_index(card)
                                       ? m_curr_tx_power_idx.load()
                                       : m_curr_tx_power_mw.load();
     const auto disarmed_power = get_effective_power(card, i, false);
     const auto armed_power = get_effective_power(card, i, true);
-    card_stats.tx_power_disarmed = card.type == WiFiCardType::OPENHD_RTL_88X2AU
+    card_stats.tx_power_disarmed = card_uses_tx_power_index(card)
                                        ? disarmed_power.second
                                        : disarmed_power.first;
-    card_stats.tx_power_armed = card.type == WiFiCardType::OPENHD_RTL_88X2AU
+    card_stats.tx_power_armed = card_uses_tx_power_index(card)
                                     ? armed_power.second
                                     : armed_power.first;
     card_stats.curr_status = m_wb_txrx->get_card_has_disconnected(i) ? 1 : 0;
@@ -3057,7 +3114,9 @@ bool WBLink::restart_after_card_replug(
   for (std::size_t i = 0; i < broadcast_cards.size(); ++i) {
     const auto& expected = m_broadcast_cards[i];
     const auto& found = broadcast_cards[i];
-    if (found.device_name != expected.device_name ||
+    const bool direct_devourer = expected.driver_name == "devourer" &&
+                                  found.driver_name == "devourer";
+    if ((!direct_devourer && found.device_name != expected.device_name) ||
         (!expected.mac.empty() && found.mac != expected.mac)) {
       m_console->warn("WB restart card mismatch: expected {} ({}) got {} ({})",
                       expected.device_name, expected.mac, found.device_name,
@@ -3065,6 +3124,7 @@ bool WBLink::restart_after_card_replug(
       return false;
     }
   }
+  m_broadcast_cards = broadcast_cards;
   m_work_thread_run = false;
   if (m_work_thread && m_work_thread->joinable()) m_work_thread->join();
   std::vector<wifibroadcast::WifiCard> runtime_cards;
