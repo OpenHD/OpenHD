@@ -763,6 +763,9 @@ void DWifiCards::main_discover_an_process_wifi_cards(
   // We need to discover the connected cards and reason about their usage
   // Find out which cards are connected first
   auto connected_cards = DWifiCards::discover_connected_wifi_cards();
+  const bool devourer_card_ready = std::any_of(
+      connected_cards.begin(), connected_cards.end(),
+      [](const WiFiCard& card) { return card.devourer_wb_enabled; });
   // Issue on rpi with Atheros: For some reason, openhd is sometimes started
   // before the card finishes some initialization steps ?! and is therefore not
   // discovered. Change January 05, 23: We always wait for a card doing monitor
@@ -770,7 +773,7 @@ void DWifiCards::main_discover_an_process_wifi_cards(
   // can be usefully for testing, but is not a behaviour we want when running on
   // a user image)
   const auto begin = std::chrono::steady_clock::now();
-  while (true) {
+  while (!devourer_card_ready) {
     const auto n_openhd_supported_cards =
         DWifiCards::n_cards_openhd_wifibroadcast_supported(connected_cards);
     // On the air unit, we stop the discovery as soon as we have one wb capable
