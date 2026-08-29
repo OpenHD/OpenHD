@@ -27,14 +27,14 @@ jobs:
       - name: Checkout repository and submodules
         uses: actions/checkout@v4
         with:
-          submodules: recursive
+          submodules: true
           fetch-depth: 0
           token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
       - name: Sync submodules
         run: |
-          git submodule sync --recursive
-          git submodule update --init --recursive
-          git submodule status --recursive
+          git submodule sync
+          git submodule update --init
+          git submodule status
       - name: Ensure private submodule content
         run: |
           if [ ! -f OpenHD/ohd_interface/video_crypto_private/CMakeLists.txt ]; then
