@@ -10,6 +10,12 @@ endif()
 set(OPENHD_SYSROOT "$ENV{OPENHD_SYSROOT}")
 set(OPENHD_CROSS_TRIPLET "$ENV{OPENHD_CROSS_TRIPLET}")
 
+# Pass the target root to the compiler and linker as well as to CMake's find
+# machinery. Bullseye's libc linker scripts contain absolute paths such as
+# /lib/<triplet>/libc.so.6; without --sysroot, GNU ld incorrectly resolves
+# those paths against the CI runner and executable links fail.
+set(CMAKE_SYSROOT "${OPENHD_SYSROOT}")
+
 if(OPENHD_CROSS_TRIPLET STREQUAL "aarch64-linux-gnu")
     set(CMAKE_SYSTEM_PROCESSOR aarch64)
 elseif(OPENHD_CROSS_TRIPLET STREQUAL "arm-linux-gnueabihf")
