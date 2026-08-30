@@ -137,11 +137,13 @@ struct Xmavlink_openhd_stats_monitor_mode_wifi_card_t {
       false;                 // Optimization, only send for active card(s).
   uint32_t count_p_received; /*<  All received (incoming) packets*/
   uint32_t count_p_injected; /*<  All injected (outgoing) packets*/
-  int32_t dummy2;            /*<  for future use*/
+  // Card subtype plus Devourer quality metadata (see wb_link.cpp).
+  int32_t dummy2;
   int16_t tx_power_current;  /*<  either in override index units or mW*/
   int16_t tx_power_armed;    /*<  either in override index units or mW*/
   int16_t tx_power_disarmed; /*<  either in override index units or mW*/
-  int16_t dummy1;            /*<  for future use*/
+  // Devourer thermal baseline (low byte) and signed delta (high byte).
+  int16_t dummy1;
   uint8_t card_index; /*<  Ground might have multiple card(s) for diversity.*/
   uint8_t card_type;  /*<  See openhd card_type enum*/
   // extra
@@ -160,12 +162,12 @@ struct Xmavlink_openhd_stats_monitor_mode_wifi_card_t {
   int8_t rx_signal_quality_antenna2; /*<  Signal quality [0..100] of antenna2*/
   int8_t rx_snr_antenna1;            /*<  SNR in dB for antenna1*/
   int8_t rx_snr_antenna2;            /*<  SNR in dB for antenna2*/
-  // Legacy drivers may report degC. Devourer reports a ThermalStatus code:
-  // 0=unknown, 1=cool, 2=warm, 3=hot, 4=critical.
+  // Legacy drivers report degC. Devourer reports its native raw thermal meter
+  // (0..63); it is deliberately not mislabeled as calibrated Celsius.
   int8_t card_temperature;
   int8_t curr_rx_packet_loss_perc;   /*<  rx packet loss (for this card)*/
   uint8_t curr_status; /*<  set to 1 if something's wrong with the card*/
-  int8_t dummy0;       /*<  for future use*/
+  int8_t dummy0;       /*<  Devourer mean EVM in dB, -128 if unavailable*/
 };
 struct Xmavlink_openhd_wifbroadcast_gnd_operating_mode_t {
   int32_t dummy1;             /*<  future use*/

@@ -30,6 +30,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <iterator>
 #include <list>
 #include <regex>
 #include <thread>
@@ -677,7 +678,18 @@ DWifiCards::ProcessedWifiCards DWifiCards::process_and_evaluate_cards(
     }
   }
   if (profile.is_air && monitor_mode_cards.size() > 1) {
-    monitor_mode_cards.resize(1);
+    std::vector<WiFiCard> devourer_cards;
+    std::copy_if(monitor_mode_cards.begin(), monitor_mode_cards.end(),
+                 std::back_inserter(devourer_cards),
+                 [](const WiFiCard& card) {
+                   return card.devourer_wb_enabled;
+                 });
+    if (devourer_cards.size() >= 2) {
+      devourer_cards.resize(2);
+      monitor_mode_cards = std::move(devourer_cards);
+    } else {
+      monitor_mode_cards.resize(1);
+    }
   }
   return {reorder_monitor_mode_cards(monitor_mode_cards), hotspot_card};
 }
@@ -755,8 +767,17 @@ void DWifiCards::main_discover_an_process_wifi_cards(
     m_monitor_mode_cards = processed.monitor_mode_cards;
     m_opt_hotspot_card = processed.hotspot_card;
     if (m_profile.is_air && m_monitor_mode_cards.size() > 1) {
-      m_console->warn("WB only supports one wifi card on air");
-      m_monitor_mode_cards.resize(1);
+      const bool two_devourer_cards =
+          m_monitor_mode_cards[0].devourer_wb_enabled &&
+          m_monitor_mode_cards[1].devourer_wb_enabled;
+      if (two_devourer_cards) {
+        m_console->info(
+            "Keeping two Devourer Air radios for adaptive channel scouting");
+        m_monitor_mode_cards.resize(2);
+      } else {
+        m_console->warn("WB only supports one non-Devourer wifi card on air");
+        m_monitor_mode_cards.resize(1);
+      }
     }
     return;
   }

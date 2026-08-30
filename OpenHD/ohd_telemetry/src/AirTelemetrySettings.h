@@ -63,6 +63,8 @@ struct Settings {
   // 0 means not configured (do not use)
   int fc_battery_n_cells = 0;
   int fc_sys_id = DEFAULT_FC_SYS_ID;
+  // Full bidirectional OpenHD unit-to-unit telemetry link. This is separate
+  // from the FC UART and must use matching settings on Air and Ground.
   std::string openhd_uart_telemetry_connection = UART_CONNECTION_TYPE_DISABLE;
   bool openhd_uart_telemetry_enabled = true;
   int openhd_uart_telemetry_baudrate = DEFAULT_UART_BAUDRATE;

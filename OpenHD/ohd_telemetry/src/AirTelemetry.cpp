@@ -23,6 +23,8 @@
 
 #include "AirTelemetry.h"
 
+#include "openhd_secondary_telemetry.hpp"
+
 #include <algorithm>
 #include <chrono>
 #include <cmath>
@@ -134,7 +136,9 @@ AirTelemetry::AirTelemetry(bool ignoreSerial)
   m_console->debug("Created AirTelemetry");
 }
 
-AirTelemetry::~AirTelemetry() {}
+AirTelemetry::~AirTelemetry() {
+  openhd::SecondaryTelemetryStatus::instance().set_configured("UART", false);
+}
 
 void AirTelemetry::send_messages_fc(std::vector<MavlinkMessage>& messages) {
   if (!m_fc_serial) return;
@@ -781,18 +785,21 @@ void AirTelemetry::setup_uart() {
 
 void AirTelemetry::setup_openhd_uart_telemetry() {
   if (m_ignoreSerial) {
+    openhd::SecondaryTelemetryStatus::instance().set_configured("UART", false);
     if (m_openhd_uart_serial) m_openhd_uart_serial->disable();
     return;
   }
   if (!m_openhd_uart_serial) return;
   const auto& settings = m_air_settings->get_settings();
   if (!settings.openhd_uart_telemetry_enabled) {
+    openhd::SecondaryTelemetryStatus::instance().set_configured("UART", false);
     m_openhd_uart_serial->disable();
     return;
   }
   const auto uart_linux_fd = serial_openhd_param_to_linux_fd(
       settings.openhd_uart_telemetry_connection, SerialPortRole::OpenHD);
   if (!uart_linux_fd.has_value()) {
+    openhd::SecondaryTelemetryStatus::instance().set_configured("UART", false);
     m_openhd_uart_serial->disable();
     return;
   }
@@ -801,9 +808,13 @@ void AirTelemetry::setup_openhd_uart_telemetry() {
   options.baud_rate = settings.openhd_uart_telemetry_baudrate;
   options.flow_control = settings.openhd_uart_telemetry_flow_control;
   options.enable_reading = true;
+  openhd::SecondaryTelemetryStatus::instance().set_configured("UART", true);
   m_openhd_uart_serial->configure(
       options, "openhd_uart",
       [this](const std::vector<MavlinkMessage> messages) {
+        if (!messages.empty()) {
+          openhd::SecondaryTelemetryStatus::instance().note_received("UART");
+        }
         auto filtered = m_uart_deduplicator.filter_and_mark(messages);
         if (!filtered.empty()) {
           this->on_messages_ground_unit(filtered);

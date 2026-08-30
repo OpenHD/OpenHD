@@ -45,6 +45,8 @@ struct Settings {
   std::string gnd_uart_connection_type = UART_CONNECTION_TYPE_DISABLE;
   int gnd_uart_baudrate = 115200;
   bool gnd_uart_flow_control = false;
+  // Full bidirectional OpenHD unit-to-unit telemetry link. Ground-side GCS and
+  // tracker serial outputs remain separate endpoints.
   std::string openhd_uart_telemetry_connection = UART_CONNECTION_TYPE_DISABLE;
   bool openhd_uart_telemetry_enabled = true;
   int openhd_uart_telemetry_baudrate = 115200;

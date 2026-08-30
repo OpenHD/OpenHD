@@ -27,6 +27,28 @@
 
 namespace openhd {
 
+namespace {
+
+int migrate_tx_power_level(const int value) {
+  // Migrate the short-lived four-level implementation and its disabled
+  // default to the new mandatory five-target control.
+  switch (value) {
+    case -1:
+    case 0:
+      return WB_TX_POWER_LEVEL_20;
+    case 1:
+      return WB_TX_POWER_LEVEL_40;
+    case 2:
+      return WB_TX_POWER_LEVEL_80;
+    case 3:
+      return WB_TX_POWER_LEVEL_100;
+    default:
+      return value;
+  }
+}
+
+}  // namespace
+
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
     WBLinkSettings, wb_frequency, wb_air_tx_channel_width,
     wb_gnd_rx_channel_width, wb_air_mcs_index, wb_gnd_uplink_mcs_index,
@@ -41,6 +63,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
     wb_tx_mode_via_rc_channel,
     enable_wb_video_variable_bitrate, wb_enable_listen_only_mode, wb_pit_mode,
     wb_dev_air_set_high_retransmit_count, wb_enable_redundant_tx,
+    wb_enable_adaptive_channel, wb_enable_fhss, wb_fhss_slot_ms,
     wb_enable_retransmission, wb_enable_retransmission_video,
     wb_enable_retransmission_telemetry, wb_enable_retransmission_rc,
     wb_retransmission_history_video_ms, wb_retransmission_history_telemetry_ms,
@@ -70,8 +93,8 @@ std::optional<WBLinkSettings> openhd::WBLinkSettingsHolder::impl_deserialize(
         parsed.value("wb_tx_power_milli_watt", settings.wb_tx_power_milli_watt);
     settings.wb_tx_power_milli_watt_armed = parsed.value(
         "wb_tx_power_milli_watt_armed", settings.wb_tx_power_milli_watt_armed);
-    settings.wb_tx_power_level =
-        parsed.value("wb_tx_power_level", settings.wb_tx_power_level);
+    settings.wb_tx_power_level = migrate_tx_power_level(
+        parsed.value("wb_tx_power_level", settings.wb_tx_power_level));
     settings.wb_rtl8812au_tx_pwr_idx_override =
         parsed.value("wb_rtl8812au_tx_pwr_idx_override",
                      settings.wb_rtl8812au_tx_pwr_idx_override);
@@ -115,6 +138,12 @@ std::optional<WBLinkSettings> openhd::WBLinkSettingsHolder::impl_deserialize(
                      settings.wb_dev_air_set_high_retransmit_count);
     settings.wb_enable_redundant_tx =
         parsed.value("wb_enable_redundant_tx", settings.wb_enable_redundant_tx);
+    settings.wb_enable_adaptive_channel = parsed.value(
+        "wb_enable_adaptive_channel", settings.wb_enable_adaptive_channel);
+    settings.wb_enable_fhss =
+        parsed.value("wb_enable_fhss", settings.wb_enable_fhss);
+    settings.wb_fhss_slot_ms =
+        parsed.value("wb_fhss_slot_ms", settings.wb_fhss_slot_ms);
     settings.wb_enable_retransmission = parsed.value(
         "wb_enable_retransmission", settings.wb_enable_retransmission);
     settings.wb_enable_retransmission_video =

@@ -55,12 +55,13 @@ static constexpr auto DEFAULT_GND_RX_CHANNEL_WIDTH = 20;
 static constexpr auto DEFAULT_WIFI_TX_POWER_MILLI_WATT = 25;
 // by default, we do not differentiate (to not confuse the user)
 static constexpr auto WIFI_TX_POWER_MILLI_WATT_ARMED_DISABLED = 0;
-// Power level abstraction: -1 disabled, 0..3 lowest..high.
-static constexpr int WB_TX_POWER_LEVEL_DISABLED = -1;
-static constexpr int WB_TX_POWER_LEVEL_LOWEST = 0;
-static constexpr int WB_TX_POWER_LEVEL_LOW = 1;
-static constexpr int WB_TX_POWER_LEVEL_MID = 2;
-static constexpr int WB_TX_POWER_LEVEL_HIGH = 3;
+// User-facing power targets. These are five simple choices; the backend maps
+// them to the appropriate calibrated control for each radio.
+static constexpr int WB_TX_POWER_LEVEL_20 = 20;
+static constexpr int WB_TX_POWER_LEVEL_40 = 40;
+static constexpr int WB_TX_POWER_LEVEL_60 = 60;
+static constexpr int WB_TX_POWER_LEVEL_80 = 80;
+static constexpr int WB_TX_POWER_LEVEL_100 = 100;
 // tx power index 22 is about 25mW on asus, but on some card(s) that can be too
 // much already (especially on custom HW). therefore, this default value is
 // written at run time (see below)
@@ -114,8 +115,8 @@ struct WBLinkSettings {
   uint32_t wb_tx_power_milli_watt = DEFAULT_WIFI_TX_POWER_MILLI_WATT;
   uint32_t wb_tx_power_milli_watt_armed =
       WIFI_TX_POWER_MILLI_WATT_ARMED_DISABLED;
-  // Abstracted power level selection (lowest/low/mid/high), -1 disables.
-  int wb_tx_power_level = WB_TX_POWER_LEVEL_DISABLED;
+  // The only user-facing TX-power control: 20, 40, 60, 80 or 100 percent.
+  int wb_tx_power_level = WB_TX_POWER_LEVEL_20;
   // rtl8812au driver does not support setting tx power by iw dev, but rather
   // only by setting a tx power index override param. With the most recent
   // openhd rtl8812au driver, we can even change this parameter dynamically. See
@@ -160,12 +161,20 @@ struct WBLinkSettings {
   // someone elses feed) but obviosuly you cannot reach your air unit anymore
   // when this mode is enabled (disable it to re-gain control)
   bool wb_enable_listen_only_mode = false;
-  // Pit mode: when enabled and using power levels, disarmed uses LOWEST level.
+  // Pit mode: when enabled, disarmed uses the 20% target.
   bool wb_pit_mode = true;
   // NOTE: Really complicated, for developers only
   bool wb_dev_air_set_high_retransmit_count = false;
   // Send same package on all connected cards
   bool wb_enable_redundant_tx = false;
+  // Devourer Air only: reserve card 1 as a non-disruptive channel scout and
+  // migrate the live link when a persistently cleaner channel is found.
+  bool wb_enable_adaptive_channel = false;
+  // Devourer owns the Wi-Fi FHSS clock/control channel. It is armed here but
+  // only runs while an independent telemetry uplink (for example mLRS UART)
+  // is confirmed live.
+  bool wb_enable_fhss = false;
+  int wb_fhss_slot_ms = 50;
   // Enable ARQ retransmission (standard: disabled)
   bool wb_enable_retransmission = false;
   // Enable ARQ retransmission for specific packet types
@@ -256,6 +265,9 @@ static constexpr auto WB_PASSIVE_MODE = "WB_PASSIVE_MODE";
 static constexpr auto WB_PIT_MODE = "WB_PIT_MODE";
 static constexpr auto WB_DEV_AIR_SET_HIGH_RETRANSMIT_COUNT = "DEV_HIGH_RETR";
 static constexpr auto WB_ENABLE_REDUNDANT_TX = "WB_RED_TX";
+static constexpr auto WB_ENABLE_ADAPTIVE_CHANNEL = "WB_ADAPT_CH";
+static constexpr auto WB_ENABLE_FHSS = "WB_FHSS";
+static constexpr auto WB_FHSS_SLOT_MS = "WB_FHSS_SLOT";
 static constexpr auto WB_ENABLE_RETRANSMISSION = "WB_ENABLE_RETRA";
 static constexpr auto WB_ENABLE_RETRANSMISSION_VIDEO = "WB_RTX_VIDEO";
 static constexpr auto WB_ENABLE_RETRANSMISSION_TELEMETRY = "WB_RTX_TELEM";

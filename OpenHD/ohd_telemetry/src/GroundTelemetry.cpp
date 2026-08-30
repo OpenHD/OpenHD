@@ -23,6 +23,8 @@
 
 #include "GroundTelemetry.h"
 
+#include "openhd_secondary_telemetry.hpp"
+
 #include <chrono>
 #include <iostream>
 
@@ -122,6 +124,7 @@ GroundTelemetry::GroundTelemetry(bool ignoreSerial)
 }
 
 GroundTelemetry::~GroundTelemetry() {
+  openhd::SecondaryTelemetryStatus::instance().set_configured("UART", false);
   // first, stop all the endpoints that have their own threads
   m_wb_endpoint = nullptr;
   m_gcs_endpoint = nullptr;
@@ -233,11 +236,6 @@ void GroundTelemetry::send_messages_ground_station_clients(
   if (m_tcp_server) {
     m_tcp_server->sendMessages(messages);
   }
-  if (m_openhd_uart_serial) {
-    const auto prioritized_messages = m_uart_prioritizer.sort_by_priority(
-        messages, get_openhd_uart_priority_profile());
-    m_openhd_uart_serial->send_messages_if_enabled(prioritized_messages);
-  }
 }
 
 void GroundTelemetry::send_messages_air_unit(
@@ -247,6 +245,11 @@ void GroundTelemetry::send_messages_air_unit(
   record_mavlink_messages(messages, "sent", "openhd_ground", "air_unit");
   if (m_wb_endpoint) {
     m_wb_endpoint->sendMessages(messages);
+  }
+  if (m_openhd_uart_serial) {
+    const auto prioritized_messages = m_uart_prioritizer.sort_by_priority(
+        messages, get_openhd_uart_priority_profile());
+    m_openhd_uart_serial->send_messages_if_enabled(prioritized_messages);
   }
 }
 
@@ -624,18 +627,21 @@ void GroundTelemetry::setup_uart() {
 
 void GroundTelemetry::setup_openhd_uart_telemetry() {
   if (m_ignoreSerial) {
+    openhd::SecondaryTelemetryStatus::instance().set_configured("UART", false);
     if (m_openhd_uart_serial) m_openhd_uart_serial->disable();
     return;
   }
   if (!m_openhd_uart_serial) return;
   const auto& settings = m_gnd_settings->get_settings();
   if (!settings.openhd_uart_telemetry_enabled) {
+    openhd::SecondaryTelemetryStatus::instance().set_configured("UART", false);
     m_openhd_uart_serial->disable();
     return;
   }
   const auto uart_linux_fd = serial_openhd_param_to_linux_fd(
       settings.openhd_uart_telemetry_connection, SerialPortRole::OpenHD);
   if (!uart_linux_fd.has_value()) {
+    openhd::SecondaryTelemetryStatus::instance().set_configured("UART", false);
     m_openhd_uart_serial->disable();
     return;
   }
@@ -644,12 +650,16 @@ void GroundTelemetry::setup_openhd_uart_telemetry() {
   options.baud_rate = settings.openhd_uart_telemetry_baudrate;
   options.flow_control = settings.openhd_uart_telemetry_flow_control;
   options.enable_reading = true;
+  openhd::SecondaryTelemetryStatus::instance().set_configured("UART", true);
   m_openhd_uart_serial->configure(
       options, "openhd_uart",
       [this](const std::vector<MavlinkMessage> messages) {
+        if (!messages.empty()) {
+          openhd::SecondaryTelemetryStatus::instance().note_received("UART");
+        }
         auto filtered = m_uart_deduplicator.filter_and_mark(messages);
         if (filtered.empty()) return;
-        on_messages_ground_station_clients(filtered);
+        on_messages_air_unit(filtered);
       });
 }
 

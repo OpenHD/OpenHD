@@ -48,7 +48,9 @@ static MavlinkMessage pack_card(
   tmp.count_p_injected = card_stats.count_p_injected;
   tmp.curr_rx_packet_loss_perc = card_stats.curr_rx_packet_loss_perc;
   tmp.card_type = card_stats.card_type;
-  tmp.dummy2 = card_stats.card_sub_type;
+  tmp.dummy2 = card_stats.dummy2;
+  tmp.dummy1 = card_stats.dummy1;
+  tmp.dummy0 = card_stats.dummy0;
   tmp.tx_power_current = card_stats.tx_power_current;
   tmp.tx_power_armed = card_stats.tx_power_armed;
   tmp.tx_power_disarmed = card_stats.tx_power_disarmed;

@@ -29,6 +29,7 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
+#include <cmath>
 #include <cstring>
 #include <iostream>
 #include <limits>
@@ -42,6 +43,7 @@
 #include "openhd_config.h"
 #include "openhd_global_constants.hpp"
 #include "openhd_platform.h"
+#include "openhd_secondary_telemetry.hpp"
 #include "openhd_reboot_util.h"
 #include "openhd_sock.h"
 #include "openhd_spdlog.h"
@@ -276,13 +278,22 @@ load_sysutil_power_profiles() {
 
 int power_level_to_value(const SysutilPowerProfile& profile, int level) {
   switch (level) {
-    case openhd::WB_TX_POWER_LEVEL_LOWEST:
+    case openhd::WB_TX_POWER_LEVEL_20:
       return profile.lowest;
-    case openhd::WB_TX_POWER_LEVEL_LOW:
+    case openhd::WB_TX_POWER_LEVEL_40:
       return profile.low;
-    case openhd::WB_TX_POWER_LEVEL_MID:
+    case openhd::WB_TX_POWER_LEVEL_60:
+      // Existing sysutil profiles have four calibrated points. Insert the new
+      // middle target in logarithmic power space for mW cards and halfway in
+      // the native index space for index-based drivers.
+      if (profile.mode == "MW") {
+        return static_cast<int>(std::lround(std::sqrt(
+            static_cast<double>(profile.low) * profile.mid)));
+      }
+      return profile.low + (profile.mid - profile.low) / 2;
+    case openhd::WB_TX_POWER_LEVEL_80:
       return profile.mid;
-    case openhd::WB_TX_POWER_LEVEL_HIGH:
+    case openhd::WB_TX_POWER_LEVEL_100:
       return profile.high;
     default:
       return 0;
@@ -290,9 +301,36 @@ int power_level_to_value(const SysutilPowerProfile& profile, int level) {
 }
 
 bool is_valid_power_level(int level) {
-  return level >= openhd::WB_TX_POWER_LEVEL_LOWEST &&
-         level <= openhd::WB_TX_POWER_LEVEL_HIGH;
+  return level == openhd::WB_TX_POWER_LEVEL_20 ||
+         level == openhd::WB_TX_POWER_LEVEL_40 ||
+         level == openhd::WB_TX_POWER_LEVEL_60 ||
+         level == openhd::WB_TX_POWER_LEVEL_80 ||
+         level == openhd::WB_TX_POWER_LEVEL_100;
 }
+
+constexpr int devourer_power_offset_qdb(int level) {
+  // A perceptually useful five-step curve relative to Devourer's calibrated
+  // per-rate/per-path maximum. Unit is quarter-dB.
+  switch (level) {
+    case openhd::WB_TX_POWER_LEVEL_20:
+      return -64;  // -16 dB
+    case openhd::WB_TX_POWER_LEVEL_40:
+      return -40;  // -10 dB
+    case openhd::WB_TX_POWER_LEVEL_60:
+      return -24;  // -6 dB
+    case openhd::WB_TX_POWER_LEVEL_80:
+      return -12;  // -3 dB
+    case openhd::WB_TX_POWER_LEVEL_100:
+    default:
+      return 0;
+  }
+}
+
+static_assert(devourer_power_offset_qdb(openhd::WB_TX_POWER_LEVEL_20) == -64);
+static_assert(devourer_power_offset_qdb(openhd::WB_TX_POWER_LEVEL_40) == -40);
+static_assert(devourer_power_offset_qdb(openhd::WB_TX_POWER_LEVEL_60) == -24);
+static_assert(devourer_power_offset_qdb(openhd::WB_TX_POWER_LEVEL_80) == -12);
+static_assert(devourer_power_offset_qdb(openhd::WB_TX_POWER_LEVEL_100) == 0);
 
 bool is_valid_power_value(int value, bool use_index) {
   if (use_index) {
@@ -306,20 +344,20 @@ bool card_uses_tx_power_index(const WiFiCard& card) {
          card.type == WiFiCardType::OPENHD_RTL_88X2AU;
 }
 
-constexpr int8_t devourer_thermal_status_code(const bool valid,
-                                               const int delta) {
-  if (!valid) return 0;
-  if (delta < 8) return 1;
-  if (delta < 15) return 2;
-  if (delta < 25) return 3;
-  return 4;
-}
+constexpr uint32_t DEVOURER_META_ACTIVE_MASK_SHIFT = 8;
+constexpr uint32_t DEVOURER_META_ACTIVE_COUNT_SHIFT = 12;
+constexpr uint32_t DEVOURER_META_VERDICT_SHIFT = 16;
+constexpr uint32_t DEVOURER_META_QUALITY_VALID = 1u << 19;
+constexpr uint32_t DEVOURER_META_PATHS_VALID = 1u << 20;
+constexpr uint32_t DEVOURER_META_THERMAL_VALID = 1u << 21;
+constexpr uint32_t DEVOURER_META_NOISE_VALID = 1u << 22;
+constexpr uint32_t DEVOURER_META_EVM_VALID = 1u << 23;
+constexpr uint32_t DEVOURER_META_ABS_NOISE = 1u << 24;
 
-static_assert(devourer_thermal_status_code(false, 0) == 0);
-static_assert(devourer_thermal_status_code(true, 7) == 1);
-static_assert(devourer_thermal_status_code(true, 8) == 2);
-static_assert(devourer_thermal_status_code(true, 15) == 3);
-static_assert(devourer_thermal_status_code(true, 25) == 4);
+int8_t clamp_i8(const double value) {
+  return static_cast<int8_t>(std::clamp<int>(
+      static_cast<int>(std::lround(value)), -128, 127));
+}
 
 std::string resolve_power_mode(const SysutilPowerProfile& profile,
                                const WiFiCard& card) {
@@ -379,6 +417,8 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
   auto default_keypair = derive_default_wb_keypair();
   if (default_keypair.has_value()) {
     txrx_options.secure_keypair = default_keypair;
+    std::copy_n(default_keypair->key_1.secret_key.begin(),
+                m_devourer_fhss_key.size(), m_devourer_fhss_key.begin());
     m_console->info("Using built-in default keypair.");
   } else {
     m_console->error("Failed to derive built-in default keypair.");
@@ -460,8 +500,19 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
   m_wb_txrx->m_fatal_error_cb = [this](int error) {
     on_wifi_card_fatal_error();
   };
+  auto& runtime_settings = m_settings->unsafe_get_settings();
+  if (runtime_settings.wb_enable_adaptive_channel &&
+      txrx_options.use_devourer && m_broadcast_cards.size() >= 2) {
+    runtime_settings.wb_enable_redundant_tx = false;
+    m_settings->persist();
+  }
+  if (runtime_settings.wb_enable_fhss) {
+    runtime_settings.wb_enable_adaptive_channel = false;
+    runtime_settings.wb_enable_redundant_tx = false;
+    m_settings->persist();
+  }
   m_wb_txrx->set_enable_redundant_tx(
-      m_settings->unsafe_get_settings().wb_enable_redundant_tx);
+      runtime_settings.wb_enable_redundant_tx);
   auto dummy = m_wb_txrx->get_dummy_link();
   if (dummy) {
     dummy->set_drop_mode(DIRTY_emulate_drop_mode);
@@ -732,6 +783,10 @@ int WBLink::get_configured_tx_mcs_index() const {
 
 bool WBLink::request_set_frequency(int frequency) {
   m_console->debug("request_set_frequency {}", frequency);
+  if (m_settings->get_settings().wb_enable_fhss) {
+    m_console->warn("Disable FHSS before changing the fixed/home frequency");
+    return false;
+  }
   if (m_profile.is_ground()) {
     if (m_gnd_curr_rx_frequency.load() == frequency) {
       // The RECEIVED packet can beat QOpenHD's local fallback update. Do not
@@ -796,6 +851,10 @@ bool WBLink::request_set_frequency(int frequency) {
               transaction_id, previous_frequency);
           m_management_air->finish_frequency_change(
               transaction_id, false, previous_frequency);
+          if (m_adaptive_pending_target.load() == frequency) {
+            m_adaptive_pending_target = -1;
+            m_adaptive_pending_previous = -1;
+          }
           m_air_close_video_in = false;
           return;
         }
@@ -810,6 +869,10 @@ bool WBLink::request_set_frequency(int frequency) {
               transaction_id, false, previous_frequency);
           apply_frequency_and_channel_width(previous_frequency, channel_width,
                                             channel_width);
+          if (m_adaptive_pending_target.load() == frequency) {
+            m_adaptive_pending_target = -1;
+            m_adaptive_pending_previous = -1;
+          }
           m_air_close_video_in = false;
           return;
         }
@@ -818,6 +881,20 @@ bool WBLink::request_set_frequency(int frequency) {
         m_settings->unsafe_get_settings().wb_frequency = frequency;
         m_settings->persist();
         m_rate_adjustment_frequency_changed = true;
+        if (m_adaptive_pending_target.load() == frequency) {
+          m_adaptive_air_switch_state.active = true;
+          m_adaptive_air_switch_state.previous_frequency =
+              m_adaptive_pending_previous.load();
+          m_adaptive_air_switch_state.attempted_frequency = frequency;
+          m_adaptive_air_switch_state.baseline_count_p_valid =
+              m_wb_txrx->get_rx_stats().count_p_valid;
+          m_adaptive_air_switch_state.switch_tp =
+              std::chrono::steady_clock::now();
+          m_adaptive_pending_target = -1;
+          m_adaptive_pending_previous = -1;
+          m_adaptive_last_switch_tp = std::chrono::steady_clock::now();
+          reset_adaptive_channel_selection();
+        }
         m_air_close_video_in = false;
         m_console->info("Frequency transaction {} switched air to {}MHz",
                         transaction_id, frequency);
@@ -829,6 +906,10 @@ bool WBLink::request_set_frequency(int frequency) {
 bool WBLink::request_set_air_tx_channel_width(int channel_width) {
   assert(m_profile.is_air);  // Channel width is only ever changed on air
   m_console->debug("request_set_air_tx_channel_width {}", channel_width);
+  if (m_settings->get_settings().wb_enable_fhss) {
+    m_console->warn("Disable FHSS before changing channel width");
+    return false;
+  }
   if (!openhd::wb::validate_air_channel_width_change(
           channel_width, m_broadcast_cards.at(0), m_console)) {
     return false;
@@ -866,6 +947,10 @@ bool WBLink::request_set_ground_rx_channel_width(int channel_width) {
     return false;
   }
   m_console->debug("request_set_ground_rx_channel_width {}", channel_width);
+  if (m_settings->get_settings().wb_enable_fhss) {
+    m_console->warn("Disable FHSS before changing channel width");
+    return false;
+  }
   if (!openhd::wb::validate_air_channel_width_change(
           channel_width, m_broadcast_cards.at(0), m_console)) {
     return false;
@@ -1068,12 +1153,6 @@ bool WBLink::request_start_analyze_channels(int channels_to_scan) {
 }
 
 bool WBLink::request_set_tx_power_level(int level) {
-  if (level == openhd::WB_TX_POWER_LEVEL_DISABLED) {
-    m_settings->unsafe_get_settings().wb_tx_power_level = level;
-    m_settings->persist();
-    m_request_apply_tx_power = true;
-    return true;
-  }
   if (!is_valid_power_level(level)) {
     m_console->warn("Invalid tx power level: {}", level);
     return false;
@@ -1186,6 +1265,11 @@ void WBLink::apply_txpower() {
 
     uint32_t card_pwr_mw = settings.wb_tx_power_mw_per_card.at(i);
     uint32_t card_pwr_idx = settings.wb_tx_power_idx_per_card.at(i);
+    int power_level = settings.wb_tx_power_level;
+    if (rc_tx_mode_pit ||
+        (rc_tx_mode_override < 0 && settings.wb_pit_mode && !m_is_armed)) {
+      power_level = openhd::WB_TX_POWER_LEVEL_20;
+    }
 
     if (m_is_armed) {
       if (settings.wb_tx_power_mw_armed_per_card.at(i) !=
@@ -1210,18 +1294,11 @@ void WBLink::apply_txpower() {
         const auto& profile = it->second;
         const auto mode = resolve_power_mode(profile, card);
         if (mode != "FIXED") {
-          bool use_index = (mode == "INDEX");
+          bool use_index = (mode == "INDEX" || mode == "POWERINDEX");
           if (use_index && !card_uses_tx_power_index(card)) {
             use_index = false;
           }
-          int level = settings.wb_tx_power_level;
-          if (rc_tx_mode_pit) {
-            level = openhd::WB_TX_POWER_LEVEL_LOWEST;
-          } else if (rc_tx_mode_override < 0 && settings.wb_pit_mode &&
-                     !m_is_armed) {
-            level = openhd::WB_TX_POWER_LEVEL_LOWEST;
-          }
-          const int value = power_level_to_value(profile, level);
+          const int value = power_level_to_value(profile, power_level);
           if (is_valid_power_value(value, use_index)) {
             if (use_index) {
               card_pwr_idx = static_cast<uint32_t>(value);
@@ -1230,8 +1307,8 @@ void WBLink::apply_txpower() {
             }
           } else {
             m_console->warn(
-                "Invalid sysutil power level {} value {} for card {}", level,
-                value, card.device_name);
+                "Invalid sysutil power target {} value {} for card {}",
+                power_level, value, card.device_name);
           }
         }
       } else {
@@ -1241,7 +1318,7 @@ void WBLink::apply_txpower() {
     }
 
     // Special logic for Air unit 40Mhz power reduction
-    if (m_profile.is_air) {
+    if (m_profile.is_air && !m_wb_txrx->uses_devourer()) {
       if ((m_broadcast_cards.at(i).type == WiFiCardType::OPENHD_RTL_88X2AU ||
            m_broadcast_cards.at(i).type ==
                WiFiCardType::DEVOURER_RTL8812A) &&
@@ -1254,15 +1331,18 @@ void WBLink::apply_txpower() {
 
     // Apply the power setting to this specific card
     if (m_wb_txrx->uses_devourer()) {
-      // Devourer exposes the chip's calibrated absolute TXAGC index. The
-      // existing OpenHD index setting maps directly and is consistent across
-      // all supported Realtek generations.
-      const int devourer_index =
-          card_pwr_idx == openhd::DEFAULT_RTL8812AU_TX_POWER_INDEX &&
-                  !rc_tx_mode_pit && !use_power_levels
-              ? -1  // OpenHD's zero default means "use calibrated table".
-              : static_cast<int>(card_pwr_idx);
-      m_wb_txrx->set_devourer_tx_power_index_override(i, devourer_index);
+      int offset_qdb = devourer_power_offset_qdb(power_level);
+      // Retain the existing 40 MHz safety backoff for RTL8812A, now without
+      // flattening its calibrated rate table.
+      if (m_profile.is_air && settings.wb_air_tx_channel_width == 40 &&
+          m_broadcast_cards.at(i).type == WiFiCardType::DEVOURER_RTL8812A) {
+        offset_qdb = std::min(offset_qdb, -12);
+      }
+      const int applied_qdb =
+          m_wb_txrx->set_devourer_tx_power_offset_qdb(i, offset_qdb);
+      m_console->debug(
+          "Devourer card {} TX power target {}%: requested {} qdB, applied {} qdB",
+          i, power_level, offset_qdb, applied_qdb);
     } else {
       openhd::wb::set_tx_power_for_card(card_pwr_mw, card_pwr_idx,
                                         m_broadcast_cards.at(i));
@@ -1495,6 +1575,12 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
   {
     auto cb_redundant = [this](std::string, int value) {
       if (!validate_yes_or_no(value)) return false;
+      if (value && (m_settings->get_settings().wb_enable_adaptive_channel ||
+                    m_settings->get_settings().wb_enable_fhss)) {
+        m_console->warn(
+            "Redundant TX cannot use the radio reserved as adaptive scout");
+        return false;
+      }
       m_settings->unsafe_get_settings().wb_enable_redundant_tx = value;
       m_settings->persist();
       m_wb_txrx->set_enable_redundant_tx(value);
@@ -1504,6 +1590,79 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
         Setting{openhd::WB_ENABLE_REDUNDANT_TX,
                 openhd::IntSetting{(int)settings.wb_enable_redundant_tx,
                                    cb_redundant}});
+  }
+  if (adaptive_channel_supported()) {
+    auto cb_adaptive_channel = [this](std::string, int value) {
+      if (!validate_yes_or_no(value)) return false;
+      if (value && m_settings->get_settings().wb_enable_fhss) return false;
+      auto& mutable_settings = m_settings->unsafe_get_settings();
+      mutable_settings.wb_enable_adaptive_channel = value != 0;
+      if (value != 0) {
+        // Card 1 is RX-only while it surveys channels away from the live link.
+        mutable_settings.wb_enable_redundant_tx = false;
+        m_wb_txrx->set_enable_redundant_tx(false);
+      } else {
+        const auto current = m_settings->get_settings();
+        m_wb_txrx->set_devourer_card_channel(
+            1, current.wb_frequency, current.wb_air_tx_channel_width);
+      }
+      m_settings->persist();
+      reset_adaptive_channel_selection();
+      m_console->info("Adaptive channel selection {}",
+                      value != 0 ? "enabled" : "disabled");
+      return true;
+    };
+    ret.push_back(Setting{
+        openhd::WB_ENABLE_ADAPTIVE_CHANNEL,
+        openhd::IntSetting{(int)settings.wb_enable_adaptive_channel,
+                           cb_adaptive_channel}});
+  }
+  if (m_wb_txrx && m_wb_txrx->uses_devourer()) {
+    auto cb_fhss = [this](std::string, int value) {
+      if (!validate_yes_or_no(value)) return false;
+      if (value &&
+          !openhd::SecondaryTelemetryStatus::instance().any_live()) {
+        m_console->warn(
+            "FHSS needs a live independent telemetry link (mLRS UART, Ethernet or LTE)");
+        return false;
+      }
+      auto& mutable_settings = m_settings->unsafe_get_settings();
+      mutable_settings.wb_enable_fhss = value != 0;
+      if (value) {
+        mutable_settings.wb_enable_adaptive_channel = false;
+        mutable_settings.wb_enable_redundant_tx = false;
+        m_wb_txrx->set_enable_redundant_tx(false);
+        reset_adaptive_channel_selection();
+      } else if (m_devourer_fhss_running) {
+        m_wb_txrx->stop_devourer_fhss();
+        m_devourer_fhss_running = false;
+        const auto current = m_settings->get_settings();
+        m_wb_txrx->set_devourer_channel(
+            current.wb_frequency,
+            m_profile.is_air
+                ? static_cast<int>(current.wb_air_tx_channel_width)
+                : m_gnd_curr_rx_channel_width.load());
+      }
+      m_settings->persist();
+      return true;
+    };
+    ret.push_back(Setting{
+        openhd::WB_ENABLE_FHSS,
+        openhd::IntSetting{static_cast<int>(settings.wb_enable_fhss), cb_fhss}});
+
+    auto cb_fhss_slot = [this](std::string, int value) {
+      if (value != 25 && value != 50 && value != 100) return false;
+      m_settings->unsafe_get_settings().wb_fhss_slot_ms = value;
+      m_settings->persist();
+      if (m_devourer_fhss_running) {
+        m_wb_txrx->stop_devourer_fhss();
+        m_devourer_fhss_running = false;
+      }
+      return true;
+    };
+    ret.push_back(Setting{
+        openhd::WB_FHSS_SLOT_MS,
+        openhd::IntSetting{settings.wb_fhss_slot_ms, cb_fhss_slot}});
   }
   {
     // Retransmission
@@ -1692,14 +1851,9 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
   } else {
     // no-op
   }
-  // WIFI TX power depends on the used chips
-  // We expose settings for all 4 slots, but usually only applicable ones
-  // matter. However, to keep it simple and allow pre-configuration, we just
-  // expose them all or maybe only for detected cards? User asked for "each card
-  // gets its own setting". If we only show settings for detected cards, the
-  // user can't config a card that isn't plugged in yet? But usually settings
-  // are static. Also MAVLink params are usually static list. Let's expose for
-  // all MAX_WIFI_CARDS.
+  // One public TX-power control for every supported radio. The legacy raw
+  // mW/index fields remain in persisted settings solely for migration and are
+  // deliberately not exposed as MAVLink parameters.
   auto cb_wb_tx_power_level = [this](std::string, int value) {
     return request_set_tx_power_level(value);
   };
@@ -1716,94 +1870,6 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
   };
   ret.push_back(openhd::Setting{
       WB_PIT_MODE, openhd::IntSetting{settings.wb_pit_mode, cb_wb_pit_mode}});
-
-  for (int i = 0; i < MAX_WIFI_CARDS; i++) {
-    // Index-based settings
-    // For RTL8812AU (and similar index-based)
-    auto cb_wb_rtl8812au_tx_pwr_idx_override = [this, i](std::string,
-                                                         int value) {
-      return request_set_tx_power_rtl8812au(i, value, false);
-    };
-    ret.push_back(openhd::Setting{
-        fmt::format("TX_POWER_I_{}", i),
-        openhd::IntSetting{(int)settings.wb_tx_power_idx_per_card.at(i),
-                           cb_wb_rtl8812au_tx_pwr_idx_override}});
-
-    auto cb_wb_rtl8812au_tx_pwr_idx_armed = [this, i](std::string, int value) {
-      return request_set_tx_power_rtl8812au(i, value, true);
-    };
-    ret.push_back(openhd::Setting{
-        fmt::format("TX_POWER_IA_{}", i),
-        openhd::IntSetting{(int)settings.wb_tx_power_idx_armed_per_card.at(i),
-                           cb_wb_rtl8812au_tx_pwr_idx_armed}});
-
-    // mW-based settings
-    // For others
-    auto cb_wb_tx_power_milli_watt = [this, i](std::string, int value) {
-      return request_set_tx_power_mw(i, value, false);
-    };
-    ret.push_back(openhd::Setting{
-        fmt::format("TX_POWER_MW_{}", i),
-        openhd::IntSetting{(int)settings.wb_tx_power_mw_per_card.at(i),
-                           cb_wb_tx_power_milli_watt}});
-
-    auto cb_wb_tx_power_milli_watt_armed = [this, i](std::string, int value) {
-      return request_set_tx_power_mw(i, value, true);
-    };
-    ret.push_back(openhd::Setting{
-        fmt::format("TX_POWER_MWA_{}", i),
-        openhd::IntSetting{(int)settings.wb_tx_power_mw_armed_per_card.at(i),
-                           cb_wb_tx_power_milli_watt_armed}});
-  }
-
-  // Restore legacy settings as global overrides to maintain GCS compatibility
-  if (openhd::wb::has_any_rtl8812au(m_broadcast_cards)) {
-    auto cb_wb_rtl8812au_tx_pwr_idx_override = [this](std::string, int value) {
-      bool success = true;
-      for (int i = 0; i < MAX_WIFI_CARDS; i++) {
-        if (!request_set_tx_power_rtl8812au(i, value, false)) success = false;
-      }
-      return success;
-    };
-    ret.push_back(openhd::Setting{
-        WB_RTL8812AU_TX_PWR_IDX_OVERRIDE,
-        openhd::IntSetting{(int)settings.wb_tx_power_idx_per_card.at(0),
-                           cb_wb_rtl8812au_tx_pwr_idx_override}});
-    auto cb_wb_rtl8812au_tx_pwr_idx_armed = [this](std::string, int value) {
-      bool success = true;
-      for (int i = 0; i < MAX_WIFI_CARDS; i++) {
-        if (!request_set_tx_power_rtl8812au(i, value, true)) success = false;
-      }
-      return success;
-    };
-    ret.push_back(openhd::Setting{
-        WB_RTL8812AU_TX_PWR_IDX_ARMED,
-        openhd::IntSetting{(int)settings.wb_tx_power_idx_armed_per_card.at(0),
-                           cb_wb_rtl8812au_tx_pwr_idx_armed}});
-  }
-  if (openhd::wb::has_any_non_rtl8812au(m_broadcast_cards)) {
-    auto cb_wb_tx_power_milli_watt = [this](std::string, int value) {
-      bool success = true;
-      for (int i = 0; i < MAX_WIFI_CARDS; i++) {
-        if (!request_set_tx_power_mw(i, value, false)) success = false;
-      }
-      return success;
-    };
-    auto change_tx_power = openhd::IntSetting{
-        (int)settings.wb_tx_power_mw_per_card.at(0), cb_wb_tx_power_milli_watt};
-    ret.push_back(Setting{WB_TX_POWER_MILLI_WATT, change_tx_power});
-    auto cb_wb_tx_power_milli_watt_armed = [this](std::string, int value) {
-      bool success = true;
-      for (int i = 0; i < MAX_WIFI_CARDS; i++) {
-        if (!request_set_tx_power_mw(i, value, true)) success = false;
-      }
-      return success;
-    };
-    auto change_tx_power_armed =
-        openhd::IntSetting{(int)settings.wb_tx_power_mw_armed_per_card.at(0),
-                           cb_wb_tx_power_milli_watt_armed};
-    ret.push_back(Setting{WB_TX_POWER_MILLI_WATT_ARMED, change_tx_power_armed});
-  }
 
   openhd::validate_provided_ids(ret);
   return ret;
@@ -1836,6 +1902,9 @@ void WBLink::loop_do_work() {
     wt_perform_bw_via_rc_channel_if_enabled();
     wt_perform_tx_mode_via_rc_channel_if_enabled();
     wt_air_perform_frequency_retry();
+    wt_manage_devourer_fhss();
+    wt_air_check_adaptive_channel_switch();
+    wt_air_perform_adaptive_channel_selection();
     wt_gnd_perform_channel_management();
     // air_perform_reset_frequency();
     // Perform thermal protection level calculation before rate adjustment !
@@ -1900,16 +1969,16 @@ void WBLink::wt_update_statistics() {
         const auto& profile = it->second;
         const auto mode = resolve_power_mode(profile, card);
         if (mode != "FIXED") {
-          bool use_index = (mode == "INDEX");
+          bool use_index = (mode == "INDEX" || mode == "POWERINDEX");
           if (use_index && !card_uses_tx_power_index(card)) {
             use_index = false;
           }
           int level = curr_settings.wb_tx_power_level;
           if (rc_tx_mode_pit) {
-            level = openhd::WB_TX_POWER_LEVEL_LOWEST;
+            level = openhd::WB_TX_POWER_LEVEL_20;
           } else if (rc_tx_mode_override < 0 && curr_settings.wb_pit_mode &&
                      !armed) {
-            level = openhd::WB_TX_POWER_LEVEL_LOWEST;
+            level = openhd::WB_TX_POWER_LEVEL_20;
           }
           const int value = power_level_to_value(profile, level);
           if (is_valid_power_value(value, use_index)) {
@@ -2121,14 +2190,62 @@ void WBLink::wt_update_statistics() {
         rf_rx_stats.antenna2.card_signal_quality_perc;
     card_stats.rx_snr_antenna1 = -128;
     card_stats.rx_snr_antenna2 = -128;
-    card_stats.card_temperature = 0;
+    card_stats.card_temperature = -128;
+    card_stats.dummy0 = -128;
+    card_stats.dummy1 = 0;
+    card_stats.dummy2 = static_cast<uint8_t>(card.sub_type);
     if (m_wb_txrx->uses_devourer()) {
-      // Devourer's meter is not calibrated in Celsius. Reuse the existing
-      // byte for its native health buckets: unknown/cool/warm/hot/critical.
+      uint32_t metadata = static_cast<uint8_t>(card.sub_type);
       if (const auto thermal = m_wb_txrx->get_devourer_thermal_status(i)) {
-        card_stats.card_temperature =
-            devourer_thermal_status_code(thermal->valid, thermal->delta);
+        card_stats.card_temperature = static_cast<int8_t>(thermal->raw);
+        const uint16_t packed_thermal =
+            static_cast<uint16_t>(thermal->baseline) |
+            (static_cast<uint16_t>(static_cast<uint8_t>(thermal->delta)) << 8);
+        card_stats.dummy1 = static_cast<int16_t>(packed_thermal);
+        if (thermal->valid) metadata |= DEVOURER_META_THERMAL_VALID;
       }
+      if (const auto quality = m_wb_txrx->get_devourer_quality_snapshot(i)) {
+        if (quality->quality_valid) {
+          metadata |= DEVOURER_META_QUALITY_VALID;
+          metadata |= (static_cast<uint32_t>(quality->verdict) & 0x7u)
+                      << DEVOURER_META_VERDICT_SHIFT;
+          card_stats.rx_rssi = clamp_i8(quality->rssi_mean_dbm);
+        }
+        if (quality->paths_valid) {
+          metadata |= DEVOURER_META_PATHS_VALID;
+          metadata |= (static_cast<uint32_t>(quality->active_mask) & 0xfu)
+                      << DEVOURER_META_ACTIVE_MASK_SHIFT;
+          metadata |= (static_cast<uint32_t>(quality->n_active) & 0x7u)
+                      << DEVOURER_META_ACTIVE_COUNT_SHIFT;
+          if (quality->path_rssi_valid[0])
+            card_stats.rx_rssi_1 = clamp_i8(quality->path_rssi_dbm[0]);
+          if (quality->path_rssi_valid[1])
+            card_stats.rx_rssi_2 = clamp_i8(quality->path_rssi_dbm[1]);
+          if (quality->path_snr_valid[0])
+            card_stats.rx_snr_antenna1 = clamp_i8(quality->path_snr_db[0]);
+          if (quality->path_snr_valid[1])
+            card_stats.rx_snr_antenna2 = clamp_i8(quality->path_snr_db[1]);
+          if (quality->path_rssi_valid[0] && quality->path_snr_valid[0])
+            card_stats.rx_noise_antenna1 = clamp_i8(
+                quality->path_rssi_dbm[0] - quality->path_snr_db[0]);
+          if (quality->path_rssi_valid[1] && quality->path_snr_valid[1])
+            card_stats.rx_noise_antenna2 = clamp_i8(
+                quality->path_rssi_dbm[1] - quality->path_snr_db[1]);
+        }
+        if (quality->noise_floor_valid) {
+          metadata |= DEVOURER_META_NOISE_VALID;
+          card_stats.rx_noise_adapter = clamp_i8(quality->noise_floor_dbm);
+        } else if (quality->absolute_noise_floor_valid) {
+          metadata |= DEVOURER_META_NOISE_VALID | DEVOURER_META_ABS_NOISE;
+          card_stats.rx_noise_adapter =
+              clamp_i8(quality->absolute_noise_floor_dbm);
+        }
+        if (quality->evm_valid) {
+          metadata |= DEVOURER_META_EVM_VALID;
+          card_stats.dummy0 = clamp_i8(quality->evm_mean_db);
+        }
+      }
+      card_stats.dummy2 = static_cast<int32_t>(metadata);
     } else {
       const auto proc_base_opt =
           resolve_proc_base_dir(card.driver_name, card.device_name);
@@ -3171,6 +3288,254 @@ void WBLink::wt_air_perform_frequency_retry() {
     m_console->warn("Air rejected ground retry {} for {}@{}MHz",
                     retry->transaction_id, retry->target_frequency_mhz,
                     retry->channel_width_mhz);
+  }
+}
+
+bool WBLink::adaptive_channel_supported() const {
+  return m_profile.is_air && m_wb_txrx && m_wb_txrx->uses_devourer() &&
+         m_broadcast_cards.size() >= 2 &&
+         m_broadcast_cards[0].devourer_wb_enabled &&
+         m_broadcast_cards[1].devourer_wb_enabled;
+}
+
+std::vector<int> WBLink::devourer_fhss_channels() const {
+  const auto settings = m_settings->get_settings();
+  const int width = m_profile.is_air
+                        ? static_cast<int>(settings.wb_air_tx_channel_width)
+                        : m_gnd_curr_rx_channel_width.load();
+  if (settings.wb_frequency < 3000) {
+    // HT40 FastRetune retains its +/- primary position, so use only channels
+    // with the same HT40+ orientation in that mode.
+    return width == 40 ? std::vector<int>{2412, 2452}
+                       : std::vector<int>{2412, 2437, 2462};
+  }
+  return width == 40 ? std::vector<int>{5745, 5785, 5825}
+                     : std::vector<int>{5700, 5745, 5785, 5825};
+}
+
+void WBLink::wt_manage_devourer_fhss() {
+  if (!m_wb_txrx || !m_wb_txrx->uses_devourer()) return;
+  const auto settings = m_settings->get_settings();
+  const bool secondary_live =
+      openhd::SecondaryTelemetryStatus::instance().any_live();
+
+  if (!settings.wb_enable_fhss || !secondary_live) {
+    if (m_devourer_fhss_running) {
+      m_wb_txrx->stop_devourer_fhss();
+      m_devourer_fhss_running = false;
+      const int width = m_profile.is_air
+                            ? static_cast<int>(settings.wb_air_tx_channel_width)
+                            : m_gnd_curr_rx_channel_width.load();
+      m_wb_txrx->set_devourer_channel(settings.wb_frequency, width);
+      m_console->warn(
+          "Devourer FHSS stopped; independent telemetry uplink is no longer live");
+    } else if (settings.wb_enable_fhss && !secondary_live &&
+               !m_devourer_fhss_wait_logged) {
+      m_console->info(
+          "Devourer FHSS armed, waiting for mLRS/secondary telemetry traffic");
+      m_devourer_fhss_wait_logged = true;
+    }
+    return;
+  }
+  m_devourer_fhss_wait_logged = false;
+  if (m_devourer_fhss_running) return;
+
+  const int width = m_profile.is_air
+                        ? static_cast<int>(settings.wb_air_tx_channel_width)
+                        : m_gnd_curr_rx_channel_width.load();
+  const auto role = m_profile.is_air ? WBTxRx::DevourerFhssRole::Authority
+                                     : WBTxRx::DevourerFhssRole::Follower;
+  if (!m_wb_txrx->start_devourer_fhss(
+          role, devourer_fhss_channels(), width,
+          static_cast<uint32_t>(settings.wb_fhss_slot_ms),
+          m_devourer_fhss_key)) {
+    m_console->error("Could not start Devourer FHSS session");
+    return;
+  }
+  m_devourer_fhss_running = true;
+  m_console->info("Devourer FHSS started as {} ({}ms slots)",
+                  m_profile.is_air ? "authority" : "follower",
+                  settings.wb_fhss_slot_ms);
+}
+
+void WBLink::reset_adaptive_channel_selection() {
+  std::lock_guard<std::mutex> lock(m_adaptive_channel_mutex);
+  m_adaptive_channel_evidence.clear();
+  m_adaptive_channel_candidates.clear();
+  m_adaptive_channel_candidate_index = 0;
+  m_adaptive_recommended_frequency = -1;
+  m_adaptive_recommendation_streak = 0;
+  m_adaptive_last_sample_tp = std::chrono::steady_clock::now();
+}
+
+void WBLink::wt_air_perform_adaptive_channel_selection() {
+  if (!adaptive_channel_supported() ||
+      m_settings->get_settings().wb_enable_fhss ||
+      !m_settings->get_settings().wb_enable_adaptive_channel ||
+      m_adaptive_air_switch_state.active ||
+      m_adaptive_pending_target.load() > 0) {
+    return;
+  }
+  std::lock_guard<std::mutex> adaptive_lock(m_adaptive_channel_mutex);
+  const auto now = std::chrono::steady_clock::now();
+  if (now - m_adaptive_last_sample_tp < ADAPTIVE_SAMPLE_INTERVAL) return;
+  {
+    std::lock_guard<std::mutex> lock(m_work_item_queue_mutex);
+    if (!m_work_item_queue.empty()) return;
+  }
+
+  const auto settings = m_settings->get_settings();
+  const int home_frequency = settings.wb_frequency;
+  const int channel_width = settings.wb_air_tx_channel_width;
+  if (m_adaptive_channel_candidates.empty()) {
+    std::vector<int> proposed;
+    if (home_frequency < 3000) {
+      // Three non-overlapping 2.4GHz channels keep a complete survey short.
+      proposed = {2412, 2437, 2462};
+    } else {
+      for (const auto& channel : openhd::get_openhd_channels_1_to_7()) {
+        proposed.push_back(static_cast<int>(channel.frequency));
+      }
+    }
+    proposed.push_back(home_frequency);
+    for (const int frequency : proposed) {
+      if (std::find(m_adaptive_channel_candidates.begin(),
+                    m_adaptive_channel_candidates.end(),
+                    frequency) != m_adaptive_channel_candidates.end()) {
+        continue;
+      }
+      if (wifi_card_supports_frequency_channel_width(
+              m_broadcast_cards[0], frequency, channel_width) &&
+          wifi_card_supports_frequency_channel_width(
+              m_broadcast_cards[1], frequency, channel_width)) {
+        m_adaptive_channel_candidates.push_back(frequency);
+      }
+    }
+    if (m_adaptive_channel_candidates.size() < 2) {
+      m_console->warn(
+          "Adaptive channel selection has no alternative channel supported "
+          "by both Air radios");
+      m_adaptive_last_sample_tp = now;
+      return;
+    }
+  }
+
+  const int sample_frequency =
+      m_adaptive_channel_candidates[m_adaptive_channel_candidate_index];
+  if (!m_wb_txrx->set_devourer_card_channel(1, sample_frequency,
+                                             channel_width)) {
+    m_console->warn("Adaptive scout could not tune card 1 to {}MHz",
+                    sample_frequency);
+    m_adaptive_last_sample_tp = now;
+    return;
+  }
+  // Discard counters accumulated while tuning, then measure a bounded window.
+  (void)m_wb_txrx->get_devourer_quality_snapshot(1);
+  std::this_thread::sleep_for(ADAPTIVE_SAMPLE_DWELL);
+  const auto sample = m_wb_txrx->get_devourer_quality_snapshot(1);
+  const bool restored = m_wb_txrx->set_devourer_card_channel(
+      1, home_frequency, channel_width);
+  if (!restored) {
+    m_console->error("Adaptive scout could not return card 1 to {}MHz",
+                     home_frequency);
+  }
+  m_adaptive_last_sample_tp = std::chrono::steady_clock::now();
+  if (sample && sample->energy_valid) {
+    auto& evidence = m_adaptive_channel_evidence[sample_frequency];
+    evidence.false_alarm_average =
+        evidence.samples == 0
+            ? sample->false_alarms
+            : (evidence.false_alarm_average * 3 + sample->false_alarms * 2) /
+                  5;
+    ++evidence.samples;
+    m_console->debug("Adaptive scout {}MHz: false alarms {} (sample {})",
+                     sample_frequency, sample->false_alarms,
+                     evidence.samples);
+  }
+
+  ++m_adaptive_channel_candidate_index;
+  if (m_adaptive_channel_candidate_index <
+      m_adaptive_channel_candidates.size()) {
+    return;
+  }
+  m_adaptive_channel_candidate_index = 0;
+
+  const auto home_it = m_adaptive_channel_evidence.find(home_frequency);
+  if (home_it == m_adaptive_channel_evidence.end() ||
+      home_it->second.samples < 2) {
+    return;
+  }
+  const uint64_t home_average = home_it->second.false_alarm_average;
+  int best_frequency = home_frequency;
+  uint64_t best_average = home_average;
+  for (const int frequency : m_adaptive_channel_candidates) {
+    const auto it = m_adaptive_channel_evidence.find(frequency);
+    if (it == m_adaptive_channel_evidence.end() || it->second.samples < 2) {
+      continue;
+    }
+    const uint64_t average = it->second.false_alarm_average;
+    if (average < best_average) {
+      best_average = average;
+      best_frequency = frequency;
+    }
+  }
+
+  // Require meaningful current interference and a 35% improvement with an
+  // absolute margin. Two complete survey rounds must agree before migration.
+  const bool materially_better =
+      best_frequency != home_frequency && home_average >= 20 &&
+      best_average + 20 <= home_average &&
+      best_average * 100 <= home_average * 65;
+  if (!materially_better) {
+    m_adaptive_recommended_frequency = -1;
+    m_adaptive_recommendation_streak = 0;
+    return;
+  }
+  if (m_adaptive_recommended_frequency == best_frequency) {
+    ++m_adaptive_recommendation_streak;
+  } else {
+    m_adaptive_recommended_frequency = best_frequency;
+    m_adaptive_recommendation_streak = 1;
+  }
+  if (m_adaptive_recommendation_streak < 2 ||
+      now - m_adaptive_last_switch_tp < ADAPTIVE_SWITCH_COOLDOWN) {
+    return;
+  }
+
+  m_console->info(
+      "Adaptive channel recommends {}MHz (false alarms {} vs {} on {}MHz)",
+      best_frequency, best_average, home_average, home_frequency);
+  m_adaptive_pending_previous = home_frequency;
+  m_adaptive_pending_target = best_frequency;
+  if (!request_set_frequency(best_frequency)) {
+    m_adaptive_pending_previous = -1;
+    m_adaptive_pending_target = -1;
+  }
+}
+
+void WBLink::wt_air_check_adaptive_channel_switch() {
+  if (!m_adaptive_air_switch_state.active) return;
+  const auto rx_stats = m_wb_txrx->get_rx_stats();
+  if (rx_stats.count_p_valid >
+      m_adaptive_air_switch_state.baseline_count_p_valid) {
+    m_console->info("Adaptive switch to {}MHz confirmed by uplink traffic",
+                    m_adaptive_air_switch_state.attempted_frequency);
+    m_adaptive_air_switch_state.active = false;
+    return;
+  }
+  if (std::chrono::steady_clock::now() -
+          m_adaptive_air_switch_state.switch_tp <
+      GND_SWITCH_ROLLBACK_TIMEOUT) {
+    return;
+  }
+  const int previous = m_adaptive_air_switch_state.previous_frequency;
+  m_console->warn(
+      "No uplink traffic after adaptive switch; returning Air to {}MHz",
+      previous);
+  if (request_set_frequency(previous)) {
+    m_adaptive_air_switch_state.active = false;
+  } else {
+    m_console->error("Could not schedule adaptive rollback to {}MHz", previous);
   }
 }
 

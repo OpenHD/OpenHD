@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <utility>
 
+#include "openhd_secondary_telemetry.hpp"
+
 namespace {
 constexpr auto kVideoDuplicateLifetime = std::chrono::seconds(2);
 constexpr auto kDataDuplicateLifetime = std::chrono::milliseconds(250);
@@ -52,6 +54,10 @@ void MultiLink::clear_links() {
     endpoints.swap(m_endpoints);
   }
   for (const auto& endpoint : endpoints) {
+    if (endpoint->name != "WIFIBROADCAST") {
+      openhd::SecondaryTelemetryStatus::instance().set_configured(
+          endpoint->name, false);
+    }
     endpoint->link->register_on_receive_video_data_cb(nullptr);
     endpoint->link->register_on_receive_telemetry_data_cb(nullptr);
     endpoint->link->m_audio_data_rx_cb = nullptr;
@@ -73,6 +79,10 @@ void MultiLink::add_link(std::string name, std::shared_ptr<OHDLink> link) {
     if (existing != m_endpoints.end()) return;
     m_endpoints.push_back(endpoint);
   }
+  if (endpoint->name != "WIFIBROADCAST") {
+    openhd::SecondaryTelemetryStatus::instance().set_configured(endpoint->name,
+                                                                true);
+  }
   endpoint->worker = std::thread([endpoint]() { dispatch_loop(endpoint); });
   auto gate = m_callback_gate;
   link->register_on_receive_video_data_cb(
@@ -84,7 +94,11 @@ void MultiLink::add_link(std::string name, std::shared_ptr<OHDLink> link) {
         }
       });
   link->register_on_receive_telemetry_data_cb(
-      [gate](std::shared_ptr<std::vector<uint8_t>> data) {
+      [gate, endpoint](std::shared_ptr<std::vector<uint8_t>> data) {
+        if (data && !data->empty() && endpoint->name != "WIFIBROADCAST") {
+          openhd::SecondaryTelemetryStatus::instance().note_received(
+              endpoint->name);
+        }
         std::lock_guard<std::mutex> lock(gate->mutex);
         if (gate->owner && data &&
             !gate->owner->is_duplicate_data(
@@ -119,6 +133,10 @@ void MultiLink::remove_link(const std::shared_ptr<OHDLink>& link) {
   removed->link->register_on_receive_video_data_cb(nullptr);
   removed->link->register_on_receive_telemetry_data_cb(nullptr);
   removed->link->m_audio_data_rx_cb = nullptr;
+  if (removed->name != "WIFIBROADCAST") {
+    openhd::SecondaryTelemetryStatus::instance().set_configured(removed->name,
+                                                                false);
+  }
   stop_endpoint(removed);
 }
 

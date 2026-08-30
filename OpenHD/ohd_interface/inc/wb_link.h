@@ -30,6 +30,7 @@
 #include <functional>
 #include <mutex>
 #include <optional>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -64,8 +65,9 @@ class WBLink : public OHDLink {
  public:
   /**
    * @param broadcast_cards list of discovered wifi card(s) that support monitor
-   * mode & are injection capable. Needs to be at least one card, and only one
-   * card on an air unit. The given cards need to support monitor mode and
+ * mode & are injection capable. Needs to be at least one card. An Air unit can
+ * additionally use a second Devourer card as an adaptive-channel scout. The
+ * given cards need to support monitor mode and
    * either 2.4G or 5G wifi. In the case where there are multiple card(s), the
    * first given card is used for transmission & receive, the other card(s) are
    * not used for transmission, only for receiving.
@@ -164,6 +166,12 @@ class WBLink : public OHDLink {
   void wt_perform_rate_adjustment();
   void wt_gnd_perform_channel_management();
   void wt_air_perform_frequency_retry();
+  void wt_air_perform_adaptive_channel_selection();
+  void wt_air_check_adaptive_channel_switch();
+  void wt_manage_devourer_fhss();
+  [[nodiscard]] std::vector<int> devourer_fhss_channels() const;
+  [[nodiscard]] bool adaptive_channel_supported() const;
+  void reset_adaptive_channel_selection();
   void wt_gnd_perform_channel_switch_rollback_check();
   void gnd_note_channel_switch_attempt(int previous_frequency,
                                        int previous_channel_width,
@@ -297,6 +305,34 @@ class WBLink : public OHDLink {
   std::atomic<int> m_gnd_pending_frequency_since_ms = 0;
   std::atomic<int> m_gnd_last_no_received_warning_ms = 0;
   uint32_t m_air_last_frequency_retry_transaction = 0;
+  struct AdaptiveChannelEvidence {
+    uint64_t false_alarm_average = 0;
+    uint32_t samples = 0;
+  };
+  std::mutex m_adaptive_channel_mutex;
+  std::unordered_map<int, AdaptiveChannelEvidence> m_adaptive_channel_evidence;
+  std::vector<int> m_adaptive_channel_candidates;
+  size_t m_adaptive_channel_candidate_index = 0;
+  int m_adaptive_recommended_frequency = -1;
+  uint8_t m_adaptive_recommendation_streak = 0;
+  std::chrono::steady_clock::time_point m_adaptive_last_sample_tp =
+      std::chrono::steady_clock::now();
+  std::chrono::steady_clock::time_point m_adaptive_last_switch_tp =
+      std::chrono::steady_clock::now() - std::chrono::minutes(3);
+  struct AdaptiveAirSwitchState {
+    bool active = false;
+    int previous_frequency = -1;
+    int attempted_frequency = -1;
+    int64_t baseline_count_p_valid = 0;
+    std::chrono::steady_clock::time_point switch_tp =
+        std::chrono::steady_clock::now();
+  };
+  AdaptiveAirSwitchState m_adaptive_air_switch_state{};
+  std::atomic<int> m_adaptive_pending_target = -1;
+  std::atomic<int> m_adaptive_pending_previous = -1;
+  std::array<uint8_t, 16> m_devourer_fhss_key{};
+  bool m_devourer_fhss_running = false;
+  bool m_devourer_fhss_wait_logged = false;
   struct GroundSwitchRollbackState {
     bool active = false;
     int previous_frequency = -1;
@@ -315,6 +351,12 @@ class WBLink : public OHDLink {
       std::chrono::milliseconds(1000);
   static constexpr auto GND_SWITCH_ROLLBACK_TIMEOUT =
       std::chrono::milliseconds(7000);
+  static constexpr auto ADAPTIVE_SAMPLE_INTERVAL =
+      std::chrono::milliseconds(3000);
+  static constexpr auto ADAPTIVE_SAMPLE_DWELL =
+      std::chrono::milliseconds(300);
+  static constexpr auto ADAPTIVE_SWITCH_COOLDOWN =
+      std::chrono::minutes(3);
   // Allows temporarily closing the video input
   std::atomic_bool m_air_close_video_in = false;
   const int m_recommended_max_fec_blk_size_for_this_platform;
