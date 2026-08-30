@@ -18,8 +18,10 @@ Implemented setting IDs are:
 | 2 | Bandwidth | 0=10MHz, 1=20MHz, 2=40MHz |
 | 3 | MCS | 0..4 |
 | 4 | TX power | 20, 40, 60, 80, or 100 percent |
-| 6 | FHSS | 0=off, 1=on |
+| 6 | FHSS | 0=off (the EdgeTX tool intentionally exposes disable only) |
 
 Frequency changes use OpenHD's existing managed change path. FHSS remains
-limited to the Devourer backend. IDs 5, 7, 8, 9, and 17 are intentionally not
+limited to the Devourer backend. The EdgeTX action only disables FHSS on Air,
+returning it to the selected fixed OpenHD channel; enabling FHSS requires its
+normal coordinated setup. IDs 5, 7, 8, 9, and 17 are intentionally not
 implemented.

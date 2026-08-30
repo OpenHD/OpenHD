@@ -188,6 +188,7 @@ _fetch_from_git() {
   {
     echo "[Artosyn] Clone manifest"
     echo "[Artosyn] repo_root=${repo_root}"
+    echo "[Artosyn] revision=$(_artlink_git -C "${repo_root}" rev-parse HEAD)"
     echo "[Artosyn] top-level:"
     ls -la "${repo_root}"
     echo "[Artosyn] key paths:"

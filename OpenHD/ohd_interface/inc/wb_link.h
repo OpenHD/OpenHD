@@ -183,6 +183,7 @@ class WBLink : public OHDLink {
   void wt_perform_rc_settings_protocol_if_enabled();
   void wt_perform_bw_via_rc_channel_if_enabled();
   void wt_perform_tx_mode_via_rc_channel_if_enabled();
+  void wt_perform_fhss_via_rc_channel_if_enabled();
   // Time out to go from wifibroadcast mode to wifi hotspot mode
   void wt_perform_air_hotspot_after_timeout();
   // X20 only, thermal protection
