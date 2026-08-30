@@ -453,3 +453,4 @@ plugins/siyi/
 *.deb
 /OpenHD/build-codex-devourer
 /OpenHD/ohd_interface/build-codex-devourer
+/OpenHD/build-armhf-docker

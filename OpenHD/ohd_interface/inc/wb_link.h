@@ -180,6 +180,7 @@ class WBLink : public OHDLink {
   // this is special, mcs index can not only be changed via mavlink param, but
   // also via RC channel (if enabled)
   void wt_perform_mcs_via_rc_channel_if_enabled();
+  void wt_perform_rc_settings_protocol_if_enabled();
   void wt_perform_bw_via_rc_channel_if_enabled();
   void wt_perform_tx_mode_via_rc_channel_if_enabled();
   // Time out to go from wifibroadcast mode to wifi hotspot mode
@@ -375,6 +376,7 @@ class WBLink : public OHDLink {
  private:
   openhd::wb::ForeignPacketsHelper m_foreign_p_helper;
   openhd::wb::RCChannelHelper m_rc_channel_helper;
+  openhd::wb::RCSettingsProtocol m_rc_settings_protocol;
   openhd::wb::FrameDropsHelper m_frame_drop_helper;
   std::atomic_int m_primary_total_dropped_frames = 0;
   std::atomic_int m_secondary_total_dropped_frames = 0;

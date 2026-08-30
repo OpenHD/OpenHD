@@ -586,3 +586,72 @@ openhd::wb::RCChannelHelper::get_fhss_from_rc_channel(int channel_index) {
   // Standard 2-pos / 3-pos switch: > 1500us is ON (enabled), <= 1500us is OFF (disabled)
   return fhss_channel_value_pwm > 1500;
 }
+
+std::optional<bool> openhd::wb::RCSettingsProtocol::binary(int pwm) {
+  if (pwm >= 900 && pwm <= 1300) return false;
+  if (pwm >= 1700 && pwm <= 2100) return true;
+  return std::nullopt;
+}
+
+uint8_t openhd::wb::RCSettingsProtocol::crc5(uint32_t data) {
+  uint8_t crc = 0x1f;
+  for (int bit = 18; bit >= 0; --bit) {
+    const bool feedback = ((crc >> 4) & 1U) ^ ((data >> bit) & 1U);
+    crc = static_cast<uint8_t>((crc << 1) & 0x1fU);
+    if (feedback) crc ^= 0x05U;
+  }
+  return static_cast<uint8_t>(crc ^ 0x1fU);
+}
+
+uint32_t openhd::wb::RCSettingsProtocol::encode_frame(uint8_t id,
+                                                       uint16_t value,
+                                                       uint8_t sequence) {
+  if (id == 0 || id > 31 || value > 2047 || sequence > 7) return 0;
+  const uint32_t payload = (static_cast<uint32_t>(id) << 14) |
+                           (static_cast<uint32_t>(value) << 3) | sequence;
+  return (payload << 5) | crc5(payload);
+}
+
+void openhd::wb::RCSettingsProtocol::reset() {
+  m_have_clock = m_receiving = false;
+  m_count = 0;
+  m_frame = 0;
+  m_last_frame.reset();
+}
+
+std::optional<openhd::wb::RCSettingsProtocol::Command>
+openhd::wb::RCSettingsProtocol::update(const std::array<int, 18>& channels,
+                                        int base) {
+  if (base < 1 || base > 15) {
+    reset();
+    return std::nullopt;
+  }
+  const int i = base - 1;
+  const auto b2 = binary(channels[i]), b1 = binary(channels[i + 1]);
+  const auto b0 = binary(channels[i + 2]), clk = binary(channels[i + 3]);
+  if (!b2 || !b1 || !b0 || !clk) return std::nullopt;
+  if (!m_have_clock) {
+    m_have_clock = true;
+    m_clock = *clk;
+    return std::nullopt;
+  }
+  if (*clk == m_clock) return std::nullopt;
+  m_clock = *clk;
+  const uint8_t symbol=static_cast<uint8_t>((*b2<<2)|(*b1<<1)|*b0);
+  if (!m_receiving) {
+    if (symbol == 7) { m_receiving=true; m_count=0; m_frame=0; }
+    return std::nullopt;
+  }
+  m_frame=(m_frame<<3)|symbol;
+  if (++m_count != 8) return std::nullopt;
+  m_receiving=false;
+  const uint32_t payload=m_frame>>5;
+  if ((m_frame&0x1fU) != crc5(payload)) return std::nullopt;
+  Command cmd{static_cast<uint8_t>((payload>>14)&31U),
+              static_cast<uint16_t>((payload>>3)&2047U),
+              static_cast<uint8_t>(payload&7U)};
+  if (cmd.setting_id == 0 || (m_last_frame && *m_last_frame == m_frame))
+    return std::nullopt;
+  m_last_frame = m_frame;
+  return cmd;
+}

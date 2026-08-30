@@ -1500,6 +1500,17 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
           openhd::IntSetting{
               (int)settings.wb_enable_rc_openhd_control,
               cb_enable_rc_openhd_control}});
+      auto cb_rc_settings_base_channel = [this](std::string, int value) {
+        if (value < 0 || value > 15) return false;
+        m_settings->unsafe_get_settings().wb_rc_settings_base_channel = value;
+        m_settings->persist();
+        m_rc_settings_protocol.reset();
+        return true;
+      };
+      ret.push_back(Setting{
+          openhd::WB_RC_SETTINGS_BASE_CHANNEL,
+          openhd::IntSetting{settings.wb_rc_settings_base_channel,
+                             cb_rc_settings_base_channel}});
       auto cb_mcs_via_rc_channel = [this](std::string, int value) {
         if (value < 0 || value > 18)
           return false;  // 0 is disabled, valid rc channel number otherwise
@@ -1905,6 +1916,7 @@ void WBLink::loop_do_work() {
       apply_txpower();
     }
     wt_perform_mcs_via_rc_channel_if_enabled();
+    wt_perform_rc_settings_protocol_if_enabled();
     wt_perform_bw_via_rc_channel_if_enabled();
     wt_perform_tx_mode_via_rc_channel_if_enabled();
     wt_perform_fhss_via_rc_channel_if_enabled();
@@ -2863,6 +2875,66 @@ void WBLink::perform_channel_analyze(int channels_to_scan) {
       MyTimeHelper::R(std::chrono::steady_clock::now() - analyze_begin));
   // Go back to the previous frequency
   apply_frequency_and_channel_width_from_settings();
+}
+
+void WBLink::wt_perform_rc_settings_protocol_if_enabled() {
+  if (!m_profile.is_air) return;
+  const auto& settings = m_settings->get_settings();
+  if (!settings.wb_enable_rc_openhd_control ||
+      settings.wb_rc_settings_base_channel == 0) return;
+  const auto channels = m_rc_channel_helper.get_fc_reported_rc_channels();
+  if (!channels) return;
+  const auto command = m_rc_settings_protocol.update(
+      *channels, settings.wb_rc_settings_base_channel);
+  if (!command) return;
+
+  bool accepted = false;
+  switch (command->setting_id) {
+    case 1: {  // Frequency: 1..14 are 2.4GHz Wi-Fi channels, otherwise MHz/5.
+      const int frequency = command->value == 14
+                                ? 2484
+                                : command->value >= 1 && command->value <= 13
+                                      ? 2407 + command->value * 5
+                                      : command->value * 5;
+      accepted = request_set_frequency(frequency);
+      break;
+    }
+    case 2: {  // Bandwidth enum: 0=10, 1=20, 2=40MHz.
+      static constexpr std::array<int, 3> widths{10, 20, 40};
+      if (command->value < widths.size())
+        accepted = request_set_air_tx_channel_width(widths[command->value]);
+      break;
+    }
+    case 3:
+      accepted = request_set_air_mcs_index(command->value);
+      break;
+    case 4:
+      accepted = request_set_tx_power_level(command->value);
+      break;
+    case 6:  // FHSS enable, Devourer only.
+      if (command->value <= 1 && m_wb_txrx && m_wb_txrx->uses_devourer()) {
+        auto& mutable_settings = m_settings->unsafe_get_settings();
+        mutable_settings.wb_enable_fhss = command->value == 1;
+        if (mutable_settings.wb_enable_fhss) {
+          mutable_settings.wb_enable_adaptive_channel = false;
+          mutable_settings.wb_enable_redundant_tx = false;
+          m_wb_txrx->set_enable_redundant_tx(false);
+          reset_adaptive_channel_selection();
+        }
+        m_settings->persist();
+        accepted = true;
+      }
+      break;
+    default:
+      break;
+  }
+  if (accepted) {
+    m_console->info("RC settings command accepted: id={} value={} seq={}",
+                    command->setting_id, command->value, command->sequence);
+  } else {
+    m_console->warn("RC settings command rejected: id={} value={} seq={}",
+                    command->setting_id, command->value, command->sequence);
+  }
 }
 
 void WBLink::wt_perform_mcs_via_rc_channel_if_enabled() {

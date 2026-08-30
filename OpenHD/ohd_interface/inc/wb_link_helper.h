@@ -251,6 +251,29 @@ class FrameDropsHelper {
       std::nullopt;
 };
 
+class RCSettingsProtocol {
+ public:
+  struct Command {
+    uint8_t setting_id;
+    uint16_t value;
+    uint8_t sequence;
+  };
+  std::optional<Command> update(const std::array<int, 18>& channels,
+                                int base_channel);
+  void reset();
+  static uint32_t encode_frame(uint8_t setting_id, uint16_t value,
+                               uint8_t sequence);
+ private:
+  static std::optional<bool> binary(int pwm);
+  static uint8_t crc5(uint32_t payload);
+  bool m_have_clock = false;
+  bool m_clock = false;
+  bool m_receiving = false;
+  uint8_t m_count = 0;
+  uint32_t m_frame = 0;
+  std::optional<uint32_t> m_last_frame;
+};
+
 class PollutionHelper {
  public:
  private:

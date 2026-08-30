@@ -147,6 +147,8 @@ struct WBLinkSettings {
   int wb_max_fec_block_size = DEFAULT_MAX_FEC_BLK_SIZE;
   // Master switch for RC-driven OpenHD link controls.
   bool wb_enable_rc_openhd_control = false;
+  // First of four consecutive channels for the clocked RC settings protocol.
+  int wb_rc_settings_base_channel = 0;
   // change mcs index via RC channel
   uint32_t wb_mcs_index_via_rc_channel = WB_MCS_INDEX_VIA_RC_CHANNEL_OFF;
   // change bw via RC channel
@@ -259,6 +261,7 @@ static constexpr auto WB_ENABLE_STBC = "WB_E_STBC";
 static constexpr auto WB_ENABLE_LDPC = "WB_E_LDPC";
 static constexpr auto WB_ENABLE_SHORT_GUARD = "WB_E_SHORT_GUARD";
 static constexpr auto WB_ENABLE_RC_OPENHD_CONTROL = "RC_OHD_CTRL";
+static constexpr auto WB_RC_SETTINGS_BASE_CHANNEL = "RC_SET_BASE";
 static constexpr auto WB_MCS_INDEX_VIA_RC_CHANNEL = "MCS_VIA_RC";
 static constexpr auto WB_BW_VIA_RC_CHANNEL = "BW_VIA_RC";
 static constexpr auto WB_TX_MODE_VIA_RC_CHANNEL = "TXMODE_VIA_RC";
