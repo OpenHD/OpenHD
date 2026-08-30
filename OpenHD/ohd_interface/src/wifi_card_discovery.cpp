@@ -608,11 +608,21 @@ int DWifiCards::n_cards_openhd_wifibroadcast_supported(
   return ret;
 }
 
-// OpenHD optimization: If there are multiple RX card(s), try and show them
+/// OpenHD optimization: If there are multiple RX card(s), try and show them
 // always in the same order, Even if they were detected in a different order
 // between boots
 std::vector<WiFiCard> reorder_monitor_mode_cards(std::vector<WiFiCard> cards) {
-  if (cards.size() == 1) return cards;
+  if (cards.size() <= 1) return cards;
+  // If Devourer cards are present, prioritize them first so userspace backend is selected
+  std::vector<WiFiCard> devourer_cards;
+  for (const auto& card : cards) {
+    if (card.devourer_wb_enabled) {
+      devourer_cards.push_back(card);
+    }
+  }
+  if (!devourer_cards.empty()) {
+    return devourer_cards;
+  }
   // card and weather card has been consumed
   std::vector<std::pair<WiFiCard, bool>> tmp;
   for (auto& card : cards) {
@@ -677,19 +687,25 @@ DWifiCards::ProcessedWifiCards DWifiCards::process_and_evaluate_cards(
       }
     }
   }
-  if (profile.is_air && monitor_mode_cards.size() > 1) {
-    std::vector<WiFiCard> devourer_cards;
-    std::copy_if(monitor_mode_cards.begin(), monitor_mode_cards.end(),
-                 std::back_inserter(devourer_cards),
-                 [](const WiFiCard& card) {
-                   return card.devourer_wb_enabled;
-                 });
-    if (devourer_cards.size() >= 2) {
-      devourer_cards.resize(2);
-      monitor_mode_cards = std::move(devourer_cards);
-    } else {
-      monitor_mode_cards.resize(1);
+  // If Devourer cards are present, prioritize them over legacy kernel netdevs
+  std::vector<WiFiCard> devourer_cards;
+  std::copy_if(monitor_mode_cards.begin(), monitor_mode_cards.end(),
+               std::back_inserter(devourer_cards),
+               [](const WiFiCard& card) {
+                 return card.devourer_wb_enabled;
+               });
+  if (!devourer_cards.empty()) {
+    if (profile.is_air) {
+      if (devourer_cards.size() >= 2) {
+        devourer_cards.resize(2);
+      } else {
+        devourer_cards.resize(1);
+      }
     }
+    return {devourer_cards, hotspot_card};
+  }
+  if (profile.is_air && monitor_mode_cards.size() > 1) {
+    monitor_mode_cards.resize(1);
   }
   return {reorder_monitor_mode_cards(monitor_mode_cards), hotspot_card};
 }

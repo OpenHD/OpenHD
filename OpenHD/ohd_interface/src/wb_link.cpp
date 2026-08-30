@@ -3045,7 +3045,7 @@ void WBLink::wt_gnd_perform_channel_switch_rollback_check() {
   }
   const bool reverted =
       apply_frequency_and_channel_width(revert_frequency, revert_channel_width,
-                                        openhd::DEFAULT_GND_RX_CHANNEL_WIDTH);
+                                         openhd::DEFAULT_GND_RX_CHANNEL_WIDTH);
   if (!reverted) {
     m_console->warn("Ground rollback apply failed {}@{}MHz", revert_frequency,
                     revert_channel_width);
@@ -3313,10 +3313,8 @@ std::vector<int> WBLink::devourer_fhss_channels() const {
 void WBLink::wt_manage_devourer_fhss() {
   if (!m_wb_txrx || !m_wb_txrx->uses_devourer()) return;
   const auto settings = m_settings->get_settings();
-  const bool secondary_live =
-      openhd::SecondaryTelemetryStatus::instance().any_live();
 
-  if (!settings.wb_enable_fhss || !secondary_live) {
+  if (!settings.wb_enable_fhss) {
     if (m_devourer_fhss_running) {
       m_wb_txrx->stop_devourer_fhss();
       m_devourer_fhss_running = false;
@@ -3324,18 +3322,40 @@ void WBLink::wt_manage_devourer_fhss() {
                             ? static_cast<int>(settings.wb_air_tx_channel_width)
                             : m_gnd_curr_rx_channel_width.load();
       m_wb_txrx->set_devourer_channel(settings.wb_frequency, width);
-      m_console->warn(
-          "Devourer FHSS stopped; independent telemetry uplink is no longer live");
-    } else if (settings.wb_enable_fhss && !secondary_live &&
-               !m_devourer_fhss_wait_logged) {
-      m_console->info(
-          "Devourer FHSS armed, waiting for mLRS/secondary telemetry traffic");
-      m_devourer_fhss_wait_logged = true;
+      m_console->warn("Devourer FHSS stopped");
     }
     return;
   }
   m_devourer_fhss_wait_logged = false;
-  if (m_devourer_fhss_running) return;
+  if (m_devourer_fhss_running) {
+    const auto status = m_wb_txrx->get_devourer_fhss_status();
+    if (status.has_value()) {
+      static auto last_log_tp = std::chrono::steady_clock::now();
+      static auto last_state = status->state;
+      const auto now = std::chrono::steady_clock::now();
+      if (status->state != last_state ||
+          now - last_log_tp >= std::chrono::seconds(5)) {
+        last_state = status->state;
+        last_log_tp = now;
+        const char* state_str = "Disabled";
+        if (status->state == WBTxRx::DevourerFhssState::Authority)
+          state_str = "Authority (Hopping)";
+        else if (status->state == WBTxRx::DevourerFhssState::Acquiring)
+          state_str = "Acquiring (Scanning)";
+        else if (status->state == WBTxRx::DevourerFhssState::Tracking)
+          state_str = "Tracking (Locked)";
+        else if (status->state == WBTxRx::DevourerFhssState::Lost)
+          state_str = "Lost";
+        m_console->warn(
+            "FHSS [{}] slot:{} ch:{} markers:{} retunes:{} reacquisitions:{} "
+            "last_marker_age:{}ms phase_err:{}us",
+            state_str, status->slot, status->channel, status->markers,
+            status->retunes, status->reacquisitions,
+            status->last_marker_age_ms, status->phase_error_us);
+      }
+    }
+    return;
+  }
 
   const int width = m_profile.is_air
                         ? static_cast<int>(settings.wb_air_tx_channel_width)
@@ -3350,7 +3370,7 @@ void WBLink::wt_manage_devourer_fhss() {
     return;
   }
   m_devourer_fhss_running = true;
-  m_console->info("Devourer FHSS started as {} ({}ms slots)",
+  m_console->warn("Devourer FHSS started as {} ({}ms slots)",
                   m_profile.is_air ? "authority" : "follower",
                   settings.wb_fhss_slot_ms);
 }

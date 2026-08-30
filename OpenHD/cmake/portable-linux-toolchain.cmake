@@ -18,9 +18,13 @@ else()
     message(FATAL_ERROR "Unsupported OPENHD_CROSS_TRIPLET=${OPENHD_CROSS_TRIPLET}")
 endif()
 
-set(CMAKE_SYSROOT "${OPENHD_SYSROOT}")
-set(OPENHD_CROSS_GCC_VERSION "10" CACHE STRING
-    "GNU cross-compiler major version matching the Bullseye sysroot")
+if(DEFINED ENV{OPENHD_CROSS_GCC_VERSION} AND NOT "$ENV{OPENHD_CROSS_GCC_VERSION}" STREQUAL "")
+    set(OPENHD_CROSS_GCC_VERSION "$ENV{OPENHD_CROSS_GCC_VERSION}")
+else()
+    set(OPENHD_CROSS_GCC_VERSION "10" CACHE STRING
+        "GNU cross-compiler major version matching the Bullseye sysroot")
+endif()
+
 find_program(OPENHD_C_COMPILER
     NAMES "${OPENHD_CROSS_TRIPLET}-gcc-${OPENHD_CROSS_GCC_VERSION}"
     REQUIRED)
