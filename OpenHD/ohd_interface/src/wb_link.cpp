@@ -1620,12 +1620,6 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
   if (m_wb_txrx && m_wb_txrx->uses_devourer()) {
     auto cb_fhss = [this](std::string, int value) {
       if (!validate_yes_or_no(value)) return false;
-      if (value &&
-          !openhd::SecondaryTelemetryStatus::instance().any_live()) {
-        m_console->warn(
-            "FHSS needs a live independent telemetry link (mLRS UART, Ethernet or LTE)");
-        return false;
-      }
       auto& mutable_settings = m_settings->unsafe_get_settings();
       mutable_settings.wb_enable_fhss = value != 0;
       if (value) {
@@ -2994,7 +2988,7 @@ void WBLink::gnd_note_channel_switch_attempt(int previous_frequency,
 }
 
 void WBLink::wt_gnd_perform_channel_switch_rollback_check() {
-  if (!m_profile.is_ground()) {
+  if (!m_profile.is_ground() || m_settings->get_settings().wb_enable_fhss) {
     return;
   }
   auto& state = m_gnd_switch_rollback_state;
@@ -3059,7 +3053,7 @@ void WBLink::wt_gnd_perform_channel_switch_rollback_check() {
 }
 
 void WBLink::wt_gnd_perform_channel_management() {
-  if (m_profile.is_ground()) {
+  if (m_profile.is_ground() && !m_settings->get_settings().wb_enable_fhss) {
     wt_gnd_perform_channel_switch_rollback_check();
     const auto prepare_request = m_management_gnd->get_prepare_request();
     if (prepare_request.has_value() &&
@@ -3273,7 +3267,10 @@ bool WBLink::restart_after_card_replug(
 }
 
 void WBLink::wt_air_perform_frequency_retry() {
-  if (!m_profile.is_air || !m_management_air) return;
+  if (!m_profile.is_air || !m_management_air ||
+      m_settings->get_settings().wb_enable_fhss) {
+    return;
+  }
   const auto retry = m_management_air->get_ground_retry_request();
   if (!retry.has_value() ||
       retry->transaction_id == m_air_last_frequency_retry_transaction) {
