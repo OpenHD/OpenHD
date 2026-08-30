@@ -93,6 +93,7 @@ static constexpr uint32_t DEFAULT_MAX_FEC_BLK_SIZE = -1;
 static constexpr auto WB_MCS_INDEX_VIA_RC_CHANNEL_OFF = 0;
 static constexpr auto WB_BW_VIA_RC_CHANNEL_OFF = 0;
 static constexpr auto WB_TX_MODE_VIA_RC_CHANNEL_OFF = 0;
+static constexpr auto WB_FHSS_VIA_RC_CHANNEL_OFF = 0;
 
 static constexpr auto MAX_WIFI_CARDS = 4;
 
@@ -152,12 +153,12 @@ struct WBLinkSettings {
   int wb_bw_via_rc_channel = WB_BW_VIA_RC_CHANNEL_OFF;
   // change tx mode via RC channel: low=off, mid=pit, high=normal
   int wb_tx_mode_via_rc_channel = WB_TX_MODE_VIA_RC_CHANNEL_OFF;
+  // change fhss enable via RC channel: low=off, high=on
+  int wb_fhss_via_rc_channel = WB_FHSS_VIA_RC_CHANNEL_OFF;
   // wb link recommends bitrate(s) to the encoder.
   bool enable_wb_video_variable_bitrate = true;
   int wb_qp_max = 17;
   int wb_qp_min = 42;
-  // !!!!
-  // This allows the ground station to become completely passive (aka tune in on
   // someone elses feed) but obviosuly you cannot reach your air unit anymore
   // when this mode is enabled (disable it to re-gain control)
   bool wb_enable_listen_only_mode = false;
@@ -261,6 +262,7 @@ static constexpr auto WB_ENABLE_RC_OPENHD_CONTROL = "RC_OHD_CTRL";
 static constexpr auto WB_MCS_INDEX_VIA_RC_CHANNEL = "MCS_VIA_RC";
 static constexpr auto WB_BW_VIA_RC_CHANNEL = "BW_VIA_RC";
 static constexpr auto WB_TX_MODE_VIA_RC_CHANNEL = "TXMODE_VIA_RC";
+static constexpr auto WB_FHSS_VIA_RC_CHANNEL = "FHSS_VIA_RC";
 static constexpr auto WB_PASSIVE_MODE = "WB_PASSIVE_MODE";
 static constexpr auto WB_PIT_MODE = "WB_PIT_MODE";
 static constexpr auto WB_DEV_AIR_SET_HIGH_RETRANSMIT_COUNT = "DEV_HIGH_RETR";

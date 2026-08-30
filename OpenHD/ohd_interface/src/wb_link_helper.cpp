@@ -564,3 +564,25 @@ openhd::wb::RCChannelHelper::get_tx_mode_from_rc_channel(int channel_index) {
   if (tx_mode_channel_value_pwm > 1300) return TxMode::PIT;
   return TxMode::OFF;
 }
+
+std::optional<bool>
+openhd::wb::RCChannelHelper::get_fhss_from_rc_channel(int channel_index) {
+  if (channel_index <= openhd::WB_FHSS_VIA_RC_CHANNEL_OFF) {
+    return std::nullopt;
+  }
+  channel_index--;
+  if (channel_index < 0 || channel_index >= 18) return std::nullopt;
+  const auto rc_channels_opt = get_fc_reported_rc_channels();
+  if (!rc_channels_opt.has_value()) {
+    return std::nullopt;
+  }
+  const auto fhss_channel_value_pwm = rc_channels_opt.value()[channel_index];
+  if (fhss_channel_value_pwm == UINT16_MAX) {
+    return std::nullopt;
+  }
+  if (fhss_channel_value_pwm < 900 || fhss_channel_value_pwm > 2100) {
+    return std::nullopt;
+  }
+  // Standard 2-pos / 3-pos switch: > 1500us is ON (enabled), <= 1500us is OFF (disabled)
+  return fhss_channel_value_pwm > 1500;
+}

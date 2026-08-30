@@ -60,7 +60,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
     wb_video_fec_percentage, wb_video_rate_for_mcs_adjustment_percent,
     wb_max_fec_block_size, wb_enable_rc_openhd_control,
     wb_mcs_index_via_rc_channel, wb_bw_via_rc_channel,
-    wb_tx_mode_via_rc_channel,
+    wb_tx_mode_via_rc_channel, wb_fhss_via_rc_channel,
     enable_wb_video_variable_bitrate, wb_enable_listen_only_mode, wb_pit_mode,
     wb_dev_air_set_high_retransmit_count, wb_enable_redundant_tx,
     wb_enable_adaptive_channel, wb_enable_fhss, wb_fhss_slot_ms,
@@ -127,6 +127,8 @@ std::optional<WBLinkSettings> openhd::WBLinkSettingsHolder::impl_deserialize(
         parsed.value("wb_bw_via_rc_channel", settings.wb_bw_via_rc_channel);
     settings.wb_tx_mode_via_rc_channel = parsed.value(
         "wb_tx_mode_via_rc_channel", settings.wb_tx_mode_via_rc_channel);
+    settings.wb_fhss_via_rc_channel = parsed.value(
+        "wb_fhss_via_rc_channel", settings.wb_fhss_via_rc_channel);
     settings.enable_wb_video_variable_bitrate =
         parsed.value("enable_wb_video_variable_bitrate",
                      settings.enable_wb_video_variable_bitrate);

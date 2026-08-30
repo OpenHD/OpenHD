@@ -136,8 +136,6 @@ class ForeignPacketsHelper {
   int get_foreign_packets_per_second() const { return m_pps_current; }
   void update_n_foreign_packets(int n_foreign_packets) {
     assert(n_foreign_packets >= 0);
-    // openhd::log::get_default()->debug("N foreign
-    // packets:{}",n_foreign_packets);
     m_pps_foreign_packets_count += n_foreign_packets;
     const auto elapsed =
         std::chrono::steady_clock::now() - m_pps_last_recalculation;
@@ -189,6 +187,7 @@ class RCChannelHelper {
   // returns either a valid channel width (10 / 20 / 40) or std::nullopt
   std::optional<uint8_t> get_bw_from_rc_channel(int channel_index);
   std::optional<TxMode> get_tx_mode_from_rc_channel(int channel_index);
+  std::optional<bool> get_fhss_from_rc_channel(int channel_index);
 
  private:
   std::optional<std::array<int, 18>> m_rc_channels;

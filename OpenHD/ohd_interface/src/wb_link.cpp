@@ -1542,6 +1542,18 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
           openhd::WB_TX_MODE_VIA_RC_CHANNEL,
           openhd::IntSetting{(int)settings.wb_tx_mode_via_rc_channel,
                              cb_tx_mode_via_rc_channel}});
+      auto cb_fhss_via_rc_channel = [this](std::string, int value) {
+        if (value < 0 || value > 18) {
+          return false;
+        }
+        m_settings->unsafe_get_settings().wb_fhss_via_rc_channel = value;
+        m_settings->persist();
+        return true;
+      };
+      ret.push_back(Setting{
+          openhd::WB_FHSS_VIA_RC_CHANNEL,
+          openhd::IntSetting{(int)settings.wb_fhss_via_rc_channel,
+                             cb_fhss_via_rc_channel}});
     }
     auto cb_dev_air_set_high_retransmit_count = [this](std::string, int value) {
       return set_dev_air_set_high_retransmit_count(value);
@@ -1895,6 +1907,7 @@ void WBLink::loop_do_work() {
     wt_perform_mcs_via_rc_channel_if_enabled();
     wt_perform_bw_via_rc_channel_if_enabled();
     wt_perform_tx_mode_via_rc_channel_if_enabled();
+    wt_perform_fhss_via_rc_channel_if_enabled();
     wt_air_perform_frequency_retry();
     wt_manage_devourer_fhss();
     wt_air_check_adaptive_channel_switch();
@@ -2946,6 +2959,51 @@ void WBLink::wt_perform_tx_mode_via_rc_channel_if_enabled() {
       re_enable_injection_unless_user_passive_mode_enabled();
       m_request_apply_tx_power = true;
       break;
+  }
+}
+
+void WBLink::wt_perform_fhss_via_rc_channel_if_enabled() {
+  if (!m_profile.is_air) {
+    return;
+  }
+  if (!m_wb_txrx || !m_wb_txrx->uses_devourer()) {
+    return;
+  }
+  const auto& settings = m_settings->get_settings();
+  if (!settings.wb_enable_rc_openhd_control) {
+    return;
+  }
+  if (settings.wb_fhss_via_rc_channel <=
+      openhd::WB_FHSS_VIA_RC_CHANNEL_OFF) {
+    return;
+  }
+  const auto opt_rc_fhss = m_rc_channel_helper.get_fhss_from_rc_channel(
+      settings.wb_fhss_via_rc_channel);
+  if (!opt_rc_fhss.has_value()) {
+    return;
+  }
+  const bool rc_fhss_enable = opt_rc_fhss.value();
+  if (settings.wb_enable_fhss != rc_fhss_enable) {
+    m_console->info("RC CHANNEL - changing FHSS enable from {} to {}",
+                    settings.wb_enable_fhss, rc_fhss_enable);
+    auto& mutable_settings = m_settings->unsafe_get_settings();
+    mutable_settings.wb_enable_fhss = rc_fhss_enable;
+    if (rc_fhss_enable) {
+      mutable_settings.wb_enable_adaptive_channel = false;
+      mutable_settings.wb_enable_redundant_tx = false;
+      m_wb_txrx->set_enable_redundant_tx(false);
+      reset_adaptive_channel_selection();
+    } else if (m_devourer_fhss_running) {
+      m_wb_txrx->stop_devourer_fhss();
+      m_devourer_fhss_running = false;
+      const auto current = m_settings->get_settings();
+      m_wb_txrx->set_devourer_channel(
+          current.wb_frequency,
+          m_profile.is_air
+              ? static_cast<int>(current.wb_air_tx_channel_width)
+              : m_gnd_curr_rx_channel_width.load());
+    }
+    m_settings->persist();
   }
 }
 
