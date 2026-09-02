@@ -23,6 +23,7 @@
 
 #include "gstaudiostream.h"
 
+#include <cstdlib>
 #include <iostream>
 #include <utility>
 
@@ -68,14 +69,11 @@ void GstAudioStream::stop_looping() {
     }
     if (!exited) {
       m_console->error(
-          "Loop thread did not exit within {}ms, requesting terminate",
+          "Loop thread did not exit within {}ms; exiting before destroying "
+          "an object still used by that thread",
           std::chrono::duration_cast<std::chrono::milliseconds>(kJoinTimeout)
               .count());
-      openhd::TerminateHelper::instance().terminate_after(
-          "gst_audio_thread_hang", std::chrono::milliseconds(100));
-      m_loop_thread->detach();
-      m_loop_thread = nullptr;
-      return;
+      std::_Exit(EXIT_FAILURE);
     }
     m_loop_thread->join();
     m_loop_thread = nullptr;

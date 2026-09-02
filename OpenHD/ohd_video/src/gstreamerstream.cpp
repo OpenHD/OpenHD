@@ -314,14 +314,14 @@ void GStreamerStream::terminate_looping() {
     }
     if (!exited) {
       m_console->error(
-          "Loop thread did not exit within {}ms, requesting terminate",
+          "Loop thread did not exit within {}ms; exiting before destroying "
+          "an object still used by that thread",
           std::chrono::duration_cast<std::chrono::milliseconds>(kJoinTimeout)
               .count());
-      openhd::TerminateHelper::instance().terminate_after(
-          "gst_thread_hang", std::chrono::milliseconds(100));
-      m_loop_thread->detach();
-      m_loop_thread = nullptr;
-      return;
+      // Detaching here is unsafe: loop_infinite() still dereferences this, while
+      // the destructor would immediately free the object.  Exit as a failure so
+      // systemd can start a clean process instead of racing into a use-after-free.
+      std::_Exit(EXIT_FAILURE);
     }
     m_loop_thread->join();
     m_loop_thread = nullptr;

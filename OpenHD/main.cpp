@@ -736,6 +736,7 @@ int main(int argc, char *argv[]) {
       quit = true;
     });
     const auto run_time_begin = std::chrono::steady_clock::now();
+    bool terminate_due_to_internal_error = false;
     while (!quit) {
       std::this_thread::sleep_for(std::chrono::seconds(2));
       if (options.run_time_seconds >= 1) {
@@ -751,6 +752,7 @@ int main(int argc, char *argv[]) {
       if (openhd::TerminateHelper::instance().should_terminate()) {
         m_console->debug("Terminating,reason:{}",
                          openhd::TerminateHelper::instance().terminate_reason());
+        terminate_due_to_internal_error = true;
         break;
       }
     }
@@ -788,6 +790,11 @@ int main(int argc, char *argv[]) {
       m_console->debug("Terminating ohd_interface - begin");
       ohdInterface.reset();
       m_console->debug("Terminating ohd_interface - end");
+    }
+    if (terminate_due_to_internal_error) {
+      reporter.report(openhd::State::Error);
+      openhd::remove_currently_running_file();
+      return EXIT_FAILURE;
     }
   } catch (std::exception &ex) {
     std::cerr << "Error: " << ex.what() << std::endl;

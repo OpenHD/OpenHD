@@ -29,14 +29,15 @@
 [Unit]
 Description=OpenHD
 After=NetworkManager.service
-StartLimitIntervalSec=60
-StartLimitBurst=3
+# OpenHD owns hardware that can fail repeatedly while USB/camera state settles.
+# Never leave the unit permanently failed after a short crash burst.
+StartLimitIntervalSec=0
 
 [Service]
 User=root
 Environment="LIBCAMERA_LOG_LEVELS=*:ERROR"
 ExecStart=/usr/local/bin/openhd
-Restart=on-failure
+Restart=always
 RestartSec=5
 LimitCORE=infinity
 
