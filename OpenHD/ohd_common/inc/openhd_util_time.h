@@ -49,9 +49,9 @@ int64_t get_air_unit_time_offset_us();
 
 // Conservatively step the system wall clock from a trusted external Unix
 // timestamp. Intended for GPS-derived time: invalid/empty timestamps are
-// rejected, small offsets are ignored, and the clock is stepped at most once per
-// process. Returns true once the timestamp was sane enough to stop retrying for
-// this boot, regardless of whether a step was required.
+// rejected and small offsets are ignored. Every accepted value also advances a
+// persistent high-water mark used by time-limited security features; it never
+// moves backwards. The wall clock itself is stepped at most once per process.
 bool maybe_adjust_system_time_from_unix_us(uint64_t unix_time_us,
                                            const std::string& source);
 

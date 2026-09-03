@@ -24,9 +24,11 @@
 #include "openhd_util_time.h"
 
 #include <cerrno>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <fstream>
 #include <mutex>
 #include <sstream>
 
@@ -131,6 +133,9 @@ constexpr uint64_t kUnixUsPerSecond = 1000ULL * 1000ULL;
 constexpr uint64_t kMinTrustedUnixUs = 1704067200ULL * kUnixUsPerSecond;
 constexpr uint64_t kMaxTrustedUnixUs = 2114380800ULL * kUnixUsPerSecond;
 constexpr int64_t kMinStepOffsetUs = 6LL * 60LL * 60LL * 1000LL * 1000LL;
+constexpr uint64_t kAnchorWriteIntervalUs = 5ULL * 60ULL * kUnixUsPerSecond;
+constexpr const char* kTrustedTimeAnchorPath =
+    "/config/openhd/trusted_time_anchor";
 
 struct GpsTimeSyncState {
   std::mutex mutex;
@@ -138,6 +143,7 @@ struct GpsTimeSyncState {
   bool logged_small_offset = false;
   bool logged_invalid = false;
   bool logged_set_failure = false;
+  uint64_t persisted_anchor_us = 0;
 };
 
 GpsTimeSyncState& gps_time_sync_state() {
@@ -153,6 +159,40 @@ uint64_t system_time_unix_us() {
   const auto now = std::chrono::system_clock::now().time_since_epoch();
   return static_cast<uint64_t>(
       std::chrono::duration_cast<std::chrono::microseconds>(now).count());
+}
+
+void advance_persistent_time_anchor(GpsTimeSyncState& state,
+                                    uint64_t unix_time_us) {
+#ifdef __linux__
+  if (state.persisted_anchor_us == 0) {
+    std::ifstream existing(kTrustedTimeAnchorPath);
+    uint64_t existing_seconds = 0;
+    existing >> existing_seconds;
+    if (existing_seconds >= kMinTrustedUnixUs / kUnixUsPerSecond) {
+      state.persisted_anchor_us = existing_seconds * kUnixUsPerSecond;
+    }
+  }
+  if (unix_time_us <= state.persisted_anchor_us ||
+      (state.persisted_anchor_us != 0 &&
+       unix_time_us - state.persisted_anchor_us < kAnchorWriteIntervalUs)) {
+    return;
+  }
+  const std::string temporary =
+      std::string(kTrustedTimeAnchorPath) + ".tmp";
+  std::ofstream file(temporary, std::ios::trunc);
+  if (!file.is_open()) {
+    return;
+  }
+  file << unix_time_us / kUnixUsPerSecond << '\n';
+  file.close();
+  if (file.good() && std::rename(temporary.c_str(),
+                                 kTrustedTimeAnchorPath) == 0) {
+    state.persisted_anchor_us = unix_time_us;
+  }
+#else
+  (void)state;
+  (void)unix_time_us;
+#endif
 }
 
 }  // namespace
@@ -171,6 +211,10 @@ bool openhd::util::maybe_adjust_system_time_from_unix_us(
       state.logged_invalid = true;
     }
     return false;
+  }
+  advance_persistent_time_anchor(state, unix_time_us);
+  if (state.adjusted) {
+    return true;
   }
   const uint64_t current_us = system_time_unix_us();
   const int64_t delta_us = static_cast<int64_t>(unix_time_us) -
