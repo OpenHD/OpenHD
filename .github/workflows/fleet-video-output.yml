@@ -1,0 +1,20 @@
+name: Fleet video output
+on:
+  push:
+    branches: [openhd-3.0]
+  pull_request:
+    branches: [openhd-3.0]
+jobs:
+  output:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y g++ libgstreamer-plugins-base1.0-dev gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav
+      - name: Validate device profiles
+        run: python3 scripts/test_fleet_setup.py
+      - name: Build and exercise independent UDP outputs
+        working-directory: OpenHD/ohd_video
+        run: |
+          g++ -std=c++17 -O2 -pthread -Iinc src/gst_video_output.cpp test/test_video_output.cpp $(pkg-config --cflags --libs gstreamer-app-1.0) -latomic -o /tmp/test_video_output
+          /tmp/test_video_output
+          /tmp/test_video_output encoded
