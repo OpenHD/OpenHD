@@ -88,7 +88,9 @@ std::string GstVideoOutput::pipeline(const VideoOutputProfile& p, bool raw,
   } else {
     out << "x264enc tune=zerolatency speed-preset=ultrafast bitrate=" << p.bitrate_kbit
         << " key-int-max=" << p.fps
-        << " bframes=0 threads=2 sliced-threads=true vbv-buf-capacity=300 option-string=nal-hrd=cbr ! ";
+        // Sliced threading produced green/corrupt frames in FleetControl's
+        // browser HLS decoder, despite decoding correctly with libav locally.
+        << " bframes=0 threads=2 sliced-threads=false vbv-buf-capacity=300 option-string=nal-hrd=cbr ! ";
   }
   out << "h264parse ! rtph264pay pt=96 config-interval=-1 mtu=1200 ! "
       << "udpsink host=" << p.host << " port=" << p.port << " sync=false async=false";

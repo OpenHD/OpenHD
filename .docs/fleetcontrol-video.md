@@ -48,7 +48,14 @@ synthetic primary source while OpenHD Ground remained running. Decoded UDP outpu
 | Shared raw frames | 854×480 | 15.14 | 1020 kbit/s |
 | Encoded fallback | 854×480 | 15.20 | 1024 kbit/s |
 
-This validates the output implementation on hardware, not a complete Air camera
-and production VPN deployment. The full OpenHD application is built by CI.
-The test Pi has the setup service installed; its running OpenHD binary was not
-replaced or switched from Ground to Air.
+The Pi was subsequently connected to production FleetControl with a native
+Ground profile. A continuous synthetic source using `GstVideoOutput` uploaded
+over WireGuard/UDP and played in the browser's Video Matrix. The HLS playlist
+reported 854x480, 15 fps and approximately 1.00 Mbit/s. Disabling x264 sliced
+threading fixed green/corrupt browser frames that were absent in local libav
+decoding; the subsequent browser sample decoded 361 frames without drops.
+
+This validates the independent output and production video path. The running
+OpenHD binary was not replaced or switched from Ground to Air, so integrated Air
+camera startup and paired Air/Ground operation still require a firmware test.
+The full OpenHD application is built by CI.
