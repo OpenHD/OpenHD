@@ -168,6 +168,9 @@ void MultiLink::transmit_video_data(
     int stream_index,
     const openhd::FragmentedVideoFrame& fragmented_video_frame) {
   for (const auto& endpoint : endpoints_snapshot()) {
+    // LTE video is an independently encoded camera output (480p15), not the
+    // full-resolution radio stream. Telemetry still uses this transport.
+    if (endpoint->name == "LTE") continue;
     enqueue_video(endpoint, stream_index, fragmented_video_frame);
   }
 }

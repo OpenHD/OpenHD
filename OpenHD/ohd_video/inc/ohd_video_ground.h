@@ -53,6 +53,7 @@ class OHDVideoGround {
  private:
   std::shared_ptr<spdlog::logger> m_console;
   std::shared_ptr<OHDLink> m_link_handle;
+  std::string m_native_fleet_address;
   std::unique_ptr<openhd::UDPMultiForwarder> m_primary_video_forwarder;
   std::unique_ptr<openhd::UDPMultiForwarder> m_secondary_video_forwarder;
   std::unique_ptr<openhd::UDPMultiForwarder> m_audio_forwarder;

@@ -26,11 +26,16 @@
 #include <utility>
 
 #include "openhd_config.h"
+#include "openhd_sock.h"
 #include "openhd_util.h"
 
 OHDVideoGround::OHDVideoGround(std::shared_ptr<OHDLink> link_handle)
     : m_link_handle(std::move(link_handle)) {
   m_console = openhd::log::create_or_get("v_gnd");
+  if (const auto settings = openhd::request_sysutil_settings();
+      settings && settings->lte_configured && settings->lte_active) {
+    m_native_fleet_address = settings->lte_fleetcontrol_address;
+  }
   m_primary_video_forwarder = std::make_unique<openhd::UDPMultiForwarder>();
   m_secondary_video_forwarder = std::make_unique<openhd::UDPMultiForwarder>();
   m_audio_forwarder = std::make_unique<openhd::UDPMultiForwarder>();
@@ -110,6 +115,11 @@ static bool ip_is_host_self(const std::string& ip) {
 
 void OHDVideoGround::start_stop_forwarding_external_device(
     openhd::ExternalDevice external_device, bool connected) {
+  // Native LTE owns the fleet upload. A TCP telemetry client must not create
+  // a second RTP upload; Ground remains a telemetry member of the same craft.
+  if (!m_native_fleet_address.empty() &&
+      external_device.external_device_ip == m_native_fleet_address) return;
+
   if (external_device.discovered_by_mavlink_tcp_server) {
     const bool is_host_self =
         ip_is_host_self(external_device.external_device_ip);

@@ -5,10 +5,6 @@
 #include "openhd_spdlog.h"
 
 LteLink::LteLink(LteLinkConfig config) : m_config(std::move(config)) {
-  m_video_tx = std::make_unique<openhd::UDPForwarder>(
-      m_config.fleetcontrol_address, m_config.video_port);
-  m_video2_tx = std::make_unique<openhd::UDPForwarder>(
-      m_config.fleetcontrol_address, m_config.video2_port);
   m_telemetry = std::make_unique<openhd::UDPReceiver>(
       "0.0.0.0", 0,
       [this](const uint8_t* data, std::size_t size) {
@@ -37,15 +33,9 @@ void LteLink::transmit_telemetry_data(TelemetryTxPacket packet) {
 }
 
 void LteLink::transmit_video_data(
-    int stream_index,
-    const openhd::FragmentedVideoFrame& fragmented_video_frame) {
-  auto* destination = stream_index == 0 ? m_video_tx.get() : m_video2_tx.get();
-  if (!destination) return;
-  for (const auto& fragment : fragmented_video_frame.rtp_fragments) {
-    if (fragment && !fragment->empty()) {
-      destination->forwardPacketViaUDP(fragment->data(), fragment->size());
-    }
-  }
+    int, const openhd::FragmentedVideoFrame&) {
+  // The generic camera output owns the low-resolution RTP/UDP encoder. Never
+  // fall back to uploading the primary radio stream when it is unavailable.
 }
 
 void LteLink::transmit_audio_data(const openhd::AudioPacket&) {}

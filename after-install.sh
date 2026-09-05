@@ -23,6 +23,8 @@
 # © OpenHD, All Rights Reserved.
 ################################################################################
 
+systemctl daemon-reload
+systemctl enable --now openhd-fleet-setup.service
 systemctl enable openhd.service
 
 if [[ -f /etc/systemd/system/openhd-artosyn.service ]]; then

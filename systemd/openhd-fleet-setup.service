@@ -1,0 +1,12 @@
+[Unit]
+Description=OpenHD FleetControl device setup
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/openhd-fleet-setup
+Restart=on-failure
+RestartSec=5
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

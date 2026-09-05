@@ -239,9 +239,11 @@ void send_pipeline_debug_over_mavlink(int cam_index,
 }  // namespace
 
 GStreamerStream::GStreamerStream(std::shared_ptr<CameraHolder> camera_holder,
-                                 openhd::ON_ENCODE_FRAME_CB out_cb)
+                                 openhd::ON_ENCODE_FRAME_CB out_cb,
+                                 bool enable_video_outputs)
     //: CameraStream(platform, camera_holder, video_udp_port) {
-    : CameraStream(std::move(camera_holder), std::move(out_cb)) {
+    : CameraStream(std::move(camera_holder), std::move(out_cb)),
+      m_enable_video_outputs(enable_video_outputs) {
   m_console = openhd::log::create_or_get(
       fmt::format("cam{}", m_camera_holder->get_camera().index));
   assert(m_console);
@@ -1253,6 +1255,24 @@ bool GStreamerStream::setup() {
     cleanup_pipe();
     return false;
   }
+  // FleetControl is a low-bandwidth rendition of the primary camera, never a
+  // second copy of the radio encoder's RTP. Outputs have independent encoders.
+  if (m_enable_video_outputs && m_camera_holder->get_camera().index == 0) {
+    if (const auto lte = openhd::request_sysutil_settings();
+        lte && lte->lte_configured && lte->lte_active) {
+      try {
+        openhd::VideoOutputProfile profile{"FleetControl", lte->lte_fleetcontrol_address,
+                                          lte->lte_video_port, 854, 480, 15, 1000,
+                                          !OHDPlatform::instance().is_rpi()};
+        auto output = std::make_unique<openhd::GstVideoOutput>(std::move(profile));
+        if (output->attach(m_gst_pipeline, setting.streamed_video_format.videoCodec == VideoCodec::H265, !dirty_use_raw))
+          m_video_outputs.push_back(std::move(output));
+        else m_console->warn("FleetControl output could not attach to the camera");
+      } catch (const std::exception& error) {
+        m_console->warn("FleetControl output unavailable: {}", error.what());
+      }
+    }
+  }
   // m_console->debug("Cam encoding format: {}",(int)cam_info.encoding_format);
   auto lol_cb =
       [this](
@@ -1289,6 +1309,7 @@ void GStreamerStream::stop() {
 void GStreamerStream::cleanup_pipe() {
   m_console->debug("GStreamerStream::cleanup_pipe() begin");
   assert(m_gst_pipeline != nullptr);
+  m_video_outputs.clear();
   cleanup_perf_element();
   if (m_gst_bus != nullptr) {
     gst_object_unref(m_gst_bus);

@@ -1,0 +1,250 @@
+#!/usr/bin/env python3
+"""Small HTTPS endpoint for QOpenHD FleetControl onboarding.
+
+Only the device's openhd account can install profiles. TLS certificates are
+pinned by QOpenHD. No WireGuard hooks, arbitrary paths or commands are accepted.
+"""
+import base64
+import ctypes
+import ctypes.util
+import hashlib
+import hmac
+import ipaddress
+import json
+import mmap
+import os
+from pathlib import Path
+import re
+import ssl
+import subprocess
+import tempfile
+import time
+from http.server import HTTPServer, BaseHTTPRequestHandler
+
+CONFIG = Path('/usr/local/share/OpenHD/SysUtils/config.json')
+PROFILE = Path('/etc/wireguard/openhd-lte.conf')
+STATE = Path('/var/lib/openhd/fleet-setup')
+
+
+def read_config():
+    try:
+        return json.loads(CONFIG.read_text())
+    except FileNotFoundError:
+        return {}
+
+
+def device_role():
+    mode = read_config().get('run_mode')
+    if mode in ('air', 'ground'):
+        return mode
+    return 'air' if Path('/Config/air.txt').exists() else 'ground'
+
+
+def video_profile_supported():
+    try:
+        with open('/usr/local/bin/openhd', 'rb') as binary:
+            with mmap.mmap(binary.fileno(), 0, access=mmap.ACCESS_READ) as data:
+                return data.find(b'OpenHD multi-output v1: 480p15 H264 RTP/UDP') >= 0
+    except (OSError, ValueError):
+        return False
+
+
+def validate_profile(text, role):
+    if len(text.encode()) > 32768 or '\x00' in text:
+        raise ValueError('Profile is too large or invalid.')
+    metadata, sections = {}, {}
+    section = None
+    for line in text.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        if line.startswith('# OpenHD-'):
+            key, sep, value = line[9:].partition('=')
+            if not sep or key in metadata:
+                raise ValueError('Invalid or duplicate profile metadata.')
+            metadata[key] = value
+        elif line.startswith('#'):
+            continue
+        elif line in ('[Interface]', '[Peer]'):
+            section = line[1:-1]
+            if section in sections:
+                raise ValueError('Only one WireGuard peer is supported.')
+            sections[section] = {}
+        else:
+            key, sep, value = line.partition('=')
+            key, value = key.strip(), value.strip()
+            allowed = {'Interface': {'PrivateKey', 'Address', 'MTU'},
+                       'Peer': {'PublicKey', 'Endpoint', 'AllowedIPs', 'PersistentKeepalive'}}
+            if not sep or key not in allowed.get(section, set()) or key in sections[section]:
+                raise ValueError('Unsupported WireGuard option. Use a FleetControl device profile.')
+            sections[section][key] = value
+    if metadata.get('Profile-Version') != '1' or metadata.get('Interface') != 'openhd-lte':
+        raise ValueError('Select an OpenHD FleetControl profile.')
+    if metadata.get('Role', 'air') != role:
+        raise ValueError('This profile is for a different device role. Choose the matching Air or Ground profile.')
+    if not re.fullmatch(r'[A-Za-z0-9_-]{1,80}', metadata.get('Device-ID', '')):
+        raise ValueError('Missing craft identity.')
+    address = ipaddress.IPv4Address(metadata.get('FleetControl-Address', ''))
+    if not str(address).startswith('10.77.') or str(address).split('.')[-1] != '1':
+        raise ValueError('Invalid FleetControl address.')
+    network = ipaddress.IPv4Network(str(address) + '/24', strict=False)
+    for name in ('Video-Port', 'Video2-Port', 'Telemetry-Port'):
+        if not metadata.get(name, '').isdigit() or not 1024 <= int(metadata[name]) <= 65535:
+            raise ValueError('Invalid streaming ports.')
+    interface, peer = sections.get('Interface', {}), sections.get('Peer', {})
+    for key in (interface.get('PrivateKey', ''), peer.get('PublicKey', '')):
+        if not re.fullmatch(r'[A-Za-z0-9+/]{43}=', key) or len(base64.b64decode(key)) != 32:
+            raise ValueError('Invalid WireGuard key.')
+    client = ipaddress.IPv4Interface(interface.get('Address', ''))
+    if client.ip not in network or client.ip in (network.network_address, network.broadcast_address, address):
+        raise ValueError('Device address is outside its account network.')
+    if peer.get('AllowedIPs') != str(network):
+        raise ValueError('Only the account VPN may be routed.')
+    if not re.fullmatch(r'[A-Za-z0-9.\-]+:[0-9]{1,5}', peer.get('Endpoint', '')):
+        raise ValueError('Invalid VPN endpoint.')
+    if not 1 <= int(peer['Endpoint'].rsplit(':', 1)[1]) <= 65535:
+        raise ValueError('Invalid VPN endpoint port.')
+    if 'MTU' in interface and (not interface['MTU'].isdigit() or not 576 <= int(interface['MTU']) <= 9000):
+        raise ValueError('Invalid MTU.')
+    if 'PersistentKeepalive' in peer and (not peer['PersistentKeepalive'].isdigit() or not 0 <= int(peer['PersistentKeepalive']) <= 65535):
+        raise ValueError('Invalid keepalive.')
+    return metadata
+
+
+def atomic_write(path, data, mode=0o600):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary = tempfile.mkstemp(dir=path.parent)
+    try:
+        with os.fdopen(descriptor, 'wb') as output:
+            os.fchmod(output.fileno(), mode)
+            output.write(data)
+            output.flush()
+            os.fsync(output.fileno())
+        os.replace(temporary, path)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+
+
+def authenticate(header):
+    try:
+        scheme, encoded = header.split(' ', 1)
+        username, password = base64.b64decode(encoded, validate=True).decode().split(':', 1)
+        if scheme != 'Basic' or username != 'openhd' or not password or '\x00' in password:
+            return False
+        row = next(line.split(':') for line in Path('/etc/shadow').read_text().splitlines() if line.startswith('openhd:'))
+        hashed = row[1]
+        today = int(time.time() / 86400)
+        if not hashed.startswith('$') or (row[7] and today >= int(row[7])):
+            return False
+        library = ctypes.CDLL(ctypes.util.find_library('crypt'))
+        library.crypt.argtypes = [ctypes.c_char_p, ctypes.c_char_p]
+        library.crypt.restype = ctypes.c_char_p
+        result = library.crypt(password.encode(), hashed.encode())
+        return bool(result) and hmac.compare_digest(result.decode(), hashed)
+    except (ValueError, OSError, StopIteration, UnicodeError):
+        return False
+
+
+def install_profile(text):
+    metadata = validate_profile(text, device_role())
+    if device_role() == 'air' and not video_profile_supported():
+        raise ValueError('Update OpenHD first: this Air firmware does not support the 480p15 FleetControl video output.')
+    config = read_config()
+    previous = PROFILE.read_bytes() if PROFILE.exists() else None
+    original_config = CONFIG.read_bytes() if CONFIG.exists() else None
+    # The same generated profile can be retried after a lost HTTPS response.
+    encoded = (text.replace('\r\n', '\n').strip() + '\n').encode()
+    if previous == encoded and config.get('lte_enabled'):
+        return metadata
+    try:
+        # Stop the old tunnel before replacing its configuration.
+        if subprocess.run(['ip', 'link', 'show', 'openhd-lte'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0:
+            subprocess.run(['wg-quick', 'down', 'openhd-lte'], check=True, capture_output=True, timeout=20)
+        atomic_write(PROFILE, encoded)
+        subprocess.run(['wg-quick', 'up', 'openhd-lte'], check=True, capture_output=True, timeout=30)
+        config.update(lte_enabled=True, lte_wireguard_config=str(PROFILE))
+        atomic_write(CONFIG, (json.dumps(config, indent=2) + '\n').encode())
+        subprocess.run(['systemctl', 'enable', 'wg-quick@openhd-lte.service'], check=True, capture_output=True, timeout=10)
+        subprocess.run(['systemctl', 'restart', 'openhd-sys-utils.service'], check=True, capture_output=True, timeout=30)
+        subprocess.run(['systemctl', 'restart', 'openhd.service'], check=True, capture_output=True, timeout=30)
+    except (OSError, subprocess.SubprocessError):
+        subprocess.run(['wg-quick', 'down', 'openhd-lte'], capture_output=True, timeout=20)
+        if previous is not None:
+            atomic_write(PROFILE, previous)
+            subprocess.run(['wg-quick', 'up', 'openhd-lte'], capture_output=True, timeout=30)
+        else:
+            PROFILE.unlink(missing_ok=True)
+        if original_config is not None:
+            atomic_write(CONFIG, original_config)
+        raise ValueError('Could not activate the tunnel. Previous profile restored; check the device network.')
+    return metadata
+
+
+class Handler(BaseHTTPRequestHandler):
+    def setup(self):
+        super().setup()
+        self.connection.settimeout(15)
+
+    def log_message(self, *_):
+        pass  # Never put credentials or profile material in a journal.
+
+    def respond(self, status, body):
+        data = json.dumps(body).encode()
+        self.send_response(status)
+        self.send_header('Content-Type', 'application/json')
+        self.send_header('Cache-Control', 'no-store')
+        self.send_header('Content-Length', str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
+    def do_GET(self):
+        if self.path != '/api/fleetcontrol/status':
+            return self.respond(404, {'message': 'Not found.'})
+        active = False
+        try:
+            result = subprocess.run(['wg', 'show', 'openhd-lte', 'latest-handshakes'], capture_output=True, timeout=3, text=True)
+            active = any(0 < time.time() - int(line.split()[1]) <= 180 for line in result.stdout.splitlines())
+        except (ValueError, OSError, subprocess.SubprocessError):
+            pass
+        self.respond(200, {'role': device_role(), 'configured': PROFILE.exists(), 'active': active, 'transport': 'native', 'videoProfile': '480p15-h264-udp' if video_profile_supported() else None})
+
+    def do_POST(self):
+        if self.path != '/api/fleetcontrol/profile':
+            return self.respond(404, {'message': 'Not found.'})
+        now = time.monotonic()
+        self.server.attempts = [at for at in self.server.attempts if now - at < 60]
+        if len(self.server.attempts) >= 10:
+            return self.respond(429, {'message': 'Too many attempts. Wait one minute.'})
+        self.server.attempts.append(now)
+        if not authenticate(self.headers.get('Authorization', '')):
+            return self.respond(401, {'message': 'Incorrect OpenHD device password.'})
+        try:
+            length = int(self.headers.get('Content-Length', '0'))
+            if not 1 <= length <= 32768:
+                raise ValueError('Select a valid FleetControl profile.')
+            text = self.rfile.read(length).decode('utf-8')
+            metadata = install_profile(text)
+            self.respond(200, {'ok': True, 'craftId': metadata['Device-ID'], 'message': 'Profile installed. Waiting for the FleetControl connection.'})
+        except (ValueError, UnicodeError) as error:
+            self.respond(400, {'message': str(error)})
+
+
+def main():
+    STATE.mkdir(parents=True, exist_ok=True, mode=0o700)
+    cert, key = STATE / 'certificate.pem', STATE / 'key.pem'
+    if not cert.exists() or not key.exists():
+        subprocess.run(['openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-days', '3650', '-subj', '/CN=OpenHD Fleet Setup', '-keyout', str(key), '-out', str(cert)], check=True, capture_output=True)
+        key.chmod(0o600)
+    context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    context.minimum_version = ssl.TLSVersion.TLSv1_2
+    context.load_cert_chain(cert, key)
+    server = HTTPServer(('0.0.0.0', 8443), Handler)
+    server.attempts = []
+    server.socket = context.wrap_socket(server.socket, server_side=True)
+    print('OpenHD Fleet setup certificate SHA256: ' + hashlib.sha256(ssl.PEM_cert_to_DER_cert(cert.read_text())).hexdigest(), flush=True)
+    server.serve_forever()
+
+
+if __name__ == '__main__':
+    main()

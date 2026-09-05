@@ -98,6 +98,7 @@ class OHDVideoAir {
   // directly, in which case we start forwarding of video data to the device.
   void start_stop_forwarding_external_device(
       openhd::ExternalDevice external_device, bool connected);
+  std::string m_native_fleet_address;
   std::unique_ptr<openhd::UDPMultiForwarder> m_primary_video_forwarder =
       nullptr;
   std::unique_ptr<openhd::UDPMultiForwarder> m_secondary_video_forwarder =

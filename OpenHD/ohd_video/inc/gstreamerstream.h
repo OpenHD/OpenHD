@@ -45,6 +45,7 @@
 // #include "gst_recorder.h"
 #include "nalu/CodecConfigFinder.hpp"
 #include "openhd_rtp.h"
+#include "gst_video_output.h"
 
 // Implementation of OHD CameraStream for pretty much everything, using
 // gstreamer.
@@ -56,7 +57,8 @@
 class GStreamerStream : public CameraStream {
  public:
   GStreamerStream(std::shared_ptr<CameraHolder> camera_holder,
-                  openhd::ON_ENCODE_FRAME_CB out_cb);
+                  openhd::ON_ENCODE_FRAME_CB out_cb,
+                  bool enable_video_outputs = true);
   ~GStreamerStream();
   void start_looping() override;
   void terminate_looping() override;
@@ -110,6 +112,8 @@ class GStreamerStream : public CameraStream {
  private:
   // points to a running gst pipeline instance
   GstElement* m_gst_pipeline = nullptr;
+  std::vector<std::unique_ptr<openhd::GstVideoOutput>> m_video_outputs;
+  bool m_enable_video_outputs = true;
   // pull samples (fragments) out of the gstreamer pipeline
   GstElement* m_app_sink_element = nullptr;
   // not supported by all camera(s).

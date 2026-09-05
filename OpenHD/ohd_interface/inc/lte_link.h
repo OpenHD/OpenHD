@@ -30,8 +30,6 @@ class LteLink final : public OHDLink {
 
  private:
   LteLinkConfig m_config;
-  std::unique_ptr<openhd::UDPForwarder> m_video_tx;
-  std::unique_ptr<openhd::UDPForwarder> m_video2_tx;
   std::unique_ptr<openhd::UDPReceiver> m_telemetry;
 };
 

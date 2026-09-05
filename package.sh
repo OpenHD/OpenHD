@@ -303,6 +303,9 @@ create_package_directory() {
     "${PKGDIR}settings" \
     "${PKGDIR}etc/systemd/system"
 
+  install -m 0755 scripts/openhd-fleet-setup "${PKGDIR}usr/local/bin/openhd-fleet-setup"
+  install -m 0644 systemd/openhd-fleet-setup.service "${PKGDIR}etc/systemd/system/openhd-fleet-setup.service"
+
   if [[ "${PACKAGE_ARCH}" != "x86_64" ]]; then
     echo "Non-x86 architecture detected"
     if [[ "${PACKAGE_ARCH}" == "armhf" && "${OS}" == "raspbian" ]]; then
@@ -408,7 +411,7 @@ build_package() {
   echo "Building package..."
   local package_name=""
   local debian_arch=""
-  local packages=()
+  local packages=(python3 openssl wireguard-tools gstreamer1.0-libav gstreamer1.0-plugins-ugly)
 
   package_name="$(resolve_package_name "${PACKAGE_ARCH}" "${CUSTOM}")"
   debian_arch="$(normalize_debian_arch "${PACKAGE_ARCH}")"

@@ -48,6 +48,10 @@ OHDVideoAir::OHDVideoAir(std::vector<XCamera> cameras,
   assert(m_console);
   assert(!cameras.empty());
   m_console->debug("OHDVideo::OHDVideo()");
+  if (const auto settings = openhd::request_sysutil_settings();
+      settings && settings->lte_configured && settings->lte_active) {
+    m_native_fleet_address = settings->lte_fleetcontrol_address;
+  }
   m_primary_video_forwarder = std::make_unique<openhd::UDPMultiForwarder>();
   m_secondary_video_forwarder = std::make_unique<openhd::UDPMultiForwarder>();
   m_audio_forwarder = std::make_unique<openhd::UDPMultiForwarder>();
@@ -166,7 +170,7 @@ void OHDVideoAir::configure(
 #ifndef OPENHD_MPP_ONLY
   {
     m_console->debug("GStreamerStream for Camera index:{}", camera.index);
-    stream = std::make_shared<GStreamerStream>(camera_holder, frame_cb);
+    stream = std::make_shared<GStreamerStream>(camera_holder, frame_cb, !m_record_only);
   }
 #else
   {
@@ -350,6 +354,11 @@ void OHDVideoAir::handle_change_bitrate_request(
 
 void OHDVideoAir::start_stop_forwarding_external_device(
     openhd::ExternalDevice external_device, bool connected) {
+  // Native LTE owns the fleet upload. A TCP telemetry client must not create
+  // a second RTP upload; Ground remains a telemetry member of the same craft.
+  if (!m_native_fleet_address.empty() &&
+      external_device.external_device_ip == m_native_fleet_address) return;
+
   const std::string client_addr = external_device.external_device_ip;
   if (connected) {
     m_primary_video_forwarder->addForwarder(client_addr, 5600);
@@ -357,10 +366,10 @@ void OHDVideoAir::start_stop_forwarding_external_device(
     m_audio_forwarder->addForwarder(client_addr, 5610);
     m_has_localhost_forwarding_enabled = true;
   } else {
-    m_has_localhost_forwarding_enabled = false;
     m_primary_video_forwarder->removeForwarder(client_addr, 5600);
     m_secondary_video_forwarder->removeForwarder(client_addr, 5601);
     m_audio_forwarder->removeForwarder(client_addr, 5610);
+    m_has_localhost_forwarding_enabled = !m_primary_video_forwarder->getForwarders().empty();
   }
 }
 

@@ -82,7 +82,7 @@ if(ENABLE_AIR)
     )
 
     if(NOT OPENHD_MPP_ONLY)
-        list(APPEND sources src/gstreamerstream.cpp src/gstaudiostream.cpp)
+        list(APPEND sources src/gstreamerstream.cpp src/gstaudiostream.cpp src/gst_video_output.cpp)
         pkg_search_module(GST REQUIRED
                 gstreamer-1.0>=1.4
                 gstreamer-app-1.0>=1.4)
