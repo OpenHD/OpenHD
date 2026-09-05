@@ -8,7 +8,8 @@
 
 int main(int argc, char** argv) {
   gst_init(&argc, &argv);
-  const bool raw = argc < 2 || std::string(argv[1]) != "encoded";
+  const bool direct_rtp = argc > 1 && std::string(argv[1]) == "rtp";
+  const bool raw = argc < 2 || std::string(argv[1]) == "raw";
   GError* error = nullptr;
   auto* receiver = gst_parse_launch("udpsrc name=rtp port=15600 caps=\"application/x-rtp,media=video,encoding-name=H264,clock-rate=90000,payload=96\" ! rtpjitterbuffer latency=40 ! rtph264depay ! h264parse ! avdec_h264 ! appsink name=decoded sync=false max-buffers=2 drop=true", &error);
   if (error || !receiver) { std::cerr << (error ? error->message : "No receiver") << '\n'; return 1; }
@@ -25,7 +26,27 @@ int main(int argc, char** argv) {
   }, &bytes, nullptr);
   gst_object_unref(pad); gst_object_unref(udp);
   auto output = std::make_unique<openhd::GstVideoOutput>(openhd::VideoOutputProfile{"test", "127.0.0.1", 15600});
-  if (!output->attach(source, false, true, raw) || output->uses_raw_input() != raw) return 2;
+  if (direct_rtp) {
+    if (!output->start_rtp_input()) return 2;
+    auto* encoded_sink = gst_bin_get_by_name(GST_BIN(source), "out_appsink");
+    auto* encoded_pad = gst_element_get_static_pad(encoded_sink, "sink");
+    gst_pad_add_probe(encoded_pad, static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER | GST_PAD_PROBE_TYPE_BUFFER_LIST), [](GstPad*, GstPadProbeInfo* info, gpointer user) {
+      auto push = [&](GstBuffer* buffer) {
+        GstMapInfo map{};
+        if (gst_buffer_map(buffer, &map, GST_MAP_READ)) {
+          static_cast<openhd::GstVideoOutput*>(user)->push_rtp(map.data, map.size);
+          gst_buffer_unmap(buffer, &map);
+        }
+      };
+      if (GST_PAD_PROBE_INFO_TYPE(info) & GST_PAD_PROBE_TYPE_BUFFER) push(GST_PAD_PROBE_INFO_BUFFER(info));
+      if (GST_PAD_PROBE_INFO_TYPE(info) & GST_PAD_PROBE_TYPE_BUFFER_LIST) {
+        auto* list = GST_PAD_PROBE_INFO_BUFFER_LIST(info);
+        for (guint i = 0; i < gst_buffer_list_length(list); ++i) push(gst_buffer_list_get(list, i));
+      }
+      return GST_PAD_PROBE_OK;
+    }, output.get(), nullptr);
+    gst_object_unref(encoded_pad); gst_object_unref(encoded_sink);
+  } else if (!output->attach(source, false, true, raw) || output->uses_raw_input() != raw) return 2;
   auto* sink = GST_APP_SINK(gst_bin_get_by_name(GST_BIN(receiver), "decoded"));
   gst_element_set_state(receiver, GST_STATE_PLAYING);
   gst_element_set_state(source, GST_STATE_PLAYING);
@@ -57,8 +78,8 @@ int main(int argc, char** argv) {
   const double fps = (frames - 1) / elapsed;
   const double bitrate = (bytes.load() - initial_bytes) * 8 / elapsed / 1000;
   std::cout << (raw ? "raw" : "encoded") << ": " << width << 'x' << height << ", " << fps << " fps, " << bitrate << " kbit/s RTP, " << frames << " decoded frames\n";
-  output.reset();
   gst_element_set_state(source, GST_STATE_NULL);
+  output.reset();
   gst_element_set_state(receiver, GST_STATE_NULL);
   gst_object_unref(sink); gst_object_unref(source); gst_object_unref(receiver);
   return width == 854 && height == 480 && fps >= 13.5 && fps <= 15.5 && bitrate >= 850 && bitrate <= 1150 ? 0 : 3;

@@ -27,6 +27,9 @@
 #include "openhd_external_device.h"
 #include "openhd_link.hpp"
 #include "openhd_udp.h"
+#ifdef OPENHD_GST_VIDEO_OUTPUT
+namespace openhd { class GstVideoOutput; }
+#endif
 
 // The ground just stupidly forwards video (rtp fragments, to be exact) via UDP
 // for QOpenHD and/or more device(s) to decode and display.
@@ -54,6 +57,9 @@ class OHDVideoGround {
   std::shared_ptr<spdlog::logger> m_console;
   std::shared_ptr<OHDLink> m_link_handle;
   std::string m_native_fleet_address;
+#ifdef OPENHD_GST_VIDEO_OUTPUT
+  std::unique_ptr<openhd::GstVideoOutput> m_fleet_output;
+#endif
   std::unique_ptr<openhd::UDPMultiForwarder> m_primary_video_forwarder;
   std::unique_ptr<openhd::UDPMultiForwarder> m_secondary_video_forwarder;
   std::unique_ptr<openhd::UDPMultiForwarder> m_audio_forwarder;

@@ -38,6 +38,28 @@ second upload when a telemetry TCP client connects. The existing native telemetr
 transport remains MAVLink/UDP; legacy TCP telemetry is supported separately by
 FleetControl with per-connection frame reassembly.
 
+GStreamer-enabled OpenHD Ground builds also feed received primary H.264 RTP into
+the independent output. Ground only encodes/uploads with permission from
+FleetControl. Air's arriving video takes priority, regardless of the order in
+which profiles were created. After three seconds without Air RTP, Ground may
+resume. FleetControl labels the actual source as **Air video** or **Ground video**
+and keeps one browser stream for the craft.
+
+Ground renews permission every 750 ms over the same WireGuard UDP video port.
+The 16-byte request is `OHDFV1Q\0` followed by eight random bytes. The reply echoes
+the nonce with `OHDFV1Y\0` (allow) or `OHDFV1N\0` (pause). Only the account's known
+Ground peer can request permission. Permission expires after two seconds without
+a matching reply; Ground stops its encoder and upload, retaining only incoming
+radio video for local consumers. Air does not require a Ground lease. A brief
+overlap during detection/permission propagation is possible; the server accepts
+only Air as soon as Air RTP arrives.
+
+`test/relay_video_output.cpp` provides the same output/permission behavior for
+bench testing older firmware without replacing the OpenHD binary. Run it with
+`HOST PORT INPUT_PORT air|ground`. The bench receiver and native Ground path
+currently expect H.264 input. The generic output supports explicitly configured
+H.265 input, but automatic Ground codec detection is not implemented.
+
 ## Verification
 
 On the Raspberry Pi 4 at 192.168.1.124, the standalone test used a 1280×720/30
@@ -59,3 +81,10 @@ This validates the independent output and production video path. The running
 OpenHD binary was not replaced or switched from Ground to Air, so integrated Air
 camera startup and paired Air/Ground operation still require a firmware test.
 The full OpenHD application is built by CI.
+
+Subsequent paired tests used Ground 192.168.1.124 and Air 192.168.1.42 with
+separate native WireGuard profiles and bench receivers. Ground upload while Air
+was active fell to 720 bytes over eight seconds (permission/tunnel traffic,
+no video). The direct RTP input used by native Ground separately decoded at
+15.21 fps and 1017 kbit/s on the Pi. Native firmware integration is built by CI;
+the bench devices still run their existing OpenHD binaries with test receivers.

@@ -1,4 +1,5 @@
 #include "gst_video_output.h"
+#include "fleet_video_lease.h"
 
 #include <gst/app/gstappsrc.h>
 #include <chrono>
@@ -64,6 +65,7 @@ GstVideoOutput::~GstVideoOutput() {
   { std::lock_guard<std::mutex> lock(m_mutex); m_stopping = true; }
   m_changed.notify_all();
   if (m_worker.joinable()) m_worker.join();
+  if (m_rtp_caps) gst_caps_unref(m_rtp_caps);
   for (auto& sample : m_queue) { gst_buffer_unref(sample.buffer); gst_caps_unref(sample.caps); }
 }
 
@@ -98,7 +100,7 @@ std::string GstVideoOutput::pipeline(const VideoOutputProfile& p, bool raw,
 }
 
 bool GstVideoOutput::attach(GstElement* camera_pipeline, bool input_h265, bool rtp_input, bool prefer_raw) {
-  if (m_pad || !camera_pipeline) return false;
+  if (m_worker.joinable() || m_pad || !camera_pipeline) return false;
   m_h265 = input_h265; m_rtp = rtp_input;
   m_pad = prefer_raw ? raw_encoder_pad(camera_pipeline) : nullptr;
   m_raw = m_pad != nullptr;
@@ -116,6 +118,30 @@ bool GstVideoOutput::attach(GstElement* camera_pipeline, bool input_h265, bool r
             m_profile.bitrate_kbit, m_raw ? "shared raw" : "encoded fallback",
             m_profile.host.c_str(), m_profile.port);
   return true;
+}
+
+bool GstVideoOutput::start_rtp_input(bool h265) {
+  if (m_worker.joinable()) return false;
+  m_h265 = h265; m_rtp = true; m_raw = false;
+  m_rtp_caps = gst_caps_new_simple("application/x-rtp", "media", G_TYPE_STRING, "video",
+      "encoding-name", G_TYPE_STRING, h265 ? "H265" : "H264", "clock-rate", G_TYPE_INT, 90000,
+      "payload", G_TYPE_INT, 96, nullptr);
+  m_worker = std::thread([this] { run(); });
+  return true;
+}
+
+void GstVideoOutput::push_rtp(const uint8_t* data, size_t size) {
+  if (!m_rtp_caps || !data || size < 12 || size > 65535) return;
+  auto* buffer = gst_buffer_new_allocate(nullptr, size, nullptr);
+  if (!buffer) return;
+  gst_buffer_fill(buffer, 0, data, size);
+  std::lock_guard<std::mutex> lock(m_mutex);
+  if (m_queue.size() >= 512) {
+    gst_buffer_unref(m_queue.front().buffer); gst_caps_unref(m_queue.front().caps);
+    m_queue.pop_front();
+  }
+  m_queue.push_back({buffer, gst_caps_ref(m_rtp_caps)});
+  m_changed.notify_one();
 }
 
 GstPadProbeReturn GstVideoOutput::probe(GstPad* pad, GstPadProbeInfo* info, gpointer user) {
@@ -144,6 +170,7 @@ void GstVideoOutput::enqueue(GstPad* pad, GstBuffer* buffer) {
 }
 
 void GstVideoOutput::run() {
+  FleetVideoLease lease(m_profile.host, m_profile.port, m_profile.ground_fallback);
   GstElement* output = nullptr;
   GstAppSrc* input = nullptr;
   GstBus* bus = nullptr;
@@ -166,6 +193,14 @@ void GstVideoOutput::run() {
       if (m_stopping) break;
       if (m_queue.empty()) continue;
       sample = m_queue.front(); m_queue.pop_front();
+    }
+    if (!lease.allowed()) {
+      if (output) {
+        g_message("Video output %s paused: Ground upload permission unavailable", m_profile.name.c_str());
+        clear();
+      }
+      gst_buffer_unref(sample.buffer); gst_caps_unref(sample.caps);
+      continue;
     }
     if (bus) {
       if (auto* message = gst_bus_pop_filtered(bus, static_cast<GstMessageType>(GST_MESSAGE_ERROR | GST_MESSAGE_EOS))) {

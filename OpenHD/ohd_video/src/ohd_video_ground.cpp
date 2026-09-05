@@ -22,6 +22,9 @@
  ******************************************************************************/
 
 #include "ohd_video_ground.h"
+#ifdef OPENHD_GST_VIDEO_OUTPUT
+#include "gst_video_output.h"
+#endif
 
 #include <utility>
 
@@ -33,8 +36,17 @@ OHDVideoGround::OHDVideoGround(std::shared_ptr<OHDLink> link_handle)
     : m_link_handle(std::move(link_handle)) {
   m_console = openhd::log::create_or_get("v_gnd");
   if (const auto settings = openhd::request_sysutil_settings();
-      settings && settings->lte_configured && settings->lte_active) {
+      settings && settings->lte_configured) {
     m_native_fleet_address = settings->lte_fleetcontrol_address;
+#ifdef OPENHD_GST_VIDEO_OUTPUT
+    if (!m_native_fleet_address.empty() && settings->lte_video_port >= 1024 && settings->lte_video_port <= 65535) {
+      gst_init(nullptr, nullptr);
+      openhd::VideoOutputProfile profile{"fleet-ground", m_native_fleet_address, settings->lte_video_port};
+      profile.ground_fallback = true;
+      m_fleet_output = std::make_unique<openhd::GstVideoOutput>(profile);
+      m_fleet_output->start_rtp_input();
+    }
+#endif
   }
   m_primary_video_forwarder = std::make_unique<openhd::UDPMultiForwarder>();
   m_secondary_video_forwarder = std::make_unique<openhd::UDPMultiForwarder>();
@@ -94,6 +106,9 @@ void OHDVideoGround::on_video_data(int stream_index, const uint8_t* data,
   // openhd::log::get_default()->debug("on_video_data {}",stream_index);
   if (stream_index == 0) {
     m_primary_video_forwarder->forwardPacketViaUDP(data, data_len);
+#ifdef OPENHD_GST_VIDEO_OUTPUT
+    if (m_fleet_output && data_len > 0) m_fleet_output->push_rtp(data, data_len);
+#endif
   } else if (stream_index == 1) {
     m_secondary_video_forwarder->forwardPacketViaUDP(data, data_len);
   } else {

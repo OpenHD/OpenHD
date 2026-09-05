@@ -22,6 +22,7 @@ struct VideoOutputProfile {
   int fps = 15;
   int bitrate_kbit = 1000;
   bool prefer_hardware = false;
+  bool ground_fallback = false;
 };
 
 class GstVideoOutput {
@@ -35,6 +36,8 @@ class GstVideoOutput {
   // radio output. Integrated camera/encoder sources use an encoded fallback.
   bool attach(GstElement* camera_pipeline, bool input_h265, bool rtp_input, bool prefer_raw = true);
   bool uses_raw_input() const { return m_raw; }
+  bool start_rtp_input(bool h265 = false);
+  void push_rtp(const uint8_t* data, size_t size);
   static std::string pipeline(const VideoOutputProfile& profile, bool raw,
                               bool h265, bool rtp, bool hardware);
 
@@ -45,6 +48,7 @@ class GstVideoOutput {
   void run();
   VideoOutputProfile m_profile;
   GstPad* m_pad = nullptr;
+  GstCaps* m_rtp_caps = nullptr;
   gulong m_probe = 0;
   bool m_raw = false;
   bool m_h265 = false;
