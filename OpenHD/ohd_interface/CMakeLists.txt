@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.16.3)
 project(OpenHD-Interface)
 
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    include(nexmon/install.cmake)
+endif()
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -41,6 +45,8 @@ set(ARTOSYN_SDK_TUNTAP "" CACHE FILEPATH "Path to Artosyn tuntap_bb helper binar
 
 set(sources
     src/wifi_card_discovery.cpp
+    src/nexmon_scout.cpp
+    src/wb_link_nexmon.cpp
     src/ohd_interface.cpp
     src/usb_tether_listener.cpp
     src/wb_link.cpp
@@ -341,6 +347,16 @@ target_link_libraries(OHDInterfaceLib PUBLIC Threads::Threads)
 # Custom testing
 add_executable(test_interface test/test_interface.cpp)
 target_link_libraries(test_interface OHDInterfaceLib)
+
+if(OPENHD_ENABLE_DEVOURER)
+    add_executable(test_nexmon_scout test/test_nexmon_scout.cpp)
+    target_link_libraries(test_nexmon_scout OHDInterfaceLib)
+    target_compile_options(test_nexmon_scout PRIVATE -UNDEBUG)
+    target_sources(test_nexmon_scout PRIVATE ../ohd_common/src/config_paths.cpp)
+    add_executable(test_nexmon_live test/test_nexmon_live.cpp)
+    target_link_libraries(test_nexmon_live OHDInterfaceLib)
+    target_sources(test_nexmon_live PRIVATE ../ohd_common/src/config_paths.cpp)
+endif()
 
 add_executable(test_usb_tether_listener test/test_usb_tether_listener.cpp)
 target_link_libraries(test_usb_tether_listener OHDInterfaceLib)

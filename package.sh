@@ -492,6 +492,11 @@ build_package() {
 
   mkdir -p "${PKGDIR}usr/local/bin/"
   cp "${build_dir}/openhd" "${PKGDIR}usr/local/bin/"
+  DESTDIR="${PKGDIR}" cmake --install "${build_dir}" \
+    --prefix /usr/local --component Nexmon
+  if [[ -f "${PKGDIR}usr/local/lib/openhd/nexmon/manifest.json" ]]; then
+    packages+=(network-manager systemd iw iproute2 kmod coreutils)
+  fi
   bundle_poco_runtime "${PKGDIR}usr/local/bin/openhd"
   verify_packaged_poco_abi "${PKGDIR}usr/local/bin/openhd"
   build_and_stage_gst_perf

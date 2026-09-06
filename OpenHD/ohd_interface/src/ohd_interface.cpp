@@ -787,6 +787,9 @@ void OHDInterface::generate_keys_from_pw_if_exists_and_delete() {
 }
 
 void OHDInterface::update_wifi_hotspot_enable() {
+  // A requested Nexmon survey temporarily owns the internal interface. Its
+  // helper restores the saved NetworkManager state before releasing this file.
+  if (OHDFilesystemUtil::exists("/run/openhd-nexmon-scout.json")) return;
   auto& action_handler = openhd::LinkActionHandler::instance();
   const auto& settings = m_nw_settings.get_settings();
   if (m_disable_wifi_hotspot &&

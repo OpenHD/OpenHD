@@ -53,6 +53,7 @@
 #include "wb_link_helper.h"
 #include "wb_link_rate_helper.hpp"
 #include "wifi_card.h"
+#include "nexmon_scout.h"
 
 static constexpr auto WB_LINK_ARM_CHANGED_TX_POWER_TAG = "wb_link_tx_power";
 int complainOnce = 0;
@@ -415,6 +416,7 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
   // txrx_options.debug_packet_gaps= true;
   txrx_options.secure_keypair = std::nullopt;
   auto default_keypair = derive_default_wb_keypair();
+  m_scout_keypair = default_keypair;
   if (default_keypair.has_value()) {
     txrx_options.secure_keypair = default_keypair;
     std::copy_n(default_keypair->key_1.secret_key.begin(),
@@ -2639,6 +2641,10 @@ openhd::WifiSpace WBLink::get_current_frequency_channel_space() const {
 
 void WBLink::perform_channel_scan(
     const openhd::LinkActionHandler::ScanChannelsParam& scan_channels_params) {
+  if (openhd::NexmonScout::installed()) {
+    perform_nexmon_scan(scan_channels_params);
+    return;
+  }
   const WiFiCard& card = m_broadcast_cards.at(0);
   const auto channels_to_scan = openhd::wb::get_scan_channels_frequencies(
       card, scan_channels_params.channels_to_scan);
@@ -2816,6 +2822,10 @@ void WBLink::perform_channel_scan(
 }
 
 void WBLink::perform_channel_analyze(int channels_to_scan) {
+  if (openhd::NexmonScout::installed()) {
+    perform_nexmon_analyze(channels_to_scan);
+    return;
+  }
   const auto analyze_begin = std::chrono::steady_clock::now();
   struct AnalyzeResult {
     int frequency;

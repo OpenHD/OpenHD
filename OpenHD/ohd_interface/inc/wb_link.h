@@ -213,6 +213,10 @@ class WBLink : public OHDLink {
       const openhd::LinkActionHandler::ScanChannelsParam& scan_channels_params);
   // similar to channel scan, analyze channel(s) for interference
   void perform_channel_analyze(int channels_to_scan);
+  void perform_nexmon_scan(
+      const openhd::LinkActionHandler::ScanChannelsParam& params);
+  void perform_nexmon_analyze(int channels_to_scan);
+  std::optional<wb::KeyPairTxRx> m_scout_keypair;
   void reset_all_rx_stats();
   void recommend_bitrate_to_encoder(int recommended_video_bitrate_kbits);
   size_t calculate_history_size_from_ms(int window_ms,

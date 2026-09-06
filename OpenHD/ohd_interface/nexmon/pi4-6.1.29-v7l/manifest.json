@@ -1,0 +1,11 @@
+{
+  "kernel": "6.1.29-v7l+",
+  "architecture": "armhf",
+  "model": "Raspberry Pi 4 Model B",
+  "firmware": "bcm43455c0/7_45_206",
+  "source": "d6b633800d80b8b8e2132a2c9a5ecda870ec8aaa",
+  "source_url": "https://github.com/seemoo-lab/nexmon",
+  "vermagic": "6.1.29-v7l+ SMP mod_unload modversions ARMv7 p2v8",
+  "monitor_interface": "ohdscout",
+  "experimental": true
+}

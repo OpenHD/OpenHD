@@ -1,4 +1,6 @@
 *.sh text eol=lf
+scripts/openhd-nexmon-scout text eol=lf
+OpenHD/ohd_interface/nexmon/pi4-6.1.29-v7l/* -text
 *.service text eol=lf
 systemd/openhd-artosyn-start text eol=lf
 Buildroot/init.d/* text eol=lf

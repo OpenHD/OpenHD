@@ -1,0 +1,171 @@
+#!/usr/bin/env python3
+"""Lease the Pi's internal Wi-Fi for an on-demand OpenHD monitor survey.
+
+Requires a matching, tested firmware/module bundle in /usr/local/lib/openhd/nexmon.
+Installed firmware and module files are never replaced. Root, NetworkManager,
+systemd and iw are required. The restore timer also covers an OpenHD crash.
+"""
+import argparse
+import fcntl
+import json
+import os
+from pathlib import Path
+import re
+import shutil
+import subprocess
+import time
+
+BUNDLE = Path('/usr/local/lib/openhd/nexmon')
+STATE = Path('/run/openhd-nexmon-scout.json')
+OVERRIDE = Path('/run/openhd-nexmon-firmware')
+FW_PATH = Path('/sys/module/firmware_class/parameters/path')
+NM_CONF = Path('/run/NetworkManager/conf.d/99-openhd-nexmon-scout.conf')
+UNIT = 'openhd-nexmon-scout-restore'
+MONITOR = 'ohdscout'
+
+
+def run(*args, check=True, timeout=20):
+    result = subprocess.run(args, capture_output=True, text=True, timeout=timeout,
+                            env=dict(os.environ, LC_ALL='C', PATH='/usr/sbin:/usr/bin:/sbin:/bin'))
+    if check and result.returncode:
+        raise RuntimeError(f'{args[0]} failed: {result.stderr.strip()}')
+    return result.stdout.strip()
+
+
+def radio():
+    matches = [p for p in Path('/sys/class/net').iterdir()
+               if p.name != MONITOR and (p/'device/driver').exists()
+               and (p/'device/driver').resolve().name == 'brcmfmac'
+               and 'mmc' in str((p/'device').resolve())]
+    if len(matches) != 1:
+        raise RuntimeError('Expected exactly one internal Broadcom SDIO interface')
+    return matches[0].name
+
+
+def restore():
+    if not STATE.exists():
+        return
+    state = json.loads(STATE.read_text())
+    # Sysfs adds a newline on reads. A zero-length write does not reset a
+    # string parameter, so explicitly write its NUL terminator for empty paths.
+    FW_PATH.write_bytes(state['firmware_path'].strip().encode() + b'\0')
+    run('ip', 'link', 'set', MONITOR, 'down', check=False)
+    run('iw', 'dev', MONITOR, 'del', check=False)
+    run('modprobe', '-r', 'brcmfmac')
+    run('modprobe', 'brcmfmac')
+    time.sleep(1)
+    name = radio()
+    if name != state['interface']:
+        run('ip', 'link', 'set', name, 'down')
+        run('ip', 'link', 'set', name, 'name', state['interface'])
+    NM_CONF.unlink(missing_ok=True)
+    run('nmcli', 'general', 'reload', 'conf')
+    name = state['interface']
+    run('nmcli', 'device', 'set', name, 'managed', state['managed'])
+    if state['uuid'] and state['uuid'] != '--':
+        # NetworkManager can need time to create its new supplicant interface.
+        for attempt in range(5):
+            try:
+                run('nmcli', 'connection', 'up', 'uuid', state['uuid'], 'ifname', name)
+                break
+            except RuntimeError:
+                if attempt == 4:
+                    raise
+                time.sleep(1)
+    elif state['up']:
+        run('ip', 'link', 'set', name, 'up')
+    else:
+        run('ip', 'link', 'set', name, 'down')
+    STATE.unlink()
+
+
+def start():
+    if STATE.exists():
+        raise RuntimeError('Internal Wi-Fi already leased, or restoration pending')
+    if not Path('/proc/device-tree/model').read_bytes().startswith(b'Raspberry Pi 4 Model B'):
+        raise RuntimeError('This Nexmon bundle requires a Raspberry Pi 4 Model B')
+    manifest = json.loads((BUNDLE/'manifest.json').read_text())
+    if manifest['kernel'] != os.uname().release:
+        raise RuntimeError('Nexmon bundle does not match the running kernel')
+    name = radio()
+    if not re.fullmatch(r'[A-Za-z0-9_-]+', name):
+        raise RuntimeError('Unsupported interface name')
+    state = dict(interface=name, firmware_path=FW_PATH.read_text().strip(),
+                 uuid=run('nmcli', '-g', 'GENERAL.CON-UUID', 'device', 'show', name),
+                 managed=run('nmcli', '-g', 'GENERAL.NM-MANAGED', 'device', 'show', name),
+                 up=bool(int((Path('/sys/class/net')/name/'flags').read_text(), 16) & 1))
+    STATE.write_text(json.dumps(state))
+    try:
+        run('systemctl', 'stop', UNIT+'.timer', check=False)
+        run('systemctl', 'reset-failed', UNIT+'.service', check=False)
+        # The helper's lock is held only during operations, never throughout a
+        # survey, so the independent timer can always begin restoration.
+        run('systemd-run', '--unit='+UNIT, '--on-active=600s',
+            '/usr/bin/python3', str(Path(__file__).resolve()), 'restore')
+        fw = OVERRIDE/'brcm'
+        fw.mkdir(parents=True, exist_ok=True)
+        for filename in ('brcmfmac43455-sdio.bin',
+                         'brcmfmac43455-sdio.raspberrypi,4-model-b.bin'):
+            shutil.copyfile(BUNDLE/'firmware.bin', fw/filename)
+        NM_CONF.parent.mkdir(parents=True, exist_ok=True)
+        NM_CONF.write_text('[keyfile]\nunmanaged-devices=interface-name:wlan0;'
+                           'interface-name:'+name+';interface-name:'+MONITOR+'\n')
+        run('nmcli', 'general', 'reload', 'conf')
+        run('nmcli', 'device', 'set', name, 'managed', 'no')
+        run('modprobe', '-r', 'brcmfmac')
+        FW_PATH.write_text(str(OVERRIDE))
+        run('modprobe', 'brcmutil')
+        run('modprobe', 'cfg80211')
+        run('insmod', str(BUNDLE/'brcmfmac.ko'))
+        time.sleep(1)
+        run('ip', 'link', 'set', radio(), 'up')
+        run('iw', 'dev', radio(), 'interface', 'add', MONITOR, 'type', 'monitor')
+        run('ip', 'link', 'set', MONITOR, 'up')
+    except Exception:
+        restore()
+        raise
+
+
+def tune(frequency):
+    if not STATE.exists():
+        raise RuntimeError('No active internal-radio survey')
+    phy = (Path('/sys/class/net')/radio()/'phy80211').resolve().name
+    if not re.fullmatch(r'phy\d+', phy):
+        raise RuntimeError('Cannot identify internal radio PHY')
+    info = run('iw', 'phy', phy, 'info')
+    if not re.search(r'\* '+str(frequency)+r' MHz \[\d+\](?![^\n]*disabled)', info):
+        raise RuntimeError('Frequency is unavailable on the internal radio')
+    if 2412 <= frequency <= 2472 and (frequency-2407) % 5 == 0:
+        channel = (frequency-2407)//5
+    elif 5000 < frequency <= 5900 and frequency % 5 == 0:
+        channel = (frequency-5000)//5
+    else:
+        raise RuntimeError('Unsupported survey frequency')
+    run(str(BUNDLE/'nexutil'), '-I'+radio(), '-k'+str(channel)+'/20', timeout=5)
+    # Nexutil's historical netlink interface ACKs even a firmware error.
+    # Require independent kernel readback, not just its zero exit status.
+    if f'({frequency} MHz)' not in run('iw', 'dev', MONITOR, 'info'):
+        raise RuntimeError('Nexmon frequency readback mismatch')
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('operation', choices=['start', 'restore', 'tune'])
+    parser.add_argument('frequency', nargs='?', type=int)
+    args = parser.parse_args()
+    if os.geteuid() != 0:
+        parser.error('Run as root')
+    with open('/run/openhd-nexmon-scout.lock', 'w') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        if args.operation == 'start':
+            start()
+        elif args.operation == 'restore':
+            restore()
+        elif args.frequency is not None:
+            tune(args.frequency)
+        else:
+            parser.error('tune requires a frequency in MHz')
+
+
+if __name__ == '__main__':
+    main()

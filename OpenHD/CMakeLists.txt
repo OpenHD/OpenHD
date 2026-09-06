@@ -23,6 +23,9 @@ endif ()
 # Add subdirectories for libraries
 add_subdirectory(ohd_common EXCLUDE_FROM_ALL)
 add_subdirectory(ohd_interface EXCLUDE_FROM_ALL)
+# EXCLUDE_FROM_ALL also excludes subdirectory install rules. Register the
+# on-demand Pi scout bundle here so normal installs and Debian staging include it.
+include(ohd_interface/nexmon/install.cmake)
 add_subdirectory(ohd_telemetry EXCLUDE_FROM_ALL)
 add_subdirectory(ohd_video EXCLUDE_FROM_ALL)
 
