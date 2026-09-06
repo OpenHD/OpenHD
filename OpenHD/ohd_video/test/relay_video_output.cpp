@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
   int result = 0;
   {
     openhd::VideoOutputProfile profile{"fleet-relay", argv[1], port};
-    profile.ground_fallback = std::string(argv[4]) == "ground";
+    profile.fleet_controlled = true;
     openhd::GstVideoOutput output(profile);
     if (!output.attach(source, false, true, false)) {
       gst_object_unref(source);

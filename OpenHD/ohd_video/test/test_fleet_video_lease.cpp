@@ -24,13 +24,25 @@ int main() {
   packet[15] ^= 1;
   sendto(server, packet.data(), packet.size(), 0, reinterpret_cast<sockaddr*>(&client), size);
   assert(lease.allowed());
+  std::this_thread::sleep_for(std::chrono::milliseconds(800));
+  assert(lease.allowed());
+  assert(recvfrom(server, packet.data(), packet.size(), 0, reinterpret_cast<sockaddr*>(&client), &size) == 16);
+  std::memcpy(packet.data(), "OHDFV1N\0", 8);
+  sendto(server, packet.data(), packet.size(), 0, reinterpret_cast<sockaddr*>(&client), size);
+  assert(!lease.allowed()); // Stop revokes the existing lease immediately.
+  std::this_thread::sleep_for(std::chrono::milliseconds(800));
+  assert(!lease.allowed());
+  assert(recvfrom(server, packet.data(), packet.size(), 0, reinterpret_cast<sockaddr*>(&client), &size) == 16);
+  std::memcpy(packet.data(), "OHDFV1Y\0", 8);
+  sendto(server, packet.data(), packet.size(), 0, reinterpret_cast<sockaddr*>(&client), size);
+  assert(lease.allowed()); // Start resumes without restarting OpenHD.
   std::this_thread::sleep_for(std::chrono::milliseconds(2100));
-  assert(!lease.allowed()); // Losing the server stops Ground, rather than failing open.
+  assert(!lease.allowed()); // Losing the server stops the Fleet output.
   assert(recvfrom(server, packet.data(), packet.size(), 0, reinterpret_cast<sockaddr*>(&client), &size) == 16);
   std::memcpy(packet.data(), "OHDFV1N\0", 8);
   sendto(server, packet.data(), packet.size(), 0, reinterpret_cast<sockaddr*>(&client), size);
   assert(!lease.allowed());
-  openhd::FleetVideoLease air("127.0.0.1", ntohs(address.sin_port), false);
-  assert(air.allowed());
+  openhd::FleetVideoLease independent("127.0.0.1", ntohs(address.sin_port), false);
+  assert(independent.allowed());
   close(server);
 }

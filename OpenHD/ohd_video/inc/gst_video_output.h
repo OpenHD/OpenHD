@@ -22,7 +22,7 @@ struct VideoOutputProfile {
   int fps = 15;
   int bitrate_kbit = 1000;
   bool prefer_hardware = false;
-  bool ground_fallback = false;
+  bool fleet_controlled = false;
 };
 
 class GstVideoOutput {

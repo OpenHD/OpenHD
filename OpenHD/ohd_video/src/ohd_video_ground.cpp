@@ -42,7 +42,7 @@ OHDVideoGround::OHDVideoGround(std::shared_ptr<OHDLink> link_handle)
     if (!m_native_fleet_address.empty() && settings->lte_video_port >= 1024 && settings->lte_video_port <= 65535) {
       gst_init(nullptr, nullptr);
       openhd::VideoOutputProfile profile{"fleet-ground", m_native_fleet_address, settings->lte_video_port};
-      profile.ground_fallback = true;
+      profile.fleet_controlled = true;
       m_fleet_output = std::make_unique<openhd::GstVideoOutput>(profile);
       m_fleet_output->start_rtp_input();
     }

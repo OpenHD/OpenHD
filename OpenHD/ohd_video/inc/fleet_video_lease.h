@@ -10,7 +10,7 @@
 #include <string>
 
 namespace openhd {
-// Ground fails closed if FleetControl cannot renew permission. The connected
+// Fleet outputs fail closed if FleetControl cannot renew permission. The connected
 // socket accepts replies only from the configured WireGuard destination.
 class FleetVideoLease {
  public:

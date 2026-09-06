@@ -1264,6 +1264,7 @@ bool GStreamerStream::setup() {
         openhd::VideoOutputProfile profile{"FleetControl", lte->lte_fleetcontrol_address,
                                           lte->lte_video_port, 854, 480, 15, 1000,
                                           !OHDPlatform::instance().is_rpi()};
+        profile.fleet_controlled = true;
         auto output = std::make_unique<openhd::GstVideoOutput>(std::move(profile));
         if (output->attach(m_gst_pipeline, setting.streamed_video_format.videoCodec == VideoCodec::H265, !dirty_use_raw))
           m_video_outputs.push_back(std::move(output));

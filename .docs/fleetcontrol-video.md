@@ -2,11 +2,13 @@
 
 FleetControl uses one craft identity with separate Air and optional Ground
 WireGuard profiles. Each device needs its own key and address. In QOpenHD, open
-OpenHD → FleetControl, sign in, create/select the craft and connect Air. Add Ground
-to that same craft. Existing license/certificate controls remain available.
+OpenHD → FleetControl, sign in and assign an existing craft to a certificate.
+The Start/Stop transmission button controls that craft's FleetControl video and
+telemetry settings. Start enables licensed telemetry and primary video only;
+Stop disables all streams. The radio video link is unaffected.
 
 The HTTPS setup service on device port 8443 authenticates the `openhd` OS account.
-QOpenHD asks to trust its certificate, then pins it. Profile installation validates
+The setup service is separate from certificate assignment. Profile installation validates
 the device role and account routes, rejects wg-quick execution hooks, activates
 WireGuard and restarts SysUtils/OpenHD. Do setup before flight. An old Air binary
 without the independent video output is rejected before profile creation.
@@ -45,12 +47,15 @@ which profiles were created. After three seconds without Air RTP, Ground may
 resume. FleetControl labels the actual source as **Air video** or **Ground video**
 and keeps one browser stream for the craft.
 
-Ground renews permission every 750 ms over the same WireGuard UDP video port.
+Both Air and Ground renew permission every 750 ms over the WireGuard UDP video port.
 The 16-byte request is `OHDFV1Q\0` followed by eight random bytes. The reply echoes
 the nonce with `OHDFV1Y\0` (allow) or `OHDFV1N\0` (pause). Only the account's known
-Ground peer can request permission. Permission expires after two seconds without
-a matching reply; Ground stops its encoder and upload, retaining only incoming
-radio video for local consumers. Air does not require a Ground lease. A brief
+Air or Ground peer can request permission. Stopping transmission denies both;
+Air retains priority when transmission is enabled. Permission expires after two
+seconds without a matching reply; the FleetControl encoder and upload stop,
+retaining radio video for local consumers. Small permission queries, tunnel
+keepalives and the telemetry control endpoint remain available while stopped.
+Older Air firmware needs updating to stop its video upload at the sender. A brief
 overlap during detection/permission propagation is possible; the server accepts
 only Air as soon as Air RTP arrives.
 

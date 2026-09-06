@@ -170,7 +170,7 @@ void GstVideoOutput::enqueue(GstPad* pad, GstBuffer* buffer) {
 }
 
 void GstVideoOutput::run() {
-  FleetVideoLease lease(m_profile.host, m_profile.port, m_profile.ground_fallback);
+  FleetVideoLease lease(m_profile.host, m_profile.port, m_profile.fleet_controlled);
   GstElement* output = nullptr;
   GstAppSrc* input = nullptr;
   GstBus* bus = nullptr;
@@ -196,7 +196,7 @@ void GstVideoOutput::run() {
     }
     if (!lease.allowed()) {
       if (output) {
-        g_message("Video output %s paused: Ground upload permission unavailable", m_profile.name.c_str());
+        g_message("Video output %s paused: FleetControl upload permission unavailable", m_profile.name.c_str());
         clear();
       }
       gst_buffer_unref(sample.buffer); gst_caps_unref(sample.caps);
