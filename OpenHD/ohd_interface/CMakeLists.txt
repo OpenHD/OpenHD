@@ -68,6 +68,8 @@ set(sources
 
 if(OPENHD_ENABLE_DEVOURER)
     list(APPEND sources src/devourer_usb_device_probe.cpp)
+    # Link devourer to OHDInterfaceLib to get its include directories
+    target_link_libraries(OHDInterfaceLib PUBLIC devourer)
 endif()
 
 if (NOT ARTOSYN_SDK_ROOT AND DEFINED ENV{ARTOSYN_SDK_ROOT})

@@ -34,16 +34,15 @@ jobs:
       - name: Sync submodules
         run: |
           git submodule sync
-          # Update first level submodules
           git submodule update --init
-          # Update devourer without recursing into its heavy/broken 'reference' submodules
-          # unless specifically needed for the build.
+          # Only initialize devourer, but avoid its broken/heavy reference sub-submodules
           git submodule update --init OpenHD/ohd_interface/lib/devourer
           git submodule status
 
       - name: Ensure private submodule content
         run: |
-          if [ ! -f OpenHD/ohd_interface/video_crypto_private/CMakeLists.txt ]; then
+          # Robustly handle private submodule content without failing the whole build
+          if [ -d OpenHD/ohd_interface/video_crypto_private ]; then
             git -C OpenHD/ohd_interface/video_crypto_private fetch origin main || true
             git -C OpenHD/ohd_interface/video_crypto_private checkout -f origin/main || true
           fi
