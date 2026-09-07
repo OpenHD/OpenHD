@@ -463,6 +463,7 @@ build_package() {
   rm -f ./openhd*.deb
   local build_dir="/out/openhd-build"
   local build_tmp="/out/openhd-build-tmp"
+  local install_build_dir="${build_dir}"
   rm -rf "${build_dir}" "${build_tmp}"
   mkdir -p "${build_dir}" "${build_tmp}"
   export TMPDIR="${build_tmp}"
@@ -476,6 +477,10 @@ build_package() {
     test -f "${OPENHD_PREBUILT_BINARY}"
     cp "${OPENHD_PREBUILT_BINARY}" "${build_dir}/openhd"
     echo "Using prebuilt ${PACKAGE_ARCH} OpenHD binary: ${OPENHD_PREBUILT_BINARY}"
+    if [[ -n "${OPENHD_PREBUILT_BUILD_DIR:-}" ]]; then
+      test -f "${OPENHD_PREBUILT_BUILD_DIR}/cmake_install.cmake"
+      install_build_dir="${OPENHD_PREBUILT_BUILD_DIR}"
+    fi
   else
     local poco_dir=""
     poco_dir="$(resolve_system_poco_dir)"
@@ -492,7 +497,7 @@ build_package() {
 
   mkdir -p "${PKGDIR}usr/local/bin/"
   cp "${build_dir}/openhd" "${PKGDIR}usr/local/bin/"
-  DESTDIR="${PKGDIR}" cmake --install "${build_dir}" \
+  DESTDIR="${PKGDIR}" cmake --install "${install_build_dir}" \
     --prefix /usr/local --component Nexmon
   if [[ -f "${PKGDIR}usr/local/lib/openhd/nexmon/manifest.json" ]]; then
     packages+=(network-manager systemd iw iproute2 kmod coreutils)

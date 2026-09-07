@@ -104,6 +104,7 @@ jobs:
           export OPENHD_SYSROOT="${sysroot}"
           export OPENHD_CROSS_TRIPLET="${{ matrix.triplet }}"
           export OPENHD_PREBUILT_BINARY="${build_dir}/openhd"
+          export OPENHD_PREBUILT_BUILD_DIR="${build_dir}"
           sudo -E ./package.sh \
             standard "${{ matrix.package_arch }}" "${{ matrix.distro }}" bullseye
 
