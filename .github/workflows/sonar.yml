@@ -1,0 +1,99 @@
+name: SonarCloud Analysis
+
+on:
+  push:
+    branches:
+      - openhd-3.0
+  pull_request:
+    branches:
+      - openhd-3.0
+  workflow_dispatch:
+
+permissions:
+  pull-requests: read
+
+jobs:
+  sonarcloud:
+    name: Build and Analyze
+    runs-on: ubuntu-22.04
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      DOWNLOAD_KEY: ${{ secrets.DOWNLOAD_KEY }}
+      DOWNLOAD_URL: ${{ secrets.DOWNLOAD_URL }}
+      OPENHD_SUBMODULE_TOKEN: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+    steps:
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0
+          token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+
+      - name: Sync submodules
+        run: |
+          git submodule sync
+          git submodule update --init
+          git submodule status
+
+      - name: Ensure private submodule content
+        run: |
+          if [ ! -f OpenHD/ohd_interface/video_crypto_private/CMakeLists.txt ]; then
+            git -C OpenHD/ohd_interface/video_crypto_private fetch origin main
+            git -C OpenHD/ohd_interface/video_crypto_private checkout -f origin/main
+          fi
+
+      - name: Install Dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y libsodium-dev libpoco-dev python3-pip
+          pip3 install gcovr
+          sudo ./install_build_dep.sh ubuntu-x86
+
+      - name: Install sysutils
+        run: |
+          curl -1sLf 'https://dl.cloudsmith.io/public/openhd/dev-release/setup.deb.sh' | sudo -E bash
+          sudo apt update
+          sudo apt install -y openhd-sys-utils
+
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      - name: Configure and Build with Coverage
+        run: |
+          mkdir build
+          cd build
+          source ../OpenHD/scripts/resolve_artosyn_sdk.sh
+          resolve_artosyn_sdk
+          cmake ../OpenHD -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+            -DARTOSYN_SDK_ROOT="${ARTOSYN_SDK_ROOT}" \
+            -DARTOSYN_SDK_LIB="${ARTOSYN_SDK_LIB}" \
+            -DARTOSYN_SDK_DAEMON="${ARTOSYN_SDK_DAEMON:-}" \
+            -DCMAKE_CXX_FLAGS="--coverage" \
+            -DCMAKE_EXE_LINKER_FLAGS="--coverage"
+          cmake --build . -- -j$(nproc)
+
+      - name: Run Tests
+        run: |
+          cd build
+          ./test_openhd_util || true
+          ./test_config || true
+          ./test_logging || true
+
+      - name: Generate Coverage Report
+        run: |
+          gcovr --sonarqube -o coverage.xml -r . --exclude '.*lib/.*' --exclude '.*test/.*'
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v4
+        with:
+          args: >
+            -Dsonar.cfamily.compile-commands=build/compile_commands.json
+            -Dsonar.coverageReportPaths=coverage.xml
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
