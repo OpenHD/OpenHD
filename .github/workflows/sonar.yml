@@ -22,6 +22,7 @@ jobs:
       DOWNLOAD_KEY: ${{ secrets.DOWNLOAD_KEY }}
       DOWNLOAD_URL: ${{ secrets.DOWNLOAD_URL }}
       OPENHD_SUBMODULE_TOKEN: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
     steps:
       - name: Checkout repository and submodules
         uses: actions/checkout@v4
@@ -46,7 +47,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt update
-          sudo apt install -y libsodium-dev libpoco-dev python3-pip
+          sudo apt install -y libsodium-dev libpoco-dev python3-pip ccache ninja-build
           pip3 install gcovr
           sudo ./install_build_dep.sh ubuntu-x86
 
@@ -56,26 +57,42 @@ jobs:
           sudo apt update
           sudo apt install -y openhd-sys-utils
 
-      - name: Cache SonarCloud packages
+      - name: Cache ccache data
         uses: actions/cache@v4
         with:
-          path: ~/.sonar/cache
-          key: ${{ runner.os }}-sonar
-          restore-keys: ${{ runner.os }}-sonar
+          path: .ccache
+          key: ${{ runner.os }}-ccache-${{ github.sha }}
+          restore-keys: ${{ runner.os }}-ccache-
 
-      - name: Configure and Build with Coverage
+      - name: Cache SonarCloud scanner and analysis data
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.sonar/cache
+            .sonar/analysis-cache
+          key: ${{ runner.os }}-sonar-${{ github.sha }}
+          restore-keys: ${{ runner.os }}-sonar-
+
+      - name: Configure and Build with Coverage and ccache
         run: |
           mkdir build
           cd build
           source ../OpenHD/scripts/resolve_artosyn_sdk.sh
           resolve_artosyn_sdk
-          cmake ../OpenHD -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+          
+          export CCACHE_COMPILERCHECK=content
+          export CCACHE_BASEDIR=$GITHUB_WORKSPACE
+          
+          cmake ../OpenHD -G Ninja \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
             -DARTOSYN_SDK_ROOT="${ARTOSYN_SDK_ROOT}" \
             -DARTOSYN_SDK_LIB="${ARTOSYN_SDK_LIB}" \
             -DARTOSYN_SDK_DAEMON="${ARTOSYN_SDK_DAEMON:-}" \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_FLAGS="--coverage" \
             -DCMAKE_EXE_LINKER_FLAGS="--coverage"
-          cmake --build . -- -j$(nproc)
+          ninja -j$(nproc)
 
       - name: Run Tests
         run: |
@@ -94,5 +111,7 @@ jobs:
           args: >
             -Dsonar.cfamily.compile-commands=build/compile_commands.json
             -Dsonar.coverageReportPaths=coverage.xml
+            -Dsonar.cfamily.analysisCache.path=.sonar/analysis-cache
+            -Dsonar.cfamily.analysisCache.mode=fs
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
