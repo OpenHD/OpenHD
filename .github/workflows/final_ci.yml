@@ -291,7 +291,7 @@ jobs:
       - name: Build X20 package in its legacy target chroot
         run: |
           git clone https://github.com/OpenHD/OpenHD-ChrootCompiler /opt/OpenHD-ChrootCompiler
-          git -C /opt/OpenHD-ChrootCompiler checkout --detach 1c32976afe6e1ef8ee0e9d541eb9e7b7578c5474
+          git -C /opt/OpenHD-ChrootCompiler checkout --detach 7101b80be9db4437b25a55ad1ceb2ed635df0eb1
           mkdir -p /opt/OpenHD-ChrootCompiler/additionalFiles
           cleanup_git_auth() {
             git config --global --unset-all url."https://x-access-token:${OPENHD_SUBMODULE_TOKEN}@github.com/".insteadOf || true
