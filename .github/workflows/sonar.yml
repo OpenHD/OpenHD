@@ -27,21 +27,25 @@ jobs:
       - name: Checkout repository and submodules
         uses: actions/checkout@v4
         with:
-          submodules: true
+          submodules: recursive
           fetch-depth: 0
           token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
 
       - name: Sync submodules
         run: |
           git submodule sync
-          git submodule update --init
+          git submodule update --init --recursive
           git submodule status
 
       - name: Ensure private submodule content
         run: |
           if [ ! -f OpenHD/ohd_interface/video_crypto_private/CMakeLists.txt ]; then
-            git -C OpenHD/ohd_interface/video_crypto_private fetch origin main
-            git -C OpenHD/ohd_interface/video_crypto_private checkout -f origin/main
+            git -C OpenHD/ohd_interface/video_crypto_private fetch origin main || true
+            git -C OpenHD/ohd_interface/video_crypto_private checkout -f origin/main || true
+          fi
+          # Ensure devourer is also properly initialized
+          if [ ! -f OpenHD/ohd_interface/lib/devourer/CMakeLists.txt ]; then
+             git submodule update --init --recursive OpenHD/ohd_interface/lib/devourer
           fi
 
       - name: Install Dependencies
