@@ -1,0 +1,9 @@
+menu "Telemetry Configuration"
+
+config OPENHD_TELEMETRY_MAVLINK
+    bool "Enable MAVLink support"
+    default y
+    help
+      Enable MAVLink telemetry protocol.
+
+endmenu

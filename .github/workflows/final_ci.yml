@@ -57,11 +57,15 @@ jobs:
           submodules: true
           token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
 
+      - name: Install modern CMake
+        uses: lukka/get-cmake@latest
+
       - name: Install native package dependencies
         if: matrix.architecture == 'amd64'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libpoco-dev
+          sudo apt-get install -y libpoco-dev python3-pip
+          pip3 install kconfiglib
           sudo ./install_build_dep.sh ubuntu-x86
 
       - name: Build native AMD64 package
@@ -77,7 +81,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             ${{ matrix.compiler_packages }} \
-            autoconf automake cmake curl dpkg-dev git libtool make pkg-config zstd
+            autoconf automake cmake curl dpkg-dev git libtool make pkg-config zstd python3-pip
+          pip3 install kconfiglib
 
       - name: Fetch verified Cloudsmith sysroot
         if: matrix.architecture != 'amd64'
@@ -98,8 +103,7 @@ jobs:
           build_dir="${RUNNER_TEMP}/build-${{ matrix.architecture }}"
           export OPENHD_REQUIRE_ARTOSYN=1
           export OPENHD_REQUIRE_ARTOSYN_DAEMON=1
-          ./scripts/build_portable_cross.sh \
-            "${{ matrix.architecture }}" "${sysroot}" "${build_dir}"
+          make portable ARCH=${{ matrix.architecture }} SYSROOT="${sysroot}" BUILD_DIR="${build_dir}"
           source "${build_dir}/openhd-cross.env"
           export OPENHD_SYSROOT="${sysroot}"
           export OPENHD_CROSS_TRIPLET="${{ matrix.triplet }}"
@@ -385,12 +389,8 @@ jobs:
             "${RUNNER_TEMP}/gst-perf-plugin.zip"
       - name: Cross-build and verify Orqa binary
         run: |
-          bash ./scripts/build_orqa_cross.sh \
-            "${RUNNER_TEMP}/orqa-sdk" \
-            "${GITHUB_WORKSPACE}/build-orqa"
-          bash ./scripts/build_orqa_iwconfig.sh \
-            "${RUNNER_TEMP}/orqa-sdk" \
-            "${GITHUB_WORKSPACE}/build-orqa/iwconfig"
+          make orqa ORQA_SDK="${RUNNER_TEMP}/orqa-sdk" BUILD_DIR="${GITHUB_WORKSPACE}/build-orqa"
+          make orqa-tools ORQA_SDK="${RUNNER_TEMP}/orqa-sdk" BUILD_DIR="${GITHUB_WORKSPACE}/build-orqa"
       - uses: actions/upload-artifact@v4
         with:
           name: openhd-orqa

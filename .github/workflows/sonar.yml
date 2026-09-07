@@ -28,6 +28,9 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
 
+      - name: Install modern CMake
+        uses: lukka/get-cmake@latest
+
       - name: Sync submodules
         run: |
           git submodule sync
@@ -48,7 +51,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y libsodium-dev libpoco-dev python3-pip ccache ninja-build
-          pip3 install gcovr
+          pip3 install gcovr kconfiglib
           sudo ./install_build_dep.sh ubuntu-x86
 
       - name: Install sysutils
@@ -73,37 +76,14 @@ jobs:
           key: ${{ runner.os }}-sonar-${{ github.sha }}
           restore-keys: ${{ runner.os }}-sonar-
 
-      - name: Configure and Build with Coverage and ccache
+      - name: Build, Test and Generate Coverage with Makefile
         run: |
-          mkdir build
-          cd build
-          source ../OpenHD/scripts/resolve_artosyn_sdk.sh
-          resolve_artosyn_sdk
-          
           export CCACHE_COMPILERCHECK=content
           export CCACHE_BASEDIR=$GITHUB_WORKSPACE
           
-          cmake ../OpenHD -G Ninja \
-            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-            -DARTOSYN_SDK_ROOT="${ARTOSYN_SDK_ROOT}" \
-            -DARTOSYN_SDK_LIB="${ARTOSYN_SDK_LIB}" \
-            -DARTOSYN_SDK_DAEMON="${ARTOSYN_SDK_DAEMON:-}" \
-            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
-            -DCMAKE_CXX_FLAGS="--coverage" \
-            -DCMAKE_EXE_LINKER_FLAGS="--coverage"
-          ninja -j$(nproc)
-
-      - name: Run Tests
-        run: |
-          cd build
-          ./test_openhd_util || true
-          ./test_config || true
-          ./test_logging || true
-
-      - name: Generate Coverage Report
-        run: |
-          gcovr --sonarqube -o coverage.xml -r . --exclude '.*lib/.*' --exclude '.*test/.*'
+          # This single command now handles config, build, test, and report generation
+          make coverage \
+            EXTRA_CMAKE="-DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache"
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v6

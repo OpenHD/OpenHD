@@ -1,0 +1,9 @@
+menu "Video Configuration"
+
+config OPENHD_VIDEO_GSTREAMER
+    bool "Use GStreamer for video"
+    default y
+    help
+      Enable GStreamer-based video processing.
+
+endmenu

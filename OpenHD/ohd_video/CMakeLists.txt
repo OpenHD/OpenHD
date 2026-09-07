@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16.3)
+cmake_minimum_required(VERSION 3.28)
 project(OHDVideoLib)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -136,7 +136,7 @@ if(ENABLE_AIR)
 endif ()
 
 if (ENABLE_AIR AND ENABLE_USB_CAMERAS AND NOT OPENHD_MPP_ONLY)
-    # FUCKING GSTREAMER !! begin
+    # GStreamer dependency handling
     pkg_search_module(GST REQUIRED
             gstreamer-sdp-1.0>=1.4
             gstreamer-video-1.0>=1.4)
@@ -146,7 +146,7 @@ if (ENABLE_AIR AND ENABLE_USB_CAMERAS AND NOT OPENHD_MPP_ONLY)
     target_link_libraries(OHDVideoLib PUBLIC
             PkgConfig::gstreamer-sdp
             PkgConfig::gstreamer-video)
-    # FUCKING GSTREAMER !! end
+    # End GStreamer dependency handling
 
     include(cmake/FindLibUSB.cmake)
     if(LIBUSB_1_FOUND)
@@ -163,7 +163,6 @@ if (ENABLE_AIR AND ENABLE_USB_CAMERAS AND NOT OPENHD_MPP_ONLY)
 endif ()
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
-target_sources(OHDVideoLib PRIVATE ${sources})
 target_include_directories(OHDVideoLib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/inc)
 target_include_directories(OHDVideoLib PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(OHDVideoLib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/librtp/inc)

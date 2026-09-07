@@ -1,0 +1,43 @@
+menu "Interface Configuration"
+
+config OPENHD_ENABLE_DEVOURER
+    bool "Enable OpenIPC Devourer support"
+    default y
+    help
+      Use OpenIPC Devourer as the default backend for supported Realtek USB radios.
+
+config OPENHD_ENABLE_ARTOSYN
+    bool "Enable Artosyn SDK support"
+    default n
+    help
+      Enable support for Artosyn hardware. Requires ARTOSYN_SDK_ROOT to be set.
+
+if OPENHD_ENABLE_ARTOSYN
+
+config ARTOSYN_SDK_ROOT
+    string "Artosyn SDK Root Path"
+    default ""
+    help
+      Path to the Artosyn SDK root directory.
+
+config ARTOSYN_SDK_LIB
+    string "Artosyn SDK Library Path"
+    default ""
+    help
+      Path to libar8030_client.a/.so.
+
+config ARTOSYN_SDK_DAEMON
+    string "Artosyn Daemon Path"
+    default ""
+    help
+      Path to Artosyn daemon binary.
+
+config ARTOSYN_SDK_TUNTAP
+    string "Artosyn TunTap Path"
+    default ""
+    help
+      Path to Artosyn tuntap_bb helper binary.
+
+endif
+
+endmenu

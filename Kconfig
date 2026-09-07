@@ -1,0 +1,32 @@
+# OpenHD Main Configuration
+
+mainmenu "OpenHD Configuration"
+
+menu "Global Settings"
+
+config OPENHD_AIR
+    bool "Enable Air Mode"
+    default y
+    help
+      Enable this if you are building for the air unit.
+      Disabling this removes a few dependencies.
+
+config OPENHD_USB_CAMERAS
+    bool "Enable USB Camera Support"
+    default y
+    depends on OPENHD_AIR
+    help
+      Enable support for USB cameras (Libusb and libv4l2).
+      Only makes sense if Air Mode is enabled.
+
+config OPENHD_DEBUG
+    bool "Debug Build"
+    default n
+    help
+      Enable additional debug logging and symbols.
+
+endmenu
+
+source "OpenHD/ohd_interface/Kconfig"
+source "OpenHD/ohd_video/Kconfig"
+source "OpenHD/ohd_telemetry/Kconfig"

@@ -485,6 +485,10 @@ build_package() {
     local poco_dir=""
     poco_dir="$(resolve_system_poco_dir)"
     echo "Using distro Poco package configuration: ${poco_dir}"
+
+    # Ensure Kconfig files are generated
+    make config
+
     cmake -S OpenHD/ -B "${build_dir}" \
       -DPoco_DIR="${poco_dir}" \
       -DENABLE_LIBCAMERA="${enable_libcamera}" \
