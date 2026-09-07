@@ -66,12 +66,11 @@ void WBLink::perform_nexmon_scan(
       progress.progress = OHDUtil::calculate_progress_perc(i, channels.size());
       actions.add_scan_channels_progress(progress);
       if (!scout.tune(frequency)) continue;
-      // Close/reopen receive handles after tuning so old buffered packets
-      // cannot announce an air unit on a different candidate frequency.
+      // Start a fresh receive loop after tuning so old buffered packets cannot
+      // announce an air unit on a different candidate frequency.
       reported_frequency = 0;
       reported_width = 0;
-      if (!rx->restart_interfaces({{openhd::NexmonScout::monitor_interface, 0}}))
-        throw std::runtime_error("Cannot reopen scout capture");
+      rx->start_receiving();
       std::this_thread::sleep_for(std::chrono::seconds(2));
       rx->stop_receiving();
       if (reported_frequency == frequency && reported_width > 0) {
@@ -135,10 +134,9 @@ void WBLink::perform_nexmon_analyze(int selection) {
     for (int round = 0; round < 3; ++round) {
       for (size_t i = 0; i < channels.size(); ++i) {
         const auto& channel = channels[i];
-        if (scout.tune(channel.frequency)) {
+          if (scout.tune(channel.frequency)) {
           rx->rx_reset_stats();
-          if (!rx->restart_interfaces({{openhd::NexmonScout::monitor_interface, 0}}))
-            throw std::runtime_error("Cannot reopen scout capture");
+          rx->start_receiving();
           const auto start = openhd::util::steady_clock_time_epoch_ms();
           const auto sample = openhd::observe_nexmon(channel.frequency, 1100);
           rx->stop_receiving();
