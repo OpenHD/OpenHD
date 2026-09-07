@@ -15,10 +15,10 @@ jobs:
       - name: Build and exercise independent UDP outputs
         working-directory: OpenHD/ohd_video
         run: |
-          g++ -std=c++17 -O2 -pthread -Iinc test/test_fleet_video_lease.cpp -o /tmp/test_fleet_video_lease
+          g++ -std=c++20 -O2 -pthread -Iinc test/test_fleet_video_lease.cpp -o /tmp/test_fleet_video_lease
           /tmp/test_fleet_video_lease
-          g++ -std=c++17 -O2 -pthread -Iinc src/gst_video_output.cpp test/relay_video_output.cpp $(pkg-config --cflags --libs gstreamer-app-1.0) -latomic -o /tmp/relay_video_output
-          g++ -std=c++17 -O2 -pthread -Iinc src/gst_video_output.cpp test/test_video_output.cpp $(pkg-config --cflags --libs gstreamer-app-1.0) -latomic -o /tmp/test_video_output
+          g++ -std=c++20 -O2 -pthread -Iinc src/gst_video_output.cpp test/relay_video_output.cpp $(pkg-config --cflags --libs gstreamer-app-1.0) -latomic -o /tmp/relay_video_output
+          g++ -std=c++20 -O2 -pthread -Iinc src/gst_video_output.cpp test/test_video_output.cpp $(pkg-config --cflags --libs gstreamer-app-1.0) -latomic -o /tmp/test_video_output
           /tmp/test_video_output
           /tmp/test_video_output encoded
           /tmp/test_video_output rtp

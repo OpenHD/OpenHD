@@ -30,6 +30,8 @@ jobs:
           submodules: true
           fetch-depth: 0
           token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+      - name: Install modern CMake
+        uses: lukka/get-cmake@latest
       - name: Sync submodules
         run: |
           git submodule sync
@@ -51,7 +53,8 @@ jobs:
         run: |
           sudo mkdir -p /Videos/
           sudo apt update
-          sudo apt install -y libsodium-dev
+          sudo apt install -y libsodium-dev python3-pip
+          pip3 install kconfiglib
           sudo ./install_build_dep.sh ubuntu-x86
       - name: Install sysutils
         run: |
@@ -69,10 +72,10 @@ jobs:
           g++ -std=c++17 client.cpp -lsodium -o ohd_video_crypto_client
       - name: Preflight Artosyn SDK + interface build (fail fast)
         run: |
-          cd OpenHD
-          source ./scripts/resolve_artosyn_sdk.sh
-          resolve_artosyn_sdk
-          cmake -S . -B build_artosyn_preflight \
+          make config
+          make resolve_artosyn
+          if [ -f .artosyn_env ]; then . ./.artosyn_env; fi
+          cmake -S OpenHD -B build_artosyn_preflight \
             -DARTOSYN_SDK_ROOT="${ARTOSYN_SDK_ROOT}" \
             -DARTOSYN_SDK_LIB="${ARTOSYN_SDK_LIB}"
           cmake --build build_artosyn_preflight --target OHDInterfaceLib -- -j"$(nproc)"
@@ -86,8 +89,10 @@ jobs:
           ./OpenHD/ohd_interface/lib/wifibroadcast/build/test_dummy_link
       - name: Build
         run: |
-          cd OpenHD
-          ./build_cmake.sh
+          make build
+      - name: Run unit tests
+        run: |
+          make test
       - name: Run as air (limited)
         run: |
           SYSUTIL_BIN="$(command -v openhd_sys_utils || command -v openhd-sys-utils || true)"

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16.3)
+cmake_minimum_required(VERSION 3.28)
 project(OHDCommon)
 
 if (TARGET OHDCommonLib)
@@ -83,7 +83,6 @@ source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
 #----------------------------------------------------------------------------------------------------------------------
 # Target configuration
 #----------------------------------------------------------------------------------------------------------------------
-target_sources(OHDCommonLib PRIVATE ${sources})
 target_include_directories(OHDCommonLib PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc/>")
 
 install(FILES inc/openhd_plugin.h DESTINATION include/openhd)

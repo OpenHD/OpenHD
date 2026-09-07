@@ -1,22 +1,43 @@
-cmake_minimum_required(VERSION 3.16.3)
+cmake_minimum_required(VERSION 3.28)
 project(OpenHD)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-# Allows to explicitly disable air support - removes a few dependencies
-option(ENABLE_AIR "Enable air support" ON)
-message("Air support enabled: ${ENABLE_AIR}")
-if (ENABLE_AIR)
+# --- Kconfig Integration ---
+find_package(Python3 REQUIRED)
+set(KCONFIG_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../Kconfig")
+set(KCONFIG_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/../scripts/kconfig.py")
+set(KCONFIG_DOTCONFIG "${CMAKE_CURRENT_SOURCE_DIR}/../.config")
+set(KCONFIG_HEADER "${CMAKE_BINARY_DIR}/autoconf.h")
+set(KCONFIG_CMAKE "${CMAKE_BINARY_DIR}/kconfig.cmake")
+
+execute_process(
+    COMMAND ${Python3_EXECUTABLE} ${KCONFIG_SCRIPT}
+            --kconfig ${KCONFIG_ROOT}
+            --config ${KCONFIG_DOTCONFIG}
+            --out-header ${KCONFIG_HEADER}
+            --out-cmake ${KCONFIG_CMAKE}
+    RESULT_VARIABLE KCONFIG_RESULT
+)
+
+if (NOT KCONFIG_RESULT EQUAL 0)
+    message(FATAL_ERROR "Kconfig generation failed")
+endif()
+
+include(${KCONFIG_CMAKE})
+include_directories(${CMAKE_BINARY_DIR})
+# ---------------------------
+
+# Use Kconfig variables instead of manual options
+message("Air support enabled: ${OPENHD_AIR}")
+if (OPENHD_AIR)
         add_definitions(-DENABLE_AIR)
 endif ()
 
-# Allows to explicitly disable USB camera support - removes a few dependencies
-# (Libusb an libv4l2), only makes sense if air support is enabled
-option(ENABLE_USB_CAMERAS "USB cameras support" ON)
-message("USB cameras enabled: ${ENABLE_USB_CAMERAS}")
-if (ENABLE_USB_CAMERAS)
+message("USB cameras enabled: ${OPENHD_USB_CAMERAS}")
+if (OPENHD_USB_CAMERAS)
         add_definitions(-DENABLE_USB_CAMERAS)
 endif ()
 

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16.3)
+cmake_minimum_required(VERSION 3.28)
 project(OpenHD-Interface)
 
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
@@ -14,9 +14,9 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules" ${CMAKE_MODULE_PATH})
 # Only needed when we build this submodule manually
 add_subdirectory(../ohd_common commonlib EXCLUDE_FROM_ALL)
 
-option(OPENHD_ENABLE_DEVOURER
-       "Use OpenIPC Devourer as the default backend for supported Realtek USB radios"
-       ON)
+# Kconfig replaces this manual option
+message("Devourer support: ${OPENHD_ENABLE_DEVOURER}")
+
 if(OPENHD_ENABLE_DEVOURER)
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/lib/devourer/CMakeLists.txt")
         set(DEVOURER_PCIE OFF CACHE BOOL "" FORCE)
@@ -316,8 +316,6 @@ endif()
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
 
 include(CMakePackageConfigHelpers)
-target_sources(OHDInterfaceLib PRIVATE ${sources})
-
 target_include_directories(OHDInterfaceLib
     PUBLIC
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc>")
