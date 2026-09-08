@@ -304,6 +304,11 @@ jobs:
           git clone --recurse-submodules \
             https://github.com/OpenHD-Technologies/OpenHD-ArtLink.git \
             /opt/OpenHD-ChrootCompiler/additionalFiles/OpenHD-ArtLink
+          # Point the in-chroot resolver at the authenticated SDK clone. Its
+          # default directory name is L4_Linux_SDK, so it otherwise misses
+          # OpenHD-ArtLink and falls back to the empty upstream repository.
+          sed -i '2i export ARTLINK_SOURCE_DIR=/opt/additionalFiles/OpenHD-ArtLink' \
+            /opt/OpenHD-ChrootCompiler/additionalFiles/build_chroot.sh
           printf '%s\n' "${CLOUDSMITH_API_KEY}" > /opt/OpenHD-ChrootCompiler/additionalFiles/cloudsmith_api_key.txt
           echo 1 > /opt/OpenHD-ChrootCompiler/additionalFiles/skip_cloudsmith_cli_install.txt
           echo true > /opt/OpenHD-ChrootCompiler/additionalFiles/custom.txt
