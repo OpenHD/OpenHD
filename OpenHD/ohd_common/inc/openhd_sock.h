@@ -205,10 +205,14 @@ struct SysutilStorageEntry {
   std::string mountpoint;
   uint64_t size_bytes = 0;
   uint64_t free_bytes = 0;
+  uint64_t unallocated_bytes = 0;
+  bool internal = false;
   bool mounted_at_video = false;
   bool can_format = false;
   bool can_repartition = false;
   bool can_mount = false;
+  bool can_create_partition = false;
+  bool can_resize_partition = false;
 };
 
 std::optional<std::vector<SysutilStorageEntry>> request_sysutil_storage_list(

@@ -376,19 +376,19 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_storage_information() {
   std::vector<MavlinkMessage> messages;
   messages.reserve(entries->size());
   for (const auto& entry : *entries) {
+    const bool is_disk = entry.kind == "disk";
     const float total_mib =
         static_cast<float>(entry.size_bytes / 1048576.0);
-    const float available_mib =
-        static_cast<float>(entry.free_bytes / 1048576.0);
+    const float available_mib = static_cast<float>(
+        (is_disk ? entry.unallocated_bytes : entry.free_bytes) / 1048576.0);
     const float used_mib =
         available_mib <= total_mib ? total_mib - available_mib : 0.0F;
-    const bool is_disk = entry.kind == "disk";
     const uint8_t status =
         is_disk ? STORAGE_STATUS_NOT_SUPPORTED
                 : (entry.filesystem.empty() ? STORAGE_STATUS_UNFORMATTED
                                             : STORAGE_STATUS_READY);
-    const std::string name =
-        std::string(is_disk ? "D " : "P ") + entry.device;
+    const std::string name = std::string(is_disk ? "D " : "P ") +
+                             (entry.internal ? "I " : "U ") + entry.device;
     std::array<char, 32> storage_name{};
     std::memcpy(storage_name.data(), name.data(),
                 std::min(name.size(), storage_name.size() - 1));
@@ -396,7 +396,13 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_storage_information() {
     mavlink_msg_storage_information_pack(
         m_sys_id, m_comp_id, &message.m, 0, entry.id,
         static_cast<uint8_t>(entries->size()), status, total_mib, used_mib,
-        available_mib, 0.0F, 0.0F,
+        available_mib,
+        static_cast<float>((entry.can_create_partition ? 1 : 0) |
+                           (entry.can_resize_partition ? 2 : 0) |
+                           (entry.can_format ? 4 : 0) |
+                           (entry.can_mount ? 8 : 0) |
+                           (entry.can_repartition ? 16 : 0)),
+        0.0F,
         is_disk ? STORAGE_TYPE_HD : STORAGE_TYPE_OTHER, storage_name.data(),
         entry.mounted_at_video
             ? STORAGE_USAGE_FLAG_SET | STORAGE_USAGE_FLAG_VIDEO
@@ -685,13 +691,15 @@ void OHDMainComponent::process_command_self(
         message_buffer.push_back(ack_command_result(
             source_sys_id, source_comp_id, command.command,
             MAV_RESULT_TEMPORARILY_REJECTED));
-      } else if ((action == 2 || action == 3 || action == 4) &&
+      } else if ((action >= 2 && action <= 6) &&
                  storage_id >= 1 &&
                  storage_id <= 254 &&
                  static_cast<int>(command.param3) == 1) {
         const char* storage_action = action == 2   ? "repartition"
                                      : action == 3 ? "mount"
-                                                   : "migrate";
+                                     : action == 4 ? "migrate"
+                                     : action == 5 ? "create"
+                                                   : "resize";
         handle_storage_action(command.command,
                               static_cast<uint8_t>(storage_id),
                               storage_action);

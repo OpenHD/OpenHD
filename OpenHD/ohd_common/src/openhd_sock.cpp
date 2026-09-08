@@ -1143,10 +1143,16 @@ std::optional<std::vector<SysutilStorageEntry>> request_sysutil_storage_list(
     entry.mountpoint = item.value("mountpoint", "");
     entry.size_bytes = item.value("size_bytes", uint64_t{0});
     entry.free_bytes = item.value("free_bytes", uint64_t{0});
+    entry.unallocated_bytes = item.value("unallocated_bytes", uint64_t{0});
+    entry.internal = item.value("internal", false);
     entry.mounted_at_video = item.value("mounted_at_video", false);
     entry.can_format = item.value("can_format", false);
     entry.can_repartition = item.value("can_repartition", false);
     entry.can_mount = item.value("can_mount", false);
+    entry.can_create_partition =
+        item.value("can_create_partition", false);
+    entry.can_resize_partition =
+        item.value("can_resize_partition", false);
     if (entry.id != 0 && !entry.device.empty()) {
       entries.push_back(std::move(entry));
     }
