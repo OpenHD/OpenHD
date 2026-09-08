@@ -34,6 +34,8 @@ namespace openhd::rtp_eof_helper {
 struct RTPFragmentInfo {
   bool is_fu_start;
   bool is_fu_end;
+  // RTP marker bit: the packet ends the current access unit / video frame.
+  bool is_frame_end;
   // ONLY set if this is a fu_start frame !
   int nal_unit_type;
 };

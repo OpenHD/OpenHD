@@ -183,15 +183,19 @@ void OHDFilesystemUtil::make_file_read_write_everyone(
 }
 
 int OHDFilesystemUtil::get_remaining_space_in_mb() {
-  std::string videoPath = getVideoPath();
-  std::filesystem::path folderPath = videoPath;
-
-  if (std::filesystem::exists(folderPath)) {
-    std::filesystem::space_info info = std::filesystem::space(folderPath);
-    return info.available / 1024 / 1024;
-  } else {
+  const std::filesystem::path folder_path = getVideoPath();
+  std::error_code error;
+  if (!std::filesystem::exists(folder_path, error) || error) {
     return 0;
   }
+  const auto info = std::filesystem::space(folder_path, error);
+  if (error) {
+    openhd::log::get_default()->warn(
+        "Cannot query free recording space for {}: {}", folder_path.string(),
+        error.message());
+    return 0;
+  }
+  return static_cast<int>(info.available / 1024 / 1024);
 }
 
 long OHDFilesystemUtil::get_file_size_bytes(const std::string &filepath) {

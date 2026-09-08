@@ -2540,7 +2540,8 @@ void WBLink::transmit_video_data(
     int stream_index,
     const openhd::FragmentedVideoFrame& fragmented_video_frame) {
   assert(m_profile.is_air);
-  if (stream_index < 0 || stream_index > m_wb_video_tx_list.size()) {
+  if (stream_index < 0 ||
+      stream_index >= static_cast<int>(m_wb_video_tx_list.size())) {
     m_console->debug("Invalid camera stream_index {}", stream_index);
     return;
   }

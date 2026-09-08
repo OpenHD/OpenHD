@@ -340,8 +340,10 @@ void OHDMainComponent::start_storage_action(
   m_storage_format_thread =
       std::thread([this, source_sys_id, source_comp_id, command_id, storage_id,
                    action]() {
+    const auto timeout = action == "migrate" ? std::chrono::minutes(30)
+                                              : std::chrono::minutes(2);
     const auto result =
-        openhd::request_sysutil_storage_action(storage_id, action);
+        openhd::request_sysutil_storage_action(storage_id, action, timeout);
     const auto final_ack = ack_command_result(
         source_sys_id, source_comp_id, command_id,
         result.ok ? MAV_RESULT_ACCEPTED : MAV_RESULT_FAILED);
@@ -587,6 +589,14 @@ void OHDMainComponent::process_command_self(
                                storage_id, action);
         }
       };
+  const auto air_recording_enabled = []() {
+    const auto camera0 =
+        openhd::LinkActionHandler::instance().get_cam_info(0);
+    const auto camera1 =
+        openhd::LinkActionHandler::instance().get_cam_info(1);
+    return camera0.air_recording_active != 0 ||
+           camera1.air_recording_active != 0;
+  };
   if (command.command == MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN) {
     // https://mavlink.io/en/messages/common.html#MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN
     m_console->debug("Got shutdown command");
@@ -642,6 +652,11 @@ void OHDMainComponent::process_command_self(
       message_buffer.push_back(ack_command_result(
           source_sys_id, source_comp_id, command.command,
           MAV_RESULT_UNSUPPORTED));
+    } else if (air_recording_enabled()) {
+      m_console->warn("Refusing storage format while Air recording is enabled");
+      message_buffer.push_back(ack_command_result(
+          source_sys_id, source_comp_id, command.command,
+          MAV_RESULT_TEMPORARILY_REJECTED));
     } else if (static_cast<int>(command.param1) < 1 ||
                static_cast<int>(command.param1) > 254 ||
                static_cast<int>(command.param2) != 1) {
@@ -663,12 +678,23 @@ void OHDMainComponent::process_command_self(
         OHDUtil::vec_append(message_buffer, generate_storage_information());
         message_buffer.push_back(
             ack_command(source_sys_id, source_comp_id, command.command));
-      } else if ((action == 2 || action == 3) && storage_id >= 1 &&
+      } else if (air_recording_enabled()) {
+        m_console->warn(
+            "Refusing storage action {} while Air recording is enabled",
+            action);
+        message_buffer.push_back(ack_command_result(
+            source_sys_id, source_comp_id, command.command,
+            MAV_RESULT_TEMPORARILY_REJECTED));
+      } else if ((action == 2 || action == 3 || action == 4) &&
+                 storage_id >= 1 &&
                  storage_id <= 254 &&
                  static_cast<int>(command.param3) == 1) {
-        handle_storage_action(
-            command.command, static_cast<uint8_t>(storage_id),
-            action == 2 ? "repartition" : "mount");
+        const char* storage_action = action == 2   ? "repartition"
+                                     : action == 3 ? "mount"
+                                                   : "migrate";
+        handle_storage_action(command.command,
+                              static_cast<uint8_t>(storage_id),
+                              storage_action);
       } else {
         message_buffer.push_back(ack_command_result(
             source_sys_id, source_comp_id, command.command,

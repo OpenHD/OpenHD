@@ -1806,7 +1806,9 @@ void GStreamerStream::on_new_rtp_frame_fragment(
   //                  OHDUtil::yes_or_no(info.is_fu_start),
   //                  OHDUtil::yes_or_no(info.is_fu_end),
   //                  x_get_nal_unit_type_as_string(info.nal_unit_type,is_h265));
-  bool is_last_fragment_of_frame = info.is_fu_end;
+  // The RTP marker bit is the authoritative end-of-frame signal and also
+  // covers complete NAL units that never use FU-A fragmentation.
+  bool is_last_fragment_of_frame = info.is_frame_end;
   if (m_frame_fragments.size() > 500) {
     // Most likely something wrong with the "find end of frame" workaround
     m_console->debug("No end of frame found after 1000 fragments");

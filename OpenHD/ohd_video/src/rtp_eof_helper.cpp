@@ -31,6 +31,7 @@
 // Look here for more details (or just look into the rtp rfc:
 // https://github.com/Consti10/LiveVideo10ms/tree/99e2c4ca31dd8c446952cd409ed51f798e29a137/VideoCore/src/main/cpp/Parser
 static constexpr auto RTP_HEADER_SIZE = 12;
+static constexpr uint8_t RTP_MARKER_BIT = 0x80;
 namespace H264 {
 struct nalu_header_t {
   uint8_t type : 5;
@@ -62,11 +63,12 @@ static_assert(sizeof(fu_header_h265_t) == 1);
 
 openhd::rtp_eof_helper::RTPFragmentInfo openhd::rtp_eof_helper::h264_more_info(
     const uint8_t *payload, const std::size_t payloadSize) {
-  RTPFragmentInfo ret{false, false, -1};
+  RTPFragmentInfo ret{false, false, false, -1};
   if (payloadSize < RTP_HEADER_SIZE + sizeof(H264::nalu_header_t)) {
     std::cerr << "Got packet that cannot be rtp h264\n";
     return ret;
   }
+  ret.is_frame_end = (payload[1] & RTP_MARKER_BIT) != 0;
   const H264::nalu_header_t &naluHeader =
       *(H264::nalu_header_t *)(&payload[RTP_HEADER_SIZE]);
   if (naluHeader.type == 28) {  // fragmented nalu
@@ -110,11 +112,12 @@ openhd::rtp_eof_helper::RTPFragmentInfo openhd::rtp_eof_helper::h264_more_info(
 
 openhd::rtp_eof_helper::RTPFragmentInfo openhd::rtp_eof_helper::h265_more_info(
     const uint8_t *payload, const std::size_t payloadSize) {
-  RTPFragmentInfo ret{false, false, -1};
+  RTPFragmentInfo ret{false, false, false, -1};
   if (payloadSize < RTP_HEADER_SIZE + sizeof(H265::nal_unit_header_h265_t)) {
     std::cerr << "Got packet that cannot be rtp h265\n";
     return ret;
   }
+  ret.is_frame_end = (payload[1] & RTP_MARKER_BIT) != 0;
   const H265::nal_unit_header_h265_t &naluHeader =
       *(H265::nal_unit_header_h265_t *)(&payload[RTP_HEADER_SIZE]);
   if (naluHeader.type == 49) {

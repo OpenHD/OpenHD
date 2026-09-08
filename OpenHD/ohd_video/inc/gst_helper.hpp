@@ -181,7 +181,9 @@ static std::string create_parse_for_codec(const VideoCodec& codec) {
  */
 static std::string createDummyStream(const CameraSettings& settings) {
   std::stringstream ss;
-  ss << "videotestsrc name=videotestsrc ! ";
+  // Behave like a real camera. Without is-live the source runs as fast as the
+  // CPU allows and can starve the other camera/link worker in dual-cam tests.
+  ss << "videotestsrc name=videotestsrc is-live=true ! ";
   // h265 cannot do NV12, but I420.
   // x264 can do both NV12 and I420
   // so we use I420 here since every SW encoder can do it.

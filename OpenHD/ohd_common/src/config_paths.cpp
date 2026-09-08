@@ -25,6 +25,7 @@
 
 #include <cstdlib>
 #include <cstring>
+#include <string>
 
 #include "openhd_util_filesystem.h"
 
@@ -35,11 +36,35 @@ static char* VIDEO_PATH = nullptr;
 const char* getConfigBasePath() { return "/Config/"; }
 
 const char* getVideoPath() {
-  static const char* VIDEO_DIR = "/Video/";
-  if (!OHDFilesystemUtil::exists(VIDEO_DIR)) {
-    OHDFilesystemUtil::create_directories(VIDEO_DIR);
+  static std::string cached_path;
+  if (!cached_path.empty()) {
+    return cached_path.c_str();
   }
-  return VIDEO_DIR;
+
+  // Honour an explicitly configured path first.
+  if (VIDEO_PATH != nullptr && std::strlen(VIDEO_PATH) > 0) {
+    cached_path = VIDEO_PATH;
+  } else if (OHDFilesystemUtil::exists(
+                 "/Videos/external_video_part.txt")) {
+    // Legacy removable-storage mount used by Raspberry Pi and Rock images.
+    cached_path = "/Videos/";
+  } else if (OHDFilesystemUtil::exists(
+                 "/external/Videos/external_video_part.txt")) {
+    // Legacy X20 removable-storage mount.
+    cached_path = "/external/Videos/";
+  } else if (OHDFilesystemUtil::exists("/Video/")) {
+    // Current images mount their recording partition here.
+    cached_path = "/Video/";
+  } else {
+    // Sysutils mounts whichever recording device the user selected here. If
+    // there is no dedicated partition, this remains a usable local directory.
+    cached_path = "/Video/";
+  }
+
+  if (!OHDFilesystemUtil::exists(cached_path)) {
+    OHDFilesystemUtil::create_directories(cached_path);
+  }
+  return cached_path.c_str();
 }
 
 void setConfigBasePath(const char* path) {
