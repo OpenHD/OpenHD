@@ -96,3 +96,36 @@ jobs:
           path: x21-bundle/
           if-no-files-found: error
           retention-days: 30
+
+      - name: Publish X21B bundle to Cloudsmith
+        uses: cloudsmith-io/action@master
+        with:
+          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
+          command: push
+          format: raw
+          owner: openhd
+          repo: dev-release
+          republish: "true"
+          file: "x21-bundle/*.tar.zst"
+
+      - name: Publish X21B bundle checksum to Cloudsmith
+        uses: cloudsmith-io/action@master
+        with:
+          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
+          command: push
+          format: raw
+          owner: openhd
+          repo: dev-release
+          republish: "true"
+          file: "x21-bundle/*.tar.zst.sha256"
+
+      - name: Publish X21B bundle manifest to Cloudsmith
+        uses: cloudsmith-io/action@master
+        with:
+          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
+          command: push
+          format: raw
+          owner: openhd
+          repo: dev-release
+          republish: "true"
+          file: "x21-bundle/*.tar.zst.manifest.json"
