@@ -31,8 +31,16 @@ jobs:
 
       - name: Checkout build submodules without Devourer references
         shell: bash
+        env:
+          OPENHD_SUBMODULE_TOKEN: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
         run: |
           set -euxo pipefail
+          test -n "${OPENHD_SUBMODULE_TOKEN}"
+          set +x
+          git config --global \
+            url."https://x-access-token:${OPENHD_SUBMODULE_TOKEN}@github.com/".insteadOf \
+            https://github.com/
+          set -x
           git submodule update --init
           git -C OpenHD/ohd_interface/lib/devourer \
             config submodule.reference/rtl8852cu.update none
