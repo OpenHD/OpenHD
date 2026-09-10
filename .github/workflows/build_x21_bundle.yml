@@ -1,7 +1,25 @@
 name: Build X21B application bundle
 
 on:
+  workflow_call:
+    inputs:
+      openhd_ref:
+        description: OpenHD branch, tag, or commit to build
+        required: false
+        type: string
+        default: openhd-3.0
+    secrets:
+      OPENHD_SUBMODULE_TOKEN:
+        required: true
+      CLOUDSMITH_API_KEY:
+        required: true
   workflow_dispatch:
+    inputs:
+      openhd_ref:
+        description: OpenHD branch, tag, or commit to build
+        required: false
+        type: string
+        default: openhd-3.0
   push:
     branches:
       - openhd-3.0
@@ -27,6 +45,8 @@ jobs:
       - name: Checkout OpenHD and submodules
         uses: actions/checkout@v4
         with:
+          repository: OpenHD/OpenHD
+          ref: ${{ inputs.openhd_ref || github.sha }}
           fetch-depth: 0
           submodules: false
           token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
