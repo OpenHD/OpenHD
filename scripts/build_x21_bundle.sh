@@ -146,19 +146,39 @@ software =
     version = "${bundle_version}";
     description = "OpenHD X21B OHD partition update";
 
+    scripts: (
+        {
+            filename = "prepare-ohd.sh";
+            type = "shellscript";
+        }
+    );
+
     images: (
         {
             filename = "ohd.img";
             device = "mtd9";
             type = "flash";
-            handler = "ubiformat";
         }
     );
 }
 EOF
+cat >"${update_work}/prepare-ohd.sh" <<'EOF'
+#!/bin/sh
+set -eu
+
+# The SWUpdate flash handler erases only enough PEBs for a compact image.
+# Erase the entire shared OHD MTD first so stale UBI image-sequence headers
+# cannot remain beyond the end of the new image and make ubiattach reject it.
+if [ "${1:-}" = "preinst" ]; then
+    umount /ohd 2>/dev/null || true
+    ubidetach /dev/ubi_ctrl -m 9 2>/dev/null || true
+    flash_erase /dev/mtd9 0 0
+fi
+EOF
+chmod 0755 "${update_work}/prepare-ohd.sh"
 (
   cd "${update_work}"
-  printf '%s\n' sw-description ohd.img | cpio -ov -H crc -L \
+  printf '%s\n' sw-description prepare-ohd.sh ohd.img | cpio -ov -H crc -L \
     >"${output_dir}/${update_name}"
 )
 
