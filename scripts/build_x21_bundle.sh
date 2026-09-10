@@ -53,7 +53,8 @@ cmake --build "${sysutils_build}" --parallel "$(nproc)" --target openhd_sys_util
 
 mkdir -p "${stage_dir}"
 cp -a "${ohd_root_seed}/." "${stage_dir}/"
-mkdir -p "${stage_dir}/usr/bin" "${stage_dir}/usr/lib"
+mkdir -p "${stage_dir}/usr/bin" "${stage_dir}/usr/lib" \
+  "${stage_dir}/ohd-rw" "${stage_dir}/ohd-config"
 install -m 0755 "${openhd_build}/openhd" "${stage_dir}/usr/bin/openhd"
 install -m 0755 "${sysutils_build}/openhd_sys_utils" \
   "${stage_dir}/usr/bin/openhd_sys_utils"
@@ -140,18 +141,25 @@ EOF
 ubinize -o "${update_work}/ohd.img" -m 2048 -p 0x20000 \
   "${update_work}/ubinize.cfg"
 
+# SWUpdate 2023.12's NAND flash handler erases only img->size bytes. Pad the
+# compact UBI image with erased (0xff) pages to the complete 100 MiB mtd9
+# partition so the handler erases every old UBI header. It skips writing pages
+# that contain only 0xff, while retaining normal NAND bad-block handling.
+ohd_partition_size=$((0x6400000))
+ohd_image_size="$(stat -c '%s' "${update_work}/ohd.img")"
+if ((ohd_image_size > ohd_partition_size)); then
+  echo "OHD UBI image exceeds mtd9: ${ohd_image_size} > ${ohd_partition_size}" >&2
+  exit 1
+fi
+head -c "$((ohd_partition_size - ohd_image_size))" /dev/zero \
+  | tr '\000' '\377' >>"${update_work}/ohd.img"
+test "$(stat -c '%s' "${update_work}/ohd.img")" -eq "${ohd_partition_size}"
+
 cat >"${update_work}/sw-description" <<EOF
 software =
 {
     version = "${bundle_version}";
     description = "OpenHD X21B OHD partition update";
-
-    scripts: (
-        {
-            filename = "prepare-ohd.sh";
-            type = "shellscript";
-        }
-    );
 
     images: (
         {
@@ -162,23 +170,9 @@ software =
     );
 }
 EOF
-cat >"${update_work}/prepare-ohd.sh" <<'EOF'
-#!/bin/sh
-set -eu
-
-# The SWUpdate flash handler erases only enough PEBs for a compact image.
-# Erase the entire shared OHD MTD first so stale UBI image-sequence headers
-# cannot remain beyond the end of the new image and make ubiattach reject it.
-if [ "${1:-}" = "preinst" ]; then
-    umount /ohd 2>/dev/null || true
-    ubidetach /dev/ubi_ctrl -m 9 2>/dev/null || true
-    flash_erase /dev/mtd9 0 0
-fi
-EOF
-chmod 0755 "${update_work}/prepare-ohd.sh"
 (
   cd "${update_work}"
-  printf '%s\n' sw-description prepare-ohd.sh ohd.img | cpio -ov -H crc -L \
+  printf '%s\n' sw-description ohd.img | cpio -ov -H crc -L \
     >"${output_dir}/${update_name}"
 )
 
