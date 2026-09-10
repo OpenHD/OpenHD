@@ -1,0 +1,68 @@
+name: Publish cached X21B build inputs
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: Successful X21B OTA run containing SDK and OHD seed artifacts
+        required: true
+        default: "34479273960"
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    env:
+      CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
+    steps:
+      - name: Validate credentials
+        env:
+          OPENHD_SUBMODULE_TOKEN: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+        run: |
+          test -n "${OPENHD_SUBMODULE_TOKEN}" || {
+            echo "::error::OPENHD_SUBMODULE_TOKEN needs read access to OpenHD/OpenHD-X21B"
+            exit 1
+          }
+          test -n "${CLOUDSMITH_API_KEY}" || {
+            echo "::error::CLOUDSMITH_API_KEY is required"
+            exit 1
+          }
+
+      - name: Download cached X21B SDK
+        uses: actions/download-artifact@v4
+        with:
+          repository: OpenHD/OpenHD-X21B
+          run-id: ${{ inputs.source_run_id }}
+          name: openhd-x21b-sdk
+          github-token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+          path: publish-inputs
+
+      - name: Download cached X21B OHD filesystem seed
+        uses: actions/download-artifact@v4
+        with:
+          repository: OpenHD/OpenHD-X21B
+          run-id: ${{ inputs.source_run_id }}
+          name: openhd-x21b-ohd-root
+          github-token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+          path: publish-inputs
+
+      - name: Verify cached inputs
+        working-directory: publish-inputs
+        run: |
+          set -euo pipefail
+          sha256sum -c openhd-x21b-sdk.tar.gz.sha256
+          sha256sum -c openhd-x21b-ohd-root.tar.gz.sha256
+          test -s openhd-x21b-sdk.manifest.json
+          test -s openhd-x21b-ohd-root.tar.gz.manifest.json
+
+      - name: Install Cloudsmith CLI
+        run: pipx install cloudsmith-cli
+
+      - name: Publish stable X21B SDK and filesystem seed
+        run: |
+          set -euo pipefail
+          for package in publish-inputs/*; do
+            cloudsmith push raw --republish openhd/dev-release "${package}"
+          done
