@@ -1,92 +1,63 @@
-name: Build X21B application bundle
+name: Build X21B OpenHD component
 
 on:
-  workflow_call:
-    inputs:
-      openhd_ref:
-        description: OpenHD branch, tag, or commit to build
-        required: false
-        type: string
-        default: openhd-3.0
-    secrets:
-      OPENHD_SUBMODULE_TOKEN:
-        required: true
-      CLOUDSMITH_API_KEY:
-        required: false
   workflow_dispatch:
-    inputs:
-      openhd_ref:
-        description: OpenHD branch, tag, or commit to build
-        required: false
-        type: string
-        default: openhd-3.0
   push:
     branches:
       - openhd-3.0
     paths:
       - OpenHD/**
-      - scripts/build_x21_bundle.sh
+      - scripts/build_x21_component.sh
       - .github/workflows/build_x21_bundle.yml
 
 permissions:
   contents: read
 
+concurrency:
+  group: x21b-openhd-component-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   X21_SDK_REPOSITORY: OpenHD/OpenHD-X21B
   X21_SDK_RUN_ID: "34479273960"
   X21_SDK_ARTIFACT: openhd-x21b-sdk
-  X21_OHD_SEED_RUN_ID: "34479273960"
-  X21_OHD_SEED_ARTIFACT: openhd-x21b-ohd-root
 
 jobs:
-  bundle:
+  component:
     runs-on: ubuntu-24.04
     env:
       CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
     steps:
-      - name: Validate access to private X21B build inputs
-        shell: bash
+      - name: Validate credentials
         env:
           OPENHD_SUBMODULE_TOKEN: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
         run: |
-          if [[ -z "${OPENHD_SUBMODULE_TOKEN}" ]]; then
-            echo "::error::OPENHD_SUBMODULE_TOKEN must be available to the calling ImageBuilder repository. It needs read access to OpenHD/OpenHD-X21B and the private OpenHD source submodules."
+          test -n "${OPENHD_SUBMODULE_TOKEN}" || {
+            echo "::error::OPENHD_SUBMODULE_TOKEN needs read access to OpenHD-X21B and the private OpenHD submodules"
             exit 1
-          fi
+          }
 
-      - name: Checkout OpenHD and submodules
+      - name: Checkout OpenHD
         uses: actions/checkout@v4
         with:
-          repository: OpenHD/OpenHD
-          ref: ${{ inputs.openhd_ref || github.sha }}
           fetch-depth: 0
           submodules: false
           token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
 
       - name: Checkout build submodules without Devourer references
-        shell: bash
         env:
           OPENHD_SUBMODULE_TOKEN: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
         run: |
-          set -euxo pipefail
-          test -n "${OPENHD_SUBMODULE_TOKEN}"
+          set -euo pipefail
           set +x
           git config --global \
             url."https://x-access-token:${OPENHD_SUBMODULE_TOKEN}@github.com/".insteadOf \
             https://github.com/
-          set -x
           git submodule update --init
           git -C OpenHD/ohd_interface/lib/devourer \
             config submodule.reference/rtl8852cu.update none
 
-      - name: Checkout SysUtils
-        uses: actions/checkout@v4
-        with:
-          repository: OpenHD/OpenHD-SysUtils
-          path: OpenHD-SysUtils
-          fetch-depth: 0
-
-      - name: Download pinned X21B SDK artifact
+      - name: Download pinned X21B SDK
         uses: actions/download-artifact@v4
         with:
           repository: ${{ env.X21_SDK_REPOSITORY }}
@@ -95,146 +66,60 @@ jobs:
           github-token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
           path: x21-sdk-artifact
 
-      - name: Verify and extract X21B SDK
-        shell: bash
+      - name: Verify and extract SDK
         run: |
-          set -euxo pipefail
+          set -euo pipefail
           cd x21-sdk-artifact
           sha256sum -c openhd-x21b-sdk.tar.gz.sha256
           tar -xzf openhd-x21b-sdk.tar.gz -C "${RUNNER_TEMP}"
-
-          sdk_sha256="$(sha256sum openhd-x21b-sdk.tar.gz | awk '{print $1}')"
-          buildroot_commit="$(python3 -c \
-            'import json; print(json.load(open("openhd-x21b-sdk.manifest.json"))["buildroot_commit"])')"
-          echo "X21_SDK_SHA256=${sdk_sha256}" >>"${GITHUB_ENV}"
-          echo "X21_SDK_BUILDROOT_COMMIT=${buildroot_commit}" >>"${GITHUB_ENV}"
+          echo "X21_SDK_SHA256=$(sha256sum openhd-x21b-sdk.tar.gz | awk '{print $1}')" >>"${GITHUB_ENV}"
+          echo "X21_SDK_BUILDROOT_COMMIT=$(python3 -c 'import json; print(json.load(open("openhd-x21b-sdk.manifest.json"))["buildroot_commit"])')" >>"${GITHUB_ENV}"
           echo "X21_SDK_DIR=${RUNNER_TEMP}/openhd-x21b-sdk" >>"${GITHUB_ENV}"
 
-      - name: Install bundle tooling
+      - name: Install build tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends cmake cpio fakeroot file g++ mtd-utils ninja-build zstd
+          sudo apt-get install -y --no-install-recommends cmake g++ ninja-build
 
-      - name: Download X21B OHD filesystem seed artifact
-        uses: actions/download-artifact@v4
-        with:
-          repository: ${{ env.X21_SDK_REPOSITORY }}
-          run-id: ${{ env.X21_OHD_SEED_RUN_ID }}
-          name: ${{ env.X21_OHD_SEED_ARTIFACT }}
-          github-token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
-          path: x21-ohd-seed-artifact
+      - name: Cross-compile and package OpenHD
+        run: ./scripts/build_x21_component.sh "${X21_SDK_DIR}" "${GITHUB_WORKSPACE}/x21-component"
 
-      - name: Verify and extract X21B OHD filesystem seed
-        shell: bash
-        run: |
-          set -euxo pipefail
-          mkdir -p x21-ohd-seed
-          (
-            cd x21-ohd-seed-artifact
-            sha256sum -c openhd-x21b-ohd-root.tar.gz.sha256
-          )
-          seed_sha256="$(sha256sum x21-ohd-seed-artifact/openhd-x21b-ohd-root.tar.gz | awk '{print $1}')"
-          echo "X21_OHD_SEED_SHA256=${seed_sha256}" >>"${GITHUB_ENV}"
-          tar -xzf x21-ohd-seed-artifact/openhd-x21b-ohd-root.tar.gz \
-            -C x21-ohd-seed
-
-      - name: Cross-compile X21B bundle
-        shell: bash
-        run: |
-          fakeroot -- ./scripts/build_x21_bundle.sh \
-            "${X21_SDK_DIR}" \
-            "${GITHUB_WORKSPACE}/OpenHD-SysUtils" \
-            "${GITHUB_WORKSPACE}/x21-ohd-seed" \
-            "${GITHUB_WORKSPACE}/x21-bundle"
-
-      - name: Upload X21B application bundle
+      - name: Upload OpenHD component artifact
         uses: actions/upload-artifact@v4
         with:
-          name: openhd-x21b-bundle
-          path: x21-bundle/
+          name: openhd-x21b-component
+          path: x21-component/
           if-no-files-found: error
           retention-days: 30
 
-      - name: Publish X21B bundle to Cloudsmith
+      - name: Install Cloudsmith CLI
         if: env.CLOUDSMITH_API_KEY != ''
-        uses: cloudsmith-io/action@master
-        with:
-          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
-          command: push
-          format: raw
-          owner: openhd
-          repo: dev-release
-          republish: "true"
-          file: "x21-bundle/*.tar.zst"
+        run: pipx install cloudsmith-cli
 
-      - name: Publish X21B bundle checksum to Cloudsmith
+      - name: Publish component files to Cloudsmith
         if: env.CLOUDSMITH_API_KEY != ''
-        uses: cloudsmith-io/action@master
-        with:
-          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
-          command: push
-          format: raw
-          owner: openhd
-          repo: dev-release
-          republish: "true"
-          file: "x21-bundle/*.tar.zst.sha256"
+        run: |
+          set -euo pipefail
+          for package in x21-component/*; do
+            cloudsmith push raw --republish openhd/dev-release "${package}"
+          done
 
-      - name: Publish X21B bundle manifest to Cloudsmith
+      - name: Trigger ImageBuilder X21 assembly
         if: env.CLOUDSMITH_API_KEY != ''
-        uses: cloudsmith-io/action@master
-        with:
-          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
-          command: push
-          format: raw
-          owner: openhd
-          repo: dev-release
-          republish: "true"
-          file: "x21-bundle/*.tar.zst.manifest.json"
-
-      - name: Publish latest X21B SWUpdate package to Cloudsmith
-        if: env.CLOUDSMITH_API_KEY != ''
-        uses: cloudsmith-io/action@master
-        with:
-          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
-          command: push
-          format: raw
-          owner: openhd
-          repo: dev-release
-          republish: "true"
-          file: "x21-bundle/OpenHD-X21B-latest.ohd"
-
-      - name: Publish latest X21B update checksum to Cloudsmith
-        if: env.CLOUDSMITH_API_KEY != ''
-        uses: cloudsmith-io/action@master
-        with:
-          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
-          command: push
-          format: raw
-          owner: openhd
-          repo: dev-release
-          republish: "true"
-          file: "x21-bundle/OpenHD-X21B-latest.ohd.sha256"
-
-      - name: Publish latest X21B update manifest to Cloudsmith
-        if: env.CLOUDSMITH_API_KEY != ''
-        uses: cloudsmith-io/action@master
-        with:
-          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
-          command: push
-          format: raw
-          owner: openhd
-          repo: dev-release
-          republish: "true"
-          file: "x21-bundle/OpenHD-X21B-latest.ohd.manifest.json"
-
-      - name: Publish X21B ImageWriter catalog to Cloudsmith
-        if: env.CLOUDSMITH_API_KEY != ''
-        uses: cloudsmith-io/action@master
-        with:
-          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
-          command: push
-          format: raw
-          owner: openhd
-          repo: dev-release
-          republish: "true"
-          file: "x21-bundle/openhd-x21b-updates.json"
+        env:
+          GH_TOKEN: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+        run: |
+          set -euo pipefail
+          base=https://dl.cloudsmith.io/public/openhd/dev-release/raw/files
+          if ! curl --fail --silent --show-error --location \
+            "${base}/openhd-x21b-latest.tar.gz.manifest.json" -o /tmp/openhd.json || \
+             ! curl --fail --silent --show-error --location \
+            "${base}/openhd-sys-utils-x21b-latest.tar.gz.manifest.json" -o /tmp/sysutils.json; then
+            echo "The other X21B component is not published yet; ImageBuilder will be triggered by its workflow."
+            exit 0
+          fi
+          if ! python3 -c 'import json; a=json.load(open("/tmp/openhd.json")); b=json.load(open("/tmp/sysutils.json")); assert a["sdk_sha256"] == b["sdk_sha256"]'; then
+            echo "The published X21B components use different SDKs; waiting for the other component to rebuild."
+            exit 0
+          fi
+          gh workflow run update-image.yml --repo OpenHD/OpenHD-ImageBuilder --ref dev-release -f target=x21-update

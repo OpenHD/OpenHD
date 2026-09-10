@@ -131,9 +131,10 @@ jobs:
 
   update-x21-buildroot-version:
     name: Update X21 Buildroot OpenHD revision
-    # This is intentionally independent from the build-and-run test.  A push
-    # to openhd-3.0 updates only the pinned source revision in Buildroot.
-    if: github.event_name == 'push' && github.ref == 'refs/heads/openhd-3.0'
+    # Application-only X21 updates now use the cross-compiled Cloudsmith
+    # component. Keep this legacy Buildroot pin update as an explicit action
+    # for changes that genuinely require a new base/SDK image.
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout X21 Buildroot
