@@ -1,15 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+usage="Usage: build_x21_bundle.sh <sdk-dir> <sysutils-source> <ohd-root-seed> <output-dir>"
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-sdk_dir="$(realpath "${1:?Usage: build_x21_bundle.sh <sdk-dir> <sysutils-source> <output-dir>}")"
-sysutils_source="$(realpath "${2:?Usage: build_x21_bundle.sh <sdk-dir> <sysutils-source> <output-dir>}")"
-output_dir="$(realpath -m "${3:?Usage: build_x21_bundle.sh <sdk-dir> <sysutils-source> <output-dir>}")"
+sdk_dir="$(realpath "${1:?${usage}}")"
+sysutils_source="$(realpath "${2:?${usage}}")"
+ohd_root_seed="$(realpath "${3:?${usage}}")"
+output_dir="$(realpath -m "${4:?${usage}}")"
 
 test -x "${sdk_dir}/relocate-sdk.sh"
 test -f "${sdk_dir}/environment-setup"
 test -f "${sdk_dir}/share/buildroot/toolchainfile.cmake"
 test -f "${sysutils_source}/CMakeLists.txt"
+test -x "${ohd_root_seed}/start-ohd.sh"
+test -f "${ohd_root_seed}/drivers/88x2eu_ohd.ko"
 
 "${sdk_dir}/relocate-sdk.sh"
 # shellcheck disable=SC1091
@@ -47,6 +51,8 @@ cmake -S "${sysutils_source}" -B "${sysutils_build}" \
   -DCMAKE_BUILD_TYPE=Release
 cmake --build "${sysutils_build}" --parallel "$(nproc)" --target openhd_sys_utils
 
+mkdir -p "${stage_dir}"
+cp -a "${ohd_root_seed}/." "${stage_dir}/"
 mkdir -p "${stage_dir}/usr/bin" "${stage_dir}/usr/lib"
 install -m 0755 "${openhd_build}/openhd" "${stage_dir}/usr/bin/openhd"
 install -m 0755 "${sysutils_build}/openhd_sys_utils" \
@@ -85,6 +91,7 @@ cat >"${stage_dir}/manifest.json" <<EOF
   "sysutils_commit": "${sysutils_commit}",
   "sdk_sha256": "${X21_SDK_SHA256:-unknown}",
   "sdk_buildroot_commit": "${X21_SDK_BUILDROOT_COMMIT:-unknown}",
+  "ohd_seed_sha256": "${X21_OHD_SEED_SHA256:-unknown}",
   "generated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 }
 EOF
@@ -111,4 +118,79 @@ tar --numeric-owner --owner=0 --group=0 --zstd \
 "${READELF}" -d "${stage_dir}/usr/bin/openhd_sys_utils" | grep NEEDED
 
 cp "${stage_dir}/manifest.json" "${output_dir}/${bundle_name}.manifest.json"
+
+update_name="OpenHD-X21B-latest.ohd"
+update_work="${work_dir}/swupdate"
+mkdir -p "${update_work}"
+
+# Match the X21B factory image geometry: 2 KiB NAND pages, 128 KiB erase
+# blocks and the fixed 100 MiB OHD partition from openhd_x21b_defconfig.
+mkfs.ubifs -x lzo -e 126976 -m 2048 -c 825 \
+  -d "${stage_dir}" -F -o "${update_work}/ohd.img.ubifs"
+cat >"${update_work}/ubinize.cfg" <<EOF
+[ubi]
+mode=ubi
+vol_id=0
+vol_type=dynamic
+vol_name=ohd
+vol_alignment=1
+vol_flags=autoresize
+image=${update_work}/ohd.img.ubifs
+EOF
+ubinize -o "${update_work}/ohd.img" -m 2048 -p 0x20000 \
+  "${update_work}/ubinize.cfg"
+
+cat >"${update_work}/sw-description" <<EOF
+software =
+{
+    version = "${bundle_version}";
+    description = "OpenHD X21B OHD partition update";
+
+    images: (
+        {
+            filename = "ohd.img";
+            device = "mtd9";
+            type = "flash";
+            handler = "ubiformat";
+        }
+    );
+}
+EOF
+(
+  cd "${update_work}"
+  printf '%s\n' sw-description ohd.img | cpio -ov -H crc -L \
+    >"${output_dir}/${update_name}"
+)
+
+update_sha256="$(sha256sum "${output_dir}/${update_name}" | awk '{print $1}')"
+update_size="$(stat -c '%s' "${output_dir}/${update_name}")"
+printf '%s  %s\n' "${update_sha256}" "${update_name}" \
+  >"${output_dir}/${update_name}.sha256"
+cp "${stage_dir}/manifest.json" "${output_dir}/${update_name}.manifest.json"
+cat >"${output_dir}/openhd-x21b-updates.json" <<EOF
+{
+  "os_list": [
+    {
+      "name": "OpenHD X21B",
+      "description": "SWUpdate package for an existing X21B installation",
+      "icon": "https://fra1.digitaloceanspaces.com/openhd-images/Downloader/OpenHD-advanced.png",
+      "subitems": [
+        {
+          "name": "OpenHD X21B latest",
+          "description": "Replace the read-only OHD NAND partition using SWUpdate",
+          "icon": "https://fra1.digitaloceanspaces.com/openhd-images/Downloader/OpenHD-advanced.png",
+          "url": "https://dl.cloudsmith.io/public/openhd/dev-release/raw/files/${update_name}",
+          "image_download_size": ${update_size},
+          "extract_size": ${update_size},
+          "update_sha256": "${update_sha256}",
+          "update_destination": "root",
+          "update_filename": "${update_name}",
+          "release_date": "$(date -u +%Y-%m-%d)"
+        }
+      ]
+    }
+  ]
+}
+EOF
 echo "Created ${output_dir}/${bundle_name}"
+echo "Created ${output_dir}/${update_name}"

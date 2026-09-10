@@ -15,8 +15,10 @@ permissions:
 
 env:
   X21_SDK_REPOSITORY: OpenHD/OpenHD-X21B
-  X21_SDK_RUN_ID: "34408323283"
+  X21_SDK_RUN_ID: "34425379014"
   X21_SDK_ARTIFACT: openhd-x21b-sdk
+  X21_OHD_SEED_RUN_ID: "34425379014"
+  X21_OHD_SEED_ARTIFACT: openhd-x21b-ohd-root
 
 jobs:
   bundle:
@@ -79,14 +81,38 @@ jobs:
       - name: Install bundle tooling
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends cmake g++ ninja-build zstd
+          sudo apt-get install -y --no-install-recommends cmake cpio fakeroot file g++ mtd-utils ninja-build zstd
+
+      - name: Download X21B OHD filesystem seed artifact
+        uses: actions/download-artifact@v4
+        with:
+          repository: ${{ env.X21_SDK_REPOSITORY }}
+          run-id: ${{ env.X21_OHD_SEED_RUN_ID }}
+          name: ${{ env.X21_OHD_SEED_ARTIFACT }}
+          github-token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+          path: x21-ohd-seed-artifact
+
+      - name: Verify and extract X21B OHD filesystem seed
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p x21-ohd-seed
+          (
+            cd x21-ohd-seed-artifact
+            sha256sum -c openhd-x21b-ohd-root.tar.gz.sha256
+          )
+          seed_sha256="$(sha256sum x21-ohd-seed-artifact/openhd-x21b-ohd-root.tar.gz | awk '{print $1}')"
+          echo "X21_OHD_SEED_SHA256=${seed_sha256}" >>"${GITHUB_ENV}"
+          tar -xzf x21-ohd-seed-artifact/openhd-x21b-ohd-root.tar.gz \
+            -C x21-ohd-seed
 
       - name: Cross-compile X21B bundle
         shell: bash
         run: |
-          ./scripts/build_x21_bundle.sh \
+          fakeroot -- ./scripts/build_x21_bundle.sh \
             "${X21_SDK_DIR}" \
             "${GITHUB_WORKSPACE}/OpenHD-SysUtils" \
+            "${GITHUB_WORKSPACE}/x21-ohd-seed" \
             "${GITHUB_WORKSPACE}/x21-bundle"
 
       - name: Upload X21B application bundle
@@ -129,3 +155,47 @@ jobs:
           repo: dev-release
           republish: "true"
           file: "x21-bundle/*.tar.zst.manifest.json"
+
+      - name: Publish latest X21B SWUpdate package to Cloudsmith
+        uses: cloudsmith-io/action@master
+        with:
+          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
+          command: push
+          format: raw
+          owner: openhd
+          repo: dev-release
+          republish: "true"
+          file: "x21-bundle/OpenHD-X21B-latest.ohd"
+
+      - name: Publish latest X21B update checksum to Cloudsmith
+        uses: cloudsmith-io/action@master
+        with:
+          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
+          command: push
+          format: raw
+          owner: openhd
+          repo: dev-release
+          republish: "true"
+          file: "x21-bundle/OpenHD-X21B-latest.ohd.sha256"
+
+      - name: Publish latest X21B update manifest to Cloudsmith
+        uses: cloudsmith-io/action@master
+        with:
+          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
+          command: push
+          format: raw
+          owner: openhd
+          repo: dev-release
+          republish: "true"
+          file: "x21-bundle/OpenHD-X21B-latest.ohd.manifest.json"
+
+      - name: Publish X21B ImageWriter catalog to Cloudsmith
+        uses: cloudsmith-io/action@master
+        with:
+          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
+          command: push
+          format: raw
+          owner: openhd
+          repo: dev-release
+          republish: "true"
+          file: "x21-bundle/openhd-x21b-updates.json"
