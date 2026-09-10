@@ -13,7 +13,6 @@ test -f "${sdk_dir}/environment-setup"
 test -f "${sdk_dir}/share/buildroot/toolchainfile.cmake"
 test -f "${sysutils_source}/CMakeLists.txt"
 test -x "${ohd_root_seed}/start-ohd.sh"
-test -f "${ohd_root_seed}/drivers/88x2eu_ohd.ko"
 
 "${sdk_dir}/relocate-sdk.sh"
 # shellcheck disable=SC1091
@@ -55,6 +54,10 @@ mkdir -p "${stage_dir}"
 cp -a "${ohd_root_seed}/." "${stage_dir}/"
 mkdir -p "${stage_dir}/usr/bin" "${stage_dir}/usr/lib" \
   "${stage_dir}/ohd-rw" "${stage_dir}/ohd-config"
+# X21 uses Devourer's userspace USB backend. The legacy 88x2eu kernel module
+# is tied to the exact base-kernel vermagic and must not be loaded at startup.
+sed -i '\|insmod /ohd/drivers/88x2eu_ohd\.ko|d' "${stage_dir}/start-ohd.sh"
+rm -f "${stage_dir}/drivers/88x2eu_ohd.ko"
 install -m 0755 "${openhd_build}/openhd" "${stage_dir}/usr/bin/openhd"
 install -m 0755 "${sysutils_build}/openhd_sys_utils" \
   "${stage_dir}/usr/bin/openhd_sys_utils"
