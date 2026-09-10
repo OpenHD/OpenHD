@@ -12,7 +12,7 @@ on:
       OPENHD_SUBMODULE_TOKEN:
         required: true
       CLOUDSMITH_API_KEY:
-        required: true
+        required: false
   workflow_dispatch:
     inputs:
       openhd_ref:
@@ -42,6 +42,16 @@ jobs:
   bundle:
     runs-on: ubuntu-24.04
     steps:
+      - name: Validate access to private X21B build inputs
+        shell: bash
+        env:
+          OPENHD_SUBMODULE_TOKEN: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+        run: |
+          if [[ -z "${OPENHD_SUBMODULE_TOKEN}" ]]; then
+            echo "::error::OPENHD_SUBMODULE_TOKEN must be available to the calling ImageBuilder repository. It needs read access to OpenHD/OpenHD-X21B and the private OpenHD source submodules."
+            exit 1
+          fi
+
       - name: Checkout OpenHD and submodules
         uses: actions/checkout@v4
         with:
@@ -144,6 +154,7 @@ jobs:
           retention-days: 30
 
       - name: Publish X21B bundle to Cloudsmith
+        if: secrets.CLOUDSMITH_API_KEY != ''
         uses: cloudsmith-io/action@master
         with:
           api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
@@ -155,6 +166,7 @@ jobs:
           file: "x21-bundle/*.tar.zst"
 
       - name: Publish X21B bundle checksum to Cloudsmith
+        if: secrets.CLOUDSMITH_API_KEY != ''
         uses: cloudsmith-io/action@master
         with:
           api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
@@ -166,6 +178,7 @@ jobs:
           file: "x21-bundle/*.tar.zst.sha256"
 
       - name: Publish X21B bundle manifest to Cloudsmith
+        if: secrets.CLOUDSMITH_API_KEY != ''
         uses: cloudsmith-io/action@master
         with:
           api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
@@ -177,6 +190,7 @@ jobs:
           file: "x21-bundle/*.tar.zst.manifest.json"
 
       - name: Publish latest X21B SWUpdate package to Cloudsmith
+        if: secrets.CLOUDSMITH_API_KEY != ''
         uses: cloudsmith-io/action@master
         with:
           api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
@@ -188,6 +202,7 @@ jobs:
           file: "x21-bundle/OpenHD-X21B-latest.ohd"
 
       - name: Publish latest X21B update checksum to Cloudsmith
+        if: secrets.CLOUDSMITH_API_KEY != ''
         uses: cloudsmith-io/action@master
         with:
           api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
@@ -199,6 +214,7 @@ jobs:
           file: "x21-bundle/OpenHD-X21B-latest.ohd.sha256"
 
       - name: Publish latest X21B update manifest to Cloudsmith
+        if: secrets.CLOUDSMITH_API_KEY != ''
         uses: cloudsmith-io/action@master
         with:
           api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
@@ -210,6 +226,7 @@ jobs:
           file: "x21-bundle/OpenHD-X21B-latest.ohd.manifest.json"
 
       - name: Publish X21B ImageWriter catalog to Cloudsmith
+        if: secrets.CLOUDSMITH_API_KEY != ''
         uses: cloudsmith-io/action@master
         with:
           api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
