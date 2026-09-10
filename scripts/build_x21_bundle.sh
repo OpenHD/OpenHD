@@ -75,7 +75,6 @@ openhd_commit="$(git -C "${repo_root}" rev-parse HEAD)"
 sysutils_commit="$(git -C "${sysutils_source}" rev-parse HEAD)"
 bundle_version="${openhd_commit:0:12}-${sysutils_commit:0:12}"
 bundle_name="openhd-x21b-bundle-${bundle_version}.tar.zst"
-update_name="OpenHD-X21B-latest.ohd_bundle"
 
 cat >"${stage_dir}/manifest.json" <<EOF
 {
@@ -101,12 +100,9 @@ EOF
 mkdir -p "${output_dir}"
 tar --numeric-owner --owner=0 --group=0 --zstd \
   -C "${stage_dir}" -cf "${output_dir}/${bundle_name}" .
-tar --numeric-owner --owner=0 --group=0 \
-  -C "${stage_dir}" -cf "${output_dir}/${update_name}" .
 (
   cd "${output_dir}"
   sha256sum "${bundle_name}" >"${bundle_name}.sha256"
-  sha256sum "${update_name}" >"${update_name}.sha256"
 )
 
 "${READELF}" -h "${stage_dir}/usr/bin/openhd" | grep -q 'Machine:.*AArch64'
@@ -115,34 +111,4 @@ tar --numeric-owner --owner=0 --group=0 \
 "${READELF}" -d "${stage_dir}/usr/bin/openhd_sys_utils" | grep NEEDED
 
 cp "${stage_dir}/manifest.json" "${output_dir}/${bundle_name}.manifest.json"
-cp "${stage_dir}/manifest.json" "${output_dir}/${update_name}.manifest.json"
-
-update_sha256="$(sha256sum "${output_dir}/${update_name}" | awk '{print $1}')"
-update_size="$(stat -c '%s' "${output_dir}/${update_name}")"
-cat >"${output_dir}/openhd-x21b-updates.json" <<EOF
-{
-  "os_list": [
-    {
-      "name": "OpenHD X21B",
-      "description": "Application update for an existing X21B installation",
-      "icon": "https://fra1.digitaloceanspaces.com/openhd-images/Downloader/OpenHD-advanced.png",
-      "subitems": [
-        {
-          "name": "OpenHD X21B latest",
-          "description": "Update OpenHD and SysUtils while preserving X21B configuration and recordings",
-          "icon": "https://fra1.digitaloceanspaces.com/openhd-images/Downloader/OpenHD-advanced.png",
-          "url": "https://dl.cloudsmith.io/public/openhd/dev-release/raw/files/${update_name}",
-          "image_download_size": ${update_size},
-          "extract_size": ${update_size},
-          "update_sha256": "${update_sha256}",
-          "update_destination": "root",
-          "update_filename": "${update_name}",
-          "release_date": "$(date -u +%Y-%m-%d)"
-        }
-      ]
-    }
-  ]
-}
-EOF
 echo "Created ${output_dir}/${bundle_name}"
-echo "Created ${output_dir}/${update_name}"
