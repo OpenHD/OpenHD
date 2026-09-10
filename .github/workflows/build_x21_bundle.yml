@@ -18,9 +18,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  X21_SDK_REPOSITORY: OpenHD/OpenHD-X21B
-  X21_SDK_RUN_ID: "34479273960"
-  X21_SDK_ARTIFACT: openhd-x21b-sdk
+  X21_INPUT_BASE_URL: https://dl.cloudsmith.io/public/openhd/dev-release/raw/files
 
 jobs:
   component:
@@ -57,19 +55,15 @@ jobs:
           git -C OpenHD/ohd_interface/lib/devourer \
             config submodule.reference/rtl8852cu.update none
 
-      - name: Download pinned X21B SDK
-        uses: actions/download-artifact@v4
-        with:
-          repository: ${{ env.X21_SDK_REPOSITORY }}
-          run-id: ${{ env.X21_SDK_RUN_ID }}
-          name: ${{ env.X21_SDK_ARTIFACT }}
-          github-token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
-          path: x21-sdk-artifact
-
-      - name: Verify and extract SDK
+      - name: Download and verify the stable X21B SDK
         run: |
           set -euo pipefail
+          mkdir -p x21-sdk-artifact
           cd x21-sdk-artifact
+          for name in openhd-x21b-sdk.tar.gz openhd-x21b-sdk.tar.gz.sha256 openhd-x21b-sdk.manifest.json; do
+            curl --fail --location --retry 5 --retry-delay 3 \
+              "${X21_INPUT_BASE_URL}/${name}" -o "${name}"
+          done
           sha256sum -c openhd-x21b-sdk.tar.gz.sha256
           tar -xzf openhd-x21b-sdk.tar.gz -C "${RUNNER_TEMP}"
           echo "X21_SDK_SHA256=$(sha256sum openhd-x21b-sdk.tar.gz | awk '{print $1}')" >>"${GITHUB_ENV}"
