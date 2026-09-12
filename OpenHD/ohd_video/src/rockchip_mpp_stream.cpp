@@ -1,6 +1,8 @@
 #include "rockchip_mpp_stream.h"
 
 #include <fcntl.h>
+#include <linux/media-bus-format.h>
+#include <linux/v4l2-subdev.h>
 #include <linux/videodev2.h>
 #include <poll.h>
 #include <rk_mpi.h>
@@ -25,6 +27,8 @@
 #include "air_recording_helper.hpp"
 #include "openhd_rtp.h"
 #include "openhd_spdlog.h"
+#include "openhd_platform.h"
+
 
 namespace {
 constexpr RK_U32 align16(RK_U32 value) { return (value + 15U) & ~15U; }
@@ -49,6 +53,40 @@ std::string find_v4l2_video(const std::string& name_fragment) {
   }
   return {};
 }
+
+#ifndef MEDIA_BUS_FMT_SGBRG12_1X12
+#define MEDIA_BUS_FMT_SGBRG12_1X12 0x300e
+#endif
+
+std::string find_v4l2_subdev(const std::string& name_fragment) {
+  for (int index = 0; index < 32; ++index) {
+    const std::string node = "/dev/v4l-subdev" + std::to_string(index);
+    std::ifstream name_file("/sys/class/video4linux/v4l-subdev" +
+                            std::to_string(index) + "/name");
+    std::string name;
+    std::getline(name_file, name);
+    if (name.find(name_fragment) != std::string::npos) return node;
+  }
+  return {};
+}
+
+bool set_subdev_format(const std::string& node, uint32_t pad, uint32_t width,
+                       uint32_t height, uint32_t code) {
+  if (node.empty()) return false;
+  const int fd = open(node.c_str(), O_RDWR | O_CLOEXEC);
+  if (fd < 0) return false;
+  v4l2_subdev_format format{};
+  format.which = V4L2_SUBDEV_FORMAT_ACTIVE;
+  format.pad = pad;
+  format.format.width = width;
+  format.format.height = height;
+  format.format.code = code;
+  format.format.field = V4L2_FIELD_NONE;
+  const bool ok = retry_ioctl(fd, VIDIOC_SUBDEV_S_FMT, &format) == 0;
+  close(fd);
+  return ok;
+}
+
 
 class MpegTsMuxer {
  public:
@@ -587,6 +625,65 @@ class RockchipMppStream::Impl {
            (mode == AIR_RECORDING_AUTO_ARM_DISARM && armed.load());
   }
 
+  bool configure_imx415_hfr() {
+    const int requested_fps = std::max(
+        1, owner.m_camera_holder->get_settings().streamed_video_format.framerate);
+    if (requested_fps < 60 || width > 1920 || height > 1080) return true;
+
+    const bool use_720p120 = requested_fps >= 100 && width <= 1280 && height <= 720;
+    const uint32_t sensor_width = use_720p120 ? 1284 : 1932;
+    const uint32_t sensor_height = use_720p120 ? 720 : 1096;
+    constexpr uint32_t bus_code = MEDIA_BUS_FMT_SGBRG12_1X12;
+    const std::string sensor = find_v4l2_subdev("imx415");
+    if (sensor.empty()) return true;
+
+    if (!set_subdev_format(sensor, 0, sensor_width, sensor_height, bus_code)) {
+      log->error("Cannot select IMX415 HFR format {}x{} on {}", sensor_width,
+                 sensor_height, sensor);
+      return false;
+    }
+
+    const int sensor_fd = open(sensor.c_str(), O_RDWR | O_CLOEXEC);
+    if (sensor_fd < 0) return false;
+    v4l2_subdev_frame_interval interval{};
+    interval.pad = 0;
+    interval.interval.numerator = 1;
+    interval.interval.denominator = requested_fps;
+    const bool interval_ok =
+        retry_ioctl(sensor_fd, VIDIOC_SUBDEV_S_FRAME_INTERVAL, &interval) == 0;
+    close(sensor_fd);
+    if (!interval_ok) {
+      log->error("IMX415 rejected requested rate {} fps: {}", requested_fps,
+                 std::strerror(errno));
+      return false;
+    }
+
+    const std::string dphy = find_v4l2_subdev("rockchip-csi2-dphy0");
+    const std::string mipi = find_v4l2_subdev("rockchip-mipi-csi2");
+    const std::string cif = find_v4l2_subdev("rkcif-mipi-lvds");
+    const std::string isp = find_v4l2_subdev("rkisp-isp-subdev");
+    const bool graph_ok =
+        set_subdev_format(dphy, 0, sensor_width, sensor_height, bus_code) &&
+        set_subdev_format(dphy, 1, sensor_width, sensor_height, bus_code) &&
+        set_subdev_format(mipi, 0, sensor_width, sensor_height, bus_code) &&
+        set_subdev_format(mipi, 1, sensor_width, sensor_height, bus_code) &&
+        set_subdev_format(cif, 0, width, height, bus_code) &&
+        set_subdev_format(isp, 0, width, height, bus_code);
+    if (!graph_ok) {
+      log->error("Cannot configure the RV1126B media graph for IMX415 HFR");
+      return false;
+    }
+
+    const double actual_fps = interval.interval.numerator
+                                  ? static_cast<double>(interval.interval.denominator) /
+                                        interval.interval.numerator
+                                  : 0.0;
+    log->info("IMX415 HFR selected: sensor {}x{} at {:.2f} fps, ISP {}x{}",
+              sensor_width, sensor_height, actual_fps, width, height);
+    return true;
+  }
+
+
   bool setup_capture() {
     const auto& camera = owner.m_camera_holder->get_camera();
     if (camera.requires_rockchip1126_mpp_testsrc_pipeline()) {
@@ -595,9 +692,23 @@ class RockchipMppStream::Impl {
       return true;
     }
 
-    // The X21 production image routes the camera's NV12 output through CIF.
-    // Discover it by entity name because video indices vary across images.
-    std::string capture_device = find_v4l2_video("stream_cif_mipi_id0");
+    std::string capture_device;
+    // The X21 routes the HDZero camera's NV12 output through CIF (stream_cif_mipi_id0).
+    // The Luckfox Aura and ISP-based cameras (IMX415, VEYE, Arducam) route through rkisp_mainpath.
+    if (camera.camera_type == X_CAM_TYPE_LUCKFOX_AURA_IMX415 ||
+        OHDPlatform::instance().is_luckfox_aura()) {
+      if (!configure_imx415_hfr()) {
+        log->warn("IMX415 HFR configuration was not applied; attempting capture");
+      }
+    }
+    if (camera.camera_type == X_CAM_TYPE_ROCKCHIP_RV1126_CSI ||
+        camera.camera_type == X_CAM_TYPE_X21_HDZERO_RUNCAM_NANO_90) {
+      capture_device = find_v4l2_video("stream_cif_mipi_id0");
+      if (capture_device.empty()) capture_device = find_v4l2_video("rkisp_mainpath");
+    } else {
+      capture_device = find_v4l2_video("rkisp_mainpath");
+      if (capture_device.empty()) capture_device = find_v4l2_video("stream_cif_mipi_id0");
+    }
     if (capture_device.empty()) capture_device = "/dev/video0";
     capture_fd =
         open(capture_device.c_str(), O_RDWR | O_NONBLOCK | O_CLOEXEC);

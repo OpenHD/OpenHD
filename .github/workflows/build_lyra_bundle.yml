@@ -1,0 +1,115 @@
+name: Build Luckfox Lyra (RK3506) Ground component
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - openhd-3.0
+    paths:
+      - OpenHD/**
+      - scripts/build_lyra_ground_component.sh
+      - .github/workflows/build_lyra_bundle.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: luckfox-lyra-ground-component-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  LYRA_INPUT_BASE_URL: https://dl.cloudsmith.io/public/openhd/dev-release/raw/files
+
+jobs:
+  component:
+    runs-on: ubuntu-22.04
+    env:
+      CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
+    steps:
+      - name: Validate credentials
+        env:
+          OPENHD_SUBMODULE_TOKEN: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+        run: |
+          test -n "${OPENHD_SUBMODULE_TOKEN}" || {
+            echo "::error::OPENHD_SUBMODULE_TOKEN needs read access to private OpenHD submodules"
+            exit 1
+          }
+
+      - name: Checkout OpenHD
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: false
+          token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+
+      - name: Checkout build submodules without Devourer references
+        env:
+          OPENHD_SUBMODULE_TOKEN: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+        run: |
+          set -euo pipefail
+          set +x
+          git config --global \
+            url."https://x-access-token:${OPENHD_SUBMODULE_TOKEN}@github.com/".insteadOf \
+            https://github.com/
+          git submodule update --init
+          git -C OpenHD/ohd_interface/lib/devourer \
+            config submodule.reference/rtl8852cu.update none
+
+      - name: Install build tools and cross-compiler
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            cmake g++ ninja-build zstd \
+            gcc-10-arm-linux-gnueabihf g++-10-arm-linux-gnueabihf
+
+      - name: Download or prepare armhf sysroot
+        run: |
+          set -euo pipefail
+          sysroot_dir="${RUNNER_TEMP}/lyra-armhf-sysroot"
+          mkdir -p "${sysroot_dir}"
+
+          if curl --fail --silent --head "${LYRA_INPUT_BASE_URL}/openhd-lyra-sdk.tar.gz" >/dev/null 2>&1; then
+            echo "Fetching prebuilt Luckfox Lyra SDK..."
+            curl --fail --location --retry 3 "${LYRA_INPUT_BASE_URL}/openhd-lyra-sdk.tar.gz" -o /tmp/lyra-sdk.tar.gz
+            tar -xzf /tmp/lyra-sdk.tar.gz -C "${sysroot_dir}"
+          elif curl --fail --silent --head "${LYRA_INPUT_BASE_URL}/openhd-sysroot-bullseye-armhf.tar.zst" >/dev/null 2>&1; then
+            echo "Fetching prebuilt armhf sysroot from Cloudsmith..."
+            curl --fail --location --retry 3 "${LYRA_INPUT_BASE_URL}/openhd-sysroot-bullseye-armhf.tar.zst" -o /tmp/sysroot.tar.zst
+            tar -I 'zstd -d' -xf /tmp/sysroot.tar.zst -C "${sysroot_dir}"
+          else
+            echo "Bootstrapping minimal cross sysroot..."
+            sudo apt-get install -y --no-install-recommends mmdebstrap debian-archive-keyring gnupg
+            sudo ./scripts/create_cross_sysroot.sh armhf "${sysroot_dir}" bullseye
+            sudo chown -R "$(id -u):$(id -g)" "${sysroot_dir}"
+          fi
+
+          echo "LYRA_SYSROOT_DIR=${sysroot_dir}" >>"${GITHUB_ENV}"
+
+      - name: Cross-compile and package OpenHD Ground module
+        env:
+          CROSS_COMPILE: arm-linux-gnueabihf-
+          CC: arm-linux-gnueabihf-gcc-10
+          CXX: arm-linux-gnueabihf-g++-10
+        run: |
+          chmod +x ./scripts/build_lyra_ground_component.sh
+          ./scripts/build_lyra_ground_component.sh "${LYRA_SYSROOT_DIR}" "${GITHUB_WORKSPACE}/lyra-component"
+
+      - name: Upload OpenHD Ground component artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: openhd-lyra-ground-component
+          path: lyra-component/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Install Cloudsmith CLI
+        if: env.CLOUDSMITH_API_KEY != ''
+        run: pipx install cloudsmith-cli
+
+      - name: Publish component files to Cloudsmith
+        if: env.CLOUDSMITH_API_KEY != ''
+        run: |
+          set -euo pipefail
+          for package in lyra-component/*; do
+            cloudsmith push raw --republish openhd/dev-release "${package}"
+          done

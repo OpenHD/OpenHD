@@ -439,11 +439,14 @@ std::string platform_default_for(SerialPortRole role) {
   if (platform.is_x20() || platform.is_rock()) {
     return "/dev/ttyS2";
   }
-  if (platform.is_x21()) {
+  if (platform.is_rv1126()) {
     return "/dev/ttyS4";
   }
   if (platform.is_luckfox_pico()) {
     return "/dev/ttyS3";
+  }
+  if (platform.is_luckfox_lyra()) {
+    return "/dev/ttyS1";
   }
   openhd::log::get_default()->debug(
       "No default serial mapping for this platform");

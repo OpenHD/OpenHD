@@ -1,4 +1,4 @@
-name: Build X21B OpenHD component
+name: Build X21B / Luckfox Aura (RV1126B) OpenHD component
 
 on:
   workflow_dispatch:

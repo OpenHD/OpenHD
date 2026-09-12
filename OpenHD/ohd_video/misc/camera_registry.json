@@ -330,7 +330,10 @@
       "name": "X21_OHD_Jaguar",
       "ui_label": "OpenHD Jaguar",
       "resolutions": [
-        {"width": 1280, "height": 720, "fps": 60}
+        {"width": 1280, "height": 720, "fps": 60},
+        {"width": 1280, "height": 720, "fps": 120},
+        {"width": 1920, "height": 1080, "fps": 60},
+        {"width": 1920, "height": 1080, "fps": 100}
       ]
     },
     {
@@ -653,7 +656,7 @@
       "key": "X_CAM_TYPE_ROCKCHIP_RV1126_CSI",
       "id": 141,
       "name": "RV1126B_CSI",
-      "ui_label": "RV1126B CSI",
+      "ui_label": "HDZero Generic",
       "resolutions": [
         {"width": 1280, "height": 720, "fps": 60},
         {"width": 720, "height": 540, "fps": 90}
@@ -670,6 +673,98 @@
         {"width": 1920, "height": 1080, "fps": 60},
         {"width": 1280, "height": 720, "fps": 240},
         {"width": 1280, "height": 720, "fps": 120},
+        {"width": 1280, "height": 720, "fps": 60}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_X21_HDZERO_RUNCAM_NANO_90",
+      "id": 143,
+      "name": "X21_HDZERO_RUNCAM_NANO_90",
+      "ui_label": "RunCam Nano 90",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 60},
+        {"width": 720, "height": 540, "fps": 90}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_X21_ARDUCAM_IMX462",
+      "id": 144,
+      "name": "X21_ARDUCAM_IMX462",
+      "ui_label": "IMX462",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 60},
+        {"width": 1280, "height": 720, "fps": 30},
+        {"width": 1920, "height": 1080, "fps": 60},
+        {"width": 1920, "height": 1080, "fps": 30}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_X21_ARDUCAM_IMX519",
+      "id": 145,
+      "name": "X21_ARDUCAM_IMX519",
+      "ui_label": "IMX519",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 60},
+        {"width": 1280, "height": 720, "fps": 30},
+        {"width": 1920, "height": 1080, "fps": 60},
+        {"width": 1920, "height": 1080, "fps": 30}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_X21_ARDUCAM_IMX708",
+      "id": 146,
+      "name": "X21_ARDUCAM_IMX708",
+      "ui_label": "IMX708",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 60},
+        {"width": 1280, "height": 720, "fps": 30},
+        {"width": 1920, "height": 1080, "fps": 60}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_LUCKFOX_AURA_IMX415",
+      "id": 147,
+      "name": "LUCKFOX_AURA_IMX415",
+      "ui_label": "IMX415",
+      "resolutions": [
+        {"width": 3840, "height": 2160, "fps": 30},
+        {"width": 1920, "height": 1080, "fps": 90},
+        {"width": 1920, "height": 1080, "fps": 60},
+        {"width": 1920, "height": 1080, "fps": 30},
+        {"width": 1280, "height": 720, "fps": 120},
+        {"width": 1280, "height": 720, "fps": 90},
+        {"width": 1280, "height": 720, "fps": 60}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_LUCKFOX_AURA_VEYE_CSIMX307",
+      "id": 148,
+      "name": "LUCKFOX_AURA_VEYE_CSIMX307",
+      "ui_label": "CS-MIPI-IMX307",
+      "resolutions": [
+        {"width": 1920, "height": 1080, "fps": 60},
+        {"width": 1920, "height": 1080, "fps": 30},
+        {"width": 1280, "height": 720, "fps": 60}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_LUCKFOX_AURA_VEYE_CSSC132",
+      "id": 149,
+      "name": "LUCKFOX_AURA_VEYE_CSSC132",
+      "ui_label": "CS-MIPI-SC132",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 60},
+        {"width": 1280, "height": 720, "fps": 30}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_LUCKFOX_AURA_VEYE_2MP",
+      "id": 150,
+      "name": "LUCKFOX_AURA_VEYE_2MP",
+      "ui_label": "VEYE-MIPI-2MP",
+      "resolutions": [
+        {"width": 1920, "height": 1080, "fps": 60},
+        {"width": 1920, "height": 1080, "fps": 30},
         {"width": 1280, "height": 720, "fps": 60}
       ]
     },
@@ -859,6 +954,40 @@
       ]
     },
     {
+      "key": "X21_HDZERO",
+      "name": "HDZERO",
+      "cameras": [
+        "X_CAM_TYPE_ROCKCHIP_RV1126_CSI",
+        "X_CAM_TYPE_X21_HDZERO_RUNCAM_NANO_90"
+      ]
+    },
+    {
+      "key": "X21_ARDUCAM",
+      "name": "ARDUCAM",
+      "cameras": [
+        "X_CAM_TYPE_X21_ARDUCAM_IMX462",
+        "X_CAM_TYPE_X21_ARDUCAM_IMX519",
+        "X_CAM_TYPE_X21_ARDUCAM_IMX708",
+        "X_CAM_TYPE_X21_OHD_Jaguar"
+      ]
+    },
+    {
+      "key": "LUCKFOX_AURA_IMX415",
+      "name": "IMX415",
+      "cameras": [
+        "X_CAM_TYPE_LUCKFOX_AURA_IMX415"
+      ]
+    },
+    {
+      "key": "LUCKFOX_AURA_VEYE",
+      "name": "VEYE",
+      "cameras": [
+        "X_CAM_TYPE_LUCKFOX_AURA_VEYE_CSIMX307",
+        "X_CAM_TYPE_LUCKFOX_AURA_VEYE_CSSC132",
+        "X_CAM_TYPE_LUCKFOX_AURA_VEYE_2MP"
+      ]
+    },
+    {
       "key": "ROCKCHIP_RV1126_TEST",
       "name": "ROCKCHIP_RV1126_TEST",
       "cameras": [
@@ -928,8 +1057,16 @@
       "manufacturers": ["LUCKFOX", "IP_CAMERA"]
     },
     {
+      "platform": "X_PLATFORM_TYPE_LUCKFOX_LYRA",
+      "manufacturers": ["IP_CAMERA", "DEBUG"]
+    },
+    {
       "platform": "X_PLATFORM_TYPE_OPENHD_X21",
-      "manufacturers": ["ROCKCHIP_RV1126_CSI", "ROCKCHIP_RV1126_TEST", "IP_CAMERA"]
+      "manufacturers": ["X21_HDZERO", "X21_ARDUCAM", "ROCKCHIP_RV1126_TEST", "IP_CAMERA", "USB"]
+    },
+    {
+      "platform": "X_PLATFORM_TYPE_LUCKFOX_AURA",
+      "manufacturers": ["LUCKFOX_AURA_IMX415", "LUCKFOX_AURA_VEYE", "ROCKCHIP_RV1126_TEST", "IP_CAMERA", "USB"]
     }
   ],
   "secondary_choices": ["DISABLE", "IP_CAMERA", "USB", "DEBUG"],

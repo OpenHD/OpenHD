@@ -25,10 +25,13 @@ build_dir="${work_dir}/build"
 stage_dir="${work_dir}/component"
 toolchain_file="${sdk_dir}/share/buildroot/toolchainfile.cmake"
 
+# Configurable options
+ENABLE_USB_CAMERAS="${ENABLE_USB_CAMERAS:-OFF}"
+
 cmake -S "${repo_root}/OpenHD" -B "${build_dir}" \
   -DCMAKE_TOOLCHAIN_FILE="${toolchain_file}" \
   -DCMAKE_BUILD_TYPE=Release \
-  -DENABLE_USB_CAMERAS=OFF \
+  -DENABLE_USB_CAMERAS="${ENABLE_USB_CAMERAS}" \
   -DBUILD_SHARED_LIBS=OFF
 cmake --build "${build_dir}" --parallel "$(nproc)" --target openhd
 
@@ -63,6 +66,26 @@ openhd_commit="$(git -C "${repo_root}" rev-parse HEAD)"
 package_version="${openhd_version}-${openhd_commit:0:12}"
 package_name="openhd-x21b-${package_version}.tar.gz"
 
+# Add convenience runtime installer script into the package
+cat >"${stage_dir}/install-openhd.sh" <<'INSTALL_EOF'
+#!/bin/sh
+set -eu
+DEST_BIN="${DEST_BIN:-/usr/bin}"
+DEST_LIB="${DEST_LIB:-/usr/lib}"
+DIR="$(cd "$(dirname "$0")" && pwd)"
+
+mkdir -p "${DEST_BIN}" "${DEST_LIB}"
+install -m 0755 "${DIR}/usr/bin/openhd" "${DEST_BIN}/openhd"
+
+if [ -d "${DIR}/usr/lib" ]; then
+  cp -af "${DIR}/usr/lib/"* "${DEST_LIB}/"
+  ldconfig 2>/dev/null || true
+fi
+
+echo "OpenHD installed to ${DEST_BIN}/openhd"
+INSTALL_EOF
+chmod 0755 "${stage_dir}/install-openhd.sh"
+
 cat >"${stage_dir}/component-manifest.json" <<EOF
 {
   "schema": 1,
@@ -70,6 +93,7 @@ cat >"${stage_dir}/component-manifest.json" <<EOF
   "component_version": "${openhd_version}",
   "package_version": "${package_version}",
   "platform": "x21b",
+  "targets": ["x21b", "luckfox-aura", "rv1126b"],
   "architecture": "aarch64",
   "source_commit": "${openhd_commit}",
   "sdk_sha256": "${X21_SDK_SHA256:-unknown}",
@@ -94,6 +118,18 @@ cp "${stage_dir}/component-manifest.json" \
   cp "${package_name}" openhd-x21b-latest.tar.gz
   sha256sum openhd-x21b-latest.tar.gz >openhd-x21b-latest.tar.gz.sha256
   cp "${package_name}.manifest.json" openhd-x21b-latest.tar.gz.manifest.json
+
+  # Provide Luckfox Aura (RV1126B) packages and manifests
+  aura_package_name="openhd-aura-${package_version}.tar.gz"
+  cp "${package_name}" "${aura_package_name}"
+  sha256sum "${aura_package_name}" >"${aura_package_name}.sha256"
+  sed 's/"platform": "x21b"/"platform": "luckfox-aura"/' "${package_name}.manifest.json" >"${aura_package_name}.manifest.json"
+
+  for alias in openhd-aura-latest.tar.gz openhd-luckfox-aura-latest.tar.gz openhd-rv1126-latest.tar.gz; do
+    cp "${aura_package_name}" "${alias}"
+    sha256sum "${alias}" >"${alias}.sha256"
+    cp "${aura_package_name}.manifest.json" "${alias}.manifest.json"
+  done
 )
 
 "${READELF}" -h "${stage_dir}/usr/bin/openhd" | grep -q 'Machine:.*AArch64'

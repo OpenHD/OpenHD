@@ -71,7 +71,7 @@ struct XCamera {
     return camera_type >= 30 && camera_type < 60;
   }
   bool requires_x20_cedar_pipeline() const {
-    return camera_type >= 70 && camera_type < 77;
+    return camera_type >= 70 && camera_type < 76;
   }
   bool requires_a733_pipeline() const {
     return camera_type >= 77 && camera_type < 80;
@@ -97,7 +97,9 @@ struct XCamera {
   }
   bool requires_rockchip_rv_pipeline() const { return camera_type == 140; }
   bool requires_rockchip1126_mpp_csi_pipeline() const {
-    return camera_type == X_CAM_TYPE_ROCKCHIP_RV1126_CSI;
+    return camera_type == X_CAM_TYPE_ROCKCHIP_RV1126_CSI ||
+           camera_type == X_CAM_TYPE_X21_OHD_Jaguar ||
+           (camera_type >= 143 && camera_type <= 150);
   }
   bool requires_rockchip1126_mpp_testsrc_pipeline() const {
     return camera_type == X_CAM_TYPE_ROCKCHIP_RV1126_TEST;

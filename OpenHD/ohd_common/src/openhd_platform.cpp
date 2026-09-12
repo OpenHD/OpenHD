@@ -123,8 +123,12 @@ std::string x_platform_type_to_string(int platform_type) {
       return "RV1126";
     case X_PLATFORM_TYPE_LUCKFOX_RV110X:
       return "RV110X";
+    case X_PLATFORM_TYPE_LUCKFOX_LYRA:
+      return "Luckfox Lyra (RK3506)";
     case X_PLATFORM_TYPE_OPENHD_X21:
-      return "X21/RV1126(B)";
+      return "OpenHD X21";
+    case X_PLATFORM_TYPE_LUCKFOX_AURA:
+      return "Luckfox Aura (RV1126B)";
     case X_PLATFORM_TYPE_ORQA:
       return "ORQA";
     case X_PLATFORM_TYPE_UVX_MOD:
@@ -167,7 +171,10 @@ int get_fec_max_block_size_for_platform() {
   if (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W ||
       platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3 ||
       platform_type == X_PLATFORM_TYPE_LUCKFOX_RV110X ||
+      platform_type == X_PLATFORM_TYPE_LUCKFOX_LYRA ||
       platform_type == X_PLATFORM_TYPE_OPENHD_X21 ||
+      platform_type == X_PLATFORM_TYPE_LUCKFOX_AURA ||
+      platform_type == X_PLATFORM_TYPE_ROCKCHIP_RV1126 ||
       platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A ||
       platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B) {
     return 20;
@@ -266,5 +273,18 @@ bool OHDPlatform::is_luckfox_pico() const {
 }
 
 bool OHDPlatform::is_x21() const {
-  return platform_type == X_PLATFORM_TYPE_OPENHD_X21;
+  return platform_type == X_PLATFORM_TYPE_OPENHD_X21 ||
+         platform_type == X_PLATFORM_TYPE_ROCKCHIP_RV1126;
+}
+
+bool OHDPlatform::is_luckfox_aura() const {
+  return platform_type == X_PLATFORM_TYPE_LUCKFOX_AURA;
+}
+
+bool OHDPlatform::is_rv1126() const {
+  return is_x21() || is_luckfox_aura();
+}
+
+bool OHDPlatform::is_luckfox_lyra() const {
+  return platform_type == X_PLATFORM_TYPE_LUCKFOX_LYRA;
 }

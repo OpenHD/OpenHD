@@ -57,6 +57,7 @@ static constexpr int X_PLATFORM_TYPE_LUCKFOX_RV110X = 25;
 // X_PLATFORM_TYPE_LUCKFOX_RV110X now
 static constexpr int X_PLATFORM_TYPE_LUCKFOX_LYRA = 27;
 static constexpr int X_PLATFORM_TYPE_OPENHD_X21 = 28;
+static constexpr int X_PLATFORM_TYPE_LUCKFOX_AURA = 29;  // RV1126B
 
 // Numbers 30..35 are reserved for allwinner
 static constexpr int X_PLATFORM_TYPE_ALWINNER_X20 = 30;
@@ -112,10 +113,16 @@ struct OHDPlatform {
   bool is_qcs405() const;
   bool is_orqa() const;
   bool is_uvx_mod() const;
-  // Luckfox Pico
+  // Luckfox Pico (RV1103/RV1106)
   bool is_luckfox_pico() const;
   // X21(B)
   bool is_x21() const;
+  // Luckfox Aura (RV1126B)
+  bool is_luckfox_aura() const;
+  // Any RV1126(B) platform (X21 or Luckfox Aura)
+  bool is_rv1126() const;
+  // Luckfox Lyra (RK3506) - Ground module
+  bool is_luckfox_lyra() const;
 };
 
 // We need to differentiate between rpi 4 and other pi's to use the right fec
