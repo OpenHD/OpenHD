@@ -75,7 +75,8 @@ jobs:
           elif curl --fail --silent --head "${LYRA_INPUT_BASE_URL}/openhd-sysroot-bullseye-armhf.tar.zst" >/dev/null 2>&1; then
             echo "Fetching prebuilt armhf sysroot from Cloudsmith..."
             curl --fail --location --retry 3 "${LYRA_INPUT_BASE_URL}/openhd-sysroot-bullseye-armhf.tar.zst" -o /tmp/sysroot.tar.zst
-            tar -I 'zstd -d' -xf /tmp/sysroot.tar.zst -C "${sysroot_dir}"
+            sudo tar -I 'zstd -d' -xf /tmp/sysroot.tar.zst -C "${sysroot_dir}"
+            sudo chown -R "$(id -u):$(id -g)" "${sysroot_dir}"
           else
             echo "Bootstrapping minimal cross sysroot..."
             sudo apt-get install -y --no-install-recommends mmdebstrap debian-archive-keyring gnupg
