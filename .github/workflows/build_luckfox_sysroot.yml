@@ -1,0 +1,64 @@
+name: Build Luckfox Pico Sysroot and SDK
+
+on:
+  workflow_dispatch:
+    inputs:
+      luckfox_ref:
+        description: "Branch or commit in OpenHD/luckfox-pico-sdk"
+        required: false
+        default: "main"
+
+permissions:
+  contents: read
+
+jobs:
+  build-sysroot:
+    runs-on: ubuntu-24.04
+    env:
+      CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
+    steps:
+      - name: Checkout OpenHD
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential gcc g++ gawk texinfo libssl-dev bison flex fakeroot \
+            cmake unzip gperf autoconf device-tree-compiler libncurses5-dev \
+            pkg-config bc python-is-python3 python3 file cpio rsync wget curl git \
+            mtools dosfstools
+
+      - name: Clone Luckfox Pico SDK
+        run: |
+          set -euo pipefail
+          echo "Cloning OpenHD/luckfox-pico-sdk (${{ inputs.luckfox_ref || 'main' }})..."
+          git clone --depth 1 --progress -b "${{ inputs.luckfox_ref || 'main' }}" \
+            --no-recurse-submodules \
+            https://github.com/OpenHD/luckfox-pico-sdk.git luckfox-pico-sdk
+          echo "Cloned luckfox-pico-sdk at commit: $(git -C luckfox-pico-sdk rev-parse HEAD)"
+
+      - name: Build Luckfox Pico Sysroot and SDK
+        run: |
+          chmod +x scripts/build_luckfox_sysroot.sh
+          ./scripts/build_luckfox_sysroot.sh luckfox-pico-sdk "${GITHUB_WORKSPACE}/luckfox-sdk-out"
+
+      - name: Upload SDK Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: openhd-luckfox-pico-sdk
+          path: luckfox-sdk-out/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Install Cloudsmith CLI
+        if: env.CLOUDSMITH_API_KEY != ''
+        run: pipx install cloudsmith-cli
+
+      - name: Publish stable Luckfox Pico SDK to Cloudsmith
+        if: env.CLOUDSMITH_API_KEY != ''
+        run: |
+          set -euo pipefail
+          for package in luckfox-sdk-out/*; do
+            cloudsmith push raw --republish openhd/dev-release "${package}"
+          done

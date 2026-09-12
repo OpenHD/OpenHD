@@ -454,3 +454,6 @@ plugins/siyi/
 /OpenHD/build-codex-devourer
 /OpenHD/ohd_interface/build-codex-devourer
 /OpenHD/build-armhf-docker
+/.codex-artifacts
+/luckfox-pico-sdk/
+

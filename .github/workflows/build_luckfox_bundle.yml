@@ -1,0 +1,100 @@
+name: Build Luckfox Pico OpenHD component
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - openhd-3.0
+    paths:
+      - OpenHD/**
+      - scripts/build_luckfox_component.sh
+      - .github/workflows/build_luckfox_bundle.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: luckfox-pico-openhd-component-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  LUCKFOX_INPUT_BASE_URL: https://dl.cloudsmith.io/public/openhd/dev-release/raw/files
+
+jobs:
+  component:
+    runs-on: ubuntu-24.04
+    env:
+      CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
+    steps:
+      - name: Validate credentials
+        env:
+          OPENHD_SUBMODULE_TOKEN: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+        run: |
+          test -n "${OPENHD_SUBMODULE_TOKEN}" || {
+            echo "::error::OPENHD_SUBMODULE_TOKEN needs read access to private OpenHD submodules"
+            exit 1
+          }
+
+      - name: Checkout OpenHD
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: false
+          token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+
+      - name: Checkout build submodules without Devourer references
+        env:
+          OPENHD_SUBMODULE_TOKEN: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+        run: |
+          set -euo pipefail
+          set +x
+          git config --global \
+            url."https://x-access-token:${OPENHD_SUBMODULE_TOKEN}@github.com/".insteadOf \
+            https://github.com/
+          git submodule update --init
+          git -C OpenHD/ohd_interface/lib/devourer \
+            config submodule.reference/rtl8852cu.update none
+
+      - name: Download and verify the stable Luckfox Pico SDK
+        run: |
+          set -euo pipefail
+          mkdir -p luckfox-sdk-artifact
+          cd luckfox-sdk-artifact
+          for name in openhd-luckfox-pico-sdk.tar.gz openhd-luckfox-pico-sdk.tar.gz.sha256 openhd-luckfox-pico-sdk.manifest.json; do
+            curl --fail --location --retry 5 --retry-delay 3 \
+              "${LUCKFOX_INPUT_BASE_URL}/${name}" -o "${name}"
+          done
+          sha256sum -c openhd-luckfox-pico-sdk.tar.gz.sha256
+          mkdir -p "${RUNNER_TEMP}/openhd-luckfox-pico-sdk"
+          tar -xzf openhd-luckfox-pico-sdk.tar.gz -C "${RUNNER_TEMP}/openhd-luckfox-pico-sdk"
+          echo "LUCKFOX_SDK_SHA256=$(sha256sum openhd-luckfox-pico-sdk.tar.gz | awk '{print $1}')" >>"${GITHUB_ENV}"
+          echo "LUCKFOX_SDK_BUILDROOT_COMMIT=$(python3 -c 'import json; print(json.load(open("openhd-luckfox-pico-sdk.manifest.json")).get("luckfox_sdk_commit", "unknown"))')" >>"${GITHUB_ENV}"
+          echo "LUCKFOX_SDK_DIR=${RUNNER_TEMP}/openhd-luckfox-pico-sdk" >>"${GITHUB_ENV}"
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends cmake g++ ninja-build
+
+      - name: Cross-compile and package OpenHD
+        run: ./scripts/build_luckfox_component.sh "${LUCKFOX_SDK_DIR}" "${GITHUB_WORKSPACE}/luckfox-component"
+
+      - name: Upload OpenHD component artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: openhd-luckfox-pico-component
+          path: luckfox-component/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Install Cloudsmith CLI
+        if: env.CLOUDSMITH_API_KEY != ''
+        run: pipx install cloudsmith-cli
+
+      - name: Publish component files to Cloudsmith
+        if: env.CLOUDSMITH_API_KEY != ''
+        run: |
+          set -euo pipefail
+          for package in luckfox-component/*; do
+            cloudsmith push raw --republish openhd/dev-release "${package}"
+          done

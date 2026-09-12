@@ -1,0 +1,54 @@
+name: Publish cached Luckfox Pico build inputs
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: Successful run ID containing openhd-luckfox-pico-sdk artifact
+        required: true
+      source_repository:
+        description: Repository where the run occurred
+        required: false
+        default: "OpenHD/OpenHD"
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    env:
+      CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
+    steps:
+      - name: Validate credentials
+        run: |
+          test -n "${CLOUDSMITH_API_KEY}" || {
+            echo "::error::CLOUDSMITH_API_KEY is required"
+            exit 1
+          }
+
+      - name: Download cached Luckfox Pico SDK
+        uses: actions/download-artifact@v4
+        with:
+          repository: ${{ inputs.source_repository }}
+          run-id: ${{ inputs.source_run_id }}
+          name: openhd-luckfox-pico-sdk
+          github-token: ${{ secrets.OPENHD_SUBMODULE_TOKEN || github.token }}
+          path: publish-inputs
+
+      - name: Verify cached inputs
+        working-directory: publish-inputs
+        run: |
+          set -euo pipefail
+          sha256sum -c openhd-luckfox-pico-sdk.tar.gz.sha256
+          test -s openhd-luckfox-pico-sdk.manifest.json
+
+      - name: Install Cloudsmith CLI
+        run: pipx install cloudsmith-cli
+
+      - name: Publish stable Luckfox Pico SDK to Cloudsmith
+        run: |
+          set -euo pipefail
+          for package in publish-inputs/*; do
+            cloudsmith push raw --republish openhd/dev-release "${package}"
+          done
