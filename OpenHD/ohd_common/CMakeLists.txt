@@ -79,6 +79,7 @@ set(sources
 )
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
+target_sources(OHDCommonLib PRIVATE ${sources})
 
 #----------------------------------------------------------------------------------------------------------------------
 # Target configuration

@@ -77,9 +77,10 @@
 
 // A few run time options, only for development. Most configuration is provided
 // via sysutils (and exposed in the WebUI).
-static const char optstr[] = "?:agcoret:";
+static const char optstr[] = "?:agcoret:h";
 static constexpr bool kRecordModeEnabled = false;
 static const struct option long_options[] = {
+    {"help", no_argument, nullptr, 'h'},
     {"air", no_argument, nullptr, 'a'},
     {"ground", no_argument, nullptr, 'g'},
     {"clean-start", no_argument, nullptr, 'c'},
@@ -404,10 +405,12 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
       case 't':
         ret.run_time_seconds = atoi(tmp_optarg);
         break;
+      case 'h':
       case '?':
       default: {
         std::stringstream ss;
         ss << "Usage: \n";
+        ss << "--help -h         [Print this help message] \n";
         ss << "--air -a          [Run as air, creates dummy camera if no "
               "camera is found] \n";
         ss << "--ground -g       [Run as ground, no camera detection] \n";
@@ -426,6 +429,7 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
            << default_openhd_uart_telemetry_device_for_platform() << "] \n";
         ss << "--ignore-serial [Do not set up any serial telemetry endpoints] \n";
         std::cout << ss.str() << std::flush;
+        if (c == 'h') exit(0);
       }
         exit(1);
     }

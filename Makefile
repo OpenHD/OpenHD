@@ -1,20 +1,60 @@
 # OpenHD 3.0 Modular Build System - 2026 Standard
 # Standard entry point for configuration and building
 
-PYTHON = python3
+# --- Load Environment Overrides ---
+# Use '-' to ignore error if .env is missing.
+# NOTE: Avoid quotes in .env (e.g. use VAR=val instead of VAR="val")
+-include .env
+
+# Export all variables to sub-processes (CMake, Shell scripts)
+export
+
+# --- OS & uv Detection ---
+ifeq ($(OS),Windows_NT)
+	IS_WINDOWS := 1
+	VENV_PYTHON := .venv/Scripts/python.exe
+	UV_INSTALL_CMD := powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+	# Windows NPROC
+	NPROC ?= $(NUMBER_OF_PROCESSORS)
+else
+	IS_WINDOWS := 0
+	VENV_PYTHON := .venv/bin/python3
+	UV_INSTALL_CMD := curl -LsSf https://astral.sh/uv/install.sh | sh
+	UNAME_S := $(shell uname -s)
+	ifeq ($(UNAME_S),Darwin)
+		# macOS NPROC
+		NPROC ?= $(shell sysctl -n hw.ncpu)
+	else
+		# Linux NPROC
+		NPROC ?= $(shell nproc 2>/dev/null || echo 4)
+	endif
+endif
+
+# Detect uv - check PATH first, then common local install locations
+UV := $(shell command -v uv 2> /dev/null)
+ifeq ($(UV),)
+	ifeq ($(IS_WINDOWS),1)
+		UV_PATH := $(USERPROFILE)\.local\bin\uv.exe
+	else
+		UV_PATH := $(HOME)/.local/bin/uv
+	endif
+	UV := $(shell if [ -f $(UV_PATH) ]; then echo $(UV_PATH); fi)
+endif
+
+# If still not found, we will install it during setup
+# -------------------------
+
+PYTHON = $(VENV_PYTHON)
 SCRIPT_DIR = scripts
 BUILD_DIR = OpenHD/build
 CMAKE_GEN = Ninja
 BUILD_TYPE = Release
 EXTRA_CMAKE =
 
-# Detect number of cores
-NPROC = $(shell nproc 2>/dev/null || echo 4)
-
-# Platform specific environment (Overridable)
-RK3588_TOOLCHAIN = /opt/gcc-12.2.0
-RK3588_SYSROOT = /opt/rk3588_debian12_kernel6_10/sysroot
-ORQA_SDK = /opt/orqa-sdk
+# Platform specific environment (Overridable via .env or environment)
+RK3588_TOOLCHAIN ?= /opt/gcc-12.2.0
+RK3588_SYSROOT   ?= /opt/rk3588_debian12_kernel6_10/sysroot
+ORQA_SDK         ?= /opt/orqa-sdk
 
 .PHONY: help setup submodules menuconfig build clean distclean config air ground rk3588 orqa debug release install check portable orqa-tools mpp-setup test coverage
 
@@ -22,10 +62,11 @@ help:
 	@echo "OpenHD Modular Build System (2026 Standard)"
 	@echo ""
 	@echo "Available commands:"
-	@echo "  make setup        - Install dependencies (kconfiglib) and prepare env"
+	@echo "  make setup        - Install dependencies (uv + kconfiglib) and prepare env"
 	@echo "  make submodules   - Initialize and update git submodules"
 	@echo "  make menuconfig   - Start interactive configuration"
 	@echo "  make config       - Generate headers/cmake files from .config"
+	@echo "  make setconfig    - Set a value via CLI (SYM=SYMBOL VAL=VALUE)"
 	@echo "  make build        - Configure and build (Default: Ninja, Release)"
 	@echo "  make test         - Build and run all unit tests"
 	@echo "  make coverage     - Build with coverage flags and generate report"
@@ -34,20 +75,50 @@ help:
 	@echo "  make orqa         - Cross-compile for Orqa Controller"
 	@echo "  make portable     - Portable cross-build (ARCH=arm64 SYSROOT=/path)"
 	@echo "  make check        - Verify module isolation"
+	@echo "  make x21          - Build for X21 platform (Usage: make x21 SDK=/path)"
 	@echo "  make clean        - Remove build artifacts"
 	@echo "  make distclean    - Remove all generated files"
 	@echo ""
 
-setup:
-	@echo "Checking for kconfiglib..."
-	@$(PYTHON) -c "import kconfiglib" 2>/dev/null || (echo "Installing kconfiglib..." && pip3 install kconfiglib)
+setup: ## Setup project environment (installs uv + kconfiglib)
+	@if [ ! -d ".venv" ]; then \
+		UV=$$(command -v uv 2>/dev/null); \
+		if [ -z "$$UV" ]; then \
+			if [ $(IS_WINDOWS) -eq 1 ]; then UV_L="$(USERPROFILE)\.local\bin\uv.exe"; else UV_L="$(HOME)/.local/bin/uv"; fi; \
+			if [ ! -f "$$UV_L" ]; then \
+				echo "uv not found. Installing..."; \
+				$(UV_INSTALL_CMD) || exit 1; \
+			fi; \
+			UV="$$UV_L"; \
+		fi; \
+		"$$UV" venv --quiet .venv || exit 1; \
+	fi
+	@UV=$$(command -v uv 2>/dev/null); \
+	if [ -z "$$UV" ]; then \
+		if [ $(IS_WINDOWS) -eq 1 ]; then UV="$(USERPROFILE)\.local\bin\uv.exe"; else UV="$(HOME)/.local/bin/uv"; fi; \
+	fi; \
+	"$$UV" pip install --quiet -r requirements.txt
+	@if [ -e ".git" ]; then \
+		UNINITIALIZED=$$(git submodule status | grep "^-" | awk '{print $$2}'); \
+		if [ -n "$$UNINITIALIZED" ]; then \
+			echo "Initializing missing submodules..."; \
+			for sub in $$UNINITIALIZED; do \
+				echo "  Syncing $$sub..."; \
+				GIT_TERMINAL_PROMPT=0 git submodule update --init "$$sub" || echo "  [!] Warning: Could not sync $$sub (likely private)"; \
+				if [ -d "$$sub/.git" ] || [ -f "$$sub/.git" ]; then \
+					echo "  Recursing into $$sub..."; \
+					GIT_TERMINAL_PROMPT=0 git submodule update --init --recursive "$$sub" 2>/dev/null || echo "  [!] Note: Nested submodules in $$sub partially failed"; \
+				fi; \
+			done; \
+		fi; \
+	fi
+	@echo "Environment ready."
 	@echo "Checking CMake version..."
 	@cmake_version=$$(cmake --version | head -n1 | grep -oE '[0-9]+\.[0-9]+'); \
 	 if [ $$(echo "$$cmake_version < 3.28" | bc -l) -eq 1 ]; then \
 	   echo "Error: CMake 3.28+ is required for C++20 modules. Found $$cmake_version"; \
 	   exit 1; \
 	 fi
-	@echo "Environment ready."
 
 submodules:
 	@echo "Initializing and updating submodules..."
@@ -59,10 +130,23 @@ menuconfig: setup
 	@$(PYTHON) -m menuconfig
 	@$(MAKE) config
 
-config: setup
+config: setup ## Generate headers/cmake files from .config (supports overrides via SET="SYM1=VAL1 SYM2=VAL2")
 	@echo "Generating configuration files..."
 	@if [ ! -f .config ]; then echo "Warning: .config missing, using defaults."; fi
-	@$(PYTHON) $(SCRIPT_DIR)/kconfig.py --kconfig Kconfig --config .config --out-header autoconf.h --out-cmake kconfig.cmake
+	@set_args=""; \
+	for pair in $(SET); do \
+		sym=$${pair%%=*}; \
+		val=$${pair#*=}; \
+		set_args="$$set_args --set $$sym $$val"; \
+	done; \
+	$(PYTHON) $(SCRIPT_DIR)/kconfig.py --kconfig Kconfig --config .config --out-header autoconf.h --out-cmake kconfig.cmake $$set_args
+
+setconfig: setup ## Set a single configuration value (Usage: make setconfig SYM=SYMBOL_NAME VAL=VALUE)
+	@if [ -z "$(SYM)" ] || [ -z "$(VAL)" ]; then \
+		echo "Usage: make setconfig SYM=SYMBOL_NAME VAL=VALUE"; \
+		exit 1; \
+	fi
+	@$(PYTHON) $(SCRIPT_DIR)/kconfig.py --kconfig Kconfig --config .config --out-header autoconf.h --out-cmake kconfig.cmake --set $(SYM) $(VAL)
 
 # Helper to resolve Artosyn SDK if enabled in .config
 resolve_artosyn:
@@ -79,7 +163,7 @@ build: config resolve_artosyn
 	@echo "Starting Build ($(BUILD_TYPE)) using $(CMAKE_GEN)..."
 	@if [ -f .artosyn_env ]; then . ./.artosyn_env && export EXTRA_ARTOSYN="-DARTOSYN_SDK_ROOT=\$$ARTOSYN_SDK_ROOT -DARTOSYN_SDK_LIB=\$$ARTOSYN_SDK_LIB -DARTOSYN_SDK_DAEMON=\$$ARTOSYN_SDK_DAEMON -DARTOSYN_SDK_TUNTAP=\$$ARTOSYN_SDK_TUNTAP"; fi; \
 	mkdir -p $(BUILD_DIR) && \
-	cd $(BUILD_DIR) && cmake -G "$(CMAKE_GEN)" -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DCMAKE_VERBOSE_MAKEFILE=ON $(EXTRA_CMAKE) $$EXTRA_ARTOSYN .. && cmake --build . -j$(NPROC)
+	cd $(BUILD_DIR) && cmake -G "$(CMAKE_GEN)" -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DPython3_EXECUTABLE=$(realpath $(PYTHON)) -DCMAKE_VERBOSE_MAKEFILE=ON $(EXTRA_CMAKE) $$EXTRA_ARTOSYN .. && cmake --build . -j$(NPROC)
 
 test: build
 	@echo "Running unit tests..."
@@ -89,7 +173,7 @@ coverage: config resolve_artosyn
 	@echo "Building with Coverage analysis..."
 	@if [ -f .artosyn_env ]; then . ./.artosyn_env && export EXTRA_ARTOSYN="-DARTOSYN_SDK_ROOT=\$$ARTOSYN_SDK_ROOT -DARTOSYN_SDK_LIB=\$$ARTOSYN_SDK_LIB -DARTOSYN_SDK_DAEMON=\$$ARTOSYN_SDK_DAEMON -DARTOSYN_SDK_TUNTAP=\$$ARTOSYN_SDK_TUNTAP"; fi; \
 	mkdir -p $(BUILD_DIR) && \
-	cd $(BUILD_DIR) && cmake -G "$(CMAKE_GEN)" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="--coverage" -DCMAKE_EXE_LINKER_FLAGS="--coverage" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON $(EXTRA_CMAKE) $$EXTRA_ARTOSYN .. && \
+	cd $(BUILD_DIR) && cmake -G "$(CMAKE_GEN)" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="--coverage" -DCMAKE_EXE_LINKER_FLAGS="--coverage" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DPython3_EXECUTABLE=$(realpath $(PYTHON)) $(EXTRA_CMAKE) $$EXTRA_ARTOSYN .. && \
 	cmake --build . -j$(NPROC)
 	@echo "Running tests for coverage..."
 	@cd $(BUILD_DIR) && ./test_openhd_util || true && ./test_config || true && ./test_logging || true
@@ -169,10 +253,14 @@ install:
 
 check: config
 	@echo "Building submodules independently..."
-	@mkdir -p OpenHD/ohd_common/build_check && cd OpenHD/ohd_common/build_check && cmake .. -DCMAKE_BUILD_TYPE=Debug && cmake --build .
-	@mkdir -p OpenHD/ohd_interface/build_check && cd OpenHD/ohd_interface/build_check && cmake .. -DCMAKE_BUILD_TYPE=Debug && cmake --build .
-	@mkdir -p OpenHD/ohd_telemetry/build_check && cd OpenHD/ohd_telemetry/build_check && cmake .. -DCMAKE_BUILD_TYPE=Debug && cmake --build .
-	@mkdir -p OpenHD/ohd_video/build_check && cd OpenHD/ohd_video/build_check && cmake .. -DCMAKE_BUILD_TYPE=Debug && cmake --build .
+	@mkdir -p OpenHD/ohd_common/build_check && cd OpenHD/ohd_common/build_check && cmake .. -DCMAKE_BUILD_TYPE=Debug -DPython3_EXECUTABLE=$(realpath $(PYTHON)) && cmake --build .
+	@mkdir -p OpenHD/ohd_interface/build_check && cd OpenHD/ohd_interface/build_check && cmake .. -DCMAKE_BUILD_TYPE=Debug -DPython3_EXECUTABLE=$(realpath $(PYTHON)) && cmake --build .
+	@mkdir -p OpenHD/ohd_telemetry/build_check && cd OpenHD/ohd_telemetry/build_check && cmake .. -DCMAKE_BUILD_TYPE=Debug -DPython3_EXECUTABLE=$(realpath $(PYTHON)) && cmake --build .
+	@mkdir -p OpenHD/ohd_video/build_check && cd OpenHD/ohd_video/build_check && cmake .. -DCMAKE_BUILD_TYPE=Debug -DPython3_EXECUTABLE=$(realpath $(PYTHON)) && cmake --build .
+
+x21: config ## Build for X21 platform (Usage: make x21 SDK=/path/to/sdk)
+	@if [ -z "$(SDK)" ]; then echo "Usage: make x21 SDK=/path/to/x21-sdk"; exit 1; fi
+	@bash scripts/build_x21_component.sh $(SDK) $(BUILD_DIR)/x21
 
 clean:
 	@echo "Cleaning artifacts..."

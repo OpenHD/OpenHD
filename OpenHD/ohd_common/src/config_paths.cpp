@@ -23,6 +23,10 @@
 
 #include "config_paths.h"
 
+#ifdef HAVE_CONFIG_H
+#include "autoconf.h"
+#endif
+
 #include <cstdlib>
 #include <cstring>
 #include <string>
@@ -33,7 +37,13 @@
 static char* CONFIG_BASE_PATH = nullptr;
 static char* VIDEO_PATH = nullptr;
 
-const char* getConfigBasePath() { return "/Config/"; }
+const char* getConfigBasePath() {
+#ifdef CONFIG_SETTINGS_BASE_PATH
+  return CONFIG_SETTINGS_BASE_PATH;
+#else
+  return "/Config/";
+#endif
+}
 
 const char* getVideoPath() {
   static std::string cached_path;
@@ -44,6 +54,10 @@ const char* getVideoPath() {
   // Honour an explicitly configured path first.
   if (VIDEO_PATH != nullptr && std::strlen(VIDEO_PATH) > 0) {
     cached_path = VIDEO_PATH;
+#ifdef CONFIG_VIDEO_RECORDING_PATH
+  } else if (OHDFilesystemUtil::exists(CONFIG_VIDEO_RECORDING_PATH)) {
+    cached_path = CONFIG_VIDEO_RECORDING_PATH;
+#endif
   } else if (OHDFilesystemUtil::exists(
                  "/Videos/external_video_part.txt")) {
     // Legacy removable-storage mount used by Raspberry Pi and Rock images.

@@ -2,7 +2,7 @@
 
 mainmenu "OpenHD Configuration"
 
-menu "Global Settings"
+comment "Global System Settings"
 
 config OPENHD_AIR
     bool "Enable Air Mode"
@@ -25,8 +25,22 @@ config OPENHD_DEBUG
     help
       Enable additional debug logging and symbols.
 
-endmenu
+config SETTINGS_BASE_PATH
+    string "Base path for settings"
+    default "/Config/"
+    help
+      The directory where OpenHD stores its configuration files.
+
+config VIDEO_RECORDING_PATH
+    string "Path for video recordings"
+    default "/Video/"
+    help
+      The directory where OpenHD stores recorded video files.
+
+comment "Interfaces & Subsystems"
 
 source "OpenHD/ohd_interface/Kconfig"
-source "OpenHD/ohd_video/Kconfig"
+
 source "OpenHD/ohd_telemetry/Kconfig"
+
+source "OpenHD/ohd_video/Kconfig"

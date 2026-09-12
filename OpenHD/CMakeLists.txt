@@ -6,7 +6,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # --- Kconfig Integration ---
-find_package(Python3 REQUIRED)
+if(NOT DEFINED Python3_EXECUTABLE)
+    find_package(Python3 REQUIRED)
+endif()
 set(KCONFIG_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../Kconfig")
 set(KCONFIG_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/../scripts/kconfig.py")
 set(KCONFIG_DOTCONFIG "${CMAKE_CURRENT_SOURCE_DIR}/../.config")
@@ -19,6 +21,7 @@ execute_process(
             --config ${KCONFIG_DOTCONFIG}
             --out-header ${KCONFIG_HEADER}
             --out-cmake ${KCONFIG_CMAKE}
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.."
     RESULT_VARIABLE KCONFIG_RESULT
 )
 
@@ -28,16 +31,17 @@ endif()
 
 include(${KCONFIG_CMAKE})
 include_directories(${CMAKE_BINARY_DIR})
+add_definitions(-DHAVE_CONFIG_H)
 # ---------------------------
 
 # Use Kconfig variables instead of manual options
-message("Air support enabled: ${OPENHD_AIR}")
-if (OPENHD_AIR)
+message("Air support enabled: ${CONFIG_OPENHD_AIR}")
+if (CONFIG_OPENHD_AIR)
         add_definitions(-DENABLE_AIR)
 endif ()
 
-message("USB cameras enabled: ${OPENHD_USB_CAMERAS}")
-if (OPENHD_USB_CAMERAS)
+message("USB cameras enabled: ${CONFIG_OPENHD_USB_CAMERAS}")
+if (CONFIG_OPENHD_USB_CAMERAS)
         add_definitions(-DENABLE_USB_CAMERAS)
 endif ()
 

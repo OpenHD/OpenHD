@@ -8,8 +8,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # otherwise, testing kinda doesn't make sense. The option might already be set to off
 # by the OpenHD main executable CMakeLists.txt file - in which case this does nothing
 # Same for managed cameras support
-option(ENABLE_AIR "Enable air support" ON)
-option(ENABLE_USB_CAMERAS "USB cameras support" ON)
+if (NOT DEFINED CONFIG_OPENHD_AIR)
+    set(CONFIG_OPENHD_AIR ON)
+endif()
+if (NOT DEFINED CONFIG_OPENHD_USB_CAMERAS)
+    set(CONFIG_OPENHD_USB_CAMERAS ON)
+endif()
 option(ENABLE_LIBCAMERA "libcamera support" ON)
 option(ENABLE_GSTREAMER "Enable GStreamer support" ON)
 option(OPENHD_MPP_ONLY "Build the RV1126 MPP video path without GStreamer" OFF)
@@ -67,7 +71,7 @@ list(APPEND sources
         librtp/src/rtp-h264-bitstream.c
 )
 
-if(ENABLE_AIR)
+if(CONFIG_OPENHD_AIR)
     # Only if air support is enabled, link all the air-only related libraries and
     # build the part(s) required for air
     list(APPEND sources
@@ -138,7 +142,7 @@ if(ENABLE_AIR)
     endif()
 endif ()
 
-if (ENABLE_AIR AND ENABLE_USB_CAMERAS AND ENABLE_GSTREAMER AND NOT OPENHD_MPP_ONLY)
+if (CONFIG_OPENHD_AIR AND CONFIG_OPENHD_USB_CAMERAS AND ENABLE_GSTREAMER AND NOT OPENHD_MPP_ONLY)
     # GStreamer dependency handling
     pkg_search_module(GST REQUIRED
             gstreamer-sdp-1.0>=1.4
@@ -166,6 +170,7 @@ if (ENABLE_AIR AND ENABLE_USB_CAMERAS AND ENABLE_GSTREAMER AND NOT OPENHD_MPP_ON
 endif ()
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
+target_sources(OHDVideoLib PRIVATE ${sources})
 target_include_directories(OHDVideoLib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/inc)
 target_include_directories(OHDVideoLib PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(OHDVideoLib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/librtp/inc)

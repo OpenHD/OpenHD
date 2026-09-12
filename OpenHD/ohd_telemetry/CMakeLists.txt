@@ -114,6 +114,7 @@ SET(sources
 
 # Build it as a library
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
+target_sources(OHDTelemetryLib PRIVATE ${sources})
 target_include_directories(OHDTelemetryLib
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
