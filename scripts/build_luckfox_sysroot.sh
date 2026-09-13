@@ -47,6 +47,7 @@ echo "=== Building Media Libraries (Rockchip MPP & RGA) ==="
 ./build.sh media
 
 echo "=== Building Buildroot Base System & Sysroot ==="
+export PATH="${sdk_source}/tools/linux/toolchain/arm-rockchip830-linux-uclibcgnueabihf/bin:${PATH}"
 make -C sysdrv buildroot
 
 buildroot_dir="${sdk_source}/sysdrv/source/buildroot/buildroot-2023.02.6"
