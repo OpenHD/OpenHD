@@ -7,6 +7,11 @@ on:
         description: "Branch or commit in OpenHD/luckfox-pico-sdk"
         required: false
         default: "main"
+  push:
+    branches:
+      - openhd-3.0
+    paths:
+      - ".github/workflows/build_luckfox_sysroot.yml"
 
 permissions:
   contents: read
