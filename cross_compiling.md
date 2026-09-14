@@ -26,9 +26,7 @@ Install the matching GNU crosscompiler on the build host and build OpenHD:
 
 ```bash
 sudo apt-get install gcc-10-aarch64-linux-gnu g++-10-aarch64-linux-gnu cmake pkg-config
-OPENHD_SUBMODULE_TOKEN=<token> \
-  ./scripts/build_portable_cross.sh \
-  arm64 /opt/openhd-sysroots/bullseye-arm64
+make portable ARCH=arm64 SYSROOT=/opt/openhd-sysroots/bullseye-arm64
 ```
 
 Use `gcc-10-arm-linux-gnueabihf`/`g++-10-arm-linux-gnueabihf` for `armhf`.
@@ -47,7 +45,7 @@ compiler shipped together in the Orqa SDK. After installing the SDK and running
 `OpenHD/scripts/setup_orqa_sdk.sh` to add the OpenHD dependencies, build with:
 
 ```bash
-bash ./scripts/build_orqa_cross.sh /opt/orqa-sdk /tmp/build-openhd-orqa
+make orqa ORQA_SDK=/opt/orqa-sdk BUILD_DIR=/tmp/build-openhd-orqa
 ```
 
 The builder sources `environment-setup-armv8a-poky-linux`, which sets
@@ -59,5 +57,5 @@ The controller includes the modern `iw` tool but not the legacy `iwconfig`
 command. Build a compatible, self-contained `iwconfig` alongside OpenHD with:
 
 ```bash
-bash ./scripts/build_orqa_iwconfig.sh /opt/orqa-sdk /tmp/build-openhd-orqa/iwconfig
+make orqa-tools ORQA_SDK=/opt/orqa-sdk BUILD_DIR=/tmp/build-openhd-orqa
 ```

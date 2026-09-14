@@ -23,7 +23,7 @@ config OPENHD_DEBUG
     bool "Debug Build"
     default n
     help
-      Enable additional debug logging and symbols.
+      Prefer a Debug CMake build when enabled.
 
 config SETTINGS_BASE_PATH
     string "Base path for settings"

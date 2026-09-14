@@ -14,6 +14,13 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules" ${CMAKE_MODULE_PATH})
 # Only needed when we build this submodule manually
 add_subdirectory(../ohd_common commonlib EXCLUDE_FROM_ALL)
 
+if(NOT DEFINED CONFIG_OPENHD_ENABLE_DEVOURER)
+    set(CONFIG_OPENHD_ENABLE_DEVOURER ON)
+endif()
+if(NOT DEFINED CONFIG_OPENHD_ENABLE_ARTOSYN)
+    set(CONFIG_OPENHD_ENABLE_ARTOSYN OFF)
+endif()
+
 # Kconfig replaces this manual option
 message("Devourer support: ${CONFIG_OPENHD_ENABLE_DEVOURER}")
 
@@ -72,19 +79,6 @@ if(CONFIG_OPENHD_ENABLE_DEVOURER)
     target_link_libraries(OHDInterfaceLib PUBLIC devourer)
 endif()
 
-if (NOT CONFIG_ARTOSYN_SDK_ROOT AND DEFINED ENV{ARTOSYN_SDK_ROOT})
-    set(CONFIG_ARTOSYN_SDK_ROOT "$ENV{ARTOSYN_SDK_ROOT}" CACHE PATH "Path to Artosyn host_drv SDK root" FORCE)
-endif()
-if (NOT CONFIG_ARTOSYN_SDK_LIB AND DEFINED ENV{ARTOSYN_SDK_LIB})
-    set(CONFIG_ARTOSYN_SDK_LIB "$ENV{ARTOSYN_SDK_LIB}" CACHE FILEPATH "Path to libar8030_client.a/.so" FORCE)
-endif()
-if (NOT CONFIG_ARTOSYN_SDK_DAEMON AND DEFINED ENV{ARTOSYN_SDK_DAEMON})
-    set(CONFIG_ARTOSYN_SDK_DAEMON "$ENV{ARTOSYN_SDK_DAEMON}" CACHE FILEPATH "Path to Artosyn daemon binary" FORCE)
-endif()
-if (NOT CONFIG_ARTOSYN_SDK_TUNTAP AND DEFINED ENV{ARTOSYN_SDK_TUNTAP})
-    set(CONFIG_ARTOSYN_SDK_TUNTAP "$ENV{ARTOSYN_SDK_TUNTAP}" CACHE FILEPATH "Path to Artosyn tuntap_bb helper binary" FORCE)
-endif()
-
 set(_enable_artosyn OFF)
 set(_artosyn_sdk_libs)
 set(_artosyn_disable_reason "")
@@ -92,84 +86,113 @@ set(_artosyn_source_root "")
 
 # Older vendor drops wrap the SDK in host_drv/.  The maintained L4 Linux SDK
 # uses app/, com/, daemon/, and install/ directly at its repository root.
-if (CONFIG_ARTOSYN_SDK_ROOT)
-    if (EXISTS "${CONFIG_ARTOSYN_SDK_ROOT}/host_drv/app/ar8030")
-        set(_artosyn_source_root "${CONFIG_ARTOSYN_SDK_ROOT}/host_drv")
-    elseif (EXISTS "${CONFIG_ARTOSYN_SDK_ROOT}/app/ar8030" AND
-            EXISTS "${CONFIG_ARTOSYN_SDK_ROOT}/com")
-        set(_artosyn_source_root "${CONFIG_ARTOSYN_SDK_ROOT}")
-    endif()
-endif()
-
-if (CONFIG_ARTOSYN_SDK_ROOT AND NOT CONFIG_ARTOSYN_SDK_LIB)
-    set(_artosyn_lib_candidates
-        "${_artosyn_source_root}/install/bin/libar8030_client.a"
-        "${_artosyn_source_root}/install/bin/libar8030_client.so"
-        "${_artosyn_source_root}/install/lib/libar8030_client.a"
-        "${_artosyn_source_root}/install/lib/libar8030_client.so"
-        "${_artosyn_source_root}/build/app/ar8030/libar8030_client.a"
-        "${_artosyn_source_root}/build/app/ar8030/libar8030_client.so"
-        "${_artosyn_source_root}/app/ar8030/libar8030_client.a"
-        "${_artosyn_source_root}/app/ar8030/libar8030_client.so"
-        "${CONFIG_ARTOSYN_SDK_ROOT}/lib/libar8030_client.a"
-        "${CONFIG_ARTOSYN_SDK_ROOT}/lib/libar8030_client.so"
-        "${CONFIG_ARTOSYN_SDK_ROOT}/libar8030_client.a"
-        "${CONFIG_ARTOSYN_SDK_ROOT}/libar8030_client.so"
-    )
-    foreach(_candidate IN LISTS _artosyn_lib_candidates)
-        if (EXISTS "${_candidate}")
-            set(CONFIG_ARTOSYN_SDK_LIB "${_candidate}" CACHE FILEPATH "Path to libar8030_client.a/.so" FORCE)
-            break()
-        endif()
-    endforeach()
-endif()
-
 set(_artosyn_include_dirs)
-if (CONFIG_ARTOSYN_SDK_ROOT AND CONFIG_ARTOSYN_SDK_LIB)
-    if (NOT _artosyn_source_root)
-        set(_artosyn_disable_reason
-            "invalid CONFIG_ARTOSYN_SDK_ROOT (${CONFIG_ARTOSYN_SDK_ROOT}); expected app/ar8030 directly or under host_drv"
-        )
+if (CONFIG_OPENHD_ENABLE_ARTOSYN)
+    if (NOT CONFIG_ARTOSYN_SDK_ROOT AND DEFINED ARTOSYN_SDK_ROOT AND NOT "${ARTOSYN_SDK_ROOT}" STREQUAL "")
+        set(CONFIG_ARTOSYN_SDK_ROOT "${ARTOSYN_SDK_ROOT}" CACHE PATH "Path to Artosyn host_drv SDK root" FORCE)
     endif()
-    if (NOT _artosyn_disable_reason)
-        set(_artosyn_include_candidates
-            "${_artosyn_source_root}/app/ar8030"
-            "${_artosyn_source_root}/com"
-            "${_artosyn_source_root}/install/include"
-        )
-        foreach(_candidate IN LISTS _artosyn_include_candidates)
-            if (EXISTS "${_candidate}" AND IS_DIRECTORY "${_candidate}")
-                list(APPEND _artosyn_include_dirs "${_candidate}")
-            endif()
-        endforeach()
-        list(REMOVE_DUPLICATES _artosyn_include_dirs)
-        if (NOT _artosyn_include_dirs)
-            set(_artosyn_disable_reason
-                "invalid CONFIG_ARTOSYN_SDK_ROOT (${CONFIG_ARTOSYN_SDK_ROOT}); expected Artosyn SDK include directories"
-            )
+    if (NOT CONFIG_ARTOSYN_SDK_LIB AND DEFINED ARTOSYN_SDK_LIB AND NOT "${ARTOSYN_SDK_LIB}" STREQUAL "")
+        set(CONFIG_ARTOSYN_SDK_LIB "${ARTOSYN_SDK_LIB}" CACHE FILEPATH "Path to libar8030_client.a/.so" FORCE)
+    endif()
+    if (NOT CONFIG_ARTOSYN_SDK_DAEMON AND DEFINED ARTOSYN_SDK_DAEMON AND NOT "${ARTOSYN_SDK_DAEMON}" STREQUAL "")
+        set(CONFIG_ARTOSYN_SDK_DAEMON "${ARTOSYN_SDK_DAEMON}" CACHE FILEPATH "Path to Artosyn daemon binary" FORCE)
+    endif()
+    if (NOT CONFIG_ARTOSYN_SDK_TUNTAP AND DEFINED ARTOSYN_SDK_TUNTAP AND NOT "${ARTOSYN_SDK_TUNTAP}" STREQUAL "")
+        set(CONFIG_ARTOSYN_SDK_TUNTAP "${ARTOSYN_SDK_TUNTAP}" CACHE FILEPATH "Path to Artosyn tuntap_bb helper binary" FORCE)
+    endif()
+    if (NOT CONFIG_ARTOSYN_SDK_ROOT AND DEFINED ENV{ARTOSYN_SDK_ROOT})
+        set(CONFIG_ARTOSYN_SDK_ROOT "$ENV{ARTOSYN_SDK_ROOT}" CACHE PATH "Path to Artosyn host_drv SDK root" FORCE)
+    endif()
+    if (NOT CONFIG_ARTOSYN_SDK_LIB AND DEFINED ENV{ARTOSYN_SDK_LIB})
+        set(CONFIG_ARTOSYN_SDK_LIB "$ENV{ARTOSYN_SDK_LIB}" CACHE FILEPATH "Path to libar8030_client.a/.so" FORCE)
+    endif()
+    if (NOT CONFIG_ARTOSYN_SDK_DAEMON AND DEFINED ENV{ARTOSYN_SDK_DAEMON})
+        set(CONFIG_ARTOSYN_SDK_DAEMON "$ENV{ARTOSYN_SDK_DAEMON}" CACHE FILEPATH "Path to Artosyn daemon binary" FORCE)
+    endif()
+    if (NOT CONFIG_ARTOSYN_SDK_TUNTAP AND DEFINED ENV{ARTOSYN_SDK_TUNTAP})
+        set(CONFIG_ARTOSYN_SDK_TUNTAP "$ENV{ARTOSYN_SDK_TUNTAP}" CACHE FILEPATH "Path to Artosyn tuntap_bb helper binary" FORCE)
+    endif()
+
+    if (CONFIG_ARTOSYN_SDK_ROOT)
+        if (EXISTS "${CONFIG_ARTOSYN_SDK_ROOT}/host_drv/app/ar8030")
+            set(_artosyn_source_root "${CONFIG_ARTOSYN_SDK_ROOT}/host_drv")
+        elseif (EXISTS "${CONFIG_ARTOSYN_SDK_ROOT}/app/ar8030" AND
+                EXISTS "${CONFIG_ARTOSYN_SDK_ROOT}/com")
+            set(_artosyn_source_root "${CONFIG_ARTOSYN_SDK_ROOT}")
         endif()
     endif()
-    if (NOT _artosyn_disable_reason)
-        set(_artosyn_sdk_libs ${CONFIG_ARTOSYN_SDK_LIB})
-        if (NOT _artosyn_sdk_libs)
-            set(_artosyn_disable_reason "invalid CONFIG_ARTOSYN_SDK_LIB (${CONFIG_ARTOSYN_SDK_LIB})")
-        endif()
-    endif()
-    if (NOT _artosyn_disable_reason)
-        foreach(_artosyn_lib IN LISTS _artosyn_sdk_libs)
-            if (NOT EXISTS "${_artosyn_lib}")
-                set(_artosyn_disable_reason "missing CONFIG_ARTOSYN_SDK_LIB entry: ${_artosyn_lib}")
+
+    if (CONFIG_ARTOSYN_SDK_ROOT AND NOT CONFIG_ARTOSYN_SDK_LIB)
+        set(_artosyn_lib_candidates
+            "${_artosyn_source_root}/install/bin/libar8030_client.a"
+            "${_artosyn_source_root}/install/bin/libar8030_client.so"
+            "${_artosyn_source_root}/install/lib/libar8030_client.a"
+            "${_artosyn_source_root}/install/lib/libar8030_client.so"
+            "${_artosyn_source_root}/build/app/ar8030/libar8030_client.a"
+            "${_artosyn_source_root}/build/app/ar8030/libar8030_client.so"
+            "${_artosyn_source_root}/app/ar8030/libar8030_client.a"
+            "${_artosyn_source_root}/app/ar8030/libar8030_client.so"
+            "${CONFIG_ARTOSYN_SDK_ROOT}/lib/libar8030_client.a"
+            "${CONFIG_ARTOSYN_SDK_ROOT}/lib/libar8030_client.so"
+            "${CONFIG_ARTOSYN_SDK_ROOT}/libar8030_client.a"
+            "${CONFIG_ARTOSYN_SDK_ROOT}/libar8030_client.so"
+        )
+        foreach(_candidate IN LISTS _artosyn_lib_candidates)
+            if (EXISTS "${_candidate}")
+                set(CONFIG_ARTOSYN_SDK_LIB "${_candidate}" CACHE FILEPATH "Path to libar8030_client.a/.so" FORCE)
                 break()
             endif()
         endforeach()
     endif()
-    if (NOT _artosyn_disable_reason)
-        set(_enable_artosyn ON)
+
+    if (CONFIG_ARTOSYN_SDK_ROOT AND CONFIG_ARTOSYN_SDK_LIB)
+        if (NOT _artosyn_source_root)
+            set(_artosyn_disable_reason
+                "invalid CONFIG_ARTOSYN_SDK_ROOT (${CONFIG_ARTOSYN_SDK_ROOT}); expected app/ar8030 directly or under host_drv"
+            )
+        endif()
+        if (NOT _artosyn_disable_reason)
+            set(_artosyn_include_candidates
+                "${_artosyn_source_root}/app/ar8030"
+                "${_artosyn_source_root}/com"
+                "${_artosyn_source_root}/install/include"
+            )
+            foreach(_candidate IN LISTS _artosyn_include_candidates)
+                if (EXISTS "${_candidate}" AND IS_DIRECTORY "${_candidate}")
+                    list(APPEND _artosyn_include_dirs "${_candidate}")
+                endif()
+            endforeach()
+            list(REMOVE_DUPLICATES _artosyn_include_dirs)
+            if (NOT _artosyn_include_dirs)
+                set(_artosyn_disable_reason
+                    "invalid CONFIG_ARTOSYN_SDK_ROOT (${CONFIG_ARTOSYN_SDK_ROOT}); expected Artosyn SDK include directories"
+                )
+            endif()
+        endif()
+        if (NOT _artosyn_disable_reason)
+            set(_artosyn_sdk_libs ${CONFIG_ARTOSYN_SDK_LIB})
+            if (NOT _artosyn_sdk_libs)
+                set(_artosyn_disable_reason "invalid CONFIG_ARTOSYN_SDK_LIB (${CONFIG_ARTOSYN_SDK_LIB})")
+            endif()
+        endif()
+        if (NOT _artosyn_disable_reason)
+            foreach(_artosyn_lib IN LISTS _artosyn_sdk_libs)
+                if (NOT EXISTS "${_artosyn_lib}")
+                    set(_artosyn_disable_reason "missing CONFIG_ARTOSYN_SDK_LIB entry: ${_artosyn_lib}")
+                    break()
+                endif()
+            endforeach()
+        endif()
+        if (NOT _artosyn_disable_reason)
+            set(_enable_artosyn ON)
+        endif()
+    elseif (CONFIG_ARTOSYN_SDK_ROOT OR CONFIG_ARTOSYN_SDK_LIB)
+        set(_artosyn_disable_reason
+            "incomplete Artosyn configuration (need both CONFIG_ARTOSYN_SDK_ROOT and CONFIG_ARTOSYN_SDK_LIB)"
+        )
     endif()
-elseif (CONFIG_ARTOSYN_SDK_ROOT OR CONFIG_ARTOSYN_SDK_LIB)
-    set(_artosyn_disable_reason
-        "incomplete Artosyn configuration (need both CONFIG_ARTOSYN_SDK_ROOT and CONFIG_ARTOSYN_SDK_LIB)"
-    )
+else()
+    message(STATUS "Artosyn support disabled by CONFIG_OPENHD_ENABLE_ARTOSYN.")
 endif()
 
 if (NOT _enable_artosyn)

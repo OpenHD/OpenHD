@@ -36,11 +36,13 @@ add_definitions(-DHAVE_CONFIG_H)
 
 # Use Kconfig variables instead of manual options
 message("Air support enabled: ${CONFIG_OPENHD_AIR}")
+set(ENABLE_AIR ${CONFIG_OPENHD_AIR} CACHE BOOL "Enable air-specific OpenHD components" FORCE)
 if (CONFIG_OPENHD_AIR)
         add_definitions(-DENABLE_AIR)
 endif ()
 
 message("USB cameras enabled: ${CONFIG_OPENHD_USB_CAMERAS}")
+set(ENABLE_USB_CAMERAS ${CONFIG_OPENHD_USB_CAMERAS} CACHE BOOL "Enable USB camera support" FORCE)
 if (CONFIG_OPENHD_USB_CAMERAS)
         add_definitions(-DENABLE_USB_CAMERAS)
 endif ()

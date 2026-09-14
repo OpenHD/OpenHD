@@ -83,6 +83,7 @@ jobs:
           
           # This single command now handles config, build, test, and report generation
           make coverage \
+            BUILD_DIR=build \
             EXTRA_CMAKE="-DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache"
 
       - name: SonarCloud Scan

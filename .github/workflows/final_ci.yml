@@ -411,6 +411,7 @@ jobs:
             build-orqa/iwconfig
             build-orqa/openhd-needed.txt
             build-orqa/gst-perf-needed.txt
+            build-orqa/gst-perf-strings.txt
             ${{ runner.temp }}/poco-libraries.zip
             ${{ runner.temp }}/libsodium-libraries.zip
             ${{ runner.temp }}/gst-perf-plugin.zip

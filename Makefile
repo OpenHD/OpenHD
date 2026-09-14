@@ -46,6 +46,7 @@ endif
 
 PYTHON ?= $(shell if [ -f $(VENV_PYTHON) ]; then echo $(VENV_PYTHON); else command -v python3 || echo python; fi)
 SCRIPT_DIR = scripts
+OPENHD_SOURCE_DIR := $(CURDIR)/OpenHD
 BUILD_DIR = OpenHD/build
 CMAKE_GEN = Ninja
 BUILD_TYPE = Release
@@ -176,23 +177,34 @@ resolve_artosyn:
 	fi
 
 build: config resolve_artosyn
-	@echo "Starting Build ($(BUILD_TYPE)) using $(CMAKE_GEN)..."
+	@effective_build_type="$(BUILD_TYPE)"; \
+	if [ "$$effective_build_type" = "Release" ] && grep -q '^CONFIG_OPENHD_DEBUG=y$$' .config 2>/dev/null; then \
+		effective_build_type=Debug; \
+	fi; \
+	echo "Starting Build ($$effective_build_type) using $(CMAKE_GEN)..."
 	@if [ -f .artosyn_env ]; then . ./.artosyn_env && export EXTRA_ARTOSYN="-DARTOSYN_SDK_ROOT=\$$ARTOSYN_SDK_ROOT -DARTOSYN_SDK_LIB=\$$ARTOSYN_SDK_LIB -DARTOSYN_SDK_DAEMON=\$$ARTOSYN_SDK_DAEMON -DARTOSYN_SDK_TUNTAP=\$$ARTOSYN_SDK_TUNTAP"; fi; \
-	mkdir -p $(BUILD_DIR) && \
-	cd $(BUILD_DIR) && cmake -G "$(CMAKE_GEN)" -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DPython3_EXECUTABLE=$(realpath $(PYTHON)) -DCMAKE_VERBOSE_MAKEFILE=ON $(EXTRA_CMAKE) $$EXTRA_ARTOSYN .. && cmake --build . -j$(NPROC)
+	effective_build_type="$(BUILD_TYPE)"; \
+	if [ "$$effective_build_type" = "Release" ] && grep -q '^CONFIG_OPENHD_DEBUG=y$$' .config 2>/dev/null; then \
+		effective_build_type=Debug; \
+	fi; \
+	cmake -S "$(OPENHD_SOURCE_DIR)" -B "$(BUILD_DIR)" -G "$(CMAKE_GEN)" -DCMAKE_BUILD_TYPE=$$effective_build_type -DPython3_EXECUTABLE=$(realpath $(PYTHON)) -DCMAKE_VERBOSE_MAKEFILE=ON $(EXTRA_CMAKE) $$EXTRA_ARTOSYN && \
+	cmake --build "$(BUILD_DIR)" -j$(NPROC)
 
 test: build
+	@echo "Building unit test targets..."
+	@cmake --build "$(BUILD_DIR)" --target test_openhd_util test_config test_logging -j$(NPROC)
 	@echo "Running unit tests..."
-	@cd $(BUILD_DIR) && ./test_openhd_util && ./test_config && ./test_logging
+	@"$(BUILD_DIR)"/ohd_common/test_openhd_util && "$(BUILD_DIR)"/ohd_common/test_config && "$(BUILD_DIR)"/ohd_common/test_logging
 
 coverage: config resolve_artosyn
 	@echo "Building with Coverage analysis..."
 	@if [ -f .artosyn_env ]; then . ./.artosyn_env && export EXTRA_ARTOSYN="-DARTOSYN_SDK_ROOT=\$$ARTOSYN_SDK_ROOT -DARTOSYN_SDK_LIB=\$$ARTOSYN_SDK_LIB -DARTOSYN_SDK_DAEMON=\$$ARTOSYN_SDK_DAEMON -DARTOSYN_SDK_TUNTAP=\$$ARTOSYN_SDK_TUNTAP"; fi; \
-	mkdir -p $(BUILD_DIR) && \
-	cd $(BUILD_DIR) && cmake -G "$(CMAKE_GEN)" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="--coverage" -DCMAKE_EXE_LINKER_FLAGS="--coverage" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DPython3_EXECUTABLE=$(realpath $(PYTHON)) $(EXTRA_CMAKE) $$EXTRA_ARTOSYN .. && \
-	cmake --build . -j$(NPROC)
+	cmake -S "$(OPENHD_SOURCE_DIR)" -B "$(BUILD_DIR)" -G "$(CMAKE_GEN)" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="--coverage" -DCMAKE_EXE_LINKER_FLAGS="--coverage" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DPython3_EXECUTABLE=$(realpath $(PYTHON)) $(EXTRA_CMAKE) $$EXTRA_ARTOSYN && \
+	cmake --build "$(BUILD_DIR)" --target test_openhd_util test_config test_logging -j$(NPROC)
 	@echo "Running tests for coverage..."
-	@cd $(BUILD_DIR) && ./test_openhd_util || true && ./test_config || true && ./test_logging || true
+	@"$(BUILD_DIR)"/ohd_common/test_openhd_util || true
+	@"$(BUILD_DIR)"/ohd_common/test_config || true
+	@"$(BUILD_DIR)"/ohd_common/test_logging || true
 	@echo "Generating coverage report (coverage.xml)..."
 	@gcovr --sonarqube -o coverage.xml -r . --exclude '.*lib/.*' --exclude '.*test/.*'
 
@@ -224,10 +236,16 @@ orqa:
 	@cp configs/orqa_defconfig .config
 	@if [ -f $(ORQA_SDK)/environment-setup-armv8a-poky-linux ]; then \
 		. $(ORQA_SDK)/environment-setup-armv8a-poky-linux && \
-		$(MAKE) build EXTRA_CMAKE="-DCMAKE_TOOLCHAIN_FILE=cmake/orqa-toolchain.cmake -DCMAKE_DISABLE_FIND_PACKAGE_SDL2=TRUE" && \
+		gst_perf_plugin="$$SDKTARGETSYSROOT/usr/lib/gstreamer-1.0/libgstperf.so" && \
+		$(MAKE) build EXTRA_CMAKE="-DCMAKE_DISABLE_FIND_PACKAGE_SDL2=TRUE" && \
 		echo "Validating Orqa binary..." && \
 		readelf -h $(BUILD_DIR)/openhd | grep -q 'Machine:.*AArch64' && \
-		readelf -d $(BUILD_DIR)/openhd | grep -q 'libPocoFoundation.so' && \
+		readelf -d $(BUILD_DIR)/openhd | tee $(BUILD_DIR)/openhd-needed.txt | grep -q 'libPocoFoundation.so' && \
+		test -f "$$gst_perf_plugin" && \
+		readelf -h "$$gst_perf_plugin" | grep -q 'Machine:.*AArch64' && \
+		readelf -d "$$gst_perf_plugin" | tee $(BUILD_DIR)/gst-perf-needed.txt >/dev/null && \
+		strings "$$gst_perf_plugin" | tee $(BUILD_DIR)/gst-perf-strings.txt | grep -q 'bitrate-interval' && \
+		grep -q 'on-bitrate' $(BUILD_DIR)/gst-perf-strings.txt && \
 		! readelf -d $(BUILD_DIR)/openhd | grep -q 'libSDL2' || (echo "Validation failed (check SDL2 linkage)!"; exit 1); \
 	else \
 		echo "Orqa SDK not found at $(ORQA_SDK)"; exit 1; \
@@ -235,7 +253,7 @@ orqa:
 
 orqa-tools:
 	@echo "Building Orqa tools (iwconfig)..."
-	@bash scripts/build_orqa_iwconfig.sh $(ORQA_SDK) $(BUILD_DIR)/orqa-tools/iwconfig
+	@bash scripts/build_orqa_iwconfig.sh $(ORQA_SDK) $(BUILD_DIR)/iwconfig
 
 mpp-setup:
 	@echo "Installing Rockchip MPP into Sysroot..."
@@ -246,12 +264,17 @@ portable:
 	@echo "Starting Portable Cross-build for $(ARCH)..."
 	@if [ -z "$(ARCH)" ] || [ -z "$(SYSROOT)" ]; then echo "Usage: make portable ARCH=arm64 SYSROOT=/path"; exit 1; fi
 	@cp configs/release_defconfig .config
-	@POCO_DIR=$$(find $(SYSROOT)/usr -name PocoConfig.cmake -print -quit | xargs dirname) && \
+	@case "$(ARCH)" in \
+		arm64) triplet=aarch64-linux-gnu ;; \
+		armhf) triplet=arm-linux-gnueabihf ;; \
+		*) echo "Unsupported ARCH=$(ARCH). Use ARCH=arm64 or ARCH=armhf."; exit 1 ;; \
+	esac; \
+	POCO_DIR=$$(find $(SYSROOT)/usr -name PocoConfig.cmake -print -quit | xargs dirname) && \
 	 SDL2_DIR=$$(find $(SYSROOT)/usr \( -name sdl2-config.cmake -o -name SDL2Config.cmake \) -print -quit | xargs dirname) && \
-	 export OPENHD_ARTOSYN_FORCE_SOURCE_BUILD=1 && \
-	 $(MAKE) build EXTRA_CMAKE="-DCMAKE_TOOLCHAIN_FILE=cmake/portable-linux-toolchain.cmake -DOPENHD_SYSROOT=$(SYSROOT) -DOPENHD_CROSS_TRIPLET=$$( [ "$(ARCH)" = "arm64" ] && echo "aarch64-linux-gnu" || echo "arm-linux-gnueabihf") -DPoco_DIR=$$POCO_DIR -DSDL2_DIR=$$SDL2_DIR -DOPENHD_MPP_ONLY=OFF -DENABLE_LIBCAMERA=OFF" && \
+	 export OPENHD_ARTOSYN_FORCE_SOURCE_BUILD=1 OPENHD_SYSROOT="$(SYSROOT)" OPENHD_CROSS_TRIPLET="$$triplet" && \
+	 $(MAKE) build SET="OPENHD_ENABLE_ARTOSYN=y" EXTRA_CMAKE="-DCMAKE_TOOLCHAIN_FILE=$(OPENHD_SOURCE_DIR)/cmake/portable-linux-toolchain.cmake -DPoco_DIR=$$POCO_DIR -DSDL2_DIR=$$SDL2_DIR -DOPENHD_MPP_ONLY=OFF -DENABLE_LIBCAMERA=OFF" && \
 	 echo "Generating cross-build manifest..." && \
-	 (echo "ARCH=$(ARCH)"; echo "SYSROOT=$(SYSROOT)"; [ -f .artosyn_env ] && cat .artosyn_env) > $(BUILD_DIR)/openhd-cross.env
+	 (echo "ARCH=$(ARCH)"; echo "SYSROOT=$(SYSROOT)"; echo "OPENHD_CROSS_TRIPLET=$$triplet"; [ -f .artosyn_env ] && cat .artosyn_env) > $(BUILD_DIR)/openhd-cross.env
 
 debug:
 	@echo "Setting up Debug build..."

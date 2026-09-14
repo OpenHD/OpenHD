@@ -15,7 +15,11 @@ if (NOT DEFINED CONFIG_OPENHD_USB_CAMERAS)
     set(CONFIG_OPENHD_USB_CAMERAS ON)
 endif()
 option(ENABLE_LIBCAMERA "libcamera support" ON)
-option(ENABLE_GSTREAMER "Enable GStreamer support" ON)
+if(DEFINED CONFIG_OPENHD_VIDEO_GSTREAMER)
+    set(ENABLE_GSTREAMER ${CONFIG_OPENHD_VIDEO_GSTREAMER} CACHE BOOL "Enable GStreamer support" FORCE)
+else()
+    option(ENABLE_GSTREAMER "Enable GStreamer support" ON)
+endif()
 option(OPENHD_MPP_ONLY "Build the RV1126 MPP video path without GStreamer" OFF)
 # The MPP-only image intentionally has no USB/GStreamer camera stack. USB
 # discovery also links libv4l2, which is not part of the minimal runtime image.

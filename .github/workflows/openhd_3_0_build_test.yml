@@ -78,7 +78,8 @@ jobs:
           g++ -std=c++17 client.cpp -lsodium -o ohd_video_crypto_client
       - name: Preflight Artosyn SDK + interface build (fail fast)
         run: |
-          make config
+          cp configs/orqa_defconfig .config
+          make config SET="OPENHD_ENABLE_ARTOSYN=y"
           make resolve_artosyn
           if [ -f .artosyn_env ]; then . ./.artosyn_env; fi
           cmake -S OpenHD -B build_artosyn_preflight \

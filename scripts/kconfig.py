@@ -52,13 +52,13 @@ def main():
             name = f"CONFIG_{sym.name}"
             if sym.type in (kconfiglib.BOOL, kconfiglib.TRISTATE):
                 val = "ON" if sym.str_value == "y" else "OFF"
-                f.write(f"set({name} {val} CACHE INTERNAL \"\")\n")
+                f.write(f"set({name} {val} CACHE INTERNAL \"\" FORCE)\n")
             elif sym.type == kconfiglib.INT:
-                f.write(f"set({name} {sym.str_value} CACHE INTERNAL \"\")\n")
+                f.write(f"set({name} {sym.str_value} CACHE INTERNAL \"\" FORCE)\n")
             elif sym.type == kconfiglib.HEX:
-                f.write(f"set({name} 0x{sym.str_value} CACHE INTERNAL \"\")\n")
+                f.write(f"set({name} 0x{sym.str_value} CACHE INTERNAL \"\" FORCE)\n")
             elif sym.type == kconfiglib.STRING:
-                f.write(f"set({name} \"{sym.str_value}\" CACHE INTERNAL \"\")\n")
+                f.write(f"set({name} \"{sym.str_value}\" CACHE INTERNAL \"\" FORCE)\n")
     print(f"Generated {args.out_cmake}")
 
 if __name__ == "__main__":
