@@ -131,8 +131,8 @@ setup: ## Setup project environment (installs uv + kconfiglib)
 	@echo "Environment ready."
 	@echo "Checking CMake version..."
 	@cmake_version=$$(cmake --version | head -n1 | grep -oE '[0-9]+\.[0-9]+'); \
-	 if [ $$(echo "$$cmake_version < 3.28" | bc -l) -eq 1 ]; then \
-	   echo "Error: CMake 3.28+ is required for C++20 modules. Found $$cmake_version"; \
+	 if [ $$(echo "$$cmake_version < 3.16" | bc -l) -eq 1 ]; then \
+	   echo "Error: CMake 3.16+ is required. Found $$cmake_version"; \
 	   exit 1; \
 	 fi
 

@@ -47,7 +47,7 @@ Build-time and runtime controls:
 
 The dependency is a git submodule. Initialize it together with the existing
 OpenHD submodules using `git submodule update --init --recursive`. Devourer
-requires CMake 3.15+, a C++20 compiler, and libusb-1.0; OpenHD's normal build
+requires CMake 3.15+, a C++17 compiler, and libusb-1.0; OpenHD's normal build
 dependencies already include libusb.
 
 ### FHSS ownership contract
