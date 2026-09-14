@@ -141,7 +141,15 @@ setup: ## Setup project environment (installs uv + kconfiglib)
 
 submodules:
 	@echo "Initializing and updating submodules..."
-	@git submodule update --init --recursive
+	@if [ -e ".git" ]; then \
+		for sub in $$(git submodule status | awk '{print $$2}'); do \
+			echo "  Updating $$sub..."; \
+			GIT_TERMINAL_PROMPT=0 git submodule update --init "$$sub" 2>/dev/null || echo "  [!] Note: Could not sync $$sub directly (private or unavailable)"; \
+			if [ -d "$$sub/.git" ] || [ -f "$$sub/.git" ]; then \
+				GIT_TERMINAL_PROMPT=0 git submodule update --init --recursive "$$sub" 2>/dev/null || echo "  [!] Note: Nested submodules in $$sub partially failed"; \
+			fi; \
+		done; \
+	fi
 	@echo "Submodules updated."
 
 menuconfig: setup
