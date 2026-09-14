@@ -35,7 +35,9 @@ int migrate_tx_power_level(const int value) {
   switch (value) {
     case -1:
     case 0:
-      return WB_TX_POWER_LEVEL_20;
+      // 0 is now the bottom of the normalized 0..150 control. Old files that
+      // used enum 0 also selected the lowest rung, so retaining 0 is safe.
+      return WB_TX_POWER_LEVEL_MIN;
     case 1:
       return WB_TX_POWER_LEVEL_40;
     case 2:

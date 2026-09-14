@@ -55,8 +55,12 @@ static constexpr auto DEFAULT_GND_RX_CHANNEL_WIDTH = 20;
 static constexpr auto DEFAULT_WIFI_TX_POWER_MILLI_WATT = 25;
 // by default, we do not differentiate (to not confuse the user)
 static constexpr auto WIFI_TX_POWER_MILLI_WATT_ARMED_DISABLED = 0;
-// User-facing power targets. These are five simple choices; the backend maps
-// them to the appropriate calibrated control for each radio.
+// User-facing normalized power target. 0..100 is the normal range; 101..150
+// is an explicitly unlocked overdrive range for Devourer radios.
+static constexpr int WB_TX_POWER_LEVEL_MIN = 0;
+static constexpr int WB_TX_POWER_LEVEL_MAX_NORMAL = 100;
+static constexpr int WB_TX_POWER_LEVEL_MAX_OVERDRIVE = 150;
+static constexpr int WB_TX_POWER_LEVEL_STEP = 10;
 static constexpr int WB_TX_POWER_LEVEL_20 = 20;
 static constexpr int WB_TX_POWER_LEVEL_40 = 40;
 static constexpr int WB_TX_POWER_LEVEL_60 = 60;

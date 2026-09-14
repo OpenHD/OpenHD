@@ -45,6 +45,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
     mpp_debug_bitrate_sweep,
     mpp_debug_bitrate_min_kbits, mpp_debug_bitrate_max_kbits,
     mpp_debug_bitrate_period_seconds, streamed_video_format,
+    rpi_libcamera_sensor_mode, rpi_libcamera_impl, rockchip_impl,
     h26x_bitrate_kbits, h26x_keyframe_interval, h26x_intra_refresh_type,
     h26x_num_slices, nxp_enable_aud, air_recording, camera_rotation_degree,
     openhd_flip,
@@ -70,6 +71,9 @@ std::optional<CameraSettings> CameraHolder::impl_deserialize(
   const bool missing_ip_camera_address =
       parsed_json.is_discarded() ||
       !parsed_json.contains("ip_camera_address");
+  const bool missing_rpi_libcamera_sensor_mode =
+      parsed_json.is_discarded() ||
+      !parsed_json.contains("rpi_libcamera_sensor_mode");
   auto parsed_settings = openhd_json_parse<CameraSettings>(file_as_string);
   if (parsed_settings.has_value() && missing_ip_camera_pipeline &&
       m_camera.camera_type == X_CAM_TYPE_EXTERNAL_IP) {
@@ -96,6 +100,10 @@ std::optional<CameraSettings> CameraHolder::impl_deserialize(
     parsed_settings->ip_camera_address = DEFAULT_IP_CAMERA_ADDRESS;
   }
   if (parsed_settings.has_value()) {
+    if (missing_rpi_libcamera_sensor_mode) {
+      parsed_settings->rpi_libcamera_sensor_mode =
+          parsed_settings->streamed_video_format;
+    }
     parsed_settings->h26x_bitrate_kbits =
         std::clamp(parsed_settings->h26x_bitrate_kbits, 1000,
                    get_max_video_bitrate_kbits());
@@ -168,6 +176,40 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
         "RESOLUTION_FPS",
         openhd::StringSetting{format_string, c_width_height_framerate}});
   }
+  if (m_camera.requires_rpi_libcamera_pipeline()) {
+    auto c_sensor_mode = [this](std::string, std::string value) {
+      const auto mode = parse_video_format(value);
+      if (!mode.has_value()) return false;
+      return set_rpi_libcamera_sensor_mode(
+          mode->width_px, mode->height_px, mode->fps);
+    };
+    const auto mode_string = openhd::video_format_from_int_values(
+        get_settings().rpi_libcamera_sensor_mode.width,
+        get_settings().rpi_libcamera_sensor_mode.height,
+        get_settings().rpi_libcamera_sensor_mode.framerate);
+    ret.push_back(openhd::Setting{
+        "SENSOR_MODE", openhd::StringSetting{mode_string, c_sensor_mode}});
+
+    auto c_libcamera_impl = [this](std::string, int value) {
+      return set_rpi_libcamera_impl(value);
+    };
+    ret.push_back(openhd::Setting{
+        "LIBCAMERA_IMPL",
+        openhd::IntSetting{get_settings().rpi_libcamera_impl,
+                           c_libcamera_impl}});
+  }
+#if defined(OPENHD_ROCKCHIP_MPP_PRESENT) && \
+    defined(OPENHD_GSTREAMER_PRESENT)
+  if (m_camera.requires_rockchip1126_mpp_csi_pipeline() ||
+      m_camera.requires_rockchip1126_mpp_testsrc_pipeline()) {
+    auto c_rockchip_impl = [this](std::string, int value) {
+      return set_rockchip_impl(value);
+    };
+    ret.push_back(openhd::Setting{
+        "ROCKCHIP_IMPL",
+        openhd::IntSetting{get_settings().rockchip_impl, c_rockchip_impl}});
+  }
+#endif
   if (!OHDPlatform::instance().is_x20()) {
     auto c_codec = [this](std::string, int value) {
       return set_video_codec(value);

@@ -28,7 +28,8 @@
 
 #include "camera_discovery.h"
 #include "camera_enums.hpp"
-#ifndef OPENHD_MPP_ONLY
+#include "libcamera_app_stream.h"
+#ifdef OPENHD_GSTREAMER_PRESENT
 #include "gstaudiostream.h"
 #include "gstreamerstream.h"
 #endif
@@ -104,9 +105,7 @@ OHDVideoAir::OHDVideoAir(std::vector<XCamera> cameras,
   }
   if (!m_record_only &&
       m_generic_settings->get_settings().enable_audio != OPENHD_AUDIO_DISABLE) {
-#ifdef OPENHD_MPP_ONLY
-    m_console->warn("Audio is unavailable in the GStreamer-free MPP build");
-#else
+#ifdef OPENHD_GSTREAMER_PRESENT
     m_audio_stream = std::make_unique<GstAudioStream>();
     auto audio_cb = [this](const openhd::AudioPacket& audioPacket) {
       on_audio_data(audioPacket);
@@ -118,6 +117,8 @@ OHDVideoAir::OHDVideoAir(std::vector<XCamera> cameras,
       m_audio_stream->openhd_enable_audio_test = false;
     }
     m_audio_stream->start_looping();
+#else
+    m_console->warn("Audio is unavailable when GStreamer is disabled");
 #endif
   }
   openhd::LinkActionHandler::instance().action_request_bitrate_change_register(
@@ -160,21 +161,29 @@ void OHDVideoAir::configure(
       };
   std::shared_ptr<CameraStream> stream;
 #ifdef OPENHD_ROCKCHIP_MPP_PRESENT
-  if (camera.requires_rockchip1126_mpp_csi_pipeline() ||
-      camera.requires_rockchip1126_mpp_testsrc_pipeline()) {
+  if ((camera.requires_rockchip1126_mpp_csi_pipeline() ||
+       camera.requires_rockchip1126_mpp_testsrc_pipeline()) &&
+      camera_holder->get_settings().rockchip_impl ==
+          ROCKCHIP_IMPL_NATIVE_MPP) {
     m_console->info("Native Rockchip MPP stream for Camera index:{}",
                     camera.index);
     stream = std::make_shared<RockchipMppStream>(camera_holder, frame_cb);
   } else
 #endif
-#ifndef OPENHD_MPP_ONLY
+  if (camera.requires_rpi_libcamera_pipeline() &&
+      camera_holder->get_settings().rpi_libcamera_impl ==
+          RPI_LIBCAMERA_IMPL_NATIVE) {
+    m_console->info("LibcameraAppStream for Camera index:{}", camera.index);
+    stream = std::make_shared<LibcameraAppStream>(camera_holder, frame_cb);
+  } else
+#ifdef OPENHD_GSTREAMER_PRESENT
   {
     m_console->debug("GStreamerStream for Camera index:{}", camera.index);
     stream = std::make_shared<GStreamerStream>(camera_holder, frame_cb, !m_record_only);
   }
 #else
   {
-    m_console->error("Camera type {} is unavailable in the MPP-only build",
+    m_console->error("Camera type {} is unavailable (GStreamer disabled)",
                      camera.camera_type);
     return;
   }

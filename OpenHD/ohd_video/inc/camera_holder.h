@@ -385,6 +385,49 @@ class CameraHolder :
     notify_video_debug_changed();
     return true;
   }
+  bool set_rpi_libcamera_sensor_mode(int width, int height, int framerate) {
+    if (!openhd::validate_video_width_height_fps(width, height, framerate)) {
+      return false;
+    }
+    unsafe_get_settings().rpi_libcamera_sensor_mode.width = width;
+    unsafe_get_settings().rpi_libcamera_sensor_mode.height = height;
+    unsafe_get_settings().rpi_libcamera_sensor_mode.framerate = framerate;
+    persist();
+    return true;
+  }
+  bool set_rpi_libcamera_impl(int value) {
+    if (value != RPI_LIBCAMERA_IMPL_GSTREAMER &&
+        value != RPI_LIBCAMERA_IMPL_NATIVE) {
+      return false;
+    }
+    if (unsafe_get_settings().rpi_libcamera_impl == value) {
+      return true;
+    }
+    unsafe_get_settings().rpi_libcamera_impl = value;
+    persist();
+    // The backend is the concrete CameraStream implementation, so restarting
+    // only the current pipeline cannot switch it. Let the parameter ACK reach
+    // QOpenHD, then have the service supervisor reconstruct OHDVideoAir.
+    openhd::TerminateHelper::instance().terminate_after(
+        "Libcamera backend changed", std::chrono::seconds(1));
+    return true;
+  }
+  bool set_rockchip_impl(int value) {
+    if (value != ROCKCHIP_IMPL_GSTREAMER &&
+        value != ROCKCHIP_IMPL_NATIVE_MPP) {
+      return false;
+    }
+    if (unsafe_get_settings().rockchip_impl == value) {
+      return true;
+    }
+    unsafe_get_settings().rockchip_impl = value;
+    persist();
+    // The backend is the concrete CameraStream implementation. Delay process
+    // termination so MAVLink can acknowledge and systemd can reconstruct it.
+    openhd::TerminateHelper::instance().terminate_after(
+        "Rockchip backend changed", std::chrono::seconds(1));
+    return true;
+  }
   bool set_mpp_debug_keyframe_loss(int value) {
     if (value < 0 || value > 95) return false;
     unsafe_get_settings().mpp_debug_keyframe_loss_percent = value;
@@ -604,6 +647,9 @@ class CameraHolder :
     ret.streamed_video_format.width = default_resolution.width_px;
     ret.streamed_video_format.height = default_resolution.height_px;
     ret.streamed_video_format.framerate = default_resolution.fps;
+    ret.rpi_libcamera_sensor_mode.width = default_resolution.width_px;
+    ret.rpi_libcamera_sensor_mode.height = default_resolution.height_px;
+    ret.rpi_libcamera_sensor_mode.framerate = default_resolution.fps;
 
     const auto& sysutil_settings =
         []() -> const std::optional<openhd::SysutilSettings>& {

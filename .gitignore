@@ -457,3 +457,4 @@ plugins/siyi/
 /.codex-artifacts
 /luckfox-pico-sdk/
 
+/OpenHD/build_test

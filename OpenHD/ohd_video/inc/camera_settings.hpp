@@ -49,6 +49,10 @@ static constexpr int DEFAULT_KEYFRAME_INTERVAL = 5;
 // (in gstreamerstream)
 static constexpr auto MINIMUM_AMOUNT_FREE_SPACE_FOR_AIR_RECORDING_MB = 300;
 static constexpr int RPI_LIBCAMERA_DEFAULT_EV = 0;
+static constexpr int RPI_LIBCAMERA_IMPL_GSTREAMER = 0;
+static constexpr int RPI_LIBCAMERA_IMPL_NATIVE = 1;
+static constexpr int ROCKCHIP_IMPL_GSTREAMER = 0;
+static constexpr int ROCKCHIP_IMPL_NATIVE_MPP = 1;
 
 // Temporary managed T010 IP-camera source used for field testing.
 static constexpr auto DEFAULT_IP_CAMERA_PIPELINE =
@@ -132,6 +136,14 @@ struct CameraSettings {
   // if a camera supports a given resolution / framerate properly yet) Note that
   // this default value is overridden in case we know more about the camera(s).
   VideoFormat streamed_video_format{VideoCodec::H264, 640, 480, 30};
+  // Native libcamera sensor mode, independent from the ISP/encoder output.
+  // The framerate describes the advertised mode and is also useful in the UI;
+  // the output framerate remains part of streamed_video_format.
+  VideoFormat rpi_libcamera_sensor_mode{VideoCodec::H264, 640, 480, 30};
+  int rpi_libcamera_impl = RPI_LIBCAMERA_IMPL_NATIVE;
+  // RV1126/Luckfox/X21 can either use the GStreamer MPP elements or OpenHD's
+  // direct V4L2 capture + Rockchip MPP implementation.
+  int rockchip_impl = ROCKCHIP_IMPL_NATIVE_MPP;
   // The settings below can only be implemented on a "best effort" manner -
   // changing them does not necessarily mean the camera supports changing them.
   // Unsupported settings have to be ignored during pipeline construction In

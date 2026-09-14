@@ -278,60 +278,68 @@ load_sysutil_power_profiles() {
 }
 
 int power_level_to_value(const SysutilPowerProfile& profile, int level) {
-  switch (level) {
-    case openhd::WB_TX_POWER_LEVEL_20:
-      return profile.lowest;
-    case openhd::WB_TX_POWER_LEVEL_40:
-      return profile.low;
-    case openhd::WB_TX_POWER_LEVEL_60:
-      // Existing sysutil profiles have four calibrated points. Insert the new
-      // middle target in logarithmic power space for mW cards and halfway in
-      // the native index space for index-based drivers.
-      if (profile.mode == "MW") {
-        return static_cast<int>(std::lround(std::sqrt(
-            static_cast<double>(profile.low) * profile.mid)));
-      }
-      return profile.low + (profile.mid - profile.low) / 2;
-    case openhd::WB_TX_POWER_LEVEL_80:
-      return profile.mid;
-    case openhd::WB_TX_POWER_LEVEL_100:
-      return profile.high;
-    default:
-      return 0;
+  // Non-Devourer profiles keep their calibrated ceiling at 100%. Intermediate
+  // slider positions interpolate in native index space or logarithmic mW
+  // space; 0..20 intentionally share the profile's safe lowest target.
+  if (level <= 20) return profile.lowest;
+  if (level >= 100) return profile.high;
+  int from_level = 20, to_level = 40;
+  int from_value = profile.lowest, to_value = profile.low;
+  if (level > 40 && level <= 80) {
+    from_level = 40;
+    to_level = 80;
+    from_value = profile.low;
+    to_value = profile.mid;
+  } else if (level > 80) {
+    from_level = 80;
+    to_level = 100;
+    from_value = profile.mid;
+    to_value = profile.high;
   }
+  const double fraction = static_cast<double>(level - from_level) /
+                          static_cast<double>(to_level - from_level);
+  if (profile.mode == "MW" && from_value > 0 && to_value > 0) {
+    return static_cast<int>(std::lround(std::exp(
+        std::log(static_cast<double>(from_value)) * (1.0 - fraction) +
+        std::log(static_cast<double>(to_value)) * fraction)));
+  }
+  return static_cast<int>(std::lround(
+      from_value + (to_value - from_value) * fraction));
 }
 
 bool is_valid_power_level(int level) {
-  return level == openhd::WB_TX_POWER_LEVEL_20 ||
-         level == openhd::WB_TX_POWER_LEVEL_40 ||
-         level == openhd::WB_TX_POWER_LEVEL_60 ||
-         level == openhd::WB_TX_POWER_LEVEL_80 ||
-         level == openhd::WB_TX_POWER_LEVEL_100;
+  return level >= openhd::WB_TX_POWER_LEVEL_MIN &&
+         level <= openhd::WB_TX_POWER_LEVEL_MAX_OVERDRIVE &&
+         level % openhd::WB_TX_POWER_LEVEL_STEP == 0;
 }
 
 constexpr int devourer_power_offset_qdb(int level) {
-  // A perceptually useful five-step curve relative to Devourer's calibrated
-  // per-rate/per-path maximum. Unit is quarter-dB.
-  switch (level) {
-    case openhd::WB_TX_POWER_LEVEL_20:
-      return -64;  // -16 dB
-    case openhd::WB_TX_POWER_LEVEL_40:
-      return -40;  // -10 dB
-    case openhd::WB_TX_POWER_LEVEL_60:
-      return -24;  // -6 dB
-    case openhd::WB_TX_POWER_LEVEL_80:
-      return -12;  // -3 dB
-    case openhd::WB_TX_POWER_LEVEL_100:
-    default:
-      return 0;
+  // Piecewise interpolation preserves the original five calibrated points and
+  // adds useful 10% positions plus a true minimum at 0. Positive overdrive is
+  // adapter-relative and is calculated inside DevourerTransport.
+  if (level <= 0) return -127;
+  if (level >= 100) return 0;
+  int x0 = 0, y0 = -127, x1 = 20, y1 = -64;
+  if (level > 20 && level <= 40) {
+    x0 = 20; y0 = -64; x1 = 40; y1 = -40;
+  } else if (level > 40 && level <= 60) {
+    x0 = 40; y0 = -40; x1 = 60; y1 = -24;
+  } else if (level > 60 && level <= 80) {
+    x0 = 60; y0 = -24; x1 = 80; y1 = -12;
+  } else if (level > 80) {
+    x0 = 80; y0 = -12; x1 = 100; y1 = 0;
   }
+  return y0 + ((y1 - y0) * (level - x0) + (x1 - x0) / 2) /
+                  (x1 - x0);
 }
 
+static_assert(devourer_power_offset_qdb(0) == -127);
 static_assert(devourer_power_offset_qdb(openhd::WB_TX_POWER_LEVEL_20) == -64);
 static_assert(devourer_power_offset_qdb(openhd::WB_TX_POWER_LEVEL_40) == -40);
 static_assert(devourer_power_offset_qdb(openhd::WB_TX_POWER_LEVEL_60) == -24);
 static_assert(devourer_power_offset_qdb(openhd::WB_TX_POWER_LEVEL_80) == -12);
 static_assert(devourer_power_offset_qdb(openhd::WB_TX_POWER_LEVEL_100) == 0);
+static_assert(devourer_power_offset_qdb(150) == 0);
 
 bool is_valid_power_value(int value, bool use_index) {
   if (use_index) {
@@ -1341,10 +1349,16 @@ void WBLink::apply_txpower() {
         offset_qdb = std::min(offset_qdb, -12);
       }
       const int applied_qdb =
-          m_wb_txrx->set_devourer_tx_power_offset_qdb(i, offset_qdb);
-      m_console->debug(
-          "Devourer card {} TX power target {}%: requested {} qdB, applied {} qdB",
-          i, power_level, offset_qdb, applied_qdb);
+          m_wb_txrx->set_devourer_tx_power_level(i, power_level, offset_qdb);
+      if (power_level > openhd::WB_TX_POWER_LEVEL_MAX_NORMAL) {
+        m_console->debug(
+            "Devourer card {} TX power target {}%: overdrive applied {} qdB",
+            i, power_level, applied_qdb);
+      } else {
+        m_console->debug(
+            "Devourer card {} TX power target {}%: requested {} qdB, applied {} qdB",
+            i, power_level, offset_qdb, applied_qdb);
+      }
     } else {
       openhd::wb::set_tx_power_for_card(card_pwr_mw, card_pwr_idx,
                                         m_broadcast_cards.at(i));

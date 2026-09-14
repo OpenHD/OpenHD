@@ -271,21 +271,18 @@ class OpenhdControlServer {
     if (parsed.contains("power_level") && parsed["power_level"].is_string()) {
       const auto raw_level = trim_copy(parsed["power_level"].get<std::string>());
       if (!raw_level.empty()) {
-        const auto upper = to_upper(raw_level);
-        if (upper == "20" || upper == "20%") {
-          request.tx_power_level = openhd::WB_TX_POWER_LEVEL_20;
-        } else if (upper == "40" || upper == "40%") {
-          request.tx_power_level = openhd::WB_TX_POWER_LEVEL_40;
-        } else if (upper == "60" || upper == "60%") {
-          request.tx_power_level = openhd::WB_TX_POWER_LEVEL_60;
-        } else if (upper == "80" || upper == "80%") {
-          request.tx_power_level = openhd::WB_TX_POWER_LEVEL_80;
-        } else if (upper == "100" || upper == "100%") {
-          request.tx_power_level = openhd::WB_TX_POWER_LEVEL_100;
-        } else {
+        auto numeric = raw_level;
+        if (!numeric.empty() && numeric.back() == '%') numeric.pop_back();
+        char* end = nullptr;
+        const long level = std::strtol(numeric.c_str(), &end, 10);
+        if (!end || *end != '\0' ||
+            level < openhd::WB_TX_POWER_LEVEL_MIN ||
+            level > openhd::WB_TX_POWER_LEVEL_MAX_OVERDRIVE ||
+            level % openhd::WB_TX_POWER_LEVEL_STEP != 0) {
           send_response(fd, false, "Invalid power level value.");
           return;
         }
+        request.tx_power_level = static_cast<int>(level);
       }
     }
 

@@ -11,6 +11,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(ENABLE_AIR "Enable air support" ON)
 option(ENABLE_USB_CAMERAS "USB cameras support" ON)
 option(ENABLE_LIBCAMERA "libcamera support" ON)
+option(ENABLE_GSTREAMER "Enable GStreamer support" ON)
 option(OPENHD_MPP_ONLY "Build the RV1126 MPP video path without GStreamer" OFF)
 # The MPP-only image intentionally has no USB/GStreamer camera stack. USB
 # discovery also links libv4l2, which is not part of the minimal runtime image.
@@ -79,18 +80,20 @@ if(ENABLE_AIR)
             src/ohd_video_air_generic_settings.cpp
             src/validate_settings.cpp
             src/usb_thermal_cam_helper.cpp
+            src/libcamera_app_stream.cpp
     )
 
-    if(NOT OPENHD_MPP_ONLY)
+    if(ENABLE_GSTREAMER AND NOT OPENHD_MPP_ONLY)
         list(APPEND sources src/gstreamerstream.cpp src/gstaudiostream.cpp src/gst_video_output.cpp)
         target_compile_definitions(OHDVideoLib PUBLIC OPENHD_GST_VIDEO_OUTPUT)
+        target_compile_definitions(OHDVideoLib PUBLIC OPENHD_GSTREAMER_PRESENT)
         pkg_search_module(GST REQUIRED
                 gstreamer-1.0>=1.4
                 gstreamer-app-1.0>=1.4)
         pkg_search_module(gstreamer REQUIRED IMPORTED_TARGET gstreamer-1.0>=1.4)
         pkg_search_module(gstreamer-app REQUIRED IMPORTED_TARGET gstreamer-app-1.0>=1.4)
         target_link_libraries(OHDVideoLib PRIVATE PkgConfig::gstreamer PkgConfig::gstreamer-app)
-    else()
+    elseif(OPENHD_MPP_ONLY)
         target_compile_definitions(OHDVideoLib PUBLIC OPENHD_MPP_ONLY)
     endif()
 
@@ -135,7 +138,7 @@ if(ENABLE_AIR)
     endif()
 endif ()
 
-if (ENABLE_AIR AND ENABLE_USB_CAMERAS AND NOT OPENHD_MPP_ONLY)
+if (ENABLE_AIR AND ENABLE_USB_CAMERAS AND ENABLE_GSTREAMER AND NOT OPENHD_MPP_ONLY)
     # FUCKING GSTREAMER !! begin
     pkg_search_module(GST REQUIRED
             gstreamer-sdp-1.0>=1.4
