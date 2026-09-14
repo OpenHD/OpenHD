@@ -64,9 +64,16 @@ jobs:
         if: matrix.architecture == 'amd64'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libpoco-dev python3-pip
+          sudo apt-get install -y libpoco-dev python3-pip ccache
           pip3 install kconfiglib
           sudo ./install_build_dep.sh ubuntu-x86
+
+      - name: Cache ccache data
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ${{ runner.os }}-${{ matrix.architecture }}-ccache-${{ github.sha }}
+          restore-keys: ${{ runner.os }}-${{ matrix.architecture }}-ccache-
 
       - name: Build native AMD64 package
         if: matrix.architecture == 'amd64'
@@ -81,7 +88,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             ${{ matrix.compiler_packages }} \
-            autoconf automake cmake curl dpkg-dev git libtool make pkg-config zstd python3-pip
+            autoconf automake cmake curl dpkg-dev git libtool make pkg-config zstd python3-pip ccache
           pip3 install kconfiglib
 
       - name: Fetch verified Cloudsmith sysroot

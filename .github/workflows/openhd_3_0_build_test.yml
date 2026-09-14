@@ -53,9 +53,15 @@ jobs:
         run: |
           sudo mkdir -p /Videos/
           sudo apt update
-          sudo apt install -y libsodium-dev python3-pip
+          sudo apt install -y libsodium-dev python3-pip ccache
           pip3 install kconfiglib
           sudo ./install_build_dep.sh ubuntu-x86
+      - name: Cache ccache data
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ${{ runner.os }}-build-test-ccache-${{ github.sha }}
+          restore-keys: ${{ runner.os }}-build-test-ccache-
       - name: Install sysutils
         run: |
           curl -1sLf 'https://dl.cloudsmith.io/public/openhd/dev-release/setup.deb.sh' | sudo -E bash

@@ -51,6 +51,12 @@ CMAKE_GEN = Ninja
 BUILD_TYPE = Release
 EXTRA_CMAKE =
 
+# --- Auto-detect ccache for faster compilation ---
+CCACHE := $(shell command -v ccache 2>/dev/null)
+ifneq ($(CCACHE),)
+    EXTRA_CMAKE += -DCMAKE_CXX_COMPILER_LAUNCHER=$(CCACHE) -DCMAKE_C_COMPILER_LAUNCHER=$(CCACHE)
+endif
+
 # Platform specific environment (Overridable via .env or environment)
 RK3588_TOOLCHAIN ?= /opt/gcc-12.2.0
 RK3588_SYSROOT   ?= /opt/rk3588_debian12_kernel6_10/sysroot

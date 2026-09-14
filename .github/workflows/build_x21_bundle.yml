@@ -70,10 +70,17 @@ jobs:
           echo "X21_SDK_BUILDROOT_COMMIT=$(python3 -c 'import json; print(json.load(open("openhd-x21b-sdk.manifest.json"))["buildroot_commit"])')" >>"${GITHUB_ENV}"
           echo "X21_SDK_DIR=${RUNNER_TEMP}/openhd-x21b-sdk" >>"${GITHUB_ENV}"
 
-      - name: Install build tools
+      - name: Install build tools and ccache
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends cmake g++ ninja-build
+          sudo apt-get install -y --no-install-recommends cmake g++ ninja-build ccache
+
+      - name: Cache ccache data
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ${{ runner.os }}-x21-ccache-${{ github.sha }}
+          restore-keys: ${{ runner.os }}-x21-ccache-
 
       - name: Cross-compile and package OpenHD
         run: ./scripts/build_x21_component.sh "${X21_SDK_DIR}" "${GITHUB_WORKSPACE}/x21-component"
