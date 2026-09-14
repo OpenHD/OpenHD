@@ -1,4 +1,4 @@
-# OpenHD 3.0 Modular Build System - 2026 Standard
+# OpenHD 3.0 Modular Build System
 # Standard entry point for configuration and building
 
 # --- Load Environment Overrides ---
@@ -66,7 +66,7 @@ ORQA_SDK         ?= /opt/orqa-sdk
 .PHONY: help setup submodules menuconfig build clean distclean config air ground rk3588 orqa debug release install check portable orqa-tools mpp-setup test coverage x21 luckfox lyra
 
 help:
-	@echo "OpenHD Modular Build System (2026 Standard)"
+	@echo "OpenHD Modular Build System"
 	@echo ""
 	@echo "Available commands:"
 	@echo "  make setup        - Install dependencies (uv + kconfiglib) and prepare env"

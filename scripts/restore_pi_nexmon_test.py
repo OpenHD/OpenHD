@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Restore the stock firmware saved by the September 2026 Pi 4 scout test.
+"""Restore the stock firmware saved by the Pi 4 scout test.
 
 Run locally on the test Pi as root, via Ethernet or its console. The test
 module was loaded with insmod only; the installed module remains stock.
