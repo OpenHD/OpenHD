@@ -39,6 +39,9 @@ jobs:
         with:
           path: openhd
 
+      - name: Install modern CMake
+        uses: lukka/get-cmake@latest
+
       - name: Checkout private plugin
         uses: actions/checkout@v4
         with:

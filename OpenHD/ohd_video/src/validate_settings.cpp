@@ -24,6 +24,7 @@
 #include "validate_settings.h"
 
 #include <regex>
+#include <sstream>
 
 #include "openhd_spdlog.h"
 #include "openhd_spdlog_include.h"

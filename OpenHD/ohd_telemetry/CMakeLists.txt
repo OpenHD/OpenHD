@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.16.3)
 project(OHDTelemetryLib)
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_library(OHDTelemetryLib STATIC) # initialized below
 add_library(OHDTelemetryLib::OHDTelemetryLib ALIAS OHDTelemetryLib)
@@ -114,7 +115,7 @@ SET(sources
 # Build it as a library
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
 target_sources(OHDTelemetryLib PRIVATE ${sources})
-target_include_directories(OHDTelemetryLib 
+target_include_directories(OHDTelemetryLib
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
     PUBLIC

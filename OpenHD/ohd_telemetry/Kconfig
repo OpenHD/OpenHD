@@ -1,0 +1,3 @@
+config OPENHD_TELEMETRY_MAVLINK
+    bool
+    default y

@@ -61,6 +61,7 @@ set(sources
     "src/openhd_spdlog.cpp"
     "src/openhd_reboot_util.cpp"
     "src/openhd_config.cpp"
+    "src/config_paths.cpp"
     "src/openhd_util_async.cpp"
     "src/openhd_external_device.cpp"
     "src/openhd_action_handler.cpp"
@@ -79,11 +80,11 @@ set(sources
 )
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
+target_sources(OHDCommonLib PRIVATE ${sources})
 
 #----------------------------------------------------------------------------------------------------------------------
 # Target configuration
 #----------------------------------------------------------------------------------------------------------------------
-target_sources(OHDCommonLib PRIVATE ${sources})
 target_include_directories(OHDCommonLib PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc/>")
 
 install(FILES inc/openhd_plugin.h DESTINATION include/openhd)

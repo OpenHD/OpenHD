@@ -456,5 +456,17 @@ plugins/siyi/
 /OpenHD/build-armhf-docker
 /.codex-artifacts
 /luckfox-pico-sdk/
+.venv/
 
 /OpenHD/build_test
+
+# --- OpenHD 2026 Kconfig Build System ---
+.config
+.config.old
+autoconf.h
+kconfig.cmake
+.artosyn_env
+.env
+coverage.xml
+.artifacts/
+**/build_check/

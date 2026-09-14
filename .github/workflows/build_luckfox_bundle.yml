@@ -71,10 +71,17 @@ jobs:
           echo "LUCKFOX_SDK_BUILDROOT_COMMIT=$(python3 -c 'import json; print(json.load(open("openhd-luckfox-pico-sdk.manifest.json")).get("luckfox_sdk_commit", "unknown"))')" >>"${GITHUB_ENV}"
           echo "LUCKFOX_SDK_DIR=${RUNNER_TEMP}/openhd-luckfox-pico-sdk" >>"${GITHUB_ENV}"
 
-      - name: Install build tools
+      - name: Install build tools and ccache
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends cmake g++ ninja-build
+          sudo apt-get install -y --no-install-recommends cmake g++ ninja-build ccache
+
+      - name: Cache ccache data
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ${{ runner.os }}-luckfox-ccache-${{ github.sha }}
+          restore-keys: ${{ runner.os }}-luckfox-ccache-
 
       - name: Cross-compile and package OpenHD
         run: ./scripts/build_luckfox_component.sh "${LUCKFOX_SDK_DIR}" "${GITHUB_WORKSPACE}/luckfox-component"
