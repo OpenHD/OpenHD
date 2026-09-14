@@ -122,9 +122,11 @@ setup: ## Setup project environment (installs uv + kconfiglib)
 		if [ -n "$$UNINITIALIZED" ]; then \
 			echo "Initializing missing submodules..."; \
 			for sub in $$UNINITIALIZED; do \
-				GIT_TERMINAL_PROMPT=0 git submodule update --init "$$sub" >/dev/null 2>&1 || continue; \
+				echo "  Syncing $$sub..."; \
+				GIT_TERMINAL_PROMPT=0 git submodule update --init "$$sub" || echo "  [!] Warning: Could not sync $$sub (likely private)"; \
 				if [ -d "$$sub/.git" ] || [ -f "$$sub/.git" ]; then \
-					GIT_TERMINAL_PROMPT=0 git submodule update --init --recursive "$$sub" >/dev/null 2>&1 || true; \
+					echo "  Recursing into $$sub..."; \
+					GIT_TERMINAL_PROMPT=0 git submodule update --init --recursive "$$sub" 2>/dev/null || echo "  [!] Note: Nested submodules in $$sub partially failed"; \
 				fi; \
 			done; \
 		fi; \
@@ -141,9 +143,10 @@ submodules:
 	@echo "Initializing and updating submodules..."
 	@if [ -e ".git" ]; then \
 		for sub in $$(git submodule status | awk '{print $$2}'); do \
-			GIT_TERMINAL_PROMPT=0 git submodule update --init "$$sub" >/dev/null 2>&1 || continue; \
+			echo "  Updating $$sub..."; \
+			GIT_TERMINAL_PROMPT=0 git submodule update --init "$$sub" 2>/dev/null || echo "  [!] Note: Could not sync $$sub directly (private or unavailable)"; \
 			if [ -d "$$sub/.git" ] || [ -f "$$sub/.git" ]; then \
-				GIT_TERMINAL_PROMPT=0 git submodule update --init --recursive "$$sub" >/dev/null 2>&1 || true; \
+				GIT_TERMINAL_PROMPT=0 git submodule update --init --recursive "$$sub" 2>/dev/null || echo "  [!] Note: Nested submodules in $$sub partially failed"; \
 			fi; \
 		done; \
 	fi
