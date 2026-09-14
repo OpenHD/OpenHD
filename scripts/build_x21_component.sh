@@ -25,6 +25,10 @@ build_dir="${work_dir}/build"
 stage_dir="${work_dir}/component"
 toolchain_file="${sdk_dir}/share/buildroot/toolchainfile.cmake"
 
+if [[ ! -f "${repo_root}/.config" && -f "${repo_root}/configs/x21_defconfig" ]]; then
+  cp "${repo_root}/configs/x21_defconfig" "${repo_root}/.config"
+fi
+
 # Configurable options
 ENABLE_USB_CAMERAS="${ENABLE_USB_CAMERAS:-OFF}"
 

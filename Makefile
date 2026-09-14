@@ -44,7 +44,7 @@ endif
 # If still not found, we will install it during setup
 # -------------------------
 
-PYTHON = $(VENV_PYTHON)
+PYTHON ?= $(shell if [ -f $(VENV_PYTHON) ]; then echo $(VENV_PYTHON); else command -v python3 || echo python; fi)
 SCRIPT_DIR = scripts
 BUILD_DIR = OpenHD/build
 CMAKE_GEN = Ninja
@@ -56,7 +56,7 @@ RK3588_TOOLCHAIN ?= /opt/gcc-12.2.0
 RK3588_SYSROOT   ?= /opt/rk3588_debian12_kernel6_10/sysroot
 ORQA_SDK         ?= /opt/orqa-sdk
 
-.PHONY: help setup submodules menuconfig build clean distclean config air ground rk3588 orqa debug release install check portable orqa-tools mpp-setup test coverage
+.PHONY: help setup submodules menuconfig build clean distclean config air ground rk3588 orqa debug release install check portable orqa-tools mpp-setup test coverage x21 luckfox lyra
 
 help:
 	@echo "OpenHD Modular Build System (2026 Standard)"
@@ -76,6 +76,8 @@ help:
 	@echo "  make portable     - Portable cross-build (ARCH=arm64 SYSROOT=/path)"
 	@echo "  make check        - Verify module isolation"
 	@echo "  make x21          - Build for X21 platform (Usage: make x21 SDK=/path)"
+	@echo "  make luckfox      - Build for Luckfox Pico platform (Usage: make luckfox SDK=/path)"
+	@echo "  make lyra         - Build for Lyra ground module (Usage: make lyra SDK=/path)"
 	@echo "  make clean        - Remove build artifacts"
 	@echo "  make distclean    - Remove all generated files"
 	@echo ""
@@ -86,18 +88,26 @@ setup: ## Setup project environment (installs uv + kconfiglib)
 		if [ -z "$$UV" ]; then \
 			if [ $(IS_WINDOWS) -eq 1 ]; then UV_L="$(USERPROFILE)\.local\bin\uv.exe"; else UV_L="$(HOME)/.local/bin/uv"; fi; \
 			if [ ! -f "$$UV_L" ]; then \
-				echo "uv not found. Installing..."; \
-				$(UV_INSTALL_CMD) || exit 1; \
+				echo "uv not found. Trying to install uv or fallback to python3..."; \
+				$(UV_INSTALL_CMD) 2>/dev/null || true; \
 			fi; \
-			UV="$$UV_L"; \
+			if [ -f "$$UV_L" ]; then UV="$$UV_L"; fi; \
 		fi; \
-		"$$UV" venv --quiet .venv || exit 1; \
+		if [ -n "$$UV" ]; then \
+			"$$UV" venv --quiet .venv 2>/dev/null || true; \
+		elif command -v python3 >/dev/null 2>&1; then \
+			python3 -m venv .venv 2>/dev/null || true; \
+		fi; \
 	fi
-	@UV=$$(command -v uv 2>/dev/null); \
-	if [ -z "$$UV" ]; then \
-		if [ $(IS_WINDOWS) -eq 1 ]; then UV="$(USERPROFILE)\.local\bin\uv.exe"; else UV="$(HOME)/.local/bin/uv"; fi; \
-	fi; \
-	"$$UV" pip install --quiet -r requirements.txt
+	@if [ -d ".venv" ]; then \
+		UV=$$(command -v uv 2>/dev/null); \
+		if [ -z "$$UV" ]; then \
+			if [ $(IS_WINDOWS) -eq 1 ]; then UV="$(USERPROFILE)\.local\bin\uv.exe"; else UV="$(HOME)/.local/bin/uv"; fi; \
+		fi; \
+		if [ -f "$$UV" ]; then \
+			"$$UV" pip install --quiet -r requirements.txt 2>/dev/null || true; \
+		fi; \
+	fi
 	@if [ -e ".git" ]; then \
 		UNINITIALIZED=$$(git submodule status | grep "^-" | awk '{print $$2}'); \
 		if [ -n "$$UNINITIALIZED" ]; then \
@@ -261,6 +271,14 @@ check: config
 x21: config ## Build for X21 platform (Usage: make x21 SDK=/path/to/sdk)
 	@if [ -z "$(SDK)" ]; then echo "Usage: make x21 SDK=/path/to/x21-sdk"; exit 1; fi
 	@bash scripts/build_x21_component.sh $(SDK) $(BUILD_DIR)/x21
+
+luckfox: config ## Build for Luckfox platform (Usage: make luckfox SDK=/path/to/luckfox-sdk)
+	@if [ -z "$(SDK)" ]; then echo "Usage: make luckfox SDK=/path/to/luckfox-sdk"; exit 1; fi
+	@bash scripts/build_luckfox_component.sh $(SDK) $(BUILD_DIR)/luckfox
+
+lyra: config ## Build for Lyra ground platform (Usage: make lyra SDK=/path/to/lyra-sdk)
+	@if [ -z "$(SDK)" ]; then echo "Usage: make lyra SDK=/path/to/lyra-sdk"; exit 1; fi
+	@bash scripts/build_lyra_ground_component.sh $(SDK) $(BUILD_DIR)/lyra
 
 clean:
 	@echo "Cleaning artifacts..."

@@ -67,6 +67,10 @@ else
   )
 fi
 
+if [[ ! -f "${repo_root}/.config" && -f "${repo_root}/configs/lyra_defconfig" ]]; then
+  cp "${repo_root}/configs/lyra_defconfig" "${repo_root}/.config"
+fi
+
 # 2. Build OpenHD with Ground-only configuration
 # Lyra (RK3506) is a ground module: ENABLE_AIR=OFF, ENABLE_USB_CAMERAS=OFF
 cmake -S "${repo_root}/OpenHD" -B "${build_dir}" \

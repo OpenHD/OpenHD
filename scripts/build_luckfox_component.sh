@@ -27,6 +27,10 @@ build_dir="${work_dir}/build"
 stage_dir="${work_dir}/component"
 toolchain_file="${sdk_dir}/share/buildroot/toolchainfile.cmake"
 
+if [[ ! -f "${repo_root}/.config" && -f "${repo_root}/configs/luckfox_defconfig" ]]; then
+  cp "${repo_root}/configs/luckfox_defconfig" "${repo_root}/.config"
+fi
+
 cmake -S "${repo_root}/OpenHD" -B "${build_dir}" \
   -DCMAKE_TOOLCHAIN_FILE="${toolchain_file}" \
   -DCMAKE_BUILD_TYPE=Release \
