@@ -2,6 +2,7 @@
 #define OPENHD_VIDEO_CRYPTO_H
 
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <string>
 
