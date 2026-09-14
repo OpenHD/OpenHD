@@ -274,17 +274,17 @@ check: config
 	@mkdir -p OpenHD/ohd_telemetry/build_check && cd OpenHD/ohd_telemetry/build_check && cmake .. -DCMAKE_BUILD_TYPE=Debug -DPython3_EXECUTABLE=$(realpath $(PYTHON)) && cmake --build .
 	@mkdir -p OpenHD/ohd_video/build_check && cd OpenHD/ohd_video/build_check && cmake .. -DCMAKE_BUILD_TYPE=Debug -DPython3_EXECUTABLE=$(realpath $(PYTHON)) && cmake --build .
 
-x21: config ## Build for X21 platform (Usage: make x21 SDK=/path/to/sdk)
-	@if [ -z "$(SDK)" ]; then echo "Usage: make x21 SDK=/path/to/x21-sdk"; exit 1; fi
-	@bash scripts/build_x21_component.sh $(SDK) $(BUILD_DIR)/x21
+x21: config ## Build for X21 platform (Usage: make x21 SDK=/path/to/sdk [OUT=/path])
+	@if [ -z "$(SDK)" ]; then echo "Usage: make x21 SDK=/path/to/x21-sdk [OUT=/path]"; exit 1; fi
+	@$(PYTHON) $(SCRIPT_DIR)/package_component.py --platform x21 --sdk "$(SDK)" --out "$(if $(OUT),$(OUT),$(BUILD_DIR)/x21)"
 
-luckfox: config ## Build for Luckfox platform (Usage: make luckfox SDK=/path/to/luckfox-sdk)
-	@if [ -z "$(SDK)" ]; then echo "Usage: make luckfox SDK=/path/to/luckfox-sdk"; exit 1; fi
-	@bash scripts/build_luckfox_component.sh $(SDK) $(BUILD_DIR)/luckfox
+luckfox: config ## Build for Luckfox platform (Usage: make luckfox SDK=/path/to/luckfox-sdk [OUT=/path])
+	@if [ -z "$(SDK)" ]; then echo "Usage: make luckfox SDK=/path/to/luckfox-sdk [OUT=/path]"; exit 1; fi
+	@$(PYTHON) $(SCRIPT_DIR)/package_component.py --platform luckfox --sdk "$(SDK)" --out "$(if $(OUT),$(OUT),$(BUILD_DIR)/luckfox)"
 
-lyra: config ## Build for Lyra ground platform (Usage: make lyra SDK=/path/to/lyra-sdk)
-	@if [ -z "$(SDK)" ]; then echo "Usage: make lyra SDK=/path/to/lyra-sdk"; exit 1; fi
-	@bash scripts/build_lyra_ground_component.sh $(SDK) $(BUILD_DIR)/lyra
+lyra: config ## Build for Lyra ground platform (Usage: make lyra SDK=/path/to/lyra-sdk [OUT=/path])
+	@if [ -z "$(SDK)" ]; then echo "Usage: make lyra SDK=/path/to/lyra-sdk [OUT=/path]"; exit 1; fi
+	@$(PYTHON) $(SCRIPT_DIR)/package_component.py --platform lyra --sdk "$(SDK)" --out "$(if $(OUT),$(OUT),$(BUILD_DIR)/lyra)"
 
 clean:
 	@echo "Cleaning artifacts..."
