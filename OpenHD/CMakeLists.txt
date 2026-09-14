@@ -9,6 +9,19 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 if(NOT DEFINED Python3_EXECUTABLE)
     find_package(Python3 REQUIRED)
 endif()
+execute_process(
+    COMMAND ${Python3_EXECUTABLE} -c "import kconfiglib"
+    RESULT_VARIABLE KCONFIGLIB_RESULT
+    ERROR_VARIABLE KCONFIGLIB_ERROR
+    OUTPUT_QUIET
+)
+if (NOT KCONFIGLIB_RESULT EQUAL 0)
+    string(STRIP "${KCONFIGLIB_ERROR}" KCONFIGLIB_ERROR)
+    message(FATAL_ERROR
+        "Python module 'kconfiglib' is required to configure OpenHD. "
+        "Install the repository requirements first (for example, run 'make setup'). "
+        "Python reported: ${KCONFIGLIB_ERROR}")
+endif()
 set(KCONFIG_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../Kconfig")
 set(KCONFIG_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/../scripts/kconfig.py")
 set(KCONFIG_DOTCONFIG "${CMAKE_CURRENT_SOURCE_DIR}/../.config")

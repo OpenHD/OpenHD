@@ -113,6 +113,8 @@ setup: ## Setup project environment (installs uv + kconfiglib)
 		fi; \
 		if [ -f "$$UV" ]; then \
 			"$$UV" pip install --quiet -r requirements.txt 2>/dev/null || true; \
+		elif [ -f "$(VENV_PYTHON)" ]; then \
+			"$(VENV_PYTHON)" -m pip install --quiet -r requirements.txt 2>/dev/null || true; \
 		fi; \
 	fi
 	@if [ -e ".git" ]; then \
@@ -144,8 +146,7 @@ submodules:
 
 menuconfig: setup
 	@echo "Starting Menuconfig..."
-	@$(PYTHON) -m menuconfig
-	@$(MAKE) config
+	@bash $(SCRIPT_DIR)/menuconfig.sh
 
 config: setup ## Generate headers/cmake files from .config (supports overrides via SET="SYM1=VAL1 SYM2=VAL2")
 	@echo "Generating configuration files..."
@@ -269,8 +270,12 @@ portable:
 		armhf) triplet=arm-linux-gnueabihf ;; \
 		*) echo "Unsupported ARCH=$(ARCH). Use ARCH=arm64 or ARCH=armhf."; exit 1 ;; \
 	esac; \
-	POCO_DIR=$$(find $(SYSROOT)/usr -name PocoConfig.cmake -print -quit | xargs dirname) && \
-	 SDL2_DIR=$$(find $(SYSROOT)/usr \( -name sdl2-config.cmake -o -name SDL2Config.cmake \) -print -quit | xargs dirname) && \
+	POCO_CFG=$$(find $(SYSROOT)/usr -name PocoConfig.cmake -print -quit) && \
+	SDL2_CFG=$$(find $(SYSROOT)/usr \( -name sdl2-config.cmake -o -name SDL2Config.cmake \) -print -quit) && \
+	test -n "$$POCO_CFG" || { echo "Could not find PocoConfig.cmake under $(SYSROOT)/usr"; exit 1; }; \
+	test -n "$$SDL2_CFG" || { echo "Could not find an SDL2 CMake config under $(SYSROOT)/usr"; exit 1; }; \
+	POCO_DIR=$$(dirname "$$POCO_CFG") && \
+	SDL2_DIR=$$(dirname "$$SDL2_CFG") && \
 	 export OPENHD_ARTOSYN_FORCE_SOURCE_BUILD=1 OPENHD_SYSROOT="$(SYSROOT)" OPENHD_CROSS_TRIPLET="$$triplet" && \
 	 $(MAKE) build SET="OPENHD_ENABLE_ARTOSYN=y" EXTRA_CMAKE="-DCMAKE_TOOLCHAIN_FILE=$(OPENHD_SOURCE_DIR)/cmake/portable-linux-toolchain.cmake -DPoco_DIR=$$POCO_DIR -DSDL2_DIR=$$SDL2_DIR -DOPENHD_MPP_ONLY=OFF -DENABLE_LIBCAMERA=OFF" && \
 	 echo "Generating cross-build manifest..." && \

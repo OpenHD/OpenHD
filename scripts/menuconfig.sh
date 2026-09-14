@@ -2,10 +2,9 @@
 set -e
 
 # Check for kconfiglib
-python3 -c "import kconfiglib" 2>/dev/null
-if [ $? -ne 0 ]; then
+if ! python3 -c "import kconfiglib" 2>/dev/null; then
     echo "kconfiglib not found, installing..."
-    pip3 install kconfiglib
+    python3 -m pip install kconfiglib
 fi
 
 # Run menuconfig
