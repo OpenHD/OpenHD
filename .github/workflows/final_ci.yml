@@ -372,6 +372,13 @@ jobs:
         with:
           submodules: true
           token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+      - name: Checkout OpenHD SysUtils
+        uses: actions/checkout@v4
+        with:
+          repository: OpenHD/OpenHD-SysUtils
+          ref: dev-release
+          path: OpenHD-SysUtils
+          token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
       - name: Install SDK tooling
         run: |
           sudo apt-get update
@@ -396,14 +403,25 @@ jobs:
           bash ./scripts/build_orqa_iwconfig.sh \
             "${RUNNER_TEMP}/orqa-sdk" \
             "${GITHUB_WORKSPACE}/build-orqa/iwconfig"
+      - name: Cross-build OpenHD SysUtils for Orqa
+        run: |
+          source "${RUNNER_TEMP}/orqa-sdk/environment-setup-armv8a-poky-linux"
+          cmake -S OpenHD-SysUtils -B build-orqa-sysutils -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release
+          cmake --build build-orqa-sysutils --parallel "$(nproc)" \
+            --target openhd_sys_utils
+          "${READELF}" -h build-orqa-sysutils/openhd_sys_utils | \
+            grep -q 'Machine:.*AArch64'
+          "${STRIP}" --strip-unneeded build-orqa-sysutils/openhd_sys_utils
       - name: Bundle Orqa deploy package
         run: |
           deploy="${GITHUB_WORKSPACE}/build-orqa/deploy"
           mkdir -p "${deploy}/usr/lib/gstreamer-1.0"
 
           # Binaries
-          cp build-orqa/openhd   "${deploy}/"
-          cp build-orqa/iwconfig "${deploy}/"
+          cp build-orqa/openhd                       "${deploy}/"
+          cp build-orqa/iwconfig                     "${deploy}/"
+          cp build-orqa-sysutils/openhd_sys_utils    "${deploy}/"
 
           # Poco shared libraries  → /usr/lib
           unzip -o "${RUNNER_TEMP}/poco-libraries.zip"    -d "${deploy}/usr/lib/"
