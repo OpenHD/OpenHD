@@ -40,8 +40,11 @@ void WBLink::perform_nexmon_scan(
   progress.channel_width_mhz = 20;
   try {
     if (!m_profile.is_ground()) throw std::runtime_error("Air discovery requires Ground mode");
-    if (params.channel_widths_mask & actions.scan_channel_width_bit(10))
+    const auto bit10 = actions.scan_channel_width_bit(10);
+    if (params.channel_widths_mask == bit10)
       throw std::runtime_error("Internal Pi radio cannot scan 10 MHz waveforms");
+    if (params.channel_widths_mask & bit10)
+      m_console->warn("Internal Wi-Fi scan skips unsupported 10 MHz waveforms");
     openhd::NexmonScout scout;
     std::atomic<int> reported_frequency{0}, reported_width{0};
     auto rx = scout_receiver(true, m_scout_keypair);
@@ -60,20 +63,42 @@ void WBLink::perform_nexmon_scan(
     rx->rx_register_stream_handler(handler);
     const auto channels = openhd::wb::get_scan_channels_frequencies(
         m_broadcast_cards.at(0), params.channels_to_scan);
+    if (channels.empty()) throw std::runtime_error("No channels to scan");
+    size_t tuned_channels = 0;
     for (size_t i = 0; i < channels.size(); ++i) {
       const auto frequency = channels[i].frequency;
       progress.channel_mhz = frequency;
       progress.progress = OHDUtil::calculate_progress_perc(i, channels.size());
       actions.add_scan_channels_progress(progress);
-      if (!scout.tune(frequency)) continue;
+      if (!scout.tune(frequency)) {
+        m_console->debug("Internal Wi-Fi cannot scan {} MHz", frequency);
+        continue;
+      }
+      ++tuned_channels;
       // Close/reopen receive handles after tuning so old buffered packets
       // cannot announce an air unit on a different candidate frequency.
       reported_frequency = 0;
       reported_width = 0;
+      rx->rx_reset_stats();
       if (!rx->restart_interfaces({{openhd::NexmonScout::monitor_interface, 0}}))
         throw std::runtime_error("Cannot reopen scout capture");
       std::this_thread::sleep_for(std::chrono::seconds(2));
+      // A fresh scout must receive a session key before management payloads
+      // can be authenticated. Allow the same extra time as the primary scan
+      // when we see likely OpenHD traffic but have no announcement yet.
+      if (rx->get_rx_stats().curr_n_likely_openhd_packets > 0) {
+        const auto deadline = std::chrono::steady_clock::now() +
+                              std::chrono::seconds(5);
+        while (reported_frequency != frequency &&
+               std::chrono::steady_clock::now() < deadline)
+          std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      }
       rx->stop_receiving();
+      const auto received = rx->get_rx_stats();
+      m_console->debug("Internal Wi-Fi {} MHz: {} packets, {} likely OpenHD, {} authenticated, air reports {} MHz @ {} MHz",
+                       frequency, received.count_p_any,
+                       received.curr_n_likely_openhd_packets, received.count_p_valid,
+                       reported_frequency.load(), reported_width.load());
       if (reported_frequency == frequency && reported_width > 0) {
         progress.success = true;
         progress.channel_width_mhz = reported_width;
@@ -82,6 +107,8 @@ void WBLink::perform_nexmon_scan(
     }
     rx.reset();
     if (!scout.restore()) throw std::runtime_error("Internal Wi-Fi restoration failed");
+    if (!tuned_channels)
+      throw std::runtime_error("No requested channels are available on the internal radio");
     if (progress.success) {
       // Only the successful, authenticated discovery changes the video radio.
       if (!apply_frequency_and_channel_width(progress.channel_mhz,

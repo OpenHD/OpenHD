@@ -720,12 +720,14 @@ void OHDMainComponent::process_command_self(
       m_console->debug("OPENHD_CMD_INITIATE_CHANNEL_SEARCH {}",
                        channels_to_scan);
       bool success = false;
-      if (channels_to_scan == 0 || channels_to_scan == 1 ||
-          channels_to_scan == 2) {
+      if ((channels_to_scan == 0 || channels_to_scan == 1 ||
+           channels_to_scan == 2) &&
+          (command.param3 == 0.0f || command.param3 == 1.0f)) {
         if (openhd::LinkActionHandler::instance().wb_cmd_scan_channels) {
           openhd::LinkActionHandler::ScanChannelsParam scanChannelsParam{};
           scanChannelsParam.channels_to_scan = channels_to_scan;
           scanChannelsParam.channel_widths_mask = channel_widths_mask;
+          scanChannelsParam.use_nexmon = command.param3 == 1.0f;
           success = openhd::LinkActionHandler::instance().wb_cmd_scan_channels(
               scanChannelsParam);
         }

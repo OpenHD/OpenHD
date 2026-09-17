@@ -15,23 +15,26 @@ Devourer radios are discovered directly on USB, so no vendor kernel module or
 network interface is required. If a kernel module did bind first, OpenHD uses
 the netdev only to select the physical adapter, then Devourer detaches the
 driver and claims the USB interface. Channel and power changes are applied
-through Devourer's runtime API, and the kernel driver is reattached during a
-clean shutdown where the platform supports it.
+through Devourer's runtime API. OpenHD does not reattach the kernel driver on
+shutdown.
 
-OpenHD performs a read-only SYS_CFG2/PID probe using Devourer's supported USB
-IDs and silicon-identification method. This leaves the upstream Devourer
-submodule unchanged while distinguishing devices that share a USB ID, including
-RTL8812AU and RTL8812EU variants using `0bda:8812`. The detected chip,
-generation, and chip ID are written to the Wi-Fi manifest. Broadcast admission
-is controlled by the `kDevourerCardPolicies` table in
-`wifi_card_discovery.cpp`:
+OpenHD performs a read-only SYS_CFG2/PID probe. It considers known USB IDs,
+other Realtek-VID devices, and OEM adapters already identified as Realtek
+netdevs; Jaguar chips are admitted only after the silicon ID confirms them.
+This distinguishes devices that share a USB ID, including RTL8812AU and
+RTL8812EU variants using `0bda:8812`. The detected chip, generation, and chip
+ID are written to the Wi-Fi manifest. Every Devourer-supported multi-chain USB
+radio is eligible for broadcast. Known 1T1R families and known RTL8811AU USB
+identities are excluded during discovery. After initialization OpenHD requires
+at least two TX/RX chains plus STBC and LDPC transmit capability. The shared
+RTL8812A/RTL8811A chip ID `0x04` is allowed through discovery, so a genuine
+RTL8812AU is not wrongly rejected; an actual 1T1R cut cannot pass the radio
+capability check because it cannot transmit STBC.
 
-| Devourer chip | OpenHD broadcast default |
-| --- | --- |
-| RTL8812A / RTL8814A | Enabled (known RTL8811AU 1T1R USB IDs are denied) |
-| RTL8822B / RTL8822C / RTL8822E | Enabled |
-| RTL8852B / RTL8852C | Enabled |
-| RTL8821A / RTL8821C / RTL8733B | Disabled (1T1R) |
+For Devourer broadcast, OpenHD forces STBC1 and LDPC on for data and session
+key transmissions, including when persisted settings previously disabled them.
+Runtime attempts to turn either feature off are rejected. Legacy-rate control
+frames (such as the FHSS marker) do not carry HT STBC/LDPC fields.
 
 Qualcomm, Ralink, and other non-Devourer adapters are never selected for
 wifibroadcast. When they expose a normal kernel network interface they remain
@@ -41,9 +44,13 @@ Build-time and runtime controls:
 
 - `OPENHD_ENABLE_DEVOURER=ON` (the CMake default) builds the backend. Set it to
   `OFF` for images that intentionally exclude Devourer.
-- `OPENHD_WB_BACKEND=linux` selects the legacy monitor-mode pcap/raw-socket
-  backend. `OPENHD_WB_BACKEND=devourer` or an unset value selects Devourer for
-  supported Realtek cards and falls back to Linux for other hardware.
+- Supported Realtek broadcast radios require Devourer. If it is not built,
+  USB probing fails, or a card is not admitted, Wi-Fi broadcast remains
+  unavailable rather than selecting a kernel Realtek driver. This also applies
+  to manually selected cards and `OPENHD_WB_BACKEND=linux|kernel|pcap`.
+  Realtek kernel netdevs are not selected for hotspot use either. This is an
+  OpenHD selection rule, not a boot-time kernel module blacklist; deployments
+  that must prevent kernel binding altogether must also configure their image.
 
 The dependency is a git submodule. Initialize it together with the existing
 OpenHD submodules using `git submodule update --init --recursive`. Devourer

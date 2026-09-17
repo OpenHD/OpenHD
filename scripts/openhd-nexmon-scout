@@ -6,6 +6,7 @@ Installed firmware and module files are never replaced. Root, NetworkManager,
 systemd and iw are required. The restore timer also covers an OpenHD crash.
 """
 import argparse
+import base64
 import fcntl
 import json
 import os
@@ -13,6 +14,7 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
+import struct
 import time
 
 BUNDLE = Path('/usr/local/lib/openhd/nexmon')
@@ -94,6 +96,7 @@ def start():
                  uuid=run('nmcli', '-g', 'GENERAL.CON-UUID', 'device', 'show', name),
                  managed=run('nmcli', '-g', 'GENERAL.NM-MANAGED', 'device', 'show', name),
                  up=bool(int((Path('/sys/class/net')/name/'flags').read_text(), 16) & 1))
+    state['bundle'] = str(BUNDLE.resolve())
     STATE.write_text(json.dumps(state))
     try:
         run('systemctl', 'stop', UNIT+'.timer', check=False)
@@ -148,20 +151,63 @@ def tune(frequency):
         raise RuntimeError('Nexmon frequency readback mismatch')
 
 
+def probe(frequency):
+    """Attempt a bounded experimental tune and expose firmware errors."""
+    if not STATE.exists():
+        raise RuntimeError('No active internal-radio survey')
+    state = json.loads(STATE.read_text())
+    bundle = Path(state.get('bundle', str(BUNDLE)))
+    manifest = json.loads((bundle/'manifest.json').read_text())
+    if manifest.get('extended_probe_ioctl') != 512 or frequency not in \
+            manifest.get('extended_probe_frequencies_mhz', []):
+        raise RuntimeError('Frequency is not in the experimental probe bundle')
+    if frequency not in (5825, 5845, 5865, 5885, 5905, 5925):
+        raise RuntimeError('Unsupported initial probe frequency')
+    requested = 0xd000 | ((frequency-5000)//5)
+    encoded = run(str(bundle/'nexutil'), '-I'+radio(), '-g512', '-l28',
+                  '-i', '-v'+str(requested), '-R', timeout=5)
+    raw = base64.b64decode(encoded, validate=True)
+    if len(raw) != 28:
+        raise RuntimeError('Invalid experimental firmware reply length')
+    magic, echoed, lookup_ret, phy_frequency, set_ret, get_ret, current = \
+        struct.unpack('<IIiiiiI', raw)
+    if magic != 0x4f484450 or echoed != requested:
+        raise RuntimeError('Experimental firmware reply is missing or mismatched')
+    matched = (phy_frequency == frequency and set_ret == 0 and get_ret == 0 and
+               current == requested)
+    iw_info = run('iw', 'dev', MONITOR, 'info', check=False)
+    iw_matched = f'({frequency} MHz)' in iw_info
+    return dict(frequency_mhz=frequency, requested_chanspec=requested,
+                phy_lookup_return=lookup_ret, phy_frequency_mhz=phy_frequency,
+                firmware_set_return=set_ret, firmware_get_return=get_ret,
+                current_chanspec=current, firmware_matched=matched,
+                iw_matched=iw_matched, capture_ready=matched and iw_matched,
+                iw_info=iw_info)
+
+
 def main():
+    global BUNDLE
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('operation', choices=['start', 'restore', 'tune'])
+    parser.add_argument('operation', choices=['start', 'restore', 'tune', 'probe'])
     parser.add_argument('frequency', nargs='?', type=int)
+    parser.add_argument('--bundle', type=Path,
+                        help='Alternate bundle for an explicit experimental lease')
     args = parser.parse_args()
     if os.geteuid() != 0:
         parser.error('Run as root')
+    if args.bundle:
+        if args.operation != 'start':
+            parser.error('--bundle is only valid with start')
+        BUNDLE = args.bundle.resolve()
     with open('/run/openhd-nexmon-scout.lock', 'w') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         if args.operation == 'start':
             start()
         elif args.operation == 'restore':
             restore()
-        elif args.frequency is not None:
+        elif args.operation == 'probe' and args.frequency is not None:
+            print(json.dumps(probe(args.frequency)))
+        elif args.operation == 'tune' and args.frequency is not None:
             tune(args.frequency)
         else:
             parser.error('tune requires a frequency in MHz')

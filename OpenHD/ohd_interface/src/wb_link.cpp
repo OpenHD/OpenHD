@@ -453,6 +453,16 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
   txrx_options.use_devourer =
       openhd::wb::use_devourer_backend(m_broadcast_cards);
   if (txrx_options.use_devourer) {
+    // Devourer broadcast always uses STBC1 + LDPC. Override stale persisted
+    // settings before either data or session-key radiotap header is built.
+    auto& radio_settings = m_settings->unsafe_get_settings();
+    if (radio_settings.wb_enable_stbc != 1 ||
+        !radio_settings.wb_enable_ldpc) {
+      radio_settings.wb_enable_stbc = 1;
+      radio_settings.wb_enable_ldpc = true;
+      m_settings->persist();
+      m_console->info("Devourer requires STBC1 and LDPC for broadcast TX");
+    }
     const auto settings = m_settings->get_settings();
     txrx_options.devourer_frequency_mhz = settings.wb_frequency;
     txrx_options.devourer_channel_width_mhz =
@@ -1145,6 +1155,14 @@ bool WBLink::set_dev_air_set_high_retransmit_count(int value) {
 }
 bool WBLink::request_start_scan_channels(
     openhd::LinkActionHandler::ScanChannelsParam scan_channels_params) {
+  if (scan_channels_params.use_nexmon &&
+      (!openhd::NexmonScout::installed() ||
+       !(scan_channels_params.channel_widths_mask &
+         (openhd::LinkActionHandler::scan_channel_width_bit(20) |
+          openhd::LinkActionHandler::scan_channel_width_bit(40))))) {
+    m_console->warn("Passive scan requires Nexmon and a 20/40 MHz scan width");
+    return false;
+  }
   auto work_item = std::make_shared<WorkItem>(
       "SCAN_CHANNELS",
       [this, scan_channels_params]() {
@@ -1848,6 +1866,10 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
     // STBC - definitely for advanced users, but aparently it can have benefits.
     auto cb_wb_enable_stbc = [this](std::string, int stbc) {
       if (stbc < 0 || stbc > 3) return false;
+      if (m_wb_txrx->uses_devourer() && stbc != 1) {
+        m_console->warn("Devourer broadcast requires STBC1");
+        return false;
+      }
       m_settings->unsafe_get_settings().wb_enable_stbc = stbc;
       m_settings->persist();
       m_tx_header_1->update_stbc(stbc);
@@ -1861,6 +1883,10 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
     // QOpenHD to prevent inexperienced users from changing them
     auto cb_wb_enable_ldpc = [this](std::string, int ldpc) {
       if (!validate_yes_or_no(ldpc)) return false;
+      if (m_wb_txrx->uses_devourer() && ldpc != 1) {
+        m_console->warn("Devourer broadcast requires LDPC");
+        return false;
+      }
       m_settings->unsafe_get_settings().wb_enable_ldpc = ldpc;
       m_settings->persist();
       m_tx_header_1->update_ldpc(ldpc);
@@ -2656,7 +2682,7 @@ openhd::WifiSpace WBLink::get_current_frequency_channel_space() const {
 
 void WBLink::perform_channel_scan(
     const openhd::LinkActionHandler::ScanChannelsParam& scan_channels_params) {
-  if (openhd::NexmonScout::installed()) {
+  if (scan_channels_params.use_nexmon) {
     perform_nexmon_scan(scan_channels_params);
     return;
   }

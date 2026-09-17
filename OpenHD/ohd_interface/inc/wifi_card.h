@@ -253,16 +253,13 @@ struct WiFiCard {
   // adapters (including Qualcomm and Ralink) remain available for hotspot and
   // normal networking roles.
   [[nodiscard]] bool supports_openhd_wifibroadcast() const {
-    const bool kernel_backend_supported =
-        type == WiFiCardType::OPENHD_RTL_88X2AU ||
-           type == WiFiCardType::OPENHD_RTL_88X2BU ||
-           type == WiFiCardType::OPENHD_RTL_88X2CU ||
-           type == WiFiCardType::OPENHD_RTL_88X2EU ||
-           type == WiFiCardType::OPENHD_EMULATED;
+    // Never fall back to a kernel Realtek radio when USB probing or Devourer
+    // initialization fails. Emulation is the only non-Devourer WB card.
+    if (type == WiFiCardType::OPENHD_EMULATED) return true;
 #ifdef OHD_ENABLE_DEVOURER
-    return kernel_backend_supported || devourer_wb_enabled;
+    return devourer_wb_enabled;
 #else
-    return kernel_backend_supported;
+    return false;
 #endif
   };
   // Returns true if the given card is exatly rtl8812au on x20 (custom HW) and

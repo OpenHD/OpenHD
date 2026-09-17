@@ -45,9 +45,12 @@ bool openhd::wb::use_devourer_backend(const std::vector<WiFiCard>& cards) {
   if (const char* configured = std::getenv("OPENHD_WB_BACKEND")) {
     const auto value = OHDUtil::to_uppercase(std::string(configured));
     if (value == "LINUX" || value == "KERNEL" || value == "PCAP") {
-      return false;
+      openhd::log::get_default()->warn(
+          "OPENHD_WB_BACKEND={} cannot select a kernel Realtek radio; "
+          "using Devourer for admitted cards", value);
     }
-    if (value != "DEVOURER" && value != "AUTO") {
+    if (value != "DEVOURER" && value != "AUTO" && value != "LINUX" &&
+        value != "KERNEL" && value != "PCAP") {
       openhd::log::get_default()->warn(
           "Unknown OPENHD_WB_BACKEND={}, using automatic selection", value);
     }

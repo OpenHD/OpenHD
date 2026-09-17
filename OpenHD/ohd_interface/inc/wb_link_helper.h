@@ -75,8 +75,8 @@ bool set_frequency_and_channel_width_for_all_cards(
     uint32_t frequency, uint32_t channel_width,
     const std::vector<WiFiCard>& m_broadcast_cards, bool is_air_unit);
 
-// Devourer is the default for supported Realtek USB radios when it was built
-// in. Set OPENHD_WB_BACKEND=linux to retain the legacy kernel/pcap path.
+// Devourer is the only broadcast backend for Realtek USB radios. A kernel
+// backend override cannot re-enable Realtek kernel-driver fallback.
 bool use_devourer_backend(const std::vector<WiFiCard>& cards);
 
 void set_tx_power_for_card(int tx_power_mw,

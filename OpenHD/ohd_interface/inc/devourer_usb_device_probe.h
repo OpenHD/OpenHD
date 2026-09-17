@@ -42,12 +42,14 @@ struct UsbDeviceProbe {
 // Pure classification entry point, also useful to tests and callers which
 // already obtained SYS_CFG2 themselves.
 std::optional<UsbDeviceProbe> classify_usb_device(uint16_t vid, uint16_t pid,
-                                                  uint8_t chip_id);
+                                                  uint8_t chip_id,
+                                                  bool realtek_netdev = false);
 
 // Returns nullopt for USB IDs outside Devourer's device set. For a known USB
 // ID which cannot currently be opened/read, returns an Unknown probe so callers
 // can keep it out of a radio role without guessing its silicon from the PID.
-std::optional<UsbDeviceProbe> probe_usb_device(libusb_device *device);
+std::optional<UsbDeviceProbe> probe_usb_device(libusb_device *device,
+                                                bool realtek_netdev = false);
 
 }  // namespace devourer
 

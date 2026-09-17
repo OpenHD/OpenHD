@@ -33,6 +33,37 @@ bool is_known_jaguar_usb_id(const uint16_t vid, const uint16_t pid) {
     case 0x0bdaa81a:
     case 0x0bdae822:
     case 0x0bdaa82a:
+    // RTL8812AU rebrands supported by the legacy USB driver. We still read
+    // SYS_CFG2 below: a matching VID:PID alone never admits a broadcast card.
+    case 0x04090408:
+    case 0x0411025d:
+    case 0x04bb0952:
+    case 0x050d1106:
+    case 0x050d1109:
+    case 0x05863426:
+    case 0x0789016e:
+    case 0x07b88812:
+    case 0x08469051:
+    case 0x0b0517d2:
+    case 0x0df60074:
+    case 0x0e660022:
+    case 0x10580632:
+    case 0x13b1003f:
+    case 0x148f9097:
+    case 0x17400100:
+    case 0x2001330e:
+    case 0x20013313:
+    case 0x20013315:
+    case 0x20013316:
+    case 0x2019ab30:
+    case 0x20f4805b:
+    case 0x23570101:
+    case 0x23570103:
+    case 0x2357010d:
+    case 0x2357010e:
+    case 0x2357010f:
+    case 0x26040012:
+    case 0x7392a822:
     case 0x2357011e:
     case 0x23570120:
     case 0x23570122:
@@ -135,7 +166,8 @@ UsbDeviceProbe make_probe(const uint16_t vid, const uint16_t pid,
 
 std::optional<UsbDeviceProbe> classify_usb_device(const uint16_t vid,
                                                   const uint16_t pid,
-                                                  const uint8_t chip_id) {
+                                                  const uint8_t chip_id,
+                                                  const bool realtek_netdev) {
   if (const auto variant = kestrel::variant_for_usb_id(vid, pid)) {
     if (*variant == kestrel::ChipVariant::C8852B) {
       return make_probe(vid, pid, chip_id, UsbChip::Rtl8852B,
@@ -147,7 +179,11 @@ std::optional<UsbDeviceProbe> classify_usb_device(const uint16_t vid,
                       "RTL8852CU/RTL8832CU");
   }
   const bool known_8733 = rtl8733b::is_usb_id(vid, pid);
-  if (!known_8733 && !is_known_jaguar_usb_id(vid, pid)) return std::nullopt;
+  // Devourer's Jaguar factory dispatches by silicon ID, not USB PID. Probe
+  // any Realtek VID or a device already known as a Realtek kernel netdev, so
+  // new OEM rebrands do not need an OpenHD-specific USB-ID update.
+  if (!known_8733 && !is_known_jaguar_usb_id(vid, pid) && vid != 0x0bda &&
+      !realtek_netdev) return std::nullopt;
   switch (chip_id) {
     case 0x04:
       return make_probe(vid, pid, chip_id, UsbChip::Rtl8812A,
@@ -184,14 +220,16 @@ std::optional<UsbDeviceProbe> classify_usb_device(const uint16_t vid,
   }
 }
 
-std::optional<UsbDeviceProbe> probe_usb_device(libusb_device *device) {
+std::optional<UsbDeviceProbe> probe_usb_device(libusb_device *device,
+                                                const bool realtek_netdev) {
   if (!device) return std::nullopt;
   libusb_device_descriptor descriptor{};
   if (libusb_get_device_descriptor(device, &descriptor) != 0) {
     return std::nullopt;
   }
   const auto known = classify_usb_device(descriptor.idVendor,
-                                         descriptor.idProduct, 0);
+                                         descriptor.idProduct, 0,
+                                         realtek_netdev);
   if (!known) return std::nullopt;
   if (known->chip != UsbChip::Unknown) return known;  // Kestrel is PID-gated.
 
@@ -206,7 +244,7 @@ std::optional<UsbDeviceProbe> probe_usb_device(libusb_device *device) {
   }
   libusb_close(handle);
   return classify_usb_device(descriptor.idVendor, descriptor.idProduct,
-                             chip_id);
+                             chip_id, realtek_netdev);
 }
 
 }  // namespace devourer

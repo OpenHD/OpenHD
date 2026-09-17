@@ -169,6 +169,8 @@ class LinkActionHandler {
     // Bitmask of channel widths to scan for (10/20/40/80).
     // Use scan_channel_width_bit(width_mhz) to construct.
     uint32_t channel_widths_mask = 0;
+    // COMMAND_LONG param3: 0 = primary radio, 1 = passive Nexmon scout.
+    bool use_nexmon = false;
   };
   std::function<bool(ScanChannelsParam)> wb_cmd_scan_channels = nullptr;
 
