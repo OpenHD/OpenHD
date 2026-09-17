@@ -376,7 +376,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            autoconf automake curl libtool ninja-build pkg-config xz-utils zip
+            autoconf automake curl libtool ninja-build pkg-config unzip xz-utils zip
       - name: Install Orqa SDK and dependencies
         run: |
           mkdir -p "${RUNNER_TEMP}/orqa-sdk"
@@ -396,17 +396,43 @@ jobs:
           bash ./scripts/build_orqa_iwconfig.sh \
             "${RUNNER_TEMP}/orqa-sdk" \
             "${GITHUB_WORKSPACE}/build-orqa/iwconfig"
+      - name: Bundle Orqa deploy package
+        run: |
+          deploy="${GITHUB_WORKSPACE}/build-orqa/deploy"
+          mkdir -p "${deploy}/usr/lib/gstreamer-1.0"
+
+          # Binaries
+          cp build-orqa/openhd   "${deploy}/"
+          cp build-orqa/iwconfig "${deploy}/"
+
+          # Poco shared libraries  → /usr/lib
+          unzip -o "${RUNNER_TEMP}/poco-libraries.zip"    -d "${deploy}/usr/lib/"
+
+          # libsodium shared library → /usr/lib
+          unzip -o "${RUNNER_TEMP}/libsodium-libraries.zip" -d "${deploy}/usr/lib/"
+
+          # gst-perf plugin (zipped as usr/lib/gstreamer-1.0/libgstperf.so)
+          unzip -o "${RUNNER_TEMP}/gst-perf-plugin.zip"   -d "${deploy}/"
+
+          # Manifest of runtime deps for the openhd binary
+          cp build-orqa/openhd-needed.txt   "${deploy}/"
+          cp build-orqa/gst-perf-needed.txt "${deploy}/"
+
+          # Pack everything into one tarball for easy scp-to-board deployment
+          tar -czf "${GITHUB_WORKSPACE}/build-orqa/openhd-orqa-deploy.tar.gz" \
+            -C "${deploy}" .
+
+          echo "=== Deploy package contents ==="
+          tar -tzf "${GITHUB_WORKSPACE}/build-orqa/openhd-orqa-deploy.tar.gz"
+
       - uses: actions/upload-artifact@v4
         with:
           name: openhd-orqa
           path: |
-            build-orqa/openhd
-            build-orqa/iwconfig
+            build-orqa/openhd-orqa-deploy.tar.gz
             build-orqa/openhd-needed.txt
             build-orqa/gst-perf-needed.txt
-            ${{ runner.temp }}/poco-libraries.zip
-            ${{ runner.temp }}/libsodium-libraries.zip
-            ${{ runner.temp }}/gst-perf-plugin.zip
+          if-no-files-found: error
 
   trigger-images:
     name: trigger-image-matrix
