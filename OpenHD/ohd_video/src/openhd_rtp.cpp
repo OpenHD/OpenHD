@@ -113,7 +113,7 @@ void openhd::RTPHelper::set_out_cb(openhd::RTPHelper::OUT_CB cb) {
 }
 
 void openhd::RTPHelper::on_new_split_nalu(const uint8_t* data, int data_len) {
-  NALU nalu(data, data_len);
+  NALU nalu(data, data_len, m_is_h265);
   // m_console->debug("Got new NAL {}
   // {}",data_len,nalu.get_nal_unit_type_as_string()); if(nalu.is_sei())return;
   if (m_config_finder.all_config_available(m_is_h265)) {

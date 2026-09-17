@@ -29,6 +29,9 @@
 #include "camera_discovery.h"
 #include "camera_enums.hpp"
 #include "libcamera_app_stream.h"
+#ifdef OPENHD_NXP_V4L2_PRESENT
+#include "nxp_v4l2_stream.h"
+#endif
 #ifdef OPENHD_GSTREAMER_PRESENT
 #include "gstaudiostream.h"
 #include "gstreamerstream.h"
@@ -160,6 +163,14 @@ void OHDVideoAir::configure(
         this->on_video_data(stream_index, fragmented_video_frame);
       };
   std::shared_ptr<CameraStream> stream;
+#ifdef OPENHD_NXP_V4L2_PRESENT
+  if (camera.requires_orqa_pipeline() ||
+      camera.requires_nxp_imx8_v4l2_pipeline()) {
+    m_console->info("Native NXP V4L2 stream for Camera index:{}",
+                    camera.index);
+    stream = std::make_shared<NxpV4l2Stream>(camera_holder, frame_cb);
+  } else
+#endif
 #ifdef OPENHD_ROCKCHIP_MPP_PRESENT
   if ((camera.requires_rockchip1126_mpp_csi_pipeline() ||
        camera.requires_rockchip1126_mpp_testsrc_pipeline()) &&

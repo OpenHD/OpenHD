@@ -73,6 +73,7 @@ if(ENABLE_AIR)
     list(APPEND sources
             src/camerastream.cpp
             src/camera_discovery.cpp
+            src/nxp_v4l2_stream.cpp
             src/ip_camera_network.cpp
             src/ohd_video_air.cpp
             src/rtp_eof_helper.cpp
@@ -82,6 +83,7 @@ if(ENABLE_AIR)
             src/usb_thermal_cam_helper.cpp
             src/libcamera_app_stream.cpp
     )
+    target_compile_definitions(OHDVideoLib PUBLIC OPENHD_NXP_V4L2_PRESENT)
 
     if(ENABLE_GSTREAMER AND NOT OPENHD_MPP_ONLY)
         list(APPEND sources src/gstreamerstream.cpp src/gstaudiostream.cpp src/gst_video_output.cpp)
@@ -188,3 +190,9 @@ add_executable(test_audio test/test_audio.cpp)
 target_link_libraries(test_audio OHDVideoLib)
 add_executable(openhd_lan_test test/openhd_lan_test.cpp)
 target_link_libraries(openhd_lan_test OHDVideoLib)
+if(ENABLE_AIR)
+    add_executable(test_nxp_v4l2
+            test/test_nxp_v4l2.cpp
+            ../ohd_common/src/config_paths.cpp)
+    target_link_libraries(test_nxp_v4l2 OHDVideoLib)
+endif()
