@@ -38,26 +38,6 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
     dualcam_primary_video_allocated_bandwidth_perc, primary_camera_type,
     secondary_camera_type, enable_audio, ip_camera_bitrate_mbits);
 
-std::optional<AirCameraGenericSettings>
-AirCameraGenericSettingsHolder::impl_deserialize(
-    const std::string &file_as_string) const {
-  auto parsed = openhd_json_parse<AirCameraGenericSettings>(file_as_string);
-  if (parsed.has_value() && OHDPlatform::instance().is_rpi5() &&
-      parsed->primary_camera_type == X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI) {
-    openhd::log::get_default()->warn(
-        "Pi 5 does not support the legacy MMAL camera pipeline; manual camera "
-        "selection is required");
-    parsed->primary_camera_type = X_CAM_TYPE_DUMMY_SW;
-  }
-  return parsed;
-}
-
-std::string AirCameraGenericSettingsHolder::imp_serialize(
-    const AirCameraGenericSettings &data) const {
-  const nlohmann::json tmp = data;
-  return tmp.dump(4);
-}
-
 struct SysutilCameraOverrides {
   std::optional<int> primary;
   std::optional<int> secondary;
@@ -86,6 +66,40 @@ static SysutilCameraOverrides get_sysutil_camera_overrides() {
         settings_opt->ip_camera_bitrate_mbits;
   }
   return overrides;
+}
+
+std::optional<AirCameraGenericSettings>
+AirCameraGenericSettingsHolder::impl_deserialize(
+    const std::string &file_as_string) const {
+  auto parsed = openhd_json_parse<AirCameraGenericSettings>(file_as_string);
+  if (!parsed.has_value()) {
+    return parsed;
+  }
+  const auto sysutil_overrides = get_sysutil_camera_overrides();
+  if (sysutil_overrides.primary.has_value()) {
+    parsed->primary_camera_type = *sysutil_overrides.primary;
+  }
+  if (sysutil_overrides.secondary.has_value()) {
+    parsed->secondary_camera_type = *sysutil_overrides.secondary;
+  }
+  if (sysutil_overrides.ip_camera_bitrate_mbits.has_value()) {
+    parsed->ip_camera_bitrate_mbits =
+        *sysutil_overrides.ip_camera_bitrate_mbits;
+  }
+  if (parsed.has_value() && OHDPlatform::instance().is_rpi5() &&
+      parsed->primary_camera_type == X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI) {
+    openhd::log::get_default()->warn(
+        "Pi 5 does not support the legacy MMAL camera pipeline; manual camera "
+        "selection is required");
+    parsed->primary_camera_type = X_CAM_TYPE_DUMMY_SW;
+  }
+  return parsed;
+}
+
+std::string AirCameraGenericSettingsHolder::imp_serialize(
+    const AirCameraGenericSettings &data) const {
+  const nlohmann::json tmp = data;
+  return tmp.dump(4);
 }
 
 static int rpi_get_default_primary_cam_type() {
@@ -161,7 +175,7 @@ AirCameraGenericSettings AirCameraGenericSettingsHolder::create_default()
              X_PLATFORM_TYPE_QUALCOMM_QRB5165) {
     ret.primary_camera_type = X_CAM_TYPE_QC_IMX577;
   } else if (OHDPlatform::instance().platform_type == X_PLATFORM_TYPE_ORQA) {
-    ret.primary_camera_type = X_CAM_TYPE_ORQA_ORCA_DIGITAL_V2;
+    ret.primary_camera_type = X_CAM_TYPE_ORQA_REKINDLE;
   } else if (OHDPlatform::instance().platform_type ==
              X_PLATFORM_TYPE_NXP_IMX8) {
     ret.primary_camera_type = X_CAM_TYPE_NXP_IMX8_OS08A20;
