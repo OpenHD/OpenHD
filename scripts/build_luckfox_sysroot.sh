@@ -155,7 +155,9 @@ export RANLIB="${SDK_PATH}/vendor-toolchain/bin/arm-rockchip830-linux-uclibcgnue
 export READELF="${SDK_PATH}/vendor-toolchain/bin/arm-rockchip830-linux-uclibcgnueabihf-readelf"
 export STRIP="${SDK_PATH}/vendor-toolchain/bin/arm-rockchip830-linux-uclibcgnueabihf-strip"
 
-if [[ -d "${SDK_PATH}/arm-rockchip830-linux-uclibcgnueabihf/sysroot" ]]; then
+if [[ -d "${SDK_PATH}/arm-buildroot-linux-uclibcgnueabihf/sysroot" ]]; then
+  export STAGING_DIR="${SDK_PATH}/arm-buildroot-linux-uclibcgnueabihf/sysroot"
+elif [[ -d "${SDK_PATH}/arm-rockchip830-linux-uclibcgnueabihf/sysroot" ]]; then
   export STAGING_DIR="${SDK_PATH}/arm-rockchip830-linux-uclibcgnueabihf/sysroot"
 elif [[ -d "${SDK_PATH}/sysroot" ]]; then
   export STAGING_DIR="${SDK_PATH}/sysroot"
@@ -177,7 +179,9 @@ get_filename_component(RELOCATED_HOST_DIR "${CMAKE_CURRENT_LIST_DIR}/../.." ABSO
 set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_SYSTEM_PROCESSOR arm)
 
-if(EXISTS "${RELOCATED_HOST_DIR}/arm-rockchip830-linux-uclibcgnueabihf/sysroot")
+if(EXISTS "${RELOCATED_HOST_DIR}/arm-buildroot-linux-uclibcgnueabihf/sysroot")
+  set(CMAKE_SYSROOT "${RELOCATED_HOST_DIR}/arm-buildroot-linux-uclibcgnueabihf/sysroot")
+elseif(EXISTS "${RELOCATED_HOST_DIR}/arm-rockchip830-linux-uclibcgnueabihf/sysroot")
   set(CMAKE_SYSROOT "${RELOCATED_HOST_DIR}/arm-rockchip830-linux-uclibcgnueabihf/sysroot")
 elseif(EXISTS "${RELOCATED_HOST_DIR}/sysroot")
   set(CMAKE_SYSROOT "${RELOCATED_HOST_DIR}/sysroot")

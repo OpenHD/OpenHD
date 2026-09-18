@@ -30,6 +30,17 @@ test -f "${sdk_dir}/share/buildroot/toolchainfile.cmake"
 # shellcheck disable=SC1091
 source "${sdk_dir}/environment-setup"
 
+# The Luckfox Buildroot host tree uses its canonical GNU tuple for the sysroot,
+# while the vendor compiler uses Rockchip's tuple. Older published SDK setup
+# scripts only checked the latter and silently pointed pkg-config at the SDK
+# root, hiding target packages such as libusb that were present in the archive.
+if [[ -d "${sdk_dir}/arm-buildroot-linux-uclibcgnueabihf/sysroot" ]]; then
+  export STAGING_DIR="${sdk_dir}/arm-buildroot-linux-uclibcgnueabihf/sysroot"
+  export PKG_CONFIG_SYSROOT_DIR="${STAGING_DIR}"
+  export PKG_CONFIG_LIBDIR="${STAGING_DIR}/usr/lib/pkgconfig:${STAGING_DIR}/usr/share/pkgconfig"
+  export CMAKE_PREFIX_PATH="${STAGING_DIR}/usr"
+fi
+
 test "${ARCH}" = "arm"
 test "${CROSS_COMPILE}" = "arm-rockchip830-linux-uclibcgnueabihf-"
 command -v "${CC}" >/dev/null
@@ -43,6 +54,7 @@ toolchain_file="${sdk_dir}/share/buildroot/toolchainfile.cmake"
 
 cmake -S "${repo_root}/OpenHD" -B "${build_dir}" \
   -DCMAKE_TOOLCHAIN_FILE="${toolchain_file}" \
+  -DCMAKE_SYSROOT="${STAGING_DIR}" \
   -DCMAKE_BUILD_TYPE=Release \
   -DENABLE_USB_CAMERAS=OFF \
   -DBUILD_SHARED_LIBS=OFF \
