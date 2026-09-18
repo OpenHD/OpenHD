@@ -6,6 +6,20 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 sdk_dir="$(realpath "${1:?${usage}}")"
 output_dir="$(realpath -m "${2:?${usage}}")"
 
+location_file="${sdk_dir}/share/buildroot/sdk-location"
+if [[ -x "${sdk_dir}/relocate-sdk.sh" && ! -r "${location_file}" ]]; then
+  # The first published cache copied Buildroot's relocation script after it
+  # copied the host tree, but omitted the location marker generated alongside
+  # that script. Recover the original host prefix from pkg-config so the
+  # verified cached SDK remains usable without rebuilding it.
+  pkgconfig_file="${sdk_dir}/lib/pkgconfig/zlib.pc"
+  test -r "${pkgconfig_file}"
+  previous_sdk_dir="$(sed -n 's/^prefix=//p' "${pkgconfig_file}")"
+  test -n "${previous_sdk_dir}"
+  mkdir -p "$(dirname "${location_file}")"
+  printf '%s\n' "${previous_sdk_dir}" >"${location_file}"
+fi
+
 if [[ -x "${sdk_dir}/relocate-sdk.sh" ]]; then
   "${sdk_dir}/relocate-sdk.sh"
 fi

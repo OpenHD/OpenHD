@@ -111,6 +111,11 @@ if make -C "${buildroot_dir}" sdk 2>/dev/null; then
   if [[ -f "${host_dir}/environment-setup" ]]; then
     cp -a "${host_dir}/environment-setup" "${sdk_stage}/"
   fi
+  if [[ -f "${host_dir}/share/buildroot/sdk-location" ]]; then
+    mkdir -p "${sdk_stage}/share/buildroot"
+    cp -a "${host_dir}/share/buildroot/sdk-location" \
+      "${sdk_stage}/share/buildroot/"
+  fi
 fi
 
 # Ensure relocate-sdk.sh exists
