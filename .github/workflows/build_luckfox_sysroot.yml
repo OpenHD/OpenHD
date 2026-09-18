@@ -12,6 +12,7 @@ on:
       - openhd-3.0
     paths:
       - ".github/workflows/build_luckfox_sysroot.yml"
+      - "scripts/build_luckfox_sysroot.sh"
 
 permissions:
   contents: read

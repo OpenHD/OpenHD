@@ -5,7 +5,8 @@ usage="Usage: build_luckfox_sysroot.sh <luckfox-sdk-dir> <output-dir>"
 sdk_source="$(realpath "${1:?${usage}}")"
 output_dir="$(realpath -m "${2:?${usage}}")"
 
-test -d "${sdk_source}/tools/linux/toolchain/arm-rockchip830-linux-uclibcgnueabihf" || {
+vendor_toolchain_dir="${sdk_source}/tools/linux/toolchain/arm-rockchip830-linux-uclibcgnueabihf"
+test -d "${vendor_toolchain_dir}" || {
   echo "Error: Toolchain directory missing in ${sdk_source}" >&2
   exit 1
 }
@@ -47,7 +48,7 @@ echo "=== Building Media Libraries (Rockchip MPP & RGA) ==="
 ./build.sh media
 
 echo "=== Building Buildroot Base System & Sysroot ==="
-export PATH="${sdk_source}/tools/linux/toolchain/arm-rockchip830-linux-uclibcgnueabihf/bin:${PATH}"
+export PATH="${vendor_toolchain_dir}/bin:${PATH}"
 make -C sysdrv buildroot
 
 buildroot_dir="${sdk_source}/sysdrv/source/buildroot/buildroot-2023.02.6"
@@ -102,6 +103,12 @@ mkdir -p "${sdk_stage}"
 # Copy host tools, toolchain, and target sysroot
 cp -a "${host_dir}/." "${sdk_stage}/"
 
+# Luckfox Buildroot uses an external Rockchip uClibc toolchain. Its generated
+# host wrappers retain an absolute reference to that compiler, so the vendor
+# toolchain must travel with the cached SDK and be selected directly.
+mkdir -p "${sdk_stage}/vendor-toolchain"
+cp -a "${vendor_toolchain_dir}/." "${sdk_stage}/vendor-toolchain/"
+
 # Buildroot make sdk populates relocate-sdk.sh and environment-setup
 if make -C "${buildroot_dir}" sdk 2>/dev/null; then
   echo "Buildroot make sdk completed"
@@ -133,20 +140,20 @@ fi
 cat >"${sdk_stage}/environment-setup" <<'EOF'
 SDK_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export SDK_PATH
-export PATH="${SDK_PATH}/bin:${SDK_PATH}/sbin:${PATH}"
+export PATH="${SDK_PATH}/vendor-toolchain/bin:${SDK_PATH}/bin:${SDK_PATH}/sbin:${PATH}"
 export ARCH="arm"
 export CROSS_COMPILE="arm-rockchip830-linux-uclibcgnueabihf-"
-export CC="${SDK_PATH}/bin/arm-rockchip830-linux-uclibcgnueabihf-gcc"
-export CXX="${SDK_PATH}/bin/arm-rockchip830-linux-uclibcgnueabihf-g++"
-export AR="${SDK_PATH}/bin/arm-rockchip830-linux-uclibcgnueabihf-ar"
-export AS="${SDK_PATH}/bin/arm-rockchip830-linux-uclibcgnueabihf-as"
-export LD="${SDK_PATH}/bin/arm-rockchip830-linux-uclibcgnueabihf-ld"
-export NM="${SDK_PATH}/bin/arm-rockchip830-linux-uclibcgnueabihf-nm"
-export OBJCOPY="${SDK_PATH}/bin/arm-rockchip830-linux-uclibcgnueabihf-objcopy"
-export OBJDUMP="${SDK_PATH}/bin/arm-rockchip830-linux-uclibcgnueabihf-objdump"
-export RANLIB="${SDK_PATH}/bin/arm-rockchip830-linux-uclibcgnueabihf-ranlib"
-export READELF="${SDK_PATH}/bin/arm-rockchip830-linux-uclibcgnueabihf-readelf"
-export STRIP="${SDK_PATH}/bin/arm-rockchip830-linux-uclibcgnueabihf-strip"
+export CC="${SDK_PATH}/vendor-toolchain/bin/arm-rockchip830-linux-uclibcgnueabihf-gcc"
+export CXX="${SDK_PATH}/vendor-toolchain/bin/arm-rockchip830-linux-uclibcgnueabihf-g++"
+export AR="${SDK_PATH}/vendor-toolchain/bin/arm-rockchip830-linux-uclibcgnueabihf-ar"
+export AS="${SDK_PATH}/vendor-toolchain/bin/arm-rockchip830-linux-uclibcgnueabihf-as"
+export LD="${SDK_PATH}/vendor-toolchain/bin/arm-rockchip830-linux-uclibcgnueabihf-ld"
+export NM="${SDK_PATH}/vendor-toolchain/bin/arm-rockchip830-linux-uclibcgnueabihf-nm"
+export OBJCOPY="${SDK_PATH}/vendor-toolchain/bin/arm-rockchip830-linux-uclibcgnueabihf-objcopy"
+export OBJDUMP="${SDK_PATH}/vendor-toolchain/bin/arm-rockchip830-linux-uclibcgnueabihf-objdump"
+export RANLIB="${SDK_PATH}/vendor-toolchain/bin/arm-rockchip830-linux-uclibcgnueabihf-ranlib"
+export READELF="${SDK_PATH}/vendor-toolchain/bin/arm-rockchip830-linux-uclibcgnueabihf-readelf"
+export STRIP="${SDK_PATH}/vendor-toolchain/bin/arm-rockchip830-linux-uclibcgnueabihf-strip"
 
 if [[ -d "${SDK_PATH}/arm-rockchip830-linux-uclibcgnueabihf/sysroot" ]]; then
   export STAGING_DIR="${SDK_PATH}/arm-rockchip830-linux-uclibcgnueabihf/sysroot"
@@ -176,8 +183,8 @@ elseif(EXISTS "${RELOCATED_HOST_DIR}/sysroot")
   set(CMAKE_SYSROOT "${RELOCATED_HOST_DIR}/sysroot")
 endif()
 
-set(CMAKE_C_COMPILER "${RELOCATED_HOST_DIR}/bin/arm-rockchip830-linux-uclibcgnueabihf-gcc")
-set(CMAKE_CXX_COMPILER "${RELOCATED_HOST_DIR}/bin/arm-rockchip830-linux-uclibcgnueabihf-g++")
+set(CMAKE_C_COMPILER "${RELOCATED_HOST_DIR}/vendor-toolchain/bin/arm-rockchip830-linux-uclibcgnueabihf-gcc")
+set(CMAKE_CXX_COMPILER "${RELOCATED_HOST_DIR}/vendor-toolchain/bin/arm-rockchip830-linux-uclibcgnueabihf-g++")
 
 set(CMAKE_C_FLAGS "" CACHE STRING "Buildroot CFLAGS")
 set(CMAKE_CXX_FLAGS "" CACHE STRING "Buildroot CXXFLAGS")
@@ -185,7 +192,7 @@ set(CMAKE_EXE_LINKER_FLAGS "" CACHE STRING "Buildroot LDFLAGS")
 
 set(CMAKE_INSTALL_SO_NO_EXE 0)
 
-set(CMAKE_PROGRAM_PATH "${RELOCATED_HOST_DIR}/bin")
+set(CMAKE_PROGRAM_PATH "${RELOCATED_HOST_DIR}/vendor-toolchain/bin;${RELOCATED_HOST_DIR}/bin")
 set(CMAKE_FIND_ROOT_PATH "${CMAKE_SYSROOT}")
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
