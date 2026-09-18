@@ -30,6 +30,7 @@ class LibcameraAppStream final : public CameraStream {
   std::atomic<bool> m_thread_running{false};
   std::atomic<bool> m_restart_requested{false};
   std::atomic<bool> m_bitrate_update_requested{false};
+  std::atomic<bool> m_armed{false};
   std::atomic<int> m_requested_bitrate_kbits{0};
   std::thread m_thread;
 

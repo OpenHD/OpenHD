@@ -544,6 +544,16 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
 
 bool CameraHolder::set_air_recording(int recording_enable) {
   if (recording_enable != AIR_RECORDING_OFF &&
+      recording_enable != AIR_RECORDING_ON &&
+      recording_enable != AIR_RECORDING_AUTO_ARM_DISARM) {
+    return false;
+  }
+  // Parameter clients may repeat the request until telemetry reports the new
+  // recording state. Restarting the camera for an unchanged value can turn
+  // that retry into a permanent restart loop.
+  if (get_settings().air_recording == recording_enable) return true;
+
+  if (recording_enable != AIR_RECORDING_OFF &&
       OHDFilesystemUtil::get_remaining_space_in_mb() <
           MINIMUM_AMOUNT_FREE_SPACE_FOR_AIR_RECORDING_MB) {
     // Corrected log statement
@@ -558,14 +568,9 @@ bool CameraHolder::set_air_recording(int recording_enable) {
        recording_enable == AIR_RECORDING_OFF)) {
     openhd::log::get_default()->warn("Auto record on arm disabled");
   }
-  if (recording_enable == AIR_RECORDING_OFF ||
-      recording_enable == AIR_RECORDING_ON ||
-      recording_enable == AIR_RECORDING_AUTO_ARM_DISARM) {
-    unsafe_get_settings().air_recording = recording_enable;
-    persist();
-    return true;
-  }
-  return false;
+  unsafe_get_settings().air_recording = recording_enable;
+  persist();
+  return true;
 }
 
 void CameraHolder::check_remaining_space_air_recording(bool call_callback) {

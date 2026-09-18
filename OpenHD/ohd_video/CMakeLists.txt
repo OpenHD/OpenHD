@@ -75,6 +75,7 @@ if(ENABLE_AIR)
             src/camera_discovery.cpp
             src/nxp_v4l2_stream.cpp
             src/ip_camera_network.cpp
+            src/matroska_recorder.cpp
             src/ohd_video_air.cpp
             src/rtp_eof_helper.cpp
             src/camera_holder.cpp
@@ -188,6 +189,11 @@ add_executable(test_video test/test_video.cpp)
 target_link_libraries(test_video OHDVideoLib)
 add_executable(test_audio test/test_audio.cpp)
 target_link_libraries(test_audio OHDVideoLib)
+add_executable(test_matroska_recorder
+        test/test_matroska_recorder.cpp
+        src/matroska_recorder.cpp)
+target_include_directories(test_matroska_recorder PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/inc)
 add_executable(openhd_lan_test test/openhd_lan_test.cpp)
 target_link_libraries(openhd_lan_test OHDVideoLib)
 if(ENABLE_AIR)

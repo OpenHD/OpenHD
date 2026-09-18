@@ -266,6 +266,15 @@ class LinkActionHandler {
       m_cam_info_cam2.measured_fps = fps;
     }
   }
+  void set_cam_info_recording_active(uint8_t cam_index, bool active) {
+    if (cam_index == 0) {
+      std::lock_guard<std::mutex> lock(m_cam_info_cam1_mutex);
+      m_cam_info_cam1.air_recording_active = active ? 1 : 0;
+    } else {
+      std::lock_guard<std::mutex> lock(m_cam_info_cam2_mutex);
+      m_cam_info_cam2.air_recording_active = active ? 1 : 0;
+    }
+  }
   void set_cam_info_supports_variable_bitrate(uint8_t cam_index,
                                               bool supports_variable_bitrate) {
     if (cam_index == 0) {

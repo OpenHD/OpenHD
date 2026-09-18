@@ -1,6 +1,7 @@
 #include "libcamera_app_stream.h"
 
 #include <algorithm>
+#include <cerrno>
 #include <chrono>
 #include <csignal>
 #include <cstdio>
@@ -14,8 +15,10 @@
 #include <unistd.h>
 #include <vector>
 
+#include "air_recording_helper.hpp"
 #include "openhd_spdlog.h"
 #include "libcamera_iq_helper.h"
+#include "matroska_recorder.h"
 #include "openhd_util.h"
 
 LibcameraAppStream::LibcameraAppStream(
@@ -36,6 +39,7 @@ LibcameraAppStream::LibcameraAppStream(
     this->m_output_cb(this->m_camera_holder->get_camera().index, frame);
   });
   m_requested_bitrate_kbits = m_camera_holder->get_settings().h26x_bitrate_kbits;
+  m_armed = openhd::ArmingStateHelper::instance().is_currently_armed();
   m_camera_holder->register_listener([this]() { m_restart_requested = true; });
   m_camera_holder->register_video_bitrate_listener([this](int bitrate_kbits) {
     handle_change_bitrate_request({bitrate_kbits});
@@ -94,6 +98,14 @@ void LibcameraAppStream::handle_change_bitrate_request(
 }
 
 void LibcameraAppStream::handle_update_arming_state(bool armed) {
+  if (m_armed.exchange(armed) == armed) return;
+  if (m_camera_holder->get_settings().air_recording ==
+      AIR_RECORDING_AUTO_ARM_DISARM) {
+    openhd::log::get_default()->info(
+        "Camera{} automatic recording {}; restarting native libcamera stream",
+        m_camera_holder->get_camera().index, armed ? "started" : "stopped");
+    m_restart_requested = true;
+  }
 }
 
 void LibcameraAppStream::run() {
@@ -125,55 +137,99 @@ void LibcameraAppStream::run() {
                                  : fps;
     const bool is_h265 =
         settings.streamed_video_format.videoCodec == VideoCodec::H265;
+    const bool recording_requested =
+        settings.air_recording == AIR_RECORDING_ON ||
+        (settings.air_recording == AIR_RECORDING_AUTO_ARM_DISARM && m_armed);
+    std::string recording_filename;
+    MatroskaRecorder recording;
+    if (recording_requested) {
+      recording_filename =
+          openhd::video::create_unused_recording_filename(".mkv");
+      if (recording.open(recording_filename, is_h265, width, height, fps)) {
+        log->info("Camera{} native recording started: {}",
+                  m_camera_holder->get_camera().index, recording_filename);
+      } else {
+        log->error("Camera{} cannot open native recording file {}: {}",
+                   m_camera_holder->get_camera().index, recording_filename,
+                   strerror(errno));
+      }
+    }
+    const bool recording_active = recording.is_open();
 
-    std::stringstream ss;
-    ss << camera_app << " -t 0 --inline --nopreview --keypress --codec "
-       << (is_h265 ? "h265" : "h264") << " --width " << width
-       << " --height " << height << " --framerate " << fps << " ";
-    ss << "--mode " << sensor_mode.width << ":" << sensor_mode.height << " ";
-    if (!is_h265) ss << "--profile high --level 4.2 ";
-    ss << "--bitrate " << bitrate_kbits * 1000 << " --intra " << intra_period
-       << " --flush -o -";
-    if (!is_h265)
-      ss << " --qp-min " << settings.qp_min << " --qp-max "
-         << settings.qp_max;
-    if (requires_hflip(settings)) ss << " --hflip";
-    if (requires_vflip(settings)) ss << " --vflip";
+    std::vector<std::string> args{
+        camera_app,
+        "-t",
+        "0",
+        "--inline",
+        "--nopreview",
+        "--keypress",
+        "--codec",
+        is_h265 ? "h265" : "h264",
+        "--width",
+        std::to_string(width),
+        "--height",
+        std::to_string(height),
+        "--framerate",
+        std::to_string(fps),
+        "--mode",
+        std::to_string(sensor_mode.width) + ":" +
+            std::to_string(sensor_mode.height)};
+    const auto add_option = [&args](const char* option, const auto& value) {
+      args.emplace_back(option);
+      std::ostringstream value_string;
+      value_string << value;
+      args.emplace_back(value_string.str());
+    };
+    if (!is_h265) {
+      add_option("--profile", "high");
+      add_option("--level", "4.2");
+    }
+    add_option("--bitrate", bitrate_kbits * 1000);
+    add_option("--intra", intra_period);
+    args.emplace_back("--flush");
+    add_option("-o", "-");
+    if (!is_h265) {
+      add_option("--qp-min", settings.qp_min);
+      add_option("--qp-max", settings.qp_max);
+    }
+    if (requires_hflip(settings)) args.emplace_back("--hflip");
+    if (requires_vflip(settings)) args.emplace_back("--vflip");
     if (auto value = openhd::libcamera::get_rotation_degree(settings))
-      ss << " --rotation " << *value;
+      add_option("--rotation", *value);
     if (auto value = openhd::libcamera::get_brightness(settings))
-      ss << " --brightness " << *value;
+      add_option("--brightness", *value);
     if (auto value = openhd::libcamera::get_contrast(settings))
-      ss << " --contrast " << *value;
+      add_option("--contrast", *value);
     if (auto value = openhd::libcamera::get_saturation(settings))
-      ss << " --saturation " << *value;
+      add_option("--saturation", *value);
     if (auto value = openhd::libcamera::get_sharpness(settings))
-      ss << " --sharpness " << *value;
+      add_option("--sharpness", *value);
     if (settings.rpi_libcamera_ev_value != RPI_LIBCAMERA_DEFAULT_EV)
-      ss << " --ev " << settings.rpi_libcamera_ev_value;
+      add_option("--ev", settings.rpi_libcamera_ev_value);
     if (settings.rpi_libcamera_shutter_microseconds != 0)
-      ss << " --shutter " << settings.rpi_libcamera_shutter_microseconds;
+      add_option("--shutter", settings.rpi_libcamera_shutter_microseconds);
     const char* awb_modes[] = {"auto", "incandescent", "tungsten",
                                "fluorescent", "indoor", "daylight", "cloudy",
                                "custom"};
     if (settings.rpi_libcamera_awb_index >= 0 &&
         settings.rpi_libcamera_awb_index <= 7)
-      ss << " --awb " << awb_modes[settings.rpi_libcamera_awb_index];
+      add_option("--awb", awb_modes[settings.rpi_libcamera_awb_index]);
     const char* denoise_modes[] = {"auto", "off", "cdn_off", "cdn_fast",
                                    "cdn_hq"};
     if (settings.rpi_libcamera_denoise_index >= 0 &&
         settings.rpi_libcamera_denoise_index <= 4)
-      ss << " --denoise " << denoise_modes[settings.rpi_libcamera_denoise_index];
+      add_option("--denoise",
+                 denoise_modes[settings.rpi_libcamera_denoise_index]);
     const char* metering_modes[] = {"centre", "spot", "average", "custom"};
     if (settings.rpi_libcamera_metering_index >= 0 &&
         settings.rpi_libcamera_metering_index <= 3)
-      ss << " --metering "
-         << metering_modes[settings.rpi_libcamera_metering_index];
+      add_option("--metering",
+                 metering_modes[settings.rpi_libcamera_metering_index]);
     const char* exposure_modes[] = {"normal", "sport"};
     if (settings.rpi_libcamera_exposure_index >= 0 &&
         settings.rpi_libcamera_exposure_index <= 1)
-      ss << " --exposure "
-         << exposure_modes[settings.rpi_libcamera_exposure_index];
+      add_option("--exposure",
+                 exposure_modes[settings.rpi_libcamera_exposure_index]);
 
     const auto cam_index = m_camera_holder->get_camera().index;
     openhd::LinkActionHandler::CamInfo cam_info{
@@ -181,7 +237,7 @@ void LibcameraAppStream::run() {
         static_cast<uint8_t>(cam_index),
         static_cast<uint8_t>(m_camera_holder->get_camera().camera_type),
         CAM_STATUS_RESTARTING,
-        0,
+        static_cast<uint8_t>(recording_active),
         static_cast<uint8_t>(
             video_codec_to_int(settings.streamed_video_format.videoCodec)),
         static_cast<uint16_t>(bitrate_kbits),
@@ -199,8 +255,12 @@ void LibcameraAppStream::run() {
     openhd::LinkActionHandler::instance().set_cam_info_supports_variable_bitrate(
         cam_index, true);
 
-    const std::string cmd = ss.str();
-    log->info("LibcameraAppStream starting: {}", cmd);
+    std::ostringstream command_for_log;
+    for (const auto& arg : args) {
+      if (command_for_log.tellp() > 0) command_for_log << ' ';
+      command_for_log << arg;
+    }
+    log->info("LibcameraAppStream starting: {}", command_for_log.str());
     int pipe_fds[2] = {-1, -1};
     int control_fds[2] = {-1, -1};
     if (pipe(pipe_fds) != 0 || pipe(control_fds) != 0) {
@@ -209,8 +269,16 @@ void LibcameraAppStream::run() {
         close(pipe_fds[0]);
         close(pipe_fds[1]);
       }
+      if (control_fds[0] >= 0) {
+        close(control_fds[0]);
+        close(control_fds[1]);
+      }
       break;
     }
+    std::vector<char*> argv;
+    argv.reserve(args.size() + 1);
+    for (auto& arg : args) argv.emplace_back(arg.data());
+    argv.emplace_back(nullptr);
     const pid_t child = fork();
     if (child == 0) {
       setpgid(0, 0);
@@ -220,7 +288,7 @@ void LibcameraAppStream::run() {
       if (dup2(control_fds[0], STDIN_FILENO) < 0) _exit(126);
       close(pipe_fds[1]);
       close(control_fds[0]);
-      execl("/bin/sh", "sh", "-c", cmd.c_str(), static_cast<char*>(nullptr));
+      execv(camera_app, argv.data());
       _exit(127);
     }
     close(pipe_fds[1]);
@@ -327,6 +395,9 @@ void LibcameraAppStream::run() {
                 ++perf_frames;
               }
             }
+            if (recording.is_open()) {
+              recording.feed_nalu(nalu_buffer.data(), next_start);
+            }
             m_rtp->feed_multiple_nalu(nalu_buffer.data(), next_start);
             nalu_buffer.erase(nalu_buffer.begin(), nalu_buffer.begin() + next_start);
           } else {
@@ -351,6 +422,23 @@ void LibcameraAppStream::run() {
                                   now - perf_started)
                                   .count();
       if (elapsed_ms >= 1000) {
+        if (recording.is_open()) {
+          recording.flush();
+          if (!recording.good()) {
+            log->error("Camera{} native Matroska write failed for {}",
+                       cam_index, recording_filename);
+            recording.close();
+            openhd::LinkActionHandler::instance()
+                .set_cam_info_recording_active(cam_index, false);
+            if (m_camera_holder->get_settings().air_recording !=
+                AIR_RECORDING_OFF) {
+              m_camera_holder->unsafe_get_settings().air_recording =
+                  AIR_RECORDING_OFF;
+              m_camera_holder->persist();
+            }
+          }
+          m_camera_holder->check_remaining_space_air_recording(true);
+        }
         const auto bitrate_bps = static_cast<uint32_t>(
             perf_bytes * 8ULL * 1000ULL /
             static_cast<uint64_t>(std::max<int64_t>(1, elapsed_ms)));
@@ -365,21 +453,83 @@ void LibcameraAppStream::run() {
       }
     }
 
-    close(fd);
-    close(control_fds[0]);
-    close(control_fds[1]);
-    kill(-child, SIGTERM);
+    // rpicam-vid handles SIGINT by stopping the camera and encoder in order.
+    // SIGTERM skips that cleanup and can leave the Pi camera pipeline unusable
+    // when the next process immediately requests a different configuration.
+    if (!child_ended && kill(-child, SIGINT) != 0 && errno != ESRCH) {
+      log->warn("Cannot gracefully stop rpicam-vid: {}", strerror(errno));
+    }
+
     bool reaped = false;
-    for (int attempt = 0; attempt < 20; ++attempt) {
-      if (waitpid(child, nullptr, WNOHANG) == child) {
+    const auto graceful_shutdown_deadline =
+        std::chrono::steady_clock::now() + std::chrono::seconds(3);
+    uint8_t drain_buffer[4096];
+    while (std::chrono::steady_clock::now() < graceful_shutdown_deadline) {
+      const pid_t wait_result = waitpid(child, nullptr, WNOHANG);
+      if (wait_result == child || (wait_result < 0 && errno == ECHILD)) {
         reaped = true;
         break;
       }
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      if (wait_result < 0 && errno != EINTR) {
+        log->warn("Cannot wait for rpicam-vid to stop: {}", strerror(errno));
+        break;
+      }
+
+      // Keep stdout flowing while the encoder flushes its final buffers.
+      fd_set drain_fds;
+      FD_ZERO(&drain_fds);
+      FD_SET(fd, &drain_fds);
+      struct timeval drain_timeout;
+      drain_timeout.tv_sec = 0;
+      drain_timeout.tv_usec = 20000;
+      const int drain_result =
+          select(fd + 1, &drain_fds, nullptr, nullptr, &drain_timeout);
+      if (drain_result > 0 && FD_ISSET(fd, &drain_fds)) {
+        const ssize_t count = read(fd, drain_buffer, sizeof(drain_buffer));
+        if (count > 0 && recording.is_open()) {
+          nalu_buffer.insert(nalu_buffer.end(), drain_buffer,
+                             drain_buffer + count);
+        }
+        if (count <= 0) {
+          std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+      } else if (drain_result < 0 && errno != EINTR) {
+        log->warn("Cannot drain rpicam-vid during shutdown: {}",
+                  strerror(errno));
+        break;
+      }
     }
     if (!reaped) {
+      log->warn("rpicam-vid did not stop gracefully; forcing shutdown");
       kill(-child, SIGKILL);
-      waitpid(child, nullptr, 0);
+      while (waitpid(child, nullptr, 0) < 0 && errno == EINTR) {
+      }
+    }
+    close(fd);
+    close(control_fds[0]);
+    close(control_fds[1]);
+    if (recording.is_open()) {
+      // The normal streaming parser retains the final NAL until the following
+      // start code arrives. At shutdown no following NAL is guaranteed, so
+      // finish parsing the buffered tail before closing the Matroska file.
+      while (!nalu_buffer.empty()) {
+        std::size_t next_start = nalu_buffer.size();
+        for (std::size_t i = 3; i + 2 < nalu_buffer.size(); ++i) {
+          if (nalu_buffer[i] == 0 && nalu_buffer[i + 1] == 0 &&
+              (nalu_buffer[i + 2] == 1 ||
+               (i + 3 < nalu_buffer.size() && nalu_buffer[i + 2] == 0 &&
+                nalu_buffer[i + 3] == 1))) {
+            next_start = i;
+            break;
+          }
+        }
+        recording.feed_nalu(nalu_buffer.data(), next_start);
+        nalu_buffer.erase(nalu_buffer.begin(),
+                          nalu_buffer.begin() + next_start);
+      }
+      recording.close();
+      log->info("Camera{} native recording stopped: {}", cam_index,
+                recording_filename);
     }
     if (!m_run) break;
     if (!m_restart_requested && child_ended) {
