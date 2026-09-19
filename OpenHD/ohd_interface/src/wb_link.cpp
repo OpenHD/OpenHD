@@ -825,14 +825,55 @@ bool WBLink::request_set_frequency(int frequency) {
             frequency, channel_width, m_broadcast_cards, m_console)) {
       return false;
     }
-    m_gnd_pending_channel_width = channel_width;
-    m_gnd_pending_frequency = frequency;
-    m_gnd_pending_frequency_since_ms =
-        openhd::util::steady_clock_time_epoch_ms();
+    // Check whether air is reachable via the management link.
+    const int last_mgmt_ts =
+        m_management_gnd ? m_management_gnd->get_last_received_packet_ts_ms()
+                         : 0;
+    const int mgmt_age_ms =
+        openhd::util::steady_clock_time_epoch_ms() - last_mgmt_ts;
+    const bool air_link_alive = last_mgmt_ts > 0 && mgmt_age_ms < 2000;
+    if (air_link_alive) {
+      // Air is present: arm the pending target. Air will receive its own
+      // MAVLink param and send RECEIVED management packets that trigger the
+      // actual switch on ground.
+      m_gnd_pending_channel_width = channel_width;
+      m_gnd_pending_frequency = frequency;
+      m_gnd_pending_frequency_since_ms =
+          openhd::util::steady_clock_time_epoch_ms();
+      m_console->info(
+          "Ground armed frequency change fallback for {}@{}MHz",
+          frequency, channel_width);
+      return true;
+    }
+    // No air link — apply the frequency change directly on ground.
+    // There is nothing to synchronize with, so we switch immediately,
+    // persist the setting, and do NOT arm the rollback monitor (no air
+    // means no valid RX packets, so rollback would always revert).
     m_console->info(
-        "Ground armed frequency change fallback for {}@{}MHz",
+        "No air link; ground applying frequency directly {}@{}MHz",
         frequency, channel_width);
-    return true;
+    auto work_item = std::make_shared<WorkItem>(
+        fmt::format("GND_SET_FREQ:{}", frequency),
+        [this, frequency, channel_width]() {
+          const bool applied = apply_frequency_and_channel_width(
+              frequency, channel_width,
+              openhd::DEFAULT_GND_RX_CHANNEL_WIDTH);
+          if (applied) {
+            m_gnd_curr_rx_frequency = frequency;
+            m_gnd_curr_rx_channel_width = channel_width;
+            m_settings->unsafe_get_settings().wb_frequency = frequency;
+            m_settings->unsafe_get_settings().wb_gnd_rx_channel_width =
+                channel_width;
+            m_settings->persist();
+            m_console->info("Ground frequency applied and persisted {}@{}MHz",
+                            frequency, channel_width);
+          } else {
+            m_console->warn("Ground failed to apply frequency {}@{}MHz",
+                            frequency, channel_width);
+          }
+        },
+        std::chrono::steady_clock::now());
+    return try_schedule_work_item(work_item);
   }
   const int current_channel_width =
       static_cast<int>(m_settings->get_settings().wb_air_tx_channel_width);
