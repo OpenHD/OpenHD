@@ -627,7 +627,7 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
       options_audio_tx.enable_fec = false;
       options_audio_tx.radio_port = openhd::AUDIO_WIFIBROADCAST_PORT;
       options_audio_tx.packet_data_queue_size = 16;
-      options_audio_tx.default_packet_type = WB_PACKET_TYPE_TELEMETRY;
+      options_audio_tx.default_packet_type = WB_PACKET_TYPE_AUDIO;
       m_wb_audio_tx = std::make_unique<WBStreamTx>(m_wb_txrx, options_audio_tx,
                                                    m_tx_header_1);
     } else {
@@ -2577,7 +2577,7 @@ void WBLink::apply_retransmission_history_window(int window_ms_video,
     const auto stats = m_wb_audio_tx->get_latest_stats();
     const auto history_size_telemetry = calculate_history_size_from_ms(
         window_ms_telemetry, stats.current_injected_packets_per_second);
-    m_wb_audio_tx->set_max_history_size_for_type(WB_PACKET_TYPE_TELEMETRY,
+    m_wb_audio_tx->set_max_history_size_for_type(WB_PACKET_TYPE_AUDIO,
                                                  history_size_telemetry);
   }
 }
