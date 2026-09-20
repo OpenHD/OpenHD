@@ -24,6 +24,8 @@
 #ifndef OPENHD_OPENHD_OHD_VIDEO_INC_OHD_VIDEO_AIR_GENERIC_SETTINGS_H_
 #define OPENHD_OPENHD_OHD_VIDEO_INC_OHD_VIDEO_AIR_GENERIC_SETTINGS_H_
 
+#include <string>
+
 // NOTE: These are not the camera-specific settings, but rather settings
 // regarding the management of how those camera(s) should be used
 
@@ -50,7 +52,16 @@ struct AirCameraGenericSettings {
   // Audio can be enabled, in which case gstreamer hopefully picks up the right
   // audio source via autoaudiosrc
   int enable_audio = OPENHD_AUDIO_DISABLE;
+  // Empty selects the platform default. Otherwise this is a stable
+  // GStreamer factory/device token returned by audio device discovery.
+  std::string audio_device;
+  // Software microphone gain. 100 means unity gain.
+  int audio_mic_gain_percent = 100;
 };
+
+static bool is_valid_audio_mic_gain_percent(int gain_percent) {
+  return gain_percent >= 0 && gain_percent <= 200;
+}
 
 static bool is_valid_dualcam_primary_video_allocated_bandwidth(
     int dualcam_primary_video_allocated_bandwidth_perc) {

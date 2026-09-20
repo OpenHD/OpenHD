@@ -36,7 +36,8 @@ extern AirCameraGenericSettings g_airCameraGenericSettings;
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
     AirCameraGenericSettings, switch_primary_and_secondary,
     dualcam_primary_video_allocated_bandwidth_perc, primary_camera_type,
-    secondary_camera_type, enable_audio, ip_camera_bitrate_mbits);
+    secondary_camera_type, enable_audio, audio_device,
+    audio_mic_gain_percent, ip_camera_bitrate_mbits);
 
 struct SysutilCameraOverrides {
   std::optional<int> primary;

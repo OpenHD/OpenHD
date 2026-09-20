@@ -23,8 +23,10 @@
 
 #include "gstaudiostream.h"
 
+#include <algorithm>
 #include <cstdlib>
 #include <iostream>
+#include <sstream>
 #include <utility>
 
 #include "config_paths.h"
@@ -35,7 +37,23 @@
 
 AirCameraGenericSettings g_airCameraGenericSettings;
 
-GstAudioStream::GstAudioStream() {
+namespace {
+
+std::string escape_gst_string(const std::string& value) {
+  std::string escaped;
+  escaped.reserve(value.size());
+  for (const char c : value) {
+    if (c == '\\' || c == '"') escaped.push_back('\\');
+    escaped.push_back(c);
+  }
+  return escaped;
+}
+
+}  // namespace
+
+GstAudioStream::GstAudioStream(std::string device_token, int mic_gain_percent)
+    : m_device_token(std::move(device_token)),
+      m_mic_gain_percent(mic_gain_percent) {
   OHDGstHelper::initGstreamerOrThrow();
   m_console = openhd::log::create_or_get("audio");
 }
@@ -44,6 +62,57 @@ GstAudioStream::~GstAudioStream() { stop_looping(); }
 
 void GstAudioStream::set_link_cb(openhd::ON_AUDIO_TX_DATA_PACKET cb) {
   m_cb = std::move(cb);
+}
+
+std::vector<GstAudioStream::DeviceInfo>
+GstAudioStream::discover_capture_devices() {
+  OHDGstHelper::initGstreamerOrThrow();
+  std::vector<DeviceInfo> result;
+  GstDeviceMonitor* monitor = gst_device_monitor_new();
+  if (!monitor) return result;
+  gst_device_monitor_add_filter(monitor, "Audio/Source", nullptr);
+  if (!gst_device_monitor_start(monitor)) {
+    gst_object_unref(monitor);
+    return result;
+  }
+  GList* devices = gst_device_monitor_get_devices(monitor);
+  for (GList* item = devices; item; item = item->next) {
+    auto* device = GST_DEVICE(item->data);
+    GstElement* element = gst_device_create_element(device, nullptr);
+    if (!element) continue;
+    GstElementFactory* factory = gst_element_get_factory(element);
+    const char* factory_name =
+        factory ? gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory))
+                : nullptr;
+    gchar* device_name = nullptr;
+    if (g_object_class_find_property(G_OBJECT_GET_CLASS(element), "device")) {
+      g_object_get(element, "device", &device_name, nullptr);
+    }
+    if (factory_name) {
+      DeviceInfo info;
+      info.token = factory_name;
+      if (device_name && device_name[0] != '\0') {
+        info.token += ":" + std::string(device_name);
+      }
+      const char* display_name = gst_device_get_display_name(device);
+      info.display_name = display_name ? display_name : info.token;
+      const auto duplicate =
+          std::find_if(result.begin(), result.end(), [&](const DeviceInfo& d) {
+            return d.token == info.token;
+          });
+      if (duplicate == result.end()) result.emplace_back(std::move(info));
+    }
+    g_free(device_name);
+    gst_object_unref(element);
+  }
+  g_list_free_full(devices, gst_object_unref);
+  gst_device_monitor_stop(monitor);
+  gst_object_unref(monitor);
+  return result;
+}
+
+void GstAudioStream::set_mic_gain_percent(int gain_percent) {
+  m_mic_gain_percent = std::clamp(gain_percent, 0, 200);
 }
 
 void GstAudioStream::start_looping() {
@@ -146,7 +215,24 @@ std::string GstAudioStream::create_pipeline() {
     // File, for development
     ss << opt_manual_audio_source.value() << " ! ";
   } else {
-    if (OHDPlatform::instance().is_rpi()) {
+    const auto devices = discover_capture_devices();
+    const auto selected = std::find_if(
+        devices.begin(), devices.end(), [this](const DeviceInfo& device) {
+          return device.token == m_device_token;
+        });
+    if (selected != devices.end()) {
+      const auto separator = selected->token.find(':');
+      const auto factory = selected->token.substr(0, separator);
+      ss << factory;
+      if (separator != std::string::npos) {
+        const auto device = selected->token.substr(separator + 1);
+        ss << " device=\"" << escape_gst_string(device) << "\"";
+      }
+      ss << " ! ";
+    } else if (OHDPlatform::instance().is_rpi()) {
+      if (!m_device_token.empty()) {
+        m_console->warn("Configured audio device is unavailable; using default");
+      }
       // RPI is weird. autoaudiosrc doesn't work, and
       // the device(s) depend on fkms / kms or are in general weird.
       ss << "alsasrc device=" << rpi_detect_alsasrc_device() << " ! ";
@@ -164,6 +250,8 @@ std::string GstAudioStream::create_pipeline() {
   ss << "audioconvert ! ";
   ss << "audio/x-raw,format=S16LE,channels=1,rate=8000 ! ";
   ss << "audioresample ! ";  // Might or might not be needed ...
+  ss << "volume name=mic_volume volume="
+     << (m_mic_gain_percent.load() / 100.0) << " ! ";
   ss << "alawenc ! rtppcmapay max-ptime=20000000 ! ";
   ss << OHDGstHelper::createOutputAppSink();
   return ss.str();
@@ -196,6 +284,8 @@ void GstAudioStream::stream_once() {
     m_gst_pipeline = nullptr;
     return;
   }
+  m_volume_element =
+      gst_bin_get_by_name(GST_BIN(m_gst_pipeline), "mic_volume");
 
   const auto ret = openhd::gst_element_set_state_with_timeout(
       m_gst_pipeline, GST_STATE_PLAYING);
@@ -215,10 +305,18 @@ void GstAudioStream::stream_once() {
           .count();
   std::chrono::steady_clock::time_point m_last_audio_packet =
       std::chrono::steady_clock::now();
+  int applied_gain_percent = m_mic_gain_percent.load();
   // Streaming - keep running while keep_looping is true
   while (m_keep_looping) {
     // Quickly terminate if openhd wants to terminate
     if (!m_keep_looping) break;
+
+    const int requested_gain_percent = m_mic_gain_percent.load();
+    if (m_volume_element && requested_gain_percent != applied_gain_percent) {
+      g_object_set(m_volume_element, "volume",
+                   requested_gain_percent / 100.0, nullptr);
+      applied_gain_percent = requested_gain_percent;
+    }
 
     auto buffer_x = openhd::gst_app_sink_try_pull_sample_and_copy(
         m_app_sink_element, timeout_ns);
@@ -235,6 +333,10 @@ void GstAudioStream::stream_once() {
     }
   }
   // cleanup
+  if (m_volume_element) {
+    gst_object_unref(m_volume_element);
+    m_volume_element = nullptr;
+  }
   openhd::unref_appsink_element(m_app_sink_element);
   openhd::gst_element_set_set_state_and_log_result(m_gst_pipeline,
                                                    GST_STATE_NULL);

@@ -109,7 +109,9 @@ OHDVideoAir::OHDVideoAir(std::vector<XCamera> cameras,
   if (!m_record_only &&
       m_generic_settings->get_settings().enable_audio != OPENHD_AUDIO_DISABLE) {
 #ifdef OPENHD_GSTREAMER_PRESENT
-    m_audio_stream = std::make_unique<GstAudioStream>();
+    m_audio_stream = std::make_unique<GstAudioStream>(
+        m_generic_settings->get_settings().audio_device,
+        m_generic_settings->get_settings().audio_mic_gain_percent);
     auto audio_cb = [this](const openhd::AudioPacket& audioPacket) {
       on_audio_data(audioPacket);
     };
@@ -302,6 +304,10 @@ std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
   }
   if (!OHDPlatform::instance().is_x20()) {
     auto cb_audio = [this](std::string, int value) {
+      if (value != 0 && value != OPENHD_AUDIO_DISABLE &&
+          value != OPENHD_AUDIO_TEST) {
+        return false;
+      }
       m_generic_settings->unsafe_get_settings().enable_audio = value;
       m_generic_settings->persist();
       openhd::TerminateHelper::instance().terminate_after(
@@ -312,6 +318,65 @@ std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
         "AUDIO_ENABLE",
         openhd::IntSetting{m_generic_settings->get_settings().enable_audio,
                            cb_audio}});
+
+    auto cb_audio_gain = [this](std::string, int value) {
+      if (!is_valid_audio_mic_gain_percent(value)) return false;
+      m_generic_settings->unsafe_get_settings().audio_mic_gain_percent = value;
+      m_generic_settings->persist();
+#ifdef OPENHD_GSTREAMER_PRESENT
+      if (m_audio_stream) m_audio_stream->set_mic_gain_percent(value);
+#endif
+      return true;
+    };
+    ret.push_back(openhd::Setting{
+        "AUDIO_GAIN",
+        openhd::IntSetting{
+            m_generic_settings->get_settings().audio_mic_gain_percent,
+            cb_audio_gain}});
+
+#ifdef OPENHD_GSTREAMER_PRESENT
+    const auto audio_devices = GstAudioStream::discover_capture_devices();
+    constexpr std::size_t kMaxPublishedAudioDevices = 8;
+    const auto published_audio_device_count =
+        std::min(audio_devices.size(), kMaxPublishedAudioDevices);
+    ret.push_back(openhd::create_read_only_int(
+        "AUDIO_DEV_COUNT",
+        static_cast<int>(published_audio_device_count)));
+    auto cb_audio_device = [this, audio_devices](std::string,
+                                                 std::string value) {
+      if (!value.empty()) {
+        const auto match = std::find_if(
+            audio_devices.begin(), audio_devices.end(),
+            [&value](const GstAudioStream::DeviceInfo& device) {
+              return device.token == value;
+            });
+        if (match == audio_devices.end()) return false;
+      }
+      m_generic_settings->unsafe_get_settings().audio_device = std::move(value);
+      m_generic_settings->persist();
+      openhd::TerminateHelper::instance().terminate_after(
+          "Audio device", std::chrono::seconds(1));
+      return true;
+    };
+    ret.push_back(openhd::Setting{
+        "AUDIO_DEVICE",
+        openhd::StringSetting{m_generic_settings->get_settings().audio_device,
+                              cb_audio_device}});
+    for (std::size_t i = 0; i < published_audio_device_count; ++i) {
+      auto reject_string_change = [](const std::string&, const std::string&) {
+        return false;
+      };
+      auto description =
+          audio_devices[i].token + "|" + audio_devices[i].display_name;
+      constexpr std::size_t kMavlinkExtendedParameterValueLength = 128;
+      if (description.size() > kMavlinkExtendedParameterValueLength) {
+        description.resize(kMavlinkExtendedParameterValueLength);
+      }
+      ret.push_back(openhd::Setting{
+          "AUD_DEV_" + std::to_string(i),
+          openhd::StringSetting{description, reject_string_change}});
+    }
+#endif
   }
   return ret;
 }

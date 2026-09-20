@@ -28,6 +28,8 @@
 
 #include <condition_variable>
 #include <mutex>
+#include <string>
+#include <vector>
 
 #include "openhd_link.hpp"
 
@@ -38,9 +40,17 @@
  */
 class GstAudioStream {
  public:
-  explicit GstAudioStream();
+  struct DeviceInfo {
+    std::string token;
+    std::string display_name;
+  };
+
+  explicit GstAudioStream(std::string device_token = {},
+                          int mic_gain_percent = 100);
   ~GstAudioStream();
+  static std::vector<DeviceInfo> discover_capture_devices();
   void set_link_cb(openhd::ON_AUDIO_TX_DATA_PACKET cb);
+  void set_mic_gain_percent(int gain_percent);
   void start_looping();
   void stop_looping();
   bool openhd_enable_audio_test = false;
@@ -57,12 +67,15 @@ class GstAudioStream {
   std::mutex m_loop_mutex;
   std::condition_variable m_loop_cv;
   openhd::ON_AUDIO_TX_DATA_PACKET m_cb = nullptr;
+  std::string m_device_token;
+  std::atomic_int m_mic_gain_percent{100};
 
  private:
   // points to a running gst pipeline instance
   GstElement* m_gst_pipeline = nullptr;
   // pull samples (fragments) out of the gstreamer pipeline
   GstElement* m_app_sink_element = nullptr;
+  GstElement* m_volume_element = nullptr;
 };
 
 #endif  // OPENHD_GSTAUDIOSTREAM_H
