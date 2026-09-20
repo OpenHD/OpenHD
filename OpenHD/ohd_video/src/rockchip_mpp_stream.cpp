@@ -804,7 +804,7 @@ class RockchipMppStream::Impl {
   void encode_context(MppCtx encoder_ctx, MppApi* encoder_mpi,
                       bool transmit) {
     MppFrame frame = nullptr;
-    if (mpp_frame_init(&frame) != 0) {
+    if (mpp_frame_init(&frame) != MPP_OK) {
       return;
     }
     mpp_frame_set_width(frame, width);
