@@ -376,8 +376,6 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_storage_information() {
   std::vector<MavlinkMessage> messages;
   messages.reserve(entries->size());
   for (const auto& entry : *entries) {
-    if (entry.device.find("mmcblk") != std::string::npos && entry.kind == "part") continue;
-    if (entry.device.find("mmcblk") == std::string::npos && entry.kind == "disk") continue;
     const bool is_disk = entry.kind == "disk";
     const float total_mib =
         static_cast<float>(entry.size_bytes / 1048576.0);

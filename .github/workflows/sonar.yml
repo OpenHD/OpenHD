@@ -40,8 +40,8 @@ jobs:
         run: |
           # Robustly handle private submodule content without failing the whole build
           if [ -d OpenHD/ohd_interface/video_crypto_private ]; then
-            git -C OpenHD/ohd_interface/video_crypto_private fetch origin main || true
-            git -C OpenHD/ohd_interface/video_crypto_private checkout -f origin/main || true
+            git -C OpenHD/ohd_interface/video_crypto_private fetch origin master || true
+            git -C OpenHD/ohd_interface/video_crypto_private checkout -f origin/master || true
           fi
 
       - name: Install Dependencies
