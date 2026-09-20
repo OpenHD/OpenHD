@@ -693,6 +693,7 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
       m_wb_audio_rx->set_callback(cb_audio);
     }
   }
+  rebuild_udp_data_stream();
   apply_frequency_and_channel_width_from_settings();
   apply_txpower();
   if (m_profile.is_ground()) {
@@ -774,6 +775,8 @@ WBLink::~WBLink() {
   m_wb_video_rx_list.resize(0);
   m_wb_audio_tx.reset();
   m_wb_audio_rx.reset();
+  m_wb_udp_data_tx.reset();
+  m_wb_udp_data_rx.reset();
   m_wb_txrx = nullptr;
   wifi::commandhelper::cleanup_openhd_driver_overrides();
   m_console->debug("WBLink::~WBLink() end");
@@ -1438,6 +1441,68 @@ void WBLink::apply_txpower() {
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "performance-unnecessary-value-param"
+void WBLink::update_udp_data_rate_limit() {
+  if (!m_wb_udp_data_tx) return;
+  const auto settings = m_settings->get_settings();
+  int cap = 0;
+  int available = m_max_total_rate_for_current_wifi_config_kbits.load();
+  if (available <= 0 && !m_broadcast_cards.empty()) {
+    const int channel_width = m_profile.is_air
+                                  ? settings.wb_air_tx_channel_width
+                                  : m_gnd_curr_rx_channel_width.load();
+    const int mcs = m_profile.is_air ? settings.wb_air_mcs_index
+                                     : settings.wb_gnd_uplink_mcs_index;
+    available = openhd::wb::calculate_bitrate_for_wifi_config_kbits(
+        m_broadcast_cards.front(), settings.wb_frequency, channel_width, mcs,
+        100, false);
+  }
+  if (available > 0) {
+    // FEC consumes radio capacity too. Convert the allocated on-air budget to
+    // an application payload ceiling so the plugin cannot starve video/control.
+    cap = available * settings.wb_udp_data_link_budget_percent / 100;
+    cap = cap * 100 / (100 + settings.wb_udp_data_fec_percentage);
+  }
+  if (settings.wb_udp_data_max_bitrate_kbits > 0) {
+    cap = cap > 0 ? std::min(cap, settings.wb_udp_data_max_bitrate_kbits)
+                  : settings.wb_udp_data_max_bitrate_kbits;
+  }
+  // Until the first RF-rate calculation, use a conservative ceiling.
+  if (cap <= 0) cap = 256;
+  m_wb_udp_data_tx->set_max_payload_bitrate_kbits(cap);
+}
+
+void WBLink::rebuild_udp_data_stream() {
+  m_wb_udp_data_tx.reset();
+  m_wb_udp_data_rx.reset();
+  const auto settings = m_settings->get_settings();
+  if (!settings.wb_udp_data_enabled || !m_wb_txrx) return;
+
+  WBStreamTx::Options tx_options{};
+  tx_options.enable_fec = true;
+  tx_options.radio_port = openhd::UDP_DATA_WIFIBROADCAST_PORT;
+  tx_options.default_packet_type = WB_PACKET_TYPE_DATA;
+  tx_options.block_data_queue_size = 8;
+  m_wb_udp_data_tx = std::make_unique<WBDataStreamTxUDP>(
+      m_wb_txrx, tx_options, 4, settings.wb_udp_data_input_port,
+      settings.wb_udp_data_fec_percentage, 256);
+  m_wb_udp_data_tx->wb_tx->set_encryption(true);
+
+  WBStreamRx::Options rx_options{};
+  rx_options.enable_fec = true;
+  rx_options.enable_threading = true;
+  rx_options.packet_queue_size = 64;
+  rx_options.radio_port = openhd::UDP_DATA_WIFIBROADCAST_PORT;
+  m_wb_udp_data_rx = std::make_unique<WBDataStreamRxUDP>(
+      m_wb_txrx, rx_options, settings.wb_udp_data_output_port);
+  update_udp_data_rate_limit();
+  m_console->info(
+      "UDP datalink enabled: localhost:{} -> radio -> localhost:{}, FEC {}%, "
+      "budget {}%",
+      settings.wb_udp_data_input_port, settings.wb_udp_data_output_port,
+      settings.wb_udp_data_fec_percentage,
+      settings.wb_udp_data_link_budget_percent);
+}
+
 std::vector<openhd::Setting> WBLink::get_all_settings() {
   using namespace openhd;
   std::vector<openhd::Setting> ret{};
@@ -1971,6 +2036,59 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
   ret.push_back(openhd::Setting{
       WB_PIT_MODE, openhd::IntSetting{settings.wb_pit_mode, cb_wb_pit_mode}});
 
+  auto persist_udp_and_rebuild = [this](auto mutate) {
+    mutate(m_settings->unsafe_get_settings());
+    m_settings->persist();
+    rebuild_udp_data_stream();
+    return true;
+  };
+  ret.push_back(openhd::Setting{
+      WB_UDP_DATA_ENABLE,
+      openhd::IntSetting{settings.wb_udp_data_enabled, [=](std::string, int v) {
+        if (!openhd::validate_yes_or_no(v)) return false;
+        return persist_udp_and_rebuild(
+            [v](auto& s) { s.wb_udp_data_enabled = v != 0; });
+      }}});
+  auto udp_port_setting = [&](const char* id, int current, bool input) {
+    ret.push_back(openhd::Setting{
+        id, openhd::IntSetting{current, [=](std::string, int v) {
+          if (v < 1024 || v > 65535) return false;
+          return persist_udp_and_rebuild([=](auto& s) {
+            if (input)
+              s.wb_udp_data_input_port = v;
+            else
+              s.wb_udp_data_output_port = v;
+          });
+        }}});
+  };
+  udp_port_setting(WB_UDP_DATA_IN_PORT, settings.wb_udp_data_input_port, true);
+  udp_port_setting(WB_UDP_DATA_OUT_PORT, settings.wb_udp_data_output_port,
+                   false);
+  ret.push_back(openhd::Setting{
+      WB_UDP_DATA_FEC,
+      openhd::IntSetting{settings.wb_udp_data_fec_percentage,
+                         [=](std::string, int v) {
+        if (v < 0 || v > 100) return false;
+        return persist_udp_and_rebuild(
+            [v](auto& s) { s.wb_udp_data_fec_percentage = v; });
+      }}});
+  ret.push_back(openhd::Setting{
+      WB_UDP_DATA_BUDGET,
+      openhd::IntSetting{settings.wb_udp_data_link_budget_percent,
+                         [=](std::string, int v) {
+        if (v < 1 || v > 80) return false;
+        return persist_udp_and_rebuild(
+            [v](auto& s) { s.wb_udp_data_link_budget_percent = v; });
+      }}});
+  ret.push_back(openhd::Setting{
+      WB_UDP_DATA_MAX_KBPS,
+      openhd::IntSetting{settings.wb_udp_data_max_bitrate_kbits,
+                         [=](std::string, int v) {
+        if (v < 0 || v > 100000) return false;
+        return persist_udp_and_rebuild(
+            [v](auto& s) { s.wb_udp_data_max_bitrate_kbits = v; });
+      }}});
+
   openhd::validate_provided_ids(ret);
   return ret;
 }
@@ -2429,9 +2547,15 @@ void WBLink::wt_perform_rate_adjustment() {
           settings.wb_video_rate_for_mcs_adjustment_percent, false);
   m_max_total_rate_for_current_wifi_config_kbits =
       max_rate_for_current_wifi_config;
+  update_udp_data_rate_limit();
   // Subtract the FEC overhead from (video) bitrate
+  const int video_radio_budget =
+      settings.wb_udp_data_enabled
+          ? max_rate_for_current_wifi_config *
+                (100 - settings.wb_udp_data_link_budget_percent) / 100
+          : max_rate_for_current_wifi_config;
   const int max_video_rate_for_current_wifi_fec_config =
-      openhd::wb::deduce_fec_overhead(max_rate_for_current_wifi_config,
+      openhd::wb::deduce_fec_overhead(video_radio_budget,
                                       settings.wb_video_fec_percentage);
   // const auto stats=m_wb_txrx->get_rx_stats();
   // m_foreign_p_helper.update(stats.count_p_any,stats.count_p_valid);

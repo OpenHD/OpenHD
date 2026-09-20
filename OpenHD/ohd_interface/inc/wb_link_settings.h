@@ -194,6 +194,16 @@ struct WBLinkSettings {
   int wb_retransmission_history_rc_ms = 10;
   // Retransmission request repeats
   int wb_retransmission_request_retries = 1;
+  // Optional straight UDP datalink plugin (UDP -> WB packet type DATA -> UDP).
+  bool wb_udp_data_enabled = false;
+  int wb_udp_data_input_port = 5602;
+  int wb_udp_data_output_port = 5603;
+  int wb_udp_data_fec_percentage = 20;
+  // Share of current usable link capacity. The payload limiter also accounts
+  // for FEC overhead, leaving the rest of the link budget to video/telemetry.
+  int wb_udp_data_link_budget_percent = 20;
+  // Hard payload ceiling; 0 means derive it exclusively from link capacity.
+  int wb_udp_data_max_bitrate_kbits = 0;
 };
 
 WBLinkSettings create_default_wb_stream_settings(
@@ -285,6 +295,12 @@ static constexpr auto WB_RETRANSMISSION_HISTORY_VIDEO_MS = "WB_RTX_V_MAXMS";
 static constexpr auto WB_RETRANSMISSION_HISTORY_TELEMETRY_MS = "WB_RTX_T_MAXMS";
 static constexpr auto WB_RETRANSMISSION_HISTORY_RC_MS = "WB_RTX_R_MAXMS";
 static constexpr auto WB_RETRANSMISSION_REQUEST_RETRIES = "WB_RTX_REQ_REP";
+static constexpr auto WB_UDP_DATA_ENABLE = "WB_UDP_ENABLE";
+static constexpr auto WB_UDP_DATA_IN_PORT = "WB_UDP_IN_PORT";
+static constexpr auto WB_UDP_DATA_OUT_PORT = "WB_UDP_OUT_PORT";
+static constexpr auto WB_UDP_DATA_FEC = "WB_UDP_FEC";
+static constexpr auto WB_UDP_DATA_BUDGET = "WB_UDP_BUDGET";
+static constexpr auto WB_UDP_DATA_MAX_KBPS = "WB_UDP_MAX_KBPS";
 
 }  // namespace openhd
 

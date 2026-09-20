@@ -70,7 +70,10 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
     wb_enable_retransmission, wb_enable_retransmission_video,
     wb_enable_retransmission_telemetry, wb_enable_retransmission_rc,
     wb_retransmission_history_video_ms, wb_retransmission_history_telemetry_ms,
-    wb_retransmission_history_rc_ms, wb_retransmission_request_retries);
+    wb_retransmission_history_rc_ms, wb_retransmission_request_retries,
+    wb_udp_data_enabled, wb_udp_data_input_port, wb_udp_data_output_port,
+    wb_udp_data_fec_percentage, wb_udp_data_link_budget_percent,
+    wb_udp_data_max_bitrate_kbits);
 
 std::optional<WBLinkSettings> openhd::WBLinkSettingsHolder::impl_deserialize(
     const std::string &file_as_string) const {
@@ -173,6 +176,20 @@ std::optional<WBLinkSettings> openhd::WBLinkSettingsHolder::impl_deserialize(
     settings.wb_retransmission_request_retries =
         parsed.value("wb_retransmission_request_retries",
                      settings.wb_retransmission_request_retries);
+    settings.wb_udp_data_enabled = parsed.value(
+        "wb_udp_data_enabled", settings.wb_udp_data_enabled);
+    settings.wb_udp_data_input_port = parsed.value(
+        "wb_udp_data_input_port", settings.wb_udp_data_input_port);
+    settings.wb_udp_data_output_port = parsed.value(
+        "wb_udp_data_output_port", settings.wb_udp_data_output_port);
+    settings.wb_udp_data_fec_percentage = parsed.value(
+        "wb_udp_data_fec_percentage", settings.wb_udp_data_fec_percentage);
+    settings.wb_udp_data_link_budget_percent = parsed.value(
+        "wb_udp_data_link_budget_percent",
+        settings.wb_udp_data_link_budget_percent);
+    settings.wb_udp_data_max_bitrate_kbits = parsed.value(
+        "wb_udp_data_max_bitrate_kbits",
+        settings.wb_udp_data_max_bitrate_kbits);
 
     // Migration: If we loaded a legacy config, the vectors might be empty.
     // Populate them from the legacy single values (which are also loaded).

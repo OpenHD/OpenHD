@@ -29,7 +29,9 @@ jobs:
         with:
           fetch-depth: 0
           submodules: true
-          token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}      run: |
+          token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+      - name: Ensure private video crypto submodule is available
+        run: |
           if [ ! -f OpenHD/ohd_interface/video_crypto_private/CMakeLists.txt ]; then
             echo "Submodule content missing, updating to latest main..."
             git -C OpenHD/ohd_interface/video_crypto_private fetch origin main

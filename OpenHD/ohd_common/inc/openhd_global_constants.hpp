@@ -50,6 +50,8 @@ static constexpr auto MANAGEMENT_RADIO_PORT_GND_TX = 21;
 
 // Audio is unidirectional from air to ground
 static constexpr auto AUDIO_WIFIBROADCAST_PORT = 30;
+// Optional generic UDP datalink. Kept separate from telemetry, video and audio.
+static constexpr auto UDP_DATA_WIFIBROADCAST_PORT = 31;
 
 // Where the video stream transmitted via wifibroadcast is made available to
 // QOpenHD to be picked up.

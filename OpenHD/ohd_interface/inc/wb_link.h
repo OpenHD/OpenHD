@@ -36,6 +36,8 @@
 
 #include "../lib/wifibroadcast/wifibroadcast/src/WBStreamRx.h"
 #include "../lib/wifibroadcast/wifibroadcast/src/WBStreamTx.h"
+#include "../lib/wifibroadcast/wifibroadcast/src/WBDataStreamRxUDP.h"
+#include "../lib/wifibroadcast/wifibroadcast/src/WBDataStreamTxUDP.h"
 #include "../lib/wifibroadcast/wifibroadcast/src/WBTxRx.h"
 #include "openhd_action_handler.h"
 #include "openhd_link.hpp"
@@ -229,6 +231,8 @@ class WBLink : public OHDLink {
   // and passive mode is enabled by the user
   void re_enable_injection_unless_user_passive_mode_enabled();
   int get_max_fec_block_size();
+  void rebuild_udp_data_stream();
+  void update_udp_data_rate_limit();
   // Called when the wifi card (really really likely) disconneccted
   void on_wifi_card_fatal_error();
 
@@ -254,6 +258,8 @@ class WBLink : public OHDLink {
   // For audio or custom data
   std::unique_ptr<WBStreamTx> m_wb_audio_tx;
   std::unique_ptr<WBStreamRx> m_wb_audio_rx;
+  std::unique_ptr<WBDataStreamTxUDP> m_wb_udp_data_tx;
+  std::unique_ptr<WBDataStreamRxUDP> m_wb_udp_data_rx;
   // We have one worker thread for asynchronously performing operation(s) like
   // changing the frequency but also recalculating statistics that are then
   // forwarded to openhd_telemetry for broadcast
