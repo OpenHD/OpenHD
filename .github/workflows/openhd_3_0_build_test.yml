@@ -39,8 +39,8 @@ jobs:
         run: |
           if [ ! -f OpenHD/ohd_interface/video_crypto_private/CMakeLists.txt ]; then
             echo "Submodule content missing, updating to latest main..."
-            git -C OpenHD/ohd_interface/video_crypto_private fetch origin main
-            git -C OpenHD/ohd_interface/video_crypto_private checkout -f origin/main
+            git -C OpenHD/ohd_interface/video_crypto_private fetch origin master
+            git -C OpenHD/ohd_interface/video_crypto_private checkout -f origin/master
           fi
           if [ ! -f OpenHD/ohd_interface/video_crypto_private/CMakeLists.txt ]; then
             echo "Missing video_crypto_private content. Ensure the private repo has the files and is accessible."
