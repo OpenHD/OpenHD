@@ -35,6 +35,8 @@
 #include "openhd_util.h"
 #include <spdlog/spdlog.h>
 
+#include "dump1090_export.h"
+
 AdsbComponent::AdsbComponent(uint8_t parent_sys_id)
     : MavlinkComponent(parent_sys_id, MAV_COMP_ID_ADSB),
       m_console(openhd::log::create_or_get("ADSB")) {
@@ -44,8 +46,8 @@ AdsbComponent::AdsbComponent(uint8_t parent_sys_id)
 
 AdsbComponent::~AdsbComponent() {
   m_terminate = true;
-  // kill dump1090
-  system("killall dump1090 > /dev/null 2>&1");
+  // We cannot easily kill dump1090 when statically linked if it's blocking in dump1090_main,
+  // but dump1090 has a Modes.exit flag if we wanted to export it.
   if (m_process_thread.joinable()) {
     m_process_thread.join();
   }
@@ -57,8 +59,16 @@ AdsbComponent::~AdsbComponent() {
 void AdsbComponent::process_runner() {
   while (!m_terminate) {
     m_console->info("Starting dump1090...");
-    // Spawns dump1090 in foreground, blocking the thread
-    int ret = system("dump1090 --net --quiet --net-sbs-port 30003");
+
+    // Dump1090 is now built into OpenHD bundle statically
+    // Run dump1090_main, it's blocking
+    char* argv[] = {(char*)"dump1090", (char*)"--net", (char*)"--quiet", (char*)"--net-sbs-port", (char*)"30003"};
+    int argc = 5;
+
+    // NOTE: dump1090_main might call exit() on error, which will kill the whole openhd process.
+    // It's better to avoid it, but for now we follow statically compiling instruction.
+    int ret = dump1090_main(argc, argv);
+
     m_console->info("dump1090 exited with code {}", ret);
 
     if (m_terminate) break;
