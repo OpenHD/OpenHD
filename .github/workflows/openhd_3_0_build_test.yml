@@ -42,11 +42,11 @@ jobs:
             git -C OpenHD/ohd_interface/video_crypto_private fetch origin main
             git -C OpenHD/ohd_interface/video_crypto_private checkout -f origin/main
           fi
+
           if [ ! -f OpenHD/ohd_interface/video_crypto_private/CMakeLists.txt ]; then
-            echo "Missing video_crypto_private content. Ensure the private repo has the files and is accessible."
+            echo "Missing video_crypto_private content."
             exit 1
           fi
-          git -C OpenHD/ohd_interface/video_crypto_private rev-parse HEAD
       - name: Install Dependencies
         run: |
           sudo mkdir -p /Videos/
