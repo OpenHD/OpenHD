@@ -40,6 +40,8 @@ SET(sources
     "src/internal/OHDLinkStatisticsHelper.h"
     "src/internal/OHDMainComponent.cpp"
     "src/internal/OHDMainComponent.h"
+    "src/internal/AdsbComponent.cpp"
+    "src/internal/AdsbComponent.h"
     "src/internal/onboard_computer_status.hpp"
     "src/internal/onboard_computer_status_rpi.hpp"
     "src/internal/OnboardComputerStatusProvider.cpp"

@@ -33,6 +33,7 @@
 #include "openhd_temporary_air_or_ground.h"
 #include "openhd_util.h"
 #include "openhd_util_time.h"
+#include "internal/AdsbComponent.h"
 
 namespace {
 
@@ -104,6 +105,9 @@ GroundTelemetry::GroundTelemetry(bool ignoreSerial)
       _sys_id, MAV_COMP_ID_ONBOARD_COMPUTER);
   m_generic_mavlink_param_provider->add_params(get_all_settings());
   m_components.push_back(m_generic_mavlink_param_provider);
+  if (m_gnd_settings->get_settings().adsb_enable) {
+    m_components.push_back(std::make_shared<AdsbComponent>(_sys_id));
+  }
   if (m_ignoreSerial) {
     m_console->info("Serial setup disabled by CLI");
   } else {
@@ -549,6 +553,12 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
     openhd::TelemetryRecorder::instance().set_enabled(value != 0);
     return true;
   };
+
+  auto c_adsb_enable = [this](std::string, int value) {
+    m_gnd_settings->unsafe_get_settings().adsb_enable = value == 1;
+    m_gnd_settings->persist();
+    return true;
+  };
   ret.push_back(openhd::Setting{
       openhd::telemetry::ground::OPENHD_UART_TELEMETRY_PARAM,
       openhd::StringSetting{
@@ -596,6 +606,11 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
           static_cast<int>(
               m_gnd_settings->get_settings().telemetry_logging_enabled),
           c_telemetry_logging}});
+  ret.push_back(openhd::Setting{
+      openhd::telemetry::ground::ADSB_ENABLE_PARAM,
+      openhd::IntSetting{
+          static_cast<int>(m_gnd_settings->get_settings().adsb_enable),
+          c_adsb_enable}});
   openhd::testing::append_dummy_if_empty(ret);
   return ret;
 }
