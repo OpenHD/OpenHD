@@ -187,8 +187,8 @@ add_dependencies(OHDVideoLib generate_camera_registry)
 # Executables for testing manually, note that some might need to run after discovery
 add_executable(test_video test/test_video.cpp)
 target_link_libraries(test_video OHDVideoLib)
-add_executable(test_audio test/test_audio.cpp)
-target_link_libraries(test_audio OHDVideoLib)
+add_executable(test_audio test/test_audio.cpp ../ohd_common/src/config_paths.cpp)
+target_link_libraries(test_audio OHDVideoLib OHDCommonLib)
 add_executable(test_matroska_recorder
         test/test_matroska_recorder.cpp
         src/matroska_recorder.cpp)
