@@ -50,6 +50,8 @@ struct AirCameraGenericSettings {
   // Audio can be enabled, in which case gstreamer hopefully picks up the right
   // audio source via autoaudiosrc
   int enable_audio = OPENHD_AUDIO_DISABLE;
+  std::string audio_source = "";
+  int audio_volume = 100;
 };
 
 static bool is_valid_dualcam_primary_video_allocated_bandwidth(

@@ -136,13 +136,19 @@ std::string GstAudioStream::create_pipeline() {
   std::stringstream ss;
   auto opt_manual_audio_source = OHDFilesystemUtil::opt_read_file(
       std::string(getConfigBasePath()) + "audio_source.txt", false);
+
+  std::string audio_source_setting = g_airCameraGenericSettings.audio_source;
+
   // audiotestsrc always works, but obviously is not a mic ;)
   if (OHDFilesystemUtil::exists(std::string(getConfigBasePath()) +
                                 "test_audio.txt") ||
       openhd_enable_audio_test) {
     ss << "audiotestsrc"
        << " ! ";
-  } else if (opt_manual_audio_source.has_value()) {
+  } else if (!audio_source_setting.empty()) {
+    // If user specified an audio source via MAVLink setting
+    ss << audio_source_setting << " ! ";
+  } else if (opt_manual_audio_source.has_value() && !opt_manual_audio_source.value().empty()) {
     // File, for development
     ss << opt_manual_audio_source.value() << " ! ";
   } else {
@@ -155,6 +161,12 @@ std::string GstAudioStream::create_pipeline() {
          << " ! ";
     }
   }
+
+  double volume_factor = g_airCameraGenericSettings.audio_volume / 100.0;
+  if (g_airCameraGenericSettings.audio_volume != 100) {
+    ss << "volume volume=" << volume_factor << " ! ";
+  }
+
   /*ss << "autoaudiosrc ! ";
   ss << "audioconvert ! ";
   ss << "rtpL16pay ! ";*/

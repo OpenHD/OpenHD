@@ -312,6 +312,30 @@ std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
         "AUDIO_ENABLE",
         openhd::IntSetting{m_generic_settings->get_settings().enable_audio,
                            cb_audio}});
+
+    auto cb_audio_src = [this](std::string, std::string value) {
+      m_generic_settings->unsafe_get_settings().audio_source = value;
+      m_generic_settings->persist();
+      openhd::TerminateHelper::instance().terminate_after(
+          "AudioSrc", std::chrono::seconds(1));
+      return true;
+    };
+    ret.push_back(openhd::Setting{
+        "AUDIO_SOURCE",
+        openhd::StringSetting{m_generic_settings->get_settings().audio_source,
+                              cb_audio_src}});
+
+    auto cb_audio_vol = [this](std::string, int value) {
+      m_generic_settings->unsafe_get_settings().audio_volume = value;
+      m_generic_settings->persist();
+      openhd::TerminateHelper::instance().terminate_after(
+          "AudioVol", std::chrono::seconds(1));
+      return true;
+    };
+    ret.push_back(openhd::Setting{
+        "AUDIO_VOLUME",
+        openhd::IntSetting{m_generic_settings->get_settings().audio_volume,
+                           cb_audio_vol}});
   }
   return ret;
 }
