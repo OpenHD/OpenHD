@@ -38,9 +38,9 @@ jobs:
       - name: Ensure private submodule content
         run: |
           if [ ! -f OpenHD/ohd_interface/video_crypto_private/CMakeLists.txt ]; then
-            echo "Submodule content missing, updating to latest main..."
-            git -C OpenHD/ohd_interface/video_crypto_private fetch origin master
-            git -C OpenHD/ohd_interface/video_crypto_private checkout -f origin/master
+            echo "Submodule content missing, updating to latest master..."
+            git -C OpenHD/ohd_interface/video_crypto_private fetch origin master || git -C OpenHD/ohd_interface/video_crypto_private fetch origin main || true
+            git -C OpenHD/ohd_interface/video_crypto_private checkout -f origin/master || git -C OpenHD/ohd_interface/video_crypto_private checkout -f origin/main || true
           fi
           if [ ! -f OpenHD/ohd_interface/video_crypto_private/CMakeLists.txt ]; then
             echo "Missing video_crypto_private content. Ensure the private repo has the files and is accessible."
