@@ -25,6 +25,7 @@
 #define OPENHD_OPENHD_OHD_TELEMETRY_SRC_INTERNAL_ADSBCOMPONENT_H_
 
 #include <atomic>
+#include <chrono>
 #include <map>
 #include <mutex>
 #include <string>
@@ -48,15 +49,18 @@ class AdsbComponent : public MavlinkComponent {
  private:
   void process_runner();
   void tcp_client_runner();
+  bool wait_for_retry() const;
 
   std::shared_ptr<spdlog::logger> m_console;
   std::atomic_bool m_terminate{false};
   std::thread m_process_thread;
   std::thread m_tcp_thread;
+  std::atomic_int m_dump1090_pid{-1};
 
   // ICAO -> ADSB Vehicle Message
   std::mutex m_adsb_mutex;
   std::map<uint32_t, mavlink_adsb_vehicle_t> m_adsb_vehicles;
+  std::map<uint32_t, std::chrono::steady_clock::time_point> m_last_seen;
 };
 
 #endif  // OPENHD_OPENHD_OHD_TELEMETRY_SRC_INTERNAL_ADSBCOMPONENT_H_
