@@ -17,3 +17,4 @@
 [submodule "OpenHD/ohd_interface/lib/devourer"]
 	path = OpenHD/ohd_interface/lib/devourer
 	url = https://github.com/OpenHD/devourer.git
+	update = none
