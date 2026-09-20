@@ -33,7 +33,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
     openhd_uart_telemetry_enabled, openhd_uart_telemetry_baudrate,
     openhd_uart_telemetry_flow_control, openhd_uart_priority_rc,
     openhd_uart_priority_openhd, openhd_uart_priority_fc,
-    telemetry_logging_enabled, sbus_out_enabled, sbus_uart_device,
+    telemetry_logging_enabled, adsb_enable, sbus_out_enabled, sbus_uart_device,
     sbus_update_rate_hz);
 
 std::optional<Settings> SettingsHolder::impl_deserialize(
@@ -72,6 +72,8 @@ std::optional<Settings> SettingsHolder::impl_deserialize(
       parsed.value("openhd_uart_priority_fc", settings.openhd_uart_priority_fc);
   settings.telemetry_logging_enabled = parsed.value(
       "telemetry_logging_enabled", settings.telemetry_logging_enabled);
+  settings.adsb_enable =
+      parsed.value("adsb_enable", settings.adsb_enable);
   settings.sbus_out_enabled =
       parsed.value("sbus_out_enabled", settings.sbus_out_enabled);
   settings.sbus_uart_device =

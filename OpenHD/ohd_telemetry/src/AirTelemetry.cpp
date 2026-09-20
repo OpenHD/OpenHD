@@ -33,6 +33,7 @@
 #include "mavsdk_temporary/XMavlinkParamProvider.h"
 #include "openhd_telemetry_recorder.h"
 #include "openhd_plugin_manager.h"
+#include "internal/AdsbComponent.h"
 #include "openhd_temporary_air_or_ground.h"
 #include "openhd_util.h"
 #include "openhd_util_time.h"
@@ -117,6 +118,9 @@ AirTelemetry::AirTelemetry(bool ignoreSerial)
   // modules have provided all their paramters.
   m_generic_mavlink_param_provider->add_params(get_all_settings());
   m_components.push_back(m_generic_mavlink_param_provider);
+  if (m_air_settings->get_settings().adsb_enable) {
+    m_components.push_back(std::make_shared<AdsbComponent>(_sys_id));
+  }
   m_tcp_server = std::make_unique<TCPEndpoint>(
       openhd::TCPServer::Config{TCPEndpoint::DEFAULT_PORT});  // 1445
   if (m_tcp_server) {
@@ -553,6 +557,12 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
     m_air_settings->persist(false);
     return true;
   };
+
+  auto c_adsb_enable = [this](std::string, int value) {
+    m_air_settings->unsafe_get_settings().adsb_enable = value == 1;
+    m_air_settings->persist();
+    return true;
+  };
   auto c_fc_sys_id = [this](std::string, int value) {
     if (value < 0 || value > 254 || value == OHD_SYS_ID_GROUND ||
         value == OHD_SYS_ID_AIR || value == QOPENHD_SYS_ID) {
@@ -712,6 +722,11 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
           static_cast<int>(
               m_air_settings->get_settings().telemetry_logging_enabled),
           c_telemetry_logging}});
+  ret.push_back(openhd::Setting{
+      air::ADSB_ENABLE_PARAM,
+      openhd::IntSetting{
+          static_cast<int>(m_air_settings->get_settings().adsb_enable),
+          c_adsb_enable}});
   ret.push_back(openhd::Setting{
       air::SBUS_OUT_ENABLE_PARAM,
       openhd::IntSetting{
