@@ -70,10 +70,9 @@ void AdsbComponent::process_runner() {
     m_console->info("Starting dump1090...");
     char program[] = "openhd_dump1090";
     char net[] = "--net";
-    char quiet[] = "--quiet";
     char port_option[] = "--net-sbs-port";
     char port[] = "30003";
-    char* argv[] = {program, net, quiet, port_option, port, nullptr};
+    char* argv[] = {program, net, port_option, port, nullptr};
     pid_t child_pid = -1;
     const int spawn_result =
         posix_spawnp(&child_pid, program, nullptr, nullptr, argv, environ);
