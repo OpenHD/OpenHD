@@ -285,8 +285,8 @@ jobs:
           overprovision-lvm: "true"
       - uses: actions/checkout@v4
         with:
-          submodules: false
-          persist-credentials: false
+          fetch-depth: 0
+          submodules: true
           token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
       - name: Build X20 package in its legacy target chroot
         run: |

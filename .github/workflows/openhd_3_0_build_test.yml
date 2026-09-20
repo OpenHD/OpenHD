@@ -27,16 +27,9 @@ jobs:
       - name: Checkout repository and submodules
         uses: actions/checkout@v4
         with:
-          submodules: true
           fetch-depth: 0
-          token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
-      - name: Sync submodules
-        run: |
-          git submodule sync
-          git submodule update --init
-          git submodule status
-      - name: Ensure private submodule content
-        run: |
+          submodules: true
+          token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}      run: |
           if [ ! -f OpenHD/ohd_interface/video_crypto_private/CMakeLists.txt ]; then
             echo "Submodule content missing, updating to latest main..."
             git -C OpenHD/ohd_interface/video_crypto_private fetch origin main
