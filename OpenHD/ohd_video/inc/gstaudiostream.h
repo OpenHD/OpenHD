@@ -69,6 +69,8 @@ class GstAudioStream {
   openhd::ON_AUDIO_TX_DATA_PACKET m_cb = nullptr;
   std::string m_device_token;
   std::atomic_int m_mic_gain_percent{100};
+  bool m_force_fallback_audio_file = false;
+  bool m_current_pipeline_uses_fallback_file = false;
 
  private:
   // points to a running gst pipeline instance

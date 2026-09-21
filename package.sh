@@ -497,6 +497,9 @@ build_package() {
 
   mkdir -p "${PKGDIR}usr/local/bin/"
   cp "${build_dir}/openhd" "${PKGDIR}usr/local/bin/"
+  mkdir -p "${PKGDIR}usr/local/share/openhd/audio/"
+  cp OpenHD/ohd_video/assets/example.mp3 \
+    "${PKGDIR}usr/local/share/openhd/audio/example.mp3"
   DESTDIR="${PKGDIR}" cmake --install "${install_build_dir}" \
     --prefix /usr/local --component Nexmon
   if [[ -f "${PKGDIR}usr/local/lib/openhd/nexmon/manifest.json" ]]; then

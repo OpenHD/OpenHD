@@ -26,6 +26,8 @@
 #include <algorithm>
 #include <cstdlib>
 #include <iostream>
+#include <optional>
+#include <regex>
 #include <sstream>
 #include <utility>
 
@@ -174,26 +176,22 @@ void GstAudioStream::loop_infinite() {
 }
 
 // Quite dirty, but hey ...
-static std::string rpi_detect_alsasrc_device() {
-  static constexpr auto DEFAULT_ALSASRC_DEVICE = "hw:2,0";
+static std::optional<std::string> rpi_detect_alsasrc_device() {
   const auto opt_arecord_list_output = OHDUtil::run_command_out("arecord -l");
   if (!opt_arecord_list_output.has_value()) {
-    return DEFAULT_ALSASRC_DEVICE;
+    return std::nullopt;
   }
   const auto& arecord_list_output = opt_arecord_list_output.value();
-  if (OHDUtil::contains(arecord_list_output, "card 3: ")) {
-    openhd::log::get_default()->debug("Found audio card 3");
-    return "hw:3,0";  // Probably KMS
+  std::smatch match;
+  static const std::regex capture_device_pattern(
+      R"(card\s+([0-9]+):.*device\s+([0-9]+):)");
+  if (std::regex_search(arecord_list_output, match,
+                        capture_device_pattern)) {
+    const auto device = "hw:" + match[1].str() + "," + match[2].str();
+    openhd::log::get_default()->debug("Found ALSA capture device {}", device);
+    return device;
   }
-  if (OHDUtil::contains(arecord_list_output, "card 2: ")) {
-    openhd::log::get_default()->debug("Found audio card 2");
-    return "hw:2,0";  // Probably FKMS
-  }
-  if (OHDUtil::contains(arecord_list_output, "card 1:")) {
-    openhd::log::get_default()->debug("Found audio card 1");
-    return "hw:1,0";
-  }
-  return DEFAULT_ALSASRC_DEVICE;
+  return std::nullopt;
 }
 
 // 2.0 pipeline tx:
@@ -207,6 +205,17 @@ static std::string rpi_detect_alsasrc_device() {
 // audio/x-alaw, rate=8000, channels=1 ! alawdec ! alsasink device=hw:0
 std::string GstAudioStream::create_pipeline() {
   std::stringstream ss;
+  m_current_pipeline_uses_fallback_file = false;
+  const bool fallback_file_exists =
+      OHDFilesystemUtil::exists(OPENHD_FALLBACK_AUDIO_FILE);
+  const auto append_fallback_file = [&]() {
+    m_current_pipeline_uses_fallback_file = true;
+    m_console->info("Streaming fallback audio file {}",
+                    OPENHD_FALLBACK_AUDIO_FILE);
+    ss << "filesrc location=\""
+       << escape_gst_string(OPENHD_FALLBACK_AUDIO_FILE)
+       << "\" ! decodebin ! ";
+  };
   auto opt_manual_audio_source = OHDFilesystemUtil::opt_read_file(
       std::string(getConfigBasePath()) + "audio_source.txt", false);
   // audiotestsrc always works, but obviously is not a mic ;)
@@ -224,13 +233,9 @@ std::string GstAudioStream::create_pipeline() {
         devices.begin(), devices.end(), [this](const DeviceInfo& device) {
           return device.token == m_device_token;
         });
-    if (devices.empty() &&
-        OHDFilesystemUtil::exists(OPENHD_FALLBACK_AUDIO_FILE)) {
-      m_console->info("No audio capture device found; streaming fallback file {}",
-                      OPENHD_FALLBACK_AUDIO_FILE);
-      ss << "filesrc location=\""
-         << escape_gst_string(OPENHD_FALLBACK_AUDIO_FILE)
-         << "\" ! decodebin ! ";
+    if ((m_force_fallback_audio_file || devices.empty()) &&
+        fallback_file_exists) {
+      append_fallback_file();
     } else if (selected != devices.end()) {
       const auto separator = selected->token.find(':');
       const auto factory = selected->token.substr(0, separator);
@@ -244,9 +249,20 @@ std::string GstAudioStream::create_pipeline() {
       if (!m_device_token.empty()) {
         m_console->warn("Configured audio device is unavailable; using default");
       }
-      // RPI is weird. autoaudiosrc doesn't work, and
-      // the device(s) depend on fkms / kms or are in general weird.
-      ss << "alsasrc device=" << rpi_detect_alsasrc_device() << " ! ";
+      // RPI is weird. autoaudiosrc doesn't work, so verify capture hardware
+      // with arecord instead of guessing a fixed card number.
+      const auto alsa_device = rpi_detect_alsasrc_device();
+      if (alsa_device.has_value()) {
+        ss << "alsasrc device=" << alsa_device.value() << " ! ";
+      } else if (fallback_file_exists) {
+        m_console->info("No ALSA capture device found on RPI");
+        append_fallback_file();
+      } else {
+        m_console->warn(
+            "No ALSA capture device found and fallback file {} is missing",
+            OPENHD_FALLBACK_AUDIO_FILE);
+        ss << "audiotestsrc wave=silence ! ";
+      }
     } else {
       if (devices.empty()) {
         m_console->warn(
@@ -312,6 +328,13 @@ void GstAudioStream::stream_once() {
   }
   if (!ret.has_value() || ret.value() == GST_STATE_CHANGE_FAILURE) {
     m_console->error("Failed to set pipeline to PLAYING state");
+    if (!m_current_pipeline_uses_fallback_file &&
+        OHDFilesystemUtil::exists(OPENHD_FALLBACK_AUDIO_FILE)) {
+      m_console->warn(
+          "Audio capture source failed; switching to fallback file {}",
+          OPENHD_FALLBACK_AUDIO_FILE);
+      m_force_fallback_audio_file = true;
+    }
     openhd::gst_object_unref_with_timeout(GST_OBJECT(m_gst_pipeline));
     m_gst_pipeline = nullptr;
     return;
