@@ -37,7 +37,7 @@ buildroot_defconfig="${sdk_source}/sysdrv/tools/board/buildroot/luckfox_pico_def
 if [[ -f "${buildroot_defconfig}" ]]; then
   sed -i -E 's/^BR2_PACKAGE_OPENHD=y/# BR2_PACKAGE_OPENHD is not set/' "${buildroot_defconfig}"
   sed -i -E 's/^BR2_PACKAGE_OPENHD_SYSUTILS=y/# BR2_PACKAGE_OPENHD_SYSUTILS is not set/' "${buildroot_defconfig}"
-  for pkg in BR2_PACKAGE_POCO BR2_PACKAGE_POCO_NET BR2_PACKAGE_LIBPCAP BR2_PACKAGE_LIBSODIUM BR2_PACKAGE_LIBUSB; do
+  for pkg in BR2_PACKAGE_POCO BR2_PACKAGE_POCO_NET BR2_PACKAGE_LIBPCAP BR2_PACKAGE_LIBSODIUM BR2_PACKAGE_LIBUSB BR2_PACKAGE_LIBRTLSDR; do
     if ! grep -q "^${pkg}=y" "${buildroot_defconfig}"; then
       echo "${pkg}=y" >> "${buildroot_defconfig}"
     fi
@@ -61,6 +61,19 @@ test -d "${staging_dir}" || {
 }
 test -d "${host_dir}" || {
   echo "Error: Buildroot host directory not found: ${host_dir}" >&2
+  exit 1
+}
+
+test -f "${staging_dir}/usr/include/rtl-sdr.h" || {
+  echo "Error: rtl-sdr headers are missing from the Buildroot sysroot" >&2
+  exit 1
+}
+find "${staging_dir}/usr/lib" -name 'librtlsdr.so*' -print -quit | grep -q . || {
+  echo "Error: librtlsdr is missing from the Buildroot sysroot" >&2
+  exit 1
+}
+find "${staging_dir}/usr/lib" -name 'librtlsdr.pc' -print -quit | grep -q . || {
+  echo "Error: librtlsdr pkg-config metadata is missing from the Buildroot sysroot" >&2
   exit 1
 }
 

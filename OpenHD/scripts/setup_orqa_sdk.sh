@@ -236,6 +236,35 @@ build_gst_perf() {
     "$SDKTARGETSYSROOT/usr/lib/gstreamer-1.0/libgstperf.so"
 }
 
+build_librtlsdr() {
+  local version="2.0.2"
+  local tarball="rtl-sdr-${version}.tar.gz"
+  local url="https://github.com/osmocom/rtl-sdr/archive/refs/tags/v${version}.tar.gz"
+  local archive="$work_dir/$tarball"
+
+  download "$url" "$archive"
+  tar -xf "$archive" -C "$work_dir"
+  local src_dir="$work_dir/rtl-sdr-${version}"
+  if [[ ! -d "$src_dir" ]]; then
+    echo "Failed to locate extracted rtl-sdr sources" >&2
+    exit 1
+  fi
+
+  cmake -S "$src_dir" -B "$src_dir/build" -G Ninja \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DCMAKE_INSTALL_LIBDIR=lib \
+    -DBUILD_SHARED_LIBS=ON \
+    -DINSTALL_UDEV_RULES=OFF \
+    -DDETACH_KERNEL_DRIVER=ON
+  cmake --build "$src_dir/build" -j"$jobs"
+  DESTDIR="$SDKTARGETSYSROOT" cmake --install "$src_dir/build"
+
+  test -f "$SDKTARGETSYSROOT/usr/include/rtl-sdr.h"
+  test -f "$SDKTARGETSYSROOT/usr/lib/pkgconfig/librtlsdr.pc"
+  find "$SDKTARGETSYSROOT/usr/lib" -name 'librtlsdr.so*' -print -quit | grep -q .
+}
+
 build_poco() {
   # Match poco-dev on the ORQA 6.6-scarthgap image. This release provides
   # libPocoFoundation.so.95 and libPocoNet.so.95.
@@ -282,6 +311,7 @@ build_poco() {
 
 build_libsodium
 build_gst_perf
+build_librtlsdr
 build_poco
 package_poco_libs "$output_archive"
 package_libsodium_libs "$libsodium_archive"

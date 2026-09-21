@@ -29,7 +29,7 @@ output="$(mktemp)"
 trap 'rm -f "${output}"' EXIT
 read -r -a pkg_config_flags <<<"$(
   pkg-config --cflags --libs \
-    gstreamer-1.0 libdrm gbm egl glesv2 freetype2 zlib
+    gstreamer-1.0 libdrm gbm egl glesv2 freetype2 zlib librtlsdr
 )"
 printf '%s\n' \
   '#include <Poco/Net/IPAddress.h>' \
@@ -41,6 +41,7 @@ printf '%s\n' \
   '#include <ft2build.h>' \
   '#include FT_FREETYPE_H' \
   '#include <zlib.h>' \
+  '#include <rtl-sdr.h>' \
   'int main() {' \
   '  Poco::Net::IPAddress address;' \
   '  gst_init(nullptr, nullptr);' \
@@ -51,9 +52,10 @@ printf '%s\n' \
   '  FT_Library freetype = nullptr;' \
   '  int ft_status = FT_Init_FreeType(&freetype);' \
   '  const char* linked_zlib_version = zlibVersion();' \
+  '  uint32_t rtl_devices = rtlsdr_get_device_count();' \
   '  return address.isWildcard() + (drm_version != nullptr) + (gbm != nullptr)' \
   '      + (display != EGL_NO_DISPLAY) + (gl_version != nullptr) + ft_status' \
-  '      + (linked_zlib_version == nullptr);' \
+  '      + (linked_zlib_version == nullptr) + (rtl_devices > 0);' \
   '}' \
   | "${compiler}" --sysroot="${sysroot}" -x c++ - \
       "${pkg_config_flags[@]}" \

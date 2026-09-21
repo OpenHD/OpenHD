@@ -37,6 +37,7 @@ packages=(
   libstdc++-10-dev
   libpoco-dev
   libusb-1.0-0-dev
+  librtlsdr-dev
   libpcap-dev
   libsodium-dev
   libnl-3-dev
@@ -104,6 +105,8 @@ test -f "${output_dir}/usr/include/gstreamer-1.0/gst/gst.h"
 test -f "${output_dir}/usr/include/gbm.h"
 test -f "${output_dir}/usr/include/EGL/egl.h"
 test -f "${output_dir}/usr/include/GLES2/gl2.h"
+test -f "${output_dir}/usr/include/rtl-sdr.h"
 find "${output_dir}/usr/lib" -name 'libPocoFoundation.so*' -print -quit | grep -q .
+find "${output_dir}/usr/lib" -name 'librtlsdr.so*' -print -quit | grep -q .
 
 echo "Created ${suite}/${architecture} OpenHD sysroot at ${output_dir}"

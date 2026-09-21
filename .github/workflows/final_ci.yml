@@ -429,6 +429,10 @@ jobs:
           # libsodium shared library → /usr/lib
           unzip -o "${RUNNER_TEMP}/libsodium-libraries.zip" -d "${deploy}/usr/lib/"
 
+          # RTL-SDR shared library used by the built-in ADS-B receiver
+          source "${RUNNER_TEMP}/orqa-sdk/environment-setup-armv8a-poky-linux"
+          cp -a "${SDKTARGETSYSROOT}"/usr/lib/librtlsdr.so* "${deploy}/usr/lib/"
+
           # gst-perf plugin (zipped as usr/lib/gstreamer-1.0/libgstperf.so)
           unzip -o "${RUNNER_TEMP}/gst-perf-plugin.zip"   -d "${deploy}/"
 

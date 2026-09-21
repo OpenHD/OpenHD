@@ -39,6 +39,9 @@ test -f "${SDKTARGETSYSROOT}/usr/lib/libPocoFoundation.so.95"
 test -f "${SDKTARGETSYSROOT}/usr/lib/libPocoNet.so.95"
 test -f "${SDKTARGETSYSROOT}/usr/lib/libsodium.so.26"
 test -f "${SDKTARGETSYSROOT}/usr/lib/gstreamer-1.0/libgstperf.so"
+test -f "${SDKTARGETSYSROOT}/usr/include/rtl-sdr.h"
+test -f "${SDKTARGETSYSROOT}/usr/lib/pkgconfig/librtlsdr.pc"
+find "${SDKTARGETSYSROOT}/usr/lib" -name 'librtlsdr.so*' -print -quit | grep -q .
 
 rm -rf "${build_dir}"
 cmake -S "${repo_root}/OpenHD" -B "${build_dir}" -G Ninja \
@@ -58,6 +61,7 @@ test -f "${binary}"
 grep -q 'Shared library: \[libPocoFoundation.so.95\]' "${needed_file}"
 grep -q 'Shared library: \[libPocoNet.so.95\]' "${needed_file}"
 grep -q 'Shared library: \[libsodium.so.26\]' "${needed_file}"
+grep -q 'Shared library: \[librtlsdr.so' "${needed_file}"
 if grep -q 'Shared library: \[libSDL2' "${needed_file}"; then
   echo "SDL2 is not installed on the Orqa controller image." >&2
   exit 1
