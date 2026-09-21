@@ -55,7 +55,6 @@ class AdsbComponent : public MavlinkComponent {
   std::atomic_bool m_terminate{false};
   std::thread m_process_thread;
   std::thread m_tcp_thread;
-  std::atomic_int m_dump1090_pid{-1};
 
   // ICAO -> ADSB Vehicle Message
   std::mutex m_adsb_mutex;

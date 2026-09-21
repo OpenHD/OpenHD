@@ -26,21 +26,16 @@
 #include <algorithm>
 #include <arpa/inet.h>
 #include <chrono>
-#include <cstdlib>
 #include <cstring>
 #include <limits>
-#include <signal.h>
-#include <spawn.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <sys/wait.h>
 #include <unistd.h>
 #include <vector>
 
+#include "dump1090_export.h"
 #include "openhd_util.h"
 #include <spdlog/spdlog.h>
-
-extern char** environ;
 
 AdsbComponent::AdsbComponent(uint8_t parent_sys_id)
     : MavlinkComponent(parent_sys_id, MAV_COMP_ID_ADSB),
@@ -51,12 +46,7 @@ AdsbComponent::AdsbComponent(uint8_t parent_sys_id)
 
 AdsbComponent::~AdsbComponent() {
   m_terminate = true;
-  const auto pid = m_dump1090_pid.load();
-  if (pid > 0) {
-    // Only stop the helper owned by this component. Never kill unrelated
-    // dump1090 processes that the user may be running.
-    kill(pid, SIGTERM);
-  }
+  dump1090_request_stop();
   if (m_process_thread.joinable()) {
     m_process_thread.join();
   }
@@ -67,34 +57,14 @@ AdsbComponent::~AdsbComponent() {
 
 void AdsbComponent::process_runner() {
   while (!m_terminate) {
-    m_console->info("Starting dump1090...");
-    char program[] = "openhd_dump1090";
+    m_console->info("Starting built-in dump1090 receiver...");
+    char program[] = "built_in_dump1090";
     char net[] = "--net";
     char port_option[] = "--net-sbs-port";
     char port[] = "30003";
     char* argv[] = {program, net, port_option, port, nullptr};
-    pid_t child_pid = -1;
-    const int spawn_result =
-        posix_spawnp(&child_pid, program, nullptr, nullptr, argv, environ);
-    if (spawn_result != 0) {
-      m_console->warn("Cannot start bundled dump1090: {}", strerror(spawn_result));
-      if (!wait_for_retry()) break;
-      continue;
-    }
-    m_dump1090_pid = child_pid;
-    if (m_terminate) {
-      kill(child_pid, SIGTERM);
-    }
-
-    int status = 0;
-    while (waitpid(child_pid, &status, 0) < 0 && errno == EINTR) {
-    }
-    m_dump1090_pid = -1;
-    if (WIFEXITED(status)) {
-      m_console->info("dump1090 exited with code {}", WEXITSTATUS(status));
-    } else if (WIFSIGNALED(status)) {
-      m_console->info("dump1090 stopped by signal {}", WTERMSIG(status));
-    }
+    const int result = dump1090_main(4, argv);
+    m_console->info("Built-in dump1090 exited with code {}", result);
 
     if (m_terminate) break;
     if (!wait_for_retry()) break;

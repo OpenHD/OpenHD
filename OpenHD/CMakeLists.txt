@@ -37,7 +37,6 @@ add_compile_options(-Wno-address-of-packed-member -Wno-cast-align)
 add_executable(openhd main.cpp
         ohd_common/inc/config_paths.h
         ohd_common/src/config_paths.cpp)
-add_dependencies(openhd openhd_dump1090)
 
 # Explicitly link stdc++fs for GCC 8.x compatibility with std::filesystem
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
@@ -56,4 +55,4 @@ if (HAVE_LIBATOMIC)
 endif()
 
 # Install the OpenHD executable
-install(TARGETS openhd openhd_dump1090 DESTINATION bin)
+install(TARGETS openhd DESTINATION bin)

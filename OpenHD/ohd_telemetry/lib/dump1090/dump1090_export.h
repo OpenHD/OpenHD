@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 int dump1090_main(int argc, char **argv);
+void dump1090_request_stop(void);
 
 #ifdef __cplusplus
 }

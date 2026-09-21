@@ -135,7 +135,9 @@ struct {
     int data_ready;                 /* Data ready to be processed. */
     uint32_t *icao_cache;           /* Recently seen ICAO addresses cache. */
     uint16_t *maglut;               /* I/Q -> Magnitude lookup table. */
-    int exit;                       /* Exit from the main loop when true. */
+    volatile sig_atomic_t exit;     /* Exit from the main loop when true. */
+    int sync_initialized;
+    int reader_started;
 
     /* RTLSDR */
     int dev_index;
@@ -258,6 +260,12 @@ static long long mstime(void) {
 /* =============================== Initialization =========================== */
 
 void modesInitConfig(void) {
+    memset(&Modes, 0, sizeof(Modes));
+    Modes.fd = -1;
+    Modes.ros = -1;
+    Modes.ris = -1;
+    Modes.https = -1;
+    Modes.sbsos = -1;
     Modes.gain = MODES_MAX_GAIN;
     Modes.dev_index = 0;
     Modes.enable_agc = 0;
@@ -278,11 +286,12 @@ void modesInitConfig(void) {
     Modes.loop = 0;
 }
 
-void modesInit(void) {
+int modesInit(void) {
     int i, q;
 
     pthread_mutex_init(&Modes.data_mutex,NULL);
     pthread_cond_init(&Modes.data_cond,NULL);
+    Modes.sync_initialized = 1;
     /* We add a full message minus a final bit to the length, so that we
      * can carry the remaining part of the buffer that we can't process
      * in the message detection loop, back at the start of the next data
@@ -299,7 +308,7 @@ void modesInit(void) {
     if ((Modes.data = malloc(Modes.data_len)) == NULL ||
         (Modes.magnitude = malloc(Modes.data_len*2)) == NULL) {
         fprintf(stderr, "Out of memory allocating data buffer.\n");
-        exit(1);
+        return -1;
     }
     memset(Modes.data,127,Modes.data_len);
 
@@ -329,11 +338,12 @@ void modesInit(void) {
     Modes.stat_sbs_connections = 0;
     Modes.stat_out_of_phase = 0;
     Modes.exit = 0;
+    return 0;
 }
 
 /* =============================== RTLSDR handling ========================== */
 
-void modesInitRTLSDR(void) {
+int modesInitRTLSDR(void) {
     int j;
     int device_count;
     int ppm_error = 0;
@@ -342,7 +352,7 @@ void modesInitRTLSDR(void) {
     device_count = rtlsdr_get_device_count();
     if (!device_count) {
         fprintf(stderr, "No supported RTLSDR devices found.\n");
-        exit(1);
+        return -1;
     }
 
     fprintf(stderr, "Found %d device(s):\n", device_count);
@@ -355,7 +365,8 @@ void modesInitRTLSDR(void) {
     if (rtlsdr_open(&Modes.dev, Modes.dev_index) < 0) {
         fprintf(stderr, "Error opening the RTLSDR device: %s\n",
             strerror(errno));
-        exit(1);
+        Modes.dev = NULL;
+        return -1;
     }
 
     /* Set gain, frequency, sample rate, and reset the device. */
@@ -383,6 +394,7 @@ void modesInitRTLSDR(void) {
     rtlsdr_reset_buffer(Modes.dev);
     fprintf(stderr, "Gain reported by device: %.2f\n",
         rtlsdr_get_tuner_gain(Modes.dev)/10.0);
+    return 0;
 }
 
 /* We use a thread reading data in background, while the main thread
@@ -411,7 +423,7 @@ void rtlsdrCallback(unsigned char *buf, uint32_t len, void *ctx) {
  * instead of using an RTLSDR device. */
 void readDataFromFile(void) {
     pthread_mutex_lock(&Modes.data_mutex);
-    while(1) {
+    while(!Modes.exit) {
         ssize_t nread, toread;
         unsigned char *p;
 
@@ -554,7 +566,7 @@ void dumpRawMessageJS(char *descr, unsigned char *msg,
 
     if ((fp = fopen("frames.js","a")) == NULL) {
         fprintf(stderr, "Error opening frames.js: %s\n", strerror(errno));
-        exit(1);
+        return;
     }
 
     fprintf(fp,"frames.push({\"descr\": \"%s\", \"mag\": [", descr);
@@ -1923,7 +1935,7 @@ struct {
 };
 
 /* Networking "stack" initialization. */
-void modesInitNet(void) {
+int modesInitNet(void) {
     int j;
 
     memset(Modes.clients,0,sizeof(Modes.clients));
@@ -1936,13 +1948,18 @@ void modesInitNet(void) {
                 modesNetServices[j].port,
                 modesNetServices[j].descr,
                 strerror(errno));
-            exit(1);
+            while (--j >= 0) {
+                close(*modesNetServices[j].socket);
+                *modesNetServices[j].socket = -1;
+            }
+            return -1;
         }
         anetNonBlock(Modes.aneterr, s);
         *modesNetServices[j].socket = s;
     }
 
     signal(SIGPIPE, SIG_IGN);
+    return 0;
 }
 
 /* This function gets called from time to time when the decoding thread is
@@ -2436,6 +2453,49 @@ int getTermRows() {
 
 /* ================================ Main ==================================== */
 
+void dump1090_request_stop(void) {
+    Modes.exit = 1;
+    if (Modes.dev != NULL) rtlsdr_cancel_async(Modes.dev);
+    if (Modes.sync_initialized) {
+        pthread_cond_broadcast(&Modes.data_cond);
+    }
+}
+
+void modesCleanup(void) {
+    int j;
+    struct aircraft *aircraft = Modes.aircrafts;
+
+    for (j = 0; j < MODES_NET_MAX_FD; ++j) {
+        if (Modes.clients[j] != NULL) {
+            close(Modes.clients[j]->fd);
+            free(Modes.clients[j]);
+            Modes.clients[j] = NULL;
+        }
+    }
+    for (j = 0; j < MODES_NET_SERVICES_NUM; ++j) {
+        if (*modesNetServices[j].socket >= 0) {
+            close(*modesNetServices[j].socket);
+            *modesNetServices[j].socket = -1;
+        }
+    }
+    while (aircraft != NULL) {
+        struct aircraft *next = aircraft->next;
+        free(aircraft);
+        aircraft = next;
+    }
+    if (Modes.fd >= 0 && Modes.fd != STDIN_FILENO) close(Modes.fd);
+    free(Modes.filename);
+    free(Modes.data);
+    free(Modes.magnitude);
+    free(Modes.icao_cache);
+    free(Modes.maglut);
+    if (Modes.sync_initialized) {
+        pthread_cond_destroy(&Modes.data_cond);
+        pthread_mutex_destroy(&Modes.data_mutex);
+        Modes.sync_initialized = 0;
+    }
+}
+
 void showHelp(void) {
     printf(
 "--device-index <index>   Select RTL device (default: 0).\n"
@@ -2497,9 +2557,14 @@ void backgroundTasks(void) {
 
 int dump1090_main(int argc, char **argv) {
     int j;
+    int result = 1;
 
     /* Set sane defaults. */
     modesInitConfig();
+    modesNetServices[MODES_NET_SERVICE_RAWO].port = MODES_NET_OUTPUT_RAW_PORT;
+    modesNetServices[MODES_NET_SERVICE_RAWI].port = MODES_NET_INPUT_RAW_PORT;
+    modesNetServices[MODES_NET_SERVICE_HTTP].port = MODES_NET_HTTP_PORT;
+    modesNetServices[MODES_NET_SERVICE_SBS].port = MODES_NET_OUTPUT_SBS_PORT;
 
     /* Parse the command line options */
     for (j = 1; j < argc; j++) {
@@ -2561,8 +2626,7 @@ int dump1090_main(int argc, char **argv) {
                 case 'j': Modes.debug |= MODES_DEBUG_JS; break;
                 default:
                     fprintf(stderr, "Unknown debugging flag: %c\n", *f);
-                    exit(1);
-                    break;
+                    return 1;
                 }
                 f++;
             }
@@ -2570,16 +2634,16 @@ int dump1090_main(int argc, char **argv) {
             Modes.stats = 1;
         } else if (!strcmp(argv[j],"--snip") && more) {
             snipMode(atoi(argv[++j]));
-            exit(0);
+            return 0;
         } else if (!strcmp(argv[j],"--help")) {
             showHelp();
-            exit(0);
+            return 0;
         } else {
             fprintf(stderr,
                 "Unknown or not enough arguments for option '%s'.\n\n",
                 argv[j]);
             showHelp();
-            exit(1);
+            return 1;
         }
     }
 
@@ -2587,33 +2651,42 @@ int dump1090_main(int argc, char **argv) {
     if (Modes.interactive == 1) signal(SIGWINCH, sigWinchCallback);
 
     /* Initialization */
-    modesInit();
+    if (modesInit() < 0) goto cleanup;
     if (Modes.net_only) {
         fprintf(stderr,"Net-only mode, no RTL device or file open.\n");
     } else if (Modes.filename == NULL) {
-        modesInitRTLSDR();
+        if (modesInitRTLSDR() < 0) goto cleanup;
     } else {
         if (Modes.filename[0] == '-' && Modes.filename[1] == '\0') {
             Modes.fd = STDIN_FILENO;
         } else if ((Modes.fd = open(Modes.filename,O_RDONLY)) == -1) {
             perror("Opening data file");
-            exit(1);
+            goto cleanup;
         }
     }
-    if (Modes.net) modesInitNet();
+    if (Modes.net && modesInitNet() < 0) goto cleanup;
 
     /* If the user specifies --net-only, just run in order to serve network
      * clients without reading data from the RTL device. */
-    while (Modes.net_only) {
+    while (Modes.net_only && !Modes.exit) {
         backgroundTasks();
         modesWaitReadableClients(100);
     }
 
+    if (Modes.net_only) {
+        result = 0;
+        goto cleanup;
+    }
+
     /* Create the thread that will read the data from the device. */
-    pthread_create(&Modes.reader_thread, NULL, readerThreadEntryPoint, NULL);
+    if (pthread_create(&Modes.reader_thread, NULL, readerThreadEntryPoint, NULL) != 0) {
+        fprintf(stderr, "Cannot start RTLSDR reader thread.\n");
+        goto cleanup;
+    }
+    Modes.reader_started = 1;
 
     pthread_mutex_lock(&Modes.data_mutex);
-    while(1) {
+    while(!Modes.exit) {
         if (!Modes.data_ready) {
             pthread_cond_wait(&Modes.data_cond,&Modes.data_mutex);
             continue;
@@ -2635,6 +2708,7 @@ int dump1090_main(int argc, char **argv) {
         pthread_mutex_lock(&Modes.data_mutex);
         if (Modes.exit) break;
     }
+    pthread_mutex_unlock(&Modes.data_mutex);
 
     /* If --ifile and --stats were given, print statistics. */
     if (Modes.stats && Modes.filename) {
@@ -2652,6 +2726,19 @@ int dump1090_main(int argc, char **argv) {
             Modes.stat_goodcrc + Modes.stat_fixed);
     }
 
-    rtlsdr_close(Modes.dev);
-    return 0;
+    result = 0;
+
+cleanup:
+    Modes.exit = 1;
+    if (Modes.dev != NULL) rtlsdr_cancel_async(Modes.dev);
+    if (Modes.reader_started) {
+        pthread_join(Modes.reader_thread, NULL);
+        Modes.reader_started = 0;
+    }
+    if (Modes.dev != NULL) {
+        rtlsdr_close(Modes.dev);
+        Modes.dev = NULL;
+    }
+    modesCleanup();
+    return result;
 }

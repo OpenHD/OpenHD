@@ -161,3 +161,4 @@ target_link_libraries(test_joystick_reader OHDTelemetryLib)
 # NOTE: We do not need MAVSDK for OpenHD, the small amount of code we share is directly included
 ####
 add_subdirectory(lib/dump1090)
+target_link_libraries(OHDTelemetryLib PUBLIC dump1090)
