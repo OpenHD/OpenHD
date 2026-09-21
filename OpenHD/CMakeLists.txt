@@ -56,3 +56,10 @@ endif()
 
 # Install the OpenHD executable
 install(TARGETS openhd DESTINATION bin)
+
+# Audio source used when an air unit has no capture device connected.
+set(OPENHD_FALLBACK_AUDIO_FILE
+    "${CMAKE_INSTALL_PREFIX}/share/openhd/audio/example.mp3")
+target_compile_definitions(OHDVideoLib PRIVATE
+    OPENHD_FALLBACK_AUDIO_FILE="${OPENHD_FALLBACK_AUDIO_FILE}")
+install(FILES ohd_video/assets/example.mp3 DESTINATION share/openhd/audio)

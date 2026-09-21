@@ -39,6 +39,10 @@ AirCameraGenericSettings g_airCameraGenericSettings;
 
 namespace {
 
+#ifndef OPENHD_FALLBACK_AUDIO_FILE
+#define OPENHD_FALLBACK_AUDIO_FILE "/usr/local/share/openhd/audio/example.mp3"
+#endif
+
 std::string escape_gst_string(const std::string& value) {
   std::string escaped;
   escaped.reserve(value.size());
@@ -220,7 +224,14 @@ std::string GstAudioStream::create_pipeline() {
         devices.begin(), devices.end(), [this](const DeviceInfo& device) {
           return device.token == m_device_token;
         });
-    if (selected != devices.end()) {
+    if (devices.empty() &&
+        OHDFilesystemUtil::exists(OPENHD_FALLBACK_AUDIO_FILE)) {
+      m_console->info("No audio capture device found; streaming fallback file {}",
+                      OPENHD_FALLBACK_AUDIO_FILE);
+      ss << "filesrc location=\""
+         << escape_gst_string(OPENHD_FALLBACK_AUDIO_FILE)
+         << "\" ! decodebin ! ";
+    } else if (selected != devices.end()) {
       const auto separator = selected->token.find(':');
       const auto factory = selected->token.substr(0, separator);
       ss << factory;
@@ -237,6 +248,12 @@ std::string GstAudioStream::create_pipeline() {
       // the device(s) depend on fkms / kms or are in general weird.
       ss << "alsasrc device=" << rpi_detect_alsasrc_device() << " ! ";
     } else {
+      if (devices.empty()) {
+        m_console->warn(
+            "No audio capture device found and fallback file {} is missing; "
+            "trying the default audio source",
+            OPENHD_FALLBACK_AUDIO_FILE);
+      }
       ss << "autoaudiosrc"
          << " ! ";
     }
@@ -324,6 +341,35 @@ void GstAudioStream::stream_once() {
       on_audio_packet(buffer_x->buffer);
       m_last_audio_packet = std::chrono::steady_clock::now();
     } else {
+      GstBus* bus = gst_element_get_bus(m_gst_pipeline);
+      GstMessage* message = gst_bus_pop_filtered(
+          bus, static_cast<GstMessageType>(GST_MESSAGE_EOS | GST_MESSAGE_ERROR));
+      gst_object_unref(bus);
+      if (message) {
+        if (GST_MESSAGE_TYPE(message) == GST_MESSAGE_EOS) {
+          m_console->debug("Audio source reached end; looping it");
+          gst_message_unref(message);
+          const auto seek_flags = static_cast<GstSeekFlags>(
+              GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_KEY_UNIT);
+          if (gst_element_seek_simple(m_gst_pipeline, GST_FORMAT_TIME,
+                                      seek_flags, 0)) {
+            m_last_audio_packet = std::chrono::steady_clock::now();
+            continue;
+          }
+          m_console->warn("Audio source cannot seek; restarting pipeline");
+          break;
+        } else {
+          GError* bus_error = nullptr;
+          gchar* debug_info = nullptr;
+          gst_message_parse_error(message, &bus_error, &debug_info);
+          m_console->error("Audio pipeline error: {}",
+                           bus_error ? bus_error->message : "unknown error");
+          g_clear_error(&bus_error);
+          g_free(debug_info);
+        }
+        gst_message_unref(message);
+        break;
+      }
       // Check if pipeline is dead (no data for 5 seconds)
       if (std::chrono::steady_clock::now() - m_last_audio_packet >
           std::chrono::seconds(5)) {
