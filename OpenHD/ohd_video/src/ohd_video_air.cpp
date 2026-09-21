@@ -106,26 +106,7 @@ OHDVideoAir::OHDVideoAir(std::vector<XCamera> cameras,
   for (auto& camera : camera_holders) {
     configure(camera);
   }
-  if (!m_record_only &&
-      m_generic_settings->get_settings().enable_audio != OPENHD_AUDIO_DISABLE) {
-#ifdef OPENHD_GSTREAMER_PRESENT
-    m_audio_stream = std::make_unique<GstAudioStream>(
-        m_generic_settings->get_settings().audio_device,
-        m_generic_settings->get_settings().audio_mic_gain_percent);
-    auto audio_cb = [this](const openhd::AudioPacket& audioPacket) {
-      on_audio_data(audioPacket);
-    };
-    m_audio_stream->set_link_cb(audio_cb);
-    if (m_generic_settings->get_settings().enable_audio == OPENHD_AUDIO_TEST) {
-      m_audio_stream->openhd_enable_audio_test = true;
-    } else {
-      m_audio_stream->openhd_enable_audio_test = false;
-    }
-    m_audio_stream->start_looping();
-#else
-    m_console->warn("Audio is unavailable when GStreamer is disabled");
-#endif
-  }
+  restart_audio_stream();
   openhd::LinkActionHandler::instance().action_request_bitrate_change_register(
       [this](openhd::LinkActionHandler::LinkBitrateInformation lb) {
         this->handle_change_bitrate_request(lb);
@@ -153,7 +134,32 @@ OHDVideoAir::~OHDVideoAir() {
   // Stop all the camera stream(s)
   m_camera_streams.resize(0);
   // stop audio if running
+  {
+    std::lock_guard<std::mutex> lock(m_audio_stream_mutex);
+    m_audio_stream = nullptr;
+  }
+}
+
+void OHDVideoAir::restart_audio_stream() {
+  std::lock_guard<std::mutex> lock(m_audio_stream_mutex);
   m_audio_stream = nullptr;
+  if (m_record_only ||
+      m_generic_settings->get_settings().enable_audio ==
+          OPENHD_AUDIO_DISABLE) {
+    return;
+  }
+#ifdef OPENHD_GSTREAMER_PRESENT
+  m_audio_stream = std::make_shared<GstAudioStream>(
+      m_generic_settings->get_settings().audio_device,
+      m_generic_settings->get_settings().audio_mic_gain_percent);
+  m_audio_stream->set_link_cb(
+      [this](const openhd::AudioPacket& packet) { on_audio_data(packet); });
+  m_audio_stream->openhd_enable_audio_test =
+      m_generic_settings->get_settings().enable_audio == OPENHD_AUDIO_TEST;
+  m_audio_stream->start_looping();
+#else
+  m_console->warn("Audio is unavailable when GStreamer is disabled");
+#endif
 }
 
 void OHDVideoAir::configure(
@@ -310,8 +316,7 @@ std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
       }
       m_generic_settings->unsafe_get_settings().enable_audio = value;
       m_generic_settings->persist();
-      openhd::TerminateHelper::instance().terminate_after(
-          "Audio", std::chrono::seconds(1));
+      restart_audio_stream();
       return true;
     };
     ret.push_back(openhd::Setting{
@@ -324,6 +329,7 @@ std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
       m_generic_settings->unsafe_get_settings().audio_mic_gain_percent = value;
       m_generic_settings->persist();
 #ifdef OPENHD_GSTREAMER_PRESENT
+      std::lock_guard<std::mutex> lock(m_audio_stream_mutex);
       if (m_audio_stream) m_audio_stream->set_mic_gain_percent(value);
 #endif
       return true;
@@ -354,8 +360,7 @@ std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
       }
       m_generic_settings->unsafe_get_settings().audio_device = std::move(value);
       m_generic_settings->persist();
-      openhd::TerminateHelper::instance().terminate_after(
-          "Audio device", std::chrono::seconds(1));
+      restart_audio_stream();
       return true;
     };
     ret.push_back(openhd::Setting{

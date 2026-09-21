@@ -24,6 +24,7 @@
 #ifndef OPENHD_VIDEO_OHDVIDEO_H
 #define OPENHD_VIDEO_OHDVIDEO_H
 
+#include <mutex>
 #include <string>
 
 #include "camerastream.h"
@@ -93,6 +94,7 @@ class OHDVideoAir {
       int stream_index,
       const openhd::FragmentedVideoFrame& fragmented_video_frame);
   void on_audio_data(const openhd::AudioPacket& audioPacket);
+  void restart_audio_stream();
   // NOTE: On air, by default, we do not forward video via UDP to save precious
   // cpu time - but we allow user(s) to connect to the air unit via mavlink TCP
   // directly, in which case we start forwarding of video data to the device.
@@ -104,6 +106,7 @@ class OHDVideoAir {
   std::unique_ptr<openhd::UDPMultiForwarder> m_secondary_video_forwarder =
       nullptr;
   std::unique_ptr<openhd::UDPMultiForwarder> m_audio_forwarder = nullptr;
+  std::mutex m_audio_stream_mutex;
   // Optimization for 0 overhead on air when not enabled
   std::atomic_bool m_has_localhost_forwarding_enabled = false;
   bool x_set_camera_type(bool primary, int cam_type);
