@@ -81,7 +81,13 @@ if [[ "${architecture}" == "arm64" ]]; then
     '}' \
     | "${compiler}" --sysroot="${sysroot}" -x c++ - \
         "${mpp_flags[@]}" \
+        -L"${gcc_runtime_dir}" \
+        -L"${sysroot}/usr/lib/${triplet}" \
+        -L"${sysroot}/lib/${triplet}" \
         -Wl,-rpath-link,"${sysroot}/usr/lib" \
+        -Wl,-rpath-link,"${sysroot}/usr/lib/${triplet}" \
+        -Wl,-rpath-link,"${sysroot}/lib/${triplet}" \
+        -pthread \
         -o "${output}"
   readelf -d "${output}" | grep 'librockchip_mpp.so.1'
   mpp_library="$(find "${sysroot}/usr/lib" -name 'librockchip_mpp.so.0' \
