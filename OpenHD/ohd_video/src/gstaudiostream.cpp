@@ -281,8 +281,8 @@ std::string GstAudioStream::create_pipeline() {
   // audioconvert might or might not be needed ...
   // alawenc needs S16LE
   ss << "audioconvert ! ";
+  ss << "audioresample ! ";
   ss << "audio/x-raw,format=S16LE,channels=1,rate=8000 ! ";
-  ss << "audioresample ! ";  // Might or might not be needed ...
   ss << "volume name=mic_volume volume="
      << (m_mic_gain_percent.load() / 100.0) << " ! ";
   ss << "alawenc ! rtppcmapay max-ptime=20000000 ! ";
