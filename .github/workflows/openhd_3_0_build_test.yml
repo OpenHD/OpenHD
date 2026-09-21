@@ -30,18 +30,13 @@ jobs:
           fetch-depth: 0
           submodules: true
           token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
-      - name: Ensure private video crypto submodule is available
-        run: |
-          if [ ! -f OpenHD/ohd_interface/video_crypto_private/CMakeLists.txt ]; then
-            echo "Submodule content missing, updating to latest main..."
-            git -C OpenHD/ohd_interface/video_crypto_private fetch origin main
-            git -C OpenHD/ohd_interface/video_crypto_private checkout -f origin/main
-          fi
-
-          if [ ! -f OpenHD/ohd_interface/video_crypto_private/CMakeLists.txt ]; then
-            echo "Missing video_crypto_private content."
-            exit 1
-          fi
+      - name: Checkout private video crypto
+        uses: actions/checkout@v4
+        with:
+          repository: OpenHD-Technologies/video_crypto_private
+          ref: main
+          token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+          path: OpenHD/ohd_interface/video_crypto_private
       - name: Install Dependencies
         run: |
           sudo mkdir -p /Videos/
