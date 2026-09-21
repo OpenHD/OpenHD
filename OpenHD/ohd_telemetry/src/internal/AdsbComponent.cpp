@@ -37,6 +37,29 @@
 #include "openhd_util.h"
 #include <spdlog/spdlog.h>
 
+namespace {
+
+// SBS/BaseStation messages are positional CSV. Empty fields are significant;
+// OHDUtil::split_into_substrings intentionally drops them and therefore cannot
+// be used here without shifting fields such as ICAO, altitude and position.
+std::vector<std::string> split_sbs_fields(const std::string& line) {
+  std::vector<std::string> fields;
+  std::string field;
+  fields.reserve(23);
+  for (const char character : line) {
+    if (character == ',') {
+      fields.push_back(field);
+      field.clear();
+    } else {
+      field.push_back(character);
+    }
+  }
+  fields.push_back(field);
+  return fields;
+}
+
+}  // namespace
+
 AdsbComponent::AdsbComponent(uint8_t parent_sys_id)
     : MavlinkComponent(parent_sys_id, MAV_COMP_ID_ADSB),
       m_console(openhd::log::create_or_get("ADSB")) {
@@ -62,8 +85,9 @@ void AdsbComponent::process_runner() {
     char net[] = "--net";
     char port_option[] = "--net-sbs-port";
     char port[] = "30003";
-    char* argv[] = {program, net, port_option, port, nullptr};
-    const int result = dump1090_main(4, argv);
+    char quiet[] = "--quiet";
+    char* argv[] = {program, net, port_option, port, quiet, nullptr};
+    const int result = dump1090_main(5, argv);
     m_console->info("Built-in dump1090 exited with code {}", result);
 
     if (m_terminate) break;
@@ -136,14 +160,22 @@ void AdsbComponent::tcp_client_runner() {
 
         // Parse SBS format
         // Example: MSG,3,111,11111,392B74,111111,2023/10/11,12:00:00.000,2023/10/11,12:00:00.000,,40000,,,48.0,-122.0,,,,,,0
-        auto parts = OHDUtil::split_into_substrings(line, ',');
+        auto parts = split_sbs_fields(line);
         if (parts.size() >= 22 && parts[0] == "MSG") {
           std::string msg_type = parts[1];
           std::string hex_id = parts[4];
 
-          auto icao_opt = OHDUtil::string_to_long_hex(hex_id);
-          if (!icao_opt) continue;
-          uint32_t icao = icao_opt.value();
+          uint32_t icao = 0;
+          try {
+            size_t parsed_characters = 0;
+            const auto parsed = std::stoul(hex_id, &parsed_characters, 16);
+            if (parsed_characters != hex_id.size() || parsed > 0xFFFFFFUL) {
+              continue;
+            }
+            icao = static_cast<uint32_t>(parsed);
+          } catch (...) {
+            continue;
+          }
 
           std::lock_guard<std::mutex> lock(m_adsb_mutex);
           if (m_adsb_vehicles.find(icao) == m_adsb_vehicles.end()) {
@@ -159,6 +191,10 @@ void AdsbComponent::tcp_client_runner() {
 
           mavlink_adsb_vehicle_t& v = m_adsb_vehicles[icao];
           m_last_seen[icao] = std::chrono::steady_clock::now();
+          if (parts.size() > 22) {
+            auto signal_opt = OHDUtil::string_to_float(parts[22]);
+            if (signal_opt) m_signal_dbfs[icao] = signal_opt.value();
+          }
 
           if (msg_type == "1") {
             // MSG,1 - Callsign
@@ -233,6 +269,7 @@ std::vector<MavlinkMessage> AdsbComponent::generate_mavlink_messages() {
   for (auto it = m_last_seen.begin(); it != m_last_seen.end();) {
     if (it->second < stale_before) {
       m_adsb_vehicles.erase(it->first);
+      m_signal_dbfs.erase(it->first);
       it = m_last_seen.erase(it);
     } else {
       ++it;
@@ -240,7 +277,17 @@ std::vector<MavlinkMessage> AdsbComponent::generate_mavlink_messages() {
   }
   for (const auto& pair : m_adsb_vehicles) {
     MavlinkMessage msg;
-    mavlink_msg_adsb_vehicle_encode(m_sys_id, m_comp_id, &msg.m, &pair.second);
+    auto vehicle = pair.second;
+    const auto signal = m_signal_dbfs.find(pair.first);
+    if (signal != m_signal_dbfs.end()) {
+      // Private OpenHD extension: an otherwise-invalid squawk carries signed
+      // RSSI*100 while bit 15 marks the extension for QOpenHD.
+      constexpr uint16_t kOpenHdRssiFlag = 1U << 15;
+      const int encoded = static_cast<int>(std::lround((signal->second + 100.0f) * 100.0f));
+      vehicle.squawk = static_cast<uint16_t>(std::clamp(encoded, 0, 10000));
+      vehicle.flags |= kOpenHdRssiFlag;
+    }
+    mavlink_msg_adsb_vehicle_encode(m_sys_id, m_comp_id, &msg.m, &vehicle);
     res.push_back(msg);
   }
 

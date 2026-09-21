@@ -165,6 +165,7 @@ struct {
     int net;                        /* Enable networking. */
     int net_only;                   /* Enable just networking. */
     int interactive;                /* Interactive mode */
+    int quiet;                      /* Suppress decoded frames on stdout. */
     int interactive_rows;           /* Interactive mode: max number of rows. */
     int interactive_ttl;            /* Interactive mode: TTL before deletion. */
     int stats;                      /* Print stats at exit in --ifile mode. */
@@ -200,6 +201,7 @@ struct modesMessage {
     int errorbit;               /* Bit corrected. -1 if no bit corrected. */
     int aa1, aa2, aa3;          /* ICAO Address bytes 1 2 and 3 */
     int phase_corrected;        /* True if phase correction was applied. */
+    int signal_level_tenths_db; /* Relative message power in tenths of dBFS. */
 
     /* DF 11 */
     int ca;                     /* Responder capabilities. */
@@ -1505,6 +1507,8 @@ good_preamble:
 
             /* Decode the received message and update statistics */
             decodeModesMessage(&mm,msg);
+            mm.signal_level_tenths_db = (int)round(200.0 * log10(
+                fmax((double)delta / 65535.0, 0.00001)));
 
             /* Update statistics. */
             if (mm.crcok || use_correction) {
@@ -1580,7 +1584,7 @@ void useModesMessage(struct modesMessage *mm) {
             if (a && Modes.stat_sbs_connections > 0) modesSendSBSOutput(mm, a);  /* Feed SBS output clients. */
         }
         /* In non-interactive way, display messages on standard output. */
-        if (!Modes.interactive) {
+        if (!Modes.interactive && !Modes.quiet) {
             displayModesMessage(mm);
             if (!Modes.raw && !Modes.onlyaddr) printf("\n");
         }
@@ -2111,6 +2115,7 @@ void modesSendSBSOutput(struct modesMessage *mm, struct aircraft *a) {
         return;
     }
 
+    p += sprintf(p, ",%.1f", mm->signal_level_tenths_db / 10.0);
     *p++ = '\n';
     modesSendAllClients(Modes.sbsos, msg, p-msg);
 }
@@ -2505,6 +2510,7 @@ void showHelp(void) {
 "--ifile <filename>       Read data from file (use '-' for stdin).\n"
 "--loop                   With --ifile, read the same file in a loop.\n"
 "--interactive            Interactive mode refreshing data on screen.\n"
+"--quiet                  Do not print decoded frames to stdout.\n"
 "--interactive-rows <num> Max number of rows in interactive mode (default: 15).\n"
 "--interactive-ttl <sec>  Remove from list if idle for <sec> (default: 60).\n"
 "--raw                    Show only messages hex values.\n"
@@ -2609,6 +2615,8 @@ int dump1090_main(int argc, char **argv) {
             Modes.aggressive++;
         } else if (!strcmp(argv[j],"--interactive")) {
             Modes.interactive = 1;
+        } else if (!strcmp(argv[j],"--quiet")) {
+            Modes.quiet = 1;
         } else if (!strcmp(argv[j],"--interactive-rows")) {
             Modes.interactive_rows = atoi(argv[++j]);
         } else if (!strcmp(argv[j],"--interactive-ttl")) {

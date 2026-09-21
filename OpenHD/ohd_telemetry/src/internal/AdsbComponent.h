@@ -59,6 +59,7 @@ class AdsbComponent : public MavlinkComponent {
   // ICAO -> ADSB Vehicle Message
   std::mutex m_adsb_mutex;
   std::map<uint32_t, mavlink_adsb_vehicle_t> m_adsb_vehicles;
+  std::map<uint32_t, float> m_signal_dbfs;
   std::map<uint32_t, std::chrono::steady_clock::time_point> m_last_seen;
 };
 
