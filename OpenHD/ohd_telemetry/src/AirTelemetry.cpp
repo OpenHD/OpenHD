@@ -118,8 +118,11 @@ AirTelemetry::AirTelemetry(bool ignoreSerial)
   // modules have provided all their paramters.
   m_generic_mavlink_param_provider->add_params(get_all_settings());
   m_components.push_back(m_generic_mavlink_param_provider);
-  if (m_air_settings->get_settings().adsb_enable) {
-    m_components.push_back(std::make_shared<AdsbComponent>(_sys_id));
+  m_adsb_enabled_requested.store(
+      m_air_settings->get_settings().adsb_enable, std::memory_order_relaxed);
+  if (m_adsb_enabled_requested.load(std::memory_order_relaxed)) {
+    m_adsb_component = std::make_shared<AdsbComponent>(_sys_id);
+    m_components.push_back(m_adsb_component);
   }
   m_tcp_server = std::make_unique<TCPEndpoint>(
       openhd::TCPServer::Config{TCPEndpoint::DEFAULT_PORT});  // 1445
@@ -462,6 +465,7 @@ void AirTelemetry::loop_infinite(bool& terminate,
     {
       // NOTE: No component on the air unit ever needs to talk to the FC himself
       std::lock_guard<std::mutex> guard(m_components_lock);
+      sync_adsb_component_locked();
       for (auto& component : m_components) {
         auto messages = component->generate_mavlink_messages();
         send_messages_ground_unit(messages);
@@ -479,6 +483,25 @@ void AirTelemetry::loop_infinite(bool& terminate,
       // send out in X second intervals
       std::this_thread::sleep_for(loop_intervall);
     }
+  }
+}
+
+void AirTelemetry::sync_adsb_component_locked() {
+  const bool enabled =
+      m_adsb_enabled_requested.load(std::memory_order_relaxed);
+  if (enabled && !m_adsb_component) {
+    m_console->info("Enabling ADS-B telemetry broadcaster");
+    m_adsb_component = std::make_shared<AdsbComponent>(_sys_id);
+    m_components.push_back(m_adsb_component);
+    return;
+  }
+  if (!enabled && m_adsb_component) {
+    m_console->info("Disabling ADS-B telemetry broadcaster");
+    m_components.erase(
+        std::remove(m_components.begin(), m_components.end(),
+                    m_adsb_component),
+        m_components.end());
+    m_adsb_component.reset();
   }
 }
 
@@ -559,8 +582,10 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
   };
 
   auto c_adsb_enable = [this](std::string, int value) {
+    if (!openhd::validate_yes_or_no(value)) return false;
     m_air_settings->unsafe_get_settings().adsb_enable = value == 1;
     m_air_settings->persist();
+    m_adsb_enabled_requested.store(value == 1, std::memory_order_relaxed);
     return true;
   };
   auto c_fc_sys_id = [this](std::string, int value) {

@@ -24,6 +24,7 @@
 #ifndef OPENHD_TELEMETRY_GROUNDTELEMETRY_H
 #define OPENHD_TELEMETRY_GROUNDTELEMETRY_H
 
+#include <atomic>
 #include <optional>
 
 #include "GroundTelemetrySettings.h"
@@ -109,6 +110,9 @@ class GroundTelemetry : public MavlinkSystem {
   std::vector<openhd::Setting> get_all_settings();
   void setup_uart();
   void setup_openhd_uart_telemetry();
+  // Must be called with m_components_lock held. The parameter callback only
+  // changes the requested state; the telemetry loop owns component lifetime.
+  void sync_adsb_component_locked();
   [[nodiscard]] UartPriorityProfile get_openhd_uart_priority_profile() const;
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
   void enable_joystick();
@@ -131,6 +135,8 @@ class GroundTelemetry : public MavlinkSystem {
   std::shared_ptr<OHDMainComponent> m_ohd_main_component;
   std::mutex m_components_lock;
   std::vector<std::shared_ptr<MavlinkComponent>> m_components;
+  std::shared_ptr<MavlinkComponent> m_adsb_component;
+  std::atomic_bool m_adsb_enabled_requested{false};
   std::shared_ptr<XMavlinkParamProvider> m_generic_mavlink_param_provider;
   //
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND

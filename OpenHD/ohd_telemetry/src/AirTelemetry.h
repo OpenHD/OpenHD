@@ -24,6 +24,7 @@
 #ifndef OPENHD_TELEMETRY_AIRTELEMETRY_H
 #define OPENHD_TELEMETRY_AIRTELEMETRY_H
 
+#include <atomic>
 #include <optional>
 #include <string>
 
@@ -111,6 +112,9 @@ class AirTelemetry : public MavlinkSystem {
   void setup_uart();
   void setup_openhd_uart_telemetry();
   void setup_sbus_output();
+  // Must be called with m_components_lock held. The parameter callback only
+  // changes the requested state; the telemetry loop owns component lifetime.
+  void sync_adsb_component_locked();
 
  private:
   std::unique_ptr<openhd::telemetry::air::SettingsHolder> m_air_settings;
@@ -125,6 +129,8 @@ class AirTelemetry : public MavlinkSystem {
   std::unique_ptr<SbusOutput> m_sbus_output;
   std::mutex m_components_lock;
   std::vector<std::shared_ptr<MavlinkComponent>> m_components;
+  std::shared_ptr<MavlinkComponent> m_adsb_component;
+  std::atomic_bool m_adsb_enabled_requested{false};
   std::shared_ptr<XMavlinkParamProvider> m_generic_mavlink_param_provider;
   // rpi only, allow changing gpios via settings
   std::unique_ptr<openhd::telemetry::rpi::GPIOControl> m_opt_gpio_control =

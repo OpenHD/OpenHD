@@ -25,6 +25,7 @@
 
 #include "openhd_secondary_telemetry.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <iostream>
 
@@ -105,8 +106,11 @@ GroundTelemetry::GroundTelemetry(bool ignoreSerial)
       _sys_id, MAV_COMP_ID_ONBOARD_COMPUTER);
   m_generic_mavlink_param_provider->add_params(get_all_settings());
   m_components.push_back(m_generic_mavlink_param_provider);
-  if (m_gnd_settings->get_settings().adsb_enable) {
-    m_components.push_back(std::make_shared<AdsbComponent>(_sys_id));
+  m_adsb_enabled_requested.store(
+      m_gnd_settings->get_settings().adsb_enable, std::memory_order_relaxed);
+  if (m_adsb_enabled_requested.load(std::memory_order_relaxed)) {
+    m_adsb_component = std::make_shared<AdsbComponent>(_sys_id);
+    m_components.push_back(m_adsb_component);
   }
   if (m_ignoreSerial) {
     m_console->info("Serial setup disabled by CLI");
@@ -290,6 +294,7 @@ void GroundTelemetry::loop_infinite(bool& terminate,
       // NOTE: No component from the ground station ever needs to talk to the
       // air unit / FC itself
       std::lock_guard<std::mutex> guard(m_components_lock);
+      sync_adsb_component_locked();
       for (auto& component : m_components) {
         assert(component);
         const auto messages = component->generate_mavlink_messages();
@@ -317,6 +322,25 @@ void GroundTelemetry::loop_infinite(bool& terminate,
       // send out in X second intervals
       std::this_thread::sleep_for(loop_intervall);
     }
+  }
+}
+
+void GroundTelemetry::sync_adsb_component_locked() {
+  const bool enabled =
+      m_adsb_enabled_requested.load(std::memory_order_relaxed);
+  if (enabled && !m_adsb_component) {
+    m_console->info("Enabling ADS-B telemetry broadcaster");
+    m_adsb_component = std::make_shared<AdsbComponent>(_sys_id);
+    m_components.push_back(m_adsb_component);
+    return;
+  }
+  if (!enabled && m_adsb_component) {
+    m_console->info("Disabling ADS-B telemetry broadcaster");
+    m_components.erase(
+        std::remove(m_components.begin(), m_components.end(),
+                    m_adsb_component),
+        m_components.end());
+    m_adsb_component.reset();
   }
 }
 
@@ -555,8 +579,10 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
   };
 
   auto c_adsb_enable = [this](std::string, int value) {
+    if (!openhd::validate_yes_or_no(value)) return false;
     m_gnd_settings->unsafe_get_settings().adsb_enable = value == 1;
     m_gnd_settings->persist();
+    m_adsb_enabled_requested.store(value == 1, std::memory_order_relaxed);
     return true;
   };
   ret.push_back(openhd::Setting{
