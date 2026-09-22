@@ -27,6 +27,12 @@ fi
 test -f "${sdk_dir}/environment-setup"
 test -f "${sdk_dir}/share/buildroot/toolchainfile.cmake"
 
+# Registry generation runs on the CI host, not on the Luckfox target. Resolve
+# Python before the SDK prepends its relocated host tools to PATH; that bundled
+# interpreter depends on SDK libraries that are not available to the runner.
+host_python="$(command -v python3)"
+test -x "${host_python}"
+
 # shellcheck disable=SC1091
 source "${sdk_dir}/environment-setup"
 
@@ -56,6 +62,8 @@ cmake -S "${repo_root}/OpenHD" -B "${build_dir}" \
   -DCMAKE_TOOLCHAIN_FILE="${toolchain_file}" \
   -DCMAKE_SYSROOT="${STAGING_DIR}" \
   -DCMAKE_BUILD_TYPE=Release \
+  -DPYTHON_EXECUTABLE="${host_python}" \
+  -DPython3_EXECUTABLE="${host_python}" \
   -DENABLE_USB_CAMERAS=OFF \
   -DBUILD_SHARED_LIBS=OFF \
   -DCMAKE_EXE_LINKER_FLAGS="-lstdc++fs"

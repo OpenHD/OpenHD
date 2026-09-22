@@ -472,6 +472,15 @@ EOF
         normalize_bookworm_graphics_for_build \
             || { echo "Failed to normalize Bookworm graphics dependencies"; exit 1; }
         ./install_build_dep.sh rock5 || { echo "Failed to install build dependencies"; exit 1; }
+    elif [[ "${ARCH}" == "armhf" && "${DISTRO}" == "debian" ]]; then
+        # The legacy X20 image predates the in-process dump1090 integration and
+        # therefore does not contain its RTL-SDR development dependency.
+        free_chroot_space_for_ci
+        apt-get update --fix-missing
+        apt-get install -y --no-install-recommends librtlsdr-dev pkg-config \
+            || { echo "Failed to install ARMHF RTL-SDR build dependencies"; exit 1; }
+        pkg-config --exists librtlsdr \
+            || { echo "librtlsdr pkg-config metadata is unavailable"; exit 1; }
     elif [[ "${DISTRO}" == "focal" ]]; then
         apt-get update || { echo "Failed to update and upgrade packages"; exit 1; }
         chmod +x ./install_build_dep.sh
