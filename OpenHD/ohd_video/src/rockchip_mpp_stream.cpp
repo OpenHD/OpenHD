@@ -6,7 +6,15 @@
 #include <linux/videodev2.h>
 #include <poll.h>
 #include <rk_mpi.h>
+#if __has_include(<rk_mpp_cfg.h>)
 #include <rk_mpp_cfg.h>
+#elif __has_include(<rk_venc_cfg.h>)
+// Older Rockchip MPP releases, including the Luckfox Pico SDK, expose the
+// same MppEncCfg API through rk_venc_cfg.h.
+#include <rk_venc_cfg.h>
+#else
+#error "Rockchip MPP encoder configuration header not found"
+#endif
 #include <rk_venc_cmd.h>
 #include <rk_venc_rc.h>
 
