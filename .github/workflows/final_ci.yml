@@ -57,6 +57,13 @@ jobs:
           submodules: true
           token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
 
+      # Devourer intentionally has `update = none` so ordinary submodule
+      # updates do not replace a developer's radio checkout. Release packages
+      # nevertheless require it: without the backend, fail-closed Realtek
+      # admission leaves every physical wifibroadcast radio unsupported.
+      - name: Checkout required Devourer backend
+        run: git submodule update --init --recursive OpenHD/ohd_interface/lib/devourer
+
       - name: Install native package dependencies
         if: matrix.architecture == 'amd64'
         run: |
@@ -133,6 +140,10 @@ jobs:
           fi
           if ! grep -a -q 'Artosyn probe:' "${openhd_binary}"; then
             echo "Packaged OpenHD binary does not contain the Artosyn link backend."
+            exit 1
+          fi
+          if ! grep -a -q 'Devourer identified' "${openhd_binary}"; then
+            echo "Packaged OpenHD binary does not contain the Devourer radio backend."
             exit 1
           fi
           artosyn_daemon="$(find "${package_root}/usr/local/bin" -maxdepth 1 -type f \

@@ -30,6 +30,8 @@ jobs:
           fetch-depth: 0
           submodules: true
           token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+      - name: Checkout required Devourer backend
+        run: git submodule update --init --recursive OpenHD/ohd_interface/lib/devourer
       - name: Checkout private video crypto
         uses: actions/checkout@v4
         with:
