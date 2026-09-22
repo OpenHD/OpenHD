@@ -12,6 +12,7 @@
 // Older Rockchip MPP releases, including the Luckfox Pico SDK, expose the
 // same MppEncCfg API through rk_venc_cfg.h.
 #include <rk_venc_cfg.h>
+#define OPENHD_LEGACY_MPP_API 1
 #else
 #error "Rockchip MPP encoder configuration header not found"
 #endif
@@ -215,9 +216,9 @@ class RockchipMppStream::Impl {
       log->error("MPP rejected encoder configuration");
       return false;
     }
-    if (mpp_buffer_group_get_internal(&group,
-                                      MPP_BUFFER_TYPE_DRM |
-                                          MPP_BUFFER_FLAGS_CACHABLE) ||
+    const auto buffer_type = static_cast<MppBufferType>(
+        MPP_BUFFER_TYPE_DRM | MPP_BUFFER_FLAGS_CACHABLE);
+    if (mpp_buffer_group_get_internal(&group, buffer_type) ||
         mpp_buffer_get(group, &input_buffer,
                        hor_stride * ver_stride * 3 / 2)) {
       log->error("Cannot allocate MPP input buffer");
@@ -777,10 +778,14 @@ class RockchipMppStream::Impl {
       if (mpi->control(ctx, MPP_ENC_SET_CFG, cfg))
         log->warn("MPP rejected a dynamic bitrate/QP update");
     }
+#if !defined(OPENHD_LEGACY_MPP_API)
     mpp_buffer_sync_begin(input_buffer);
+#endif
     auto* destination = static_cast<uint8_t*>(mpp_buffer_get_ptr(input_buffer));
     if (!destination) {
+#if !defined(OPENHD_LEGACY_MPP_API)
       mpp_buffer_sync_end(input_buffer);
+#endif
       return;
     }
     for (RK_U32 row = 0; row < height; ++row)
@@ -792,7 +797,9 @@ class RockchipMppStream::Impl {
       std::memcpy(destination_uv + row * hor_stride,
                   source_uv + static_cast<size_t>(row) * src_stride, width);
     add_noise(destination);
+#if !defined(OPENHD_LEGACY_MPP_API)
     mpp_buffer_sync_end(input_buffer);
+#endif
 
     encode_context(ctx, mpi, true);
     if (recording_requested()) {
@@ -968,7 +975,11 @@ class RockchipMppStream::Impl {
     region.quality = roi_quality.load();
     region.abs_qp_en = 0;
     roi_cfg.number = 1;
+#if defined(OPENHD_LEGACY_MPP_API)
+    roi_cfg.regions[0] = region;
+#else
     roi_cfg.regions = &region;
+#endif
   }
 
   void update_roi_snapshot() {
