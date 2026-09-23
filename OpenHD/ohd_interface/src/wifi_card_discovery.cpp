@@ -505,11 +505,20 @@ std::vector<WiFiCard> DWifiCards::discover_connected_wifi_cards() {
       continue;
     }
     if (sys_card.phy_index < 0) {
+      const bool devourer_pseudo_iface =
+          sys_card.interface_name.rfind("devourer-usb-", 0) == 0;
       const bool artosyn_pseudo_iface =
           OHDUtil::contains_after_uppercase(sys_card.interface_name,
                                             "AR_MDEV") ||
           OHDUtil::equal_after_uppercase(sys_card.type, "ARTOSYN");
-      if (artosyn_pseudo_iface) {
+      if (devourer_pseudo_iface) {
+        // This is a userspace USB transport, not a kernel netdev. Live libusb
+        // discovery below validates and recreates it with the current USB
+        // address, so a phy80211 index is neither present nor required.
+        openhd::log::get_default()->debug(
+            "Ignoring cached Devourer pseudo-interface {}; probing USB live",
+            sys_card.interface_name);
+      } else if (artosyn_pseudo_iface) {
         WiFiCard card{};
         card.device_name = sys_card.interface_name;
         card.driver_name = sys_card.driver_name;

@@ -9,6 +9,8 @@ output_dir="$(realpath -m "${2:?${usage}}")"
 test -x "${sdk_dir}/relocate-sdk.sh"
 test -f "${sdk_dir}/environment-setup"
 test -f "${sdk_dir}/share/buildroot/toolchainfile.cmake"
+test -f "${repo_root}/OpenHD/ohd_interface/lib/devourer/CMakeLists.txt"
+test -f "${repo_root}/OpenHD/ohd_interface/lib/wifibroadcast/wifibroadcast/WBLib.cmake"
 
 "${sdk_dir}/relocate-sdk.sh"
 # shellcheck disable=SC1091
@@ -32,8 +34,18 @@ cmake -S "${repo_root}/OpenHD" -B "${build_dir}" \
   -DCMAKE_TOOLCHAIN_FILE="${toolchain_file}" \
   -DCMAKE_BUILD_TYPE=Release \
   -DENABLE_USB_CAMERAS="${ENABLE_USB_CAMERAS}" \
+  -DOPENHD_ENABLE_DEVOURER=ON \
+  -DDEVOURER_JAGUAR3_8822E=ON \
   -DBUILD_SHARED_LIBS=OFF
+grep -qx 'OPENHD_ENABLE_DEVOURER:BOOL=ON' "${build_dir}/CMakeCache.txt"
+grep -qx 'DEVOURER_JAGUAR3_8822E:BOOL=ON' "${build_dir}/CMakeCache.txt"
 cmake --build "${build_dir}" --parallel "$(nproc)" --target openhd
+
+# Guard against silently shipping an X21 binary whose userspace Realtek
+# discovery was compiled out (for example when the optional submodule was not
+# checked out). Enum names alone are always present, so assert a discovery-only
+# diagnostic string instead.
+strings "${build_dir}/openhd" | grep -F 'Devourer could not identify' >/dev/null
 
 mkdir -p "${stage_dir}/usr/bin" "${stage_dir}/usr/lib"
 install -m 0755 "${build_dir}/openhd" "${stage_dir}/usr/bin/openhd"
