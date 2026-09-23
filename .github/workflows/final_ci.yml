@@ -57,12 +57,19 @@ jobs:
           submodules: true
           token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
 
-      # Devourer intentionally has `update = none` so ordinary submodule
-      # updates do not replace a developer's radio checkout. Release packages
-      # nevertheless require it: without the backend, fail-closed Realtek
-      # admission leaves every physical wifibroadcast radio unsupported.
-      - name: Checkout required Devourer backend
-        run: git submodule update --init --recursive OpenHD/ohd_interface/lib/devourer
+      # Keep Devourer optional for ordinary checkouts (`update = none`) and do
+      # not initialize its reference-driver submodules. Package CI only needs
+      # the exact Devourer commit pinned by this repository.
+      - name: Fetch Devourer backend without nested submodules
+        run: |
+          devourer_dir="OpenHD/ohd_interface/lib/devourer"
+          devourer_commit="$(git rev-parse "HEAD:${devourer_dir}")"
+          mkdir -p "${devourer_dir}"
+          git -C "${devourer_dir}" init
+          git -C "${devourer_dir}" remote add origin https://github.com/OpenHD/devourer.git
+          git -C "${devourer_dir}" fetch --depth=1 origin "${devourer_commit}"
+          git -C "${devourer_dir}" checkout --detach "${devourer_commit}"
+          test -f "${devourer_dir}/CMakeLists.txt"
 
       - name: Install native package dependencies
         if: matrix.architecture == 'amd64'
