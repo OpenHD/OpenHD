@@ -476,8 +476,10 @@ jobs:
       - name: Build flashable Orqa image
         run: |
           set -euo pipefail
-          echo "DT=$(date -u +'%Y-%m-%d-%H-%M-%S')" >>"${GITHUB_ENV}"
+          DT="$(date -u +'%Y-%m-%d-%H-%M-%S')"
+          echo "DT=${DT}" >>"${GITHUB_ENV}"
           source OpenHD-ImageBuilder/images/orqa
+          echo "ORQA_OUTPUT_IMAGE=${OUTPUT_IMAGE}" >>"${GITHUB_ENV}"
 
           mkdir -p build-orqa/image-input
           curl --fail --location --retry 5 --retry-delay 3 \
@@ -493,11 +495,11 @@ jobs:
             "build-orqa/image-input/${BASE_IMAGE}" \
             build-orqa/openhd-orqa-deploy.tar.gz \
             OpenHD-SysUtils/misc/wifi_cards.json \
-            "build-orqa/OpenHD-ORQA-DTK-STANDALONE-${DT}.zip"
+            "build-orqa/${OUTPUT_IMAGE}-${DT}.zip"
           sudo chown "$(id -u):$(id -g)" \
-            "build-orqa/OpenHD-ORQA-DTK-STANDALONE-${DT}.zip"
-          sha256sum "build-orqa/OpenHD-ORQA-DTK-STANDALONE-${DT}.zip" > \
-            "build-orqa/OpenHD-ORQA-DTK-STANDALONE-${DT}.zip.sha256"
+            "build-orqa/${OUTPUT_IMAGE}-${DT}.zip"
+          sha256sum "build-orqa/${OUTPUT_IMAGE}-${DT}.zip" > \
+            "build-orqa/${OUTPUT_IMAGE}-${DT}.zip.sha256"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -512,8 +514,8 @@ jobs:
         with:
           name: openhd-image-orqa-${{ env.DT }}
           path: |
-            build-orqa/OpenHD-ORQA-DTK-STANDALONE-${{ env.DT }}.zip
-            build-orqa/OpenHD-ORQA-DTK-STANDALONE-${{ env.DT }}.zip.sha256
+            build-orqa/${{ env.ORQA_OUTPUT_IMAGE }}-${{ env.DT }}.zip
+            build-orqa/${{ env.ORQA_OUTPUT_IMAGE }}-${{ env.DT }}.zip.sha256
           if-no-files-found: error
           retention-days: 30
 
