@@ -465,6 +465,40 @@ jobs:
           echo "=== Deploy package contents ==="
           tar -tzf "${GITHUB_WORKSPACE}/build-orqa/openhd-orqa-deploy.tar.gz"
 
+      - name: Checkout the ORQA image assembler
+        uses: actions/checkout@v4
+        with:
+          repository: OpenHD/OpenHD-ImageBuilder
+          ref: dev-release
+          path: OpenHD-ImageBuilder
+          token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+
+      - name: Build flashable Orqa image
+        run: |
+          set -euo pipefail
+          echo "DT=$(date -u +'%Y-%m-%d-%H-%M-%S')" >>"${GITHUB_ENV}"
+          source OpenHD-ImageBuilder/images/orqa
+
+          mkdir -p build-orqa/image-input
+          curl --fail --location --retry 5 --retry-delay 3 \
+            "${BASE_IMAGE_URL}/${BASE_IMAGE}" \
+            -o "build-orqa/image-input/${BASE_IMAGE}"
+          echo "${BASE_IMAGE_SHA256}  build-orqa/image-input/${BASE_IMAGE}" | \
+            sha256sum -c -
+
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends e2fsprogs unzip zip
+          bash OpenHD-ImageBuilder/scripts/install_current_e2fsprogs.sh
+          sudo bash OpenHD-ImageBuilder/scripts/build_orqa_image.sh \
+            "build-orqa/image-input/${BASE_IMAGE}" \
+            build-orqa/openhd-orqa-deploy.tar.gz \
+            OpenHD-SysUtils/misc/wifi_cards.json \
+            "build-orqa/OpenHD-ORQA-DTK-STANDALONE-${DT}.zip"
+          sudo chown "$(id -u):$(id -g)" \
+            "build-orqa/OpenHD-ORQA-DTK-STANDALONE-${DT}.zip"
+          sha256sum "build-orqa/OpenHD-ORQA-DTK-STANDALONE-${DT}.zip" > \
+            "build-orqa/OpenHD-ORQA-DTK-STANDALONE-${DT}.zip.sha256"
+
       - uses: actions/upload-artifact@v4
         with:
           name: openhd-orqa
@@ -473,6 +507,15 @@ jobs:
             build-orqa/openhd-needed.txt
             build-orqa/gst-perf-needed.txt
           if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openhd-image-orqa-${{ env.DT }}
+          path: |
+            build-orqa/OpenHD-ORQA-DTK-STANDALONE-${{ env.DT }}.zip
+            build-orqa/OpenHD-ORQA-DTK-STANDALONE-${{ env.DT }}.zip.sha256
+          if-no-files-found: error
+          retention-days: 30
 
   trigger-images:
     name: trigger-image-matrix
