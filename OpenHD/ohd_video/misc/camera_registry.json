@@ -643,6 +643,16 @@
       ]
     },
     {
+      "key": "X_CAM_TYPE_NXP_IMX8_IMX662",
+      "id": 132,
+      "name": "NXP_IMX8_IMX662",
+      "ui_label": "IMX662",
+      "resolutions": [
+        {"width": 1920, "height": 1080, "fps": 60},
+        {"width": 1280, "height": 720, "fps": 60}
+      ]
+    },
+    {
       "key": "X_CAM_TYPE_ROCKCHIP_RV110X",
       "id": 140,
       "name": "LUCKFOX_MIS5001",
@@ -937,6 +947,7 @@
       "name": "NXP",
       "cameras": [
         "X_CAM_TYPE_NXP_IMX8_OS08A20",
+        "X_CAM_TYPE_NXP_IMX8_IMX662",
         "X_CAM_TYPE_NXP_IMX8_V4L2"
       ]
     },

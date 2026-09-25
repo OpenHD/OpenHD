@@ -173,7 +173,8 @@ void OHDVideoAir::configure(
   std::shared_ptr<CameraStream> stream;
 #ifdef OPENHD_NXP_V4L2_PRESENT
   if (camera.requires_orqa_pipeline() ||
-      camera.requires_nxp_imx8_v4l2_pipeline()) {
+      (camera.requires_nxp_imx8_v4l2_pipeline() &&
+       camera.camera_type != X_CAM_TYPE_NXP_IMX8_IMX662)) {
     m_console->info("Native NXP V4L2 stream for Camera index:{}",
                     camera.index);
     stream = std::make_shared<NxpV4l2Stream>(camera_holder, frame_cb);
