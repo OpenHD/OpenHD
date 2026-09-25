@@ -603,6 +603,8 @@ std::optional<SysutilSettings> request_sysutil_settings(
       "nw_manual_forwarding_ips", settings.nw_manual_forwarding_ips);
   settings.nw_forward_to_localhost_58xx = read_bool(
       "nw_forward_to_localhost_58xx", settings.nw_forward_to_localhost_58xx);
+  settings.disable_ethernet_link = read_bool(
+      "disable_ethernet_link", settings.disable_ethernet_link);
   settings.ground_unit_ip =
       read_string("ground_unit_ip", settings.ground_unit_ip);
   settings.air_unit_ip = read_string("air_unit_ip", settings.air_unit_ip);

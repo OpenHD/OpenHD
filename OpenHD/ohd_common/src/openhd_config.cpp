@@ -79,6 +79,7 @@ static openhd::Config load_or_default() {
   ret.NW_ETHERNET_CARD = settings.nw_ethernet_card;
   ret.NW_MANUAL_FORWARDING_IPS = split_list(settings.nw_manual_forwarding_ips);
   ret.NW_FORWARD_TO_LOCALHOST_58XX = settings.nw_forward_to_localhost_58xx;
+  ret.DISABLE_ETHERNET_LINK = settings.disable_ethernet_link;
   ret.GROUND_UNIT_IP = settings.ground_unit_ip;
   ret.AIR_UNIT_IP = settings.air_unit_ip;
   ret.VIDEO_PORT = settings.video_port;

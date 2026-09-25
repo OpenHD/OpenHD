@@ -50,6 +50,9 @@ struct Config {
   bool NW_FORWARD_TO_LOCALHOST_58XX = false;
 
   // ETHERNET LINK
+  // Keep Ethernet hardware/network management available, but do not create
+  // an OpenHD Ethernet transport when explicitly disabled.
+  bool DISABLE_ETHERNET_LINK = false;
   std::string GROUND_UNIT_IP = "";
   std::string AIR_UNIT_IP = "";
   int VIDEO_PORT = 5000;
