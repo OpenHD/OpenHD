@@ -689,7 +689,7 @@ static std::string create_nxp_imx8_v4l2_stream(const CameraSettings& settings,
   std::stringstream ss;
   ss << fmt::format(
       "v4l2src device=/dev/video{} io-mode={} do-timestamp=true ! "
-      "video/x-raw,format=NV12,width={},height={},framerate={}/1 ! ",
+      "video/x-raw,format=NV21,width={},height={},framerate={}/1 ! ",
       device_index, io_mode, width, height, framerate);
   ss << "queue max-size-buffers=4 leaky=downstream ! ";
   const std::string aud_parameter =
