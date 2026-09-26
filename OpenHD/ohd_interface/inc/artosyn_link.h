@@ -42,6 +42,7 @@ class ArtosynLink : public OHDLink {
       int stream_index,
       const openhd::FragmentedVideoFrame& fragmented_video_frame) override;
   void transmit_audio_data(const openhd::AudioPacket& audio_packet) override;
+  bool usage_supports_audio() override { return false; }
 
   // Lightweight detection to decide whether to instantiate this link.
   static bool probe();

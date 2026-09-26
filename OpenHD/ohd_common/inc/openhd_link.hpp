@@ -57,6 +57,11 @@ class OHDLink {
       ON_TELE_DATA_CB;
   virtual ~OHDLink() = default;
 
+  // Usage accounting only includes payloads accepted by this transport.
+  virtual bool usage_tx_available() { return true; }
+  virtual bool usage_supports_video(int) { return true; }
+  virtual bool usage_supports_audio() { return true; }
+
  public:
   // --- Telemetry air and ground both receive and send --------
   // Telemetry TX special - retransmission(s) - duplicate specific mavlink

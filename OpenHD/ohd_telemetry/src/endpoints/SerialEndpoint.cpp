@@ -38,6 +38,7 @@
 #include "openhd_spdlog_include.h"
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"
+#include "openhd_link_usage.hpp"
 
 static std::string GET_ERROR() { return {strerror(errno)}; }
 static void debug_poll_fd(const struct pollfd& poll_fd) {
@@ -75,10 +76,19 @@ SerialEndpoint::SerialEndpoint(std::string TAG1,
   assert(m_console);
   // m_limited_rate_logger=std::make_unique<openhd::log::LimitedRateLogger>(m_console,std::chrono::milliseconds(1000));
   m_console->info("created with {}", m_options.to_string());
+  if (TAG == "openhd_uart") {
+    // UART 8N1 uses ten line bits per payload byte.
+    openhd::link_usage::Registry::instance().add_link(
+        "UART", static_cast<uint32_t>(m_options.baud_rate * 8 / 10));
+  }
   start();
 }
 
-SerialEndpoint::~SerialEndpoint() { stop(); }
+SerialEndpoint::~SerialEndpoint() {
+  stop();
+  if (TAG == "openhd_uart")
+    openhd::link_usage::Registry::instance().remove_link("UART");
+}
 
 bool SerialEndpoint::sendMessagesImpl(
     const std::vector<MavlinkMessage>& messages) {
@@ -129,6 +139,9 @@ bool SerialEndpoint::write_data_serial(const std::vector<uint8_t>& data) {
     }
     return false;
   }
+  if (TAG == "openhd_uart")
+    openhd::link_usage::Registry::instance().record(
+        "UART", openhd::link_usage::Category::Telemetry, data.size());
   return true;
 }
 

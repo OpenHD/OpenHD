@@ -718,6 +718,18 @@ void EthernetLink::transmit_audio_data(
   // Currently not implemented for EthernetLink
 }
 
+bool EthernetLink::usage_tx_available() {
+  if (m_auto_discovery) {
+    const auto last = m_last_discovery_response_ms.load(std::memory_order_relaxed);
+    if (last <= 0 || openhd::util::steady_clock_time_epoch_ms() - last >
+                         DISCOVERY_PEER_TIMEOUT_MS)
+      return false;
+  }
+  std::lock_guard<std::mutex> lock(m_forwarders_mutex);
+  return static_cast<bool>(m_telemetry_tx) &&
+         (!m_profile.is_air || static_cast<bool>(m_video_tx));
+}
+
 void EthernetLink::handle_video_data(int stream_index, const uint8_t* data,
                                      int data_len) {
   m_rx_total_bytes.fetch_add(static_cast<uint64_t>(data_len),

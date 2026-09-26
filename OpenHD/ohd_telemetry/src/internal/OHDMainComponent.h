@@ -98,6 +98,7 @@ class OHDMainComponent : public MavlinkComponent {
       std::chrono::steady_clock::now();
   std::vector<MavlinkMessage> create_broadcast_stats_if_needed();
   [[nodiscard]] std::vector<MavlinkMessage> generate_mav_wb_stats();
+  [[nodiscard]] std::vector<MavlinkMessage> generate_mav_link_usage_stats();
   [[nodiscard]] MavlinkMessage generate_ohd_version() const;
   // pack all the buffered log messages
   std::vector<MavlinkMessage> generateLogMessages();

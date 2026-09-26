@@ -4,6 +4,7 @@
 #include <utility>
 
 #include "openhd_secondary_telemetry.hpp"
+#include "openhd_link_usage.hpp"
 
 namespace {
 constexpr auto kVideoDuplicateLifetime = std::chrono::seconds(2);
@@ -54,6 +55,7 @@ void MultiLink::clear_links() {
     endpoints.swap(m_endpoints);
   }
   for (const auto& endpoint : endpoints) {
+    openhd::link_usage::Registry::instance().remove_link(endpoint->name);
     if (endpoint->name != "WIFIBROADCAST") {
       openhd::SecondaryTelemetryStatus::instance().set_configured(
           endpoint->name, false);
@@ -83,6 +85,7 @@ void MultiLink::add_link(std::string name, std::shared_ptr<OHDLink> link) {
     openhd::SecondaryTelemetryStatus::instance().set_configured(endpoint->name,
                                                                 true);
   }
+  openhd::link_usage::Registry::instance().add_link(endpoint->name);
   endpoint->worker = std::thread([endpoint]() { dispatch_loop(endpoint); });
   auto gate = m_callback_gate;
   link->register_on_receive_video_data_cb(
@@ -137,6 +140,7 @@ void MultiLink::remove_link(const std::shared_ptr<OHDLink>& link) {
     openhd::SecondaryTelemetryStatus::instance().set_configured(removed->name,
                                                                 false);
   }
+  openhd::link_usage::Registry::instance().remove_link(removed->name);
   stop_endpoint(removed);
 }
 
@@ -224,12 +228,47 @@ void MultiLink::dispatch_loop(const EndpointPtr& endpoint) {
     // producer and all other transports remain independent.
     try {
       if (has_telemetry) {
+        const auto category = telemetry.packet_type == TelemetryPacketType::RC
+                                  ? openhd::link_usage::Category::Control
+                                  : openhd::link_usage::Category::Telemetry;
+        const auto bytes = telemetry.data ? telemetry.data->size() : 0;
+        const bool count_usage = endpoint->link->usage_tx_available();
         endpoint->link->transmit_telemetry_data(std::move(telemetry));
+        if (count_usage) {
+          openhd::link_usage::Registry::instance().record(endpoint->name,
+                                                          category, bytes);
+        }
       }
       if (has_video) {
+        uint64_t bytes = video.frame.dirty_frame
+                             ? video.frame.dirty_frame->size()
+                             : 0;
+        if (!video.frame.dirty_frame) {
+          for (const auto& fragment : video.frame.rtp_fragments) {
+            if (fragment) bytes += fragment->size();
+          }
+        }
+        const bool count_usage = endpoint->link->usage_tx_available() &&
+            endpoint->link->usage_supports_video(video.stream_index);
         endpoint->link->transmit_video_data(video.stream_index, video.frame);
+        if (count_usage)
+          openhd::link_usage::Registry::instance().record(
+              endpoint->name,
+              video.stream_index == 0 ? openhd::link_usage::Category::Camera1
+                                      : video.stream_index == 1
+                                            ? openhd::link_usage::Category::Camera2
+                                            : openhd::link_usage::Category::Other,
+              bytes);
       }
-      if (has_audio) endpoint->link->transmit_audio_data(audio);
+      if (has_audio) {
+        const bool count_usage = endpoint->link->usage_tx_available() &&
+            endpoint->link->usage_supports_audio();
+        endpoint->link->transmit_audio_data(audio);
+        if (count_usage)
+          openhd::link_usage::Registry::instance().record(
+              endpoint->name, openhd::link_usage::Category::Audio,
+              audio.data ? audio.data->size() : 0);
+      }
     } catch (...) {
     }
   }

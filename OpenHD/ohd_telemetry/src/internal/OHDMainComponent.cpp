@@ -35,6 +35,25 @@
 #include "openhd_sock.h"
 #include "openhd_spdlog_include.h"
 #include "openhd_util_time.h"
+#include "openhd_link_usage.hpp"
+
+namespace {
+uint8_t link_usage_id(const std::string& name) {
+  if (name == "WIFIBROADCAST") return 1;
+  if (name == "ETHERNET") return 2;
+  if (name == "UART") return 3;
+  if (name == "MICROHARD") return 4;
+  if (name == "ARTOSYN") return 5;
+  if (name == "LTE") return 6;
+  if (name == "MLRS") return 7;
+  return 0;
+}
+
+void put_u32(uint8_t* bytes, std::size_t offset, uint32_t value) {
+  for (unsigned int i = 0; i < 4; ++i)
+    bytes[offset + i] = static_cast<uint8_t>(value >> (i * 8));
+}
+}  // namespace
 
 OHDMainComponent::OHDMainComponent(uint8_t parent_sys_id, bool runsOnAir)
     : RUNS_ON_AIR(runsOnAir),
@@ -224,6 +243,55 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mav_wb_stats() {
     }
   }
   return ret;
+}
+
+std::vector<MavlinkMessage> OHDMainComponent::generate_mav_link_usage_stats() {
+  std::vector<MavlinkMessage> messages;
+  auto samples = openhd::link_usage::Registry::instance().sample();
+  const auto latest = openhd::LinkActionHandler::instance().get_link_stats();
+  for (auto& sample : samples) {
+    const auto link_id = link_usage_id(sample.link_name);
+    if (link_id == 0) continue;
+    if (link_id == 1 && latest.ready && latest.is_air == RUNS_ON_AIR &&
+        latest.monitor_mode_link.curr_rate_kbits > 0) {
+      sample.capacity_bps =
+          static_cast<uint32_t>(latest.monitor_mode_link.curr_rate_kbits) * 1000;
+      // The WB transmitter's measured rate also includes FEC and framing
+      // bytes absent from the application payload counters. Account for that
+      // remainder explicitly so the stacked bar adds up to the reported total.
+      if (latest.monitor_mode_link.curr_tx_bps > 0 &&
+          static_cast<uint32_t>(latest.monitor_mode_link.curr_tx_bps) >
+              sample.total_bps) {
+        const auto overhead = static_cast<uint32_t>(
+            latest.monitor_mode_link.curr_tx_bps) - sample.total_bps;
+        sample.category_bps[static_cast<std::size_t>(
+            openhd::link_usage::Category::Other)] += overhead;
+        sample.total_bps += overhead;
+      }
+    }
+
+    // DATA96/OHLU v1: magic, version, link, category count, flags,
+    // total_bps, capacity_bps, then six (category id, rate_bps) tuples.
+    mavlink_data96_t payload{};
+    payload.type = openhd::link_usage::kMavlinkDataType;
+    payload.len = 16 + 6 * 5;
+    std::memcpy(payload.data, "OHLU", 4);
+    payload.data[4] = openhd::link_usage::kPayloadVersion;
+    payload.data[5] = link_id;
+    payload.data[6] = 6;
+    payload.data[7] = 0;
+    put_u32(payload.data, 8, sample.total_bps);
+    put_u32(payload.data, 12, sample.capacity_bps);
+    for (uint8_t category = 1; category <= 6; ++category) {
+      const std::size_t offset = 16 + (category - 1) * 5;
+      payload.data[offset] = category;
+      put_u32(payload.data, offset + 1, sample.category_bps[category]);
+    }
+    MavlinkMessage message;
+    mavlink_msg_data96_encode(m_sys_id, m_comp_id, &message.m, &payload);
+    messages.push_back(message);
+  }
+  return messages;
 }
 
 static mavlink_message_t create_mavlink_log_message(
@@ -537,6 +605,8 @@ OHDMainComponent::create_broadcast_stats_if_needed() {
   if (elapsed_wb > m_wb_stats_interval) {
     m_last_wb_stats = now;
     OHDUtil::vec_append(ret, generate_mav_wb_stats());
+    if (RUNS_ON_AIR)
+      OHDUtil::vec_append(ret, generate_mav_link_usage_stats());
     if (RUNS_ON_AIR) {
       auto cam_stats1 = openhd::LinkActionHandler::instance().get_cam_info(0);
       auto cam_stats2 = openhd::LinkActionHandler::instance().get_cam_info(1);
