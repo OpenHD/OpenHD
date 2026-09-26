@@ -27,8 +27,11 @@ systemctl daemon-reload
 systemctl enable --now openhd-fleet-setup.service
 systemctl enable openhd.service
 
-if [[ -f /etc/systemd/system/openhd-artosyn.service ]]; then
-    systemctl enable openhd-artosyn.service
+# SysUtils owns Artosyn hardware detection and starts this service only after an
+# Artosyn device is present.  Do not make the optional daemon part of every
+# system's boot, and remove enablement left behind by older packages.
+if systemctl list-unit-files openhd-artosyn.service >/dev/null 2>&1; then
+    systemctl disable openhd-artosyn.service || true
 fi
 
 if command -v ldconfig >/dev/null 2>&1; then

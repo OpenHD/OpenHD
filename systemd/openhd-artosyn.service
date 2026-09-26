@@ -1,7 +1,7 @@
 [Unit]
 Description=OpenHD Artosyn baseband daemon
 After=systemd-udev-settle.service
-Before=openhd.service openhd-sys-utils.service
+Before=openhd.service
 
 [Service]
 Type=simple

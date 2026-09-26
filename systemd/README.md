@@ -7,7 +7,9 @@
    Artosyn-enabled package is built. The package includes the daemon and tunnel
    helper produced from https://github.com/KUTIAN-VT/L4_Linux_SDK. Output is
    discarded because the vendor daemon can log continuously; OpenHD and
-   SysUtils expose the useful link state separately.
+   SysUtils expose the useful link state separately. The service is deliberately
+   disabled at boot: SysUtils detects supported Artosyn USB/SDIO hardware and
+   starts it on demand.
 
    USB is the default SDK transport (`ARTOSYN_INTERFACE=0`). Override it in
    `/etc/default/openhd-artosyn` when building an image for another transport:
