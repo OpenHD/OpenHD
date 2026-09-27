@@ -227,6 +227,11 @@ std::optional<UsbDeviceProbe> probe_usb_device(libusb_device *device,
   if (libusb_get_device_descriptor(device, &descriptor) != 0) {
     return std::nullopt;
   }
+  // Ignore ZeroCD / driver CD-ROM mode. Probing this via control transfers 
+  // causes some chips to crash and reset, preventing usb_modeswitch from working.
+  if (descriptor.idVendor == 0x0bda && descriptor.idProduct == 0x1a2b) {
+    return std::nullopt;
+  }
   const auto known = classify_usb_device(descriptor.idVendor,
                                          descriptor.idProduct, 0,
                                          realtek_netdev);
