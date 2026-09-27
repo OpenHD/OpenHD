@@ -76,7 +76,6 @@ set(sources
     "src/openhd_bitrate.cpp"
     "src/openhd_thermal.cpp"
     "src/openhd_plugin_manager.cpp"
-    "src/openhd_ncurses_ui.cpp"
 )
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
