@@ -1,3 +1,4 @@
+#include "openhd_ncurses_ui.h"
 /******************************************************************************
  * OpenHD
  * 
@@ -485,6 +486,7 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
 }
 
 int main(int argc, char *argv[]) {
+    openhd::ui::init_ncurses();
   // OpenHD needs to be run as root!
   OHDUtil::terminate_if_not_root();
   if (OHDFilesystemUtil::exists("/run/openhd/hold.pid")) {
@@ -735,6 +737,7 @@ int main(int argc, char *argv[]) {
     const auto run_time_begin = std::chrono::steady_clock::now();
     bool terminate_due_to_internal_error = false;
     while (!quit) {
+      openhd::ui::update_ncurses();
       std::this_thread::sleep_for(std::chrono::seconds(2));
       if (options.run_time_seconds >= 1) {
         if (std::chrono::steady_clock::now() - run_time_begin >=
@@ -803,5 +806,6 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
   openhd::remove_currently_running_file();
+  openhd::ui::shutdown_ncurses();
   return 0;
 }

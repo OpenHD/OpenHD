@@ -44,7 +44,9 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_
 endif()
 
 # Link the libraries
-target_link_libraries(openhd PRIVATE OHDInterfaceLib OHDVideoLib OHDTelemetryLib OHDCommonLib)
+find_package(Curses REQUIRED)
+include_directories($CURSES_INCLUDE_DIRS)
+target_link_libraries(openhd PRIVATE OHDInterfaceLib OHDVideoLib OHDTelemetryLib OHDCommonLib $CURSES_LIBRARIES)
 
 # Check if libatomic is needed and available
 include(CheckLibraryExists)

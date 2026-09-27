@@ -1,3 +1,5 @@
+#include <unistd.h>
+#include "openhd_ncurses_ui.h"
 /******************************************************************************
  * OpenHD
  *
@@ -52,6 +54,15 @@ static openhd::log::MavlinkLogMessage safe_create(int level,
 // We send logs higher or equal to the warning log level out via udp
 // such that they can be picked up by the telemetry module
 namespace openhd::log::sink {
+
+class NcursesSink : public spdlog::sinks::base_sink<std::mutex> {
+ protected:
+  void sink_it_(const spdlog::details::log_msg& msg) override {
+    openhd::ui::ncurses_log(std::string(msg.logger_name.data(), msg.logger_name.size()), static_cast<int>(msg.level), fmt::to_string(msg.payload));
+  }
+  void flush_() override {}
+};
+
 
 // Sinks the messages into a buffer
 // For the telemetry thread to fetch
@@ -112,7 +123,13 @@ std::shared_ptr<spdlog::logger> openhd::log::create_or_get(
   std::lock_guard<std::mutex> guard(logger_mutex2);
   auto ret = spdlog::get(logger_name);
   if (ret == nullptr) {
-    auto created = spdlog::stdout_color_mt(logger_name);
+    auto created = std::make_shared<spdlog::logger>(logger_name);
+    spdlog::register_logger(created);
+    if (isatty(STDOUT_FILENO)) {
+      created->sinks().push_back(std::make_shared<openhd::log::sink::NcursesSink>());
+    } else {
+      created->sinks().push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
+    }
     assert(created);
     if (OHDFilesystemUtil::exists("/usr/local/share/openhd/debug.txt")) {
       created->set_level(spdlog::level::debug);
