@@ -36,7 +36,8 @@ static void to_json(nlohmann::json& j, const NetworkingSettings& settings) {
       {"wifi_client_interface", settings.wifi_client_interface},
       {"wifi_client_ssid", settings.wifi_client_ssid},
       {"wifi_client_password", settings.wifi_client_password},
-      {"ethernet_operating_mode", settings.ethernet_operating_mode}};
+      {"ethernet_operating_mode", settings.ethernet_operating_mode},
+      {"enterprise_multi_link", settings.enterprise_multi_link}};
 }
 
 static void from_json(const nlohmann::json& j, NetworkingSettings& settings) {
@@ -59,6 +60,8 @@ static void from_json(const nlohmann::json& j, NetworkingSettings& settings) {
       j.value("wifi_client_password", settings.wifi_client_password);
   settings.ethernet_operating_mode =
       j.value("ethernet_operating_mode", settings.ethernet_operating_mode);
+  settings.enterprise_multi_link =
+      j.value("enterprise_multi_link", settings.enterprise_multi_link);
 }
 
 std::optional<NetworkingSettings> NetworkingSettingsHolder::impl_deserialize(

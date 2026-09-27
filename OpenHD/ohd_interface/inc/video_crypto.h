@@ -11,6 +11,8 @@ class logger;
 
 namespace openhd {
 
+bool enterprise_multilink_allowed(bool is_air);
+
 class VideoCrypto {
  public:
   explicit VideoCrypto(std::shared_ptr<spdlog::logger> logger);

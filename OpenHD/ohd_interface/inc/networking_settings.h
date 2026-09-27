@@ -69,6 +69,8 @@ struct NetworkingSettings {
   std::string wifi_client_password;
   // Ethernet operating mode (changes networking,might require reboot)
   int ethernet_operating_mode = ETHERNET_OPERATING_MODE_UNTOUCHED;
+  // Simultaneous video/data transports require a verified enterprise certificate.
+  bool enterprise_multi_link = false;
 };
 
 static bool is_valid_wifi_hotspot_mode(int mode) {

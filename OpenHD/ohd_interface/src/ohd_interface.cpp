@@ -44,6 +44,7 @@
 #include "openhd_global_constants.hpp"
 #include "openhd_sock.h"
 #include "openhd_util_filesystem.h"
+#include "video_crypto.h"
 #include "wb_link.h"
 // Helper function to execute a shell command and return the output
 std::string exec(const std::string& cmd) {
@@ -80,6 +81,9 @@ OHDInterface::OHDInterface(OHDProfile profile1, bool disable_wifi_hotspot)
   m_monitor_mode_cards = {};
   m_opt_hotspot_card = std::nullopt;
   const auto config = openhd::load_config();
+  m_enterprise_multi_link =
+      m_nw_settings.get_settings().enterprise_multi_link &&
+      openhd::enterprise_multilink_allowed(m_profile.is_air);
   bool microhard_device_present = is_microhard_device_present();
   openhd::LinkActionHandler::instance().set_primary_link_type(
       openhd::LinkActionHandler::PRIMARY_LINK_NONE);
@@ -107,6 +111,7 @@ OHDInterface::OHDInterface(OHDProfile profile1, bool disable_wifi_hotspot)
     openhd::LinkActionHandler::instance().set_primary_link_type(
         openhd::LinkActionHandler::PRIMARY_LINK_ARTOSYN);
     m_console->warn("artosyn found");
+    apply_link_policy();
     return;
   }
   m_console->warn(
@@ -209,7 +214,58 @@ OHDInterface::OHDInterface(OHDProfile profile1, bool disable_wifi_hotspot)
   auto cb = [this](bool /*armed*/) { update_wifi_hotspot_enable(); };
   openhd::ArmingStateHelper::instance().register_listener("ohd_interface_wfi",
                                                           cb);
+  apply_link_policy();
   m_console->debug("OHDInterface::created");
+}
+
+void OHDInterface::apply_link_policy() {
+  if (!m_multi_link) return;
+  // UART telemetry is managed separately from these video/data transports.
+  std::string selected;
+  if (!m_enterprise_multi_link) {
+    if (m_wb_link && m_wb_routing_enabled) selected = "WIFIBROADCAST";
+    else if (m_microhard_link) selected = "MICROHARD";
+#ifdef OHD_ENABLE_ARTOSYN
+    else if (m_artosyn_link) selected = "ARTOSYN";
+#endif
+    else if (m_ethernet_link && m_ethernet_routing_enabled) selected = "ETHERNET";
+    else if (m_lte_link) selected = "LTE";
+  }
+  const auto route = [this, &selected](const char* name,
+                                        const std::shared_ptr<OHDLink>& link,
+                                        bool enabled) {
+    if (!link) return;
+    if (enabled && (m_enterprise_multi_link || selected == name)) {
+      m_multi_link->add_link(name, link);
+    } else {
+      m_multi_link->remove_link(link);
+    }
+  };
+  route("WIFIBROADCAST", m_wb_link, m_wb_routing_enabled);
+  route("MICROHARD", m_microhard_link, true);
+#ifdef OHD_ENABLE_ARTOSYN
+  route("ARTOSYN", m_artosyn_link, true);
+#endif
+  route("ETHERNET", m_ethernet_link, m_ethernet_routing_enabled);
+  route("LTE", m_lte_link, true);
+  if (m_wb_link && m_wb_routing_enabled) {
+    openhd::LinkActionHandler::instance().set_primary_link_type(
+        openhd::LinkActionHandler::PRIMARY_LINK_WIFIBROADCAST);
+  } else if (m_microhard_link) {
+    openhd::LinkActionHandler::instance().set_primary_link_type(
+        openhd::LinkActionHandler::PRIMARY_LINK_MICROHARD);
+#ifdef OHD_ENABLE_ARTOSYN
+  } else if (m_artosyn_link) {
+    openhd::LinkActionHandler::instance().set_primary_link_type(
+        openhd::LinkActionHandler::PRIMARY_LINK_ARTOSYN);
+#endif
+  } else if (m_ethernet_link && m_ethernet_routing_enabled) {
+    openhd::LinkActionHandler::instance().set_primary_link_type(
+        openhd::LinkActionHandler::PRIMARY_LINK_ETHERNET);
+  } else {
+    openhd::LinkActionHandler::instance().set_primary_link_type(
+        openhd::LinkActionHandler::PRIMARY_LINK_NONE);
+  }
 }
 
 OHDInterface::~OHDInterface() {
@@ -515,6 +571,27 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings() {
   }
 #endif
   const auto settings = m_nw_settings.get_settings();
+  const bool enterprise_allowed =
+      openhd::enterprise_multilink_allowed(m_profile.is_air);
+  ret.push_back(openhd::create_read_only_int(
+      "MULTI_LINK_CAP", enterprise_allowed ? 1 : 0));
+  auto cb_multi_link = [this](std::string, int value) {
+    if (value != 0 && value != 1) return false;
+    if (value == 1 &&
+        !openhd::enterprise_multilink_allowed(m_profile.is_air)) return false;
+    m_enterprise_multi_link = value == 1;
+    if (!m_enterprise_multi_link && m_wb_link) {
+      m_wb_routing_enabled = true;
+    }
+    m_nw_settings.unsafe_get_settings().enterprise_multi_link =
+        m_enterprise_multi_link;
+    m_nw_settings.persist();
+    apply_link_policy();
+    return true;
+  };
+  ret.push_back(openhd::Setting{
+      "MULTI_LINK_EN",
+      openhd::IntSetting{m_enterprise_multi_link ? 1 : 0, cb_multi_link}});
   auto cb_wifi_mode = [this](std::string, int value) {
     if (!is_valid_wifi_operating_mode(value)) return false;
     m_nw_settings.unsafe_get_settings().wifi_operating_mode = value;
@@ -631,6 +708,7 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings() {
     auto cb_wb_routing = [this](std::string, int value) {
       if (value != 0 && value != 1) return false;
       if (!m_wb_link || !m_multi_link) return false;
+      if (value == 0 && !m_enterprise_multi_link) return false;
       if (m_wb_routing_enabled == (value != 0)) return true;
       if (value == 0) {
         m_multi_link->remove_link(m_wb_link);
@@ -638,12 +716,7 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings() {
         m_multi_link->add_link("WIFIBROADCAST", m_wb_link);
       }
       m_wb_routing_enabled = value != 0;
-      openhd::LinkActionHandler::instance().set_primary_link_type(
-          m_wb_routing_enabled
-              ? openhd::LinkActionHandler::PRIMARY_LINK_WIFIBROADCAST
-              : (m_ethernet_routing_enabled && m_ethernet_link
-                     ? openhd::LinkActionHandler::PRIMARY_LINK_ETHERNET
-                     : openhd::LinkActionHandler::PRIMARY_LINK_NONE));
+      apply_link_policy();
       return true;
     };
     if (m_wb_link) {
@@ -653,6 +726,8 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings() {
     auto cb_ethernet_routing = [this](std::string, int value) {
       if (value != 0 && value != 1) return false;
       if (!m_ethernet_link || !m_multi_link) return false;
+      if (value == 1 && !m_enterprise_multi_link && m_wb_link &&
+          m_wb_routing_enabled) return false;
       if (m_ethernet_routing_enabled == (value != 0)) return true;
       if (value == 0) {
         m_multi_link->remove_link(m_ethernet_link);
@@ -660,13 +735,7 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings() {
         m_multi_link->add_link("ETHERNET", m_ethernet_link);
       }
       m_ethernet_routing_enabled = value != 0;
-      if (!m_ethernet_routing_enabled && !m_wb_link) {
-        openhd::LinkActionHandler::instance().set_primary_link_type(
-            openhd::LinkActionHandler::PRIMARY_LINK_NONE);
-      } else if (m_ethernet_routing_enabled && !m_wb_routing_enabled) {
-        openhd::LinkActionHandler::instance().set_primary_link_type(
-            openhd::LinkActionHandler::PRIMARY_LINK_ETHERNET);
-      }
+      apply_link_policy();
       return true;
     };
     if (m_ethernet_link) {
@@ -790,8 +859,7 @@ void OHDInterface::wb_recovery_loop() {
                   m_wb_link->restart_after_card_replug(*recovered_cards);
       if (recovered && m_multi_link && m_wb_routing_enabled) {
         m_multi_link->add_link("WIFIBROADCAST", m_wb_link);
-        openhd::LinkActionHandler::instance().set_primary_link_type(
-            openhd::LinkActionHandler::PRIMARY_LINK_WIFIBROADCAST);
+        apply_link_policy();
         m_console->info(
             "Wifibroadcast automatically rejoined the multi-link router");
       }

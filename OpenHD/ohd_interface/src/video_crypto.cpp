@@ -18,6 +18,25 @@ constexpr const char* kDefaultVideoCryptoPath =
     "/usr/local/lib/openhd/libohd_video_crypto.so";
 }  // namespace
 
+bool openhd::enterprise_multilink_allowed(bool is_air) {
+#ifdef __linux__
+  const char* env_path = std::getenv(kVideoCryptoEnvVar);
+  const std::string path =
+      (env_path && env_path[0] != '\0') ? env_path : kDefaultVideoCryptoPath;
+  void* handle = dlopen(path.c_str(), RTLD_NOW | RTLD_LOCAL);
+  if (!handle) return false;
+  using entitlement_fn = int (*)(int);
+  const auto entitlement = reinterpret_cast<entitlement_fn>(
+      dlsym(handle, "openhd_video_crypto_enterprise_multilink_allowed"));
+  const bool allowed = entitlement && entitlement(is_air ? 1 : 0) == 1;
+  dlclose(handle);
+  return allowed;
+#else
+  (void)is_air;
+  return false;
+#endif
+}
+
 openhd::VideoCrypto::VideoCrypto(std::shared_ptr<spdlog::logger> logger)
     : m_console(std::move(logger)) {}
 

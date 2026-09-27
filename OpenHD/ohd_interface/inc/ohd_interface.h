@@ -123,6 +123,7 @@ class OHDInterface {
   void stop_wb_recovery_supervisor();
   void request_wb_recovery();
   void wb_recovery_loop();
+  void apply_link_policy();
   std::optional<std::vector<WiFiCard>> find_replugged_wb_cards();
 
  private:
@@ -156,6 +157,7 @@ class OHDInterface {
   bool m_wb_recovery_shutdown = false;
   std::atomic<bool> m_wb_routing_enabled{true};
   bool m_ethernet_routing_enabled = true;
+  bool m_enterprise_multi_link = false;
 };
 
 #endif  // OPENHD_OPENHD_INTERFACE_H
