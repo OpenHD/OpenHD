@@ -204,6 +204,8 @@ void LibcameraAppStream::run() {
       add_option("--saturation", *value);
     if (auto value = openhd::libcamera::get_sharpness(settings))
       add_option("--sharpness", *value);
+    if (settings.openhd_iso > 0)
+      add_option("--gain", settings.openhd_iso);
     if (settings.rpi_libcamera_ev_value != RPI_LIBCAMERA_DEFAULT_EV)
       add_option("--ev", settings.rpi_libcamera_ev_value);
     if (settings.rpi_libcamera_shutter_microseconds != 0)

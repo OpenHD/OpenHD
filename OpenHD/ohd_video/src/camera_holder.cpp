@@ -49,7 +49,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
     h26x_bitrate_kbits, h26x_keyframe_interval, h26x_intra_refresh_type,
     h26x_num_slices, nxp_enable_aud, air_recording, camera_rotation_degree,
     openhd_flip,
-    openhd_brightness, openhd_sharpness, openhd_saturation, openhd_contrast,
+    openhd_iso, veye_framerate, veye_wbmode, veye_cameramode, veye_mshutter, veye_denoise, veye_wdrbtargetbr, openhd_brightness, openhd_sharpness, openhd_saturation, openhd_contrast,
     // rpi libcamera specific IQ params begin
     rpi_libcamera_ev_value, rpi_libcamera_denoise_index,
     rpi_libcamera_awb_index, rpi_libcamera_metering_index,
@@ -482,6 +482,32 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
     ret.push_back(openhd::Setting{
         "BRIGHTNESS",
         openhd::IntSetting{get_settings().openhd_brightness, c_brightness}});
+    if (m_camera.requires_rpi_mmal_pipeline() || m_camera.requires_rpi_libcamera_pipeline() || m_camera.requires_rpi_veye_pipeline()) {
+      auto cb_iso = [this](std::string, int value) {
+        return set_openhd_iso(value);
+      };
+      ret.push_back(openhd::Setting{
+          "ISO",
+          openhd::IntSetting{get_settings().openhd_iso, cb_iso}});
+    }
+    if (m_camera.requires_rpi_veye_pipeline()) {
+      auto cb_framerate = [this](std::string, int value) {
+        return set_veye_framerate(value);
+      };
+      ret.push_back(openhd::Setting{
+          "VEYE_FRAMERATE",
+          openhd::IntSetting{get_settings().veye_framerate, cb_framerate}});
+      auto cb_wbmode = [this](std::string, int value) { return set_veye_wbmode(value); };
+      ret.push_back(openhd::Setting{"VEYE_WBMODE", openhd::IntSetting{get_settings().veye_wbmode, cb_wbmode}});
+      auto cb_cameramode = [this](std::string, int value) { return set_veye_cameramode(value); };
+      ret.push_back(openhd::Setting{"VEYE_CAMERAMODE", openhd::IntSetting{get_settings().veye_cameramode, cb_cameramode}});
+      auto cb_mshutter = [this](std::string, int value) { return set_veye_mshutter(value); };
+      ret.push_back(openhd::Setting{"VEYE_MSHUTTER", openhd::IntSetting{get_settings().veye_mshutter, cb_mshutter}});
+      auto cb_denoise = [this](std::string, int value) { return set_veye_denoise(value); };
+      ret.push_back(openhd::Setting{"VEYE_DENOISE", openhd::IntSetting{get_settings().veye_denoise, cb_denoise}});
+      auto cb_wdrbtargetbr = [this](std::string, int value) { return set_veye_wdrbtargetbr(value); };
+      ret.push_back(openhd::Setting{"VEYE_WDRBTARGETBR", openhd::IntSetting{get_settings().veye_wdrbtargetbr, cb_wdrbtargetbr}});
+    }
   }
   const bool SUPPORTS_IQ = m_camera.requires_rpi_libcamera_pipeline() &&
                            !OHDPlatform::instance().is_rpi5();

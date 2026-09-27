@@ -212,6 +212,13 @@ struct CameraSettings {
   int openhd_saturation = OPENHD_SATURATION_DEFAULT;
   int openhd_contrast = OPENHD_CONTRAST_DEFAULT;
   int openhd_sharpness = OPENHD_SHARPNESS_DEFAULT;
+  int openhd_iso = 0;
+  int veye_framerate = 30;
+  int veye_wbmode = 0x1B; // auto by default
+  int veye_cameramode = 0x0;
+  int veye_mshutter = 0x4B;
+  int veye_denoise = 0x0;
+  int veye_wdrbtargetbr = 0x80;
   // libcamera params
   int rpi_libcamera_ev_value = RPI_LIBCAMERA_DEFAULT_EV;
   int rpi_libcamera_denoise_index = 0;

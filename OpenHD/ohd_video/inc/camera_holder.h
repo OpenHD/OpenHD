@@ -518,27 +518,124 @@ class CameraHolder :
     persist();
     return true;
   }
+  bool set_openhd_iso(int value) {
+    if (value < 0) return false;
+    unsafe_get_settings().openhd_iso = value;
+    if (m_camera.requires_rpi_veye_pipeline()) {
+        std::stringstream cmd;
+        cmd << "veye_mipi_i2c.sh -w -f new_mgain -p1 " << value;
+        system(cmd.str().c_str());
+    }
+    persist(true);
+    return true;
+  }
+  bool set_veye_wbmode(int value) {
+    if (value < 0) return false;
+    unsafe_get_settings().veye_wbmode = value;
+    if (m_camera.requires_rpi_veye_pipeline()) {
+        std::stringstream cmd;
+        cmd << "veye_mipi_i2c.sh -w -f wbmode -p1 0x" << std::hex << value;
+        system(cmd.str().c_str());
+    }
+    persist(true);
+    return true;
+  }
+  bool set_veye_cameramode(int value) {
+    if (value < 0) return false;
+    unsafe_get_settings().veye_cameramode = value;
+    if (m_camera.requires_rpi_veye_pipeline()) {
+        std::stringstream cmd;
+        cmd << "veye_mipi_i2c.sh -w -f cameramode -p1 0x" << std::hex << value;
+        system(cmd.str().c_str());
+    }
+    persist(true);
+    return true;
+  }
+  bool set_veye_denoise(int value) {
+    if (value < 0) return false;
+    unsafe_get_settings().veye_denoise = value;
+    if (m_camera.requires_rpi_veye_pipeline()) {
+        std::stringstream cmd;
+        cmd << "veye_mipi_i2c.sh -w -f denoise -p1 0x" << std::hex << value;
+        system(cmd.str().c_str());
+    }
+    persist(true);
+    return true;
+  }
+  bool set_veye_wdrbtargetbr(int value) {
+    if (value < 0) return false;
+    unsafe_get_settings().veye_wdrbtargetbr = value;
+    if (m_camera.requires_rpi_veye_pipeline()) {
+        std::stringstream cmd;
+        cmd << "veye_mipi_i2c.sh -w -f wdrbtargetbr -p1 0x" << std::hex << value;
+        system(cmd.str().c_str());
+    }
+    persist(true);
+    return true;
+  }
+  bool set_veye_mshutter(int value) {
+    if (value < 0) return false;
+    unsafe_get_settings().veye_mshutter = value;
+    if (m_camera.requires_rpi_veye_pipeline()) {
+        std::stringstream cmd;
+        cmd << "veye_mipi_i2c.sh -w -f mshutter -p1 0x" << std::hex << value;
+        system(cmd.str().c_str());
+    }
+    persist(true);
+    return true;
+  }
+  bool set_veye_framerate(int value) {
+    if (value < 0) return false;
+    unsafe_get_settings().veye_framerate = value;
+    if (m_camera.requires_rpi_veye_pipeline()) {
+        std::stringstream cmd;
+        cmd << "veye_mipi_i2c.sh -w -f nodf -p1 " << value;
+        system(cmd.str().c_str());
+    }
+    persist(true);
+    return true;
+  }
   bool set_openhd_brightness(int value) {
     if (!openhd::validate_openhd_brightness(value)) return false;
     unsafe_get_settings().openhd_brightness = value;
+    if (m_camera.requires_rpi_veye_pipeline()) {
+        std::stringstream cmd;
+        cmd << "veye_mipi_i2c.sh -w -f brightness -p1 0x" << std::hex << (value / 2);
+        system(cmd.str().c_str());
+    }
     persist();
     return true;
   }
   bool set_openhd_sharpness(int value) {
     if (!openhd::validate_openhd_sharpness(value)) return false;
     unsafe_get_settings().openhd_sharpness = value;
+    if (m_camera.requires_rpi_veye_pipeline()) {
+        std::stringstream cmd;
+        cmd << "veye_mipi_i2c.sh -w -f sharppen -p1 0x" << std::hex << (value / 2) << " -p2 0x" << std::hex << (value / 2);
+        system(cmd.str().c_str());
+    }
     persist(true);
     return true;
   }
   bool set_openhd_contrast(int value) {
     if (!openhd::validate_openhd_contrast(value)) return false;
     unsafe_get_settings().openhd_contrast = value;
+    if (m_camera.requires_rpi_veye_pipeline()) {
+        std::stringstream cmd;
+        cmd << "veye_mipi_i2c.sh -w -f contrast -p1 0x" << std::hex << ((value * 255) / 200);
+        system(cmd.str().c_str());
+    }
     persist(true);
     return true;
   }
   bool set_openhd_saturation(int value) {
     if (!openhd::validate_openhd_saturation(value)) return false;
     unsafe_get_settings().openhd_saturation = value;
+    if (m_camera.requires_rpi_veye_pipeline()) {
+        std::stringstream cmd;
+        cmd << "veye_mipi_i2c.sh -w -f saturation -p1 0x" << std::hex << (value / 2);
+        system(cmd.str().c_str());
+    }
     persist(true);
     return true;
   }
