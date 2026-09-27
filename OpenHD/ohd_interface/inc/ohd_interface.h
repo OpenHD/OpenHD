@@ -156,8 +156,8 @@ class OHDInterface {
   bool m_wb_recovery_requested = false;
   bool m_wb_recovery_shutdown = false;
   std::atomic<bool> m_wb_routing_enabled{true};
-  bool m_ethernet_routing_enabled = true;
-  bool m_enterprise_multi_link = false;
+  std::atomic<bool> m_ethernet_routing_enabled{true};
+  std::atomic<bool> m_enterprise_multi_link{false};
 };
 
 #endif  // OPENHD_OPENHD_INTERFACE_H

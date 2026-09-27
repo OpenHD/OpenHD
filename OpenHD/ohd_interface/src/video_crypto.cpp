@@ -16,13 +16,22 @@ namespace {
 constexpr const char* kVideoCryptoEnvVar = "OPENHD_VIDEO_CRYPTO_SO";
 constexpr const char* kDefaultVideoCryptoPath =
     "/usr/local/lib/openhd/libohd_video_crypto.so";
+constexpr const char* kPackagedVideoCryptoPath =
+    "/usr/local/lib/openhd/plugins/libopenhd_video_crypto.so";
+
+std::string video_crypto_path() {
+  const char* env_path = std::getenv(kVideoCryptoEnvVar);
+  if (env_path && env_path[0] != '\0') return env_path;
+  if (OHDFilesystemUtil::exists(kPackagedVideoCryptoPath)) {
+    return kPackagedVideoCryptoPath;
+  }
+  return kDefaultVideoCryptoPath;
+}
 }  // namespace
 
 bool openhd::enterprise_multilink_allowed(bool is_air) {
 #ifdef __linux__
-  const char* env_path = std::getenv(kVideoCryptoEnvVar);
-  const std::string path =
-      (env_path && env_path[0] != '\0') ? env_path : kDefaultVideoCryptoPath;
+  const std::string path = video_crypto_path();
   void* handle = dlopen(path.c_str(), RTLD_NOW | RTLD_LOCAL);
   if (!handle) return false;
   using entitlement_fn = int (*)(int);
@@ -56,9 +65,7 @@ bool openhd::VideoCrypto::load(bool is_air) {
   if (m_handle != nullptr) {
     return true;
   }
-  const char* env_path = std::getenv(kVideoCryptoEnvVar);
-  const std::string path =
-      (env_path && env_path[0] != '\0') ? env_path : kDefaultVideoCryptoPath;
+  const std::string path = video_crypto_path();
   if (!OHDFilesystemUtil::exists(path)) {
     m_console->debug("Video crypto library not found at {}", path);
     return false;
