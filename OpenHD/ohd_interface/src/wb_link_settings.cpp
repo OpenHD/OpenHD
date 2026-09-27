@@ -189,7 +189,9 @@ std::optional<WBLinkSettings> openhd::WBLinkSettingsHolder::impl_deserialize(
         settings.wb_udp_data_link_budget_percent);
     settings.wb_udp_data_max_bitrate_kbits = parsed.value(
         "wb_udp_data_max_bitrate_kbits",
-        settings.wb_udp_data_max_bitrate_kbits, wb_enable_devourer_logging);
+        settings.wb_udp_data_max_bitrate_kbits);
+    settings.wb_enable_devourer_logging = parsed.value(
+        "wb_enable_devourer_logging", settings.wb_enable_devourer_logging);
 
     // Migration: If we loaded a legacy config, the vectors might be empty.
     // Populate them from the legacy single values (which are also loaded).
