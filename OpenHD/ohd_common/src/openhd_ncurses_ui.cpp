@@ -28,7 +28,13 @@ DashboardStatus status;
 DashboardAction action = DashboardAction::None;
 #ifdef OPENHD_HAVE_CURSES
 struct LogLine { std::string text; int level; };
-std::deque<LogLine> logs;
+std::deque<LogLine>& log_buffer() {
+  // Keep the buffer alive for the process lifetime and initialize it on first
+  // use. Logging starts in global constructors on some targets, so a namespace
+  // scope deque can otherwise be accessed before its constructor has run.
+  static auto* value = new std::deque<LogLine>();
+  return *value;
+}
 int scroll = 0;
 bool logs_only = false;
 int page = 0;
@@ -156,6 +162,9 @@ void init_ncurses() {
   const char* term = std::getenv("TERM");
   if (active || !isatty(STDIN_FILENO) || !isatty(STDOUT_FILENO) || !term || std::string(term)=="dumb") return;
   if (!initscr()) return;
+  // Complete dynamic log storage initialization before worker threads may see
+  // active=true and begin forwarding messages to the dashboard.
+  (void)log_buffer();
   cbreak(); noecho(); keypad(stdscr,TRUE); nodelay(stdscr,TRUE); curs_set(0);
   if (has_colors()) {
     start_color();
@@ -181,6 +190,7 @@ void ncurses_log(const std::string& name, int level, const std::string& message)
   // touching the dynamically initialized log deque until main enables the UI.
   if (!active.load()) return;
   std::lock_guard<std::mutex> guard(mutex);
+  auto& logs = log_buffer();
   const auto now = std::chrono::system_clock::now();
   auto time = std::chrono::system_clock::to_time_t(now);
   std::tm local{}; localtime_r(&time,&local);
@@ -204,6 +214,7 @@ void update_ncurses() {
 #ifdef OPENHD_HAVE_CURSES
   std::lock_guard<std::mutex> guard(mutex);
   if (!active) return;
+  auto& logs = log_buffer();
   for (int key = getch(); key != ERR; key = getch()) {
     if (page == 3 || page == 5) {
       if (key == 'y' || key == 'Y') {
