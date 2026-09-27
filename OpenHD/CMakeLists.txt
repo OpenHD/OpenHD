@@ -63,3 +63,6 @@ set(OPENHD_FALLBACK_AUDIO_FILE
 target_compile_definitions(OHDVideoLib PRIVATE
     OPENHD_FALLBACK_AUDIO_FILE="${OPENHD_FALLBACK_AUDIO_FILE}")
 install(FILES ohd_video/assets/example.mp3 DESTINATION share/openhd/audio)
+
+# Install VEYE camera i2c tools
+install(PROGRAMS scripts/veye_i2c_cmd/veye_mipi_i2c.sh scripts/veye_i2c_cmd/i2c_read scripts/veye_i2c_cmd/i2c_write DESTINATION bin)
