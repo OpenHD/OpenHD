@@ -488,6 +488,9 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
 
 int main(int argc, char *argv[]) {
   openhd::ui::DashboardAction dashboard_action = openhd::ui::DashboardAction::None;
+  // Curses changes the terminal's stdio state. Initialize it before OpenHD
+  // starts any worker threads that can concurrently log to stdout.
+  openhd::ui::init_ncurses();
   // OpenHD needs to be run as root!
   OHDUtil::terminate_if_not_root();
   if (OHDFilesystemUtil::exists("/run/openhd/hold.pid")) {
@@ -731,7 +734,6 @@ int main(int argc, char *argv[]) {
     dashboard.camera = dashboard_camera;
     if (ohdInterface) ohdInterface->populate_dashboard_status(dashboard);
     openhd::ui::set_dashboard_status(dashboard);
-    openhd::ui::init_ncurses();
     // run forever, everything has its own threads. Note that the only way to
     // break out basically is when one of the modules encounters an exception.
     static volatile sig_atomic_t quit = 0;

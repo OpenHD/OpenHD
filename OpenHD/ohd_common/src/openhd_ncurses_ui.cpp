@@ -33,7 +33,6 @@ int scroll = 0;
 bool logs_only = false;
 int page = 0;
 constexpr size_t log_limit = 1000;
-SCREEN* terminal = nullptr;
 std::vector<std::string> network;
 std::string uptime = "--", cpu = "--", ram = "--", disk = "--", temp = "--";
 double cpu_ratio = -1, ram_ratio = -1, disk_ratio = -1, temp_ratio = -1;
@@ -156,8 +155,7 @@ void init_ncurses() {
   std::lock_guard<std::mutex> guard(mutex);
   const char* term = std::getenv("TERM");
   if (active || !isatty(STDIN_FILENO) || !isatty(STDOUT_FILENO) || !term || std::string(term)=="dumb") return;
-  terminal = newterm(nullptr, stdout, stdin);
-  if (!terminal) return;
+  if (!initscr()) return;
   cbreak(); noecho(); keypad(stdscr,TRUE); nodelay(stdscr,TRUE); curs_set(0);
   if (has_colors()) {
     start_color();
@@ -173,7 +171,7 @@ void shutdown_ncurses() {
 #ifdef OPENHD_HAVE_CURSES
   std::lock_guard<std::mutex> guard(mutex);
   if (active.exchange(false)) {
-    endwin(); delscreen(terminal); terminal = nullptr;
+    endwin();
   }
 #endif
 }
