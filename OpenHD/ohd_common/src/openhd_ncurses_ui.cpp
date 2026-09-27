@@ -177,6 +177,9 @@ void shutdown_ncurses() {
 }
 void ncurses_log(const std::string& name, int level, const std::string& message) {
 #ifdef OPENHD_HAVE_CURSES
+  // Logging can occur from constructors in other translation units. Avoid
+  // touching the dynamically initialized log deque until main enables the UI.
+  if (!active.load()) return;
   std::lock_guard<std::mutex> guard(mutex);
   const auto now = std::chrono::system_clock::now();
   auto time = std::chrono::system_clock::to_time_t(now);

@@ -23,6 +23,8 @@ void key(int value) { ungetch(value); openhd::ui::update_ncurses(); }
 
 int main(int argc, char** argv) {
   using namespace openhd::ui;
+  // This must be harmless before the UI's dynamic state is in use.
+  ncurses_log("pre-main", 3, "ignored before initialization");
   init_ncurses();
   if (!ncurses_active()) return 77;  // Run in a pseudo-terminal.
   try {
