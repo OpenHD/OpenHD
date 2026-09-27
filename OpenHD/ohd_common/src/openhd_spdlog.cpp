@@ -59,8 +59,13 @@ class NcursesSink : public spdlog::sinks::base_sink<std::mutex> {
  protected:
   void sink_it_(const spdlog::details::log_msg& msg) override {
     openhd::ui::ncurses_log(std::string(msg.logger_name.data(), msg.logger_name.size()), static_cast<int>(msg.level), fmt::to_string(msg.payload));
+    if (!openhd::ui::ncurses_active()) {
+      fallback_.log(msg);
+    }
   }
-  void flush_() override {}
+  void flush_() override { fallback_.flush(); }
+ private:
+  spdlog::sinks::stdout_color_sink_mt fallback_;
 };
 
 
@@ -125,11 +130,7 @@ std::shared_ptr<spdlog::logger> openhd::log::create_or_get(
   if (ret == nullptr) {
     auto created = std::make_shared<spdlog::logger>(logger_name);
     spdlog::register_logger(created);
-    if (isatty(STDOUT_FILENO)) {
-      created->sinks().push_back(std::make_shared<openhd::log::sink::NcursesSink>());
-    } else {
-      created->sinks().push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
-    }
+    created->sinks().push_back(std::make_shared<openhd::log::sink::NcursesSink>());
     assert(created);
     if (OHDFilesystemUtil::exists("/usr/local/share/openhd/debug.txt")) {
       created->set_level(spdlog::level::debug);

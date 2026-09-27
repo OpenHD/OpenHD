@@ -411,7 +411,7 @@ build_package() {
   echo "Building package..."
   local package_name=""
   local debian_arch=""
-  local packages=(python3 openssl wireguard-tools gstreamer1.0-libav gstreamer1.0-plugins-ugly)
+  local packages=(python3 openssl wireguard-tools gstreamer1.0-libav gstreamer1.0-plugins-ugly libncurses6 libncursesw6 libtinfo6 ncurses-base)
 
   package_name="$(resolve_package_name "${PACKAGE_ARCH}" "${CUSTOM}")"
   debian_arch="$(normalize_debian_arch "${PACKAGE_ARCH}")"

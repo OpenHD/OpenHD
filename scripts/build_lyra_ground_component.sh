@@ -107,6 +107,7 @@ copy_library_family 'libpcap.so*' 1
 copy_library_family 'libsodium.so*' 1
 copy_library_family 'libusb-1.0.so*' 1
 copy_library_family 'libatomic.so*' 1
+bash "${repo_root}/scripts/bundle_terminal_runtime.sh" "${staging_root}" "${stage_dir}" "${stage_dir}/usr/bin/openhd"
 
 # Provide ground module systemd service and installer
 mkdir -p "${stage_dir}/etc/systemd/system"
@@ -132,10 +133,15 @@ cat >"${stage_dir}/install-lyra-ground.sh" <<'INSTALL_EOF'
 set -eu
 DEST_BIN="${DEST_BIN:-/usr/bin}"
 DEST_LIB="${DEST_LIB:-/usr/lib}"
+DEST_TERMINFO="${DEST_TERMINFO:-/usr/share/terminfo}"
 DIR="$(cd "$(dirname "$0")" && pwd)"
 
 mkdir -p "${DEST_BIN}" "${DEST_LIB}"
 install -m 0755 "${DIR}/usr/bin/openhd" "${DEST_BIN}/openhd"
+if [ -d "${DIR}/usr/share/terminfo" ]; then
+  mkdir -p "${DEST_TERMINFO}"
+  cp -a "${DIR}/usr/share/terminfo/." "${DEST_TERMINFO}/"
+fi
 
 if [ -d "${DIR}/usr/lib" ] && [ "$(ls -A "${DIR}/usr/lib" 2>/dev/null)" ]; then
   cp -af "${DIR}/usr/lib/"* "${DEST_LIB}/"

@@ -68,6 +68,7 @@ copy_library_family 'libPocoEncodings.so*'
 copy_library_family 'libpcap.so*'
 copy_library_family 'libsodium.so*'
 copy_library_family 'libusb-1.0.so*'
+bash "${repo_root}/scripts/bundle_terminal_runtime.sh" "${STAGING_DIR}" "${stage_dir}" "${stage_dir}/usr/bin/openhd"
 
 version_header="${repo_root}/OpenHD/ohd_common/inc/openhd_global_constants.hpp"
 major="$(awk '/MAJOR_VERSION =/{gsub(/;/, "", $NF); print $NF}' "${version_header}")"
@@ -84,10 +85,15 @@ cat >"${stage_dir}/install-openhd.sh" <<'INSTALL_EOF'
 set -eu
 DEST_BIN="${DEST_BIN:-/usr/bin}"
 DEST_LIB="${DEST_LIB:-/usr/lib}"
+DEST_TERMINFO="${DEST_TERMINFO:-/usr/share/terminfo}"
 DIR="$(cd "$(dirname "$0")" && pwd)"
 
 mkdir -p "${DEST_BIN}" "${DEST_LIB}"
 install -m 0755 "${DIR}/usr/bin/openhd" "${DEST_BIN}/openhd"
+if [ -d "${DIR}/usr/share/terminfo" ]; then
+  mkdir -p "${DEST_TERMINFO}"
+  cp -a "${DIR}/usr/share/terminfo/." "${DEST_TERMINFO}/"
+fi
 
 if [ -d "${DIR}/usr/lib" ]; then
   cp -af "${DIR}/usr/lib/"* "${DEST_LIB}/"

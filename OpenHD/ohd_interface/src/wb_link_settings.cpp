@@ -73,7 +73,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
     wb_retransmission_history_rc_ms, wb_retransmission_request_retries,
     wb_udp_data_enabled, wb_udp_data_input_port, wb_udp_data_output_port,
     wb_udp_data_fec_percentage, wb_udp_data_link_budget_percent,
-    wb_udp_data_max_bitrate_kbits);
+    wb_udp_data_max_bitrate_kbits, wb_enable_devourer_logging);
 
 std::optional<WBLinkSettings> openhd::WBLinkSettingsHolder::impl_deserialize(
     const std::string &file_as_string) const {
@@ -189,7 +189,7 @@ std::optional<WBLinkSettings> openhd::WBLinkSettingsHolder::impl_deserialize(
         settings.wb_udp_data_link_budget_percent);
     settings.wb_udp_data_max_bitrate_kbits = parsed.value(
         "wb_udp_data_max_bitrate_kbits",
-        settings.wb_udp_data_max_bitrate_kbits);
+        settings.wb_udp_data_max_bitrate_kbits, wb_enable_devourer_logging);
 
     // Migration: If we loaded a legacy config, the vectors might be empty.
     // Populate them from the legacy single values (which are also loaded).

@@ -1,4 +1,5 @@
 #include "openhd_ncurses_ui.h"
+#include "openhd_reboot_util.h"
 /******************************************************************************
  * OpenHD
  * 
@@ -486,7 +487,7 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
 }
 
 int main(int argc, char *argv[]) {
-    openhd::ui::init_ncurses();
+  openhd::ui::DashboardAction dashboard_action = openhd::ui::DashboardAction::None;
   // OpenHD needs to be run as root!
   OHDUtil::terminate_if_not_root();
   if (OHDFilesystemUtil::exists("/run/openhd/hold.pid")) {
@@ -664,6 +665,7 @@ int main(int argc, char *argv[]) {
     }
 
     // either one is active, depending on air or ground
+    std::string dashboard_camera = "N/A";
     std::unique_ptr<OHDVideoGround> ohd_video_ground = nullptr;
     if (profile.is_ground()) {
       ohd_video_ground =
@@ -673,6 +675,7 @@ int main(int argc, char *argv[]) {
     std::unique_ptr<OHDVideoAir> ohd_video_air = nullptr;
     if (profile.is_air) {
       auto cameras = OHDVideoAir::discover_cameras();
+      if (!cameras.empty()) dashboard_camera = x_cam_type_to_string(cameras.front().camera_type);
       const bool using_dummy_camera = std::any_of(
           cameras.begin(), cameras.end(),
           [](const XCamera& camera) {
@@ -722,23 +725,32 @@ int main(int argc, char *argv[]) {
       }
       reporter.report(openhd::State::Error, combined_errors, 3000);
     }
+    openhd::ui::DashboardStatus dashboard;
+    dashboard.version = openhd::get_ohd_version_as_string();
+    dashboard.platform = x_platform_type_to_string(platform.platform_type);
+    dashboard.camera = dashboard_camera;
+    if (ohdInterface) ohdInterface->populate_dashboard_status(dashboard);
+    openhd::ui::set_dashboard_status(dashboard);
+    openhd::ui::init_ncurses();
     // run forever, everything has its own threads. Note that the only way to
     // break out basically is when one of the modules encounters an exception.
-    static bool quit = false;
+    static volatile sig_atomic_t quit = 0;
+    signal(SIGINT, [](int) { quit = 1; });
     // https://unix.stackexchange.com/questions/362559/list-of-terminal-generated-signals-eg-ctrl-c-sigint
     signal(SIGTERM, [](int sig) {
-      std::cerr << "Got SIGTERM, exiting\n";
       quit = true;
     });
     signal(SIGQUIT, [](int sig) {
-      std::cerr << "Got SIGQUIT, exiting\n";
       quit = true;
     });
     const auto run_time_begin = std::chrono::steady_clock::now();
     bool terminate_due_to_internal_error = false;
     while (!quit) {
       openhd::ui::update_ncurses();
-      std::this_thread::sleep_for(std::chrono::seconds(2));
+      dashboard_action = openhd::ui::take_dashboard_action();
+      if (dashboard_action != openhd::ui::DashboardAction::None) break;
+      std::this_thread::sleep_for(openhd::ui::ncurses_active()
+          ? std::chrono::milliseconds(100) : std::chrono::milliseconds(2000));
       if (options.run_time_seconds >= 1) {
         if (std::chrono::steady_clock::now() - run_time_begin >=
             std::chrono::seconds(options.run_time_seconds)) {
@@ -797,15 +809,25 @@ int main(int argc, char *argv[]) {
       return EXIT_FAILURE;
     }
   } catch (std::exception &ex) {
+    openhd::ui::shutdown_ncurses();
     std::cerr << "Error: " << ex.what() << std::endl;
     reporter.report(openhd::State::Error);
     exit(1);
   } catch (...) {
+    openhd::ui::shutdown_ncurses();
     std::cerr << "Unknown exception occurred" << std::endl;
     reporter.report(openhd::State::Error);
     exit(1);
   }
   openhd::remove_currently_running_file();
   openhd::ui::shutdown_ncurses();
+  if (dashboard_action == openhd::ui::DashboardAction::Restart) {
+    execv("/proc/self/exe", argv);
+    std::cerr << "Unable to restart OpenHD\n";
+    return EXIT_FAILURE;
+  }
+  if (dashboard_action == openhd::ui::DashboardAction::Shutdown) {
+    openhd::reboot::systemctl_shutdown();
+  }
   return 0;
 }

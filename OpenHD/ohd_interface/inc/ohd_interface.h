@@ -39,6 +39,7 @@
 #include "openhd_action_handler.h"
 #include "openhd_external_device.h"
 #include "openhd_link.hpp"
+#include "openhd_ncurses_ui.h"
 #include "openhd_platform.h"
 #include "openhd_profile.h"
 #include "openhd_settings_imp.h"
@@ -99,6 +100,7 @@ class OHDInterface {
   // Whether we detected any functional primary link implementation
   // (WiFi/microhard/ethernet).
   bool has_primary_link() const;
+  void populate_dashboard_status(openhd::ui::DashboardStatus& status) const;
   // Whether we have at least one real monitor-mode WiFi card (not emulated).
   bool has_real_monitor_mode_cards() const;
   // Human-readable list of discovered WiFi cards and their drivers.

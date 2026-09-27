@@ -36,6 +36,7 @@ packages=(
   linux-libc-dev
   libstdc++-10-dev
   libpoco-dev
+  libncurses-dev
   libusb-1.0-0-dev
   librtlsdr-dev
   libpcap-dev

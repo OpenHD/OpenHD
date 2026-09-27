@@ -48,6 +48,24 @@ find_package(Threads REQUIRED)
 target_link_libraries(OHDCommonLib PUBLIC Threads::Threads)
 target_link_libraries(OHDCommonLib PUBLIC ${CMAKE_DL_LIBS})
 
+# Embedded sysroots without curses retain normal stdout logging.
+option(OPENHD_ENABLE_NCURSES "Build the interactive terminal dashboard" ON)
+if(OPENHD_ENABLE_NCURSES)
+    find_package(Curses QUIET)
+    if(CURSES_FOUND)
+        target_compile_definitions(OHDCommonLib PRIVATE OPENHD_HAVE_CURSES)
+        target_include_directories(OHDCommonLib PRIVATE ${CURSES_INCLUDE_DIRS})
+        target_link_libraries(OHDCommonLib PUBLIC ${CURSES_LIBRARIES})
+        add_executable(test_ncurses_ui EXCLUDE_FROM_ALL
+            test/test_ncurses_ui.cpp src/openhd_ncurses_ui.cpp)
+        target_compile_definitions(test_ncurses_ui PRIVATE OPENHD_HAVE_CURSES)
+        target_include_directories(test_ncurses_ui PRIVATE inc ${CURSES_INCLUDE_DIRS})
+        target_link_libraries(test_ncurses_ui PRIVATE ${CURSES_LIBRARIES} Threads::Threads)
+    else()
+        message(STATUS "Curses unavailable: using plain console logging")
+    endif()
+endif()
+
 #----------------------------------------------------------------------------------------------------------------------
 # Sources
 #----------------------------------------------------------------------------------------------------------------------
@@ -59,6 +77,7 @@ set(sources
     "src/openhd_profile.cpp"
     "src/openhd_platform.cpp"
     "src/openhd_spdlog.cpp"
+    "src/openhd_ncurses_ui.cpp"
     "src/openhd_reboot_util.cpp"
     "src/openhd_config.cpp"
     "src/openhd_util_async.cpp"

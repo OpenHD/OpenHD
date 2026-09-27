@@ -879,6 +879,25 @@ bool OHDInterface::has_primary_link() const {
   return m_multi_link && m_multi_link->link_count() > 0;
 }
 
+void OHDInterface::populate_dashboard_status(openhd::ui::DashboardStatus& status) const {
+  // Startup inventory only: configured transports are not proof of a live peer.
+  status.links[0] = m_wb_link ? "Configured" : "Not found";
+#ifdef OHD_ENABLE_ARTOSYN
+  status.links[1] = m_artosyn_link ? "Configured" : "Not found";
+#else
+  status.links[1] = "Not built";
+#endif
+  status.links[2] = m_microhard_link ? "Configured" : "Not found";
+  status.links[3] = m_ethernet_link ? "Configured" : "Disabled";
+  status.links[4] = m_lte_link ? "Configured" : "Disabled";
+  status.wifi.clear();
+  for (const auto& card : m_monitor_mode_cards) {
+    if (!status.wifi.empty()) status.wifi += ", ";
+    status.wifi += card.driver_name.empty() ? card.device_name : card.driver_name;
+  }
+  if (status.wifi.empty()) status.wifi = "Not found";
+}
+
 bool OHDInterface::has_real_monitor_mode_cards() const {
   return std::any_of(m_monitor_mode_cards.begin(), m_monitor_mode_cards.end(),
                      [](const WiFiCard& card) {

@@ -204,6 +204,7 @@ struct WBLinkSettings {
   int wb_udp_data_link_budget_percent = 20;
   // Hard payload ceiling; 0 means derive it exclusively from link capacity.
   int wb_udp_data_max_bitrate_kbits = 0;
+  bool wb_enable_devourer_logging = false;
 };
 
 WBLinkSettings create_default_wb_stream_settings(
@@ -301,6 +302,7 @@ static constexpr auto WB_UDP_DATA_OUT_PORT = "WB_UDP_OUT_PORT";
 static constexpr auto WB_UDP_DATA_FEC = "WB_UDP_FEC";
 static constexpr auto WB_UDP_DATA_BUDGET = "WB_UDP_BUDGET";
 static constexpr auto WB_UDP_DATA_MAX_KBPS = "WB_UDP_MAX_KBPS";
+static constexpr auto WB_ENABLE_DEVOURER_LOGS = "WB_DEV_LOGS";
 
 }  // namespace openhd
 

@@ -465,6 +465,9 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
     }
     const auto settings = m_settings->get_settings();
     txrx_options.devourer_frequency_mhz = settings.wb_frequency;
+    if (settings.wb_enable_devourer_logging) {
+      txrx_options.devourer_log_path = std::string(getVideoPath()) + "/devourer.log";
+    }
     txrx_options.devourer_channel_width_mhz =
         m_profile.is_air
             ? static_cast<int>(settings.wb_air_tx_channel_width)
@@ -2035,6 +2038,15 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
   };
   ret.push_back(openhd::Setting{
       WB_PIT_MODE, openhd::IntSetting{settings.wb_pit_mode, cb_wb_pit_mode}});
+
+  auto cb_wb_enable_devourer_logging = [this](std::string, int value) {
+    if (!openhd::validate_yes_or_no(value)) return false;
+    m_settings->unsafe_get_settings().wb_enable_devourer_logging = value;
+    m_settings->persist();
+    return true;
+  };
+  ret.push_back(openhd::Setting{
+      WB_ENABLE_DEVOURER_LOGS, openhd::IntSetting{settings.wb_enable_devourer_logging, cb_wb_enable_devourer_logging}});
 
   auto persist_udp_and_rebuild = [this](auto mutate) {
     mutate(m_settings->unsafe_get_settings());

@@ -97,6 +97,7 @@ copy_library_family 'libusb-1.0.so*' 1
 copy_library_family 'librockchip_mpp.so*' 1
 copy_library_family 'librga.so*' 1
 copy_library_family 'libatomic.so*' 1
+bash "${repo_root}/scripts/bundle_terminal_runtime.sh" "${STAGING_DIR}" "${stage_dir}" "${stage_dir}/usr/bin/openhd"
 
 version_header="${repo_root}/OpenHD/ohd_common/inc/openhd_global_constants.hpp"
 major="$(awk '/MAJOR_VERSION =/{gsub(/;/, "", $NF); print $NF}' "${version_header}")"

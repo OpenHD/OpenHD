@@ -1,0 +1,30 @@
+name: Terminal dashboard
+
+on:
+  push:
+    branches: [openhd-3.0]
+  pull_request:
+    branches: [openhd-3.0]
+  workflow_dispatch:
+
+jobs:
+  terminal:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install terminal dependencies
+        run: sudo apt-get update && sudo apt-get install -y libncurses-dev
+      - name: Compile dashboard and headless fallback
+        run: |
+          g++ -std=c++17 -Wall -Wextra -Werror -pthread \
+            -IOpenHD/ohd_common/inc -DOPENHD_HAVE_CURSES \
+            OpenHD/ohd_common/src/openhd_ncurses_ui.cpp \
+            OpenHD/ohd_common/test/test_ncurses_ui.cpp \
+            -lncurses -o /tmp/test_ncurses_ui
+          g++ -std=c++17 -Wall -Wextra -Werror \
+            -IOpenHD/ohd_common/inc \
+            -c OpenHD/ohd_common/src/openhd_ncurses_ui.cpp -o /tmp/dashboard-headless.o
+      - name: Exercise terminal resize, logs, and keyboard actions
+        env:
+          TERM: xterm
+        run: script -q -e -c /tmp/test_ncurses_ui /tmp/dashboard-test.log
