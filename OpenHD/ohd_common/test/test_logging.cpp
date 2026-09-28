@@ -25,7 +25,26 @@
 #include "openhd_spdlog_include.h"
 
 int main(int argc, char *argv[]) {
-  openhd::log::get_default()->debug("Example debug");
-  openhd::log::get_default()->warn("Example warn");
+  openhd::log::initialize_persistent_logging();
+  openhd::log::get_default()->debug("OpenHD category debug");
+  openhd::log::get_default()->warn("OpenHD category warning");
+  openhd::log::create_or_get("camera_test")->info("Camera category message");
+  openhd::log::create_or_get("telemetry_test")->info("Other category message");
+  if (openhd::log::persistent_logging_enabled()) {
+    bool listener_saw_stop = false;
+    bool listener_saw_start = false;
+    const auto listener = openhd::log::add_persistent_logging_listener(
+        [&](bool enabled) {
+          listener_saw_start = listener_saw_start || enabled;
+          listener_saw_stop = listener_saw_stop || !enabled;
+        });
+    if (!openhd::log::set_persistent_logging_enabled(false, false)) return 1;
+    openhd::log::create_or_get("camera_test")->warn("MUST_NOT_BE_SAVED");
+    if (!openhd::log::set_persistent_logging_enabled(true, false)) return 1;
+    openhd::log::create_or_get("camera_test")->info("Runtime restart message");
+    openhd::log::remove_persistent_logging_listener(listener);
+    if (!listener_saw_stop || !listener_saw_start) return 1;
+  }
+  spdlog::shutdown();
   return 0;
 }

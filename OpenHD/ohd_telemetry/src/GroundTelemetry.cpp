@@ -31,6 +31,7 @@
 
 #include "mav_helper.h"
 #include "openhd_telemetry_recorder.h"
+#include "openhd_spdlog.h"
 #include "openhd_temporary_air_or_ground.h"
 #include "openhd_util.h"
 #include "openhd_util_time.h"
@@ -585,6 +586,10 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
     m_adsb_enabled_requested.store(value == 1, std::memory_order_relaxed);
     return true;
   };
+  auto c_openhd_logging = [](std::string, int value) {
+    if (!openhd::validate_yes_or_no(value)) return false;
+    return openhd::log::set_persistent_logging_enabled(value != 0, true);
+  };
   ret.push_back(openhd::Setting{
       openhd::telemetry::ground::OPENHD_UART_TELEMETRY_PARAM,
       openhd::StringSetting{
@@ -632,6 +637,15 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
           static_cast<int>(
               m_gnd_settings->get_settings().telemetry_logging_enabled),
           c_telemetry_logging}});
+  ret.push_back(openhd::Setting{
+      openhd::telemetry::ground::OPENHD_LOGGING_PARAM,
+      openhd::IntSetting{
+          static_cast<int>(openhd::log::persistent_logging_enabled()),
+          c_openhd_logging,
+          []() {
+            return static_cast<int>(
+                openhd::log::persistent_logging_enabled());
+          }}});
   ret.push_back(openhd::Setting{
       openhd::telemetry::ground::ADSB_ENABLE_PARAM,
       openhd::IntSetting{

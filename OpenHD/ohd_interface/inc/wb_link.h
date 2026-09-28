@@ -248,6 +248,7 @@ class WBLink : public OHDLink {
   // (20Mhz vs 40Mhz)
   std::shared_ptr<RadiotapHeaderTxHolder> m_tx_header_2;
   std::shared_ptr<WBTxRx> m_wb_txrx;
+  uint64_t m_persistent_logging_listener_id = 0;
   // For telemetry, bidirectional in opposite directions
   std::unique_ptr<WBStreamTx> m_wb_tele_tx;
   std::unique_ptr<WBStreamRx> m_wb_tele_rx;

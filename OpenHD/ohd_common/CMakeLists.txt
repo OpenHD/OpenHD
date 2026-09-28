@@ -57,10 +57,10 @@ if(OPENHD_ENABLE_NCURSES)
         target_include_directories(OHDCommonLib PRIVATE ${CURSES_INCLUDE_DIRS})
         target_link_libraries(OHDCommonLib PUBLIC ${CURSES_LIBRARIES})
         add_executable(test_ncurses_ui EXCLUDE_FROM_ALL
-            test/test_ncurses_ui.cpp src/openhd_ncurses_ui.cpp)
+            test/test_ncurses_ui.cpp src/config_paths.cpp)
         target_compile_definitions(test_ncurses_ui PRIVATE OPENHD_HAVE_CURSES)
         target_include_directories(test_ncurses_ui PRIVATE inc ${CURSES_INCLUDE_DIRS})
-        target_link_libraries(test_ncurses_ui PRIVATE ${CURSES_LIBRARIES} Threads::Threads)
+        target_link_libraries(test_ncurses_ui PRIVATE OHDCommonLib ${CURSES_LIBRARIES} Threads::Threads)
         if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
             target_link_libraries(test_ncurses_ui PRIVATE stdc++fs)
         endif()
@@ -128,7 +128,7 @@ target_link_libraries(test_ohd_reboot OHDCommonLib)
 add_executable(test_config test/test_config.cpp)
 target_link_libraries(test_config OHDCommonLib)
 
-add_executable(test_logging test/test_logging.cpp)
+add_executable(test_logging test/test_logging.cpp src/config_paths.cpp)
 target_link_libraries(test_logging OHDCommonLib)
 
 # Not part of the main interface but useful for debugging

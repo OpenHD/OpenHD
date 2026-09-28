@@ -84,7 +84,7 @@ class TelemetryRecorder {
   std::vector<std::string> m_pending_lines;
   std::chrono::steady_clock::time_point m_last_flush =
       std::chrono::steady_clock::now();
-  bool m_enabled = true;
+  bool m_enabled = false;
   bool m_stream_ready = false;
   bool m_failed_once = false;
   std::shared_ptr<spdlog::logger> m_console;

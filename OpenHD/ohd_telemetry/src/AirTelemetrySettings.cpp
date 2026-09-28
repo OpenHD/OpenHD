@@ -70,8 +70,9 @@ std::optional<Settings> SettingsHolder::impl_deserialize(
       "openhd_uart_priority_openhd", settings.openhd_uart_priority_openhd);
   settings.openhd_uart_priority_fc =
       parsed.value("openhd_uart_priority_fc", settings.openhd_uart_priority_fc);
+  // The v2 key deliberately does not inherit the old default-on setting.
   settings.telemetry_logging_enabled = parsed.value(
-      "telemetry_logging_enabled", settings.telemetry_logging_enabled);
+      "telemetry_logging_enabled_v2", false);
   settings.adsb_enable =
       parsed.value("adsb_enable", settings.adsb_enable);
   settings.sbus_out_enabled =
@@ -85,7 +86,9 @@ std::optional<Settings> SettingsHolder::impl_deserialize(
 
 std::string SettingsHolder::imp_serialize(
     const openhd::telemetry::air::Settings &data) const {
-  const nlohmann::json tmp = data;
+  nlohmann::json tmp = data;
+  tmp.erase("telemetry_logging_enabled");
+  tmp["telemetry_logging_enabled_v2"] = data.telemetry_logging_enabled;
   return tmp.dump(4);
 }
 

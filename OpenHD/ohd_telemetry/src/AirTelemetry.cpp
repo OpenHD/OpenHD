@@ -33,6 +33,7 @@
 #include "mavsdk_temporary/XMavlinkParamProvider.h"
 #include "openhd_telemetry_recorder.h"
 #include "openhd_plugin_manager.h"
+#include "openhd_spdlog.h"
 #include "internal/AdsbComponent.h"
 #include "openhd_temporary_air_or_ground.h"
 #include "openhd_util.h"
@@ -655,6 +656,10 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
     openhd::TelemetryRecorder::instance().set_enabled(value != 0);
     return true;
   };
+  auto c_openhd_logging = [](std::string, int value) {
+    if (!openhd::validate_yes_or_no(value)) return false;
+    return openhd::log::set_persistent_logging_enabled(value != 0, true);
+  };
   auto c_sbus_enable = [this](std::string, int value) {
     if (!openhd::validate_yes_or_no(value)) return false;
     m_air_settings->unsafe_get_settings().sbus_out_enabled = value;
@@ -747,6 +752,15 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
           static_cast<int>(
               m_air_settings->get_settings().telemetry_logging_enabled),
           c_telemetry_logging}});
+  ret.push_back(openhd::Setting{
+      air::OPENHD_LOGGING_PARAM,
+      openhd::IntSetting{
+          static_cast<int>(openhd::log::persistent_logging_enabled()),
+          c_openhd_logging,
+          []() {
+            return static_cast<int>(
+                openhd::log::persistent_logging_enabled());
+          }}});
   ret.push_back(openhd::Setting{
       air::ADSB_ENABLE_PARAM,
       openhd::IntSetting{

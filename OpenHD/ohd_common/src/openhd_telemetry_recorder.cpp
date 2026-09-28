@@ -226,28 +226,6 @@ TelemetryRecorder& TelemetryRecorder::instance() {
 
 TelemetryRecorder::TelemetryRecorder() {
   m_console = openhd::log::create_or_get("tele_rec");
-  try {
-    const auto directory = telemetry_log_directory();
-    if (!directory.empty()) {
-      OHDFilesystemUtil::create_directories(directory);
-      const auto now = std::chrono::system_clock::now();
-      m_file_path =
-          directory + "openhd_telemetry_" + create_filename_timestamp(now) +
-          ".ohd";
-      m_stream.open(m_file_path, std::ios::out | std::ios::app);
-      if (!m_stream.is_open()) {
-        m_console->error("Failed to open telemetry recording file {}",
-                         m_file_path);
-      } else {
-        OHDFilesystemUtil::make_file_read_write_everyone(m_file_path);
-        m_stream_ready = true;
-        m_console->info("Recording telemetry to {}", m_file_path);
-      }
-    }
-  } catch (const std::exception& ex) {
-    m_console->error("Exception while creating telemetry recorder: {}",
-                     ex.what());
-  }
 }
 
 TelemetryRecorder::~TelemetryRecorder() { flush(); }
@@ -293,6 +271,22 @@ std::string TelemetryRecorder::create_entry_timestamp(
 void TelemetryRecorder::ensure_stream_is_ready() {
   if (m_stream_ready && m_stream.is_open()) {
     return;
+  }
+  try {
+    const auto directory = telemetry_log_directory();
+    OHDFilesystemUtil::create_directories(directory);
+    const auto now = std::chrono::system_clock::now();
+    m_file_path = directory + "openhd_telemetry_" +
+                  create_filename_timestamp(now) + ".ohd";
+    m_stream.open(m_file_path, std::ios::out | std::ios::app);
+    if (m_stream.is_open()) {
+      OHDFilesystemUtil::make_file_read_write_everyone(m_file_path);
+      m_stream_ready = true;
+      m_console->info("Recording optional telemetry to {}", m_file_path);
+      return;
+    }
+  } catch (const std::exception& ex) {
+    m_console->error("Exception while creating telemetry recorder: {}", ex.what());
   }
   if (!m_failed_once) {
     m_console->warn("Telemetry recorder stream not ready for {}", m_file_path);

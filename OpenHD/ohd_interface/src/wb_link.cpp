@@ -31,6 +31,7 @@
 #include <cctype>
 #include <cmath>
 #include <cstring>
+#include <filesystem>
 #include <iostream>
 #include <limits>
 #include <optional>
@@ -63,6 +64,27 @@ static constexpr size_t WB_RETRANSMISSION_HISTORY_MIN_SIZE = 10;
 static constexpr size_t WB_RETRANSMISSION_HISTORY_MAX_SIZE = 20000;
 
 namespace {
+
+std::string prepare_devourer_log(const std::string& directory) {
+  OHDFilesystemUtil::create_directories(directory);
+  const std::filesystem::path active =
+      std::filesystem::path(directory) / "devourer.log";
+  std::error_code error;
+  if (std::filesystem::file_size(active, error) < 10 * 1024 * 1024 || error)
+    return active.string();
+  std::filesystem::remove(active.string() + ".3", error);
+  error.clear();
+  for (int index = 2; index >= 1; --index) {
+    const auto source = active.string() + "." + std::to_string(index);
+    const auto destination = active.string() + "." + std::to_string(index + 1);
+    if (std::filesystem::exists(source)) {
+      std::filesystem::rename(source, destination, error);
+      error.clear();
+    }
+  }
+  std::filesystem::rename(active, active.string() + ".1", error);
+  return active.string();
+}
 
 std::optional<int> read_proc_int(const std::string& base_dir,
                                  const std::string& entry) {
@@ -465,8 +487,10 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
     }
     const auto settings = m_settings->get_settings();
     txrx_options.devourer_frequency_mhz = settings.wb_frequency;
-    if (settings.wb_enable_devourer_logging) {
-      txrx_options.devourer_log_path = std::string(getVideoPath()) + "/devourer.log";
+    if (settings.wb_enable_devourer_logging ||
+        openhd::log::persistent_logging_enabled()) {
+      const auto directory = openhd::log::persistent_log_directory();
+      txrx_options.devourer_log_path = prepare_devourer_log(directory);
     }
     txrx_options.devourer_channel_width_mhz =
         m_profile.is_air
@@ -752,10 +776,23 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
       };
   openhd::LinkActionHandler::instance().wb_get_supported_channels =
       wb_get_supported_channels;
+  m_persistent_logging_listener_id =
+      openhd::log::add_persistent_logging_listener([this](bool enabled) {
+        if (!m_wb_txrx) return;
+        const bool devourer_enabled =
+            enabled || m_settings->get_settings().wb_enable_devourer_logging;
+        const auto path = devourer_enabled
+                              ? prepare_devourer_log(
+                                    openhd::log::persistent_log_directory())
+                              : std::string{};
+        m_wb_txrx->set_devourer_log_path(path);
+      });
 }
 
 WBLink::~WBLink() {
   m_console->debug("WBLink::~WBLink() begin");
+  openhd::log::remove_persistent_logging_listener(
+      m_persistent_logging_listener_id);
   if (m_work_thread) {
     m_work_thread_run = false;
     if (m_work_thread->joinable()) m_work_thread->join();
@@ -2043,6 +2080,12 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
     if (!openhd::validate_yes_or_no(value)) return false;
     m_settings->unsafe_get_settings().wb_enable_devourer_logging = value;
     m_settings->persist();
+    const bool enabled = value != 0 || openhd::log::persistent_logging_enabled();
+    const auto path = enabled
+                          ? prepare_devourer_log(
+                                openhd::log::persistent_log_directory())
+                          : std::string{};
+    m_wb_txrx->set_devourer_log_path(path);
     return true;
   };
   ret.push_back(openhd::Setting{

@@ -1,4 +1,5 @@
 #include "openhd_ncurses_ui.h"
+#include "openhd_spdlog.h"
 #include <curses.h>
 #include <chrono>
 #include <cstdlib>
@@ -27,6 +28,15 @@ void key(int value) { ungetch(value); openhd::ui::update_ncurses(); }
 
 int main(int argc, char** argv) {
   using namespace openhd::ui;
+  char control_template[] = "/tmp/openhd-ui-control-XXXXXX";
+  const char* control_dir = mkdtemp(control_template);
+  require(control_dir != nullptr, "cannot create log control test directory");
+  const auto log_dir = std::filesystem::path(control_dir) / "logs";
+  setenv("OPENHD_LOG_CONTROL_DIR", control_dir, 1);
+  setenv("OPENHD_DEV_IMAGE_MARKER", "/tmp/openhd-no-dev-image-marker", 1);
+  setenv("OPENHD_PERSISTENT_LOG_DIR", log_dir.c_str(), 1);
+  std::ofstream(std::filesystem::path(control_dir) / "disable_logs.txt") << "test\n";
+  openhd::log::initialize_persistent_logging();
   // This must be harmless before the UI's dynamic state is in use.
   ncurses_log("pre-main", 3, "ignored before initialization");
   init_ncurses();
@@ -55,6 +65,20 @@ int main(int argc, char** argv) {
     require(screen_text().find("Debug menu") != std::string::npos, "debug menu failed");
     require(screen_text().find("[x] [1] Devourer") != std::string::npos,
             "debug menu does not show source checkboxes");
+    key('l');
+    require(screen_text().find("Persistent logs started") != std::string::npos,
+            "release persistent logging was not enabled from the CLI");
+    require(std::filesystem::exists(std::filesystem::path(control_dir) / "enable_logs.txt"),
+            "release log enable marker was not written");
+    key('l');
+    require(screen_text().find("Persistent logs stopped") != std::string::npos,
+            "release persistent logging was not disabled from the CLI");
+    require(!std::filesystem::exists(std::filesystem::path(control_dir) / "enable_logs.txt"),
+            "release log enable marker was not removed");
+    std::filesystem::remove_all(control_dir);
+    unsetenv("OPENHD_LOG_CONTROL_DIR");
+    unsetenv("OPENHD_DEV_IMAGE_MARKER");
+    unsetenv("OPENHD_PERSISTENT_LOG_DIR");
     key('x');
     key('2');
     key('d');

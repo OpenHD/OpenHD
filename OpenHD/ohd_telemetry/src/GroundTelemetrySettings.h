@@ -54,7 +54,7 @@ struct Settings {
   int openhd_uart_priority_rc = 3;
   int openhd_uart_priority_openhd = 2;
   int openhd_uart_priority_fc = 1;
-  bool telemetry_logging_enabled = true;
+  bool telemetry_logging_enabled = false;
   bool adsb_enable = false;
 };
 
@@ -66,6 +66,7 @@ static constexpr auto OPENHD_UART_PRIORITY_RC_PARAM = "UART_PRI_RC";
 static constexpr auto OPENHD_UART_PRIORITY_OHD_PARAM = "UART_PRI_OHD";
 static constexpr auto OPENHD_UART_PRIORITY_FC_PARAM = "UART_PRI_FC";
 static constexpr auto TELEMETRY_LOGGING_PARAM = "LOG_MAVLINK";
+static constexpr auto OPENHD_LOGGING_PARAM = "LOG_OPENHD";
 static constexpr auto ADSB_ENABLE_PARAM = "ADSB_ENABLE";
 static constexpr auto FC_SYS_ID_PARAM = "FC_SYS_ID";
 static constexpr auto TRACKER_UART_BAUD_PARAM = "TRACK_UART_BAUD";

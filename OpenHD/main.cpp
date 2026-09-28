@@ -509,6 +509,7 @@ int main(int argc, char *argv[]) {
       std::cerr << "WARN: sysutils socket not ready after 30s, continuing.\n";
     }
   }
+  openhd::log::initialize_persistent_logging();
   const OHDRunOptions options = parse_run_parameters(argc, argv);
   // Create the folder structure
   openhd::generateSettingsDirectoryIfNonExists();

@@ -37,6 +37,8 @@
 
 #include <memory>
 #include <mutex>
+#include <functional>
+#include <cstdint>
 #include <vector>
 
 namespace openhd::log {
@@ -56,6 +58,19 @@ std::shared_ptr<spdlog::logger> get_default();
 // it is active, enable debug messages on loggers that may have been created
 // before main() and use the same level for loggers created afterwards.
 void enable_debug_logging_for_dashboard();
+
+// Persistent diagnostic logs are enabled by default on development images.
+// Release images can opt in with /Config/openhd/enable_logs.txt and opt out
+// with /Config/openhd/disable_logs.txt. Call after sysutils mounted storage.
+void initialize_persistent_logging();
+bool persistent_logging_enabled();
+std::string persistent_log_directory();
+bool set_persistent_logging_enabled(bool enabled, bool persist_preference);
+using PersistentLoggingListener = std::function<void(bool)>;
+uint64_t add_persistent_logging_listener(PersistentLoggingListener listener);
+void remove_persistent_logging_listener(uint64_t listener_id);
+void attach_persistent_logging_sink(
+    const std::shared_ptr<spdlog::logger>& logger);
 
 // By default, only messages of level warn or higher are forwarded via mavlink
 // (and then shown in QOpenHD). Use this if you want to show a non-warning

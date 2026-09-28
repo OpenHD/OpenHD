@@ -1,4 +1,5 @@
 #include "openhd_ncurses_ui.h"
+#include "openhd_spdlog.h"
 
 #include <atomic>
 #include <mutex>
@@ -132,6 +133,15 @@ bool config_partition_mounted() {
     }
   }
   return false;
+}
+std::string toggle_persistent_logs() {
+  const bool testing = std::getenv("OPENHD_LOG_CONTROL_DIR") != nullptr;
+  if (!testing && !config_partition_mounted())
+    return "Change failed: SD card /Config is not mounted";
+  const bool enable = !openhd::log::persistent_logging_enabled();
+  if (!openhd::log::set_persistent_logging_enabled(enable, true))
+    return "Change failed: cannot switch persistent logs";
+  return enable ? "Persistent logs started" : "Persistent logs stopped";
 }
 std::string save_logs_to_sd(UiState& state) {
   const char* override_dir = std::getenv("OPENHD_LOG_EXPORT_DIR");
@@ -429,7 +439,7 @@ void update_ncurses() {
     if (state.page == 2) {
       if (key == 27 || key == 'd' || key == 'D') { state.page = 0; continue; }
       if (key == KEY_UP) state.menu_cursor = std::max(0, state.menu_cursor - 1);
-      if (key == KEY_DOWN) state.menu_cursor = std::min(7, state.menu_cursor + 1);
+      if (key == KEY_DOWN) state.menu_cursor = std::min(8, state.menu_cursor + 1);
       if (key >= '1' && key <= '5') {
         const int category = key - '1';
         state.debug_mask ^= 1u << category;
@@ -447,12 +457,16 @@ void update_ncurses() {
         state.scroll = 0; state.menu_message.clear(); continue;
       }
       if (key == 's' || key == 'S') {
-        state.menu_cursor = 7; state.menu_message = save_logs_to_sd(state); continue;
+        state.menu_cursor = 8; state.menu_message = save_logs_to_sd(state); continue;
+      }
+      if (key == 'l' || key == 'L') {
+        state.menu_cursor = 7; state.menu_message = toggle_persistent_logs(); continue;
       }
       if (key == ' ' || key == '\n' || key == KEY_ENTER) {
         if (state.menu_cursor < 5) state.debug_mask ^= 1u << state.menu_cursor;
         else if (state.menu_cursor == 5) state.debug_mask = all_debug_categories;
         else if (state.menu_cursor == 6) state.debug_mask = 0;
+        else if (state.menu_cursor == 7) state.menu_message = toggle_persistent_logs();
         else state.menu_message = save_logs_to_sd(state);
         state.scroll = 0;
       }
@@ -559,14 +573,16 @@ void update_ncurses() {
       static constexpr const char* entries[] = {
           "Devourer / USB radio", "Camera / video pipelines", "WiFiBroadcast / radio link",
           "Telemetry / MAVLink / serial", "System / plugins / other",
-          "Enable all debug sources", "Clear all selections", "Save all logs to SD card"};
-      for (int i = 0; i < 8; ++i) {
+          "Enable all debug sources", "Clear all selections", "Runtime OpenHD logs",
+          "Save all logs to SD card"};
+      for (int i = 0; i < 9; ++i) {
         const bool cursor = i == state.menu_cursor;
         std::string shortcut;
         if (i < 5) shortcut = std::string("[") + char('1'+i) + "]";
-        else shortcut = i == 5 ? "[A]" : i == 6 ? "[X]" : "[S]";
+        else shortcut = i == 5 ? "[A]" : i == 6 ? "[X]" : i == 7 ? "[L]" : "[S]";
         const std::string checkbox = i < 5
-            ? std::string((state.debug_mask & (1u << i)) ? "[x] " : "[ ] ") : "    ";
+            ? std::string((state.debug_mask & (1u << i)) ? "[x] " : "[ ] ")
+            : i == 7 ? std::string(openhd::log::persistent_logging_enabled() ? "[x] " : "[ ] ") : "    ";
         put(4+i,left+2,std::string(cursor ? "> " : "  ") + checkbox + shortcut + " " + entries[i],
             cursor ? 4 : 0,width-4);
       }
