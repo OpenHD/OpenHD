@@ -5,6 +5,7 @@
 #ifdef OPENHD_HAVE_CURSES
 #include <curses.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <arpa/inet.h>
 #include <ifaddrs.h>
 #include <net/if.h>
@@ -40,6 +41,10 @@ struct UiState {
   std::vector<std::string> network;
   std::string uptime = "--", cpu = "--", ram = "--", disk = "--", temp = "--";
   double cpu_ratio = -1, ram_ratio = -1, disk_ratio = -1, temp_ratio = -1;
+  SCREEN* terminal = nullptr;
+  FILE* terminal_output = nullptr;
+  int saved_stdout = -1;
+  int saved_stderr = -1;
 #endif
 };
 
@@ -175,7 +180,14 @@ void init_ncurses() {
   std::lock_guard<std::mutex> guard(state.mutex);
   const char* term = std::getenv("TERM");
   if (active || !isatty(STDIN_FILENO) || !isatty(STDOUT_FILENO) || !term || std::string(term)=="dumb") return;
-  if (!initscr()) return;
+  const int output_fd = dup(STDOUT_FILENO);
+  if (output_fd < 0) return;
+  state.terminal_output = fdopen(output_fd, "w");
+  if (!state.terminal_output) { close(output_fd); return; }
+  state.terminal = newterm(term, state.terminal_output, stdin);
+  if (!state.terminal) {
+    fclose(state.terminal_output); state.terminal_output = nullptr; return;
+  }
   cbreak(); noecho(); keypad(stdscr,TRUE); nodelay(stdscr,TRUE); curs_set(0);
   if (has_colors()) {
     start_color();
@@ -183,6 +195,17 @@ void init_ncurses() {
     init_pair(1,COLOR_GREEN,background); init_pair(2,COLOR_RED,background);
     init_pair(3,COLOR_YELLOW,background); init_pair(4,COLOR_CYAN,background);
   }
+  // Curses owns a duplicate of the console output. Keep library and child
+  // process stdout/stderr from overwriting the dashboard between refreshes.
+  fflush(stdout); fflush(stderr);
+  state.saved_stdout = dup(STDOUT_FILENO);
+  state.saved_stderr = dup(STDERR_FILENO);
+  const int null_fd = open("/dev/null", O_WRONLY);
+  if (state.saved_stdout >= 0 && state.saved_stderr >= 0 && null_fd >= 0) {
+    dup2(null_fd, STDOUT_FILENO);
+    dup2(null_fd, STDERR_FILENO);
+  }
+  if (null_fd >= 0) close(null_fd);
   active = true;
   std::atexit(shutdown_ncurses);
 #endif
@@ -193,6 +216,14 @@ void shutdown_ncurses() {
   std::lock_guard<std::mutex> guard(state.mutex);
   if (active.exchange(false)) {
     endwin();
+    if (state.terminal) { delscreen(state.terminal); state.terminal = nullptr; }
+    if (state.terminal_output) { fclose(state.terminal_output); state.terminal_output = nullptr; }
+    if (state.saved_stdout >= 0) {
+      dup2(state.saved_stdout, STDOUT_FILENO); close(state.saved_stdout); state.saved_stdout = -1;
+    }
+    if (state.saved_stderr >= 0) {
+      dup2(state.saved_stderr, STDERR_FILENO); close(state.saved_stderr); state.saved_stderr = -1;
+    }
   }
 #endif
 }

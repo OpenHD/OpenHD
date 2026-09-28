@@ -76,17 +76,9 @@ AirCameraGenericSettingsHolder::impl_deserialize(
   if (!parsed.has_value()) {
     return parsed;
   }
-  const auto sysutil_overrides = get_sysutil_camera_overrides();
-  if (sysutil_overrides.primary.has_value()) {
-    parsed->primary_camera_type = *sysutil_overrides.primary;
-  }
-  if (sysutil_overrides.secondary.has_value()) {
-    parsed->secondary_camera_type = *sysutil_overrides.secondary;
-  }
-  if (sysutil_overrides.ip_camera_bitrate_mbits.has_value()) {
-    parsed->ip_camera_bitrate_mbits =
-        *sysutil_overrides.ip_camera_bitrate_mbits;
-  }
+  // Saved camera settings are authoritative across restarts and reboots.
+  // SysUtils only seeds create_default(); never reapply provisioning values
+  // over settings subsequently changed by the user.
   if (parsed.has_value() && OHDPlatform::instance().is_rpi5() &&
       parsed->primary_camera_type == X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI) {
     openhd::log::get_default()->warn(
