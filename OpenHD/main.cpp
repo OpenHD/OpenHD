@@ -491,6 +491,9 @@ int main(int argc, char *argv[]) {
   // Curses changes the terminal's stdio state. Initialize it before OpenHD
   // starts any worker threads that can concurrently log to stdout.
   openhd::ui::init_ncurses();
+  if (openhd::ui::ncurses_active()) {
+    openhd::log::enable_debug_logging_for_dashboard();
+  }
   // OpenHD needs to be run as root!
   OHDUtil::terminate_if_not_root();
   if (OHDFilesystemUtil::exists("/run/openhd/hold.pid")) {

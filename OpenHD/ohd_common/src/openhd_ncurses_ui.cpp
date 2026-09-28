@@ -6,18 +6,22 @@
 #include <curses.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <poll.h>
 #include <arpa/inet.h>
 #include <ifaddrs.h>
 #include <net/if.h>
 #include <sys/statvfs.h>
 #include <algorithm>
 #include <chrono>
+#include <cctype>
 #include <cstdlib>
 #include <ctime>
 #include <deque>
+#include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <sstream>
+#include <thread>
 #include <vector>
 #endif
 
@@ -25,8 +29,10 @@ namespace openhd::ui {
 namespace {
 std::atomic<bool> active{false};
 #ifdef OPENHD_HAVE_CURSES
-struct LogLine { std::string text; int level; };
+enum class LogCategory { Devourer, Camera, Radio, Telemetry, System };
+struct LogLine { std::string text; int level; LogCategory category; };
 constexpr size_t log_limit = 1000;
+constexpr unsigned all_debug_categories = (1u << 5) - 1;
 #endif
 
 struct UiState {
@@ -38,6 +44,9 @@ struct UiState {
   int scroll = 0;
   bool logs_only = false;
   int page = 0;
+  unsigned debug_mask = all_debug_categories;
+  int menu_cursor = 0;
+  std::string menu_message;
   std::vector<std::string> network;
   std::string uptime = "--", cpu = "--", ram = "--", disk = "--", temp = "--";
   double cpu_ratio = -1, ram_ratio = -1, disk_ratio = -1, temp_ratio = -1;
@@ -45,6 +54,10 @@ struct UiState {
   FILE* terminal_output = nullptr;
   int saved_stdout = -1;
   int saved_stderr = -1;
+  int capture_read = -1;
+  std::atomic<bool> capture_running{false};
+  std::thread capture_thread;
+  FILE* session_log = nullptr;
 #endif
 };
 
@@ -61,6 +74,129 @@ UiState& ui_state() {
 std::string clean(std::string text) {
   for (auto& c : text) if (static_cast<unsigned char>(c) < 32 || c == 127) c = ' ';
   return text;
+}
+std::string lower(std::string text) {
+  std::transform(text.begin(), text.end(), text.begin(), [](unsigned char c) {
+    return static_cast<char>(std::tolower(c));
+  });
+  return text;
+}
+LogCategory categorize(const std::string& name, const std::string& message) {
+  const auto text = lower(name + " " + message);
+  if (text.find("devourer") != std::string::npos ||
+      text.find("jaguar") != std::string::npos ||
+      text.find("kestrel") != std::string::npos)
+    return LogCategory::Devourer;
+  if (text.find("camera") != std::string::npos ||
+      text.find("cam0") != std::string::npos || text.find("cam1") != std::string::npos ||
+      text.find("video") != std::string::npos || text.find("gstreamer") != std::string::npos ||
+      text.find("gst_") != std::string::npos || text.find("mpp") != std::string::npos ||
+      text.find("v_air") != std::string::npos || text.find("v_gnd") != std::string::npos)
+    return LogCategory::Camera;
+  if (text.find("tele") != std::string::npos || text.find("mavlink") != std::string::npos ||
+      text.find("serial") != std::string::npos || text.find("adsb") != std::string::npos ||
+      text.find("sbus") != std::string::npos || text.find("joystick") != std::string::npos)
+    return LogCategory::Telemetry;
+  if (text.find("wifi") != std::string::npos || text.find("wifibroadcast") != std::string::npos ||
+      text.find("wb_") != std::string::npos || text.find("wbtx") != std::string::npos ||
+      text.find("wbrx") != std::string::npos || text.find("radio") != std::string::npos ||
+      text.find("artosyn") != std::string::npos || text.find("microhard") != std::string::npos ||
+      text.find("interface") != std::string::npos)
+    return LogCategory::Radio;
+  return LogCategory::System;
+}
+std::string selection_name(unsigned mask) {
+  if (mask == all_debug_categories) return "All debug sources";
+  if (mask == 0) return "No debug sources";
+  static constexpr const char* names[] = {
+      "Devourer", "Camera/video", "Radio", "Telemetry", "System"};
+  std::string result;
+  for (int i = 0; i < 5; ++i) {
+    if ((mask & (1u << i)) == 0) continue;
+    if (!result.empty()) result += " + ";
+    result += names[i];
+  }
+  return result;
+}
+bool matches_filter(const LogLine& line, unsigned mask) {
+  return (mask & (1u << static_cast<unsigned>(line.category))) != 0;
+}
+bool config_partition_mounted() {
+  std::ifstream mounts("/proc/self/mountinfo");
+  std::string line;
+  while (std::getline(mounts, line)) {
+    std::istringstream fields(line);
+    std::string id, parent, major_minor, root, mount_point;
+    if (fields >> id >> parent >> major_minor >> root >> mount_point) {
+      if (mount_point == "/Config") return true;
+    }
+  }
+  return false;
+}
+std::string save_logs_to_sd(UiState& state) {
+  const char* override_dir = std::getenv("OPENHD_LOG_EXPORT_DIR");
+  if ((!override_dir || !*override_dir) && !config_partition_mounted())
+    return "Save failed: SD card /Config is not mounted";
+  const std::filesystem::path directory =
+      override_dir && *override_dir ? override_dir : "/Config/openhd/logs";
+  std::error_code error;
+  std::filesystem::create_directories(directory, error);
+  if (error) return "Save failed: " + error.message();
+  const auto now = std::chrono::system_clock::now();
+  const auto time = std::chrono::system_clock::to_time_t(now);
+  std::tm local{}; localtime_r(&time, &local);
+  std::ostringstream filename;
+  filename << "openhd_debug_" << std::put_time(&local, "%Y%m%d_%H%M%S") << '_'
+           << std::setfill('0') << std::setw(3)
+           << std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count()%1000
+           << ".log";
+  const auto path = directory / filename.str();
+  std::ofstream output(path, std::ios::trunc);
+  if (!output) return "Save failed: cannot write " + path.string();
+  output << "OpenHD terminal debug log\n"
+         << "Debug sources selected: " << selection_name(state.debug_mask) << "\n\n";
+  if (state.session_log) {
+    std::fflush(state.session_log);
+    const int session_fd = dup(fileno(state.session_log));
+    if (session_fd >= 0) {
+      lseek(session_fd, 0, SEEK_SET);
+      char buffer[4096];
+      ssize_t count = 0;
+      while ((count = read(session_fd, buffer, sizeof(buffer))) > 0)
+        output.write(buffer, count);
+      close(session_fd);
+    }
+  } else {
+    for (const auto& line : state.logs) output << line.text << '\n';
+  }
+  output.flush();
+  if (!output) return "Save failed while writing " + path.string();
+  output.close();
+  const int output_fd = open(path.c_str(), O_RDONLY);
+  if (output_fd >= 0) { fsync(output_fd); close(output_fd); }
+  const int directory_fd = open(directory.c_str(), O_RDONLY | O_DIRECTORY);
+  if (directory_fd >= 0) { fsync(directory_fd); close(directory_fd); }
+  return "Saved all logs to " + path.string();
+}
+void capture_console(int fd) {
+  std::string pending;
+  char buffer[1024];
+  auto& state = ui_state();
+  while (state.capture_running.load()) {
+    pollfd descriptor{fd, POLLIN, 0};
+    const int ready = poll(&descriptor, 1, 100);
+    if (ready <= 0) continue;
+    const auto count = read(fd, buffer, sizeof(buffer));
+    if (count <= 0) break;
+    pending.append(buffer, static_cast<size_t>(count));
+    for (auto newline = pending.find('\n'); newline != std::string::npos;
+         newline = pending.find('\n')) {
+      auto line = pending.substr(0, newline);
+      pending.erase(0, newline + 1);
+      if (!line.empty()) ncurses_log("process", 2, line);
+    }
+  }
+  if (!pending.empty() && active.load()) ncurses_log("process", 2, pending);
 }
 void put(int y, int x, const std::string& text, int color = 0, int limit = -1) {
   if (y < 0 || y >= LINES || x < 0 || x >= COLS - 1) return;
@@ -195,17 +331,28 @@ void init_ncurses() {
     init_pair(1,COLOR_GREEN,background); init_pair(2,COLOR_RED,background);
     init_pair(3,COLOR_YELLOW,background); init_pair(4,COLOR_CYAN,background);
   }
+  char session_template[] = "/tmp/openhd-ui-session-XXXXXX";
+  const int session_fd = mkstemp(session_template);
+  if (session_fd >= 0) {
+    unlink(session_template);
+    state.session_log = fdopen(session_fd, "w+");
+    if (!state.session_log) close(session_fd);
+  }
   // Curses owns a duplicate of the console output. Keep library and child
   // process stdout/stderr from overwriting the dashboard between refreshes.
   fflush(stdout); fflush(stderr);
   state.saved_stdout = dup(STDOUT_FILENO);
   state.saved_stderr = dup(STDERR_FILENO);
-  const int null_fd = open("/dev/null", O_WRONLY);
-  if (state.saved_stdout >= 0 && state.saved_stderr >= 0 && null_fd >= 0) {
-    dup2(null_fd, STDOUT_FILENO);
-    dup2(null_fd, STDERR_FILENO);
+  int capture_pipe[2]{-1, -1};
+  if (state.saved_stdout >= 0 && state.saved_stderr >= 0 && pipe(capture_pipe) == 0) {
+    dup2(capture_pipe[1], STDOUT_FILENO);
+    dup2(capture_pipe[1], STDERR_FILENO);
+    close(capture_pipe[1]);
+    state.capture_read = capture_pipe[0];
+    state.capture_running = true;
+    state.capture_thread = std::thread(capture_console, state.capture_read);
+    setenv("OPENHD_TUI_DEBUG", "1", 1);
   }
-  if (null_fd >= 0) close(null_fd);
   active = true;
   std::atexit(shutdown_ncurses);
 #endif
@@ -213,7 +360,7 @@ void init_ncurses() {
 void shutdown_ncurses() {
 #ifdef OPENHD_HAVE_CURSES
   auto& state = ui_state();
-  std::lock_guard<std::mutex> guard(state.mutex);
+  std::unique_lock<std::mutex> guard(state.mutex);
   if (active.exchange(false)) {
     endwin();
     if (state.terminal) { delscreen(state.terminal); state.terminal = nullptr; }
@@ -224,6 +371,14 @@ void shutdown_ncurses() {
     if (state.saved_stderr >= 0) {
       dup2(state.saved_stderr, STDERR_FILENO); close(state.saved_stderr); state.saved_stderr = -1;
     }
+    state.capture_running = false;
+    auto* capture_thread = state.capture_thread.joinable() ? &state.capture_thread : nullptr;
+    guard.unlock();
+    if (capture_thread) capture_thread->join();
+    guard.lock();
+    if (state.capture_read >= 0) { close(state.capture_read); state.capture_read = -1; }
+    if (state.session_log) { fclose(state.session_log); state.session_log = nullptr; }
+    unsetenv("OPENHD_TUI_DEBUG");
   }
 #endif
 }
@@ -244,7 +399,12 @@ void ncurses_log(const std::string& name, int level, const std::string& message)
          << "] [" << name << "] [" << levels[std::clamp(level,0,6)] << "] ";
   std::istringstream stream(message); std::string line;
   while (std::getline(stream,line)) {
-    state.logs.push_back({prefix.str()+clean(line),level});
+    const auto text = prefix.str()+clean(line);
+    state.logs.push_back({text, level, categorize(name, line)});
+    if (state.session_log) {
+      std::fwrite(text.data(), 1, text.size(), state.session_log);
+      std::fputc('\n', state.session_log);
+    }
     if (state.scroll) ++state.scroll;
     if (state.logs.size()>log_limit) state.logs.pop_front();
   }
@@ -266,11 +426,43 @@ void update_ncurses() {
       } else if (key == 27 || key == 'n' || key == 'N') state.page = 0;
       continue;
     }
-    if (key == KEY_F(1)) state.page = state.page == 1 ? 0 : 1;
-    if (key == KEY_F(2)) state.page = state.page == 2 ? 0 : 2;
-    if (key == KEY_F(3)) state.page = 3;
-    if (key == KEY_F(5)) state.page = 5;
-    if (key == KEY_F(4)) state.page = state.page == 4 ? 0 : 4;
+    if (state.page == 2) {
+      if (key == 27 || key == 'd' || key == 'D') { state.page = 0; continue; }
+      if (key == KEY_UP) state.menu_cursor = std::max(0, state.menu_cursor - 1);
+      if (key == KEY_DOWN) state.menu_cursor = std::min(7, state.menu_cursor + 1);
+      if (key >= '1' && key <= '5') {
+        const int category = key - '1';
+        state.debug_mask ^= 1u << category;
+        state.menu_cursor = category;
+        state.scroll = 0;
+        state.menu_message.clear();
+        continue;
+      }
+      if (key == 'a' || key == 'A') {
+        state.debug_mask = all_debug_categories; state.menu_cursor = 5;
+        state.scroll = 0; state.menu_message.clear(); continue;
+      }
+      if (key == 'x' || key == 'X') {
+        state.debug_mask = 0; state.menu_cursor = 6;
+        state.scroll = 0; state.menu_message.clear(); continue;
+      }
+      if (key == 's' || key == 'S') {
+        state.menu_cursor = 7; state.menu_message = save_logs_to_sd(state); continue;
+      }
+      if (key == ' ' || key == '\n' || key == KEY_ENTER) {
+        if (state.menu_cursor < 5) state.debug_mask ^= 1u << state.menu_cursor;
+        else if (state.menu_cursor == 5) state.debug_mask = all_debug_categories;
+        else if (state.menu_cursor == 6) state.debug_mask = 0;
+        else state.menu_message = save_logs_to_sd(state);
+        state.scroll = 0;
+      }
+      continue;
+    }
+    if (key == 'h' || key == 'H') state.page = state.page == 1 ? 0 : 1;
+    if (key == 'd' || key == 'D') state.page = state.page == 2 ? 0 : 2;
+    if (key == 'r' || key == 'R') state.page = 3;
+    if (key == 'p' || key == 'P') state.page = 5;
+    if (key == 'n' || key == 'N') state.page = state.page == 4 ? 0 : 4;
     if (key == 27) state.page = 0;
     if (key == '\t') { state.logs_only = !state.logs_only; state.page = 0; }
     if (key == KEY_PPAGE) state.scroll += std::max(1,LINES-4);
@@ -336,32 +528,57 @@ void update_ncurses() {
     log_top = header+7;
   }
   const int visible = std::max(0,LINES-log_top-3);
-  state.scroll = std::clamp(state.scroll,0,std::max(0,static_cast<int>(state.logs.size())-visible));
-  panel(log_top,0,LINES-log_top-1,COLS,state.scroll ? "Logs - paused (End: live)" : "Logs - live");
-  const int start = std::max(0,static_cast<int>(state.logs.size())-visible-state.scroll);
-  for (int i=0;i<visible && start+i<static_cast<int>(state.logs.size());++i) {
-    const auto& line = state.logs[start+i];
+  std::vector<const LogLine*> filtered;
+  filtered.reserve(state.logs.size());
+  for (const auto& line : state.logs)
+    if (matches_filter(line, state.debug_mask)) filtered.push_back(&line);
+  state.scroll = std::clamp(state.scroll,0,std::max(0,static_cast<int>(filtered.size())-visible));
+  const std::string log_title = std::string("Logs - ") +
+      (state.scroll ? "paused" : "live") + " [" + selection_name(state.debug_mask) + "]" +
+      (state.scroll ? " (End: live)" : "");
+  panel(log_top,0,LINES-log_top-1,COLS,log_title);
+  const int start = std::max(0,static_cast<int>(filtered.size())-visible-state.scroll);
+  for (int i=0;i<visible && start+i<static_cast<int>(filtered.size());++i) {
+    const auto& line = *filtered[start+i];
     put(log_top+1+i,2,line.text,line.level>=4 ? 2 : line.level==3 ? 3 : 0,COLS-4);
   }
-  put(LINES-1,1,COLS >= 100 ? "[F1] Help  [F2] Menu  [F3] Restart  [F4] Network  [F5] Power  [TAB] Switch View  [CTRL+C] Exit" : "F1 Help F2 Menu F3 Restart F4 Net F5 Power Tab View ^C",4);
+  put(LINES-1,1,COLS >= 100 ? "[H] Help  [D] Debug  [R] Restart  [N] Network  [P] Power  [TAB] Switch View  [CTRL+C] Exit" : "H Help D Debug R Restart N Net P Power Tab View ^C",4);
   if (state.page) {
     const int width = std::min(COLS-4,76), left = (COLS-width)/2;
-    for (int y=3;y<14;++y) put(y,left,std::string(width,' '));
-    panel(3,left,11,width,state.page==3 ? "Restart OpenHD" : state.page==5 ? "Power off board" : state.page==4 ? "Network addresses" : state.page==2 ? "Menu" : "Help");
+    const int top = state.page == 2 ? 2 : 3;
+    const int height = state.page == 2 ? 15 : 11;
+    for (int y=top;y<top+height;++y) put(y,left,std::string(width,' '));
+    panel(top,left,height,width,state.page==3 ? "Restart OpenHD" : state.page==5 ? "Power off board" : state.page==4 ? "Network addresses" : state.page==2 ? "Debug menu" : "Help");
     if (state.page==3 || state.page==5) {
       put(5,left+2,state.page==3 ? "Restart OpenHD now? Video and telemetry will stop." : "Power off this board? Video and telemetry will stop.",3,width-4);
       put(7,left+2,"Y: confirm    N / Esc: cancel",0,width-4);
     } else if (state.page==4) {
       for (size_t i=0;i<state.network.size() && i<7;++i) put(5+static_cast<int>(i),left+2,state.network[i],0,width-4);
       if (state.network.empty()) put(5,left+2,"No IPv4 address assigned.");
+    } else if (state.page == 2) {
+      static constexpr const char* entries[] = {
+          "Devourer / USB radio", "Camera / video pipelines", "WiFiBroadcast / radio link",
+          "Telemetry / MAVLink / serial", "System / plugins / other",
+          "Enable all debug sources", "Clear all selections", "Save all logs to SD card"};
+      for (int i = 0; i < 8; ++i) {
+        const bool cursor = i == state.menu_cursor;
+        std::string shortcut;
+        if (i < 5) shortcut = std::string("[") + char('1'+i) + "]";
+        else shortcut = i == 5 ? "[A]" : i == 6 ? "[X]" : "[S]";
+        const std::string checkbox = i < 5
+            ? std::string((state.debug_mask & (1u << i)) ? "[x] " : "[ ] ") : "    ";
+        put(4+i,left+2,std::string(cursor ? "> " : "  ") + checkbox + shortcut + " " + entries[i],
+            cursor ? 4 : 0,width-4);
+      }
+      if (!state.menu_message.empty()) put(13,left+2,state.menu_message,3,width-4);
     } else {
       put(5,left+2,"Tab: dashboard / full-screen logs",0,width-4);
       put(6,left+2,"Up/Down, PgUp/PgDn: scroll logs; End: follow live",0,width-4);
-      put(7,left+2,"F4: network interfaces and IPv4 addresses",0,width-4);
+      put(7,left+2,"D: choose debug sources; N: network addresses",0,width-4);
       put(8,left+2,"Configured means transport exists, not peer connected.",0,width-4);
       put(9,left+2,"Unknown means no live measurement is available.",0,width-4);
     }
-    put(12,left+2,"Esc: close",4,width-4);
+    put(state.page == 2 ? 15 : 12,left+2,"Esc: close",4,width-4);
   }
   refresh();
 #endif

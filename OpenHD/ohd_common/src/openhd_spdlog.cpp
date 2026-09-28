@@ -132,7 +132,8 @@ std::shared_ptr<spdlog::logger> openhd::log::create_or_get(
     spdlog::register_logger(created);
     created->sinks().push_back(std::make_shared<openhd::log::sink::NcursesSink>());
     assert(created);
-    if (OHDFilesystemUtil::exists("/usr/local/share/openhd/debug.txt")) {
+    if (openhd::ui::ncurses_active() ||
+        OHDFilesystemUtil::exists("/usr/local/share/openhd/debug.txt")) {
       created->set_level(spdlog::level::debug);
     } else {
       created->set_level(spdlog::level::warn);
@@ -148,6 +149,12 @@ std::shared_ptr<spdlog::logger> openhd::log::create_or_get(
     return created;
   }
   return ret;
+}
+
+void openhd::log::enable_debug_logging_for_dashboard() {
+  spdlog::apply_all([](const std::shared_ptr<spdlog::logger>& logger) {
+    logger->set_level(spdlog::level::debug);
+  });
 }
 
 std::shared_ptr<spdlog::logger> openhd::log::get_default() {

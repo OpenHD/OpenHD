@@ -52,6 +52,11 @@ std::shared_ptr<spdlog::logger> create_or_get(const std::string& logger_name);
 // variable approach, but sometimes you just don't care about that.
 std::shared_ptr<spdlog::logger> get_default();
 
+// The terminal dashboard is an explicitly interactive debugging surface. When
+// it is active, enable debug messages on loggers that may have been created
+// before main() and use the same level for loggers created afterwards.
+void enable_debug_logging_for_dashboard();
+
 // By default, only messages of level warn or higher are forwarded via mavlink
 // (and then shown in QOpenHD). Use this if you want to show a non-warning
 // message in QOpenHD.
