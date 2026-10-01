@@ -274,6 +274,10 @@ static MavlinkMessage generate_msg_analyze_channels_progress(
          sizeof(tmp.channels_mhz));
   memcpy(tmp.foreign_packets, progress.foreign_packets.data(),
          sizeof(tmp.foreign_packets));
+  if (progress.rf_sampled_busy) {
+    tmp.dummy0=0x4553;  // ESP RF metric, not foreign packet counts.
+    memcpy(tmp.dummy,progress.rf_busy_centipercent.data(),sizeof(tmp.dummy));
+  }
   tmp.progress_perc = progress.progress;
   mavlink_msg_openhd_wifbroadcast_analyze_channels_progress_encode(
       system_id, component_id, &msg.m, &tmp);

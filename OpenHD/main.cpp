@@ -1,5 +1,4 @@
-#include "openhd_ncurses_ui.h"
-#include "openhd_reboot_util.h"
+
 /******************************************************************************
  * OpenHD
  * 
@@ -23,6 +22,8 @@
  * © OpenHD, All Rights Reserved.
  ******************************************************************************/
 
+#include "openhd_ncurses_ui.h"
+#include "openhd_reboot_util.h"
 
 #include <OHDTelemetry.h>
 #include <getopt.h>

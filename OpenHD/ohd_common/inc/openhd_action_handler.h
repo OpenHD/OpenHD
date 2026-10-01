@@ -359,6 +359,8 @@ class LinkActionHandler {
   struct AnalyzeChannelsResult {
     std::array<uint16_t, 30> channels_mhz{0};
     std::array<uint16_t, 30> foreign_packets{0};
+    bool rf_sampled_busy = false;
+    std::array<uint16_t, 30> rf_busy_centipercent{0};
     int8_t progress;
   };
   void add_analyze_result(AnalyzeChannelsResult scan_result) {

@@ -76,7 +76,8 @@ class MavlinkParameterReceiver {
   Result provide_server_param(
       const std::string& name, const T& param_value,
       std::function<bool(std::string id, T requested_value)> change_callback =
-          nullptr);
+          nullptr,
+      bool apply_same_value = false);
   // convenient implementations for the 3 most commonly used types
   Result provide_server_param_float(const std::string& name, float value);
   Result provide_server_param_int(const std::string& name, int32_t value);

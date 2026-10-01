@@ -41,7 +41,9 @@ void XMavlinkParamProvider::add_param(const openhd::Setting& setting) {
   if (std::holds_alternative<openhd::IntSetting>(setting.setting)) {
     const auto intSetting = std::get<openhd::IntSetting>(setting.setting);
     const auto result = _mavlink_parameter_receiver->provide_server_param<int>(
-        setting.id, intSetting.value, intSetting.change_callback);
+        setting.id, intSetting.value, intSetting.change_callback,
+        // A link-controlled encoder can differ from the cached manual target.
+        setting.id == "BITRATE_MBITS");
     assert(result == mavsdk::MavlinkParameterReceiver::Result::Success);
     if (intSetting.get_callback != nullptr) {
       m_int_settings_with_update_functionality.push_back(setting);

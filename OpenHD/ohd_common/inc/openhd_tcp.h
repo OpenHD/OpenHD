@@ -26,6 +26,8 @@
 
 #include <deque>
 #include <thread>
+#include <map>
+#include <string>
 
 #include "openhd_spdlog.h"
 
@@ -62,9 +64,8 @@ class TCPServer {
   void send_message_to_all_clients(const uint8_t* data, int data_len);
   /**
    * Needs to be overridden by implementation.
-   * Called with connected=true once a client connects, and connected==false
-   * once a client disconnects (Or is dead and has been disconnected as a
-   * caution feature)
+   * Called with connected=true when the first client from an IP connects,
+   * and connected=false when the last client from that IP disconnects.
    */
   virtual void on_external_device(std::string ip, int port, bool connected) = 0;
 
@@ -91,6 +92,9 @@ class TCPServer {
   };
   std::mutex m_clients_list_mutex;
   std::deque<std::shared_ptr<ConnectedClient>> m_clients_list;
+  std::mutex m_external_device_mutex;
+  std::map<std::string, size_t> m_connections_per_ip;
+  void notify_external_device(const std::string& ip, int port, bool connected);
 };
 }  // namespace openhd
 

@@ -157,6 +157,9 @@ target_link_libraries(test_onboard_computer_status_read_stuff OHDTelemetryLib)
 add_executable(test_joystick_reader test/test_joystick_reader.cpp)
 target_link_libraries(test_joystick_reader OHDTelemetryLib)
 
+add_executable(test_parameter_reapply test/test_parameter_reapply.cpp)
+target_link_libraries(test_parameter_reapply OHDTelemetryLib)
+
 ####
 # NOTE: We do not need MAVSDK for OpenHD, the small amount of code we share is directly included
 ####

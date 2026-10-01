@@ -71,7 +71,8 @@ void MavlinkParameterReceiver::ready_for_communication() {
 template <class T>
 MavlinkParameterReceiver::Result MavlinkParameterReceiver::provide_server_param(
     const std::string& name, const T& value,
-    std::function<bool(std::string id, T requested_value)> change_callback) {
+    std::function<bool(std::string id, T requested_value)> change_callback,
+    bool apply_same_value) {
   if (name.size() > MavlinkParameterSet::PARAM_ID_LEN) {
     LogErr() << "Error: param name too long";
     return Result::ParamNameTooLong;
@@ -97,7 +98,7 @@ MavlinkParameterReceiver::Result MavlinkParameterReceiver::provide_server_param(
   };
   // Param set makes sure we cannot add the same parameter more than once and
   // keeps the type safe
-  if (_param_set.add_new_parameter(name, param_value, tmp)) {
+  if (_param_set.add_new_parameter(name, param_value, tmp, apply_same_value)) {
     return Result::Success;
   }
   return Result::WrongType;
@@ -545,7 +546,8 @@ MavlinkParameterReceiver::update_existing_server_param(const std::string& name,
   std::lock_guard<std::mutex> lock(_all_params_mutex);
   ParamValue param_value;
   param_value.set(value);
-  auto res = _param_set.update_existing_parameter(name, param_value);
+  // Refreshing readback must not reapply the setting to hardware.
+  auto res = _param_set.update_existing_parameter(name, param_value, false);
   if (res == MavlinkParameterSet::UpdateExistingParamResult::SUCCESS)
     return MavlinkParameterReceiver::Result::Success;
   return MavlinkParameterReceiver::Result::NotFound;

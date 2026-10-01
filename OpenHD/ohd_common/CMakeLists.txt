@@ -138,6 +138,9 @@ target_link_libraries(test_openhd_async OHDCommonLib)
 add_executable(test_tcp_server test/test_tcp_server.cpp)
 target_link_libraries(test_tcp_server OHDCommonLib)
 
+add_executable(test_tcp_host_lifetime test/test_tcp_host_lifetime.cpp)
+target_link_libraries(test_tcp_host_lifetime OHDCommonLib)
+
 add_executable(test_openhd_plugin
     test/test_openhd_plugin.cpp
     src/config_paths.cpp)

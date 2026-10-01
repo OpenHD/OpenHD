@@ -22,11 +22,15 @@
  ******************************************************************************/
 
 #include "openhd_tcp.h"
+#include <spdlog/spdlog.h>
 
 #include <arpa/inet.h>
 #include <unistd.h>
 
 #include <csignal>
+#include <cassert>
+#include <array>
+#include <cstring>
 #include <queue>
 #include <utility>
 
@@ -105,9 +109,9 @@ void openhd::TCPServer::loop_accept() {
     new_client->port = client_port;
     new_client->keep_rx_looping = true;
     new_client->parent = this;
+    notify_external_device(client_ip, client_port, true);
     new_client->rx_loop_thread = std::make_shared<std::thread>(
         &TCPServer::ConnectedClient::loop_rx, new_client.get());
-    on_external_device(client_ip, client_port, true);
     {
       std::lock_guard<std::mutex> guard(m_clients_list_mutex);
       m_clients_list.push_back(new_client);
@@ -151,5 +155,21 @@ void openhd::TCPServer::ConnectedClient::loop_rx() {
     }
     parent->on_packet_any_tcp_client(buff->data(), message_length);
   }
-  parent->on_external_device(ip, port, false);
+  parent->notify_external_device(ip, port, false);
+}
+
+void openhd::TCPServer::notify_external_device(const std::string& ip,
+                                             int port, bool connected) {
+  std::lock_guard<std::mutex> guard(m_external_device_mutex);
+  if (connected) {
+    // Video forwarding belongs to the host, not to each telemetry socket.
+    if (++m_connections_per_ip[ip] == 1) on_external_device(ip, port, true);
+  } else {
+    auto found = m_connections_per_ip.find(ip);
+    if (found == m_connections_per_ip.end()) return;
+    if (--found->second == 0) {
+      m_connections_per_ip.erase(found);
+      on_external_device(ip, port, false);
+    }
+  }
 }

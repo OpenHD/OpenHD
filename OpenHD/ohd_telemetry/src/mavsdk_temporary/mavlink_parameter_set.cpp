@@ -7,7 +7,8 @@ namespace mavsdk {
 bool MavlinkParameterSet::add_new_parameter(
     const std::string &param_id, ParamValue value,
     std::function<bool(std::string id, ParamValue requested_value)>
-        change_callback) {
+        change_callback,
+    bool apply_same_value) {
   std::lock_guard<std::mutex> lock(_all_params_mutex);
   if (!validate_param_id(param_id)) {
     if (enable_debugging) {
@@ -24,7 +25,7 @@ bool MavlinkParameterSet::add_new_parameter(
     return false;
   }
   InternalParameter parameter{param_id, std::move(value),
-                              std::move(change_callback)};
+                              std::move(change_callback), apply_same_value};
   _all_params.push_back(parameter);
   // just don't think about it.
   _param_index_to_hidden_extended.push_back(param_count_non_extended);
@@ -42,7 +43,8 @@ bool MavlinkParameterSet::add_new_parameter(
 
 MavlinkParameterSet::UpdateExistingParamResult
 MavlinkParameterSet::update_existing_parameter(const std::string &param_id,
-                                               const ParamValue &value) {
+                                               const ParamValue &value,
+                                               bool invoke_callback) {
   std::lock_guard<std::mutex> lock(_all_params_mutex);
   if (_param_id_to_idx.find(param_id) == _param_id_to_idx.end()) {
     // this parameter does not exist yet.
@@ -58,10 +60,11 @@ MavlinkParameterSet::update_existing_parameter(const std::string &param_id,
                << parameter.value.typestr() << " to " << value.typestr();
     return UpdateExistingParamResult::WRONG_PARAM_TYPE;
   }
-  if (parameter.value == value) {
+  if (parameter.value == value &&
+      (!invoke_callback || !parameter.apply_same_value)) {
     return UpdateExistingParamResult::NO_CHANGE;
   }
-  if (parameter.change_callback) {
+  if (invoke_callback && parameter.change_callback) {
     const auto before = std::chrono::steady_clock::now();
     const auto result = parameter.change_callback(param_id, value);
     const auto time_spend_on_user_callback =

@@ -6,6 +6,7 @@
 #include <thread>
 
 #include "nexmon_scout.h"
+#include "esp_analyse.h"
 #include "openhd_global_constants.hpp"
 #include "openhd_util.h"
 #ifdef OHD_ENABLE_DEVOURER
@@ -61,9 +62,11 @@ void WBLink::perform_nexmon_scan(
           reported_frequency = static_cast<int>(frequency);
         }, nullptr);
     rx->rx_register_stream_handler(handler);
-    const auto channels = openhd::wb::get_scan_channels_frequencies(
+    auto channels = openhd::wb::get_scan_channels_frequencies(
         m_broadcast_cards.at(0), params.channels_to_scan);
     if (channels.empty()) throw std::runtime_error("No channels to scan");
+    if(m_settings->get_settings().wb_enable_esp_analyse)
+      if(const auto esp=openhd::latest_esp_analysis()) openhd::prioritize_esp_channels(channels,*esp);
     size_t tuned_channels = 0;
     for (size_t i = 0; i < channels.size(); ++i) {
       const auto frequency = channels[i].frequency;

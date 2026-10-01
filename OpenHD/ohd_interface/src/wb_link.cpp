@@ -55,6 +55,7 @@
 #include "wb_link_rate_helper.hpp"
 #include "wifi_card.h"
 #include "nexmon_scout.h"
+#include "esp_analyse.h"
 
 static constexpr auto WB_LINK_ARM_CHANGED_TX_POWER_TAG = "wb_link_tx_power";
 int complainOnce = 0;
@@ -1755,6 +1756,13 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
                            cb_dev_air_set_high_retransmit_count}});
   }
   if (m_profile.is_ground()) {
+    ret.push_back(Setting{"ESP_ANALYSE", openhd::IntSetting{(int)settings.wb_enable_esp_analyse,
+        [this](std::string, int value) {
+          if (!validate_yes_or_no(value)) return false;
+          m_settings->unsafe_get_settings().wb_enable_esp_analyse = value;
+          m_settings->persist();
+          return true;
+        }}});
     // We display the total n of detected RX cards such that users can validate
     // their multi rx setup(s) if there is more than one rx card detected (Note:
     // air always has exactly one monitor mode wi-fi card)
@@ -2907,11 +2915,17 @@ void WBLink::perform_channel_scan(
     return;
   }
   const WiFiCard& card = m_broadcast_cards.at(0);
-  const auto channels_to_scan = openhd::wb::get_scan_channels_frequencies(
+  auto channels_to_scan = openhd::wb::get_scan_channels_frequencies(
       card, scan_channels_params.channels_to_scan);
   if (channels_to_scan.empty()) {
     m_console->warn("No channels to scan, return early");
     return;
+  }
+  if (m_settings->get_settings().wb_enable_esp_analyse) {
+    if (const auto esp=openhd::latest_esp_analysis()) {
+      openhd::prioritize_esp_channels(channels_to_scan,*esp);
+      m_console->info("ESP discovery: {} RF candidates first, then legacy fallback",esp->priority_mhz.size());
+    } else m_console->warn("ESP analysis unavailable/stale; using legacy channel search");
   }
   // const auto channel_widths_to_scan=
   //         openhd::wb::get_scan_channels_bandwidths(scan_channels_params.check_20Mhz_channel_width_if_card_supports,
@@ -3083,6 +3097,27 @@ void WBLink::perform_channel_scan(
 }
 
 void WBLink::perform_channel_analyze(int channels_to_scan) {
+  if (m_settings->get_settings().wb_enable_esp_analyse) {
+    if (const auto esp=openhd::latest_esp_analysis()) {
+      const auto allowed=openhd::wb::get_analyze_channels_frequencies(m_broadcast_cards.at(0),channels_to_scan);
+      openhd::LinkActionHandler::AnalyzeChannelsResult result{};
+      result.rf_sampled_busy=true;
+      size_t i=0;
+      for (const auto& channel:allowed) {
+        const auto found=std::find_if(esp->channels.begin(),esp->channels.end(),[&](const auto& c){return c.frequency_mhz==channel.frequency;});
+        if(found==esp->channels.end() || i>=result.channels_mhz.size()) continue;
+        result.channels_mhz[i]=found->frequency_mhz;
+        result.rf_busy_centipercent[i++]=found->busy_centipercent;
+      }
+      if(i>0) {
+        result.progress=100;
+        openhd::LinkActionHandler::instance().add_analyze_result(result);
+        m_console->info("ESP background analysis: {} channels, primary radio unchanged",i);
+        return;
+      }
+    }
+    m_console->warn("ESP analysis unavailable for requested band; using legacy analysis");
+  }
   if (openhd::NexmonScout::installed()) {
     perform_nexmon_analyze(channels_to_scan);
     return;

@@ -177,6 +177,7 @@ struct WBLinkSettings {
   // Devourer Air only: reserve card 1 as a non-disruptive channel scout and
   // migrate the live link when a persistently cleaner channel is found.
   bool wb_enable_adaptive_channel = false;
+  bool wb_enable_esp_analyse = false;
   // Devourer owns the Wi-Fi FHSS clock/control channel. It is armed here but
   // only runs while an independent telemetry uplink (for example mLRS UART)
   // is confirmed live.

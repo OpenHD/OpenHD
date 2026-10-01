@@ -306,7 +306,10 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
         "BITRATE_MBITS",
         openhd::IntSetting{
             static_cast<int>(get_settings().h26x_bitrate_kbits / 1000),
-            c_bitrate}});
+            c_bitrate,
+            [this]() {
+              return get_settings().h26x_bitrate_kbits / 1000;
+            }}});
   }
   if (true) {
     auto c_keyframe_interval = [this](std::string, int value) {

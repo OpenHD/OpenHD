@@ -27,7 +27,8 @@ class MavlinkParameterSet {
   bool add_new_parameter(
       const std::string& param_id, ParamValue value,
       std::function<bool(std::string id, ParamValue requested_value)>
-          change_callback = nullptr);
+          change_callback = nullptr,
+      bool apply_same_value = false);
   /**
    * Possible return codes for performing a update operation on an existing
    * parameter.
@@ -49,7 +50,9 @@ class MavlinkParameterSet {
    * @return one of the results above.
    */
   UpdateExistingParamResult update_existing_parameter(
-      const std::string& param_id, const ParamValue& value);
+      const std::string& param_id, const ParamValue& value,
+      // Internal readback refreshes update only the cache.
+      bool invoke_callback = true);
   // This is how we publicly expose parameters - with a unique param_id as well
   // as a unique param_index. The param_index can be different on extended or
   // non-extended protocol.
@@ -111,6 +114,7 @@ class MavlinkParameterSet {
     ParamValue value;
     std::function<bool(std::string id, ParamValue requested_value)>
         change_callback;
+    bool apply_same_value = false;
   };
   friend std::ostream& operator<<(
       std::ostream& strm, const MavlinkParameterSet::InternalParameter& obj);
