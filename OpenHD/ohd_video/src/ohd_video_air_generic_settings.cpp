@@ -23,6 +23,8 @@
 
 #include "ohd_video_air_generic_settings.h"
 
+#include <stdexcept>
+
 #include "camera.hpp"
 #include "include_json.hpp"
 #include "openhd_platform.h"
@@ -47,9 +49,16 @@ struct SysutilCameraOverrides {
 
 static SysutilCameraOverrides get_sysutil_camera_overrides() {
   SysutilCameraOverrides overrides{};
-  const auto settings_opt = openhd::request_sysutil_settings();
+  std::optional<openhd::SysutilSettings> settings_opt;
+  for (int attempt = 0; attempt < 3 && !settings_opt.has_value(); ++attempt) {
+    settings_opt =
+        openhd::request_sysutil_settings(std::chrono::seconds(2));
+  }
   if (!settings_opt.has_value()) {
-    return overrides;
+    // init() persists create_default() immediately. A temporary IPC failure
+    // must not permanently replace first-boot provisioning with HDMI defaults.
+    throw std::runtime_error(
+        "Cannot initialize camera settings: SysUtils settings unavailable");
   }
 
   if (settings_opt->has_camera_type &&
