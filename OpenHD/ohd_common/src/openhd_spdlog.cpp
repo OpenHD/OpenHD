@@ -318,7 +318,7 @@ std::string openhd::log::persistent_log_directory() {
   if (const char* configured = std::getenv("OPENHD_PERSISTENT_LOG_DIR")) {
     if (*configured) return configured;
   }
-  return std::string(getVideoPath()) + "logs/openhd";
+  return (std::filesystem::path(getVideoPath()) / "logs" / "openhd").string();
 }
 
 bool openhd::log::persistent_logging_enabled() {
@@ -345,8 +345,8 @@ void openhd::log::initialize_persistent_logging() {
   const auto control = log_control_directory();
   const bool disabled = OHDFilesystemUtil::exists(
       (control / "disable_logs.txt").string());
-  const bool development = OHDFilesystemUtil::exists(
-      development_image_marker().string());
+  const bool development = OPENHD_DEVELOPMENT_BUILD ||
+      OHDFilesystemUtil::exists(development_image_marker().string());
   const bool requested =
       OHDFilesystemUtil::exists((control / "enable_logs.txt").string()) ||
       std::getenv("OPENHD_FORCE_PERSISTENT_LOGS") != nullptr ||

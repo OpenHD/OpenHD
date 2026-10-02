@@ -59,9 +59,10 @@ std::shared_ptr<spdlog::logger> get_default();
 // before main() and use the same level for loggers created afterwards.
 void enable_debug_logging_for_dashboard();
 
-// Persistent diagnostic logs are enabled by default on development images.
-// Release images can opt in with /Config/openhd/enable_logs.txt and opt out
-// with /Config/openhd/disable_logs.txt. Call after sysutils mounted storage.
+// Persistent diagnostic logs are enabled by default on development builds and
+// images, under the recordings directory's logs/openhd subdirectory. Opt in
+// with /Config/openhd/enable_logs.txt or opt out with disable_logs.txt.
+// Call after sysutils mounted storage.
 void initialize_persistent_logging();
 bool persistent_logging_enabled();
 std::string persistent_log_directory();
