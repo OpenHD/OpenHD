@@ -235,6 +235,17 @@
       ]
     },
     {
+      "key": "X_CAM_TYPE_RPI_LIBCAMERA_IMX415",
+      "id": 48,
+      "name": "IMX415",
+      "ui_label": "IMX415 (2-lane binning)",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 60},
+        {"width": 1920, "height": 1080, "fps": 30},
+        {"width": 1920, "height": 1080, "fps": 60}
+      ]
+    },
+    {
       "key": "X_CAM_TYPE_RPI_V4L2_VEYE_2MP",
       "id": 60,
       "name": "VEYE_2MP",
@@ -843,6 +854,11 @@
       ]
     },
     {
+      "key": "RPI_SONY",
+      "name": "SONY",
+      "cameras": ["X_CAM_TYPE_RPI_LIBCAMERA_IMX415"]
+    },
+    {
       "key": "RPI_VEYE",
       "name": "VEYE",
       "cameras": [
@@ -1021,15 +1037,15 @@
   "platform_choices": [
     {
       "platform": "X_PLATFORM_TYPE_RPI_OLD",
-      "manufacturers": ["RPI_ARDUCAM", "RPI_VEYE", "RPI_RPIF", "RPI_HDMI", "IP_CAMERA", "USB", "DEBUG"]
+      "manufacturers": ["RPI_ARDUCAM", "RPI_SONY", "RPI_VEYE", "RPI_RPIF", "RPI_HDMI", "IP_CAMERA", "USB", "DEBUG"]
     },
     {
       "platform": "X_PLATFORM_TYPE_RPI_4",
-      "manufacturers": ["RPI_ARDUCAM", "RPI_VEYE", "RPI_RPIF", "RPI_HDMI", "IP_CAMERA", "USB", "DEBUG"]
+      "manufacturers": ["RPI_ARDUCAM", "RPI_SONY", "RPI_VEYE", "RPI_RPIF", "RPI_HDMI", "IP_CAMERA", "USB", "DEBUG"]
     },
     {
       "platform": "X_PLATFORM_TYPE_RPI_CM4",
-      "manufacturers": ["RPI_ARDUCAM", "RPI_VEYE", "RPI_RPIF", "RPI_HDMI", "IP_CAMERA", "USB", "DEBUG"]
+      "manufacturers": ["RPI_ARDUCAM", "RPI_SONY", "RPI_VEYE", "RPI_RPIF", "RPI_HDMI", "IP_CAMERA", "USB", "DEBUG"]
     },
     {
       "platform": "X_PLATFORM_TYPE_RPI_5",

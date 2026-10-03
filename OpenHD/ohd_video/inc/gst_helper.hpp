@@ -390,8 +390,10 @@ static std::string create_rpi_v4l2_h264_encoder(
   // rpi v4l2 encoder takes bit/s instead of kbit/s
   const int bitrateBitsPerSecond =
       openhd::kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
+  // Match the native libcamera encoder's target-bitrate mode. Strict CBR
+  // stalls the Pi 4 firmware encoder at 1080p despite 30 fps camera capture.
   const auto bitrate_mode_and_value_str = fmt::format(
-      ",video_bitrate_mode=1,video_bitrate={}", bitrateBitsPerSecond);
+      ",video_bitrate_mode=0,video_bitrate={}", bitrateBitsPerSecond);
   std::stringstream ret;
   ret << fmt::format(
       "v4l2h264enc name=rpi_v4l2_encoder "
