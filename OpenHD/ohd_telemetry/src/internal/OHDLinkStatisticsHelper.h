@@ -275,6 +275,8 @@ static MavlinkMessage generate_msg_analyze_channels_progress(
   memcpy(tmp.foreign_packets, progress.foreign_packets.data(),
          sizeof(tmp.foreign_packets));
   if (progress.rf_sampled_busy) {
+    tmp.dummy1=progress.rf_batch_id;
+    tmp.dummy2=(static_cast<uint32_t>(progress.rf_total_channels)<<16)|progress.rf_page_offset;
     tmp.dummy0=0x4553;  // ESP RF metric, not foreign packet counts.
     memcpy(tmp.dummy,progress.rf_busy_centipercent.data(),sizeof(tmp.dummy));
   }

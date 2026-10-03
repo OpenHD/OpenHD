@@ -1,3 +1,4 @@
+#include <cmath>
 /******************************************************************************
  * OpenHD
  *
@@ -227,13 +228,6 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mav_wb_stats() {
                         generate_msg_openhd_wifibroadcast_supported_channels(
                             m_sys_id, m_comp_id, channels));
     }
-    auto progress_x =
-        openhd::LinkActionHandler::instance().get_analyze_results();
-    for (auto& progress : progress_x) {
-      ret.push_back(
-          openhd::LinkStatisticsHelper::generate_msg_analyze_channels_progress(
-              m_sys_id, m_comp_id, progress));
-    }
     auto progress_y =
         openhd::LinkActionHandler::instance().get_scan_channels_progress();
     for (auto& progress : progress_y) {
@@ -242,6 +236,13 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mav_wb_stats() {
               m_sys_id, m_comp_id, progress));
     }
   }
+    auto progress_x =
+        openhd::LinkActionHandler::instance().get_analyze_results();
+    for (auto& progress : progress_x) {
+      ret.push_back(
+          openhd::LinkStatisticsHelper::generate_msg_analyze_channels_progress(
+              m_sys_id, m_comp_id, progress));
+    }
   return ret;
 }
 
@@ -812,23 +813,11 @@ void OHDMainComponent::process_command_self(
           ack_command(source_sys_id, source_comp_id, command.command, success));
     }
   } else if (command.command == OPENHD_CMD_INITIATE_CHANNEL_ANALYZE) {
-    if (RUNS_ON_AIR) {
-      m_console->debug("Scan channels is only a feature for ground unit");
-      return;
-    } else {
-      const int channels_to_scan = static_cast<uint32_t>(command.param1);
-      m_console->debug("OPENHD_CMD_INITIATE_CHANNEL_ANALYZE {}",
-                       channels_to_scan);
-      bool success = false;
-      if (openhd::LinkActionHandler::instance().wb_cmd_analyze_channels &&
-              channels_to_scan == 0 ||
-          channels_to_scan == 1 || channels_to_scan == 2) {
-        success = openhd::LinkActionHandler::instance().wb_cmd_analyze_channels(
-            channels_to_scan);
-      }
-      message_buffer.push_back(
-          ack_command(source_sys_id, source_comp_id, command.command, success));
-    }
+    const auto callback=openhd::LinkActionHandler::instance().wb_cmd_analyze_channels;
+    const bool valid=std::isfinite(command.param1) && command.param1>=0 && command.param1<=2 && std::floor(command.param1)==command.param1;
+    const int channels_to_scan=valid ? static_cast<int>(command.param1) : -1;
+    const bool success=valid && callback && callback(channels_to_scan);
+    message_buffer.push_back(ack_command(source_sys_id,source_comp_id,command.command,success));
   } else {
     m_console->debug("Unknown command {}", command.command);
   }

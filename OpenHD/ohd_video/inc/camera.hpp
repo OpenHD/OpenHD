@@ -79,6 +79,9 @@ struct XCamera {
   bool requires_rpi_veye_pipeline() const {
     return camera_type >= 60 && camera_type < 70;
   }
+  bool supports_legacy_veye_controls() const {
+    return camera_type >= 60 && camera_type <= 63;
+  }
   bool x20_supports_basic_iq_params() const {
     return requires_x20_cedar_pipeline() &&
            camera_type != X_CAM_TYPE_X20_HDZERO_GENERIC;
@@ -153,6 +156,9 @@ struct XCamera {
   }
   // We default to the last supported resolution
   [[nodiscard]] ResolutionFramerate get_default_resolution_fps() const {
+    if (camera_type == X_CAM_TYPE_RPI_V4L2_VEYE_GX_IMX662) {
+      return {1920, 1080, 30};
+    }
     auto supported_resolutions = get_supported_resolutions();
     return supported_resolutions.at(supported_resolutions.size() - 1);
   }

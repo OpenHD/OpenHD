@@ -49,7 +49,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
     h26x_bitrate_kbits, h26x_keyframe_interval, h26x_intra_refresh_type,
     h26x_num_slices, nxp_enable_aud, air_recording, camera_rotation_degree,
     openhd_flip,
-    openhd_iso, veye_framerate, veye_wbmode, veye_cameramode, veye_mshutter, veye_denoise, veye_wdrbtargetbr, openhd_brightness, openhd_sharpness, openhd_saturation, openhd_contrast,
+    openhd_iso, veye_gx_isp, veye_framerate, veye_wbmode, veye_cameramode, veye_mshutter, veye_denoise, veye_wdrbtargetbr, openhd_brightness, openhd_sharpness, openhd_saturation, openhd_contrast,
     // rpi libcamera specific IQ params begin
     rpi_libcamera_ev_value, rpi_libcamera_denoise_index,
     rpi_libcamera_awb_index, rpi_libcamera_metering_index,
@@ -456,6 +456,23 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
         "N_SLICES",
         openhd::IntSetting{get_settings().h26x_num_slices, c_h26x_num_slices}});
   }
+  if (m_camera.camera_type == X_CAM_TYPE_RPI_V4L2_VEYE_GX_IMX662) {
+    for (const auto& control : veye_gx::controls) {
+      const auto current = gx_isp_values.find(control.id);
+      if (current == gx_isp_values.end()) {
+        spdlog::warn("Cannot read GX ISP control {}", control.id);
+        continue;
+      }
+      ret.push_back(openhd::Setting{control.id, openhd::IntSetting{
+          current->second, [this, control](std::string, int value) {
+            if (!veye_gx::set(control, value)) return false;
+            gx_isp_values[control.id] = value;
+            unsafe_get_settings().veye_gx_isp[control.id] = value;
+            persist(false);
+            return true;
+          }}});
+    }
+  }
   // right now only supported by libcamera and (partially) x20
   const bool SUPPORTS_OPENHD_IQ = (m_camera.requires_rpi_libcamera_pipeline() &&
                                    !OHDPlatform::instance().is_rpi5()) ||
@@ -485,7 +502,7 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
     ret.push_back(openhd::Setting{
         "BRIGHTNESS",
         openhd::IntSetting{get_settings().openhd_brightness, c_brightness}});
-    if (m_camera.requires_rpi_mmal_pipeline() || m_camera.requires_rpi_libcamera_pipeline() || m_camera.requires_rpi_veye_pipeline()) {
+    if (m_camera.requires_rpi_mmal_pipeline() || m_camera.requires_rpi_libcamera_pipeline() || m_camera.supports_legacy_veye_controls()) {
       auto cb_iso = [this](std::string, int value) {
         return set_openhd_iso(value);
       };
@@ -493,7 +510,7 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
           "ISO",
           openhd::IntSetting{get_settings().openhd_iso, cb_iso}});
     }
-    if (m_camera.requires_rpi_veye_pipeline()) {
+    if (m_camera.supports_legacy_veye_controls()) {
       auto cb_framerate = [this](std::string, int value) {
         return set_veye_framerate(value);
       };

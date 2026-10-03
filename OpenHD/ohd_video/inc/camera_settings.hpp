@@ -25,6 +25,7 @@
 #define OPENHD_CAMERA_H
 
 #include <string>
+#include <map>
 
 #include "camera_enums.hpp"
 #include "validate_settings.h"
@@ -213,6 +214,9 @@ struct CameraSettings {
   int openhd_contrast = OPENHD_CONTRAST_DEFAULT;
   int openhd_sharpness = OPENHD_SHARPNESS_DEFAULT;
   int openhd_iso = 0;
+  // Only explicitly changed GX ISP settings are restored on startup.
+  // An empty map preserves the camera's own defaults on first use.
+  std::map<std::string, int> veye_gx_isp;
   int veye_framerate = 30;
   int veye_wbmode = 0x1B; // auto by default
   int veye_cameramode = 0x0;

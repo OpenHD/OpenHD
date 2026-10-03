@@ -41,6 +41,7 @@
 #include "openhd_util.h"
 #include "openhd_sock.h"
 #include "usb_thermal_cam_helper.h"
+#include "veye_gx_controls.hpp"
 
 // Holds the immutable (camera) and mutable (camera_settings) information about
 // a camera. Changes in the camera
@@ -55,6 +56,15 @@ class CameraHolder :
             openhd::get_video_settings_directory()) {
     // read previous settings or create default ones
     init();
+    if (m_camera.camera_type == X_CAM_TYPE_RPI_V4L2_VEYE_GX_IMX662) {
+      restore_gx_isp_controls();
+      // Read the ISP before capture/telemetry threads start. Its two-step
+      // register reads must not overlap the kernel's frame-rate setup.
+      for (const auto& control : veye_gx::controls) {
+        const auto current = veye_gx::read(control);
+        if (current) gx_isp_values[control.id] = *current;
+      }
+    }
     // Hornet and Rekindle expose fixed CSI modes. Migrate values persisted by
     // older releases so CamInfo and RESOLUTION_FPS match the native capture.
     if (m_camera.camera_type == X_CAM_TYPE_ORQA_HORNET ||
@@ -72,6 +82,27 @@ class CameraHolder :
     }
   }
   [[nodiscard]] const XCamera& get_camera() const { return m_camera; }
+  std::map<std::string, int> gx_isp_values;
+  void restore_gx_isp_controls() {
+    // Apply after configuring frame rate: firmware can reject a shutter longer
+    // than its current frame period when powering up at the default 60 fps.
+    if (m_camera.camera_type != X_CAM_TYPE_RPI_V4L2_VEYE_GX_IMX662) return;
+    std::lock_guard<std::mutex> lock(veye_gx::mutex);
+    const auto fps = get_settings().streamed_video_format.framerate;
+    if (OHDUtil::run_command("v4l2-ctl", {"-d", "/dev/video0",
+            "--set-ctrl=frame_rate=" + std::to_string(fps)}) != 0) {
+      spdlog::warn("Cannot set GX frame rate to {}", fps);
+    }
+    veye_gx::Device device;
+    for (const auto& control : veye_gx::controls) {
+      const auto saved = get_settings().veye_gx_isp.find(control.id);
+      if (saved != get_settings().veye_gx_isp.end() &&
+          (saved->second < control.min || saved->second > control.max ||
+           !device.write(control.reg, saved->second))) {
+        spdlog::warn("Cannot restore GX ISP control {}", control.id);
+      }
+    }
+  }
   using VIDEO_BITRATE_CHANGED_CALLBACK = std::function<void(int bitrate_kbits)>;
   using VIDEO_QP_CHANGED_CALLBACK = std::function<void(int qp_min, int qp_max)>;
   using VIDEO_ROI_CHANGED_CALLBACK = std::function<void()>;
@@ -521,7 +552,7 @@ class CameraHolder :
   bool set_openhd_iso(int value) {
     if (value < 0) return false;
     unsafe_get_settings().openhd_iso = value;
-    if (m_camera.requires_rpi_veye_pipeline()) {
+    if (m_camera.supports_legacy_veye_controls()) {
         std::stringstream cmd;
         cmd << "veye_mipi_i2c.sh -w -f new_mgain -p1 " << value;
         system(cmd.str().c_str());
@@ -532,7 +563,7 @@ class CameraHolder :
   bool set_veye_wbmode(int value) {
     if (value < 0) return false;
     unsafe_get_settings().veye_wbmode = value;
-    if (m_camera.requires_rpi_veye_pipeline()) {
+    if (m_camera.supports_legacy_veye_controls()) {
         std::stringstream cmd;
         cmd << "veye_mipi_i2c.sh -w -f wbmode -p1 0x" << std::hex << value;
         system(cmd.str().c_str());
@@ -543,7 +574,7 @@ class CameraHolder :
   bool set_veye_cameramode(int value) {
     if (value < 0) return false;
     unsafe_get_settings().veye_cameramode = value;
-    if (m_camera.requires_rpi_veye_pipeline()) {
+    if (m_camera.supports_legacy_veye_controls()) {
         std::stringstream cmd;
         cmd << "veye_mipi_i2c.sh -w -f cameramode -p1 0x" << std::hex << value;
         system(cmd.str().c_str());
@@ -554,7 +585,7 @@ class CameraHolder :
   bool set_veye_denoise(int value) {
     if (value < 0) return false;
     unsafe_get_settings().veye_denoise = value;
-    if (m_camera.requires_rpi_veye_pipeline()) {
+    if (m_camera.supports_legacy_veye_controls()) {
         std::stringstream cmd;
         cmd << "veye_mipi_i2c.sh -w -f denoise -p1 0x" << std::hex << value;
         system(cmd.str().c_str());
@@ -565,7 +596,7 @@ class CameraHolder :
   bool set_veye_wdrbtargetbr(int value) {
     if (value < 0) return false;
     unsafe_get_settings().veye_wdrbtargetbr = value;
-    if (m_camera.requires_rpi_veye_pipeline()) {
+    if (m_camera.supports_legacy_veye_controls()) {
         std::stringstream cmd;
         cmd << "veye_mipi_i2c.sh -w -f wdrbtargetbr -p1 0x" << std::hex << value;
         system(cmd.str().c_str());
@@ -576,7 +607,7 @@ class CameraHolder :
   bool set_veye_mshutter(int value) {
     if (value < 0) return false;
     unsafe_get_settings().veye_mshutter = value;
-    if (m_camera.requires_rpi_veye_pipeline()) {
+    if (m_camera.supports_legacy_veye_controls()) {
         std::stringstream cmd;
         cmd << "veye_mipi_i2c.sh -w -f mshutter -p1 0x" << std::hex << value;
         system(cmd.str().c_str());
@@ -587,7 +618,7 @@ class CameraHolder :
   bool set_veye_framerate(int value) {
     if (value < 0) return false;
     unsafe_get_settings().veye_framerate = value;
-    if (m_camera.requires_rpi_veye_pipeline()) {
+    if (m_camera.supports_legacy_veye_controls()) {
         std::stringstream cmd;
         cmd << "veye_mipi_i2c.sh -w -f nodf -p1 " << value;
         system(cmd.str().c_str());
@@ -598,7 +629,7 @@ class CameraHolder :
   bool set_openhd_brightness(int value) {
     if (!openhd::validate_openhd_brightness(value)) return false;
     unsafe_get_settings().openhd_brightness = value;
-    if (m_camera.requires_rpi_veye_pipeline()) {
+    if (m_camera.supports_legacy_veye_controls()) {
         std::stringstream cmd;
         cmd << "veye_mipi_i2c.sh -w -f brightness -p1 0x" << std::hex << (value / 2);
         system(cmd.str().c_str());
@@ -609,7 +640,7 @@ class CameraHolder :
   bool set_openhd_sharpness(int value) {
     if (!openhd::validate_openhd_sharpness(value)) return false;
     unsafe_get_settings().openhd_sharpness = value;
-    if (m_camera.requires_rpi_veye_pipeline()) {
+    if (m_camera.supports_legacy_veye_controls()) {
         std::stringstream cmd;
         cmd << "veye_mipi_i2c.sh -w -f sharppen -p1 0x" << std::hex << (value / 2) << " -p2 0x" << std::hex << (value / 2);
         system(cmd.str().c_str());
@@ -620,7 +651,7 @@ class CameraHolder :
   bool set_openhd_contrast(int value) {
     if (!openhd::validate_openhd_contrast(value)) return false;
     unsafe_get_settings().openhd_contrast = value;
-    if (m_camera.requires_rpi_veye_pipeline()) {
+    if (m_camera.supports_legacy_veye_controls()) {
         std::stringstream cmd;
         cmd << "veye_mipi_i2c.sh -w -f contrast -p1 0x" << std::hex << ((value * 255) / 200);
         system(cmd.str().c_str());
@@ -631,7 +662,7 @@ class CameraHolder :
   bool set_openhd_saturation(int value) {
     if (!openhd::validate_openhd_saturation(value)) return false;
     unsafe_get_settings().openhd_saturation = value;
-    if (m_camera.requires_rpi_veye_pipeline()) {
+    if (m_camera.supports_legacy_veye_controls()) {
         std::stringstream cmd;
         cmd << "veye_mipi_i2c.sh -w -f saturation -p1 0x" << std::hex << (value / 2);
         system(cmd.str().c_str());

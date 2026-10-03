@@ -360,6 +360,8 @@ class LinkActionHandler {
     std::array<uint16_t, 30> channels_mhz{0};
     std::array<uint16_t, 30> foreign_packets{0};
     bool rf_sampled_busy = false;
+    uint32_t rf_batch_id = 0;
+    uint16_t rf_page_offset = 0, rf_total_channels = 0;
     std::array<uint16_t, 30> rf_busy_centipercent{0};
     int8_t progress;
   };

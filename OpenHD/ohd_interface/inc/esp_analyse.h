@@ -26,29 +26,33 @@ inline std::optional<EspAnalysis> read_esp_analysis(
     const auto age=now_ms-j.at("generated_unix_ms").get<int64_t>();
     const auto& d=j.at("discovery");
     if (d.at("schema")!="openhd.rf_discovery" || d.at("version")!=1) return std::nullopt;
-    const auto expiry=std::min<int64_t>(3000,std::min(j.at("expires_after_ms").get<int64_t>(),d.at("expires_after_ms").get<int64_t>()));
+    const auto expiry=std::min<int64_t>(5000,j.at("expires_after_ms").get<int64_t>());
+    const auto discovery_expiry=std::min<int64_t>(3000,d.at("expires_after_ms").get<int64_t>());
     if (age<0 || expiry<=0 || age>=expiry) return std::nullopt;
     EspAnalysis result;
+    std::vector<int> fresh_discovery_channels;
     for (const auto& c:j.at("channels")) {
       if (!c.contains("age_seconds") || !c.contains("sampled_busy_percent") || c.at("sampled_busy_percent").is_null()) continue;
       const double channel_age=c.at("age_seconds").get<double>();
       const double busy=c.at("sampled_busy_percent").get<double>();
-      if (!std::isfinite(channel_age) || channel_age<0 || channel_age+age/1000.0>3 || !std::isfinite(busy) || busy<0 || busy>100) continue;
+      const double effective_age=channel_age+age/1000.0;
+      if (!std::isfinite(channel_age) || channel_age<0 || effective_age*1000>=expiry || !std::isfinite(busy) || busy<0 || busy>100) continue;
       bool invalid=false;
       for (const auto& reason:c.at("reason_codes"))
         if (reason=="STALE_OR_GAIN_UNSTABLE" || reason=="ADC_CLIPPING") invalid=true;
       const auto hz=c.at("frequency_hz").get<int64_t>();
-      if (invalid || hz%1000000 || hz<2000000000LL || hz>6000000000LL) continue;
+      if (invalid || hz%1000000 || hz<2000000000LL || hz>6100000000LL) continue;
       const int mhz=static_cast<int>(hz/1000000);
       if (std::any_of(result.channels.begin(),result.channels.end(),[&](const auto& v){return v.frequency_mhz==mhz;})) continue;
       result.channels.push_back({mhz,static_cast<uint16_t>(std::lround(busy*100))});
+      if(discovery_expiry>0 && effective_age*1000<discovery_expiry) fresh_discovery_channels.push_back(mhz);
     }
     for (const auto& v:d.at("priority_frequencies_hz")) {
       const auto hz=v.get<int64_t>();
       if(hz%1000000) continue;
       const int mhz=static_cast<int>(hz/1000000);
       if(std::find(result.priority_mhz.begin(),result.priority_mhz.end(),mhz)!=result.priority_mhz.end()) continue;
-      if(std::any_of(result.channels.begin(),result.channels.end(),[&](const auto& c){return c.frequency_mhz==mhz;})) result.priority_mhz.push_back(mhz);
+      if(std::find(fresh_discovery_channels.begin(),fresh_discovery_channels.end(),mhz)!=fresh_discovery_channels.end()) result.priority_mhz.push_back(mhz);
     }
     if(result.channels.empty()) return std::nullopt;
     return result;

@@ -1258,6 +1258,23 @@ bool WBLink::request_start_scan_channels(
 }
 
 bool WBLink::request_start_analyze_channels(int channels_to_scan) {
+  if(channels_to_scan<0 || channels_to_scan>2) return false;
+  if(m_profile.is_air) {
+    const auto esp=m_settings->get_settings().wb_enable_esp_analyse ? openhd::latest_esp_analysis() : std::nullopt;
+    if(!esp) {
+      m_console->warn("Air channel analysis requires a connected ESP analyser");
+      return false;
+    }
+    const auto& card=m_broadcast_cards.at(0);
+    const auto allowed=channels_to_scan==2 ? openhd::frequencies_to_channels(card.supported_frequencies_5G) :
+        openhd::wb::get_analyze_channels_frequencies(card,channels_to_scan);
+    if(std::none_of(allowed.begin(),allowed.end(),[&](const auto& channel) {
+      return std::any_of(esp->channels.begin(),esp->channels.end(),[&](const auto& c){return c.frequency_mhz==channel.frequency;});
+    })) {
+      m_console->warn("Air ESP analysis has no fresh measurements in the requested band");
+      return false;
+    }
+  }
   auto work_item = std::make_shared<WorkItem>(
       "ANALYZE_CHANNELS",
       [this, channels_to_scan]() { perform_channel_analyze(channels_to_scan); },
@@ -1755,7 +1772,6 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
         openhd::IntSetting{(int)settings.wb_dev_air_set_high_retransmit_count,
                            cb_dev_air_set_high_retransmit_count}});
   }
-  if (m_profile.is_ground()) {
     ret.push_back(Setting{"ESP_ANALYSE", openhd::IntSetting{(int)settings.wb_enable_esp_analyse,
         [this](std::string, int value) {
           if (!validate_yes_or_no(value)) return false;
@@ -1763,6 +1779,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
           m_settings->persist();
           return true;
         }}});
+  if (m_profile.is_ground()) {
     // We display the total n of detected RX cards such that users can validate
     // their multi rx setup(s) if there is more than one rx card detected (Note:
     // air always has exactly one monitor mode wi-fi card)
@@ -3099,24 +3116,38 @@ void WBLink::perform_channel_scan(
 void WBLink::perform_channel_analyze(int channels_to_scan) {
   if (m_settings->get_settings().wb_enable_esp_analyse) {
     if (const auto esp=openhd::latest_esp_analysis()) {
-      const auto allowed=openhd::wb::get_analyze_channels_frequencies(m_broadcast_cards.at(0),channels_to_scan);
-      openhd::LinkActionHandler::AnalyzeChannelsResult result{};
-      result.rf_sampled_busy=true;
-      size_t i=0;
-      for (const auto& channel:allowed) {
+      const auto& card=m_broadcast_cards.at(0);
+      const auto allowed=channels_to_scan==2 ? openhd::frequencies_to_channels(card.supported_frequencies_5G) :
+          openhd::wb::get_analyze_channels_frequencies(card,channels_to_scan);
+      std::vector<openhd::EspRfChannel> measured;
+      for(const auto& channel:allowed) {
         const auto found=std::find_if(esp->channels.begin(),esp->channels.end(),[&](const auto& c){return c.frequency_mhz==channel.frequency;});
-        if(found==esp->channels.end() || i>=result.channels_mhz.size()) continue;
-        result.channels_mhz[i]=found->frequency_mhz;
-        result.rf_busy_centipercent[i++]=found->busy_centipercent;
+        if(found!=esp->channels.end()) measured.push_back(*found);
       }
-      if(i>0) {
-        result.progress=100;
-        openhd::LinkActionHandler::instance().add_analyze_result(result);
-        m_console->info("ESP background analysis: {} channels, primary radio unchanged",i);
+      if(!measured.empty()) {
+        static uint32_t sequence=0;
+        const uint32_t batch=(m_profile.is_air ? 0x40000000u : 0x20000000u) | (++sequence & 0x1fffffffu);
+        for(size_t offset=0;offset<measured.size();offset+=30) {
+          openhd::LinkActionHandler::AnalyzeChannelsResult result{};
+          result.rf_sampled_busy=true; result.rf_batch_id=batch;
+          result.rf_page_offset=offset; result.rf_total_channels=measured.size();
+          const size_t count=std::min<size_t>(30,measured.size()-offset);
+          for(size_t i=0;i<count;i++) {
+            result.channels_mhz[i]=measured[offset+i].frequency_mhz;
+            result.rf_busy_centipercent[i]=measured[offset+i].busy_centipercent;
+          }
+          result.progress=100*(offset+count)/measured.size();
+          openhd::LinkActionHandler::instance().add_analyze_result(result);
+        }
+        m_console->info("ESP background analysis: {} channels, primary radio unchanged",measured.size());
         return;
       }
     }
     m_console->warn("ESP analysis unavailable for requested band; using legacy analysis");
+  }
+  if(m_profile.is_air) {
+    m_console->warn("ESP analysis lost availability; Air primary radio remains unchanged");
+    return;
   }
   if (openhd::NexmonScout::installed()) {
     perform_nexmon_analyze(channels_to_scan);

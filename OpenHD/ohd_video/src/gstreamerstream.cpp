@@ -940,6 +940,9 @@ std::string GStreamerStream::create_source_encode_pipeline(
   } else if (camera.requires_rpi_veye_pipeline()) {
     openhd::log::get_default()->debug("Camera requires RPI Veye pipeline.");
     auto bus = "/dev/video0";
+    if (camera.camera_type == X_CAM_TYPE_RPI_V4L2_VEYE_GX_IMX662) {
+      m_camera_holder->restore_gx_isp_controls();
+    }
     pipeline << OHDGstHelper::create_veye_vl2_stream(setting, bus);
   } else if (camera.requires_rockchip3_mpp_pipeline()) {
     openhd::log::get_default()->debug(

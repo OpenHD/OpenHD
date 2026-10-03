@@ -272,6 +272,16 @@
       ]
     },
     {
+      "key": "X_CAM_TYPE_RPI_V4L2_VEYE_GX_IMX662",
+      "id": 64,
+      "name": "VEYE_GX_IMX662",
+      "ui_label": "GX/GXC IMX662 (ISP)",
+      "resolutions": [
+        {"width": 1920, "height": 1080, "fps": 30},
+        {"width": 1920, "height": 1080, "fps": 60}
+      ]
+    },
+    {
       "key": "X_CAM_TYPE_X20_HDZERO_GENERIC",
       "id": 70,
       "name": "X20_HDZERO_GENERIC",
@@ -839,7 +849,8 @@
         "X_CAM_TYPE_RPI_V4L2_VEYE_2MP",
         "X_CAM_TYPE_RPI_V4L2_VEYE_CSIMX307",
         "X_CAM_TYPE_RPI_V4L2_VEYE_CSSC132",
-        "X_CAM_TYPE_RPI_V4L2_VEYE_MVCAM"
+        "X_CAM_TYPE_RPI_V4L2_VEYE_MVCAM",
+        "X_CAM_TYPE_RPI_V4L2_VEYE_GX_IMX662"
       ]
     },
     {
