@@ -208,7 +208,8 @@ std::vector<std::string> openhd::wb::get_card_names(
 bool openhd::wb::any_card_supports_stbc_ldpc_sgi(
     const std::vector<WiFiCard>& cards) {
   for (const auto& card : cards) {
-    if (card.type == WiFiCardType::OPENHD_EMULATED) {
+    if (card.devourer_wb_enabled ||
+        card.type == WiFiCardType::OPENHD_EMULATED) {
       return true;
     }
     if (card.type == WiFiCardType::OPENHD_RTL_88X2AU ||
@@ -403,6 +404,13 @@ bool openhd::wb::validate_air_channel_width_change(
     m_console->warn("Invalid channel width {}", new_channel_width);
     return false;
   }
+  if ((new_channel_width == 5 &&
+       !wifi_card_supports_5Mhz_channel_width_injection(card)) ||
+      (new_channel_width == 10 &&
+       !wifi_card_supports_10Mhz_channel_width_injection(card))) {
+    m_console->warn("Cannot change channel width, not supported by card");
+    return false;
+  }
   // We only have one tx card, check if it supports injecting with 40Mhz channel
   // width:
   if (new_channel_width == 40 &&
@@ -436,7 +444,8 @@ int openhd::wb::calculate_bitrate_for_wifi_config_kbits(
   const auto wifi_space = openhd::get_space_from_frequency(frequency_mhz);
   const int max_rate_for_current_wifi_config_without_adjust =
       get_max_rate_possible(card, wifi_space, mcs_index, channel_width_mhz);
-  if (channel_width_mhz != 10 && channel_width_mhz != 20 &&
+  if (channel_width_mhz != 5 && channel_width_mhz != 10 &&
+      channel_width_mhz != 20 &&
       channel_width_mhz != 40) {
     auto m_console = openhd::log::get_default();
     m_console->warn(

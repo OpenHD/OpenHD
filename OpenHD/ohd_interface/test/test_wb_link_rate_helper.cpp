@@ -33,6 +33,17 @@ int main() {
           card, 5785, 40, 5, 100, false) != 40000)
     return 4;
 
+  // Narrowband must preserve link budgeting and reject kernel-only cards.
+  auto logger = openhd::log::get_default();
+  if (!openhd::wb::validate_air_channel_width_change(5, card, logger) ||
+      openhd::wb::calculate_bitrate_for_wifi_config_kbits(
+          card, 5785, 5, 2, 100, false) != 3800)
+    return 7;
+  card.devourer_wb_enabled = false;
+  card.type = WiFiCardType::OPENHD_RTL_88X2EU;
+  if (openhd::wb::validate_air_channel_width_change(5, card, logger))
+    return 8;
+
   // Exercise a complete clocked RC settings frame and duplicate suppression.
   openhd::wb::RCSettingsProtocol protocol;
   std::array<int, 18> rc{};

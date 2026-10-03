@@ -268,7 +268,8 @@ get_dynamic_bitrate_control_element_in_pipeline(
     ret.encoder = gst_bin_get_by_name(GST_BIN(gst_pipeline), "rpicamsrc");
     ret.property_name = "bitrate";
     ret.takes_kbit = false;
-  } else if (camera.requires_rpi_libcamera_pipeline() &&
+  } else if ((camera.requires_rpi_libcamera_pipeline() ||
+              camera.requires_rpi_veye_pipeline()) &&
              !settings.force_sw_encode && !OHDPlatform::instance().is_rpi5() &&
              settings.streamed_video_format.videoCodec == VideoCodec::H264) {
     ret.encoder =

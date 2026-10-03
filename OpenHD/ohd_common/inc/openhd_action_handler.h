@@ -166,7 +166,7 @@ class LinkActionHandler {
   // of them both) also duplicates the scan time
   struct ScanChannelsParam {
     uint32_t channels_to_scan = 0;
-    // Bitmask of channel widths to scan for (10/20/40/80).
+    // Bitmask of channel widths to scan for (5/10/20/40/80).
     // Use scan_channel_width_bit(width_mhz) to construct.
     uint32_t channel_widths_mask = 0;
     // COMMAND_LONG param3: 0 = primary radio, 1 = passive Nexmon scout.
@@ -176,6 +176,8 @@ class LinkActionHandler {
 
   static constexpr uint32_t scan_channel_width_bit(int width_mhz) {
     switch (width_mhz) {
+      case 5:
+        return 1u << 4;
       case 10:
         return 1u << 0;
       case 20:

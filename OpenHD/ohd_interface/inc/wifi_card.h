@@ -300,7 +300,9 @@ static bool wifi_card_supports_variable_mcs(const WiFiCard& wifi_card) {
 
 static bool wifi_card_supports_5Mhz_channel_width_injection(
     const WiFiCard& wifi_card) {
-  return false;
+  return (wifi_card.devourer_wb_enabled &&
+          wifi_card.type != WiFiCardType::DEVOURER_RTL8733B) ||
+         wifi_card.type == WiFiCardType::OPENHD_EMULATED;
 }
 
 static bool wifi_card_supports_10Mhz_channel_width_injection(

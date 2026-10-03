@@ -425,7 +425,8 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
   if (m_profile.is_ground()) {
     int init_width =
         static_cast<int>(m_settings->get_settings().wb_gnd_rx_channel_width);
-    if (!(init_width == 10 || init_width == 20 || init_width == 40)) {
+    if (!(init_width == 5 || init_width == 10 ||
+          init_width == 20 || init_width == 40)) {
       init_width = openhd::DEFAULT_GND_RX_CHANNEL_WIDTH;
     }
     m_gnd_curr_rx_channel_width = init_width;
@@ -476,16 +477,6 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
   txrx_options.use_devourer =
       openhd::wb::use_devourer_backend(m_broadcast_cards);
   if (txrx_options.use_devourer) {
-    // Devourer broadcast always uses STBC1 + LDPC. Override stale persisted
-    // settings before either data or session-key radiotap header is built.
-    auto& radio_settings = m_settings->unsafe_get_settings();
-    if (radio_settings.wb_enable_stbc != 1 ||
-        !radio_settings.wb_enable_ldpc) {
-      radio_settings.wb_enable_stbc = 1;
-      radio_settings.wb_enable_ldpc = true;
-      m_settings->persist();
-      m_console->info("Devourer requires STBC1 and LDPC for broadcast TX");
-    }
     const auto settings = m_settings->get_settings();
     txrx_options.devourer_frequency_mhz = settings.wb_frequency;
     if (settings.wb_enable_devourer_logging ||
@@ -508,8 +499,10 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
                          : static_cast<int>(settings.wb_gnd_uplink_mcs_index);
     int tx_channel_width = static_cast<int>(settings.wb_air_tx_channel_width);
     if (m_profile.is_ground()) {
-      // Always use 20Mhz for injection on ground
-      tx_channel_width = 20;
+      // Devourer uplink follows the tuned baseband width.
+      tx_channel_width = txrx_options.use_devourer
+                             ? m_gnd_curr_rx_channel_width.load()
+                             : 20;
     }
     // const bool set_flag_tx_no_ack = m_profile.is_ground() ? false :
     // !settings.wb_tx_use_ack;
@@ -860,7 +853,8 @@ bool WBLink::request_set_frequency(int frequency) {
     }
     const int channel_width =
         m_management_gnd &&
-                (m_management_gnd->m_air_reported_curr_channel_width == 10 ||
+                (m_management_gnd->m_air_reported_curr_channel_width == 5 ||
+                 m_management_gnd->m_air_reported_curr_channel_width == 10 ||
                  m_management_gnd->m_air_reported_curr_channel_width == 20 ||
                  m_management_gnd->m_air_reported_curr_channel_width == 40)
             ? m_management_gnd->m_air_reported_curr_channel_width.load()
@@ -1034,7 +1028,7 @@ bool WBLink::request_set_air_tx_channel_width(int channel_width) {
         apply_txpower();
         // Allow the ground to receive the new BW announcement while still on the old width.
         auto announce_delay = std::chrono::milliseconds(300);
-        if (prev_channel_width == 10 || channel_width == 10) {
+        if (prev_channel_width <= 10 || channel_width <= 10) {
           announce_delay = std::chrono::milliseconds(800);
         }
         std::this_thread::sleep_for(announce_delay);
@@ -1322,6 +1316,10 @@ bool WBLink::apply_radio_settings(
 bool WBLink::apply_frequency_and_channel_width(int frequency,
                                                int channel_width_rx,
                                                int channel_width_tx) {
+  // Channel management and rollback callers retain the kernel's 20 MHz
+  // uplink convention. Normalize every Devourer ground retune here.
+  if (m_profile.is_ground() && m_wb_txrx->uses_devourer())
+    channel_width_tx = channel_width_rx;
   m_console->debug("apply_frequency_and_channel_width {}Mhz RX:{}Mhz TX:{}Mhz",
                    frequency, channel_width_rx, channel_width_tx);
   // Weird bug hunting - I hope this makes the driver less likely too crash
@@ -1337,9 +1335,11 @@ bool WBLink::apply_frequency_and_channel_width(int frequency,
                              m_profile.is_air);
   m_tx_header_1->update_channel_width(channel_width_tx);
   // Keep management/session-key packets on 20MHz (if possible) to allow re-sync after BW changes.
-  // For 10MHz operation, we must also transmit management at 10MHz.
+  // Narrowband management must use the same baseband clock as data.
   const int management_channel_width =
-      channel_width_tx < openhd::DEFAULT_GND_RX_CHANNEL_WIDTH
+      m_wb_txrx->uses_devourer() && m_profile.is_ground()
+          ? channel_width_tx
+          : channel_width_tx < openhd::DEFAULT_GND_RX_CHANNEL_WIDTH
           ? channel_width_tx
           : openhd::DEFAULT_GND_RX_CHANNEL_WIDTH;
   m_tx_header_2->update_channel_width(management_channel_width);
@@ -1360,10 +1360,10 @@ bool WBLink::apply_frequency_and_channel_width_from_settings() {
     channel_width_tx = static_cast<int>(settings.wb_air_tx_channel_width);
     channel_width_rx = channel_width_tx;
   } else {
-    // GND always uses 20Mhz channel width for uplink, and listens in the
-    // configured RX width until air reports its width.
+    // Devourer uses the tuned width for uplink; kernel injection stays at
+    // 20 MHz. Listen at the configured width until air reports its width.
     channel_width_rx = m_gnd_curr_rx_channel_width;
-    channel_width_tx = 20;
+    channel_width_tx = m_wb_txrx->uses_devourer() ? channel_width_rx : 20;
   }
   const auto res = apply_frequency_and_channel_width(
       center_frequency, channel_width_rx, channel_width_tx);
@@ -1542,7 +1542,7 @@ void WBLink::rebuild_udp_data_stream() {
   tx_options.block_data_queue_size = 8;
   m_wb_udp_data_tx = std::make_unique<WBDataStreamTxUDP>(
       m_wb_txrx, tx_options, 4, settings.wb_udp_data_input_port,
-      settings.wb_udp_data_fec_percentage, 256);
+      settings.wb_udp_data_fec_percentage, 256, m_tx_header_1);
   m_wb_udp_data_tx->wb_tx->set_encryption(true);
 
   WBStreamRx::Options rx_options{};
@@ -2031,16 +2031,11 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
   }
   const bool any_card_supports_stbc_ldpc_sgi =
       openhd::wb::any_card_supports_stbc_ldpc_sgi(m_broadcast_cards);
-  // These 3 are only supported / known to work on rtl8812au (yet), therefore
-  // only expose them when rtl8812au is used
+  // Expose HT coding controls for adapters whose backend supports them.
   if (any_card_supports_stbc_ldpc_sgi) {
     // STBC - definitely for advanced users, but aparently it can have benefits.
     auto cb_wb_enable_stbc = [this](std::string, int stbc) {
       if (stbc < 0 || stbc > 3) return false;
-      if (m_wb_txrx->uses_devourer() && stbc != 1) {
-        m_console->warn("Devourer broadcast requires STBC1");
-        return false;
-      }
       m_settings->unsafe_get_settings().wb_enable_stbc = stbc;
       m_settings->persist();
       m_tx_header_1->update_stbc(stbc);
@@ -2054,10 +2049,6 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
     // QOpenHD to prevent inexperienced users from changing them
     auto cb_wb_enable_ldpc = [this](std::string, int ldpc) {
       if (!validate_yes_or_no(ldpc)) return false;
-      if (m_wb_txrx->uses_devourer() && ldpc != 1) {
-        m_console->warn("Devourer broadcast requires LDPC");
-        return false;
-      }
       m_settings->unsafe_get_settings().wb_enable_ldpc = ldpc;
       m_settings->persist();
       m_tx_header_1->update_ldpc(ldpc);
@@ -2668,9 +2659,8 @@ void WBLink::wt_perform_rate_adjustment() {
     m_secondary_total_dropped_frames = 0;
     return;
   }
-  // const bool
-  // dropping_many_frames=m_frame_drop_helper.needs_bitrate_reduction();
-  const bool dropping_many_frames = false;
+  const bool dropping_many_frames =
+      m_frame_drop_helper.needs_bitrate_reduction();
   // m_console->debug("Dropped since last check:{}",dropped_since_last_check);
   if (dropping_many_frames) {
     // We are dropping frames / too many tx error hint(s), we need to reduce
@@ -2954,6 +2944,9 @@ void WBLink::perform_channel_scan(
   std::vector<uint16_t> channel_widths_to_scan;
   const auto width_mask = scan_channels_params.channel_widths_mask;
   if (width_mask != 0) {
+    if (width_mask & openhd::LinkActionHandler::scan_channel_width_bit(5)) {
+      channel_widths_to_scan.push_back(5);
+    }
     if (width_mask & openhd::LinkActionHandler::scan_channel_width_bit(10)) {
       channel_widths_to_scan.push_back(10);
     }
@@ -2999,7 +2992,7 @@ void WBLink::perform_channel_scan(
   for (int i = 0; i < channels_to_scan.size(); i++) {
     const auto& channel = channels_to_scan[i];
     if (done_early) break;
-    // and all possible channel widths (20 or 40Mhz only right now)
+    // Try each requested channel width.
     for (const auto& channel_width : channel_widths_to_scan) {
       const auto requested_channel_width = channel_width;
       auto scan_channel_width = channel_width;
@@ -3076,7 +3069,8 @@ void WBLink::perform_channel_scan(
           n_valid_packets, channel.frequency, scan_channel_width,
           air_center_frequency, air_tx_channel_width, packet_loss);
       if (n_valid_packets > 0 && air_center_frequency > 0 &&
-          (air_tx_channel_width == 10 || air_tx_channel_width == 20 ||
+          (air_tx_channel_width == 5 || air_tx_channel_width == 10 ||
+           air_tx_channel_width == 20 ||
            air_tx_channel_width == 40) &&
           channel.frequency == air_center_frequency) {
         m_console->debug("Found air unit");
@@ -3495,7 +3489,9 @@ void WBLink::wt_gnd_perform_channel_switch_rollback_check() {
                                    : static_cast<int>(
                                          m_settings->get_settings().wb_frequency);
   const int revert_channel_width =
-      state.previous_channel_width == 10 || state.previous_channel_width == 20 ||
+      state.previous_channel_width == 5 ||
+              state.previous_channel_width == 10 ||
+              state.previous_channel_width == 20 ||
               state.previous_channel_width == 40
           ? state.previous_channel_width
           : openhd::DEFAULT_GND_RX_CHANNEL_WIDTH;
@@ -3641,7 +3637,8 @@ void WBLink::wt_gnd_perform_channel_management() {
     const int air_reported_frequency =
         m_management_gnd->m_air_reported_curr_frequency;
     if (management_is_fresh &&
-        (air_reported_channel_width == 10 || air_reported_channel_width == 20 ||
+        (air_reported_channel_width == 5 ||
+         air_reported_channel_width == 10 || air_reported_channel_width == 20 ||
          air_reported_channel_width == 40) &&
         air_reported_frequency > 100) {
       if (m_gnd_curr_rx_channel_width != air_reported_channel_width ||

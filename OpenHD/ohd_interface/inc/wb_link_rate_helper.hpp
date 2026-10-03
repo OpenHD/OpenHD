@@ -168,6 +168,8 @@ static uint32_t rtl8812au_get_max_rate_5G_kbits(uint16_t mcs_index,
                                                 int channel_bw_mhz) {
   auto rate_kbits = rtl8812au_get_max_rate_5G_kbits(mcs_index);
   switch (channel_bw_mhz) {
+    case 5:
+      return rate_kbits.rate_10mhz / 2;
     case 10:
       return rate_kbits.rate_10mhz;
     case 20:
@@ -183,6 +185,8 @@ static uint32_t rtl8812au_get_max_rate_2G_kbits(uint16_t mcs_index,
                                                 int channel_bw_mhz) {
   auto rate_kbits = rtl8812au_get_max_rate_2G_kbits(mcs_index);
   switch (channel_bw_mhz) {
+    case 5:
+      return rate_kbits.rate_10mhz / 2;
     case 10:
       return rate_kbits.rate_10mhz;
     case 20:

@@ -310,11 +310,12 @@ static mavlink_message_t create_mavlink_log_message(
 
 static uint32_t parse_scan_channel_widths_param(float param2) {
   const int raw = static_cast<int>(param2);
+  const uint32_t bit5 = openhd::LinkActionHandler::scan_channel_width_bit(5);
   const uint32_t bit10 = openhd::LinkActionHandler::scan_channel_width_bit(10);
   const uint32_t bit20 = openhd::LinkActionHandler::scan_channel_width_bit(20);
   const uint32_t bit40 = openhd::LinkActionHandler::scan_channel_width_bit(40);
   const uint32_t bit80 = openhd::LinkActionHandler::scan_channel_width_bit(80);
-  const uint32_t allowed = bit10 | bit20 | bit40 | bit80;
+  const uint32_t allowed = bit5 | bit10 | bit20 | bit40 | bit80;
   if (raw <= 0) {
     return bit20;
   }
@@ -326,11 +327,11 @@ static uint32_t parse_scan_channel_widths_param(float param2) {
     // Legacy: "2 bandwidths" meant 20 + 40 MHz.
     return bit20 | bit40;
   }
-  if (raw == 10 || raw == 20 || raw == 40 || raw == 80) {
+  if (raw == 5 || raw == 10 || raw == 20 || raw == 40 || raw == 80) {
     return openhd::LinkActionHandler::scan_channel_width_bit(raw);
   }
   // Allow passing an explicit bitmask (future-proof).
-  if (raw > 0 && raw <= 0x0F) {
+  if (raw > 0 && raw <= 0x1F) {
     const uint32_t mask = static_cast<uint32_t>(raw) & allowed;
     if (mask != 0) {
       return mask;

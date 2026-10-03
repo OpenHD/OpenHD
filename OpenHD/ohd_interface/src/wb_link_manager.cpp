@@ -226,7 +226,8 @@ void ManagementAir::on_new_management_packet(const uint8_t *data,
     DataManagementFrequencyChange packet{};
     std::memcpy(&packet, &data[1], sizeof(packet));
     if (packet.transaction_id == 0 || packet.target_frequency_mhz <= 100 ||
-        (packet.bandwidth_mhz != 10 && packet.bandwidth_mhz != 20 &&
+        (packet.bandwidth_mhz != 5 &&
+         packet.bandwidth_mhz != 10 && packet.bandwidth_mhz != 20 &&
          packet.bandwidth_mhz != 40)) {
       return;
     }
@@ -285,7 +286,7 @@ void ManagementGround::on_new_management_packet(const uint8_t *data,
         openhd::util::steady_clock_time_epoch_ms();
     DataManagementTxBandwidth packet{};
     std::memcpy(&packet, &data[1], data_len - 1);
-    if (packet.bandwidth_mhz == 10 || packet.bandwidth_mhz == 20 ||
+    if (packet.bandwidth_mhz == 5 || packet.bandwidth_mhz == 10 || packet.bandwidth_mhz == 20 ||
         packet.bandwidth_mhz == 40) {
       m_air_reported_curr_channel_width = packet.bandwidth_mhz;
       m_air_reported_curr_frequency = packet.center_frequency_mhz;
@@ -299,7 +300,8 @@ void ManagementGround::on_new_management_packet(const uint8_t *data,
     DataManagementFrequencyChange packet{};
     std::memcpy(&packet, &data[1], sizeof(packet));
     if (packet.phase != FREQUENCY_CHANGE_PHASE_PREPARE ||
-        (packet.bandwidth_mhz != 10 && packet.bandwidth_mhz != 20 &&
+        (packet.bandwidth_mhz != 5 &&
+         packet.bandwidth_mhz != 10 && packet.bandwidth_mhz != 20 &&
          packet.bandwidth_mhz != 40) ||
         packet.target_frequency_mhz <= 100 || packet.transaction_id == 0) {
       m_console->warn("Invalid frequency change management packet");
