@@ -22,6 +22,7 @@
  ******************************************************************************/
 
 #include "ohd_interface.h"
+#include "wifi_card_recovery.h"
 
 #include <wifi_card_discovery.h>
 #include <wifi_client.h>
@@ -814,20 +815,13 @@ OHDInterface::find_replugged_wb_cards() {
         [&expected, &discovered, &used](const WiFiCard& candidate) {
           const auto index = static_cast<size_t>(&candidate - discovered.data());
           if (used[index]) return false;
-          if (expected.driver_name == "devourer") {
-            return candidate.driver_name == "devourer" &&
-                   candidate.type == expected.type;
-          }
-          if (!expected.mac.empty()) {
-            return candidate.mac == expected.mac;
-          }
-          return candidate.device_name == expected.device_name;
+          return wifi_card_matches_recovery(expected, candidate);
         });
     if (found == discovered.end()) return std::nullopt;
     used[static_cast<size_t>(found - discovered.begin())] = true;
     auto recovered_card = *found;
     if (recovered_card.device_name != expected.device_name &&
-        expected.driver_name != "devourer") {
+        !expected.devourer_wb_enabled) {
       m_console->warn("WFB card {} reappeared as {}; restoring its name",
                       expected.mac, recovered_card.device_name);
       if (!wifi::commandhelper::ip_link_rename(recovered_card.device_name,
@@ -853,7 +847,7 @@ void OHDInterface::wb_recovery_loop() {
     const auto recovered_cards = find_replugged_wb_cards();
     bool recovered = false;
     if (recovered_cards) {
-      m_console->info("Replugged WFB card(s) found; restoring monitor mode");
+      m_console->debug("Live WFB card(s) found; attempting radio restart");
       openhd::wb::takeover_cards_monitor_mode(*recovered_cards, m_console);
       recovered = m_wb_link &&
                   m_wb_link->restart_after_card_replug(*recovered_cards);

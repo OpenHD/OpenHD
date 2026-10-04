@@ -54,6 +54,7 @@
 #include "wb_link_helper.h"
 #include "wb_link_rate_helper.hpp"
 #include "wifi_card.h"
+#include "wifi_card_recovery.h"
 #include "nexmon_scout.h"
 #include "esp_analyse.h"
 
@@ -3686,13 +3687,17 @@ bool WBLink::restart_after_card_replug(
                     m_broadcast_cards.size(), broadcast_cards.size());
     return false;
   }
+  if (!m_wb_txrx || m_wb_txrx->uses_devourer() !=
+                        openhd::wb::use_devourer_backend(broadcast_cards)) {
+    m_console->warn("WB restart rejected a radio backend change");
+    return false;
+  }
   for (std::size_t i = 0; i < broadcast_cards.size(); ++i) {
     const auto& expected = m_broadcast_cards[i];
     const auto& found = broadcast_cards[i];
-    const bool direct_devourer = expected.driver_name == "devourer" &&
-                                  found.driver_name == "devourer";
-    if ((!direct_devourer && found.device_name != expected.device_name) ||
-        (!expected.mac.empty() && found.mac != expected.mac)) {
+    if (!wifi_card_matches_recovery(expected, found) ||
+        (!expected.devourer_wb_enabled &&
+         found.device_name != expected.device_name)) {
       m_console->warn("WB restart card mismatch: expected {} ({}) got {} ({})",
                       expected.device_name, expected.mac, found.device_name,
                       found.mac);

@@ -388,6 +388,10 @@ target_link_libraries(test_wb_link_rate_helper OHDInterfaceLib)
 add_executable(test_multi_link test/test_multi_link.cpp)
 target_link_libraries(test_multi_link OHDInterfaceLib)
 
+add_executable(test_wifi_card_recovery test/test_wifi_card_recovery.cpp)
+target_link_libraries(test_wifi_card_recovery OHDInterfaceLib)
+target_compile_options(test_wifi_card_recovery PRIVATE -UNDEBUG)
+
 # The production OpenHD executable supplies these platform paths at its top
 # level. Standalone interface tests need the same implementation themselves.
 set(OPENHD_INTERFACE_TEST_TARGETS
@@ -398,7 +402,8 @@ set(OPENHD_INTERFACE_TEST_TARGETS
     test_wifi_commands
     test_wifi_set_channel
     test_wb_link_rate_helper
-    test_multi_link)
+    test_multi_link
+    test_wifi_card_recovery)
 foreach(test_target IN LISTS OPENHD_INTERFACE_TEST_TARGETS)
     target_sources(${test_target} PRIVATE ../ohd_common/src/config_paths.cpp)
 endforeach()

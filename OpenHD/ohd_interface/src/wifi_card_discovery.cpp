@@ -537,6 +537,12 @@ std::vector<WiFiCard> DWifiCards::discover_connected_wifi_cards() {
       continue;
     }
     WiFiCard card{};
+    // SysUtils caches its inventory. libusb can detach the kernel netdev;
+    // only keep kernel entries that still exist and let the live USB probe
+    // below recreate detached radios as Devourer pseudo-interfaces.
+    if (!OHDFilesystemUtil::exists("/sys/class/net/" + sys_card.interface_name)) {
+      continue;
+    }
     card.device_name = sys_card.interface_name;
     card.driver_name = sys_card.driver_name;
     card.mac = sys_card.mac;
