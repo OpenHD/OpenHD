@@ -420,3 +420,39 @@ with the new binary, so the earlier exception protection does not establish
 complete recovery. The initial USB failure and this new abort remain unresolved.
 The service journal and kernel evidence are saved privately under
 `out/eu-air-restart-investigation.log`; no new abort stack was captured.
+
+## Quality polling abort diagnosed on October 6
+
+The next investigation captured the exact running Air executable (SHA-256
+`ef72d77776d4c69dd35adf9a70061a7e450b92e2e8f937d1ebb354e7e91f10f1`)
+and an OpenHD SIGABRT core. The default relative `core` filename was shared
+with `rpicam-vid`, whose later dump could overwrite OpenHD's dump. A temporary
+process/PID-specific core pattern separated the two; the original pattern was
+restored after testing. Private dumps and analysis are under
+`out/air-crash-20261005/` and are not committed.
+
+GDB resolves `raise()` and `abort()` but cannot automatically unwind beyond
+the target libc's abort frame. Symbolizing saved stack addresses identifies
+the C++ terminate handler and `std::ios_base::failure`, followed by
+`UsbTransport::read32`, `RtlJaguar3Device::GetRxEnergy`, `GetRxQuality`,
+`Transport::get_quality_snapshot`, and `WBLink::wt_update_statistics`.
+This agrees with the source: quality polling performs USB register reads,
+but the OpenHD transport wrapper did not catch their exceptions. Thermal
+polling already had exception protection. A quality-read exception could
+therefore escape the OpenHD statistics worker and terminate the process.
+
+`Transport::get_quality_snapshot` now logs a failed read and returns no sample,
+matching the thermal-read behavior. This fixes an OpenHD integration defect;
+it does not explain or repair the underlying USB disconnect/partial-write
+events, and it does not establish that a comparable OpenIPC workload sees
+the same USB conditions.
+
+An ARMHF build passed target `ldd -r` and SHA-256 checks and was deployed to
+Air only. Its SHA-256 is
+`e19bd2669ce55bc22bec583e6b10f130544f77ec9384f777e2e957d1f0abaa10`;
+rollback binary and settings are in
+`/Video/openhd-rollback-20261005-quality-read-fix/`.
+A controlled two-second software unbind/rebind of the verified `0bda:a81a`
+USB adapter preserved OpenHD PID 24722 and `NRestarts=0`. Logs reported that
+the radio runtime rejoined. This validates process survival and recovery for
+that controlled test, not indefinite radio stability or every exception path.
