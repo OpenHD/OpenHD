@@ -423,6 +423,17 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
   // this fetches the last settings, otherwise creates default ones
   m_settings = std::make_unique<openhd::WBLinkSettingsHolder>(
       m_profile, m_broadcast_cards);
+  // Persisted narrowband settings cannot bypass local radio validation.
+  if (!local_radios_support_10mhz() &&
+      (m_settings->get_settings().wb_air_tx_channel_width == 10 ||
+       m_settings->get_settings().wb_gnd_rx_channel_width == 10)) {
+    m_console->warn("10 MHz requires 8812EU broadcast cards; restoring 20 MHz");
+    if (m_settings->get_settings().wb_air_tx_channel_width == 10)
+      m_settings->unsafe_get_settings().wb_air_tx_channel_width = 20;
+    if (m_settings->get_settings().wb_gnd_rx_channel_width == 10)
+      m_settings->unsafe_get_settings().wb_gnd_rx_channel_width = 20;
+    m_settings->persist();
+  }
   if (m_profile.is_ground()) {
     int init_width =
         static_cast<int>(m_settings->get_settings().wb_gnd_rx_channel_width);
@@ -1014,6 +1025,10 @@ bool WBLink::request_set_air_tx_channel_width(int channel_width) {
   }
   const int prev_channel_width =
       m_settings->get_settings().wb_air_tx_channel_width;
+  if (channel_width == 10 && !local_radios_support_10mhz()) {
+    m_console->warn("10 MHz requires 8812EU broadcast cards");
+    return false;
+  }
   auto work_item = std::make_shared<WorkItem>(
       fmt::format("SET_CHWIDTH:{}", channel_width),
       [this, channel_width, prev_channel_width]() {
@@ -1051,6 +1066,10 @@ bool WBLink::request_set_ground_rx_channel_width(int channel_width) {
   }
   if (!openhd::wb::validate_air_channel_width_change(
           channel_width, m_broadcast_cards.at(0), m_console)) {
+    return false;
+  }
+  if (channel_width == 10 && !local_radios_support_10mhz()) {
+    m_console->warn("10 MHz requires 8812EU broadcast cards");
     return false;
   }
   auto work_item = std::make_shared<WorkItem>(
@@ -1312,11 +1331,22 @@ bool WBLink::apply_radio_settings(
   return true;
 }
 
+bool WBLink::local_radios_support_10mhz() const {
+  return !m_broadcast_cards.empty() &&
+         std::all_of(m_broadcast_cards.begin(), m_broadcast_cards.end(),
+                     wifi_card_supports_10Mhz_channel_width_injection);
+}
+
 bool WBLink::apply_frequency_and_channel_width(int frequency,
                                                int channel_width_rx,
                                                int channel_width_tx) {
   if (channel_width_rx == 5 || channel_width_tx == 5) {
     m_console->warn("5 MHz channel width is temporarily disabled");
+    return false;
+  }
+  if ((channel_width_rx == 10 || channel_width_tx == 10) &&
+      !local_radios_support_10mhz()) {
+    m_console->warn("10 MHz requires 8812EU broadcast cards");
     return false;
   }
   // Channel management and rollback callers retain the kernel's 20 MHz

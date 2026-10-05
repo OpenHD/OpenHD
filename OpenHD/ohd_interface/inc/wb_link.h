@@ -147,6 +147,7 @@ class WBLink : public OHDLink {
 
   // apply the frequency (wifi channel) and channel with for all wifibroadcast
   // cards r.n uses both iw and modifies the radiotap header
+  bool local_radios_support_10mhz() const;
   bool apply_frequency_and_channel_width(int frequency, int channel_width_rx,
                                          int channel_width_tx);
   bool apply_frequency_and_channel_width_from_settings();

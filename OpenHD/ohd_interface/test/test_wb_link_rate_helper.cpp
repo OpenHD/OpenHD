@@ -48,6 +48,22 @@ int main() {
       !openhd::wb::validate_air_channel_width_change(40, card, logger))
     return 8;
 
+  // Every backend identity is checked, including Devourer's EU mapping.
+  for (const auto type : devourer_types) {
+    card.type = type;
+    if (wifi_card_supports_10Mhz_channel_width_injection(card) !=
+        (type == WiFiCardType::DEVOURER_RTL8822E)) return 9;
+  }
+  card.type = WiFiCardType::OPENHD_RTL_88X2EU;
+  if (!wifi_card_supports_10Mhz_channel_width_injection(card)) return 10;
+  card.supported_frequencies_5G = {5785};
+  WiFiCard bu = card;
+  bu.type = WiFiCardType::DEVOURER_RTL8822B;
+  if (openhd::wb::all_cards_support_frequency_and_channel_width(
+          5785, 10, {card, bu}, logger)) return 11;
+  if (!openhd::wb::all_cards_support_frequency_and_channel_width(
+          5785, 10, {card}, logger)) return 12;
+
   // Exercise a complete clocked RC settings frame and duplicate suppression.
   openhd::wb::RCSettingsProtocol protocol;
   std::array<int, 18> rc{};
