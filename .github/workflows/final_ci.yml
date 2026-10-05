@@ -319,6 +319,8 @@ jobs:
           git clone "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}" -b "${GITHUB_REF_NAME}" \
             /opt/OpenHD-ChrootCompiler/additionalFiles
           git -C /opt/OpenHD-ChrootCompiler/additionalFiles submodule update --init
+          git -C /opt/OpenHD-ChrootCompiler/additionalFiles submodule update \
+            --init --checkout OpenHD/ohd_interface/lib/devourer
           git clone --recurse-submodules \
             https://github.com/OpenHD-Technologies/OpenHD-ArtLink.git \
             /opt/OpenHD-ChrootCompiler/additionalFiles/OpenHD-ArtLink
@@ -345,6 +347,9 @@ jobs:
           test -n "${package}"
           test "$(dpkg-deb -f "${package}" Package)" = "openhd-x20"
           test "$(dpkg-deb -f "${package}" Architecture)" = "armhf"
+          dpkg-deb -x "${package}" "${RUNNER_TEMP}/x20-package-root"
+          grep -a -q 'Devourer identified' \
+            "${RUNNER_TEMP}/x20-package-root/usr/local/bin/openhd"
           members="$(ar t "${package}")"
           grep -qx 'control.tar.xz' <<<"${members}"
           grep -qx 'data.tar.xz' <<<"${members}"

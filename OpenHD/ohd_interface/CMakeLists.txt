@@ -17,15 +17,17 @@ add_subdirectory(../ohd_common commonlib EXCLUDE_FROM_ALL)
 option(OPENHD_ENABLE_DEVOURER
        "Use OpenIPC Devourer as the default backend for supported Realtek USB radios"
        ON)
+if(NOT OPENHD_ENABLE_DEVOURER)
+    message(FATAL_ERROR "OpenHD requires Devourer for broadcast USB radios")
+endif()
 if(OPENHD_ENABLE_DEVOURER)
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/lib/devourer/CMakeLists.txt")
         set(DEVOURER_PCIE OFF CACHE BOOL "" FORCE)
         set(DEVOURER_LOG_MAX_LEVEL INFO CACHE STRING "" FORCE)
         add_subdirectory(lib/devourer devourer EXCLUDE_FROM_ALL)
     else()
-        message(WARNING
+        message(FATAL_ERROR
             "OPENHD_ENABLE_DEVOURER=ON but lib/devourer is missing; run git submodule update --init --recursive")
-        set(OPENHD_ENABLE_DEVOURER OFF)
     endif()
 endif()
 

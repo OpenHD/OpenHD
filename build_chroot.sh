@@ -477,7 +477,7 @@ EOF
         # therefore does not contain its RTL-SDR development dependency.
         free_chroot_space_for_ci
         apt-get update --fix-missing
-        apt-get install -y --no-install-recommends librtlsdr-dev pkg-config \
+        apt-get install -y --no-install-recommends librtlsdr-dev libusb-1.0-0-dev pkg-config \
             || { echo "Failed to install ARMHF RTL-SDR build dependencies"; exit 1; }
         pkg-config --exists librtlsdr \
             || { echo "librtlsdr pkg-config metadata is unavailable"; exit 1; }
