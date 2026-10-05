@@ -397,3 +397,26 @@ usbmon errors, kernel log, and service journal. The executable SHA-256 remains
 `32f1657499500b9aa4043c1e25467e055817d93c3040a7923f31d54ed8bef35e`.
 The usbmon collector was stopped and `WB_DEV_LOGS` restored to its original
 disabled value after capture. Air remains on the original binary.
+
+## Subsequent deployment and USB recurrence
+
+The recovery changes were subsequently deployed to both Air (`192.168.1.42`)
+and Ground (`192.168.1.124`), together with the bitrate and channel-width changes.
+The deployed binary includes OpenHD commit `54ff9340`; its stripped SHA-256 is
+`8ab5b523c4735e5f8423cc318681fa817c2c876cd54da0220a1cb4479f3c3665`.
+Both running executables were checked against that hash. Rollback binaries and
+settings are in `/Video/openhd-rollback-20261005-eu-only-10mhz/` on each unit.
+
+10 MHz now requires EU cards locally on each unit, including every diversity
+card. QOpenHD checks Air and Ground card telemetry before offering it. There is
+no capability handshake or timeout downgrade, so passive broadcast reception
+remains possible. Air cannot independently verify a silent Ground radio.
+The mixed EU/BU live pair rejected a Ground 10 MHz parameter request. Aligning
+both units at 40 MHz restored approximately 17 Mbit/s of received video.
+
+The kernel logged another Air USB disconnect at 20:20:11 BST on October 5,
+followed by an OpenHD SIGABRT at 20:20:14 and automatic restart. This occurred
+with the new binary, so the earlier exception protection does not establish
+complete recovery. The initial USB failure and this new abort remain unresolved.
+The service journal and kernel evidence are saved privately under
+`out/eu-air-restart-investigation.log`; no new abort stack was captured.
