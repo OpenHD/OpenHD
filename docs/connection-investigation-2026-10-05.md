@@ -313,3 +313,48 @@ The locally tested SysUtils package is deployed only on Air. The implementation
 was committed and published as OpenHD `bce2ab8e` (openhd-3.0), SysUtils `0bcaaaa`
 (dev-release), and ImageBuilder `2796a4f` (dev-release). Each remote branch was
 fetched and verified against the local branch before publishing this report.
+
+## Continued USB and abort investigation
+
+The later read-only check found 13 OpenHD SIGABRT restarts in the same boot.
+Kernel events show EU device `0bda:a81a` disappearing at port `1-1.2` before
+those aborts, with a newly assigned USB address after each reconnect. The Pi
+reported `get_throttled=0x0`; USB power control was already `on`. These checks
+do not measure the adapter's external supply. The user confirmed that the card
+was untouched and continuously powered during the continued monitoring run.
+Initial evidence is `out/8812eu-disconnect-2026-10-05.log`.
+
+An eight-second device deauthorization at device-local time 18:14:47 recovered
+without a process restart. A separate eight-second USB-device driver unbind at
+18:19:12 also avoided SIGABRT. Neither test is a physical removal: discovery
+can still find the USB identity, and the second test even reopened the radio
+before the parent USB-device driver was rebound. Both used verified VID/PID and
+an exit trap to restore only the EU device; no hub-wide reset was requested.
+
+The second test exposed a distinct receive-lifecycle defect. At 18:28 Air
+reported zero RF receive packets while still injecting video, Ground continued
+transmitting uplink packets, and Jaguar3's coex thread was draining bulk-IN.
+Devourer's async RX loop can return normally on `NO_DEVICE`; the transport only
+reported exceptions as fatal, leaving that normal early exit unreported.
+Evidence: `out/wfb-telemetry-1791221319.json` and the saved console/USB traces.
+
+A local wifibroadcast change reports unexpected normal RX-loop exits through
+the existing recovery callback, with an atomic per-card stop request suppressing
+that callback during deliberate teardown. The ARMHF OpenHD build completed.
+This change has not been deployed or hardware-validated. Existing uncommitted
+TX-failure diagnostic changes in the same submodule were preserved.
+
+Air's OpenHD service was restarted at approximately 18:29 device-local time to
+restore reception after the controlled test. PID changed from 26179 to 20843;
+the explicit restart reset systemd's restart counter to zero, so it must not be
+interpreted as disproving the earlier 13 aborts. The following eight-second
+sample confirmed nonzero Air RX and approximately 11 Mbps RF video at Ground:
+`out/wfb-telemetry-1791221379.json`.
+
+Passive unique-name core capture is temporarily active under
+`/tmp/openhd-usb-investigation/core.%e.%p`, with a watcher restoring the original
+`core` pattern after the first OpenHD core or a 40-minute timeout. Filtered
+usbmon errors and preceding control transfers are saved beside it. The earlier
+GDB attachment was removed because its interception of frequent subprocess
+launches changes timing. Devourer logging was enabled for diagnostics. The
+cause of a spontaneous disconnect and the SIGABRT remains unproven.
