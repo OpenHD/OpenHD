@@ -34,6 +34,7 @@
 
 static int OPENHD_AUDIO_DISABLE = 1;
 static int OPENHD_AUDIO_TEST = 100;
+static int OPENHD_AUDIO_EXAMPLE = 101;
 
 struct AirCameraGenericSettings {
   // Make primary camera secondary camera and other way around (aka if they are

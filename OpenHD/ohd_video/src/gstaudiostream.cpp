@@ -219,7 +219,15 @@ std::string GstAudioStream::create_pipeline() {
   auto opt_manual_audio_source = OHDFilesystemUtil::opt_read_file(
       std::string(getConfigBasePath()) + "audio_source.txt", false);
   // audiotestsrc always works, but obviously is not a mic ;)
-  if (OHDFilesystemUtil::exists(std::string(getConfigBasePath()) +
+  if (openhd_enable_audio_example) {
+    if (fallback_file_exists) {
+      append_fallback_file();
+    } else {
+      m_console->warn("Example audio file {} is missing; streaming silence",
+                      OPENHD_FALLBACK_AUDIO_FILE);
+      ss << "audiotestsrc wave=silence ! ";
+    }
+  } else if (OHDFilesystemUtil::exists(std::string(getConfigBasePath()) +
                                 "test_audio.txt") ||
       openhd_enable_audio_test) {
     ss << "audiotestsrc"

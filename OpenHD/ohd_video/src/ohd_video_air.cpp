@@ -156,6 +156,8 @@ void OHDVideoAir::restart_audio_stream() {
       [this](const openhd::AudioPacket& packet) { on_audio_data(packet); });
   m_audio_stream->openhd_enable_audio_test =
       m_generic_settings->get_settings().enable_audio == OPENHD_AUDIO_TEST;
+  m_audio_stream->openhd_enable_audio_example =
+      m_generic_settings->get_settings().enable_audio == OPENHD_AUDIO_EXAMPLE;
   m_audio_stream->start_looping();
 #else
   m_console->warn("Audio is unavailable when GStreamer is disabled");
@@ -312,7 +314,7 @@ std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
   if (!OHDPlatform::instance().is_x20()) {
     auto cb_audio = [this](std::string, int value) {
       if (value != 0 && value != OPENHD_AUDIO_DISABLE &&
-          value != OPENHD_AUDIO_TEST) {
+          value != OPENHD_AUDIO_TEST && value != OPENHD_AUDIO_EXAMPLE) {
         return false;
       }
       m_generic_settings->unsafe_get_settings().enable_audio = value;
@@ -324,6 +326,9 @@ std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
         "AUDIO_ENABLE",
         openhd::IntSetting{m_generic_settings->get_settings().enable_audio,
                            cb_audio}});
+#ifdef OPENHD_GSTREAMER_PRESENT
+    ret.push_back(openhd::create_read_only_int("AUDIO_EXAMPLE", 1));
+#endif
 
     auto cb_audio_gain = [this](std::string, int value) {
       if (!is_valid_audio_mic_gain_percent(value)) return false;

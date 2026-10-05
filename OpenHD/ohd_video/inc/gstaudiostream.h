@@ -54,6 +54,7 @@ class GstAudioStream {
   void start_looping();
   void stop_looping();
   bool openhd_enable_audio_test = false;
+  bool openhd_enable_audio_example = false;
 
  private:
   void loop_infinite();
