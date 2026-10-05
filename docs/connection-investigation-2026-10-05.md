@@ -356,5 +356,44 @@ Passive unique-name core capture is temporarily active under
 `core` pattern after the first OpenHD core or a 40-minute timeout. Filtered
 usbmon errors and preceding control transfers are saved beside it. The earlier
 GDB attachment was removed because its interception of frequent subprocess
-launches changes timing. Devourer logging was enabled for diagnostics. The
-cause of a spontaneous disconnect and the SIGABRT remains unproven.
+launches changes timing. Devourer logging was enabled for diagnostics. At that
+checkpoint the spontaneous disconnect and SIGABRT causes remained unproven.
+
+## Captured spontaneous abort
+
+At device-local time 18:39:55, with no manual USB operation during the soak,
+the EU disappeared and OpenHD PID 20843 aborted. The passive watcher captured
+`core.openhd.20843` and automatically restored the original core pattern. The
+core identifies `/usr/local/bin/openhd`, not the camera process. The restarted
+service was active with PID 30858 and restart count 1.
+
+The filtered USB trace's first retained error is bulk-OUT endpoint 8 returning
+`-71` with 512 bytes completed. Bulk-IN errors and a vendor control-read error
+follow. Devourer recorded `bulk_send EP 8 FAIL rc=-1 got 512/1538`, followed by
+`rtw_read(3d08), sizeof(T) = 4`. The preceding retained control transfers
+completed successfully. This establishes a USB-level error before the abort;
+it does not establish why the device developed that error.
+
+GDB's automatic unwind of the aborting thread stops after libc `abort()`, so
+the saved stack-memory dump is also required. Its contiguous caller return
+addresses identify `UsbTransport::read32`, `Halrf8822e::bb_get`,
+`Halrf8822e::read_thermal`, `RtlJaguar3Device::GetThermalStatus`,
+`Transport::get_thermal_status`, `WBTxRx::get_devourer_thermal_status`,
+`WBLink::wt_update_statistics`, and `WBLink::loop_do_work`. C++ exception and
+verbose-terminate-handler addresses are also present. The failed `3d08` read
+is the direct RF thermal register read, and the source throws
+`std::ios_base::failure` on failure. No catch previously protected this
+statistics-thread call path. This evidence identifies the process-abort cause.
+
+The wifibroadcast thermal getter now catches that read exception and returns
+an unavailable reading instead of terminating OpenHD. The ARMHF OpenHD build
+passed after this change. Both recovery fixes remain undeployed; source/build
+validation is not hardware acceptance. The cause of the initial USB protocol
+error/disconnect remains open.
+
+Private local evidence is in `out/8812eu-crash-evidence-2026-10-05/`, including
+the OpenHD core, its exact unstripped executable, GDB output, console capture,
+usbmon errors, kernel log, and service journal. The executable SHA-256 remains
+`32f1657499500b9aa4043c1e25467e055817d93c3040a7923f31d54ed8bef35e`.
+The usbmon collector was stopped and `WB_DEV_LOGS` restored to its original
+disabled value after capture. Air remains on the original binary.
