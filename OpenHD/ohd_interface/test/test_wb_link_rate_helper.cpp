@@ -35,13 +35,16 @@ int main() {
 
   // Disabled widths must be rejected even when the radio supports them.
   auto logger = openhd::log::get_default();
-  for (const auto width : {5, 10}) {
+  for (const auto width : {5}) {
     if (openhd::wb::validate_air_channel_width_change(width, card, logger) ||
         openhd::wb::all_cards_support_frequency_and_channel_width(
             5785, width, {card}, logger))
       return 7;
   }
-  if (!openhd::wb::validate_air_channel_width_change(20, card, logger) ||
+  if (!openhd::wb::validate_air_channel_width_change(10, card, logger) ||
+      openhd::wb::calculate_bitrate_for_wifi_config_kbits(
+          card, 5785, 10, 2, 100, false) != 7600 ||
+      !openhd::wb::validate_air_channel_width_change(20, card, logger) ||
       !openhd::wb::validate_air_channel_width_change(40, card, logger))
     return 8;
 

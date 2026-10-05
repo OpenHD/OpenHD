@@ -426,7 +426,7 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
   if (m_profile.is_ground()) {
     int init_width =
         static_cast<int>(m_settings->get_settings().wb_gnd_rx_channel_width);
-    if (!(init_width == 20 || init_width == 40)) {
+    if (!(init_width == 10 || init_width == 20 || init_width == 40)) {
       init_width = openhd::DEFAULT_GND_RX_CHANNEL_WIDTH;
     }
     m_gnd_curr_rx_channel_width = init_width;
@@ -853,7 +853,8 @@ bool WBLink::request_set_frequency(int frequency) {
     }
     const int channel_width =
         m_management_gnd &&
-                (m_management_gnd->m_air_reported_curr_channel_width == 20 ||
+                (m_management_gnd->m_air_reported_curr_channel_width == 10 ||
+                 m_management_gnd->m_air_reported_curr_channel_width == 20 ||
                  m_management_gnd->m_air_reported_curr_channel_width == 40)
             ? m_management_gnd->m_air_reported_curr_channel_width.load()
             : m_gnd_curr_rx_channel_width.load();
@@ -1314,9 +1315,8 @@ bool WBLink::apply_radio_settings(
 bool WBLink::apply_frequency_and_channel_width(int frequency,
                                                int channel_width_rx,
                                                int channel_width_tx) {
-  if (channel_width_rx == 5 || channel_width_rx == 10 ||
-      channel_width_tx == 5 || channel_width_tx == 10) {
-    m_console->warn("5/10 MHz channel widths are temporarily disabled");
+  if (channel_width_rx == 5 || channel_width_tx == 5) {
+    m_console->warn("5 MHz channel width is temporarily disabled");
     return false;
   }
   // Channel management and rollback callers retain the kernel's 20 MHz
@@ -2929,6 +2929,9 @@ void WBLink::perform_channel_scan(
   std::vector<uint16_t> channel_widths_to_scan;
   const auto width_mask = scan_channels_params.channel_widths_mask;
   if (width_mask != 0) {
+    if (width_mask & openhd::LinkActionHandler::scan_channel_width_bit(10)) {
+      channel_widths_to_scan.push_back(10);
+    }
     if (width_mask & openhd::LinkActionHandler::scan_channel_width_bit(20)) {
       channel_widths_to_scan.push_back(20);
     }
@@ -3048,7 +3051,7 @@ void WBLink::perform_channel_scan(
           n_valid_packets, channel.frequency, scan_channel_width,
           air_center_frequency, air_tx_channel_width, packet_loss);
       if (n_valid_packets > 0 && air_center_frequency > 0 &&
-          (air_tx_channel_width == 20 ||
+          (air_tx_channel_width == 10 || air_tx_channel_width == 20 ||
            air_tx_channel_width == 40) &&
           channel.frequency == air_center_frequency) {
         m_console->debug("Found air unit");
@@ -3467,7 +3470,8 @@ void WBLink::wt_gnd_perform_channel_switch_rollback_check() {
                                    : static_cast<int>(
                                          m_settings->get_settings().wb_frequency);
   const int revert_channel_width =
-      state.previous_channel_width == 20 ||
+      state.previous_channel_width == 10 ||
+              state.previous_channel_width == 20 ||
               state.previous_channel_width == 40
           ? state.previous_channel_width
           : openhd::DEFAULT_GND_RX_CHANNEL_WIDTH;
@@ -3613,7 +3617,7 @@ void WBLink::wt_gnd_perform_channel_management() {
     const int air_reported_frequency =
         m_management_gnd->m_air_reported_curr_frequency;
     if (management_is_fresh &&
-        (air_reported_channel_width == 20 ||
+        (air_reported_channel_width == 10 || air_reported_channel_width == 20 ||
          air_reported_channel_width == 40) &&
         air_reported_frequency > 100) {
       if (m_gnd_curr_rx_channel_width != air_reported_channel_width ||

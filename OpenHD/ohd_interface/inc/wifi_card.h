@@ -298,14 +298,25 @@ static bool wifi_card_supports_variable_mcs(const WiFiCard& wifi_card) {
   return false;
 }
 
-// Narrowband operation is temporarily disabled for all broadcast cards.
+// 5 MHz operation is temporarily disabled for all broadcast cards.
 static bool wifi_card_supports_5Mhz_channel_width_injection(
     const WiFiCard&) {
   return false;
 }
 
 static bool wifi_card_supports_10Mhz_channel_width_injection(
-    const WiFiCard&) {
+    const WiFiCard& wifi_card) {
+  if (wifi_card.devourer_wb_enabled) return true;
+  if (wifi_card.type == WiFiCardType::OPENHD_EMULATED) return true;
+  if (wifi_card.type == WiFiCardType::OPENHD_RTL_88X2AU) return true;
+  if (wifi_card.type == WiFiCardType::OPENHD_RTL_88X2BU) return true;
+  if (wifi_card.type == WiFiCardType::OPENHD_RTL_88X2CU) return true;
+  if (wifi_card.type == WiFiCardType::OPENHD_RTL_88X2EU) return true;
+  if (wifi_card.type == WiFiCardType::OPENHD_RTL_8852BU) return true;
+#ifdef OHD_ENABLE_DEVOURER
+  if (wifi_card.type == WiFiCardType::RTL_88X2AU) return true;
+  if (wifi_card.type == WiFiCardType::RTL_88X2BU) return true;
+#endif
   return false;
 }
 

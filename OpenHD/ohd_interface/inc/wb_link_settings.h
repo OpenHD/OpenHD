@@ -231,12 +231,12 @@ class WBLinkSettingsHolder : public openhd::PersistentSettings<WBLinkSettings> {
         m_cards(std::move(wifibroadcast_cards1)),
         m_profile(std::move(profile)) {
     init();
-    // Migrate persisted narrowband settings before either radio is initialized.
+    // Migrate persisted 5 MHz settings before either radio is initialized.
     auto& settings = unsafe_get_settings();
     bool changed = false;
     for (auto* width : {&settings.wb_air_tx_channel_width,
                         &settings.wb_gnd_rx_channel_width}) {
-      if (*width == 5 || *width == 10) {
+      if (*width == 5) {
         *width = 20;
         changed = true;
       }
