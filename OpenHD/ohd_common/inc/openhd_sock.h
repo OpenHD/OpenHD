@@ -116,7 +116,7 @@ struct SysutilSettings {
   std::string nw_ethernet_card = "RPI_ETHERNET_ONLY";
   std::string nw_manual_forwarding_ips;
   bool nw_forward_to_localhost_58xx = false;
-  bool disable_ethernet_link = false;
+  bool disable_ethernet_link = true;
   std::string ground_unit_ip;
   std::string air_unit_ip;
   int video_port = 5000;

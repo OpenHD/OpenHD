@@ -82,6 +82,9 @@ OHDInterface::OHDInterface(OHDProfile profile1, bool disable_wifi_hotspot)
   m_monitor_mode_cards = {};
   m_opt_hotspot_card = std::nullopt;
   const auto config = openhd::load_config();
+  const bool ethernet_requested =
+      OHDFilesystemUtil::exists(std::string(getConfigBasePath()) + "ethernet.txt");
+  m_ethernet_routing_enabled = !config.DISABLE_ETHERNET_LINK || ethernet_requested;
   m_enterprise_multi_link =
       m_nw_settings.get_settings().enterprise_multi_link &&
       openhd::enterprise_multilink_allowed(m_profile.is_air);
@@ -120,9 +123,7 @@ OHDInterface::OHDInterface(OHDProfile profile1, bool disable_wifi_hotspot)
       "ethernet/microhard/wifibroadcast discovery.");
 #endif
 
-  if (!config.DISABLE_ETHERNET_LINK &&
-      OHDFilesystemUtil::exists(std::string(getConfigBasePath()) +
-                                "ethernet.txt")) {
+  if (ethernet_requested) {
     m_ethernet_link = std::make_shared<EthernetLink>(m_profile);
     m_multi_link->add_link("ETHERNET", m_ethernet_link);
     openhd::LinkActionHandler::instance().set_primary_link_type(
@@ -151,9 +152,9 @@ OHDInterface::OHDInterface(OHDProfile profile1, bool disable_wifi_hotspot)
   // We don't have at least one card for monitor mode, which means we cannot
   // instantiate wb_link (no wifibroadcast connectivity at all)
   if (m_monitor_mode_cards.empty()) {
-    if (!config.DISABLE_ETHERNET_LINK && !m_ethernet_link && !m_microhard_link) {
+    if (m_ethernet_routing_enabled && !m_ethernet_link && !m_microhard_link) {
       m_console->warn(
-          "No monitor-mode WiFi card found; enabling automatic Ethernet link");
+          "No monitor-mode WiFi card found; starting requested Ethernet link");
       m_ethernet_link = std::make_shared<EthernetLink>(m_profile, true);
       m_multi_link->add_link("ETHERNET", m_ethernet_link);
       openhd::LinkActionHandler::instance().set_primary_link_type(
@@ -168,9 +169,8 @@ OHDInterface::OHDInterface(OHDProfile profile1, bool disable_wifi_hotspot)
     start_wb_recovery_supervisor();
     openhd::LinkActionHandler::instance().set_primary_link_type(
         openhd::LinkActionHandler::PRIMARY_LINK_WIFIBROADCAST);
-    // Ethernet is an always-available secondary transport. It discovers its
-    // peer independently and silently drops packets until one is present.
-    if (!config.DISABLE_ETHERNET_LINK && !m_ethernet_link) {
+    // Only start Ethernet discovery when the user explicitly enabled it.
+    if (m_ethernet_routing_enabled && !m_ethernet_link) {
       m_ethernet_link = std::make_shared<EthernetLink>(m_profile, true);
       m_multi_link->add_link("ETHERNET", m_ethernet_link);
     }
@@ -726,12 +726,15 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings() {
     }
     auto cb_ethernet_routing = [this](std::string, int value) {
       if (value != 0 && value != 1) return false;
-      if (!m_ethernet_link || !m_multi_link) return false;
+      if (!m_multi_link) return false;
       if (value == 1 && !m_enterprise_multi_link && m_wb_link &&
           m_wb_routing_enabled) return false;
       if (m_ethernet_routing_enabled == (value != 0)) return true;
+      if (value == 1 && !m_ethernet_link) {
+        m_ethernet_link = std::make_shared<EthernetLink>(m_profile, true);
+      }
       if (value == 0) {
-        m_multi_link->remove_link(m_ethernet_link);
+        if (m_ethernet_link) m_multi_link->remove_link(m_ethernet_link);
       } else {
         m_multi_link->add_link("ETHERNET", m_ethernet_link);
       }
@@ -739,10 +742,9 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings() {
       apply_link_policy();
       return true;
     };
-    if (m_ethernet_link) {
-      ret.push_back(openhd::Setting{
-          "ETH_LINK_EN", openhd::IntSetting{1, cb_ethernet_routing}});
-    }
+    ret.push_back(openhd::Setting{
+        "ETH_LINK_EN", openhd::IntSetting{m_ethernet_routing_enabled ? 1 : 0,
+                                         cb_ethernet_routing}});
     auto cb_ethernet = [this](std::string, int value) {
       m_nw_settings.unsafe_get_settings().ethernet_operating_mode = value;
       m_nw_settings.persist();
