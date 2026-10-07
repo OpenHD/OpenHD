@@ -19,6 +19,10 @@ class MatroskaRecorder {
 
   bool open(const std::string& path, bool h265, int width, int height, int fps);
   void feed_nalu(const uint8_t* data, std::size_t size);
+  // Complete Annex-B AU with a capture-relative timestamp. Unlike feed_nalu,
+  // this preserves time gaps when raw frames are dropped before encoding.
+  void feed_annex_b_access_unit(const uint8_t* data, std::size_t size,
+                               uint64_t timestamp_ms);
   void flush();
   void close();
 
@@ -51,6 +55,8 @@ class MatroskaRecorder {
   bool m_access_unit_keyframe = false;
   uint64_t m_frame_index = 0;
   uint64_t m_cluster_timestamp_ms = 0;
+  bool m_explicit_timestamp = false;
+  uint64_t m_timestamp_ms = 0;
   std::vector<uint8_t> m_access_unit;
   std::vector<uint8_t> m_vps;
   std::vector<uint8_t> m_sps;

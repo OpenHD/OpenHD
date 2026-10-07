@@ -20,9 +20,9 @@ bool is_start_code(const std::vector<uint8_t>& data, std::size_t offset) {
 }  // namespace
 
 int main(int argc, char** argv) {
-  if (argc != 7) {
+  if (argc != 7 && argc != 8) {
     std::cerr << "Usage: test_matroska_recorder INPUT OUTPUT h264|h265 "
-                 "WIDTH HEIGHT FPS\n";
+                 "WIDTH HEIGHT FPS [timestamped]\n";
     return 2;
   }
   std::ifstream input(argv[1], std::ios::binary);
@@ -37,13 +37,38 @@ int main(int argc, char** argv) {
     return 4;
   }
   std::size_t start = 0;
+  const bool timestamped = argc == 8 && std::string(argv[7]) == "timestamped";
+  std::vector<uint8_t> access_unit;
+  uint64_t frame = 0;
+  const auto emit = [&] {
+    if (access_unit.empty()) return;
+    // Preserve a deliberate 500 ms gap after the second frame.
+    recorder.feed_annex_b_access_unit(access_unit.data(), access_unit.size(),
+                                      frame * 100 + (frame >= 2 ? 500 : 0));
+    ++frame;
+    access_unit.clear();
+  };
   while (start < stream.size() && !is_start_code(stream, start)) ++start;
   while (start < stream.size()) {
     std::size_t next = start + 3;
     while (next < stream.size() && !is_start_code(stream, next)) ++next;
-    recorder.feed_nalu(stream.data() + start, next - start);
+    if (timestamped) {
+      const auto header = start + (stream[start + 2] == 1 ? 3 : 4);
+      if (header < next) {
+        const int type = std::string(argv[3]) == "h265"
+                             ? ((stream[header] >> 1) & 0x3f)
+                             : (stream[header] & 0x1f);
+        const bool aud = std::string(argv[3]) == "h265" ? type == 35 : type == 9;
+        if (aud) emit();
+      }
+      access_unit.insert(access_unit.end(), stream.begin() + start,
+                         stream.begin() + next);
+    } else {
+      recorder.feed_nalu(stream.data() + start, next - start);
+    }
     start = next;
   }
+  if (timestamped) emit();
   recorder.close();
   return recorder.good() ? 0 : 5;
 }

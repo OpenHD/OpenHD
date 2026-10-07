@@ -18,9 +18,9 @@
 #endif
 #include <rk_venc_cmd.h>
 #include <rk_venc_rc.h>
-
 #include <sys/ioctl.h>
 #include <sys/mman.h>
+#include <time.h>
 #include <unistd.h>
 
 #include <algorithm>
@@ -28,17 +28,18 @@
 #include <chrono>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <fstream>
 #include <string>
 #include <vector>
 
 #include "air_recording_helper.hpp"
+#include "matroska_recorder.h"
+#include "openhd_platform.h"
 #include "openhd_rtp.h"
 #include "openhd_spdlog.h"
-#include "openhd_platform.h"
-#include "matroska_recorder.h"
-
+#include "rockchip_stream_utils.h"
 
 namespace {
 constexpr RK_U32 align16(RK_U32 value) { return (value + 15U) & ~15U; }
@@ -97,15 +98,29 @@ bool set_subdev_format(const std::string& node, uint32_t pad, uint32_t width,
   return ok;
 }
 
-
-}
+}  // namespace
 
 class RockchipMppStream::Impl {
  public:
   struct CaptureBuffer {
     void* data = nullptr;
     size_t size = 0;
+    int dma_fd = -1;
+    MppBuffer imported = nullptr;
   };
+
+  using Clock = std::chrono::steady_clock;
+  struct RecordJob {
+    Clock::time_point captured;
+    Clock::time_point queued;
+    uint64_t epoch;
+  };
+  static constexpr size_t record_slot_count = 3;
+
+  static double elapsed_ms(Clock::time_point begin) {
+    return std::chrono::duration<double, std::milli>(Clock::now() - begin)
+        .count();
+  }
 
   Impl(RockchipMppStream& owner, std::shared_ptr<spdlog::logger> log)
       : owner(owner), log(std::move(log)) {
@@ -151,12 +166,16 @@ class RockchipMppStream::Impl {
         if (fragments.empty()) return;
       }
       const auto& s = this->owner.m_camera_holder->get_settings();
-      openhd::FragmentedVideoFrame frame{
-          std::move(fragments), std::chrono::steady_clock::now(),
-          s.enable_ultra_secure_encryption, nullptr,
-          intra_refresh_enable.load(), false};
-      this->owner.m_output_cb(
-          this->owner.m_camera_holder->get_camera().index, frame);
+      openhd::FragmentedVideoFrame frame{std::move(fragments),
+                                         current_capture_time,
+                                         s.enable_ultra_secure_encryption,
+                                         nullptr,
+                                         intra_refresh_enable.load(),
+                                         false};
+      const auto output_begin = Clock::now();
+      this->owner.m_output_cb(this->owner.m_camera_holder->get_camera().index,
+                              frame);
+      output_callback_latency.add(elapsed_ms(output_begin));
     });
   }
 
@@ -175,14 +194,9 @@ class RockchipMppStream::Impl {
       log->error("Cannot initialize native Rockchip MPP encoder");
       return false;
     }
-    // RV1126 can expose the encoder in non-blocking output mode. A single
-    // immediate get_packet() then frequently races the hardware and silently
-    // drops the encoded access unit. Wait briefly for the packet belonging to
-    // each submitted frame.
-    RK_S64 output_timeout = MPP_POLL_BLOCK;
-    if (mpi->control(ctx, MPP_SET_OUTPUT_TIMEOUT, &output_timeout)) {
-      log->warn("MPP rejected the encoder output timeout");
-    }
+    // Bound both input and output waits when the encoder stalls.
+    // A timeout is fatal to this stream: its input may still be in use.
+    if (!set_encoder_timeouts(ctx, mpi)) return false;
     if (mpp_enc_cfg_init(&cfg) || mpi->control(ctx, MPP_ENC_GET_CFG, cfg)) {
       log->error("Cannot allocate native MPP encoder configuration");
       return false;
@@ -256,10 +270,9 @@ class RockchipMppStream::Impl {
       destroy_record_encoder();
       return false;
     }
-    RK_S64 output_timeout = MPP_POLL_BLOCK;
-    if (record_mpi->control(record_ctx, MPP_SET_OUTPUT_TIMEOUT,
-                            &output_timeout)) {
-      log->warn("MPP rejected the recording output timeout");
+    if (!set_encoder_timeouts(record_ctx, record_mpi)) {
+      destroy_record_encoder();
+      return false;
     }
     mpp_enc_cfg_set_s32(record_cfg, "codec:type", coding);
     mpp_enc_cfg_set_s32(record_cfg, "prep:width", width);
@@ -286,6 +299,17 @@ class RockchipMppStream::Impl {
     if (record_mpi->control(record_ctx, MPP_ENC_SET_CFG, record_cfg)) {
       log->error("MPP rejected the recording-channel configuration");
       destroy_record_encoder();
+      return false;
+    }
+    return true;
+  }
+
+  bool set_encoder_timeouts(MppCtx encoder_ctx, MppApi* encoder_mpi) {
+    RK_S64 timeout_ms = 250;
+    if (encoder_mpi->control(encoder_ctx, MPP_SET_INPUT_TIMEOUT, &timeout_ms) ||
+        encoder_mpi->control(encoder_ctx, MPP_SET_OUTPUT_TIMEOUT,
+                             &timeout_ms)) {
+      log->error("MPP rejected bounded encoder timeouts");
       return false;
     }
     return true;
@@ -415,6 +439,7 @@ class RockchipMppStream::Impl {
       return false;
     }
     emit_record_codec_header();
+    record_time_origin.reset();
     log->info("High-quality MPP recording started: {} kbit/s, QP {}-{}, {}",
               record_bitrate_kbits.load(), record_qp_min.load(),
               record_qp_max.load(), recording_filename);
@@ -422,8 +447,8 @@ class RockchipMppStream::Impl {
   }
 
   void destroy_record_encoder() {
-    if (record_cfg) mpp_enc_cfg_deinit(record_cfg);
     if (record_ctx) mpp_destroy(record_ctx);
+    if (record_cfg) mpp_enc_cfg_deinit(record_cfg);
     record_cfg = nullptr;
     record_ctx = nullptr;
     record_mpi = nullptr;
@@ -441,7 +466,7 @@ class RockchipMppStream::Impl {
   }
 
   bool recording_requested() const {
-    const int mode = owner.m_camera_holder->get_settings().air_recording;
+    const int mode = record_mode.load();
     return mode == AIR_RECORDING_ON ||
            (mode == AIR_RECORDING_AUTO_ARM_DISARM && armed.load());
   }
@@ -504,7 +529,6 @@ class RockchipMppStream::Impl {
     return true;
   }
 
-
   bool setup_capture() {
     const auto& camera = owner.m_camera_holder->get_camera();
     if (camera.requires_rockchip1126_mpp_testsrc_pipeline()) {
@@ -514,8 +538,9 @@ class RockchipMppStream::Impl {
     }
 
     std::string capture_device;
-    // The X21 routes the HDZero camera's NV12 output through CIF (stream_cif_mipi_id0).
-    // The Luckfox Aura and ISP-based cameras (IMX415, VEYE, Arducam) route through rkisp_mainpath.
+    // The X21 routes the HDZero camera's NV12 output through CIF
+    // (stream_cif_mipi_id0). The Luckfox Aura and ISP-based cameras (IMX415,
+    // VEYE, Arducam) route through rkisp_mainpath.
     if (camera.camera_type == X_CAM_TYPE_LUCKFOX_AURA_IMX415 ||
         OHDPlatform::instance().is_luckfox_aura()) {
       if (!configure_imx415_hfr()) {
@@ -545,7 +570,10 @@ class RockchipMppStream::Impl {
     format.fmt.pix_mp.field = V4L2_FIELD_NONE;
     format.fmt.pix_mp.num_planes = 1;
     if (retry_ioctl(capture_fd, VIDIOC_S_FMT, &format) < 0 ||
-        format.fmt.pix_mp.pixelformat != V4L2_PIX_FMT_NV12) {
+        format.fmt.pix_mp.pixelformat != V4L2_PIX_FMT_NV12 ||
+        format.fmt.pix_mp.width != width ||
+        format.fmt.pix_mp.height != height ||
+        format.fmt.pix_mp.num_planes != 1) {
       log->error("{} cannot provide NV12 {}x{}: {}", capture_device, width,
                  height, std::strerror(errno));
       return false;
@@ -616,6 +644,29 @@ class RockchipMppStream::Impl {
           mmap(nullptr, planes[0].length, PROT_READ | PROT_WRITE, MAP_SHARED,
                capture_fd, planes[0].m.mem_offset);
       if (capture_buffers[index].data == MAP_FAILED) return false;
+      // Import only an identical NV12 memory layout. The copy fallback handles
+      // driver-specific padding and debug noise without modifying capture data.
+      if (dma_layout_compatible()) {
+        v4l2_exportbuffer exported{};
+        exported.type = request.type;
+        exported.index = index;
+        exported.plane = 0;
+        exported.flags = O_CLOEXEC;
+        if (retry_ioctl(capture_fd, VIDIOC_EXPBUF, &exported) == 0) {
+          auto& capture = capture_buffers[index];
+          capture.dma_fd = exported.fd;
+          MppBufferInfo info{};
+          info.type = MPP_BUFFER_TYPE_EXT_DMA;
+          info.fd = exported.fd;
+          info.size = capture.size;
+          if (mpp_buffer_import(&capture.imported, &info) != MPP_OK) {
+            if (capture.imported) mpp_buffer_put(capture.imported);
+            capture.imported = nullptr;
+            close(capture.dma_fd);
+            capture.dma_fd = -1;
+          }
+        }
+      }
       if (retry_ioctl(capture_fd, VIDIOC_QBUF, &buffer) < 0) return false;
     }
     v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
@@ -710,11 +761,56 @@ class RockchipMppStream::Impl {
     if (retry_ioctl(capture_fd, VIDIOC_DQBUF, &buffer) < 0) {
       return errno == EAGAIN;
     }
+    current_capture_time = Clock::now();
+    sequence_gaps += capture_sequence.observe(buffer.sequence);
+    current_capture_age_ms.reset();
+    const uint32_t timestamp_type = buffer.flags & V4L2_BUF_FLAG_TIMESTAMP_MASK;
+    const uint32_t timestamp_source =
+        buffer.flags & V4L2_BUF_FLAG_TSTAMP_SRC_MASK;
+    if (!timestamp_flags ||
+        *timestamp_flags != (timestamp_type | timestamp_source)) {
+      timestamp_flags = timestamp_type | timestamp_source;
+      log->info(
+          "V4L2 capture timestamp: clock {}, source {} (buffer age, not "
+          "glass-to-glass latency)",
+          timestamp_type == V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC ? "monotonic"
+                                                              : "unknown/copy",
+          timestamp_source == V4L2_BUF_FLAG_TSTAMP_SRC_SOE ? "start of exposure"
+                                                           : "end of frame");
+    }
+    if (timestamp_type == V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC &&
+        (buffer.timestamp.tv_sec || buffer.timestamp.tv_usec)) {
+      timespec now{};
+      if (clock_gettime(CLOCK_MONOTONIC, &now) == 0) {
+        const double age = (now.tv_sec - buffer.timestamp.tv_sec) * 1000.0 +
+                           now.tv_nsec / 1e6 -
+                           buffer.timestamp.tv_usec / 1000.0;
+        if (age >= 0) {
+          current_capture_age_ms = age;
+          capture_age_latency.add(age);
+        }
+      }
+    }
+    bool encoded = true;
     if (buffer.index < capture_buffers.size()) {
       const auto& mapped = capture_buffers[buffer.index];
-      encode_nv12(static_cast<const uint8_t*>(mapped.data),
-                  std::min<size_t>(planes[0].bytesused, mapped.size));
+      const size_t bytes = std::min<size_t>(planes[0].bytesused, mapped.size);
+      const size_t offset = planes[0].data_offset;
+      if (!(buffer.flags & V4L2_BUF_FLAG_ERROR) && offset <= bytes) {
+        encoded = encode_nv12(static_cast<const uint8_t*>(mapped.data) + offset,
+                              bytes - offset,
+                              offset == 0 ? mapped.imported : nullptr);
+      } else {
+        ++invalid_capture_frames;
+      }
+    } else {
+      log->error("V4L2 returned an invalid capture buffer index");
+      return false;
     }
+    // On failure leave the buffer dequeued. cleanup() destroys the encoder
+    // before releasing DMA imports or stopping capture, so DMA cannot race
+    // QBUF.
+    if (!encoded) return false;
     if (retry_ioctl(capture_fd, VIDIOC_QBUF, &buffer) < 0) {
       log->error("Cannot requeue V4L2 buffer: {}", std::strerror(errno));
       return false;
@@ -731,11 +827,20 @@ class RockchipMppStream::Impl {
     openhd::LinkActionHandler::instance().set_cam_info_status(
         owner.m_camera_holder->get_camera().index,
         CameraStream::CAM_STATUS_RESTARTING);
+    current_capture_time = Clock::now();
     if (!init_mpp() || !setup_capture()) {
       running = false;
       cleanup();
       return;
     }
+    init_record_worker();
+    const auto imported_count =
+        std::count_if(capture_buffers.begin(), capture_buffers.end(),
+                      [](const auto& b) { return b.imported != nullptr; });
+    log->info(
+        "MPP capture input: {}/{} DMA buffers imported, copy fallback "
+        "available, force-copy {}",
+        imported_count, capture_buffers.size(), force_copy ? "on" : "off");
     log->info("Native MPP encoder active: {}x{} ROI is runtime adjustable",
               width, height);
     openhd::LinkActionHandler::instance().set_cam_info_status(
@@ -748,89 +853,116 @@ class RockchipMppStream::Impl {
     uint64_t synthetic_index = 0;
     while (running) {
       if (synthetic_capture) {
+        current_capture_time = Clock::now();
+        current_capture_age_ms.reset();
         fill_synthetic_frame(synthetic_index++);
-        encode_nv12(synthetic_frame.data(), synthetic_frame.size());
+        if (!encode_nv12(synthetic_frame.data(), synthetic_frame.size())) break;
         next_frame += frame_period;
         std::this_thread::sleep_until(next_frame);
       } else if (!capture_one_frame()) {
         break;
       }
       const auto now = std::chrono::steady_clock::now();
-      if (now - last_space_check >= std::chrono::seconds(5)) {
-        last_space_check = now;
-        owner.m_camera_holder->check_remaining_space_air_recording(false);
-      }
+      report_latency(now);
     }
     cleanup();
+    running = false;
   }
 
-  void encode_nv12(const uint8_t* source, size_t source_size) {
+  bool dma_layout_compatible() const {
+    return !force_copy && capture_num_planes == 1 &&
+           openhd::mpp::Nv12Layout{capture_stride, capture_uv_offset}.matches(
+               hor_stride, ver_stride);
+  }
+
+  bool copy_nv12(const uint8_t* source, size_t source_size,
+                 openhd::mpp::Nv12Layout layout, MppBuffer target) {
+    if (!source || !layout.fits(source_size, width, height)) return false;
+#if !defined(OPENHD_LEGACY_MPP_API)
+    if (mpp_buffer_sync_begin(target) != MPP_OK) return false;
+#endif
+    auto* destination = static_cast<uint8_t*>(mpp_buffer_get_ptr(target));
+    if (destination) {
+      std::memset(destination, 0, hor_stride * ver_stride * 3 / 2);
+      for (RK_U32 row = 0; row < height; ++row)
+        std::memcpy(destination + row * hor_stride,
+                    source + static_cast<size_t>(row) * layout.stride, width);
+      for (RK_U32 row = 0; row < height / 2; ++row)
+        std::memcpy(destination + hor_stride * ver_stride + row * hor_stride,
+                    source + layout.uv_offset +
+                        static_cast<size_t>(row) * layout.stride,
+                    width);
+    }
+#if !defined(OPENHD_LEGACY_MPP_API)
+    if (mpp_buffer_sync_end(target) != MPP_OK) return false;
+#endif
+    return destination != nullptr;
+  }
+
+  bool encode_nv12(const uint8_t* source, size_t source_size,
+                   MppBuffer imported = nullptr) {
     const size_t src_stride = capture_stride ? capture_stride : width;
     const size_t uv_offset = capture_uv_offset
                                  ? capture_uv_offset
                                  : src_stride * static_cast<size_t>(height);
-    const size_t required_size =
-        uv_offset + src_stride * static_cast<size_t>(height / 2);
-    if (!source || source_size < required_size) return;
+    openhd::mpp::Nv12Layout layout{src_stride, uv_offset};
+    if (!source || !layout.fits(source_size, width, height)) {
+      ++invalid_capture_frames;
+      return true;
+    }
     update_bitrate_sweep();
     if (rate_dirty.exchange(false)) {
       apply_rate_control();
       if (mpi->control(ctx, MPP_ENC_SET_CFG, cfg))
         log->warn("MPP rejected a dynamic bitrate/QP update");
     }
-#if !defined(OPENHD_LEGACY_MPP_API)
-    mpp_buffer_sync_begin(input_buffer);
-#endif
-    auto* destination = static_cast<uint8_t*>(mpp_buffer_get_ptr(input_buffer));
-    if (!destination) {
-#if !defined(OPENHD_LEGACY_MPP_API)
-      mpp_buffer_sync_end(input_buffer);
-#endif
-      return;
-    }
-    for (RK_U32 row = 0; row < height; ++row)
-      std::memcpy(destination + row * hor_stride,
-                  source + static_cast<size_t>(row) * src_stride, width);
-    const uint8_t* source_uv = source + uv_offset;
-    uint8_t* destination_uv = destination + hor_stride * ver_stride;
-    for (RK_U32 row = 0; row < height / 2; ++row)
-      std::memcpy(destination_uv + row * hor_stride,
-                  source_uv + static_cast<size_t>(row) * src_stride, width);
-    add_noise(destination);
-#if !defined(OPENHD_LEGACY_MPP_API)
-    mpp_buffer_sync_end(input_buffer);
-#endif
-
-    encode_context(ctx, mpi, true);
-    if (recording_requested()) {
-      if (start_recording()) {
-        if (record_rate_dirty.exchange(false)) {
-          apply_record_rate_control();
-          if (record_mpi->control(record_ctx, MPP_ENC_SET_CFG, record_cfg))
-            log->warn("MPP rejected a dynamic recording-quality update");
-        }
-        encode_context(record_ctx, record_mpi, false);
+    MppBuffer encoder_input = input_buffer;
+    const auto copy_begin = Clock::now();
+    if (imported && dma_layout_compatible() &&
+        debug_noise_percent.load() == 0) {
+      encoder_input = imported;
+      ++dma_frames;
+    } else {
+      if (!copy_nv12(source, source_size, layout, input_buffer)) {
+        log->error("Cannot copy capture input into MPP buffer");
+        return false;
       }
-    } else if (record_ctx || record_muxer.is_open()) {
-      stop_recording();
+#if !defined(OPENHD_LEGACY_MPP_API)
+      if (mpp_buffer_sync_begin(input_buffer) != MPP_OK) return false;
+#endif
+      add_noise(static_cast<uint8_t*>(mpp_buffer_get_ptr(input_buffer)));
+#if !defined(OPENHD_LEGACY_MPP_API)
+      if (mpp_buffer_sync_end(input_buffer) != MPP_OK) return false;
+#endif
+      source = static_cast<const uint8_t*>(mpp_buffer_get_ptr(input_buffer));
+      source_size = hor_stride * ver_stride * 3 / 2;
+      layout = {hor_stride, static_cast<size_t>(hor_stride) * ver_stride};
+      ++copied_frames;
+      copy_latency.add(elapsed_ms(copy_begin));
     }
+    const bool encoded = encode_context(ctx, mpi, encoder_input, true);
+    if (encoded) enqueue_recording(source, source_size, layout);
+    return encoded;
   }
 
-  void encode_context(MppCtx encoder_ctx, MppApi* encoder_mpi,
-                      bool transmit) {
+  bool encode_context(MppCtx encoder_ctx, MppApi* encoder_mpi,
+                      MppBuffer encoder_input, bool transmit) {
+    const auto encode_begin = Clock::now();
     MppFrame frame = nullptr;
     if (mpp_frame_init(&frame) != MPP_OK) {
-      return;
+      return false;
     }
     mpp_frame_set_width(frame, width);
     mpp_frame_set_height(frame, height);
     mpp_frame_set_hor_stride(frame, hor_stride);
     mpp_frame_set_ver_stride(frame, ver_stride);
     mpp_frame_set_fmt(frame, MPP_FMT_YUV420SP);
-    mpp_frame_set_buffer(frame, input_buffer);
+    mpp_frame_set_buffer(frame, encoder_input);
     if (roi_enable.load()) {
-      configure_roi(roi_region, roi_cfg);
-      mpp_meta_set_ptr(mpp_frame_get_meta(frame), KEY_ROI_DATA, &roi_cfg);
+      auto& region = transmit ? roi_region : record_roi_region;
+      auto& config = transmit ? roi_cfg : record_roi_cfg;
+      configure_roi(region, config);
+      mpp_meta_set_ptr(mpp_frame_get_meta(frame), KEY_ROI_DATA, &config);
     }
     const auto encode_now = std::chrono::steady_clock::now();
     bool request_keyframe = transmit && force_keyframe_pending.exchange(false);
@@ -854,16 +986,24 @@ class RockchipMppStream::Impl {
       log->warn("MPP {} channel failed to accept an input frame",
                 transmit ? "transmit" : "recording");
       mpp_frame_deinit(&frame);
-      return;
+      return false;
     }
     mpp_frame_deinit(&frame);
     RK_U32 end_of_image = 0;
     size_t transmit_frame_bytes = 0;
+    const auto output_deadline = Clock::now() + std::chrono::seconds(2);
     do {
       MppPacket packet = nullptr;
-      if (encoder_mpi->encode_get_packet(encoder_ctx, &packet) || !packet)
-        break;
-      const auto* data = static_cast<const uint8_t*>(mpp_packet_get_pos(packet));
+      if (encoder_mpi->encode_get_packet(encoder_ctx, &packet) || !packet) {
+        if (packet) mpp_packet_deinit(&packet);
+        log->error(
+            "MPP {} output failed; input remains owned until encoder "
+            "destruction",
+            transmit ? "transmit" : "recording");
+        return false;
+      }
+      const auto* data =
+          static_cast<const uint8_t*>(mpp_packet_get_pos(packet));
       const size_t length = mpp_packet_get_length(packet);
       end_of_image = !mpp_packet_is_partition(packet) || mpp_packet_is_eoi(packet);
       if (data && length) {
@@ -889,13 +1029,35 @@ class RockchipMppStream::Impl {
       }
       mpp_packet_deinit(&packet);
       if (transmit && end_of_image) transmitting_keyframe = false;
+      if (!end_of_image && Clock::now() >= output_deadline) {
+        log->error("MPP partition output exceeded deadline");
+        return false;
+      }
     } while (!end_of_image);
     if (!transmit && !record_au.empty()) {
-      if (is_keyframe_au(record_au.data(), record_au.size()) && !record_header.empty()) {
-        record_muxer.feed_nalu(record_header.data(), record_header.size());
+      const auto mux_begin = Clock::now();
+      if (is_keyframe_au(record_au.data(), record_au.size()) &&
+          !record_header.empty()) {
+        record_muxer.feed_annex_b_access_unit(
+            record_header.data(), record_header.size(), record_timestamp_ms);
       }
-      record_muxer.feed_nalu(record_au.data(), record_au.size());
+      record_muxer.feed_annex_b_access_unit(record_au.data(), record_au.size(),
+                                            record_timestamp_ms);
       record_au.clear();
+      recording_write_latency.add(elapsed_ms(mux_begin));
+      if (!record_muxer.good()) {
+        log->error("MPP recording write failed");
+        return false;
+      }
+    }
+    if (transmit) {
+      encode_latency.add(elapsed_ms(encode_begin));
+      dequeue_to_output_latency.add(elapsed_ms(current_capture_time));
+      if (current_capture_age_ms)
+        capture_to_output_latency.add(*current_capture_age_ms +
+                                      elapsed_ms(current_capture_time));
+    } else {
+      recording_encode_latency.add(elapsed_ms(encode_begin));
     }
     if (transmit) {
       // Pace filler against wall-clock time, not configured FPS. The hardware
@@ -933,6 +1095,163 @@ class RockchipMppStream::Impl {
         perf_window_start = now;
       }
     }
+    return true;
+  }
+
+  void init_record_worker() {
+    record_queue.reset();
+    recording_enabled = false;
+    record_worker_available = true;
+    for (auto& buffer : record_inputs) {
+      if (mpp_buffer_get(group, &buffer, hor_stride * ver_stride * 3 / 2) !=
+          MPP_OK) {
+        log->warn(
+            "Cannot allocate recording input pool; transmission remains "
+            "available");
+        record_worker_available = false;
+        for (auto& allocated : record_inputs) {
+          if (allocated) mpp_buffer_put(allocated);
+          allocated = nullptr;
+        }
+        return;
+      }
+    }
+    record_worker_running = true;
+    record_thread = std::thread([this] { recording_loop(); });
+  }
+
+  void enqueue_recording(const uint8_t* source, size_t bytes,
+                         openhd::mpp::Nv12Layout layout) {
+    record_mode = owner.m_camera_holder->get_settings().air_recording;
+    const bool enabled = recording_requested() && record_worker_available;
+    if (recording_enabled.exchange(enabled) != enabled) {
+      ++record_epoch;
+      record_queue.discard_pending();
+    }
+    if (!enabled) return;
+    const auto slot = record_queue.reserve();
+    if (!slot) {
+      ++recording_drops;
+      return;  // Drop raw input only; never discard encoded reference frames.
+    }
+    const auto begin = Clock::now();
+    if (!copy_nv12(source, bytes, layout, record_inputs[*slot])) {
+      record_queue.release(*slot);
+      ++recording_drops;
+      return;
+    }
+    recording_copy_latency.add(elapsed_ms(begin));
+    record_queue.publish(*slot, RecordJob{current_capture_time, Clock::now(),
+                                          record_epoch.load()});
+  }
+
+  void recording_loop() {
+    uint64_t active_epoch = 0;
+    auto last_space_check = Clock::now();
+    auto retry_after = Clock::time_point{};
+    while (record_worker_running) {
+      auto queued = record_queue.wait(std::chrono::milliseconds(100));
+      if (!record_worker_running) break;
+      if (!recording_enabled || !recording_requested()) {
+        if (queued) record_queue.release(queued->first);
+        record_queue.discard_pending();
+        stop_recording();
+        continue;
+      }
+      if (!queued) continue;
+      const auto slot = queued->first;
+      const auto& job = queued->second;
+      if (job.epoch != record_epoch.load()) {
+        record_queue.release(slot);
+        continue;
+      }
+      if (active_epoch != job.epoch) {
+        stop_recording();
+        active_epoch = job.epoch;
+        retry_after = Clock::time_point{};
+      }
+      recording_queue_latency.add(elapsed_ms(job.queued));
+      bool ok = false;
+      const auto begin = Clock::now();
+      if (begin < retry_after) {
+        record_queue.release(slot);
+        ++recording_drops;
+        continue;
+      }
+      if (start_recording()) {
+        if (!record_time_origin) record_time_origin = job.captured;
+        record_timestamp_ms = static_cast<uint64_t>(std::max<int64_t>(
+            0, std::chrono::duration_cast<std::chrono::milliseconds>(
+                   job.captured - *record_time_origin)
+                   .count()));
+        if (record_rate_dirty.exchange(false)) {
+          apply_record_rate_control();
+          if (record_mpi->control(record_ctx, MPP_ENC_SET_CFG, record_cfg))
+            log->warn("MPP rejected a dynamic recording-quality update");
+        }
+        ok = encode_context(record_ctx, record_mpi, record_inputs[slot], false);
+      }
+      if (!ok) {
+        // Destroy before recycling the input slot: a timed-out encoder may
+        // still be reading it. Clear partial output and restart with fresh
+        // headers.
+        stop_recording();
+        ++recording_drops;
+        retry_after = Clock::now() + std::chrono::seconds(1);
+      } else {
+        recording_total_latency.add(elapsed_ms(job.captured));
+      }
+      record_queue.release(slot);
+      if (Clock::now() - last_space_check >= std::chrono::seconds(5)) {
+        last_space_check = Clock::now();
+        owner.m_camera_holder->check_remaining_space_air_recording(false);
+        record_mode = owner.m_camera_holder->get_settings().air_recording;
+      }
+    }
+    stop_recording();
+  }
+
+  void stop_record_worker() {
+    recording_enabled = false;
+    record_worker_running = false;
+    record_queue.stop();
+    if (record_thread.joinable()) record_thread.join();
+    for (auto& buffer : record_inputs) {
+      if (buffer) mpp_buffer_put(buffer);
+      buffer = nullptr;
+    }
+    record_worker_available = false;
+  }
+
+  void report_latency(Clock::time_point now) {
+    if (now - last_latency_report < std::chrono::seconds(5)) return;
+    last_latency_report = now;
+    const auto report = [this](const char* stage,
+                               openhd::mpp::LatencySamples& samples) {
+      const auto sorted = samples.take();
+      if (!sorted.empty())
+        log->info(
+            "MPP latency {} ms: p50 {:.3f}, p95 {:.3f}, max {:.3f}, samples {}",
+            stage, openhd::mpp::LatencySamples::percentile(sorted, 50),
+            openhd::mpp::LatencySamples::percentile(sorted, 95), sorted.back(),
+            sorted.size());
+    };
+    report("capture-buffer-age", capture_age_latency);
+    report("transmit-copy", copy_latency);
+    report("transmit-encode-and-output", encode_latency);
+    report("output-callback", output_callback_latency);
+    report("dequeue-to-output", dequeue_to_output_latency);
+    report("capture-timestamp-to-output", capture_to_output_latency);
+    report("recording-copy", recording_copy_latency);
+    report("recording-queue", recording_queue_latency);
+    report("recording-encode-and-write", recording_encode_latency);
+    report("recording-write", recording_write_latency);
+    report("recording-dequeue-to-write", recording_total_latency);
+    log->info(
+        "MPP input totals: DMA {}, copy {}, capture sequence gaps {}, invalid "
+        "frames {}, recording raw drops {}",
+        dma_frames, copied_frames, sequence_gaps, invalid_capture_frames,
+        recording_drops.load());
   }
 
   size_t emit_bitrate_padding(size_t bytes) {
@@ -1000,6 +1319,7 @@ class RockchipMppStream::Impl {
 
   void update_recording_snapshot() {
     const auto& s = owner.m_camera_holder->get_settings();
+    record_mode = s.air_recording;
     record_bitrate_kbits = s.mpp_record_bitrate_kbits;
     record_qp_min = s.mpp_record_qp_min;
     record_qp_max = s.mpp_record_qp_max;
@@ -1037,12 +1357,18 @@ class RockchipMppStream::Impl {
   }
 
   void cleanup() {
-    stop_recording();
+    stop_record_worker();
+    // Retire encoder DMA before releasing imported capture buffers.
+    if (ctx) mpp_destroy(ctx);
+    ctx = nullptr;
+    mpi = nullptr;
     if (capture_streaming) {
       v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
       retry_ioctl(capture_fd, VIDIOC_STREAMOFF, &type);
     }
     for (auto& buffer : capture_buffers) {
+      if (buffer.imported) mpp_buffer_put(buffer.imported);
+      if (buffer.dma_fd >= 0) close(buffer.dma_fd);
       if (buffer.data && buffer.data != MAP_FAILED)
         munmap(buffer.data, buffer.size);
     }
@@ -1058,12 +1384,13 @@ class RockchipMppStream::Impl {
     if (input_buffer) mpp_buffer_put(input_buffer);
     if (group) mpp_buffer_group_put(group);
     if (cfg) mpp_enc_cfg_deinit(cfg);
-    if (ctx) mpp_destroy(ctx);
     input_buffer = nullptr;
     group = nullptr;
     cfg = nullptr;
     ctx = nullptr;
     mpi = nullptr;
+    capture_sequence.reset();
+    timestamp_flags.reset();
   }
 
   void stop() {
@@ -1091,6 +1418,15 @@ class RockchipMppStream::Impl {
   std::atomic<int> intra_refresh_mode{2};
   std::atomic<int> intra_refresh_num{8};
   std::atomic_bool armed{false};
+  std::atomic<int> record_mode{AIR_RECORDING_OFF};
+  std::atomic_bool recording_enabled{false};
+  std::atomic<uint64_t> record_epoch{0};
+  std::atomic_bool record_worker_running{false};
+  bool record_worker_available = false;
+  std::thread record_thread;
+  openhd::mpp::SlotQueue<RecordJob, record_slot_count> record_queue;
+  std::array<MppBuffer, record_slot_count> record_inputs{};
+  std::atomic<uint64_t> recording_drops{0};
   std::atomic_bool record_rate_dirty{false};
   std::atomic<int> record_bitrate_kbits{40000};
   std::atomic<int> record_qp_min{4};
@@ -1132,13 +1468,31 @@ class RockchipMppStream::Impl {
   // backing storage must outlive the encode_context stack frame.
   MppEncROIRegion roi_region{};
   MppEncROICfg roi_cfg{};
+  MppEncROIRegion record_roi_region{};
+  MppEncROICfg record_roi_cfg{};
+  std::optional<Clock::time_point> record_time_origin;
+  uint64_t record_timestamp_ms = 0;
+  bool force_copy = [] {
+    const char* value = std::getenv("OPENHD_MPP_FORCE_COPY");
+    return value && std::strcmp(value, "1") == 0;
+  }();
+  openhd::mpp::CaptureSequence capture_sequence;
+  std::optional<uint32_t> timestamp_flags;
+  Clock::time_point current_capture_time = Clock::now();
+  std::optional<double> current_capture_age_ms;
+  Clock::time_point last_latency_report = Clock::now();
+  uint64_t sequence_gaps = 0, invalid_capture_frames = 0, dma_frames = 0,
+           copied_frames = 0;
+  openhd::mpp::LatencySamples capture_age_latency, copy_latency, encode_latency,
+      output_callback_latency, dequeue_to_output_latency,
+      capture_to_output_latency, recording_copy_latency,
+      recording_queue_latency, recording_encode_latency,
+      recording_write_latency, recording_total_latency;
   MatroskaRecorder record_muxer;
   std::vector<uint8_t> record_au;
   std::vector<uint8_t> record_header;
   std::vector<uint8_t> codec_header;
   std::string recording_filename;
-  std::chrono::steady_clock::time_point last_space_check =
-      std::chrono::steady_clock::now();
   std::chrono::steady_clock::time_point next_bootstrap_keyframe =
       std::chrono::steady_clock::now() + std::chrono::seconds(3);
   int bootstrap_keyframes_remaining = 3;

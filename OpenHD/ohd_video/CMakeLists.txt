@@ -192,6 +192,8 @@ target_link_libraries(test_audio OHDVideoLib)
 add_executable(test_matroska_recorder
         test/test_matroska_recorder.cpp
         src/matroska_recorder.cpp)
+add_executable(test_rockchip_stream_utils test/test_rockchip_stream_utils.cpp)
+target_link_libraries(test_rockchip_stream_utils PRIVATE Threads::Threads)
 target_include_directories(test_matroska_recorder PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/inc)
 add_executable(openhd_lan_test test/openhd_lan_test.cpp)

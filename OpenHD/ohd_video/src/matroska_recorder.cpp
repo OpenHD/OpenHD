@@ -126,6 +126,8 @@ bool MatroskaRecorder::open(const std::string& path, bool h265, int width,
   m_access_unit_keyframe = false;
   m_frame_index = 0;
   m_cluster_timestamp_ms = 0;
+  m_explicit_timestamp = false;
+  m_timestamp_ms = 0;
   m_access_unit.clear();
   m_vps.clear();
   m_sps.clear();
@@ -321,7 +323,9 @@ void MatroskaRecorder::write_access_unit() {
   if (!write_header()) return;
 
   const uint64_t timestamp_ms =
-      m_frame_index * 1000ULL / static_cast<uint64_t>(m_fps);
+      m_explicit_timestamp
+          ? m_timestamp_ms
+          : m_frame_index * 1000ULL / static_cast<uint64_t>(m_fps);
   if (m_frame_index == 0 || timestamp_ms - m_cluster_timestamp_ms >= 1000) {
     start_cluster(timestamp_ms);
   }
@@ -376,6 +380,32 @@ void MatroskaRecorder::feed_nalu(const uint8_t* data, std::size_t size) {
 
   if (m_access_unit_has_vcl) write_access_unit();
   append_nalu(nalu, size);
+}
+
+void MatroskaRecorder::feed_annex_b_access_unit(const uint8_t* data,
+                                              std::size_t size,
+                                              uint64_t timestamp_ms) {
+  if (!m_file.is_open() || !data || !size) return;
+  write_access_unit();
+  m_timestamp_ms = m_explicit_timestamp ? std::max(m_timestamp_ms, timestamp_ms)
+                                       : timestamp_ms;
+  m_explicit_timestamp = true;
+  const auto start_code = [data, size](std::size_t at) -> std::size_t {
+    if (at + 3 <= size && data[at] == 0 && data[at + 1] == 0) {
+      if (data[at + 2] == 1) return 3;
+      if (at + 4 <= size && data[at + 2] == 0 && data[at + 3] == 1) return 4;
+    }
+    return 0;
+  };
+  std::size_t begin = 0;
+  while (begin < size && !start_code(begin)) ++begin;
+  while (begin < size) {
+    std::size_t next = begin + start_code(begin);
+    while (next < size && !start_code(next)) ++next;
+    feed_nalu(data + begin, next - begin);
+    begin = next;
+  }
+  write_access_unit();
 }
 
 void MatroskaRecorder::flush() {
