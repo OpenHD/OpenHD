@@ -141,7 +141,9 @@ struct CameraSettings {
   // The framerate describes the advertised mode and is also useful in the UI;
   // the output framerate remains part of streamed_video_format.
   VideoFormat rpi_libcamera_sensor_mode{VideoCodec::H264, 640, 480, 30};
-  int rpi_libcamera_impl = RPI_LIBCAMERA_IMPL_NATIVE;
+  // Prefer GStreamer for decoder compatibility; native libcamera is opt-in
+  // via LIBCAMERA_IMPL (0 = GStreamer, 1 = native libcamera).
+  int rpi_libcamera_impl = RPI_LIBCAMERA_IMPL_GSTREAMER;
   // RV1126/Luckfox/X21 can either use the GStreamer MPP elements or OpenHD's
   // direct V4L2 capture + Rockchip MPP implementation.
   int rockchip_impl = ROCKCHIP_IMPL_NATIVE_MPP;
