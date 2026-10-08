@@ -395,6 +395,18 @@ jobs:
         with:
           submodules: true
           token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+      # Devourer has update=none to avoid fetching its vendor reference trees.
+      # Fetch the pinned backend explicitly, as in the architecture jobs.
+      - name: Fetch Devourer backend without nested submodules
+        run: |
+          devourer_dir="OpenHD/ohd_interface/lib/devourer"
+          devourer_commit="$(git rev-parse "HEAD:${devourer_dir}")"
+          mkdir -p "${devourer_dir}"
+          git -C "${devourer_dir}" init
+          git -C "${devourer_dir}" remote add origin https://github.com/OpenHD/devourer.git
+          git -C "${devourer_dir}" fetch --depth=1 origin "${devourer_commit}"
+          git -C "${devourer_dir}" checkout --detach "${devourer_commit}"
+          test -f "${devourer_dir}/CMakeLists.txt"
       - name: Checkout OpenHD SysUtils
         uses: actions/checkout@v4
         with:
