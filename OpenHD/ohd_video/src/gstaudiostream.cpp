@@ -31,7 +31,6 @@
 #include <sstream>
 #include <utility>
 
-#include "config_paths.h"
 #include "gst_appsink_helper.h"
 #include "gst_debug_helper.h"
 #include "gst_helper.hpp"
@@ -75,13 +74,10 @@ GstAudioStream::discover_capture_devices() {
   OHDGstHelper::initGstreamerOrThrow();
   std::vector<DeviceInfo> result;
   GstDeviceMonitor* monitor = gst_device_monitor_new();
-  if (!monitor) return result;
-  gst_device_monitor_add_filter(monitor, "Audio/Source", nullptr);
-  if (!gst_device_monitor_start(monitor)) {
-    gst_object_unref(monitor);
-    return result;
-  }
-  GList* devices = gst_device_monitor_get_devices(monitor);
+  if (monitor) gst_device_monitor_add_filter(monitor, "Audio/Source", nullptr);
+  const bool monitor_started = monitor && gst_device_monitor_start(monitor);
+  GList* devices =
+      monitor_started ? gst_device_monitor_get_devices(monitor) : nullptr;
   for (GList* item = devices; item; item = item->next) {
     auto* device = GST_DEVICE(item->data);
     GstElement* element = gst_device_create_element(device, nullptr);
@@ -100,21 +96,67 @@ GstAudioStream::discover_capture_devices() {
       if (device_name && device_name[0] != '\0') {
         info.token += ":" + std::string(device_name);
       }
-      const char* display_name = gst_device_get_display_name(device);
+      gchar* display_name = gst_device_get_display_name(device);
       info.display_name = display_name ? display_name : info.token;
-      const auto duplicate =
-          std::find_if(result.begin(), result.end(), [&](const DeviceInfo& d) {
-            return d.token == info.token;
-          });
+      g_free(display_name);
+      const auto duplicate = std::find_if(
+          result.begin(), result.end(),
+          [&](const DeviceInfo& d) { return d.token == info.token; });
       if (duplicate == result.end()) result.emplace_back(std::move(info));
     }
     g_free(device_name);
     gst_object_unref(element);
   }
   g_list_free_full(devices, gst_object_unref);
-  gst_device_monitor_stop(monitor);
-  gst_object_unref(monitor);
+  if (monitor_started) gst_device_monitor_stop(monitor);
+  if (monitor) gst_object_unref(monitor);
+  // Embedded systems may have alsasrc without a GStreamer device provider.
+  // Publish every ALSA capture device as well, so discovery and selection use
+  // the same list even when the device monitor is unavailable.
+  GstElementFactory* alsa_factory = gst_element_factory_find("alsasrc");
+  if (alsa_factory) {
+    gst_object_unref(alsa_factory);
+    const auto output = OHDUtil::run_command_out("LC_ALL=C arecord -l");
+    if (output.has_value()) {
+      static const std::regex pattern(
+          R"(card\s+([0-9]+):\s*(.*?)\s*,\s*device\s+([0-9]+):\s*([^\r\n]*))");
+      for (std::sregex_iterator it(output->begin(), output->end(), pattern),
+           end;
+           it != end; ++it) {
+        const auto token =
+            "alsasrc:plughw:" + (*it)[1].str() + "," + (*it)[3].str();
+        const auto duplicate = std::find_if(
+            result.begin(), result.end(), [&](const DeviceInfo& device) {
+              return device.token == token ||
+                     device.token ==
+                         "alsasrc:hw:" + (*it)[1].str() + "," + (*it)[3].str();
+            });
+        if (duplicate == result.end()) {
+          result.push_back({token, (*it)[2].str() + " / " + (*it)[4].str()});
+        }
+      }
+    }
+  }
   return result;
+}
+
+std::optional<std::vector<std::string>>
+GstAudioStream::discover_usb_audio_cards() {
+  const auto cards =
+      OHDFilesystemUtil::opt_read_file("/proc/asound/cards", false);
+  if (!cards.has_value()) return std::nullopt;
+  std::vector<std::string> names;
+  static const std::regex pattern(
+      R"((?:^|\n)\s*([0-9]+)\s+\[[^\]]*\]\s*:\s*[^\r\n]*? - ([^\r\n]+))");
+  for (std::sregex_iterator it(cards->begin(), cards->end(), pattern), end;
+       it != end; ++it) {
+    // snd-usb-audio exposes the USB vendor/product ID for each sound card.
+    if (OHDFilesystemUtil::exists("/proc/asound/card" + (*it)[1].str() +
+                                  "/usbid")) {
+      names.push_back((*it)[2].str());
+    }
+  }
+  return names;
 }
 
 void GstAudioStream::set_mic_gain_percent(int gain_percent) {
@@ -175,25 +217,6 @@ void GstAudioStream::loop_infinite() {
   m_loop_cv.notify_all();
 }
 
-// Quite dirty, but hey ...
-static std::optional<std::string> rpi_detect_alsasrc_device() {
-  const auto opt_arecord_list_output = OHDUtil::run_command_out("arecord -l");
-  if (!opt_arecord_list_output.has_value()) {
-    return std::nullopt;
-  }
-  const auto& arecord_list_output = opt_arecord_list_output.value();
-  std::smatch match;
-  static const std::regex capture_device_pattern(
-      R"(card\s+([0-9]+):.*device\s+([0-9]+):)");
-  if (std::regex_search(arecord_list_output, match,
-                        capture_device_pattern)) {
-    const auto device = "hw:" + match[1].str() + "," + match[2].str();
-    openhd::log::get_default()->debug("Found ALSA capture device {}", device);
-    return device;
-  }
-  return std::nullopt;
-}
-
 // 2.0 pipeline tx:
 // gst-launch-1.0 alsasrc device=plughw:1,0 name=mic provide-clock=true
 // do-timestamp=true buffer-time=20000 ! alawenc ! rtppcmapay max-ptime=20000000
@@ -205,20 +228,14 @@ static std::optional<std::string> rpi_detect_alsasrc_device() {
 // audio/x-alaw, rate=8000, channels=1 ! alawdec ! alsasink device=hw:0
 std::string GstAudioStream::create_pipeline() {
   std::stringstream ss;
-  m_current_pipeline_uses_fallback_file = false;
   const bool fallback_file_exists =
       OHDFilesystemUtil::exists(OPENHD_FALLBACK_AUDIO_FILE);
   const auto append_fallback_file = [&]() {
-    m_current_pipeline_uses_fallback_file = true;
-    m_console->info("Streaming fallback audio file {}",
+    m_console->info("Streaming example audio file {}",
                     OPENHD_FALLBACK_AUDIO_FILE);
-    ss << "filesrc location=\""
-       << escape_gst_string(OPENHD_FALLBACK_AUDIO_FILE)
+    ss << "filesrc location=\"" << escape_gst_string(OPENHD_FALLBACK_AUDIO_FILE)
        << "\" ! decodebin ! ";
   };
-  auto opt_manual_audio_source = OHDFilesystemUtil::opt_read_file(
-      std::string(getConfigBasePath()) + "audio_source.txt", false);
-  // audiotestsrc always works, but obviously is not a mic ;)
   if (openhd_enable_audio_example) {
     if (fallback_file_exists) {
       append_fallback_file();
@@ -227,59 +244,37 @@ std::string GstAudioStream::create_pipeline() {
                       OPENHD_FALLBACK_AUDIO_FILE);
       ss << "audiotestsrc wave=silence ! ";
     }
-  } else if (OHDFilesystemUtil::exists(std::string(getConfigBasePath()) +
-                                "test_audio.txt") ||
-      openhd_enable_audio_test) {
-    ss << "audiotestsrc"
-       << " ! ";
-  } else if (opt_manual_audio_source.has_value()) {
-    // File, for development
-    ss << opt_manual_audio_source.value() << " ! ";
+  } else if (openhd_enable_audio_test) {
+    ss << "audiotestsrc ! ";
   } else {
     const auto devices = discover_capture_devices();
-    const auto selected = std::find_if(
+    auto selected = std::find_if(
         devices.begin(), devices.end(), [this](const DeviceInfo& device) {
-          return device.token == m_device_token;
+          return !m_device_token.empty() && device.token == m_device_token;
         });
-    if ((m_force_fallback_audio_file || devices.empty()) &&
-        fallback_file_exists) {
-      append_fallback_file();
-    } else if (selected != devices.end()) {
+    if (!m_device_token.empty() && selected == devices.end()) {
+      m_console->warn("Configured microphone is unavailable; using default");
+    }
+    if (selected == devices.end() && OHDPlatform::instance().is_rpi()) {
+      // autoaudiosrc is unreliable on Raspberry Pi; use the first actual
+      // ALSA capture device instead of assuming a fixed card number.
+      selected = std::find_if(devices.begin(), devices.end(),
+                              [](const DeviceInfo& device) {
+                                return device.token.rfind("alsasrc:", 0) == 0;
+                              });
+    }
+    if (selected != devices.end()) {
       const auto separator = selected->token.find(':');
-      const auto factory = selected->token.substr(0, separator);
-      ss << factory;
+      ss << selected->token.substr(0, separator);
       if (separator != std::string::npos) {
-        const auto device = selected->token.substr(separator + 1);
-        ss << " device=\"" << escape_gst_string(device) << "\"";
+        ss << " device=\""
+           << escape_gst_string(selected->token.substr(separator + 1)) << "\"";
       }
       ss << " ! ";
     } else if (OHDPlatform::instance().is_rpi()) {
-      if (!m_device_token.empty()) {
-        m_console->warn("Configured audio device is unavailable; using default");
-      }
-      // RPI is weird. autoaudiosrc doesn't work, so verify capture hardware
-      // with arecord instead of guessing a fixed card number.
-      const auto alsa_device = rpi_detect_alsasrc_device();
-      if (alsa_device.has_value()) {
-        ss << "alsasrc device=" << alsa_device.value() << " ! ";
-      } else if (fallback_file_exists) {
-        m_console->info("No ALSA capture device found on RPI");
-        append_fallback_file();
-      } else {
-        m_console->warn(
-            "No ALSA capture device found and fallback file {} is missing",
-            OPENHD_FALLBACK_AUDIO_FILE);
-        ss << "audiotestsrc wave=silence ! ";
-      }
+      ss << "alsasrc device=default ! ";
     } else {
-      if (devices.empty()) {
-        m_console->warn(
-            "No audio capture device found and fallback file {} is missing; "
-            "trying the default audio source",
-            OPENHD_FALLBACK_AUDIO_FILE);
-      }
-      ss << "autoaudiosrc"
-         << " ! ";
+      ss << "autoaudiosrc ! ";
     }
   }
   /*ss << "autoaudiosrc ! ";
@@ -291,8 +286,8 @@ std::string GstAudioStream::create_pipeline() {
   ss << "audioconvert ! ";
   ss << "audioresample ! ";
   ss << "audio/x-raw,format=S16LE,channels=1,rate=8000 ! ";
-  ss << "volume name=mic_volume volume="
-     << (m_mic_gain_percent.load() / 100.0) << " ! ";
+  ss << "volume name=mic_volume volume=" << (m_mic_gain_percent.load() / 100.0)
+     << " ! ";
   ss << "alawenc ! rtppcmapay max-ptime=20000000 ! ";
   ss << OHDGstHelper::createOutputAppSink();
   return ss.str();
@@ -325,8 +320,7 @@ void GstAudioStream::stream_once() {
     m_gst_pipeline = nullptr;
     return;
   }
-  m_volume_element =
-      gst_bin_get_by_name(GST_BIN(m_gst_pipeline), "mic_volume");
+  m_volume_element = gst_bin_get_by_name(GST_BIN(m_gst_pipeline), "mic_volume");
 
   const auto ret = openhd::gst_element_set_state_with_timeout(
       m_gst_pipeline, GST_STATE_PLAYING);
@@ -336,13 +330,6 @@ void GstAudioStream::stream_once() {
   }
   if (!ret.has_value() || ret.value() == GST_STATE_CHANGE_FAILURE) {
     m_console->error("Failed to set pipeline to PLAYING state");
-    if (!m_current_pipeline_uses_fallback_file &&
-        OHDFilesystemUtil::exists(OPENHD_FALLBACK_AUDIO_FILE)) {
-      m_console->warn(
-          "Audio capture source failed; switching to fallback file {}",
-          OPENHD_FALLBACK_AUDIO_FILE);
-      m_force_fallback_audio_file = true;
-    }
     openhd::gst_object_unref_with_timeout(GST_OBJECT(m_gst_pipeline));
     m_gst_pipeline = nullptr;
     return;
@@ -361,8 +348,8 @@ void GstAudioStream::stream_once() {
 
     const int requested_gain_percent = m_mic_gain_percent.load();
     if (m_volume_element && requested_gain_percent != applied_gain_percent) {
-      g_object_set(m_volume_element, "volume",
-                   requested_gain_percent / 100.0, nullptr);
+      g_object_set(m_volume_element, "volume", requested_gain_percent / 100.0,
+                   nullptr);
       applied_gain_percent = requested_gain_percent;
     }
 
@@ -374,7 +361,8 @@ void GstAudioStream::stream_once() {
     } else {
       GstBus* bus = gst_element_get_bus(m_gst_pipeline);
       GstMessage* message = gst_bus_pop_filtered(
-          bus, static_cast<GstMessageType>(GST_MESSAGE_EOS | GST_MESSAGE_ERROR));
+          bus,
+          static_cast<GstMessageType>(GST_MESSAGE_EOS | GST_MESSAGE_ERROR));
       gst_object_unref(bus);
       if (message) {
         if (GST_MESSAGE_TYPE(message) == GST_MESSAGE_EOS) {

@@ -28,6 +28,7 @@
 
 #include <condition_variable>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -49,6 +50,9 @@ class GstAudioStream {
                           int mic_gain_percent = 100);
   ~GstAudioStream();
   static std::vector<DeviceInfo> discover_capture_devices();
+  // Kernel-recognized USB sound cards, including playback-only adapters.
+  // nullopt means the kernel audio inventory could not be read.
+  static std::optional<std::vector<std::string>> discover_usb_audio_cards();
   void set_link_cb(openhd::ON_AUDIO_TX_DATA_PACKET cb);
   void set_mic_gain_percent(int gain_percent);
   void start_looping();
@@ -70,8 +74,6 @@ class GstAudioStream {
   openhd::ON_AUDIO_TX_DATA_PACKET m_cb = nullptr;
   std::string m_device_token;
   std::atomic_int m_mic_gain_percent{100};
-  bool m_force_fallback_audio_file = false;
-  bool m_current_pipeline_uses_fallback_file = false;
 
  private:
   // points to a running gst pipeline instance

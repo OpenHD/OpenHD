@@ -347,13 +347,33 @@ std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
             cb_audio_gain}});
 
 #ifdef OPENHD_GSTREAMER_PRESENT
+    const auto usb_cards = GstAudioStream::discover_usb_audio_cards();
+    ret.push_back(openhd::create_read_only_int(
+        "AUDIO_USB_COUNT",
+        usb_cards.has_value() ? static_cast<int>(usb_cards->size()) : -1));
+    std::string usb_names;
+    if (usb_cards.has_value()) {
+      for (const auto& name : *usb_cards) {
+        if (!usb_names.empty()) usb_names += ", ";
+        usb_names += name;
+      }
+    }
+    usb_names.resize(std::min<std::size_t>(usb_names.size(), 128));
+    ret.push_back(openhd::Setting{
+        "AUD_USB_NAMES",
+        openhd::StringSetting{
+            usb_names,
+            [](const std::string&, const std::string&) { return false; }}});
     const auto audio_devices = GstAudioStream::discover_capture_devices();
+    m_console->info(
+        "Audio detection: {} USB sound cards, {} capture inputs",
+        usb_cards.has_value() ? static_cast<int>(usb_cards->size()) : -1,
+        audio_devices.size());
     constexpr std::size_t kMaxPublishedAudioDevices = 8;
     const auto published_audio_device_count =
         std::min(audio_devices.size(), kMaxPublishedAudioDevices);
     ret.push_back(openhd::create_read_only_int(
-        "AUDIO_DEV_COUNT",
-        static_cast<int>(published_audio_device_count)));
+        "AUDIO_DEV_COUNT", static_cast<int>(published_audio_device_count)));
     auto cb_audio_device = [this, audio_devices](std::string,
                                                  std::string value) {
       if (!value.empty()) {
