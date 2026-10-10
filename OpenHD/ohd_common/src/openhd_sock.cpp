@@ -217,6 +217,21 @@ void Reporter::clear() {
   send_pending_now();
 }
 
+void Reporter::report_runtime(const std::string& mode, bool operating,
+                              bool activity, bool recording) {
+  nlohmann::json payload;
+  payload["type"] = "indicator.runtime";
+  payload["source"] = "openhd";
+  payload["mode"] = mode;
+  payload["operating"] = operating;
+  payload["activity"] = activity;
+  payload["recording"] = recording;
+  payload["ttl_ms"] = 7000;
+  auto serialized = payload.dump();
+  serialized.push_back('\n');
+  send_payload(serialized);
+}
+
 void Reporter::worker_loop() {
   while (true) {
     std::unique_lock<std::mutex> lock(m_mutex);

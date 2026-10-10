@@ -25,6 +25,7 @@
 #define OPENHD_OPENHD_OHD_COMMON_OPENHD_ACTION_HANDLER_HPP_
 
 #include <atomic>
+#include <chrono>
 #include <functional>
 #include <map>
 #include <mutex>
@@ -327,12 +328,14 @@ class LinkActionHandler {
  private:
   std::mutex m_last_link_stats_mutex;
   openhd::link_statistics::StatsAirGround m_last_link_stats{};
+  std::chrono::steady_clock::time_point m_last_link_stats_time{};
 
  public:
   void update_link_stats(openhd::link_statistics::StatsAirGround stats) {
     {
       std::lock_guard<std::mutex> guard(m_last_link_stats_mutex);
       m_last_link_stats = stats;
+      m_last_link_stats_time = std::chrono::steady_clock::now();
     }
     if (stats.ready) {
       openhd::TelemetryRecorder::instance().record(stats);
@@ -341,6 +344,14 @@ class LinkActionHandler {
   openhd::link_statistics::StatsAirGround get_link_stats() {
     std::lock_guard<std::mutex> guard(m_last_link_stats_mutex);
     return m_last_link_stats;
+  }
+  // Sample only on the control thread; do not put indicator I/O in packet paths.
+  openhd::link_statistics::StatsAirGround get_fresh_indicator_stats() {
+    std::lock_guard<std::mutex> guard(m_last_link_stats_mutex);
+    auto stats = m_last_link_stats;
+    if (std::chrono::steady_clock::now() - m_last_link_stats_time > std::chrono::seconds(5))
+      stats.ready = false;
+    return stats;
   }
 
  public:

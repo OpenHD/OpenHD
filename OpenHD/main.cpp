@@ -60,6 +60,7 @@
 #include "openhd_plugin_manager.h"
 #include "openhd_profile.h"
 #include "openhd_sock.h"
+#include "openhd_action_handler.h"
 #include "openhd_spdlog.h"
 #include "openhd_temporary_air_or_ground.h"
 #include "openhd_telemetry_recorder.h"
@@ -752,7 +753,32 @@ int main(int argc, char *argv[]) {
     });
     const auto run_time_begin = std::chrono::steady_clock::now();
     bool terminate_due_to_internal_error = false;
+    auto next_indicator_sample = std::chrono::steady_clock::now();
     while (!quit) {
+      const auto indicator_now = std::chrono::steady_clock::now();
+      if (indicator_now >= next_indicator_sample) {
+        next_indicator_sample = indicator_now + std::chrono::seconds(2);
+        auto& actions = openhd::LinkActionHandler::instance();
+        const auto stats = actions.get_fresh_indicator_stats();
+        bool video_active = false, link_active = false;
+        if (stats.ready) {
+          link_active = stats.telemetry.curr_rx_pps > 0;
+          if (options.run_as_air) {
+            for (const auto& video : stats.stats_wb_video_air)
+              video_active = video_active || video.curr_injected_bitrate > 0;
+            // One-way Air transmission is useful even without an uplink.
+            link_active = link_active || stats.telemetry.curr_tx_pps > 0;
+          } else {
+            for (const auto& video : stats.stats_wb_video_ground)
+              video_active = video_active || video.curr_incoming_bitrate > 0;
+          }
+        }
+        const bool recording = actions.get_cam_info(0).air_recording_active ||
+                               actions.get_cam_info(1).air_recording_active;
+        reporter.report_runtime(options.record_only ? "record" : options.run_as_air ? "air" : "ground",
+                                options.record_only ? recording : (link_active || video_active),
+                                video_active, recording);
+      }
       openhd::ui::update_ncurses();
       dashboard_action = openhd::ui::take_dashboard_action();
       if (dashboard_action != openhd::ui::DashboardAction::None) break;

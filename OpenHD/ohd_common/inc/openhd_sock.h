@@ -47,6 +47,8 @@ class Reporter {
   void report_status(const std::string& code, const std::string& description,
                      int ttl_ms = 3000);
   void clear();
+  void report_runtime(const std::string& mode, bool operating, bool activity,
+                      bool recording);
 
  private:
   Reporter();
