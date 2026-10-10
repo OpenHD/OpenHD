@@ -1,0 +1,26 @@
+name: Sign Windows ImageWriter
+
+on:
+  workflow_dispatch:
+    inputs:
+      imagewriter_commit:
+        description: Full approved OpenHD-ImageWriter commit SHA to build
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  imagewriter:
+    # Pin the signing implementation to the reviewed ImageWriter commit.
+    uses: OpenHD/OpenHD-ImageWriter/.github/workflows/windows.yml@46960d1e351d3af87e6e9f1d97f446e742bfb2be
+    with:
+      source-ref: ${{ inputs.imagewriter_commit }}
+      sign: true
+      organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+      project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+      signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+    secrets:
+      SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
