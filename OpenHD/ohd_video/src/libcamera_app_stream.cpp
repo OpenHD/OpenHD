@@ -170,10 +170,12 @@ void LibcameraAppStream::run() {
         "--height",
         std::to_string(height),
         "--framerate",
-        std::to_string(fps),
-        "--mode",
-        std::to_string(sensor_mode.width) + ":" +
-            std::to_string(sensor_mode.height)};
+        std::to_string(fps)};
+    if (sensor_mode.width > 0 && sensor_mode.height > 0) {
+      args.emplace_back("--mode");
+      args.emplace_back(std::to_string(sensor_mode.width) + ":" +
+                        std::to_string(sensor_mode.height));
+    }
     const auto add_option = [&args](const char* option, const auto& value) {
       args.emplace_back(option);
       std::ostringstream value_string;

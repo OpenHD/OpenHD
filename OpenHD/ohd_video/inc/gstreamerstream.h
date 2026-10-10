@@ -134,6 +134,7 @@ class GStreamerStream : public CameraStream {
   // Set to true if armed, used for auto record on arm
   bool m_armed_enable_air_recording = false;
   std::atomic<int> m_curr_dynamic_bitrate_kbits = -1;
+  std::atomic<bool> m_supports_live_bitrate = false;
   std::atomic<int> m_curr_dynamic_encoder_bitrate_kbits = -1;
   std::atomic<int> m_curr_dynamic_qp_min = -1;
   std::atomic<int> m_curr_dynamic_qp_max = -1;

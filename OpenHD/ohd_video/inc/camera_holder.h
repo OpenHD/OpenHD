@@ -171,6 +171,12 @@ class CameraHolder :
     unsafe_get_settings().streamed_video_format.width = width;
     unsafe_get_settings().streamed_video_format.height = height;
     unsafe_get_settings().streamed_video_format.framerate = framerate;
+    if (m_camera.requires_rpi_libcamera_pipeline()) {
+      // A normal output-format change returns capture selection to automatic.
+      // Advanced users can explicitly override SENSOR_MODE afterwards.
+      unsafe_get_settings().rpi_libcamera_sensor_mode =
+          VideoFormat{VideoCodec::H264, 0, 0, 0};
+    }
     persist();
     notify_plugin_video_settings_changed();
     return true;
@@ -775,9 +781,6 @@ class CameraHolder :
     ret.streamed_video_format.width = default_resolution.width_px;
     ret.streamed_video_format.height = default_resolution.height_px;
     ret.streamed_video_format.framerate = default_resolution.fps;
-    ret.rpi_libcamera_sensor_mode.width = default_resolution.width_px;
-    ret.rpi_libcamera_sensor_mode.height = default_resolution.height_px;
-    ret.rpi_libcamera_sensor_mode.framerate = default_resolution.fps;
 
     const auto& sysutil_settings =
         []() -> const std::optional<openhd::SysutilSettings>& {

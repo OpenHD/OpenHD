@@ -559,4 +559,10 @@ MavlinkParameterReceiver::update_existing_server_param_int(
   return update_existing_server_param<int>(name, param_value);
 }
 
+MavlinkParameterReceiver::Result
+MavlinkParameterReceiver::update_existing_server_param_custom(
+    const std::string& name, const std::string& param_value) {
+  return update_existing_server_param<std::string>(name, param_value);
+}
+
 }  // namespace mavsdk

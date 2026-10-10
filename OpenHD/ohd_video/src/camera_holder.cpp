@@ -102,7 +102,7 @@ std::optional<CameraSettings> CameraHolder::impl_deserialize(
   if (parsed_settings.has_value()) {
     if (missing_rpi_libcamera_sensor_mode) {
       parsed_settings->rpi_libcamera_sensor_mode =
-          parsed_settings->streamed_video_format;
+          VideoFormat{VideoCodec::H264, 0, 0, 0};
     }
     parsed_settings->h26x_bitrate_kbits =
         std::clamp(parsed_settings->h26x_bitrate_kbits, 1000,
@@ -188,7 +188,11 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
         get_settings().rpi_libcamera_sensor_mode.height,
         get_settings().rpi_libcamera_sensor_mode.framerate);
     ret.push_back(openhd::Setting{
-        "SENSOR_MODE", openhd::StringSetting{mode_string, c_sensor_mode}});
+        "SENSOR_MODE", openhd::StringSetting{mode_string, c_sensor_mode, [this]() {
+          const auto& mode = get_settings().rpi_libcamera_sensor_mode;
+          return openhd::video_format_from_int_values(
+              mode.width, mode.height, mode.framerate);
+        }}});
 
     auto c_libcamera_impl = [this](std::string, int value) {
       return set_rpi_libcamera_impl(value);

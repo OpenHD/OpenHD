@@ -54,6 +54,9 @@ void XMavlinkParamProvider::add_param(const openhd::Setting& setting) {
         _mavlink_parameter_receiver->provide_server_param<std::string>(
             setting.id, stringSetting.value, stringSetting.change_callback);
     assert(result == mavsdk::MavlinkParameterReceiver::Result::Success);
+    if (stringSetting.get_callback != nullptr) {
+      m_string_settings_with_update_functionality.push_back(setting);
+    }
   } else {
     assert(false);
   }
@@ -90,6 +93,19 @@ std::vector<MavlinkMessage> XMavlinkParamProvider::process_mavlink_messages(
     }
   }
   for (const auto& msg : messages) {
+    // One parameter write can change another setting (e.g. resolution resets
+    // the sensor mode). Refresh before every request, including batched writes.
+    for (const auto& setting : m_string_settings_with_update_functionality) {
+      const auto& string_setting = std::get<openhd::StringSetting>(setting.setting);
+      const auto current =
+          _mavlink_parameter_receiver->retrieve_server_param_custom(setting.id);
+      const auto value = string_setting.get_callback();
+      if (current.first == mavsdk::MavlinkParameterReceiver::Result::Success &&
+          current.second != value) {
+        _mavlink_parameter_receiver->update_existing_server_param_custom(
+            setting.id, value);
+      }
+    }
     _mavlink_message_handler->process_message(msg.m);
   }
   for (int i = 0; i < 100; i++) {

@@ -140,7 +140,8 @@ struct CameraSettings {
   // Native libcamera sensor mode, independent from the ISP/encoder output.
   // The framerate describes the advertised mode and is also useful in the UI;
   // the output framerate remains part of streamed_video_format.
-  VideoFormat rpi_libcamera_sensor_mode{VideoCodec::H264, 640, 480, 30};
+  // Zero means let libcamera select a sensor mode for the requested output.
+  VideoFormat rpi_libcamera_sensor_mode{VideoCodec::H264, 0, 0, 0};
   // Prefer GStreamer for decoder compatibility; native libcamera is opt-in
   // via LIBCAMERA_IMPL (0 = GStreamer, 1 = native libcamera).
   int rpi_libcamera_impl = RPI_LIBCAMERA_IMPL_GSTREAMER;

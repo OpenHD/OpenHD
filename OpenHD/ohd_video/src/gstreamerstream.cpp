@@ -270,6 +270,12 @@ GStreamerStream::GStreamerStream(std::shared_ptr<CameraHolder> camera_holder,
     this->request_restart();
   });
   m_camera_holder->register_video_bitrate_listener([this](int bitrate_kbits) {
+    if (!m_supports_live_bitrate.load()) {
+      // A manual target is persisted, unlike link adaptation: rebuild once
+      // to apply it when the encoder has no live bitrate property.
+      this->request_restart();
+      return;
+    }
     openhd::LinkActionHandler::LinkBitrateInformation lb{bitrate_kbits};
     this->handle_change_bitrate_request(lb);
   });
@@ -1233,6 +1239,7 @@ bool GStreamerStream::setup() {
   }
   m_bitrate_ctrl_element = get_dynamic_bitrate_control_element_in_pipeline(
       m_gst_pipeline, *m_camera_holder);
+  m_supports_live_bitrate = m_bitrate_ctrl_element.has_value();
   m_qp_ctrl_element = get_dynamic_qp_control_element_in_pipeline(
       m_gst_pipeline, *m_camera_holder);
   const bool plugin_managed_ip_camera =
@@ -1305,7 +1312,7 @@ void GStreamerStream::stop() {
   m_console->debug("GStreamerStream::stop()");
   assert(m_gst_pipeline != nullptr);
   openhd::gst_element_set_set_state_and_log_result(m_gst_pipeline,
-                                                   GST_STATE_PAUSED);
+                                                   GST_STATE_NULL);
   m_console->debug(
       openhd::gst_element_get_current_state_as_string(m_gst_pipeline));
 }
@@ -1313,7 +1320,12 @@ void GStreamerStream::stop() {
 void GStreamerStream::cleanup_pipe() {
   m_console->debug("GStreamerStream::cleanup_pipe() begin");
   assert(m_gst_pipeline != nullptr);
+  // Stop streaming callbacks before releasing encoder/perf references.
+  // cleanup_pipe() also runs on partial setup failures, without stop().
+  openhd::gst_element_set_set_state_and_log_result(m_gst_pipeline,
+                                                   GST_STATE_NULL);
   m_video_outputs.clear();
+  m_supports_live_bitrate = false;
   cleanup_perf_element();
   if (m_gst_bus != nullptr) {
     gst_object_unref(m_gst_bus);
@@ -1339,9 +1351,6 @@ void GStreamerStream::cleanup_pipe() {
     m_console->info("error gst_element_send_event eos"); // No idea what that
   means }else{ m_console->info("success gst_element_send_event eos");
   }*/
-  // TODO do we need to wait until the pipeline is actually in state NULL ?
-  openhd::gst_element_set_set_state_and_log_result(m_gst_pipeline,
-                                                   GST_STATE_NULL);
   openhd::gst_object_unref_with_timeout(GST_OBJECT(m_gst_pipeline));
   m_gst_pipeline = nullptr;
   if (m_opt_curr_recording_filename) {
@@ -1401,9 +1410,14 @@ void GStreamerStream::handle_change_bitrate_request(
   //     "Received bitrate update request: {} kBit/s (current target: {}
   //     kBit/s)", bitrate_for_encoder_kbits,
   //     m_curr_dynamic_bitrate_kbits.load());
-  static auto MIN_BITRATE_KBITS = 1 * 1000;
+  const auto& camera = m_camera_holder->get_camera();
+  int MIN_BITRATE_KBITS = 1 * 1000;
   // RPi cannot do less than 2MBit/s
-  if (OHDPlatform::instance().is_rpi()) {
+  if (OHDPlatform::instance().is_rpi() &&
+      !is_usb_camera(camera.camera_type) &&
+      camera.camera_type != X_CAM_TYPE_DUMMY_SW &&
+      !m_camera_holder->get_settings().force_sw_encode &&
+      !OHDPlatform::instance().is_rpi5()) {
     MIN_BITRATE_KBITS = 2 * 1000;
   }
   if (bitrate_for_encoder_kbits < MIN_BITRATE_KBITS) {
@@ -1411,7 +1425,6 @@ void GStreamerStream::handle_change_bitrate_request(
     // kbits_per_second_to_string(MIN_BITRATE_KBITS));
     bitrate_for_encoder_kbits = MIN_BITRATE_KBITS;
   }
-  const auto& camera = m_camera_holder->get_camera();
   if (camera.requires_rockchip1126_mpp_csi_pipeline() ||
       camera.requires_rockchip1126_mpp_testsrc_pipeline() ||
       camera.requires_rockchip3_mpp_pipeline() ||
@@ -1625,10 +1638,11 @@ void GStreamerStream::stream_once() {
               hacked_bitrate_kbits);
         }
       } else {
-        // Sad, but if the camera doesn't support changing the bitrate without a
-        // restart, we need to restart
-        m_console->info("Bitrate change requires restart (Not good)");
-        m_request_restart = true;
+        // Rebuilding at the persisted bitrate cannot apply a link target and
+        // creates an endless restart cycle. Keep unsupported encoders running.
+        m_console->warn("Ignoring dynamic bitrate for camera{}: no live control",
+                        m_camera_holder->get_camera().index);
+        m_curr_dynamic_bitrate_kbits = currently_applied_bitrate;
       }
     }
     if (rockchip_mpp_bitrate_pid_camera) {

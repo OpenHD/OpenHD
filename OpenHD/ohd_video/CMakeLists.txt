@@ -187,6 +187,11 @@ add_dependencies(OHDVideoLib generate_camera_registry)
 # Executables for testing manually, note that some might need to run after discovery
 add_executable(test_video test/test_video.cpp)
 target_link_libraries(test_video OHDVideoLib)
+if(ENABLE_AIR AND ENABLE_USB_CAMERAS AND ENABLE_GSTREAMER AND NOT OPENHD_MPP_ONLY)
+    add_executable(test_usb_output test/test_usb_output.cpp
+            ../ohd_common/src/config_paths.cpp)
+    target_link_libraries(test_usb_output OHDVideoLib)
+endif()
 add_executable(test_audio test/test_audio.cpp)
 target_link_libraries(test_audio OHDVideoLib)
 add_executable(test_matroska_recorder
