@@ -1,0 +1,10 @@
+[Unit]
+Description=Check for a stalled Realtek ZeroCD radio
+
+[Timer]
+OnBootSec=30
+OnUnitInactiveSec=15
+Unit=openhd-zerocd-recovery.service
+
+[Install]
+WantedBy=timers.target

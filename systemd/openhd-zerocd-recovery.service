@@ -1,0 +1,10 @@
+[Unit]
+Description=Recover stalled Realtek ZeroCD radio on an opted-in Raspberry Pi 4
+After=openhd-sys-utils.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /usr/local/sbin/openhd-zerocd-recovery.py
+RuntimeDirectory=openhd-zerocd-recovery
+RuntimeDirectoryPreserve=yes
+TimeoutStartSec=150
