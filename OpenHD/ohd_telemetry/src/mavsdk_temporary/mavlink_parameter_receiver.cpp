@@ -169,12 +169,15 @@ void MavlinkParameterReceiver::process_param_set_internally(
   // for checking if the update actually changed the value
   const auto opt_before_update =
       _param_set.lookup_parameter(param_id, extended);
-  const auto result =
-      _param_set.update_existing_parameter(param_id, value_to_set);
+    const auto result = opt_before_update && _request_validator && !_request_validator(param_id,value_to_set)
+        ? MavlinkParameterSet::UpdateExistingParamResult::REJECTED
+        : _param_set.update_existing_parameter(param_id, value_to_set);
   const auto param_count = _param_set.get_current_parameters_count(extended);
   LogDebug() << result;
   switch (result) {
     case MavlinkParameterSet::UpdateExistingParamResult::MISSING_PARAM: {
+        if (extended) _work_queue.push_back(std::make_shared<WorkItem>(
+            param_id,value_to_set,WorkItemAck{PARAM_ACK_VALUE_UNSUPPORTED}));
       // We do not allow clients to add a new parameter to the parameter set,
       // only to update existing parameters. In this case, we cannot even
       // respond with anything, since this parameter simply does not exist.

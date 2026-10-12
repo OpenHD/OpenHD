@@ -98,6 +98,7 @@ set(sources
     "src/openhd_sock.cpp"
     "src/openhd_buttons.cpp"
     "src/openhd_settings_imp.cpp"
+    "src/openhd_sysutil_settings_adapter.cpp"
     "src/openhd_settings_directories.cpp"
     "src/openhd_settings_persistent.cpp"
     "src/openhd_util_time.cpp"
@@ -113,6 +114,17 @@ source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
 #----------------------------------------------------------------------------------------------------------------------
 target_sources(OHDCommonLib PRIVATE ${sources})
 target_include_directories(OHDCommonLib PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc/>")
+target_include_directories(OHDCommonLib PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/../settings/generated
+    ${CMAKE_CURRENT_SOURCE_DIR}/../settings/include)
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
+add_custom_target(check_settings_catalog
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../settings/tools/generate.py --check)
+add_dependencies(OHDCommonLib check_settings_catalog)
+add_executable(test_metadata_ftp ../settings/tests/test_metadata_ftp.cpp)
+target_include_directories(test_metadata_ftp PRIVATE ../settings/include)
+install(FILES ../settings/generated/catalog.json DESTINATION share/openhd/settings)
+install(FILES ../settings/generated/imagewriter-settings.json DESTINATION share/openhd/settings)
 
 install(FILES inc/openhd_plugin.h DESTINATION include/openhd)
 

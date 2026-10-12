@@ -2193,6 +2193,44 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
             [v](auto& s) { s.wb_udp_data_max_bitrate_kbits = v; });
       }}});
 
+  for (auto& setting:ret) {
+    setting.seed_allowed=m_settings->created_defaults();
+    if (setting.id==WB_FREQUENCY) setting.metadata=[this] {
+      auto choices=nlohmann::json::array();
+      const auto& state=m_settings->get_settings();
+      const int width=m_profile.is_air ? state.wb_air_tx_channel_width :
+        (m_management_gnd && m_management_gnd->m_air_reported_curr_channel_width>0 ?
+         m_management_gnd->m_air_reported_curr_channel_width.load() : m_gnd_curr_rx_channel_width.load());
+      if (!m_broadcast_cards.empty()) for (const auto frequency:m_broadcast_cards.front().get_supported_frequencies_2G_5G()) {
+        const bool supported=std::all_of(m_broadcast_cards.begin(),m_broadcast_cards.end(),[&](const auto& card){
+          return wifi_card_supports_frequency_channel_width(card,frequency,width);
+        });
+        if (supported) choices.push_back({{"value",frequency},{"label",std::to_string(frequency)+" MHz"}});
+      }
+      return nlohmann::json{{"choices",choices},{"writable",!state.wb_enable_fhss},
+        {"reason",state.wb_enable_fhss ? "Disable FHSS to change the fixed frequency" : ""},
+        {"enforce",!openhd::wb::disable_all_frequency_checks()}};
+    };
+    if (setting.id==WB_CHANNEL_WIDTH) setting.metadata=[this] {
+      auto choices=nlohmann::json::array();
+      const int frequency=m_settings->get_settings().wb_frequency;
+      for (int width:{10,20,40}) {
+        if (width==10 && !local_radios_support_10mhz()) continue;
+        const bool supported=!m_broadcast_cards.empty() && std::all_of(m_broadcast_cards.begin(),m_broadcast_cards.end(),[&](const auto& card){
+          return (width!=40 || wifi_card_supports_40Mhz_channel_width_injection(card)) &&
+              wifi_card_supports_frequency_channel_width(card,frequency,width);
+        });
+        if (supported) choices.push_back({{"value",width},{"label",std::to_string(width)+" MHz"}});
+      }
+      const bool fhss=m_settings->get_settings().wb_enable_fhss;
+      return nlohmann::json{{"choices",choices},{"writable",!fhss},{"reason",fhss ? "Disable FHSS to change channel width" : ""},{"enforce",true}};
+    };
+    if (setting.id==WB_MCS_INDEX) setting.metadata=[this] {
+      const bool variable=!m_broadcast_cards.empty() && wifi_card_supports_variable_mcs(m_broadcast_cards.front());
+      return nlohmann::json{{"available",m_profile.is_ground() || variable},{"writable",variable},
+        {"reason",variable ? "" : "This radio uses a fixed MCS rate"}};
+    };
+  }
   openhd::validate_provided_ids(ret);
   return ret;
 }

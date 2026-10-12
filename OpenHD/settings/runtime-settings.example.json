@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "systemId": 101,
+  "components": {
+    "100": {"RESOLUTION_FPS": "1920x1080@30"}
+  }
+}

@@ -1,0 +1,7503 @@
+{
+  "settings": [
+    {
+      "choices": [
+        {
+          "label": "Disable",
+          "value": 0
+        },
+        {
+          "label": "Enable",
+          "value": 1
+        }
+      ],
+      "description": "Recommend a matching bitrate to the encoder depending on the selected link parameters,and reduce bitrate on TX errors (failed injections). On by default, but only works on select cameras. On Cameras thatdon't support changing the bitrate / are bad at targeting a given bitrate, you have to adjust your link according to your camera needs.",
+      "group": "General",
+      "hidden": true,
+      "id": "VARIABLE_BITRATE",
+      "label": "VARIABLE_BITRATE",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "Maximum encoder QP. Lower values improve quality but increase required bitrate.",
+      "group": "General",
+      "hidden": true,
+      "id": "QP_MAX",
+      "label": "QP_MAX",
+      "maximum": 51,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "Minimum encoder QP. Higher values reduce bitrate but can reduce image quality.",
+      "group": "General",
+      "hidden": true,
+      "id": "QP_MIN",
+      "label": "QP_MIN",
+      "maximum": 51,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Disable",
+          "value": 0
+        },
+        {
+          "label": "+1 (2 antennas)",
+          "value": 1
+        }
+      ],
+      "description": "!! Advanced users only, changing this param can result in no connection !!. This param is not automatically synchronized between air/ground. Specifies the difference between the number of space-time streams and the number of spatial streams. Use +1 only if you have 2 antennas.",
+      "group": "General",
+      "hidden": true,
+      "id": "WB_E_STBC",
+      "label": "WB_E_STBC",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Disable",
+          "value": 0
+        },
+        {
+          "label": "Enable",
+          "value": 1
+        }
+      ],
+      "description": "!! Advanced users only, changing this param can result in no connection !!. This param is not automatically synchronized between air/ground. Enable Low density parity check. Needs to be supported by both your tx and rxes.",
+      "group": "General",
+      "hidden": true,
+      "id": "WB_E_LDPC",
+      "label": "WB_E_LDPC",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "LONG_GI (default)",
+          "value": 0
+        },
+        {
+          "label": "SHORT_GI",
+          "value": 1
+        }
+      ],
+      "description": "!! Advanced users only !!. This param is not automatically synchronized between air/ground. A short guard intervall increases throughput, but increases packet collisions.",
+      "group": "General",
+      "hidden": true,
+      "id": "WB_E_SHORT_GUARD",
+      "label": "WB_E_SHORT_GUARD",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Disable",
+          "value": 0
+        },
+        {
+          "label": "Enable",
+          "value": 1
+        }
+      ],
+      "description": "Use the connected ESP background RF survey for analysis and prioritize air discovery. Legacy scanning remains the fallback.",
+      "group": "General",
+      "hidden": false,
+      "id": "ESP_ANALYSE",
+      "label": "ESP_ANALYSE",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Disable",
+          "value": 0
+        },
+        {
+          "label": "Enable",
+          "value": 1
+        }
+      ],
+      "description": "Enable passive mode if you want to use your GCS as a passive listener to an existing openhd air-ground link. E.g. if you want to tune intosomeone elses openhd link (if encryption is enabled, you need his encryption key) but not interfere with any RC/MAVLINK control.",
+      "group": "General",
+      "hidden": true,
+      "id": "WB_PASSIVE_MODE",
+      "label": "WB_PASSIVE_MODE",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Disable",
+          "value": 0
+        },
+        {
+          "label": "Enable",
+          "value": 1
+        }
+      ],
+      "description": "Pit mode: when enabled, disarmed uses the 20% TX power target and armed uses the selected target.",
+      "group": "General",
+      "hidden": true,
+      "id": "WB_PIT_MODE",
+      "label": "WB_PIT_MODE",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Disable",
+          "value": 0
+        },
+        {
+          "label": "Enable",
+          "value": 1
+        }
+      ],
+      "description": "DEV ONLY - DO NOT TOUCH (LEAVE DISABLED). Sets a wifi param that needs to be investigated.",
+      "group": "General",
+      "hidden": true,
+      "id": "DEV_HIGH_RETR",
+      "label": "DEV_HIGH_RETR",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Disable",
+          "value": 0
+        },
+        {
+          "label": "Enable",
+          "value": 1
+        }
+      ],
+      "description": "Send packets redundantly on all connected TX cards. Increases robustness but also airtime usage.",
+      "group": "General",
+      "hidden": true,
+      "id": "WB_RED_TX",
+      "label": "WB_RED_TX",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Disable",
+          "value": 0
+        },
+        {
+          "label": "Enable",
+          "value": 1
+        }
+      ],
+      "description": "Use the second Devourer radio on Air to survey channels and automatically move the link when a persistently cleaner channel is found. Redundant TX is disabled while active.",
+      "group": "General",
+      "hidden": false,
+      "id": "WB_ADAPT_CH",
+      "label": "WB_ADAPT_CH",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Disable",
+          "value": 0
+        },
+        {
+          "label": "Enable",
+          "value": 1
+        }
+      ],
+      "description": "Devourer frequency hopping. Devourer handles synchronization and its Wi-Fi control channel; mLRS UART or another live independent telemetry link is required as the OpenHD uplink/recovery path.",
+      "group": "General",
+      "hidden": false,
+      "id": "WB_FHSS",
+      "label": "WB_FHSS",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "25 ms",
+          "value": 25
+        },
+        {
+          "label": "50 ms",
+          "value": 50
+        },
+        {
+          "label": "100 ms",
+          "value": 100
+        }
+      ],
+      "description": "Devourer FHSS dwell time. 50 ms is recommended.",
+      "group": "General",
+      "hidden": false,
+      "id": "WB_FHSS_SLOT",
+      "label": "WB_FHSS_SLOT",
+      "maximum": 100,
+      "minimum": 25,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Disable",
+          "value": 0
+        },
+        {
+          "label": "Enable",
+          "value": 1
+        }
+      ],
+      "description": "Enable OpenHD settings commands from the EdgeTX/OpenTX Lua tool. The transport uses four consecutive RC channels.",
+      "group": "General",
+      "hidden": false,
+      "id": "RC_OHD_CTRL",
+      "label": "RC_OHD_CTRL",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "First RC channel used by the Lua settings protocol. The mapping is D2, D1, D0 and CLK; zero disables the protocol.",
+      "group": "General",
+      "hidden": false,
+      "id": "RC_SET_BASE",
+      "label": "RC_SET_BASE",
+      "maximum": 15,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Disable",
+          "value": 0
+        },
+        {
+          "label": "Enable",
+          "value": 1
+        }
+      ],
+      "description": "Enable ARQ retransmission for video. Requires restart to take effect.",
+      "group": "General",
+      "hidden": true,
+      "id": "WB_ENABLE_RETRA",
+      "label": "WB_ENABLE_RETRA",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": true,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Disable",
+          "value": 0
+        },
+        {
+          "label": "Enable",
+          "value": 1
+        }
+      ],
+      "description": "Enable ARQ retransmission for video packets. Requires restart to take effect.",
+      "group": "General",
+      "hidden": true,
+      "id": "WB_RTX_VIDEO",
+      "label": "WB_RTX_VIDEO",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": true,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Disable",
+          "value": 0
+        },
+        {
+          "label": "Enable",
+          "value": 1
+        }
+      ],
+      "description": "Enable ARQ retransmission for telemetry packets. Requires restart to take effect.",
+      "group": "General",
+      "hidden": true,
+      "id": "WB_RTX_TELEM",
+      "label": "WB_RTX_TELEM",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": true,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Disable",
+          "value": 0
+        },
+        {
+          "label": "Enable",
+          "value": 1
+        }
+      ],
+      "description": "Enable ARQ retransmission for RC packets. Requires restart to take effect.",
+      "group": "General",
+      "hidden": true,
+      "id": "WB_RTX_RC",
+      "label": "WB_RTX_RC",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": true,
+      "type": "int32"
+    },
+    {
+      "description": "Max retransmission history window for video in milliseconds. Larger values allow longer recovery but use more memory.",
+      "group": "General",
+      "hidden": true,
+      "id": "WB_RTX_V_MAXMS",
+      "label": "WB_RTX_V_MAXMS",
+      "maximum": 100,
+      "minimum": 1,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "Max retransmission history window for telemetry in milliseconds. Larger values allow longer recovery but use more memory.",
+      "group": "General",
+      "hidden": true,
+      "id": "WB_RTX_T_MAXMS",
+      "label": "WB_RTX_T_MAXMS",
+      "maximum": 100,
+      "minimum": 1,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "Max retransmission history window for RC in milliseconds. Larger values allow longer recovery but use more memory.",
+      "group": "General",
+      "hidden": true,
+      "id": "WB_RTX_R_MAXMS",
+      "label": "WB_RTX_R_MAXMS",
+      "maximum": 100,
+      "minimum": 1,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "How often each retransmission request is sent. Higher values increase reliability but add overhead.",
+      "group": "General",
+      "hidden": true,
+      "id": "WB_RTX_REQ_REP",
+      "label": "WB_RTX_REQ_REP",
+      "maximum": 10,
+      "minimum": 1,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Unitless [1]",
+          "value": 1
+        },
+        {
+          "label": "Unitless [3]",
+          "value": 3
+        },
+        {
+          "label": "Unitless [6]",
+          "value": 6
+        },
+        {
+          "label": "Unitless [10]",
+          "value": 10
+        },
+        {
+          "label": "Unitless [20]",
+          "value": 20
+        },
+        {
+          "label": "Unitless [26]",
+          "value": 26
+        },
+        {
+          "label": "Unitless [40]",
+          "value": 40
+        },
+        {
+          "label": "Unitless [60]",
+          "value": 60
+        },
+        {
+          "label": "Unitless [63]",
+          "value": 63
+        }
+      ],
+      "description": "Please use the TX POWER wizzard from WB Link to avoid destroying your card ! Unitless Tx power index value applied when the FC is disarmed and no specific armedtx power value is set.",
+      "group": "General",
+      "hidden": true,
+      "id": "TX_POWER_I",
+      "label": "TX_POWER_I",
+      "maximum": 63,
+      "minimum": 1,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Disabled [0]",
+          "value": 0
+        },
+        {
+          "label": "Unitless [1]",
+          "value": 1
+        },
+        {
+          "label": "Unitless [3]",
+          "value": 3
+        },
+        {
+          "label": "Unitless [6]",
+          "value": 6
+        },
+        {
+          "label": "Unitless [10]",
+          "value": 10
+        },
+        {
+          "label": "Unitless [20]",
+          "value": 20
+        },
+        {
+          "label": "Unitless [26]",
+          "value": 26
+        },
+        {
+          "label": "Unitless [40]",
+          "value": 40
+        },
+        {
+          "label": "Unitless [60]",
+          "value": 60
+        },
+        {
+          "label": "Unitless [63]",
+          "value": 63
+        }
+      ],
+      "description": "Please use the TX POWER wizzard from WB Link to avoid destroying your card ! Unitless Tx power index value applied when the FC is armed, off by default",
+      "group": "General",
+      "hidden": true,
+      "id": "TX_POWER_I_ARMED",
+      "label": "TX_POWER_I_ARMED",
+      "maximum": 63,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "Please use the TX POWER wizzard from WB Link to avoid destroying your card ! tx power in mW when FC is disarmed and no specific armed tx power value is set. Actual tx power depends on the manufacturer.",
+      "group": "General",
+      "hidden": true,
+      "id": "TX_POWER_MW",
+      "label": "TX_POWER_MW",
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Please use the TX POWER wizzard from WB Link to avoid destroying your card ! tx power in mW when FC is armed, off by default. Actual tx power depends on the manufacturer.",
+      "group": "General",
+      "hidden": true,
+      "id": "TX_POWER_MW_ARM",
+      "label": "TX_POWER_MW_ARM",
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "choices": [
+        {
+          "label": "0%",
+          "value": 0
+        },
+        {
+          "label": "20%",
+          "value": 20
+        },
+        {
+          "label": "40%",
+          "value": 40
+        },
+        {
+          "label": "60%",
+          "value": 60
+        },
+        {
+          "label": "80%",
+          "value": 80
+        },
+        {
+          "label": "100%",
+          "value": 100
+        },
+        {
+          "label": "110% (OVERDRIVE)",
+          "value": 110
+        },
+        {
+          "label": "120% (OVERDRIVE)",
+          "value": 120
+        },
+        {
+          "label": "130% (OVERDRIVE)",
+          "value": 130
+        },
+        {
+          "label": "140% (OVERDRIVE)",
+          "value": 140
+        },
+        {
+          "label": "150% (MAX OVERDRIVE)",
+          "value": 150
+        }
+      ],
+      "description": "Normalized TX power target. Values through 100% use the normal calibrated range. Values above 100% are hardware-stressing Devourer overdrive and require Advanced Settings in the link control.",
+      "group": "General",
+      "hidden": true,
+      "id": "TX_PWR_LVL",
+      "label": "TX_PWR_LVL",
+      "maximum": 150,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "AUTO (Default)",
+          "value": 0
+        },
+        {
+          "label": "FEC_K=8",
+          "value": 8
+        },
+        {
+          "label": "FEC_K=10",
+          "value": 10
+        },
+        {
+          "label": "FEC_K=12",
+          "value": 12
+        },
+        {
+          "label": "FEC_K=16",
+          "value": 16
+        },
+        {
+          "label": "FEC_K=20",
+          "value": 20
+        },
+        {
+          "label": "FEC_K=50",
+          "value": 50
+        }
+      ],
+      "description": "Default AUTO (Uses biggest block sizes possible while not adding any latency).Otherwise: WB Video FEC block length, previous FEC_K. Increasing this value can improve link stability for free, but can create additional latency.",
+      "group": "General",
+      "hidden": false,
+      "id": "WB_V_FEC_BLK_L",
+      "label": "WB_V_FEC_BLK_L",
+      "maximum": 50,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "70% (lower)",
+          "value": 70
+        },
+        {
+          "label": "80% (lower)",
+          "value": 80
+        },
+        {
+          "label": "90% (slightly lower)",
+          "value": 90
+        },
+        {
+          "label": "DEFAULT",
+          "value": 100
+        },
+        {
+          "label": "110% (slightly higher)",
+          "value": 110
+        },
+        {
+          "label": "120% (higher)",
+          "value": 120
+        },
+        {
+          "label": "130% (higher)",
+          "value": 130
+        }
+      ],
+      "description": "Reduce used data rate per mcs index by fixed value (not needed in most cases)",
+      "group": "General",
+      "hidden": true,
+      "id": "WB_V_RATE_PERC",
+      "label": "WB_V_RATE_PERC",
+      "maximum": 130,
+      "minimum": 70,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "10%",
+          "value": 10
+        },
+        {
+          "label": "20% (low interf)",
+          "value": 20
+        },
+        {
+          "label": "30%",
+          "value": 30
+        },
+        {
+          "label": "40%",
+          "value": 40
+        },
+        {
+          "label": "50% (high interf)",
+          "value": 50
+        },
+        {
+          "label": "100%",
+          "value": 100
+        }
+      ],
+      "description": "WB Video FEC overhead, in percent. Increases link stability, but also the required link bandwidth (watch out for tx errors). The best value depends on your rf environment - recommended is about ~20% in low rf enironemnts(e.g. nature), and ~50% in high rf noise environments(populated areas).Note that your rf interference/ packet loss will increase during flight, it is not recommended to decrase this value below 20%.",
+      "group": "General",
+      "hidden": true,
+      "id": "WB_V_FEC_PERC",
+      "label": "WB_V_FEC_PERC",
+      "maximum": 100,
+      "minimum": 10,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "10Mhz",
+          "value": 10
+        },
+        {
+          "label": "20Mhz",
+          "value": 20
+        },
+        {
+          "label": "40Mhz",
+          "value": 40
+        }
+      ],
+      "description": "!!!Editing this param manually without care will result in a broken link!!!",
+      "group": "General",
+      "hidden": true,
+      "id": "WB_CHANNEL_W",
+      "label": "WB_CHANNEL_W",
+      "maximum": 40,
+      "minimum": 10,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "MCS0",
+          "value": 0
+        },
+        {
+          "label": "MCS1",
+          "value": 1
+        },
+        {
+          "label": "MCS2",
+          "value": 2
+        },
+        {
+          "label": "MCS3",
+          "value": 3
+        },
+        {
+          "label": "MCS4",
+          "value": 4
+        },
+        {
+          "label": "MCS5",
+          "value": 5
+        },
+        {
+          "label": "MCS6",
+          "value": 6
+        },
+        {
+          "label": "MCS7",
+          "value": 7
+        },
+        {
+          "label": "MCS8",
+          "value": 8
+        },
+        {
+          "label": "MCS9",
+          "value": 9
+        },
+        {
+          "label": "MCS10",
+          "value": 10
+        },
+        {
+          "label": "MCS11",
+          "value": 11
+        },
+        {
+          "label": "MCS12",
+          "value": 12
+        },
+        {
+          "label": "MCS13",
+          "value": 13
+        },
+        {
+          "label": "MCS14",
+          "value": 14
+        },
+        {
+          "label": "MCS15",
+          "value": 15
+        },
+        {
+          "label": "MCS16",
+          "value": 16
+        },
+        {
+          "label": "MCS17",
+          "value": 17
+        },
+        {
+          "label": "MCS18",
+          "value": 18
+        },
+        {
+          "label": "MCS19",
+          "value": 19
+        },
+        {
+          "label": "MCS20",
+          "value": 20
+        },
+        {
+          "label": "MCS21",
+          "value": 21
+        },
+        {
+          "label": "MCS22",
+          "value": 22
+        },
+        {
+          "label": "MCS23",
+          "value": 23
+        },
+        {
+          "label": "MCS24",
+          "value": 24
+        },
+        {
+          "label": "MCS25",
+          "value": 25
+        },
+        {
+          "label": "MCS26",
+          "value": 26
+        },
+        {
+          "label": "MCS27",
+          "value": 27
+        },
+        {
+          "label": "MCS28",
+          "value": 28
+        },
+        {
+          "label": "MCS29",
+          "value": 29
+        },
+        {
+          "label": "MCS30",
+          "value": 30
+        },
+        {
+          "label": "MCS31",
+          "value": 31
+        }
+      ],
+      "description": "!!!Editing this param manually without care will result in a broken link!!!",
+      "group": "General",
+      "hidden": true,
+      "id": "WB_MCS_INDEX",
+      "label": "WB_MCS_INDEX",
+      "maximum": 31,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Disable",
+          "value": 0
+        },
+        {
+          "label": "Channel 1",
+          "value": 1
+        },
+        {
+          "label": "Channel 2",
+          "value": 2
+        },
+        {
+          "label": "Channel 3",
+          "value": 3
+        },
+        {
+          "label": "Channel 4",
+          "value": 4
+        },
+        {
+          "label": "Channel 5",
+          "value": 5
+        },
+        {
+          "label": "Channel 6",
+          "value": 6
+        },
+        {
+          "label": "Channel 7",
+          "value": 7
+        },
+        {
+          "label": "Channel 8",
+          "value": 8
+        },
+        {
+          "label": "Channel 9",
+          "value": 9
+        },
+        {
+          "label": "Channel 10",
+          "value": 10
+        },
+        {
+          "label": "Channel 11",
+          "value": 11
+        },
+        {
+          "label": "Channel 12",
+          "value": 12
+        },
+        {
+          "label": "Channel 13",
+          "value": 13
+        },
+        {
+          "label": "Channel 14",
+          "value": 14
+        },
+        {
+          "label": "Channel 15",
+          "value": 15
+        },
+        {
+          "label": "Channel 16",
+          "value": 16
+        },
+        {
+          "label": "Channel 17",
+          "value": 17
+        },
+        {
+          "label": "Channel 18",
+          "value": 18
+        }
+      ],
+      "description": "Dynamically change the MCS Index (Trade range <-> image quality (bitrate)) during flight using your RC and a specific channel (similar to how flight modes work).",
+      "group": "General",
+      "hidden": true,
+      "id": "MCS_VIA_RC",
+      "label": "MCS_VIA_RC",
+      "maximum": 18,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Disable",
+          "value": 0
+        },
+        {
+          "label": "Channel 1",
+          "value": 1
+        },
+        {
+          "label": "Channel 2",
+          "value": 2
+        },
+        {
+          "label": "Channel 3",
+          "value": 3
+        },
+        {
+          "label": "Channel 4",
+          "value": 4
+        },
+        {
+          "label": "Channel 5",
+          "value": 5
+        },
+        {
+          "label": "Channel 6",
+          "value": 6
+        },
+        {
+          "label": "Channel 7",
+          "value": 7
+        },
+        {
+          "label": "Channel 8",
+          "value": 8
+        },
+        {
+          "label": "Channel 9",
+          "value": 9
+        },
+        {
+          "label": "Channel 10",
+          "value": 10
+        },
+        {
+          "label": "Channel 11",
+          "value": 11
+        },
+        {
+          "label": "Channel 12",
+          "value": 12
+        },
+        {
+          "label": "Channel 13",
+          "value": 13
+        },
+        {
+          "label": "Channel 14",
+          "value": 14
+        },
+        {
+          "label": "Channel 15",
+          "value": 15
+        },
+        {
+          "label": "Channel 16",
+          "value": 16
+        },
+        {
+          "label": "Channel 17",
+          "value": 17
+        },
+        {
+          "label": "Channel 18",
+          "value": 18
+        }
+      ],
+      "description": "Dynamically change the BW via RC. NOT ALWAYS SAFE TO USE !",
+      "group": "General",
+      "hidden": true,
+      "id": "BW_VIA_RC",
+      "label": "BW_VIA_RC",
+      "maximum": 18,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "!!!Editing this param manually without care will result in a broken link!!!",
+      "group": "General",
+      "hidden": true,
+      "id": "WB_FREQUENCY",
+      "label": "WB_FREQUENCY",
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "choices": [
+        {
+          "label": "AUTO -1",
+          "value": -1
+        },
+        {
+          "label": "LOW 20",
+          "value": 20
+        },
+        {
+          "label": "30",
+          "value": 30
+        },
+        {
+          "label": "40",
+          "value": 40
+        },
+        {
+          "label": "50",
+          "value": 50
+        },
+        {
+          "label": "100",
+          "value": 100
+        },
+        {
+          "label": "128",
+          "value": 128
+        }
+      ],
+      "description": "Developer only, max FEC block size.",
+      "group": "General",
+      "hidden": true,
+      "id": "WB_MAX_D_BZ",
+      "label": "WB_MAX_D_BZ",
+      "maximum": 128,
+      "minimum": -1,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "Detected wifi card type used for wifibroadcast.",
+      "group": "General",
+      "hidden": false,
+      "id": "WIFI_CARD0",
+      "label": "WIFI_CARD0",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Detected wifi card type used for wifibroadcast.",
+      "group": "General",
+      "hidden": false,
+      "id": "WIFI_CARD1",
+      "label": "WIFI_CARD1",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Detected wifi card type used for wifibroadcast.",
+      "group": "General",
+      "hidden": false,
+      "id": "WIFI_CARD2",
+      "label": "WIFI_CARD2",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Detected wifi card type used for wifibroadcast.",
+      "group": "General",
+      "hidden": false,
+      "id": "WIFI_CARD3",
+      "label": "WIFI_CARD3",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Detected card for wifi hotspot",
+      "group": "General",
+      "hidden": false,
+      "id": "HOTSPOT_CARD",
+      "label": "HOTSPOT_CARD",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "TODO",
+      "group": "General",
+      "hidden": false,
+      "id": "WB_N_RX_CARDS",
+      "label": "WB_N_RX_CARDS",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Stored locally on your air unit. If set to a nonzero value, overwrites the batt n cells of any connected GS (QOpenHD)such that you don't have to change the value when swapping around planes.",
+      "group": "General",
+      "hidden": false,
+      "id": "FC_BATT_N_CELLS",
+      "label": "FC_BATT_N_CELLS",
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "MAVLink system ID of the flight controller. Avoid using 100 or 101 (reserved for OpenHD air/ground), and keep it within 1-254.",
+      "group": "General",
+      "hidden": false,
+      "id": "FC_SYS_ID",
+      "label": "FC_SYS_ID",
+      "maximum": 254,
+      "minimum": 1,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "Artosyn daemon address (host/IP). Changing this reconnects to the daemon.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_ADDR",
+      "label": "AR_ADDR",
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "string"
+    },
+    {
+      "description": "Artosyn daemon TCP port.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_PORT",
+      "label": "AR_PORT",
+      "maximum": 65535,
+      "minimum": 1,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "Artosyn slot index used by the OpenHD link.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_SLOT",
+      "label": "AR_SLOT",
+      "maximum": 7,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "Artosyn video socket port id.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_VPORT",
+      "label": "AR_VPORT",
+      "maximum": 255,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "Artosyn telemetry socket port id.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_TPORT",
+      "label": "AR_TPORT",
+      "maximum": 255,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Disable",
+          "value": 0
+        },
+        {
+          "label": "Enable",
+          "value": 1
+        }
+      ],
+      "description": "Enable Artosyn datagram socket mode.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_DGRAM",
+      "label": "AR_DGRAM",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "Artosyn socket RX buffer size (bytes).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_RXBUF",
+      "label": "AR_RXBUF",
+      "maximum": 2147483647,
+      "minimum": 1,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "Artosyn socket TX buffer size (bytes).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_TXBUF",
+      "label": "AR_TXBUF",
+      "maximum": 2147483647,
+      "minimum": 1,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "Artosyn socket read timeout (ms).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_RDTMO",
+      "label": "AR_RDTMO",
+      "maximum": 2147483647,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Manual",
+          "value": 0
+        },
+        {
+          "label": "Auto",
+          "value": 1
+        }
+      ],
+      "description": "MCS mode. Manual uses AR_MCS_VAL; Auto uses internal adaptation.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_MCS_MD",
+      "label": "AR_MCS_MD",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "Manual MCS value (bb_phy_mcs_e). Use -1 to keep current.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_MCS_VAL",
+      "label": "AR_MCS_VAL",
+      "maximum": 25,
+      "minimum": -1,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "Auto MCS minimum limit (bb_phy_mcs_e). -1 disables the limit.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_MCS_MIN",
+      "label": "AR_MCS_MIN",
+      "maximum": 25,
+      "minimum": -1,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "Auto MCS maximum limit (bb_phy_mcs_e). -1 disables the limit.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_MCS_MAX",
+      "label": "AR_MCS_MAX",
+      "maximum": 25,
+      "minimum": -1,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Manual",
+          "value": 0
+        },
+        {
+          "label": "Auto",
+          "value": 1
+        }
+      ],
+      "description": "Bandwidth mode. Manual uses AR_BW_VAL; Auto uses internal adaptation.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_BW_MD",
+      "label": "AR_BW_MD",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Ignore (-1)",
+          "value": -1
+        },
+        {
+          "label": "1.25 MHz",
+          "value": 0
+        },
+        {
+          "label": "2.5 MHz",
+          "value": 1
+        },
+        {
+          "label": "5 MHz",
+          "value": 2
+        },
+        {
+          "label": "10 MHz",
+          "value": 3
+        },
+        {
+          "label": "20 MHz",
+          "value": 4
+        },
+        {
+          "label": "40 MHz",
+          "value": 5
+        }
+      ],
+      "description": "Manual bandwidth selection (bb_bandwidth_e).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_BW_VAL",
+      "label": "AR_BW_VAL",
+      "maximum": 5,
+      "minimum": -1,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Manual",
+          "value": 0
+        },
+        {
+          "label": "Auto",
+          "value": 1
+        }
+      ],
+      "description": "Channel mode. Manual uses AR_CHN_IDX; Auto uses internal adaptation.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_CHN_MD",
+      "label": "AR_CHN_MD",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "Manual channel index. -1 keeps current.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_CHN_IDX",
+      "label": "AR_CHN_IDX",
+      "maximum": 255,
+      "minimum": -1,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Manual",
+          "value": 0
+        },
+        {
+          "label": "Auto",
+          "value": 1
+        }
+      ],
+      "description": "Power control mode. Manual uses AR_PWR_DBM.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_PWR_ATO",
+      "label": "AR_PWR_ATO",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "Manual TX power target (dBm). -1 keeps current.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_PWR_DBM",
+      "label": "AR_PWR_DBM",
+      "maximum": 31,
+      "minimum": -1,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Ignore (-1)",
+          "value": -1
+        },
+        {
+          "label": "Manual (0)",
+          "value": 0
+        },
+        {
+          "label": "Auto (1)",
+          "value": 1
+        }
+      ],
+      "description": "Band mode control. -1 keeps current.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_BND_MD",
+      "label": "AR_BND_MD",
+      "maximum": 1,
+      "minimum": -1,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Ignore (-1)",
+          "value": -1
+        },
+        {
+          "label": "1G (150-1000 MHz)",
+          "value": 0
+        },
+        {
+          "label": "2G (1000-4000 MHz)",
+          "value": 1
+        },
+        {
+          "label": "5G (4000-7000 MHz)",
+          "value": 2
+        }
+      ],
+      "description": "Manual band selection (bb_band_e). -1 keeps current.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_BND_VAL",
+      "label": "AR_BND_VAL",
+      "maximum": 2,
+      "minimum": -1,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Ignore (-1)",
+          "value": -1
+        },
+        {
+          "label": "Disable (0)",
+          "value": 0
+        },
+        {
+          "label": "Enable (1)",
+          "value": 1
+        }
+      ],
+      "description": "Compliance mode control. -1 keeps current.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_CMP_MD",
+      "label": "AR_CMP_MD",
+      "maximum": 1,
+      "minimum": -1,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Ignore (-1)",
+          "value": -1
+        },
+        {
+          "label": "Open loop (0)",
+          "value": 0
+        },
+        {
+          "label": "Closed loop (1)",
+          "value": 1
+        }
+      ],
+      "description": "Power mode (bb_phy_pwr_mode_e). -1 keeps current.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_PWR_MD",
+      "label": "AR_PWR_MD",
+      "maximum": 1,
+      "minimum": -1,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Ignore (-1)",
+          "value": -1
+        },
+        {
+          "label": "Manual (0)",
+          "value": 0
+        },
+        {
+          "label": "Auto (1)",
+          "value": 1
+        }
+      ],
+      "description": "LNA mode control. -1 keeps current.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_LNA_MD",
+      "label": "AR_LNA_MD",
+      "maximum": 1,
+      "minimum": -1,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Ignore (-1)",
+          "value": -1
+        },
+        {
+          "label": "LNA (0)",
+          "value": 0
+        },
+        {
+          "label": "Bypass (1)",
+          "value": 1
+        }
+      ],
+      "description": "LNA bypass control. -1 keeps current.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_LNA_BP",
+      "label": "AR_LNA_BP",
+      "maximum": 1,
+      "minimum": -1,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Ignore (-1)",
+          "value": -1
+        },
+        {
+          "label": "Off (0)",
+          "value": 0
+        },
+        {
+          "label": "On (1)",
+          "value": 1
+        }
+      ],
+      "description": "RF path A TX enable. -1 keeps current.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_RF_ATX",
+      "label": "AR_RF_ATX",
+      "maximum": 1,
+      "minimum": -1,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Ignore (-1)",
+          "value": -1
+        },
+        {
+          "label": "Off (0)",
+          "value": 0
+        },
+        {
+          "label": "On (1)",
+          "value": 1
+        }
+      ],
+      "description": "RF path A RX enable. -1 keeps current.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_RF_ARX",
+      "label": "AR_RF_ARX",
+      "maximum": 1,
+      "minimum": -1,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Ignore (-1)",
+          "value": -1
+        },
+        {
+          "label": "Off (0)",
+          "value": 0
+        },
+        {
+          "label": "On (1)",
+          "value": 1
+        }
+      ],
+      "description": "RF path B TX enable. -1 keeps current.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_RF_BTX",
+      "label": "AR_RF_BTX",
+      "maximum": 1,
+      "minimum": -1,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Ignore (-1)",
+          "value": -1
+        },
+        {
+          "label": "Off (0)",
+          "value": 0
+        },
+        {
+          "label": "On (1)",
+          "value": 1
+        }
+      ],
+      "description": "RF path B RX enable. -1 keeps current.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_RF_BRX",
+      "label": "AR_RF_BRX",
+      "maximum": 1,
+      "minimum": -1,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "Artosyn link state (bb_link_state_e).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_LK_STATE",
+      "label": "AR_LK_STATE",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "RX MCS (bb_phy_mcs_e).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_RX_MCS",
+      "label": "AR_RX_MCS",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "TX MCS (bb_phy_mcs_e).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_TX_MCS",
+      "label": "AR_TX_MCS",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "TX bandwidth (bb_bandwidth_e).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_BW",
+      "label": "AR_BW",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "RX bandwidth (bb_bandwidth_e).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_RX_BW",
+      "label": "AR_RX_BW",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "PHY throughput estimate (kbps).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_PHY_TP",
+      "label": "AR_PHY_TP",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Measured throughput (kbps).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_REAL_TP",
+      "label": "AR_REAL_TP",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "TX center frequency (kHz).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_TX_FREQ",
+      "label": "AR_TX_FREQ",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "RX center frequency (kHz).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_RX_FREQ",
+      "label": "AR_RX_FREQ",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "SNR (linear, see bb_api.h for conversion).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_SNR",
+      "label": "AR_SNR",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "LDPC error blocks.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_LDPC_E",
+      "label": "AR_LDPC_E",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "LDPC total blocks.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_LDPC_N",
+      "label": "AR_LDPC_N",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "RX gain path A.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_GAIN_A",
+      "label": "AR_GAIN_A",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "RX gain path B.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_GAIN_B",
+      "label": "AR_GAIN_B",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Channel auto mode flag.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_CHN_AUT",
+      "label": "AR_CHN_AUT",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Current channel index.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_CHN_CUR",
+      "label": "AR_CHN_CUR",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Current channel frequency (kHz).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_CHN_FK",
+      "label": "AR_CHN_FK",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Current TX power (dBm).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_PWR_CUR",
+      "label": "AR_PWR_CUR",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Band auto mode flag.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_BND_AUT",
+      "label": "AR_BND_AUT",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Current band (bb_band_e).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_BND_CUR",
+      "label": "AR_BND_CUR",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "RF path A TX state.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_RF_ATX_R",
+      "label": "AR_RF_ATX_R",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "RF path A RX state.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_RF_ARX_R",
+      "label": "AR_RF_ARX_R",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "RF path B TX state.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_RF_BTX_R",
+      "label": "AR_RF_BTX_R",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "RF path B RX state.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_RF_BRX_R",
+      "label": "AR_RF_BRX_R",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Artosyn software version.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_SW_VER",
+      "label": "AR_SW_VER",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Artosyn hardware version.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_HW_VER",
+      "label": "AR_HW_VER",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Artosyn firmware version.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_FW_VER",
+      "label": "AR_FW_VER",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Artosyn build/compile time.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_CMP_TM",
+      "label": "AR_CMP_TM",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Artosyn uptime (s).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_UPTIME",
+      "label": "AR_UPTIME",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Running system/app id.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_RUNSYS",
+      "label": "AR_RUNSYS",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "AP time value (device-specific).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_AP_TIME",
+      "label": "AR_AP_TIME",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "TX throughput threshold (kbps).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_TX_TPTH",
+      "label": "AR_TX_TPTH",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "RX throughput threshold (kbps).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_RX_TPTH",
+      "label": "AR_RX_TPTH",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Peer SNR (linear).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_P_SNR",
+      "label": "AR_P_SNR",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Peer LDPC error blocks.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_P_LDPC_E",
+      "label": "AR_P_LDPC_E",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Peer LDPC total blocks.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_P_LDPC_N",
+      "label": "AR_P_LDPC_N",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Peer RX gain path A.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_P_GAIN_A",
+      "label": "AR_P_GAIN_A",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Peer RX gain path B.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_P_GAIN_B",
+      "label": "AR_P_GAIN_B",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Device role.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_ROLE",
+      "label": "AR_ROLE",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Operating mode (bb_mode_e).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_MODE",
+      "label": "AR_MODE",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Sync mode.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_SYNC",
+      "label": "AR_SYNC",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Sync master flag.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_SYNC_M",
+      "label": "AR_SYNC_M",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Configured SBMP value.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_CFG_SBM",
+      "label": "AR_CFG_SBM",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Runtime SBMP value.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_RT_SBM",
+      "label": "AR_RT_SBM",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Local MAC (baseband).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_LMAC",
+      "label": "AR_LMAC",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Pair state.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_PAIR",
+      "label": "AR_PAIR",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Peer MAC (baseband).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_PMAC",
+      "label": "AR_PMAC",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "TX RF mode (bb_tx_mode_e).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_TX_RFM",
+      "label": "AR_TX_RFM",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "RX RF mode (bb_rx_mode_e).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_RX_RFM",
+      "label": "AR_RX_RFM",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "TX time interleaving enable.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_TX_TEN",
+      "label": "AR_TX_TEN",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "RX time interleaving enable.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_RX_TEN",
+      "label": "AR_RX_TEN",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "TX time interleaving block count.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_TX_TNM",
+      "label": "AR_TX_TNM",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "RX time interleaving block count.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_RX_TNM",
+      "label": "AR_RX_TNM",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "TX time interleaving length.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_TX_TLN",
+      "label": "AR_TX_TLN",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "RX time interleaving length.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_RX_TLN",
+      "label": "AR_RX_TLN",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "1v1 self SNR (linear).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR1_S_SNR",
+      "label": "AR1_S_SNR",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "1v1 self LDPC TLV error ratio (x10000).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR1_S_LDPT",
+      "label": "AR1_S_LDPT",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "1v1 self LDPC frame error ratio (x10000).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR1_S_LDPN",
+      "label": "AR1_S_LDPN",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "1v1 self RX gain A.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR1_S_GNA",
+      "label": "AR1_S_GNA",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "1v1 self RX gain B.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR1_S_GNB",
+      "label": "AR1_S_GNB",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "1v1 self TX MCS.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR1_S_MCS",
+      "label": "AR1_S_MCS",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "1v1 self TX channel.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR1_S_CHN",
+      "label": "AR1_S_CHN",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "1v1 self TX power.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR1_S_PWR",
+      "label": "AR1_S_PWR",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "1v1 self LNA inner bypass.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR1_S_LNI",
+      "label": "AR1_S_LNI",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "1v1 self LNA FEM bypass.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR1_S_LNF",
+      "label": "AR1_S_LNF",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "1v1 self RF 1TX mode flag.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR1_S_1TX",
+      "label": "AR1_S_1TX",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "1v1 self TX frequency (kHz).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR1_S_TFK",
+      "label": "AR1_S_TFK",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "1v1 self low-band channel SNR.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR1_S_LSN",
+      "label": "AR1_S_LSN",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "1v1 self low-band gain A.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR1_S_LGA",
+      "label": "AR1_S_LGA",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "1v1 self low-band gain B.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR1_S_LGB",
+      "label": "AR1_S_LGB",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "1v1 self high-band channel SNR.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR1_S_HSN",
+      "label": "AR1_S_HSN",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "1v1 self high-band gain A.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR1_S_HGA",
+      "label": "AR1_S_HGA",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "1v1 self high-band gain B.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR1_S_HGB",
+      "label": "AR1_S_HGB",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "1v1 peer SNR (linear).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR1_P_SNR",
+      "label": "AR1_P_SNR",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "1v1 peer LDPC TLV error ratio (x10000).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR1_P_LDPT",
+      "label": "AR1_P_LDPT",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "1v1 peer LDPC frame error ratio (x10000).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR1_P_LDPN",
+      "label": "AR1_P_LDPN",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "1v1 peer RX gain A.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR1_P_GNA",
+      "label": "AR1_P_GNA",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "1v1 peer RX gain B.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR1_P_GNB",
+      "label": "AR1_P_GNB",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "1v1 peer TX MCS.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR1_P_MCS",
+      "label": "AR1_P_MCS",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "1v1 peer TX channel.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR1_P_CHN",
+      "label": "AR1_P_CHN",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "1v1 peer TX power.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR1_P_PWR",
+      "label": "AR1_P_PWR",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "1v1 peer LNA inner bypass.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR1_P_LNI",
+      "label": "AR1_P_LNI",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "1v1 peer LNA FEM bypass.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR1_P_LNF",
+      "label": "AR1_P_LNF",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "1v1 peer RF 1TX mode flag.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR1_P_1TX",
+      "label": "AR1_P_1TX",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "1v1 peer TX frequency (kHz).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR1_P_TFK",
+      "label": "AR1_P_TFK",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "1v1 peer low-band channel SNR.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR1_P_LSN",
+      "label": "AR1_P_LSN",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "1v1 peer low-band gain A.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR1_P_LGA",
+      "label": "AR1_P_LGA",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "1v1 peer low-band gain B.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR1_P_LGB",
+      "label": "AR1_P_LGB",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "1v1 peer high-band channel SNR.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR1_P_HSN",
+      "label": "AR1_P_HSN",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "1v1 peer high-band gain A.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR1_P_HGA",
+      "label": "AR1_P_HGA",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "1v1 peer high-band gain B.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR1_P_HGB",
+      "label": "AR1_P_HGB",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Video socket RX available flag.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_V_RX_AV",
+      "label": "AR_V_RX_AV",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Video socket RX overflow count.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_V_RX_OV",
+      "label": "AR_V_RX_OV",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Video socket RX buffer size (bytes).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_V_RX_BS",
+      "label": "AR_V_RX_BS",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Video socket RX buffered data size (bytes).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_V_RX_DS",
+      "label": "AR_V_RX_DS",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Video socket TX available flag.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_V_TX_AV",
+      "label": "AR_V_TX_AV",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Video socket TX overflow count.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_V_TX_OV",
+      "label": "AR_V_TX_OV",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Video socket TX buffer size (bytes).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_V_TX_BS",
+      "label": "AR_V_TX_BS",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Video socket TX buffered data size (bytes).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_V_TX_DS",
+      "label": "AR_V_TX_DS",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Telemetry socket RX available flag.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_T_RX_AV",
+      "label": "AR_T_RX_AV",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Telemetry socket RX overflow count.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_T_RX_OV",
+      "label": "AR_T_RX_OV",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Telemetry socket RX buffer size (bytes).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_T_RX_BS",
+      "label": "AR_T_RX_BS",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Telemetry socket RX buffered data size (bytes).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_T_RX_DS",
+      "label": "AR_T_RX_DS",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Telemetry socket TX available flag.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_T_TX_AV",
+      "label": "AR_T_TX_AV",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Telemetry socket TX overflow count.",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_T_TX_OV",
+      "label": "AR_T_TX_OV",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Telemetry socket TX buffer size (bytes).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_T_TX_BS",
+      "label": "AR_T_TX_BS",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Telemetry socket TX buffered data size (bytes).",
+      "group": "General",
+      "hidden": false,
+      "id": "AR_T_TX_DS",
+      "label": "AR_T_TX_DS",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "choices": [
+        {
+          "label": "640x480@30",
+          "value": "640x480@30"
+        },
+        {
+          "label": "640x480@60",
+          "value": "640x480@60"
+        },
+        {
+          "label": "640x480@90",
+          "value": "640x480@90"
+        },
+        {
+          "label": "1280x720@30",
+          "value": "1280x720@30"
+        },
+        {
+          "label": "1280x720@49",
+          "value": "1280x720@49"
+        },
+        {
+          "label": "1280x720@60",
+          "value": "1280x720@60"
+        },
+        {
+          "label": "1920x1080@30",
+          "value": "1920x1080@30"
+        }
+      ],
+      "description": "Video WIDTHxHEIGHT@FPS. You can enter any value you want here, but if you select a video format that is not supported by your camera, the video stream will stop",
+      "group": "General",
+      "hidden": false,
+      "id": "RESOLUTION_FPS",
+      "label": "RESOLUTION_FPS",
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "string"
+    },
+    {
+      "description": "GStreamer source pipeline for an IP camera. Use {IP} for IP_CAM_ADDRESS and {CODEC} for h264/h265 from VIDEO_CODEC; limited to 127 characters.",
+      "group": "General",
+      "hidden": false,
+      "id": "IP_CAM_PIPELINE",
+      "label": "IP_CAM_PIPELINE",
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "string"
+    },
+    {
+      "description": "IPv4 address of this IP camera. OpenHD adds a secondary local /24 address when required without replacing the normal Ethernet configuration.",
+      "group": "General",
+      "hidden": false,
+      "id": "IP_CAM_ADDRESS",
+      "label": "IP_CAM_ADDRESS",
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "string"
+    },
+    {
+      "choices": [
+        {
+          "label": "h264",
+          "value": 0
+        },
+        {
+          "label": "h265",
+          "value": 1
+        }
+      ],
+      "description": "Video codec. If your camera/ground station does not support HW accelerated encoding/decoding of the selected codec,it'l default to SW encode/decode. A reboot (air&ground) is recommended after changing this parameter.",
+      "group": "General",
+      "hidden": true,
+      "id": "VIDEO_CODEC",
+      "label": "VIDEO_CODEC",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "GStreamer (libcamerasrc)",
+          "value": 0
+        },
+        {
+          "label": "libcamera direct (rpicam-vid)",
+          "value": 1
+        }
+      ],
+      "description": "Select the Raspberry Pi camera backend. Changing it restarts the camera stream.",
+      "group": "General",
+      "hidden": false,
+      "id": "LIBCAMERA_IMPL",
+      "label": "LIBCAMERA_IMPL",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "GStreamer (MPP elements)",
+          "value": 0
+        },
+        {
+          "label": "MPP direct (native)",
+          "value": 1
+        }
+      ],
+      "description": "Select the supported Rockchip camera backend. Changing it restarts OpenHD and the camera stream.",
+      "group": "General",
+      "hidden": false,
+      "id": "ROCKCHIP_IMPL",
+      "label": "ROCKCHIP_IMPL",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "DISABLE",
+          "value": 0
+        },
+        {
+          "label": "ENABLE",
+          "value": 1
+        },
+        {
+          "label": "AUTO(armed)",
+          "value": 2
+        }
+      ],
+      "description": "Record video data locally on your air unit. You can find the files under /home/openhd/Videos on the SD card and/or download them via the web ui.When AUTO is set, air recording automatically starts (and stops) when you arm/disarm your drone (requires inav / ardupilot FC).",
+      "group": "General",
+      "hidden": false,
+      "id": "AIR_RECORDING_E",
+      "label": "Air recording",
+      "maximum": 2,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32",
+      "provision": {
+        "componentId": 100,
+        "roles": [
+          "air"
+        ]
+      }
+    },
+    {
+      "choices": [
+        {
+          "label": "Disable",
+          "value": 0
+        },
+        {
+          "label": "Enable",
+          "value": 1
+        }
+      ],
+      "description": "Enable / disable streaming for this camera. Note that this setting is persistent at run time - once you disable streaming for a camera, you won't have video until you re-enable streaming or reboot your air unit. On by default",
+      "group": "General",
+      "hidden": true,
+      "id": "STREAMING_E",
+      "label": "Video streaming",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32",
+      "provision": {
+        "componentId": 100,
+        "roles": [
+          "air"
+        ]
+      }
+    },
+    {
+      "choices": [
+        {
+          "label": "2MBit/s",
+          "value": 2
+        },
+        {
+          "label": "4MBit/s",
+          "value": 4
+        },
+        {
+          "label": "6MBit/s",
+          "value": 6
+        },
+        {
+          "label": "8MBit/s (default)",
+          "value": 8
+        },
+        {
+          "label": "10MBit/s (high)",
+          "value": 10
+        },
+        {
+          "label": "14MBit/s (high)",
+          "value": 14
+        },
+        {
+          "label": "18MBit/s (high)",
+          "value": 18
+        }
+      ],
+      "description": "Camera encoder bitrate, does not include FEC overhead. !! If variable bitrate is enabled (recommended), this value is ignored.!! Otherwise, you can manually set a fixed camera/encoder bitrate here. NOTE: If you are using a camera not listed on the OpenHD recommended cameras list, the bitrate might be fixed by the vendor and not changeable.",
+      "group": "General",
+      "hidden": true,
+      "id": "BITRATE_MBITS",
+      "label": "BITRATE_MBITS",
+      "maximum": 18,
+      "minimum": 2,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "2  (best recovery)",
+          "value": 2
+        },
+        {
+          "label": "3  (best recovery)",
+          "value": 3
+        },
+        {
+          "label": "5  (good recovery)",
+          "value": 5
+        },
+        {
+          "label": "8  (good recovery)",
+          "value": 8
+        },
+        {
+          "label": "10 (medium recovery)",
+          "value": 10
+        },
+        {
+          "label": "15 (medium recovery)",
+          "value": 15
+        },
+        {
+          "label": "20 (bad recovery)",
+          "value": 20
+        }
+      ],
+      "description": "Keyframe / instantaneous decode refresh interval, in frames. E.g. if set to 15, every 15th frame will be a key frame. Higher values result in better image compression, but increase the likeliness of microfreezes.",
+      "group": "General",
+      "hidden": true,
+      "id": "KEYFRAME_I",
+      "label": "KEYFRAME_I",
+      "maximum": 20,
+      "minimum": 2,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Disable",
+          "value": 0
+        },
+        {
+          "label": "Enable",
+          "value": 1
+        }
+      ],
+      "description": "Enable experimental runtime QP limit PID control. OpenHD compares measured encoder bitrate against the current target bitrate and adjusts live QP min/max to reduce bitrate over/undershoot. Off by default.",
+      "group": "General",
+      "hidden": false,
+      "id": "QP_PID_ENABLE",
+      "label": "QP_PID_ENABLE",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Disable",
+          "value": 0
+        },
+        {
+          "label": "Enable",
+          "value": 1
+        }
+      ],
+      "description": "Enable experimental RK3566/RK3588 MPP VBR bitrate PID control. OpenHD compares measured encoder bitrate against the current target bitrate and adjusts live encoder bps/bps-min/bps-max. On by default for RK3566/RK3588 testing.",
+      "group": "General",
+      "hidden": false,
+      "id": "RK_BITRATE_PID",
+      "label": "RK_BITRATE_PID",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Disable",
+          "value": 0
+        },
+        {
+          "label": "Enable",
+          "value": 1
+        }
+      ],
+      "description": "Force SW encode for the given camera, only enable if your camera supports outputting an appropriate raw format.",
+      "group": "General",
+      "hidden": true,
+      "id": "FORCE_SW_ENC",
+      "label": "FORCE_SW_ENC",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Disable",
+          "value": 0
+        },
+        {
+          "label": "Enable",
+          "value": 1
+        }
+      ],
+      "description": "Requires reboot. Switch primary and secondary camera.",
+      "group": "General",
+      "hidden": false,
+      "id": "V_SWITCH_CAM",
+      "label": "V_SWITCH_CAM",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "If Variable bitrate is enabled,your primary camera is given that much percentage of the total available link bandwidth. The rest is given to the secondary camera. Default to 60% (60:40 split).",
+      "group": "General",
+      "hidden": false,
+      "id": "V_PRIMARY_PERC",
+      "label": "V_PRIMARY_PERC",
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "choices": [
+        {
+          "label": "1 MBit/s",
+          "value": 1
+        },
+        {
+          "label": "2 MBit/s (default)",
+          "value": 2
+        },
+        {
+          "label": "3 MBit/s",
+          "value": 3
+        },
+        {
+          "label": "4 MBit/s",
+          "value": 4
+        }
+      ],
+      "description": "Fixed link bitrate reserved for an IP camera in either slot. OpenHD cannot adjust the IP camera encoder: configure its own WebUI to stay at or below this value and keep it low.",
+      "group": "General",
+      "hidden": false,
+      "id": "V_IP_CAM_MBITS",
+      "label": "V_IP_CAM_MBITS",
+      "maximum": 4,
+      "minimum": 1,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "NONE",
+          "value": 0
+        },
+        {
+          "label": "VFLIP°",
+          "value": 1
+        },
+        {
+          "label": "HFLIP",
+          "value": 2
+        },
+        {
+          "label": "BOTH",
+          "value": 3
+        }
+      ],
+      "description": "Flip video vertically / horizontally (ROTATE)",
+      "group": "General",
+      "hidden": false,
+      "id": "ROTATION_FLIP",
+      "label": "ROTATION_FLIP",
+      "maximum": 3,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "0°(disable)",
+          "value": 0
+        },
+        {
+          "label": "180°",
+          "value": 180
+        }
+      ],
+      "description": "Rotate video",
+      "group": "General",
+      "hidden": false,
+      "id": "ROTATION_DEG",
+      "label": "ROTATION_DEG",
+      "maximum": 180,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "NONE",
+          "value": -1
+        },
+        {
+          "label": "CYCLIC",
+          "value": 0
+        },
+        {
+          "label": "ADAPTIVE",
+          "value": 1
+        },
+        {
+          "label": "BOTH",
+          "value": 2
+        },
+        {
+          "label": "CYCLIC_ROWS",
+          "value": 2130706433
+        }
+      ],
+      "description": "Experimental,Default NONE, Type of Intra Refresh to use",
+      "group": "General",
+      "hidden": true,
+      "id": "INTRA_REFRESH",
+      "label": "INTRA_REFRESH",
+      "maximum": 2130706433,
+      "minimum": -1,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "Image capture brightness, [0..200], default 100. Increase for a brighter Image. However, if available, it is recommended to tune AWB or EXP instead.",
+      "group": "General",
+      "hidden": false,
+      "id": "BRIGHTNESS",
+      "label": "BRIGHTNESS",
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "ISO value to use (0 = Auto)",
+      "group": "General",
+      "hidden": false,
+      "id": "ISO",
+      "label": "ISO",
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "choices": [
+        {
+          "label": "Day / IR-cut",
+          "value": 0
+        },
+        {
+          "label": "Night / clear",
+          "value": 1
+        },
+        {
+          "label": "External trigger",
+          "value": 2
+        }
+      ],
+      "description": "GX ISP day/night mode. Drives an attached IR-cut actuator; does not control IR illumination.",
+      "group": "General",
+      "hidden": false,
+      "id": "GX_DAYNIGHT",
+      "label": "GX_DAYNIGHT",
+      "maximum": 2,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Normal",
+          "value": 0
+        },
+        {
+          "label": "Reversed",
+          "value": 1
+        }
+      ],
+      "description": "Reverse IR-cut actuator polarity to match the attached lens.",
+      "group": "General",
+      "hidden": false,
+      "id": "GX_IRCUT_DIR",
+      "label": "GX_IRCUT_DIR",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Disable",
+          "value": 0
+        },
+        {
+          "label": "Enable",
+          "value": 1
+        }
+      ],
+      "description": "Periodically reassert the IR-cut actuator state.",
+      "group": "General",
+      "hidden": false,
+      "id": "GX_IRCUT_TIMER",
+      "label": "GX_IRCUT_TIMER",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Manual",
+          "value": 0
+        },
+        {
+          "label": "Auto",
+          "value": 2
+        }
+      ],
+      "description": "GX ISP control mode. Manual gain/shutter or manual WB channel gains take effect only in Manual mode.",
+      "group": "General",
+      "hidden": false,
+      "id": "GX_EXPOSURE",
+      "label": "GX_EXPOSURE",
+      "maximum": 2,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Manual",
+          "value": 0
+        },
+        {
+          "label": "Auto",
+          "value": 2
+        }
+      ],
+      "description": "GX ISP control mode. Manual gain/shutter or manual WB channel gains take effect only in Manual mode.",
+      "group": "General",
+      "hidden": false,
+      "id": "GX_WB_MODE",
+      "label": "GX_WB_MODE",
+      "maximum": 2,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "GX gain in tenths of a dB: 60 means 6.0 dB. Manual gain requires manual exposure mode. Values above 45.3 dB include digital gain.",
+      "group": "General",
+      "hidden": false,
+      "id": "GX_GAIN",
+      "label": "GX_GAIN",
+      "maximum": 720,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "GX gain in tenths of a dB: 60 means 6.0 dB. Manual gain requires manual exposure mode. Values above 45.3 dB include digital gain.",
+      "group": "General",
+      "hidden": false,
+      "id": "GX_AE_MAX_GAIN",
+      "label": "GX_AE_MAX_GAIN",
+      "maximum": 720,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "Exposure time in microseconds, limited to one 30-fps frame. Manual shutter requires manual exposure mode.",
+      "group": "General",
+      "hidden": false,
+      "id": "GX_SHUTTER_US",
+      "label": "GX_SHUTTER_US",
+      "maximum": 33333,
+      "minimum": 16,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "Exposure time in microseconds, limited to one 30-fps frame. Manual shutter requires manual exposure mode.",
+      "group": "General",
+      "hidden": false,
+      "id": "GX_AE_MAX_US",
+      "label": "GX_AE_MAX_US",
+      "maximum": 33333,
+      "minimum": 16,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Highlight priority",
+          "value": 0
+        },
+        {
+          "label": "Shadow priority",
+          "value": 1
+        }
+      ],
+      "description": "Automatic exposure strategy.",
+      "group": "General",
+      "hidden": false,
+      "id": "GX_AE_STRATEGY",
+      "label": "GX_AE_STRATEGY",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "Manual white balance channel gain. Requires GX_WB_MODE=Manual.",
+      "group": "General",
+      "hidden": false,
+      "id": "GX_WB_RED",
+      "label": "GX_WB_RED",
+      "maximum": 4095,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "Manual white balance channel gain. Requires GX_WB_MODE=Manual.",
+      "group": "General",
+      "hidden": false,
+      "id": "GX_WB_BLUE",
+      "label": "GX_WB_BLUE",
+      "maximum": 4095,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "GX ISP image adjustment, vendor range 0-100.",
+      "group": "General",
+      "hidden": false,
+      "id": "GX_SATURATION",
+      "label": "GX_SATURATION",
+      "maximum": 100,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "GX ISP image adjustment, vendor range 0-100.",
+      "group": "General",
+      "hidden": false,
+      "id": "GX_CONTRAST",
+      "label": "GX_CONTRAST",
+      "maximum": 100,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "GX ISP image adjustment, vendor range 0-100.",
+      "group": "General",
+      "hidden": false,
+      "id": "GX_HUE",
+      "label": "GX_HUE",
+      "maximum": 100,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "GX ISP strength or AE brightness target, vendor range 0-255. AE target requires auto exposure mode.",
+      "group": "General",
+      "hidden": false,
+      "id": "GX_AE_TARGET",
+      "label": "GX_AE_TARGET",
+      "maximum": 255,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "GX ISP strength or AE brightness target, vendor range 0-255. AE target requires auto exposure mode.",
+      "group": "General",
+      "hidden": false,
+      "id": "GX_SHARPNESS",
+      "label": "GX_SHARPNESS",
+      "maximum": 255,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "GX ISP strength or AE brightness target, vendor range 0-255. AE target requires auto exposure mode.",
+      "group": "General",
+      "hidden": false,
+      "id": "GX_DENOISE_2D",
+      "label": "GX_DENOISE_2D",
+      "maximum": 255,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "GX ISP strength or AE brightness target, vendor range 0-255. AE target requires auto exposure mode.",
+      "group": "General",
+      "hidden": false,
+      "id": "GX_DENOISE_3D",
+      "label": "GX_DENOISE_3D",
+      "maximum": 255,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "GX ISP strength or AE brightness target, vendor range 0-255. AE target requires auto exposure mode.",
+      "group": "General",
+      "hidden": false,
+      "id": "GX_DRC",
+      "label": "GX_DRC",
+      "maximum": 255,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Linear",
+          "value": 0
+        },
+        {
+          "label": "Default",
+          "value": 1
+        },
+        {
+          "label": "Gamma 1.6",
+          "value": 2
+        },
+        {
+          "label": "Gamma 1.8",
+          "value": 3
+        },
+        {
+          "label": "Gamma 2.0",
+          "value": 4
+        },
+        {
+          "label": "Gamma 2.2",
+          "value": 5
+        },
+        {
+          "label": "Style 1",
+          "value": 6
+        },
+        {
+          "label": "Style 2",
+          "value": 7
+        },
+        {
+          "label": "Style 3",
+          "value": 8
+        },
+        {
+          "label": "Style 4",
+          "value": 9
+        },
+        {
+          "label": "Style 5",
+          "value": 10
+        },
+        {
+          "label": "Style 6",
+          "value": 11
+        }
+      ],
+      "description": "GX ISP gamma curve.",
+      "group": "General",
+      "hidden": false,
+      "id": "GX_GAMMA",
+      "label": "GX_GAMMA",
+      "maximum": 11,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "OFF",
+          "value": 0
+        },
+        {
+          "label": "AUTO",
+          "value": 1
+        },
+        {
+          "label": "SUNLIGHT",
+          "value": 2
+        },
+        {
+          "label": "CLOUDY",
+          "value": 3
+        },
+        {
+          "label": "SHADE",
+          "value": 4
+        },
+        {
+          "label": "TUNGSTEN",
+          "value": 5
+        },
+        {
+          "label": "FLUORESCENT",
+          "value": 6
+        },
+        {
+          "label": "INCANDESCENT",
+          "value": 7
+        },
+        {
+          "label": "FLASH",
+          "value": 8
+        },
+        {
+          "label": "HORIZON",
+          "value": 9
+        }
+      ],
+      "description": "AWB Automatic white balance mode",
+      "group": "General",
+      "hidden": false,
+      "id": "AWB_MODE",
+      "label": "AWB_MODE",
+      "maximum": 9,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "OFF",
+          "value": 0
+        },
+        {
+          "label": "AUTO",
+          "value": 1
+        },
+        {
+          "label": "NIGHT",
+          "value": 2
+        },
+        {
+          "label": "NIGHTPREVIEW",
+          "value": 3
+        },
+        {
+          "label": "BACKLIGHT",
+          "value": 4
+        },
+        {
+          "label": "SPOTLIGHT",
+          "value": 5
+        },
+        {
+          "label": "SPORTS",
+          "value": 6
+        },
+        {
+          "label": "SNOW",
+          "value": 7
+        },
+        {
+          "label": "BEACH",
+          "value": 8
+        },
+        {
+          "label": "VERYLONG",
+          "value": 9
+        },
+        {
+          "label": "FIXEDFPS",
+          "value": 10
+        },
+        {
+          "label": "ANTISHAKE",
+          "value": 11
+        },
+        {
+          "label": "FIREWORKS",
+          "value": 12
+        }
+      ],
+      "description": "EXP Exposure mode",
+      "group": "General",
+      "hidden": false,
+      "id": "EXP_MODE",
+      "label": "EXP_MODE",
+      "maximum": 12,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "AVERAGE",
+          "value": 0
+        },
+        {
+          "label": "SPOT",
+          "value": 1
+        },
+        {
+          "label": "BACKLIST",
+          "value": 2
+        },
+        {
+          "label": "MATRIX",
+          "value": 3
+        }
+      ],
+      "description": "Camera exposure metering mode to use. Default average.",
+      "group": "General",
+      "hidden": false,
+      "id": "METERING_MODE",
+      "label": "METERING_MODE",
+      "maximum": 3,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "AUTO",
+          "value": 0
+        },
+        {
+          "label": "OFF",
+          "value": 1
+        },
+        {
+          "label": "CDN_OFF",
+          "value": 2
+        },
+        {
+          "label": "CDN_FAST",
+          "value": 3
+        },
+        {
+          "label": "CDN_HQ",
+          "value": 4
+        }
+      ],
+      "description": "Setting this to off reduces latency by ~1 Frame on the cost of slightly reduced image quality in dark situations.",
+      "group": "General",
+      "hidden": false,
+      "id": "DENOISE_INDEX_LC",
+      "label": "DENOISE_INDEX_LC",
+      "maximum": 4,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "centre (default)",
+          "value": 0
+        },
+        {
+          "label": "spot",
+          "value": 1
+        },
+        {
+          "label": "average",
+          "value": 2
+        }
+      ],
+      "description": "Libcamera Metering mode.",
+      "group": "General",
+      "hidden": false,
+      "id": "METERING_MODE_LC",
+      "label": "METERING_MODE_LC",
+      "maximum": 2,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "auto (default)",
+          "value": 0
+        },
+        {
+          "label": "incandescent",
+          "value": 1
+        },
+        {
+          "label": "tungsten",
+          "value": 2
+        },
+        {
+          "label": "fluorescent",
+          "value": 3
+        },
+        {
+          "label": "indoor",
+          "value": 4
+        },
+        {
+          "label": "daylight",
+          "value": 5
+        },
+        {
+          "label": "cloudy",
+          "value": 6
+        },
+        {
+          "label": "custom",
+          "value": 7
+        }
+      ],
+      "description": "Libcamera AWB mode.",
+      "group": "General",
+      "hidden": false,
+      "id": "AWB_MODE_LC",
+      "label": "AWB_MODE_LC",
+      "maximum": 7,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "normal (default)",
+          "value": 0
+        },
+        {
+          "label": "sport",
+          "value": 1
+        }
+      ],
+      "description": "Libcamera exposure mode.",
+      "group": "General",
+      "hidden": false,
+      "id": "EXPOSURE_MODE_LC",
+      "label": "EXPOSURE_MODE_LC",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "auto",
+          "value": 0
+        },
+        {
+          "label": "example1 (1000us)",
+          "value": 1000
+        },
+        {
+          "label": "example2 (5000us)",
+          "value": 5000
+        },
+        {
+          "label": "example3 (16666us)",
+          "value": 16666
+        },
+        {
+          "label": "example4 (33333us)",
+          "value": 33333
+        }
+      ],
+      "description": "Libcamera shutter in microseconds. Normally seleceted automatically, but you can overwrite this value for more control.",
+      "group": "General",
+      "hidden": false,
+      "id": "SHUTTER_US_LC",
+      "label": "SHUTTER_US_LC",
+      "maximum": 33333,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "default(100)",
+          "value": 100
+        },
+        {
+          "label": "higher (120)",
+          "value": 120
+        },
+        {
+          "label": "higher (150)",
+          "value": 150
+        },
+        {
+          "label": "lower(80)",
+          "value": 80
+        },
+        {
+          "label": "lower (50)",
+          "value": 50
+        }
+      ],
+      "description": "Libcamera contrast",
+      "group": "General",
+      "hidden": false,
+      "id": "CONTRAST_LC",
+      "label": "CONTRAST_LC",
+      "maximum": 150,
+      "minimum": 50,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "default(100)",
+          "value": 100
+        },
+        {
+          "label": "higher (120)",
+          "value": 120
+        },
+        {
+          "label": "higher (150)",
+          "value": 150
+        },
+        {
+          "label": "lower(80)",
+          "value": 80
+        },
+        {
+          "label": "lower (50)",
+          "value": 50
+        }
+      ],
+      "description": "Libcamera saturation",
+      "group": "General",
+      "hidden": false,
+      "id": "SATURATION_LC",
+      "label": "SATURATION_LC",
+      "maximum": 150,
+      "minimum": 50,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "default(100)",
+          "value": 100
+        },
+        {
+          "label": "higher (120)",
+          "value": 120
+        },
+        {
+          "label": "higher (150)",
+          "value": 150
+        },
+        {
+          "label": "lower(80)",
+          "value": 80
+        },
+        {
+          "label": "lower (50)",
+          "value": 50
+        }
+      ],
+      "description": "Libcamera sharpness",
+      "group": "General",
+      "hidden": false,
+      "id": "SHARPNESS_LC",
+      "label": "SHARPNESS_LC",
+      "maximum": 150,
+      "minimum": 50,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "default(0)",
+          "value": 0
+        },
+        {
+          "label": "higher (5)",
+          "value": 5
+        },
+        {
+          "label": "higher (10)",
+          "value": 10
+        },
+        {
+          "label": "lower(-5)",
+          "value": -5
+        },
+        {
+          "label": "lower (-10)",
+          "value": -10
+        }
+      ],
+      "description": "Libcamera exposure value, [-10,10]",
+      "group": "General",
+      "hidden": false,
+      "id": "EXPOSURE_LC",
+      "label": "EXPOSURE_LC",
+      "maximum": 10,
+      "minimum": -10,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Disable",
+          "value": 0
+        },
+        {
+          "label": "Enable",
+          "value": 1
+        }
+      ],
+      "description": "Enable ultra secure - but expensive - video encryption - by default, video is not encrypted (only validated) to save CPU performance (Telemetry is always encrypted though).It is recommended to leave video encryption off unless you are using at least RPI 4 on air and are TOTALLY worried about someone listening to your video - even with encryption disabled, it is not easy for an attacker to listen in on your openhd video (and impossible to attack your video due to always on secure packet validation).",
+      "group": "General",
+      "hidden": false,
+      "id": "HIGH_ENCRYPTION",
+      "label": "HIGH_ENCRYPTION",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "TODO",
+      "group": "General",
+      "hidden": false,
+      "id": "BOARD_TYPE",
+      "label": "BOARD_TYPE",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "choices": [
+        {
+          "label": "Disable",
+          "value": 0
+        },
+        {
+          "label": "Enable",
+          "value": 1
+        }
+      ],
+      "description": "Only enable joystick rc if you actually use it to save cpu / bandwidth. If enabled, you can connect a joystick to your ground station for RC. After enabling,a reboot is recommended, but not neccessary.",
+      "group": "General",
+      "hidden": false,
+      "id": "ENABLE_JOY_RC",
+      "label": "ENABLE_JOY_RC",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Disable",
+          "value": 0
+        },
+        {
+          "label": "Enable",
+          "value": 1
+        }
+      ],
+      "description": "Leave disabled, for setups with an additional 4th cable for uart flow control",
+      "group": "General",
+      "hidden": false,
+      "id": "FC_UART_FLWCTL",
+      "label": "FC_UART_FLWCTL",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "9600",
+          "value": 9600
+        },
+        {
+          "label": "19200",
+          "value": 19200
+        },
+        {
+          "label": "38400",
+          "value": 38400
+        },
+        {
+          "label": "57600",
+          "value": 57600
+        },
+        {
+          "label": "115200",
+          "value": 115200
+        },
+        {
+          "label": "230400",
+          "value": 230400
+        },
+        {
+          "label": "460800",
+          "value": 460800
+        },
+        {
+          "label": "500000",
+          "value": 500000
+        },
+        {
+          "label": "576000",
+          "value": 576000
+        },
+        {
+          "label": "921600",
+          "value": 921600
+        },
+        {
+          "label": "1000000",
+          "value": 1000000
+        }
+      ],
+      "description": "RPI HW UART baud rate, needs to match the UART baud rate set on your FC",
+      "group": "General",
+      "hidden": false,
+      "id": "FC_UART_BAUD",
+      "label": "FC_UART_BAUD",
+      "maximum": 1000000,
+      "minimum": 9600,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Disable",
+          "value": 0
+        },
+        {
+          "label": "Enable",
+          "value": 1
+        }
+      ],
+      "description": "Enable the full bidirectional Air-to-Ground OpenHD telemetry UART link. Configure the matching UART and baud rate on both units.",
+      "group": "General",
+      "hidden": false,
+      "id": "OHD_UART_EN",
+      "label": "OHD_UART_EN",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "9600",
+          "value": 9600
+        },
+        {
+          "label": "19200",
+          "value": 19200
+        },
+        {
+          "label": "38400",
+          "value": 38400
+        },
+        {
+          "label": "57600",
+          "value": 57600
+        },
+        {
+          "label": "115200",
+          "value": 115200
+        },
+        {
+          "label": "230400",
+          "value": 230400
+        },
+        {
+          "label": "460800",
+          "value": 460800
+        },
+        {
+          "label": "500000",
+          "value": 500000
+        },
+        {
+          "label": "576000",
+          "value": 576000
+        },
+        {
+          "label": "921600",
+          "value": 921600
+        },
+        {
+          "label": "1000000",
+          "value": 1000000
+        }
+      ],
+      "description": "Baud rate for the Air-to-Ground OpenHD UART telemetry link. It must match on both units and on any serial radio or bridge between them.",
+      "group": "General",
+      "hidden": false,
+      "id": "OHD_UART_BAUD",
+      "label": "OHD_UART_BAUD",
+      "maximum": 1000000,
+      "minimum": 9600,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Disable",
+          "value": 0
+        },
+        {
+          "label": "Enable",
+          "value": 1
+        }
+      ],
+      "description": "Toggle RTS/CTS flow control for the OpenHD telemetry UART.",
+      "group": "General",
+      "hidden": false,
+      "id": "OHD_UART_FLW",
+      "label": "OHD_UART_FLW",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Disable",
+          "value": 0
+        },
+        {
+          "label": "Enable",
+          "value": 1
+        }
+      ],
+      "description": "Enable SBUS output on the air unit (generated from RC override messages).",
+      "group": "General",
+      "hidden": false,
+      "id": "SBUS_EN",
+      "label": "SBUS_EN",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "UART device for SBUS output (e.g. /dev/serial0, /dev/ttyAMA1).",
+      "group": "General",
+      "hidden": false,
+      "id": "SBUS_DEV",
+      "label": "SBUS_DEV",
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "string"
+    },
+    {
+      "description": "SBUS output update rate (Hz).",
+      "group": "General",
+      "hidden": false,
+      "id": "SBUS_HZ",
+      "label": "SBUS_HZ",
+      "maximum": 1000,
+      "minimum": 1,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "9600",
+          "value": 9600
+        },
+        {
+          "label": "19200",
+          "value": 19200
+        },
+        {
+          "label": "38400",
+          "value": 38400
+        },
+        {
+          "label": "57600",
+          "value": 57600
+        },
+        {
+          "label": "115200",
+          "value": 115200
+        },
+        {
+          "label": "230400",
+          "value": 230400
+        },
+        {
+          "label": "460800",
+          "value": 460800
+        },
+        {
+          "label": "500000",
+          "value": 500000
+        },
+        {
+          "label": "576000",
+          "value": 576000
+        },
+        {
+          "label": "921600",
+          "value": 921600
+        },
+        {
+          "label": "1000000",
+          "value": 1000000
+        }
+      ],
+      "description": "Baud rate for the ground side tracker/output UART.",
+      "group": "General",
+      "hidden": false,
+      "id": "TRACK_UART_BAUD",
+      "label": "TRACK_UART_BAUD",
+      "maximum": 1000000,
+      "minimum": 9600,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Disable",
+          "value": 0
+        },
+        {
+          "label": "Enable",
+          "value": 1
+        }
+      ],
+      "description": "Enable RTS/CTS flow control on the ground tracker/output UART.",
+      "group": "General",
+      "hidden": false,
+      "id": "TRACK_UART_FLOW",
+      "label": "TRACK_UART_FLOW",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "0 (lowest)",
+          "value": 0
+        },
+        {
+          "label": "1",
+          "value": 1
+        },
+        {
+          "label": "2",
+          "value": 2
+        },
+        {
+          "label": "3 (default RC)",
+          "value": 3
+        },
+        {
+          "label": "4",
+          "value": 4
+        },
+        {
+          "label": "5",
+          "value": 5
+        },
+        {
+          "label": "6",
+          "value": 6
+        },
+        {
+          "label": "7",
+          "value": 7
+        },
+        {
+          "label": "8",
+          "value": 8
+        },
+        {
+          "label": "9",
+          "value": 9
+        },
+        {
+          "label": "10 (highest)",
+          "value": 10
+        }
+      ],
+      "description": "Priority bucket for RC/control messages on the OpenHD UART. Higher values are sent first.",
+      "group": "General",
+      "hidden": false,
+      "id": "UART_PRI_RC",
+      "label": "UART_PRI_RC",
+      "maximum": 10,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "0 (lowest)",
+          "value": 0
+        },
+        {
+          "label": "1",
+          "value": 1
+        },
+        {
+          "label": "2",
+          "value": 2
+        },
+        {
+          "label": "3 (default RC)",
+          "value": 3
+        },
+        {
+          "label": "4",
+          "value": 4
+        },
+        {
+          "label": "5",
+          "value": 5
+        },
+        {
+          "label": "6",
+          "value": 6
+        },
+        {
+          "label": "7",
+          "value": 7
+        },
+        {
+          "label": "8",
+          "value": 8
+        },
+        {
+          "label": "9",
+          "value": 9
+        },
+        {
+          "label": "10 (highest)",
+          "value": 10
+        }
+      ],
+      "description": "Priority bucket for OpenHD internal telemetry on the OpenHD UART.",
+      "group": "General",
+      "hidden": false,
+      "id": "UART_PRI_OHD",
+      "label": "UART_PRI_OHD",
+      "maximum": 10,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "0 (lowest)",
+          "value": 0
+        },
+        {
+          "label": "1",
+          "value": 1
+        },
+        {
+          "label": "2",
+          "value": 2
+        },
+        {
+          "label": "3 (default RC)",
+          "value": 3
+        },
+        {
+          "label": "4",
+          "value": 4
+        },
+        {
+          "label": "5",
+          "value": 5
+        },
+        {
+          "label": "6",
+          "value": 6
+        },
+        {
+          "label": "7",
+          "value": 7
+        },
+        {
+          "label": "8",
+          "value": 8
+        },
+        {
+          "label": "9",
+          "value": 9
+        },
+        {
+          "label": "10 (highest)",
+          "value": 10
+        }
+      ],
+      "description": "Priority bucket for FC-originating MAVLink on the OpenHD UART.",
+      "group": "General",
+      "hidden": false,
+      "id": "UART_PRI_FC",
+      "label": "UART_PRI_FC",
+      "maximum": 10,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Disable",
+          "value": 0
+        },
+        {
+          "label": "Enable",
+          "value": 1
+        }
+      ],
+      "description": "DEV, change boot as air / ground",
+      "group": "General",
+      "hidden": true,
+      "id": "CONFIG_BOOT_AIR",
+      "label": "CONFIG_BOOT_AIR",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": true,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Disable",
+          "value": 0
+        },
+        {
+          "label": "Enable",
+          "value": 1
+        }
+      ],
+      "description": "Route video and data over multiple links. Requires a verified enterprise certificate on each OpenHD unit; standard mode uses one link and keeps UART telemetry available.",
+      "group": "General",
+      "hidden": false,
+      "id": "MULTI_LINK_EN",
+      "label": "MULTI_LINK_EN",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "Whether this unit has a verified enterprise certificate permitting multiple links.",
+      "group": "General",
+      "hidden": false,
+      "id": "MULTI_LINK_CAP",
+      "label": "MULTI_LINK_CAP",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "choices": [
+        {
+          "label": "OFF",
+          "value": 0
+        },
+        {
+          "label": "HOTSPOT",
+          "value": 1
+        },
+        {
+          "label": "CLIENT",
+          "value": 2
+        }
+      ],
+      "description": "Select how the built-in WiFi card is used. OFF disables WiFi entirely, HOTSPOT enables the access point for nearby devices, and CLIENT connects the unit to an existing WiFi network.",
+      "group": "General",
+      "hidden": false,
+      "id": "WIFI_MODE",
+      "label": "WIFI_MODE",
+      "maximum": 2,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "AUTO",
+          "value": 0
+        },
+        {
+          "label": "ALWAYS_OFF",
+          "value": 1
+        },
+        {
+          "label": "ALWAYS_ON",
+          "value": 2
+        }
+      ],
+      "description": "Enable/Disable WiFi hotspot such that you can connect to your air/ground unit via normal WiFi. Frequency is always the opposite of your WB link, e.g. 2.4G if your wb link is 5.8G and opposite. In AUTO (default), the wifi hotspot is automatically disarmed when you arm your FC (to avoid interference).",
+      "group": "General",
+      "hidden": false,
+      "id": "WIFI_HOTSPOT_E",
+      "label": "WIFI_HOTSPOT_E",
+      "maximum": 2,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "Comma separated list of detected WiFi interfaces and their current roles (wb/hotspot/client/idle).",
+      "group": "General",
+      "hidden": false,
+      "id": "WIFI_IFACES",
+      "label": "WIFI_IFACES",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "description": "Optional interface override to use for hotspot mode (empty = auto). Changing this reconfigures the hotspot when WiFi mode is set to HOTSPOT.",
+      "group": "General",
+      "hidden": false,
+      "id": "WIFI_HS_IFACE",
+      "label": "WIFI_HS_IFACE",
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "string"
+    },
+    {
+      "description": "Optional interface to use for WiFi client mode (empty = auto). Only applied when WiFi mode is set to CLIENT.",
+      "group": "General",
+      "hidden": false,
+      "id": "WIFI_CL_IFACE",
+      "label": "WIFI_CL_IFACE",
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "string"
+    },
+    {
+      "description": "SSID to join when WiFi mode is set to CLIENT.",
+      "group": "General",
+      "hidden": false,
+      "id": "WIFI_CL_SSID",
+      "label": "WIFI_CL_SSID",
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "string"
+    },
+    {
+      "description": "Password to join when WiFi mode is set to CLIENT.",
+      "group": "General",
+      "hidden": false,
+      "id": "WIFI_CL_PW",
+      "label": "WIFI_CL_PW",
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "string"
+    },
+    {
+      "choices": [
+        {
+          "label": "Disable",
+          "value": 0
+        },
+        {
+          "label": "Enable",
+          "value": 1
+        }
+      ],
+      "description": "Enable/Disable ethernet hotspot. When enabled, your rpi becomes a DHCPD server and starts forwarding video & telemetry if you connect a device via ethernet.However, this doesn't allow you to share your other device(s) internet with the RPI (e.g android) and in general, it is recommended to use ETH_PASSIVE_F instead.Cannot be used simultanoeusly with ETH_PASSIVE_F. Requires reboot.",
+      "group": "General",
+      "hidden": false,
+      "id": "ETH_HOTSPOT_E",
+      "label": "ETH_HOTSPOT_E",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": true,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "Disable",
+          "value": 0
+        },
+        {
+          "label": "Enable",
+          "value": 1
+        }
+      ],
+      "description": "Enable automatic video & telemetry forwarding via ethernet if EITH_HOTSPOT_E is false (Recommended).Cannot be used simultaneously with ETH_HOTSPOT_E. Doesn't require reboot.",
+      "group": "General",
+      "hidden": false,
+      "id": "ETH_PASSIVE_F",
+      "label": "ETH_PASSIVE_F",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "UNMANAGED",
+          "value": 0
+        },
+        {
+          "label": "HOTSPOT",
+          "value": 1
+        },
+        {
+          "label": "FORWARD+INTERNET",
+          "value": 2
+        }
+      ],
+      "description": "Specify the intended usage of the ground station ethernet port (for connecting external devices). A reboot might be required after changing this param.",
+      "group": "General",
+      "hidden": false,
+      "id": "ETHERNET",
+      "label": "ETHERNET",
+      "maximum": 2,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "untouched",
+          "value": 0
+        },
+        {
+          "label": "high",
+          "value": 1
+        },
+        {
+          "label": "low",
+          "value": 2
+        }
+      ],
+      "description": "Experimental, allows manually controlling a rpi gpio for special uses like a LED, landing gear, ...",
+      "group": "General",
+      "hidden": false,
+      "id": "GPIO_2",
+      "label": "GPIO_2",
+      "maximum": 2,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "untouched",
+          "value": 0
+        },
+        {
+          "label": "high",
+          "value": 1
+        },
+        {
+          "label": "low",
+          "value": 2
+        }
+      ],
+      "description": "Experimental, allows manually controlling a rpi gpio for special uses like a LED, landing gear, ...",
+      "group": "General",
+      "hidden": false,
+      "id": "GPIO_26",
+      "label": "GPIO_26",
+      "maximum": 2,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "choices": [
+        {
+          "label": "DISABLE",
+          "value": ""
+        },
+        {
+          "label": "DEFAULT",
+          "value": "DEFAULT"
+        },
+        {
+          "label": "/dev/serial0",
+          "value": "/dev/serial0"
+        },
+        {
+          "label": "/dev/ttyAMA1",
+          "value": "/dev/ttyAMA1"
+        },
+        {
+          "label": "/dev/ttyAMA2",
+          "value": "/dev/ttyAMA2"
+        },
+        {
+          "label": "/dev/ttyAMA3",
+          "value": "/dev/ttyAMA3"
+        },
+        {
+          "label": "/dev/ttyAMA4",
+          "value": "//dev/ttyAMA4"
+        },
+        {
+          "label": "/dev/serial1",
+          "value": "/dev/serial1"
+        },
+        {
+          "label": "/dev/ttyS1",
+          "value": "/dev/ttyS1"
+        },
+        {
+          "label": "/dev/ttyS2",
+          "value": "/dev/ttyS2"
+        },
+        {
+          "label": "/dev/ttyUSB0",
+          "value": "/dev/ttyUSB0"
+        },
+        {
+          "label": "/dev/ttyUSB1",
+          "value": "/dev/ttyUSB1"
+        },
+        {
+          "label": "/dev/ttyACM0",
+          "value": "/dev/ttyACM0"
+        },
+        {
+          "label": "/dev/ttyACM1",
+          "value": "/dev/ttyACM1"
+        },
+        {
+          "label": "/dev/ttyS7",
+          "value": "/dev/ttyS7"
+        }
+      ],
+      "description": "Telemetry FC<->Air unit. Make sure FC_UART_BAUD matches your FC. DEFAULT - primary telemetry serial of this platform (see wiki).Otherwise, any linux serial fd filename (dev/testing).",
+      "group": "General",
+      "hidden": false,
+      "id": "FC_UART_CONN",
+      "label": "FC_UART_CONN",
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "string"
+    },
+    {
+      "choices": [
+        {
+          "label": "DISABLE",
+          "value": ""
+        },
+        {
+          "label": "DEFAULT",
+          "value": "DEFAULT"
+        },
+        {
+          "label": "/dev/serial0",
+          "value": "/dev/serial0"
+        },
+        {
+          "label": "/dev/ttyAMA1",
+          "value": "/dev/ttyAMA1"
+        },
+        {
+          "label": "/dev/ttyAMA2",
+          "value": "/dev/ttyAMA2"
+        },
+        {
+          "label": "/dev/ttyAMA3",
+          "value": "/dev/ttyAMA3"
+        },
+        {
+          "label": "/dev/ttyAMA4",
+          "value": "//dev/ttyAMA4"
+        },
+        {
+          "label": "/dev/serial1",
+          "value": "/dev/serial1"
+        },
+        {
+          "label": "/dev/ttyS1",
+          "value": "/dev/ttyS1"
+        },
+        {
+          "label": "/dev/ttyS2",
+          "value": "/dev/ttyS2"
+        },
+        {
+          "label": "/dev/ttyUSB0",
+          "value": "/dev/ttyUSB0"
+        },
+        {
+          "label": "/dev/ttyUSB1",
+          "value": "/dev/ttyUSB1"
+        },
+        {
+          "label": "/dev/ttyACM0",
+          "value": "/dev/ttyACM0"
+        },
+        {
+          "label": "/dev/ttyACM1",
+          "value": "/dev/ttyACM1"
+        },
+        {
+          "label": "/dev/ttyS7",
+          "value": "/dev/ttyS7"
+        }
+      ],
+      "description": "Enable mavlink telemetry out via UART on the ground station for connecting a tracker or even an RC with mavlink lua script.",
+      "group": "General",
+      "hidden": false,
+      "id": "TRACKER_UART_OUT",
+      "label": "TRACKER_UART_OUT",
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "string"
+    },
+    {
+      "choices": [
+        {
+          "label": "DISABLE",
+          "value": ""
+        },
+        {
+          "label": "DEFAULT",
+          "value": "DEFAULT"
+        },
+        {
+          "label": "/dev/serial0",
+          "value": "/dev/serial0"
+        },
+        {
+          "label": "/dev/ttyAMA1",
+          "value": "/dev/ttyAMA1"
+        },
+        {
+          "label": "/dev/ttyAMA2",
+          "value": "/dev/ttyAMA2"
+        },
+        {
+          "label": "/dev/ttyAMA3",
+          "value": "/dev/ttyAMA3"
+        },
+        {
+          "label": "/dev/ttyAMA4",
+          "value": "//dev/ttyAMA4"
+        },
+        {
+          "label": "/dev/serial1",
+          "value": "/dev/serial1"
+        },
+        {
+          "label": "/dev/ttyS1",
+          "value": "/dev/ttyS1"
+        },
+        {
+          "label": "/dev/ttyS2",
+          "value": "/dev/ttyS2"
+        },
+        {
+          "label": "/dev/ttyUSB0",
+          "value": "/dev/ttyUSB0"
+        },
+        {
+          "label": "/dev/ttyUSB1",
+          "value": "/dev/ttyUSB1"
+        },
+        {
+          "label": "/dev/ttyACM0",
+          "value": "/dev/ttyACM0"
+        },
+        {
+          "label": "/dev/ttyACM1",
+          "value": "/dev/ttyACM1"
+        },
+        {
+          "label": "/dev/ttyS7",
+          "value": "/dev/ttyS7"
+        }
+      ],
+      "description": "UART device used as the full bidirectional OpenHD telemetry link between Air and Ground. Configure the corresponding device on both units.",
+      "group": "General",
+      "hidden": false,
+      "id": "OHD_UART_TLM",
+      "label": "OHD_UART_TLM",
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "string"
+    },
+    {
+      "choices": [
+        {
+          "label": "default",
+          "value": "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18"
+        },
+        {
+          "label": "Steamdeck AETR",
+          "value": "4,5,1,2,3,6,7,8,9,10,11,12,13,14,15,16,17,18"
+        },
+        {
+          "label": "EX1",
+          "value": "2,1,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18"
+        },
+        {
+          "label": "EX2",
+          "value": "2,1,4,3,5,6,7,8,9,10,11,12,13,14,15,16,17,18"
+        }
+      ],
+      "description": "Change which joystick 'channel' is taken for each RC channel. This is a list of numbers, where each number X at position N means take joystick input nr X for channel N. For example, 1,4,... means take channel number 1 for the first channel, and channel number 4 for the second channel. Needs to have ! all! 18 channel elements seperated by a ','",
+      "group": "General",
+      "hidden": false,
+      "id": "RC_CHAN_MAP",
+      "label": "RC_CHAN_MAP",
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "string"
+    },
+    {
+      "choices": [
+        {
+          "label": "CMD Shutter calibration",
+          "value": 32768
+        },
+        {
+          "label": "CMD YUYV output",
+          "value": 32773
+        },
+        {
+          "label": "CMD save configurations",
+          "value": 33022
+        },
+        {
+          "label": "White Hot",
+          "value": 34816
+        },
+        {
+          "label": "Black Hot",
+          "value": 34817
+        },
+        {
+          "label": "Iron Rainbow",
+          "value": 34818
+        },
+        {
+          "label": "Lava",
+          "value": 34819
+        },
+        {
+          "label": "Rainbow2",
+          "value": 34820
+        },
+        {
+          "label": "Rainbow3",
+          "value": 34821
+        },
+        {
+          "label": "Red Hot",
+          "value": 34822
+        },
+        {
+          "label": "Iron gray",
+          "value": 34823
+        },
+        {
+          "label": "HCR1",
+          "value": 34824
+        },
+        {
+          "label": "HCR2",
+          "value": 34825
+        },
+        {
+          "label": "Black hot 2",
+          "value": 34826
+        }
+      ],
+      "description": "Infiray thermal colors",
+      "group": "General",
+      "hidden": false,
+      "id": "COLOR_PALETE",
+      "label": "COLOR_PALETE",
+      "maximum": 34826,
+      "minimum": 32768,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "description": "Specify the update rate of RC over wifibroadcast. A higher update rate gives lower RC latency, but takes more bandwidth away from the downlink.No effect if joy rc is disabled.",
+      "group": "General",
+      "hidden": false,
+      "id": "RC_UPDATE_HZ",
+      "label": "RC_UPDATE_HZ",
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "runtime"
+    },
+    {
+      "choices": [
+        {
+          "label": "DISABLE",
+          "value": 1
+        },
+        {
+          "label": "ENABLE",
+          "value": 0
+        },
+        {
+          "label": "TEST",
+          "value": 100
+        }
+      ],
+      "description": "enables / disables audio streaming from air to ground. In development. Use test mode to validate your ground audio output.",
+      "group": "General",
+      "hidden": true,
+      "id": "AUDIO_ENABLE",
+      "label": "AUDIO_ENABLE",
+      "maximum": 100,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32"
+    },
+    {
+      "id": "SYS_RUN_MODE",
+      "type": "string",
+      "label": "System role",
+      "group": "System",
+      "description": "Air, Ground, or record-only mode. Applies when OpenHD restarts.",
+      "enforce": true,
+      "requiresReboot": true,
+      "choices": [
+        {
+          "value": "air",
+          "label": "Air"
+        },
+        {
+          "value": "ground",
+          "label": "Ground"
+        },
+        {
+          "value": "record",
+          "label": "Record only"
+        }
+      ],
+      "rpc": {
+        "read": "sysutil.settings.request",
+        "write": "sysutil.settings.update",
+        "key": "run_mode",
+          "availableKey": "has_run_mode",
+          "choicesKey": "run_mode_choices"
+      }
+    },
+    {
+      "id": "SYS_DEBUG",
+      "type": "int32",
+      "label": "System debug logging",
+      "group": "System",
+      "description": "Enable or disable SysUtils debug logging.",
+      "minimum": 0,
+      "maximum": 1,
+      "enforce": true,
+      "choices": [
+        {
+          "value": 0,
+          "label": "Disabled"
+        },
+        {
+          "value": 1,
+          "label": "Enabled"
+        }
+      ],
+      "rpc": {
+        "read": "sysutil.debug.request",
+        "write": "sysutil.debug.update",
+        "key": "debug",
+        "boolean": true
+      }
+    },
+    {
+      "id": "SYS_PLATFORM",
+      "type": "int32",
+      "label": "Detected platform",
+      "group": "System",
+      "readOnly": true,
+      "rpc": {
+        "read": "sysutil.platform.request",
+        "key": "platform_type"
+      }
+    },
+    {
+      "id": "SYS_DISP_FORCE",
+      "type": "int32",
+      "label": "Force display mode",
+      "group": "Display",
+      "description": "Enable the configured display mode, or restore automatic mode selection after reboot.",
+      "minimum": 0,
+      "maximum": 1,
+      "enforce": true,
+      "requiresReboot": true,
+      "choices": [
+        {
+          "value": 0,
+          "label": "Automatic"
+        },
+        {
+          "value": 1,
+          "label": "Forced"
+        }
+      ],
+      "rpc": {
+        "read": "sysutil.display.request",
+        "write": "sysutil.display.update",
+        "key": "enabled",
+        "boolean": true,
+        "availableKey": "supported",
+        "preserve": [
+          "enabled",
+          "width",
+          "height",
+          "refresh_hz",
+          "connector"
+        ]
+      }
+    },
+    {
+      "id": "SYS_DISP_MODE",
+      "type": "string",
+      "label": "Forced display resolution and refresh rate",
+      "group": "Display",
+      "description": "WIDTHxHEIGHT@HZ, for example 1920x1080@60. Applying a mode also enables forced display mode. Requires reboot.",
+      "enforce": true,
+      "requiresReboot": true,
+      "rpc": {
+        "read": "sysutil.display.request",
+        "write": "sysutil.display.update",
+        "format": "display-mode",
+        "availableKey": "supported",
+        "preserve": [
+          "enabled",
+          "width",
+          "height",
+          "refresh_hz",
+          "connector"
+        ]
+      }
+    }
+  ],
+  "version": 1,
+  "imageWriter": {
+    "_comment": "Machine-readable map of OpenHD advanced options, the UI categories that show them, and the FAT32 outputs written by downloadthread.cpp.",
+    "_comment_use": "Programs can traverse each setting object to build menus and know which file/value is produced.",
+    "useSettings": {
+      "_comment": "Global gate: when true, all other files under openhd/ are written.",
+      "files": [
+        {
+          "path": "openhd/*",
+          "note": "All other setting files are only written when useSettings is true."
+        }
+      ]
+    },
+    "bootType": {
+      "_comment": "Mutually exclusive Air/Ground flags that create marker files.",
+      "options": [
+        {
+          "id": "Air",
+          "file": "openhd/air.txt",
+          "valueWritten": ""
+        },
+        {
+          "id": "Ground",
+          "file": "openhd/ground.txt",
+          "valueWritten": ""
+        }
+      ]
+    },
+    "sbc": {
+      "_comment": "Detected SBC marker files written as empty files.",
+      "options": [
+        {
+          "id": "rpi",
+          "file": "openhd/rpi.txt"
+        },
+        {
+          "id": "rock-5a",
+          "file": "openhd/rock-5a.txt"
+        },
+        {
+          "id": "rock-5b",
+          "file": "openhd/rock-5b.txt"
+        },
+        {
+          "id": "zero3w",
+          "file": "openhd/zero3w.txt"
+        },
+        {
+          "id": "radxa-cm3",
+          "file": "openhd/rock-rk3566.txt"
+        },
+        {
+          "id": "radxa-cm5",
+          "file": "openhd/radxa-cm5.txt"
+        },
+        {
+          "id": "x20",
+          "file": "openhd/x20.txt"
+        },
+        {
+          "id": "x21",
+          "file": "openhd/x21.txt"
+        },
+        {
+          "id": "cubie",
+          "file": "openhd/cubie.txt"
+        },
+        {
+          "id": "x86",
+          "file": "openhd/x86.txt"
+        },
+        {
+          "id": "qcs405",
+          "file": "openhd/qcs405.txt"
+        },
+        {
+          "id": "qrb5165",
+          "file": "openhd/qrb5165.txt"
+        },
+        {
+          "id": "openipc",
+          "file": "openhd/openipc.txt"
+        },
+        {
+          "id": "rockchip-rv",
+          "file": "openhd/rockchip-rv.txt"
+        },
+        {
+          "id": "orqa",
+          "file": "openhd/orqa.txt"
+        },
+        {
+          "id": "nvidia-xavier",
+          "file": "openhd/nvidia-xavier.txt"
+        },
+        {
+          "id": "uvx",
+          "file": "openhd/uvx.txt"
+        },
+        {
+          "id": "nxp-imx8",
+          "file": "openhd/nxp-imx8.txt"
+        },
+        {
+          "id": "unknown",
+          "file": "openhd/unknown.txt"
+        }
+      ]
+    },
+    "mode": {
+      "_comment": "Debug toggle currently supported.",
+      "options": [
+        {
+          "id": "debug",
+          "file": "openhd/debug.txt",
+          "valueWritten": ""
+        }
+      ]
+    },
+    "camera": {
+      "_comment": "Camera selection depends on SBC and vendor/category shown in the UI.",
+      "valueEncoding": "stringified OpenHD camera type integers written to openhd/settings.json",
+      "secondaryOptions": [
+        {
+          "id": "USB",
+          "displayName": "USB",
+          "valueWritten": "10"
+        },
+        {
+          "id": "IP-CAMERA",
+          "displayName": "IP CAMERA",
+          "valueWritten": "3"
+        },
+        {
+          "id": "TESTPATTERN",
+          "displayName": "DEV CAMERA",
+          "valueWritten": "0"
+        },
+        {
+          "id": "INFIRAY",
+          "displayName": "INFIRAY",
+          "valueWritten": "11"
+        },
+        {
+          "id": "INFIRAY_T2",
+          "displayName": "INFIRAY T2",
+          "valueWritten": "12"
+        },
+        {
+          "id": "INFIRAY_X2",
+          "displayName": "INFIRAY X2",
+          "valueWritten": "13"
+        },
+        {
+          "id": "INFIRAY_P2_PRO",
+          "displayName": "INFIRAY P2 PRO",
+          "valueWritten": "14"
+        },
+        {
+          "id": "FLIR_VUE",
+          "displayName": "FLIR VUE",
+          "valueWritten": "15"
+        },
+        {
+          "id": "FLIR_BOSON",
+          "displayName": "FLIR BOSON",
+          "valueWritten": "16"
+        }
+      ],
+      "commonVendors": [
+        {
+          "id": "network",
+          "displayName": "Network",
+          "options": [
+            {
+              "id": "IP-CAMERA",
+              "valueWritten": "3"
+            }
+          ]
+        }
+      ],
+      "sbcGroups": [
+        {
+          "sbc": [
+            "rpi"
+          ],
+          "bootTypeRequired": "Air",
+          "file": "openhd/camera1.txt",
+          "secondaryCsi": true,
+          "vendors": [
+            {
+              "id": "raspberry",
+              "displayName": "Raspberry",
+              "options": [
+                {
+                  "id": "HDMI",
+                  "valueWritten": "20"
+                },
+                {
+                  "id": "OV5647",
+                  "valueWritten": "30"
+                },
+                {
+                  "id": "IMX219",
+                  "valueWritten": "31"
+                },
+                {
+                  "id": "IMX708",
+                  "valueWritten": "32"
+                },
+                {
+                  "id": "IMX477",
+                  "valueWritten": "33"
+                }
+              ]
+            },
+            {
+              "id": "arducam",
+              "displayName": "Arducam",
+              "options": [
+                {
+                  "id": "SkyMasterHDR708",
+                  "valueWritten": "40"
+                },
+                {
+                  "id": "SkyVisionPro519",
+                  "valueWritten": "41"
+                },
+                {
+                  "id": "IMX477m",
+                  "valueWritten": "42"
+                },
+                {
+                  "id": "IMX462",
+                  "valueWritten": "43"
+                },
+                {
+                  "id": "IMX327",
+                  "valueWritten": "44"
+                },
+                {
+                  "id": "IMX290",
+                  "valueWritten": "45"
+                },
+                {
+                  "id": "IMX462MINI",
+                  "valueWritten": "46"
+                },
+                {
+                  "id": "IMX662",
+                  "valueWritten": "47"
+                }
+              ]
+            },
+            {
+              "id": "veye",
+              "displayName": "Veye",
+              "options": [
+                {
+                  "id": "2MPCAMERAS",
+                  "valueWritten": "60"
+                },
+                {
+                  "id": "CSIMX307",
+                  "valueWritten": "61"
+                },
+                {
+                  "id": "CSSC137",
+                  "valueWritten": "62"
+                },
+                {
+                  "id": "MVCAM",
+                  "valueWritten": "63"
+                },
+                {
+                  "id": "GX/GXC IMX662 (ISP)",
+                  "valueWritten": "64"
+                }
+              ]
+            },
+            {
+              "id": "advanced",
+              "displayName": "Advanced",
+              "options": [
+                {
+                  "id": "USB",
+                  "valueWritten": "10"
+                },
+                {
+                  "id": "FILESRC",
+                  "valueWritten": "4"
+                },
+                {
+                  "id": "EXTERNAL",
+                  "valueWritten": "2"
+                },
+                {
+                  "id": "TESTPATTERN",
+                  "valueWritten": "0"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sbc": [
+            "rock-5a",
+            "rock-5b",
+            "radxa-cm5"
+          ],
+          "bootTypeRequired": "Air",
+          "file": "openhd/camera1.txt",
+          "vendors": [
+            {
+              "id": "rock-default",
+              "displayName": "Rock5",
+              "options": [
+                {
+                  "id": "HDMI",
+                  "valueWritten": "80"
+                },
+                {
+                  "id": "OV5647",
+                  "valueWritten": "81"
+                },
+                {
+                  "id": "IMX219",
+                  "valueWritten": "82"
+                },
+                {
+                  "id": "IMX708",
+                  "valueWritten": "83"
+                },
+                {
+                  "id": "IMX462",
+                  "valueWritten": "84"
+                },
+                {
+                  "id": "IMX415",
+                  "valueWritten": "85"
+                },
+                {
+                  "id": "IMX477",
+                  "valueWritten": "86"
+                },
+                {
+                  "id": "IMX519",
+                  "valueWritten": "87"
+                },
+                {
+                  "id": "OHD-JAGUAR",
+                  "valueWritten": "88"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sbc": [
+            "zero3w",
+            "radxa-cm3"
+          ],
+          "bootTypeRequired": "Air",
+          "file": "openhd/camera1.txt",
+          "vendors": [
+            {
+              "id": "rock3-default",
+              "displayName": "Zero3W",
+              "options": [
+                {
+                  "id": "HDMI",
+                  "valueWritten": "90"
+                },
+                {
+                  "id": "OV5647",
+                  "valueWritten": "91"
+                },
+                {
+                  "id": "IMX219",
+                  "valueWritten": "92"
+                },
+                {
+                  "id": "IMX708",
+                  "valueWritten": "93"
+                },
+                {
+                  "id": "IMX462",
+                  "valueWritten": "94"
+                },
+                {
+                  "id": "IMX519",
+                  "valueWritten": "95"
+                },
+                {
+                  "id": "OHD-JAGUAR",
+                  "valueWritten": "96"
+                },
+                {
+                  "id": "VEYE",
+                  "valueWritten": "97"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sbc": [
+            "x86",
+            "unknown"
+          ],
+          "bootTypeRequired": "Air",
+          "file": "openhd/camera1.txt",
+          "vendors": [
+            {
+              "id": "generic",
+              "displayName": "Generic",
+              "options": [
+                {
+                  "id": "USB",
+                  "valueWritten": "10"
+                },
+                {
+                  "id": "EXTERNAL",
+                  "valueWritten": "2"
+                },
+                {
+                  "id": "FILESRC",
+                  "valueWritten": "4"
+                },
+                {
+                  "id": "TESTPATTERN",
+                  "valueWritten": "0"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sbc": [
+            "x20"
+          ],
+          "bootTypeRequired": "Air",
+          "file": "openhd/camera1.txt",
+          "vendors": [
+            {
+              "id": "x20",
+              "displayName": "X20",
+              "options": [
+                {
+                  "id": "HDZERO",
+                  "valueWritten": "70"
+                },
+                {
+                  "id": "RUNCAM_V1",
+                  "valueWritten": "71"
+                },
+                {
+                  "id": "RUNCAM_V2",
+                  "valueWritten": "72"
+                },
+                {
+                  "id": "RUNCAM_V3",
+                  "valueWritten": "73"
+                },
+                {
+                  "id": "RUNCAM_NANO_90",
+                  "valueWritten": "74"
+                },
+                {
+                  "id": "OHD-JAGUAR",
+                  "valueWritten": "75"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sbc": [
+            "x21"
+          ],
+          "bootTypeRequired": "Air",
+          "file": "openhd/camera1.txt",
+          "vendors": [
+            {
+              "id": "x21",
+              "displayName": "X21",
+              "options": [
+                {
+                  "id": "OHD-JAGUAR-X21",
+                  "valueWritten": "76"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sbc": [
+            "qcs405",
+            "qrb5165"
+          ],
+          "bootTypeRequired": "Air",
+          "file": "openhd/camera1.txt",
+          "vendors": [
+            {
+              "id": "qualcomm",
+              "displayName": "Qualcomm",
+              "options": [
+                {
+                  "id": "IMX577",
+                  "valueWritten": "120"
+                },
+                {
+                  "id": "OV9282",
+                  "valueWritten": "121"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sbc": [
+            "openipc"
+          ],
+          "bootTypeRequired": "Air",
+          "file": "openhd/camera1.txt",
+          "vendors": [
+            {
+              "id": "integrated",
+              "displayName": "Integrated camera",
+              "options": [
+                {
+                  "id": "OPENIPC",
+                  "valueWritten": "110"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sbc": [
+            "orqa"
+          ],
+          "bootTypeRequired": "Air",
+          "file": "openhd/camera1.txt",
+          "vendors": [
+            {
+              "id": "orqa",
+              "displayName": "Orqa",
+              "options": [
+                {
+                  "id": "ORQA-HORNET",
+                  "valueWritten": "122"
+                },
+                {
+                  "id": "ORQA-JAGUAR",
+                  "valueWritten": "123"
+                },
+                {
+                  "id": "ORQA-REKINDLE",
+                  "valueWritten": "124"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sbc": [
+            "rockchip-rv"
+          ],
+          "bootTypeRequired": "Air",
+          "file": "openhd/camera1.txt",
+          "vendors": [
+            {
+              "id": "integrated",
+              "displayName": "Integrated camera",
+              "options": [
+                {
+                  "id": "ROCKCHIP-RV",
+                  "valueWritten": "125"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sbc": [
+            "nvidia-xavier"
+          ],
+          "bootTypeRequired": "Air",
+          "file": "openhd/camera1.txt",
+          "vendors": [
+            {
+              "id": "nvidia",
+              "displayName": "Nvidia",
+              "options": [
+                {
+                  "id": "XAVIER-IMX577",
+                  "valueWritten": "101"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sbc": [
+            "cubie",
+            "uvx",
+            "nxp-imx8"
+          ],
+          "bootTypeRequired": "Air",
+          "file": "openhd/camera1.txt",
+          "vendors": []
+        }
+      ]
+    },
+    "cameraResolution": {
+      "_comment": "Resolution/fps choices keyed by OpenHD camera type value (widthxheight@fps).",
+      "valueEncoding": "string written to openhd/settings.json as camera_resolution_fps and camera2_resolution_fps",
+      "byCameraValue": {
+        "0": [
+          "640x480@30",
+          "1280x720@30",
+          "1280x720@60"
+        ],
+        "4": [
+          "848x480@60",
+          "1280x720@60",
+          "1920x1080@60"
+        ],
+        "10": [
+          "640x480@30",
+          "0x0@0"
+        ],
+        "11": [
+          "384x292@25"
+        ],
+        "12": [
+          "256x192@25",
+          "0x0@0"
+        ],
+        "13": [
+          "384x292@50"
+        ],
+        "14": [
+          "256x192@25"
+        ],
+        "15": [
+          "640x512@30"
+        ],
+        "16": [
+          "640x512@60"
+        ],
+        "20": [
+          "1280x720@30",
+          "1920x1080@25",
+          "1280x720@60"
+        ],
+        "30": [
+          "1280x720@30",
+          "1920x1080@30"
+        ],
+        "31": [
+          "640x480@47",
+          "896x504@47",
+          "1280x720@47",
+          "1920x1080@30"
+        ],
+        "32": [
+          "640x480@60",
+          "896x504@60",
+          "1280x720@60",
+          "1920x1080@30"
+        ],
+        "33": [
+          "640x480@50",
+          "896x504@50",
+          "1280x720@50",
+          "1920x1080@30"
+        ],
+        "40": [
+          "640x480@60",
+          "896x504@60",
+          "1280x720@60",
+          "1920x1080@30"
+        ],
+        "41": [
+          "640x480@60",
+          "896x504@60",
+          "1280x720@60",
+          "1920x1080@30"
+        ],
+        "42": [
+          "640x480@50",
+          "896x504@50",
+          "1280x720@50",
+          "1920x1080@30"
+        ],
+        "43": [
+          "640x480@60",
+          "896x504@30",
+          "896x504@60",
+          "1280x720@30",
+          "1280x720@60",
+          "1920x1080@30"
+        ],
+        "44": [
+          "640x480@60",
+          "896x504@60",
+          "1280x720@60",
+          "1920x1080@30"
+        ],
+        "46": [
+          "640x480@60",
+          "896x504@30",
+          "896x504@60",
+          "1280x720@30",
+          "1280x720@60",
+          "1920x1080@30"
+        ],
+        "47": [
+          "1280x720@60",
+          "1920x1080@30"
+        ],
+        "60": [
+          "1920x1080@30"
+        ],
+        "61": [
+          "1280x720@60",
+          "1920x1080@30"
+        ],
+        "62": [
+          "1920x1080@30"
+        ],
+        "63": [
+          "1920x1080@30"
+        ],
+        "70": [
+          "1280x720@60"
+        ],
+        "71": [
+          "1280x720@60"
+        ],
+        "72": [
+          "1280x720@60"
+        ],
+        "73": [
+          "1280x720@60"
+        ],
+        "74": [
+          "1280x720@60"
+        ],
+        "75": [
+          "1280x720@60"
+        ],
+        "76": [
+          "1280x720@60"
+        ],
+        "80": [
+          "1280x720@30",
+          "1280x720@60",
+          "1920x1080@30",
+          "1920x1080@60",
+          "3840x2160@30",
+          "3840x2160@60"
+        ],
+        "81": [
+          "640x480@60",
+          "1280x720@30",
+          "1920x1080@30"
+        ],
+        "82": [
+          "640x480@30",
+          "848x480@30",
+          "1280x720@30",
+          "1920x1080@30"
+        ],
+        "83": [
+          "1280x720@30",
+          "1280x720@60",
+          "1920x1080@60",
+          "4608x2592@14"
+        ],
+        "84": [
+          "1280x720@30",
+          "1280x720@60",
+          "1920x1080@30",
+          "1920x1080@60"
+        ],
+        "85": [
+          "1280x720@30",
+          "1280x720@30",
+          "1920x1080@30",
+          "3864x2192@30"
+        ],
+        "86": [
+          "1280x720@60",
+          "1920x1080@60",
+          "3840x2160@20",
+          "4056x3040@10"
+        ],
+        "87": [
+          "1280x720@60",
+          "1920x1080@60",
+          "3840x2160@20",
+          "4056x3040@9"
+        ],
+        "88": [
+          "1280x720@120",
+          "1920x1080@100",
+          "3840x2160@90"
+        ],
+        "90": [
+          "1280x720@30",
+          "1280x720@60"
+        ],
+        "91": [
+          "640x480@60",
+          "1280x720@30",
+          "1920x1080@30"
+        ],
+        "92": [
+          "640x480@30",
+          "848x480@30",
+          "1280x720@30",
+          "1920x1080@30"
+        ],
+        "93": [
+          "1280x720@30",
+          "1280x720@60",
+          "1920x1080@60"
+        ],
+        "94": [
+          "1280x720@60",
+          "1280x720@30",
+          "1920x1080@30",
+          "1920x1080@60"
+        ],
+        "95": [
+          "1280x720@60",
+          "1280x720@30",
+          "1920x1080@30",
+          "1920x1080@60"
+        ],
+        "96": [
+          "1280x720@60",
+          "1280x720@120",
+          "1920x1080@60",
+          "1920x1080@100"
+        ],
+        "101": [
+          "1280x720@60",
+          "1920x1080@60"
+        ],
+        "110": [
+          "1280x720@60"
+        ],
+        "120": [
+          "1280x720@30",
+          "1920x1080@30"
+        ],
+        "121": [
+          "1280x720@30"
+        ],
+        "122": [
+          "960x720@120"
+        ],
+        "123": [
+          "1280x720@120"
+        ],
+        "124": [
+          "1280x720@60"
+        ],
+        "125": [
+          "1280x720@60",
+          "1296x968@60",
+          "1920x1080@25",
+          "2592x1944@25"
+        ]
+      }
+    },
+    "ipCamera": {
+      "_comment": "Shown when primary or secondary camera type 3 (IP-CAMERA) is selected. Values are imported by openhd-sysutils and used as OpenHD's initial camera configuration.",
+      "primaryAddressKey": "ip_camera_address",
+      "primaryPipelineKey": "ip_camera_pipeline",
+      "secondaryAddressKey": "camera2_ip_camera_address",
+      "secondaryPipelineKey": "camera2_ip_camera_pipeline",
+      "reservedBitrateKey": "ip_camera_bitrate_mbits",
+      "defaultAddress": "192.168.144.108",
+      "defaultPipeline": "rtspsrc location=rtsp://{IP}:554/stream=0 latency=0 ! rtph264depay",
+      "reservedBitrateRangeMbits": [
+        1,
+        20
+      ],
+      "defaultReservedBitrateMbits": 2
+    },
+    "rpi5CameraConnectors": {
+      "_comment": "For Raspberry Pi CSI cameras, ImageWriter asks which Pi 5 connector is used. Sysutils applies ,cam0 for CAM0; CAM1 uses the overlay default.",
+      "primaryKey": "camera_port",
+      "secondaryKey": "camera2_port",
+      "options": [
+        "cam0",
+        "cam1"
+      ],
+      "primaryDefault": "cam1",
+      "secondaryDefault": "cam0"
+    },
+    "groundDisplay": {
+      "_comment": "Optional forced HDMI mode. Sysutils applies it to the DRM boot argument and OpenHD Glide, then reboots. Omit or set display_force_mode=false to retain automatic EDID mode selection.",
+      "enabledKey": "display_force_mode",
+      "widthKey": "display_width",
+      "heightKey": "display_height",
+      "refreshKey": "display_refresh_hz",
+      "connectorKey": "display_connector",
+      "defaultConnector": "HDMI-A-1",
+      "widthRange": [
+        320,
+        7680
+      ],
+      "heightRange": [
+        240,
+        4320
+      ],
+      "refreshRangeHz": [
+        20,
+        240
+      ]
+    },
+    "qopenhdConf": {
+      "_comment": "Optional full configuration file copied verbatim when provided by the user.",
+      "file": "openhd/QOpenHD.conf"
+    },
+    "mapboxApiKey": {
+      "_comment": "Optional Mapbox public access token. OpenHD SysUtils imports it into QOpenHD's map_api_key setting on first boot.",
+      "key": "mapbox_api_key"
+    },
+    "premiumCertificate": {
+      "_comment": "Optional signed premium certificate copied verbatim when provided by the user.",
+      "file": "openhd/premium_certificate.ohdcert"
+    },
+    "hotSpot": {
+      "_comment": "UI exposes WifiHotspot but creation of wifi_hotspot.txt is commented out in downloadthread.cpp.",
+      "options": []
+    },
+    "beep": {
+      "_comment": "Stored in settings but not written to FAT32 partition.",
+      "options": []
+    },
+    "eject": {
+      "_comment": "Stored in settings but not written to FAT32 partition.",
+      "options": []
+    }
+  },
+  "legacyWebUi": {
+    "interface/networking_settings.json": {
+      "title": "Networking",
+      "groupOrder": [
+        "Interfaces"
+      ],
+      "order": [
+        "wifi_hotspot_mode",
+        "wifi_hotspot_interface_override",
+        "wifi_hotspot_ssid",
+        "wifi_hotspot_password",
+        "ethernet_operating_mode"
+      ],
+      "fields": {
+        "wifi_hotspot_mode": {
+          "label": "WiFi hotspot mode",
+          "description": "Control whether the OpenHD hotspot is managed automatically, forced off or always on.",
+          "control": "select",
+          "valueType": "number",
+          "options": [
+            {
+              "value": 0,
+              "label": "Automatic (disable when armed)"
+            },
+            {
+              "value": 1,
+              "label": "Always off"
+            },
+            {
+              "value": 2,
+              "label": "Always on"
+            }
+          ],
+          "group": "Interfaces"
+        },
+        "wifi_hotspot_interface_override": {
+          "label": "WiFi hotspot interface override",
+          "description": "Optional interface name to force for hotspot mode (leave blank for auto).",
+          "control": "text",
+          "valueType": "string",
+          "group": "Interfaces"
+        },
+        "wifi_hotspot_ssid": {
+          "label": "WiFi hotspot SSID",
+          "description": "Override the default OpenHD hotspot SSID (blank uses the unit name).",
+          "control": "text",
+          "valueType": "string",
+          "group": "Interfaces"
+        },
+        "wifi_hotspot_password": {
+          "label": "WiFi hotspot password",
+          "description": "Override the default hotspot password (8–63 chars; blank uses default).",
+          "control": "text",
+          "valueType": "string",
+          "group": "Interfaces"
+        },
+        "ethernet_operating_mode": {
+          "label": "Ethernet operating mode",
+          "description": "Choose how OpenHD configures the ethernet port (untouched, hotspot or forwarding).",
+          "control": "select",
+          "valueType": "number",
+          "options": [
+            {
+              "value": 0,
+              "label": "Leave ethernet untouched"
+            },
+            {
+              "value": 1,
+              "label": "Hotspot mode (static IP)"
+            },
+            {
+              "value": 2,
+              "label": "Forward to external uplink"
+            }
+          ],
+          "group": "Interfaces"
+        }
+      }
+    },
+    "telemetry/air_settings.json": {
+      "title": "Telemetry (air unit)",
+      "groupOrder": [
+        "Flight controller UART",
+        "Battery"
+      ],
+      "order": [
+        "fc_uart_connection_type",
+        "fc_uart_baudrate",
+        "fc_uart_flow_control",
+        "fc_battery_n_cells"
+      ],
+      "fields": {
+        "fc_uart_connection_type": {
+          "label": "Flight controller UART port",
+          "description": "Select which serial device OpenHD should use to communicate with the flight controller. \"DEFAULT\" resolves to the recommended port for the current platform.",
+          "control": "select",
+          "valueType": "string",
+          "options": [
+            {
+              "value": "DEFAULT",
+              "label": "Auto-detect (platform default)"
+            },
+            {
+              "value": "",
+              "label": "Disabled"
+            },
+            {
+              "value": "/dev/serial0",
+              "label": "Raspberry Pi /dev/serial0"
+            },
+            {
+              "value": "/dev/serial1",
+              "label": "Raspberry Pi /dev/serial1"
+            },
+            {
+              "value": "/dev/ttyUSB0",
+              "label": "USB adapter /dev/ttyUSB0"
+            },
+            {
+              "value": "/dev/ttyUSB1",
+              "label": "USB adapter /dev/ttyUSB1"
+            },
+            {
+              "value": "/dev/ttyACM0",
+              "label": "USB flight controller /dev/ttyACM0"
+            },
+            {
+              "value": "/dev/ttyACM1",
+              "label": "USB flight controller /dev/ttyACM1"
+            },
+            {
+              "value": "/dev/ttyS7",
+              "label": "Rock 5B /dev/ttyS7"
+            },
+            {
+              "value": "/dev/ttyS2",
+              "label": "Rock /dev/ttyS2"
+            }
+          ],
+          "group": "Flight controller UART"
+        },
+        "fc_uart_baudrate": {
+          "label": "UART baud rate",
+          "description": "Allowed values follow the Linux serial driver (9 600 – 1 000 000 baud).",
+          "control": "select",
+          "valueType": "number",
+          "options": [
+            {
+              "value": 9600,
+              "label": "9.600 baud"
+            },
+            {
+              "value": 19200,
+              "label": "19.200 baud"
+            },
+            {
+              "value": 38400,
+              "label": "38.400 baud"
+            },
+            {
+              "value": 57600,
+              "label": "57.600 baud"
+            },
+            {
+              "value": 115200,
+              "label": "115.200 baud"
+            },
+            {
+              "value": 230400,
+              "label": "230.400 baud"
+            },
+            {
+              "value": 460800,
+              "label": "460.800 baud"
+            },
+            {
+              "value": 500000,
+              "label": "500.000 baud"
+            },
+            {
+              "value": 576000,
+              "label": "576.000 baud"
+            },
+            {
+              "value": 921600,
+              "label": "921.600 baud"
+            },
+            {
+              "value": 1000000,
+              "label": "1.000.000 baud"
+            }
+          ],
+          "group": "Flight controller UART"
+        },
+        "fc_uart_flow_control": {
+          "label": "Hardware flow control (RTS/CTS)",
+          "description": "Enable RTS/CTS flow control for flight-controller serial links that support it.",
+          "control": "toggle",
+          "valueType": "boolean",
+          "group": "Flight controller UART"
+        },
+        "fc_battery_n_cells": {
+          "label": "Battery cell count",
+          "description": "Set the number of cells reported by the flight controller (0 leaves it unset).",
+          "control": "number",
+          "valueType": "number",
+          "min": 0,
+          "max": 12,
+          "group": "Battery"
+        }
+      }
+    },
+    "video/air_camera_generic.json": {
+      "title": "Air video",
+      "groupOrder": [
+        "Cameras",
+        "Dual camera",
+        "Audio"
+      ],
+      "order": [
+        "primary_camera_type",
+        "secondary_camera_type",
+        "switch_primary_and_secondary",
+        "dualcam_primary_video_allocated_bandwidth_perc",
+        "ip_camera_bitrate_mbits",
+        "enable_audio"
+      ],
+      "fields": {
+        "primary_camera_type": {
+          "label": "Primary camera type",
+          "description": "Matches the camera enumeration used by OpenHD (camera.hpp).",
+          "control": "select",
+          "valueType": "number",
+          "options": [
+            {
+              "value": 0,
+              "label": "Dummy"
+            },
+            {
+              "value": 2,
+              "label": "External"
+            },
+            {
+              "value": 3,
+              "label": "External IP"
+            },
+            {
+              "value": 4,
+              "label": "Development file source"
+            },
+            {
+              "value": 10,
+              "label": "USB camera (software encode)"
+            },
+            {
+              "value": 11,
+              "label": "InfiRay thermal"
+            },
+            {
+              "value": 12,
+              "label": "InfiRay T2"
+            },
+            {
+              "value": 13,
+              "label": "InfiRay X2"
+            },
+            {
+              "value": 14,
+              "label": "InfiRay P2 Pro"
+            },
+            {
+              "value": 15,
+              "label": "FLIR Vue"
+            },
+            {
+              "value": 16,
+              "label": "FLIR Boson"
+            },
+            {
+              "value": 20,
+              "label": "Raspberry Pi HDMI to CSI"
+            },
+            {
+              "value": 30,
+              "label": "Raspberry Pi cam v1 (OV5647)"
+            },
+            {
+              "value": 31,
+              "label": "Raspberry Pi cam v2 (IMX219)"
+            },
+            {
+              "value": 32,
+              "label": "Raspberry Pi cam v3 (IMX708)"
+            },
+            {
+              "value": 33,
+              "label": "Raspberry Pi HQ (IMX477)"
+            },
+            {
+              "value": 40,
+              "label": "ArduCam Skymaster HDR"
+            },
+            {
+              "value": 41,
+              "label": "ArduCam Skyvision Pro"
+            },
+            {
+              "value": 42,
+              "label": "ArduCam IMX477M"
+            },
+            {
+              "value": 43,
+              "label": "ArduCam IMX462"
+            },
+            {
+              "value": 44,
+              "label": "ArduCam IMX327"
+            },
+            {
+              "value": 45,
+              "label": "ArduCam IMX290"
+            },
+            {
+              "value": 46,
+              "label": "ArduCam IMX462 Low-Light Mini"
+            },
+            {
+              "value": 60,
+              "label": "VEYE 2MP"
+            },
+            {
+              "value": 61,
+              "label": "VEYE IMX307"
+            },
+            {
+              "value": 62,
+              "label": "VEYE CSSC132"
+            },
+            {
+              "value": 63,
+              "label": "VEYE MVCAM"
+            },
+            {
+              "value": 70,
+              "label": "HDZero generic (X20)"
+            },
+            {
+              "value": 71,
+              "label": "HDZero RunCam V1 (X20)"
+            },
+            {
+              "value": 72,
+              "label": "HDZero RunCam V2 (X20)"
+            },
+            {
+              "value": 73,
+              "label": "HDZero RunCam V3 (X20)"
+            },
+            {
+              "value": 74,
+              "label": "HDZero RunCam Nano 90 (X20)"
+            },
+            {
+              "value": 75,
+              "label": "OHD Jaguar (X20)"
+            },
+            {
+              "value": 76,
+              "label": "OHD Jaguar (X21)"
+            },
+            {
+              "value": 80,
+              "label": "Rock 5 HDMI input"
+            },
+            {
+              "value": 81,
+              "label": "Rock 5 OV5647"
+            },
+            {
+              "value": 82,
+              "label": "Rock 5 IMX219"
+            },
+            {
+              "value": 83,
+              "label": "Rock 5 IMX708"
+            },
+            {
+              "value": 84,
+              "label": "Rock 5 IMX462"
+            },
+            {
+              "value": 85,
+              "label": "Rock 5 IMX415"
+            },
+            {
+              "value": 86,
+              "label": "Rock 5 IMX477"
+            },
+            {
+              "value": 87,
+              "label": "Rock 5 IMX519"
+            },
+            {
+              "value": 88,
+              "label": "Rock 5 OHD Jaguar"
+            },
+            {
+              "value": 90,
+              "label": "Rock 3 HDMI input"
+            },
+            {
+              "value": 91,
+              "label": "Rock 3 OV5647"
+            },
+            {
+              "value": 92,
+              "label": "Rock 3 IMX219"
+            },
+            {
+              "value": 93,
+              "label": "Rock 3 IMX708"
+            },
+            {
+              "value": 94,
+              "label": "Rock 3 IMX462"
+            },
+            {
+              "value": 95,
+              "label": "Rock 3 IMX519"
+            },
+            {
+              "value": 96,
+              "label": "Rock 3 OHD Jaguar"
+            },
+            {
+              "value": 97,
+              "label": "Rock 3 VEYE"
+            },
+            {
+              "value": 101,
+              "label": "NVIDIA Xavier IMX577"
+            },
+            {
+              "value": 110,
+              "label": "OpenIPC generic"
+            },
+            {
+              "value": 120,
+              "label": "Coretronic IMX577"
+            },
+            {
+              "value": 121,
+              "label": "Coretronic OV9282"
+            },
+            {
+              "value": 122,
+              "label": "Willy Hornet"
+            },
+            {
+              "value": 123,
+              "label": "Willy Jaguar"
+            },
+            {
+              "value": 124,
+              "label": "Willy Rekindle"
+            },
+            {
+              "value": 255,
+              "label": "Disabled"
+            }
+          ],
+          "group": "Cameras"
+        },
+        "secondary_camera_type": {
+          "label": "Secondary camera type",
+          "description": "Set to \"Disabled\" to keep the secondary stream inactive.",
+          "control": "select",
+          "valueType": "number",
+          "options": [
+            {
+              "value": 0,
+              "label": "Dummy"
+            },
+            {
+              "value": 2,
+              "label": "External"
+            },
+            {
+              "value": 3,
+              "label": "External IP"
+            },
+            {
+              "value": 4,
+              "label": "Development file source"
+            },
+            {
+              "value": 10,
+              "label": "USB camera (software encode)"
+            },
+            {
+              "value": 11,
+              "label": "InfiRay thermal"
+            },
+            {
+              "value": 12,
+              "label": "InfiRay T2"
+            },
+            {
+              "value": 13,
+              "label": "InfiRay X2"
+            },
+            {
+              "value": 14,
+              "label": "InfiRay P2 Pro"
+            },
+            {
+              "value": 15,
+              "label": "FLIR Vue"
+            },
+            {
+              "value": 16,
+              "label": "FLIR Boson"
+            },
+            {
+              "value": 20,
+              "label": "Raspberry Pi HDMI to CSI"
+            },
+            {
+              "value": 30,
+              "label": "Raspberry Pi cam v1 (OV5647)"
+            },
+            {
+              "value": 31,
+              "label": "Raspberry Pi cam v2 (IMX219)"
+            },
+            {
+              "value": 32,
+              "label": "Raspberry Pi cam v3 (IMX708)"
+            },
+            {
+              "value": 33,
+              "label": "Raspberry Pi HQ (IMX477)"
+            },
+            {
+              "value": 40,
+              "label": "ArduCam Skymaster HDR"
+            },
+            {
+              "value": 41,
+              "label": "ArduCam Skyvision Pro"
+            },
+            {
+              "value": 42,
+              "label": "ArduCam IMX477M"
+            },
+            {
+              "value": 43,
+              "label": "ArduCam IMX462"
+            },
+            {
+              "value": 44,
+              "label": "ArduCam IMX327"
+            },
+            {
+              "value": 45,
+              "label": "ArduCam IMX290"
+            },
+            {
+              "value": 46,
+              "label": "ArduCam IMX462 Low-Light Mini"
+            },
+            {
+              "value": 60,
+              "label": "VEYE 2MP"
+            },
+            {
+              "value": 61,
+              "label": "VEYE IMX307"
+            },
+            {
+              "value": 62,
+              "label": "VEYE CSSC132"
+            },
+            {
+              "value": 63,
+              "label": "VEYE MVCAM"
+            },
+            {
+              "value": 70,
+              "label": "HDZero generic (X20)"
+            },
+            {
+              "value": 71,
+              "label": "HDZero RunCam V1 (X20)"
+            },
+            {
+              "value": 72,
+              "label": "HDZero RunCam V2 (X20)"
+            },
+            {
+              "value": 73,
+              "label": "HDZero RunCam V3 (X20)"
+            },
+            {
+              "value": 74,
+              "label": "HDZero RunCam Nano 90 (X20)"
+            },
+            {
+              "value": 75,
+              "label": "OHD Jaguar (X20)"
+            },
+            {
+              "value": 76,
+              "label": "OHD Jaguar (X21)"
+            },
+            {
+              "value": 80,
+              "label": "Rock 5 HDMI input"
+            },
+            {
+              "value": 81,
+              "label": "Rock 5 OV5647"
+            },
+            {
+              "value": 82,
+              "label": "Rock 5 IMX219"
+            },
+            {
+              "value": 83,
+              "label": "Rock 5 IMX708"
+            },
+            {
+              "value": 84,
+              "label": "Rock 5 IMX462"
+            },
+            {
+              "value": 85,
+              "label": "Rock 5 IMX415"
+            },
+            {
+              "value": 86,
+              "label": "Rock 5 IMX477"
+            },
+            {
+              "value": 87,
+              "label": "Rock 5 IMX519"
+            },
+            {
+              "value": 88,
+              "label": "Rock 5 OHD Jaguar"
+            },
+            {
+              "value": 90,
+              "label": "Rock 3 HDMI input"
+            },
+            {
+              "value": 91,
+              "label": "Rock 3 OV5647"
+            },
+            {
+              "value": 92,
+              "label": "Rock 3 IMX219"
+            },
+            {
+              "value": 93,
+              "label": "Rock 3 IMX708"
+            },
+            {
+              "value": 94,
+              "label": "Rock 3 IMX462"
+            },
+            {
+              "value": 95,
+              "label": "Rock 3 IMX519"
+            },
+            {
+              "value": 96,
+              "label": "Rock 3 OHD Jaguar"
+            },
+            {
+              "value": 97,
+              "label": "Rock 3 VEYE"
+            },
+            {
+              "value": 101,
+              "label": "NVIDIA Xavier IMX577"
+            },
+            {
+              "value": 110,
+              "label": "OpenIPC generic"
+            },
+            {
+              "value": 120,
+              "label": "Coretronic IMX577"
+            },
+            {
+              "value": 121,
+              "label": "Coretronic OV9282"
+            },
+            {
+              "value": 122,
+              "label": "Willy Hornet"
+            },
+            {
+              "value": 123,
+              "label": "Willy Jaguar"
+            },
+            {
+              "value": 124,
+              "label": "Willy Rekindle"
+            },
+            {
+              "value": 255,
+              "label": "Disabled"
+            }
+          ],
+          "group": "Cameras"
+        },
+        "switch_primary_and_secondary": {
+          "label": "Swap primary and secondary inputs",
+          "description": "Swap detected camera order when the hardware enumeration is inverted.",
+          "control": "toggle",
+          "valueType": "boolean",
+          "group": "Cameras"
+        },
+        "dualcam_primary_video_allocated_bandwidth_perc": {
+          "label": "Primary camera bandwidth share (%)",
+          "description": "Allocate bitrate between primary and secondary streams (10% – 90%).",
+          "control": "number",
+          "valueType": "number",
+          "min": 10,
+          "max": 90,
+          "step": 5,
+          "group": "Dual camera",
+          "unit": "%"
+        },
+        "ip_camera_bitrate_mbits": {
+          "label": "IP camera reservation",
+          "description": "Fixed link rate reserved for an IP camera in either slot. OpenHD cannot adjust its encoder; configure the camera itself at or below this value and keep it low.",
+          "control": "number",
+          "valueType": "number",
+          "min": 1,
+          "max": 20,
+          "step": 1,
+          "group": "Dual camera",
+          "unit": "Mbit/s"
+        },
+        "enable_audio": {
+          "label": "Audio capture mode",
+          "description": "Enable real audio capture or run the encoder test tone.",
+          "control": "select",
+          "valueType": "number",
+          "options": [
+            {
+              "value": 1,
+              "label": "Disabled"
+            },
+            {
+              "value": 0,
+              "label": "Capture live audio"
+            },
+            {
+              "value": 100,
+              "label": "Enable test tone output"
+            }
+          ],
+          "group": "Audio"
+        }
+      }
+    },
+    "video/external_ip_0.json": {
+      "title": "Primary IP camera",
+      "groupOrder": [
+        "IP camera"
+      ],
+      "order": [
+        "ip_camera_address",
+        "ip_camera_pipeline"
+      ],
+      "fields": {
+        "ip_camera_address": {
+          "label": "Camera IPv4 address",
+          "description": "Address configured on the IP camera. OpenHD adds a secondary local /24 address when needed without replacing the normal Ethernet configuration.",
+          "control": "text",
+          "valueType": "string",
+          "maxLength": 15,
+          "group": "IP camera"
+        },
+        "ip_camera_pipeline": {
+          "label": "Managed GStreamer source pipeline",
+          "description": "Maximum 127 characters. Use {IP} for the configured camera address. Must output elementary H264/H265 matching the selected codec. Saving requires an OpenHD restart when editing this file directly.",
+          "control": "text",
+          "valueType": "string",
+          "maxLength": 127,
+          "group": "IP camera"
+        }
+      }
+    },
+    "video/external_ip_1.json": {
+      "title": "Secondary IP camera",
+      "groupOrder": [
+        "IP camera"
+      ],
+      "order": [
+        "ip_camera_address",
+        "ip_camera_pipeline"
+      ],
+      "fields": {
+        "ip_camera_address": {
+          "label": "Camera IPv4 address",
+          "description": "Address configured on the IP camera. OpenHD adds a secondary local /24 address when needed without replacing the normal Ethernet configuration.",
+          "control": "text",
+          "valueType": "string",
+          "maxLength": 15,
+          "group": "IP camera"
+        },
+        "ip_camera_pipeline": {
+          "label": "Managed GStreamer source pipeline",
+          "description": "Maximum 127 characters. Use {IP} for the configured camera address. Must output elementary H264/H265 matching the selected codec. Saving requires an OpenHD restart when editing this file directly.",
+          "control": "text",
+          "valueType": "string",
+          "maxLength": 127,
+          "group": "IP camera"
+        }
+      }
+    },
+    "interface/wifibroadcast_settings.json": {
+      "title": "WiFi broadcast link",
+      "groupOrder": [
+        "Radio link",
+        "Transmission power",
+        "FEC & encoding",
+        "RC integration",
+        "Advanced"
+      ],
+      "order": [
+        "wb_frequency",
+        "wb_air_tx_channel_width",
+        "wb_air_mcs_index",
+        "wb_enable_stbc",
+        "wb_enable_ldpc",
+        "wb_enable_short_guard",
+        "enable_wb_video_variable_bitrate",
+        "wb_tx_power_milli_watt",
+        "wb_tx_power_milli_watt_armed",
+        "wb_rtl8812au_tx_pwr_idx_override",
+        "wb_rtl8812au_tx_pwr_idx_override_armed",
+        "wb_video_fec_percentage",
+        "wb_video_rate_for_mcs_adjustment_percent",
+        "wb_max_fec_block_size",
+        "wb_qp_min",
+        "wb_qp_max",
+        "wb_mcs_index_via_rc_channel",
+        "wb_bw_via_rc_channel",
+        "wb_enable_listen_only_mode",
+        "wb_dev_air_set_high_retransmit_count"
+      ],
+      "fields": {
+        "wb_frequency": {
+          "label": "Center frequency (MHz)",
+          "description": "Must be a supported WiFi channel frequency. OpenHD validates against the card capabilities.",
+          "control": "number",
+          "valueType": "number",
+          "min": 2300,
+          "max": 5900,
+          "step": 1,
+          "unit": "MHz",
+          "group": "Radio link"
+        },
+        "wb_air_tx_channel_width": {
+          "label": "Channel width (MHz)",
+          "description": "Valid channel widths are 10 or 20 MHz.",
+          "control": "select",
+          "valueType": "number",
+          "options": [
+            {
+              "value": 10,
+              "label": "10 MHz"
+            },
+            {
+              "value": 20,
+              "label": "20 MHz"
+            }
+          ],
+          "group": "Radio link"
+        },
+        "wb_air_mcs_index": {
+          "label": "Air unit MCS index",
+          "description": "0 – 31 per validate_settings_helper.h; lower values trade throughput for range.",
+          "control": "number",
+          "valueType": "number",
+          "min": 0,
+          "max": 31,
+          "group": "Radio link"
+        },
+        "wb_enable_stbc": {
+          "label": "Enable STBC",
+          "description": "Space-time block coding can improve diversity on multi-antenna hardware.",
+          "control": "select",
+          "valueType": "number",
+          "options": [
+            {
+              "value": 0,
+              "label": "Disabled"
+            },
+            {
+              "value": 1,
+              "label": "Enabled"
+            }
+          ],
+          "group": "Radio link"
+        },
+        "wb_enable_ldpc": {
+          "label": "Enable LDPC",
+          "description": "Turn on low-density parity-check coding when supported by your radios.",
+          "control": "toggle",
+          "valueType": "boolean",
+          "group": "Radio link"
+        },
+        "wb_enable_short_guard": {
+          "label": "Use short guard interval",
+          "description": "Short guard intervals slightly reduce robustness but increase throughput.",
+          "control": "toggle",
+          "valueType": "boolean",
+          "group": "Radio link"
+        },
+        "enable_wb_video_variable_bitrate": {
+          "label": "Allow variable encoder bitrate",
+          "description": "Let the link dynamically request lower encoder bitrates on poor links.",
+          "control": "toggle",
+          "valueType": "boolean",
+          "group": "Radio link"
+        },
+        "wb_tx_power_milli_watt": {
+          "label": "TX power (mW)",
+          "description": "Valid range 10 – 30 000 mW per validate_settings_helper.h.",
+          "control": "number",
+          "valueType": "number",
+          "min": 10,
+          "max": 30000,
+          "group": "Transmission power",
+          "unit": "mW"
+        },
+        "wb_tx_power_milli_watt_armed": {
+          "label": "TX power when armed (mW)",
+          "description": "Override transmit power when the vehicle is armed (0 keeps the default).",
+          "control": "number",
+          "valueType": "number",
+          "min": 0,
+          "max": 30000,
+          "group": "Transmission power",
+          "unit": "mW"
+        },
+        "wb_rtl8812au_tx_pwr_idx_override": {
+          "label": "RTL8812AU TX power index",
+          "description": "Valid range 0 – 63.",
+          "control": "number",
+          "valueType": "number",
+          "min": 0,
+          "max": 63,
+          "group": "Transmission power"
+        },
+        "wb_rtl8812au_tx_pwr_idx_override_armed": {
+          "label": "RTL8812AU TX power index when armed",
+          "description": "Set to 0 to keep the default armed power index.",
+          "control": "number",
+          "valueType": "number",
+          "min": 0,
+          "max": 63,
+          "group": "Transmission power"
+        },
+        "wb_video_fec_percentage": {
+          "label": "Video FEC percentage",
+          "description": "Forward-error correction ratio (1 – 400%).",
+          "control": "number",
+          "valueType": "number",
+          "min": 1,
+          "max": 400,
+          "step": 5,
+          "group": "FEC & encoding",
+          "unit": "%"
+        },
+        "wb_video_rate_for_mcs_adjustment_percent": {
+          "label": "Rate reduction for MCS (%)",
+          "description": "Reduce encoder bitrate relative to theoretical maximum (10 – 200%).",
+          "control": "number",
+          "valueType": "number",
+          "min": 10,
+          "max": 200,
+          "step": 5,
+          "group": "FEC & encoding",
+          "unit": "%"
+        },
+        "wb_max_fec_block_size": {
+          "label": "Max FEC block size",
+          "description": "0 enables automatic sizing, positive values clamp the block size. -1 keeps the platform default.",
+          "control": "number",
+          "valueType": "number",
+          "min": -1,
+          "max": 99,
+          "group": "FEC & encoding"
+        },
+        "wb_qp_min": {
+          "label": "Encoder QP minimum",
+          "description": "Lower values improve quality but need more bandwidth (typical range 10 – 45).",
+          "control": "number",
+          "valueType": "number",
+          "min": 0,
+          "max": 51,
+          "group": "FEC & encoding"
+        },
+        "wb_qp_max": {
+          "label": "Encoder QP maximum",
+          "description": "Higher values allow more compression at the cost of quality.",
+          "control": "number",
+          "valueType": "number",
+          "min": 0,
+          "max": 51,
+          "group": "FEC & encoding"
+        },
+        "wb_mcs_index_via_rc_channel": {
+          "label": "RC channel for MCS control",
+          "description": "0 disables RC control. Otherwise set the RC channel index that should modify MCS.",
+          "control": "number",
+          "valueType": "number",
+          "min": 0,
+          "max": 16,
+          "group": "RC integration"
+        },
+        "wb_bw_via_rc_channel": {
+          "label": "RC channel for bandwidth control",
+          "description": "0 disables RC control. Otherwise choose the RC channel used for bandwidth switching.",
+          "control": "number",
+          "valueType": "number",
+          "min": 0,
+          "max": 16,
+          "group": "RC integration"
+        },
+        "wb_enable_listen_only_mode": {
+          "label": "Listen-only mode",
+          "description": "Enable passive reception without transmitting (developer/diagnostic use).",
+          "control": "toggle",
+          "valueType": "boolean",
+          "group": "Advanced"
+        },
+        "wb_dev_air_set_high_retransmit_count": {
+          "label": "High retransmit count (developer)",
+          "description": "Developer option to raise WiFi retransmit thresholds.",
+          "control": "toggle",
+          "valueType": "boolean",
+          "group": "Advanced"
+        }
+      }
+    }
+  }
+}

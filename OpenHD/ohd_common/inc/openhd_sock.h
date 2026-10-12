@@ -30,6 +30,7 @@
 #include <mutex>
 #include <optional>
 #include <string>
+#include <nlohmann/json.hpp>
 #include <thread>
 #include <unordered_map>
 #include <vector>
@@ -153,6 +154,9 @@ struct SysutilSettingsUpdate {
   std::optional<bool> run_as_air;
   std::optional<std::string> run_mode;
 };
+// Internal owner RPC; runtime applications communicate with OpenHD over MAVLink.
+std::optional<nlohmann::json> request_sysutil_json(
+    const nlohmann::json& request,std::chrono::milliseconds timeout=std::chrono::milliseconds(300));
 
 std::optional<SysutilSettings> request_sysutil_settings(
     std::chrono::milliseconds timeout = std::chrono::seconds(1));

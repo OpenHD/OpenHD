@@ -277,6 +277,11 @@ struct MTarget {
 };
 static MTarget get_target_from_message_if_available(
     const mavlink_message_t& msg) {
+  if (msg.msgid == MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL) {
+    mavlink_file_transfer_protocol_t ftp{};
+    mavlink_msg_file_transfer_protocol_decode(&msg,&ftp);
+    return {ftp.target_system,ftp.target_component};
+  }
   // if(msg.incompat_flags)
   if (msg.msgid == MAVLINK_MSG_ID_COMMAND_LONG) {
     mavlink_command_long_t command;

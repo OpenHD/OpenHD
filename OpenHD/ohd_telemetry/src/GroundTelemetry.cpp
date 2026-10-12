@@ -200,7 +200,8 @@ void GroundTelemetry::on_messages_ground_station_clients(
     // anybody else) on special message(s). WB link makes sure duplicates are
     // discarded
     if (msg_id == MAVLINK_MSG_ID_PARAM_EXT_SET  // Param protocol
-        || msg_id == MAVLINK_MSG_ID_PARAM_EXT_REQUEST_READ ||
+        || msg_id == MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL ||
+        msg_id == MAVLINK_MSG_ID_PARAM_EXT_REQUEST_READ ||
         msg_id == MAVLINK_MSG_ID_PARAM_EXT_REQUEST_LIST ||
         msg_id == MAVLINK_MSG_ID_PARAM_SET ||
         msg_id == MAVLINK_MSG_ID_PARAM_REQUEST_READ ||

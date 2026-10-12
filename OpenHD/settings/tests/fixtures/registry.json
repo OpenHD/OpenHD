@@ -1,0 +1,34 @@
+{
+  "componentId": 100,
+  "settings": [
+    {
+      "available": true,
+      "enforce": true,
+      "group": "General",
+      "id": "NEW_TEST",
+      "label": "NEW_TEST",
+      "maximum": 2,
+      "minimum": 0,
+      "readOnly": false,
+      "type": "int32"
+    },
+    {
+      "available": true,
+      "group": "General",
+      "id": "READ_ONLY",
+      "label": "READ_ONLY",
+      "readOnly": true,
+      "type": "int32"
+    },
+    {
+      "available": true,
+      "group": "General",
+      "id": "TEXT_TEST",
+      "label": "TEXT_TEST",
+      "readOnly": false,
+      "type": "string"
+    }
+  ],
+  "systemId": 101,
+  "version": 1
+}

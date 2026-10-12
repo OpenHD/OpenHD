@@ -1,0 +1,119 @@
+--- a/component_metadata/parameter.schema.json
++++ b/component_metadata/parameter.schema.json
+@@ -7,7 +7,7 @@
+     "version": {
+       "description": "Version number for the format of this file.",
+       "type": "integer",
+-      "minimum": 3
++      "minimum": 4
+     },
+     "translation": {
+       "type": "object",
+@@ -34,7 +34,8 @@
+               "Int16",
+               "Uint32",
+               "Int32",
+-              "Float"
++              "Float",
++              "String"
+             ]
+           },
+           "shortDesc": {
+@@ -57,7 +58,10 @@
+           },
+           "default": {
+             "description": "Default value for parameter.",
+-            "type": "number",
++            "type": [
++              "number",
++              "string"
++            ],
+             "comment": "If a defaultValue is not specified, there is no default for the parameter available at all. A GCS should not provide an option to reset this parameter to default."
+           },
+           "decimalPlaces": {
+@@ -107,7 +111,10 @@
+               "type": "object",
+               "properties": {
+                 "value": {
+-                  "type": "number"
++                  "type": [
++                    "number",
++                    "string"
++                  ]
+                 },
+                 "description": {
+                   "type": "string"
+@@ -133,12 +140,71 @@
+             "description": "true: value is read only and should not be changed by user.",
+             "type": "boolean",
+             "default": false
++          },
++          "maxLength": {
++            "type": "integer",
++            "minimum": 0,
++            "maximum": 128,
++            "description": "Maximum UTF-8 string length in bytes, excluding an optional NUL terminator."
+           }
+         },
+         "required": [
+-          "name"
++          "name",
++          "type"
+         ],
+-        "additionalProperties": false
++        "additionalProperties": false,
++        "allOf": [
++          {
++            "if": {
++              "properties": {
++                "type": {
++                  "const": "String"
++                }
++              },
++              "required": [
++                "type"
++              ]
++            },
++            "then": {
++              "properties": {
++                "default": {
++                  "type": "string"
++                },
++                "values": {
++                  "items": {
++                    "properties": {
++                      "value": {
++                        "type": "string"
++                      }
++                    }
++                  }
++                },
++                "min": false,
++                "max": false,
++                "increment": false,
++                "decimalPlaces": false,
++                "bitmask": false
++              }
++            },
++            "else": {
++              "properties": {
++                "default": {
++                  "type": "number"
++                },
++                "values": {
++                  "items": {
++                    "properties": {
++                      "value": {
++                        "type": "number"
++                      }
++                    }
++                  }
++                },
++                "maxLength": false
++              }
++            }
++          }
++        ]
+       }
+     }
+   },

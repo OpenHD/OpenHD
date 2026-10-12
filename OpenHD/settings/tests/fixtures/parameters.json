@@ -1,0 +1,1 @@
+{"parameters":[{"group":"General","longDesc":"","max":2,"min":0,"name":"NEW_TEST","readOnly":false,"rebootRequired":false,"shortDesc":"NEW_TEST","type":"Int32"},{"group":"General","longDesc":"","name":"READ_ONLY","readOnly":true,"rebootRequired":false,"shortDesc":"READ_ONLY","type":"Int32"}],"version":3}

@@ -114,6 +114,7 @@ class PersistentSettings {
       _settings = std::make_unique<T>(last_settings_opt.value());
       openhd::log::info_log("Using settings in [" + get_file_path() + "]");
     } else {
+      _created_defaults = true;
       openhd::log::info_log("Creating default settings in [" + get_file_path() +
                             "]");
       // create default settings and persist them for the next reboot
@@ -121,8 +122,11 @@ class PersistentSettings {
       persist_settings();
     }
   }
+  // Initial provisioning may seed only a newly created owner's settings.
+  bool created_defaults() const { return _created_defaults; }
 
  protected:
+  bool _created_defaults = false;
   // NEEDS TO BE OVERRIDDEN
   [[nodiscard]] virtual std::string get_unique_filename() const = 0;
   virtual T create_default() const = 0;

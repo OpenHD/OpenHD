@@ -167,7 +167,8 @@ void AirTelemetry::send_messages_ground_unit(
     for (auto& msg : messages) {
       const auto msg_id = msg.m.msgid;
       if (msg_id == MAVLINK_MSG_ID_PARAM_EXT_VALUE ||
-          msg_id == MAVLINK_MSG_ID_PARAM_VALUE) {
+          msg_id == MAVLINK_MSG_ID_PARAM_VALUE ||
+          msg_id == MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL) {
         msg.recommended_n_injections = 2;
       }
     }

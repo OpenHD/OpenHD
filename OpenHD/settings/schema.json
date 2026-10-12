@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "OpenHD settings catalog and runtime metadata",
+  "type": "object",
+  "required": ["version", "settings"],
+  "properties": {
+    "version": {"const": 1},
+    "systemId": {"type": "integer", "minimum": 1, "maximum": 255},
+    "componentId": {"type": "integer", "minimum": 1, "maximum": 255},
+    "imageWriter": {"type": "object"},
+    "settings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "label"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^[A-Za-z0-9_.-]{1,16}$"},
+          "type": {"enum": ["int32", "string", "runtime"]},
+          "label": {"type": "string"},
+          "description": {"type": "string"},
+          "group": {"type": "string"},
+          "readOnly": {"type": "boolean"},
+          "requiresReboot": {"type": "boolean"},
+          "available": {"type": "boolean"},
+          "writable": {"type": "boolean"},
+          "hidden": {"type": "boolean"},
+          "enforce": {"type": "boolean"},
+          "minimum": {"type": "integer"},
+          "maximum": {"type": "integer"},
+          "choices": {"type": "array", "items": {
+            "type": "object", "required": ["label", "value"],
+            "properties": {"label": {"type": "string"}, "value": {"type": ["integer", "string"]}}
+          }}
+        }
+      }
+    }
+  }
+}

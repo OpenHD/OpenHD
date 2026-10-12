@@ -25,6 +25,7 @@
 
 #include <poll.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <sys/un.h>
 #include <unistd.h>
 
@@ -1220,4 +1221,21 @@ SysutilStorageFormatResult request_sysutil_storage_action(
   return result;
 }
 
+std::optional<nlohmann::json> request_sysutil_json(const nlohmann::json& request,std::chrono::milliseconds timeout) {
+  const auto serialized=request.dump()+"\n";
+  if(serialized.size()>kMaxLineLength) return std::nullopt;
+  const int fd=::socket(AF_UNIX,SOCK_STREAM|SOCK_CLOEXEC,0);
+  if(fd<0) return std::nullopt;
+  timeval limit{}; limit.tv_sec=timeout.count()/1000; limit.tv_usec=(timeout.count()%1000)*1000;
+  setsockopt(fd,SOL_SOCKET,SO_SNDTIMEO,&limit,sizeof(limit));
+  sockaddr_un address{}; address.sun_family=AF_UNIX;
+  std::strncpy(address.sun_path,kSocketPath,sizeof(address.sun_path)-1);
+  if(::connect(fd,reinterpret_cast<sockaddr*>(&address),sizeof(address))<0 ||
+      !write_all(fd,serialized.data(),serialized.size())) { ::close(fd); return std::nullopt; }
+  const auto line=read_line_with_timeout(fd,timeout); ::close(fd);
+  if(!line) return std::nullopt;
+  const auto response=nlohmann::json::parse(*line,nullptr,false);
+  if(!response.is_object()) return std::nullopt;
+  return response;
+}
 }  // namespace openhd

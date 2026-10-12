@@ -1,0 +1,1417 @@
+{
+  "_comment": "Machine-readable map of OpenHD advanced options, the UI categories that show them, and the FAT32 outputs written by downloadthread.cpp.",
+  "_comment_use": "Programs can traverse each setting object to build menus and know which file/value is produced.",
+  "useSettings": {
+    "_comment": "Global gate: when true, all other files under openhd/ are written.",
+    "files": [
+      {
+        "path": "openhd/*",
+        "note": "All other setting files are only written when useSettings is true."
+      }
+    ]
+  },
+  "bootType": {
+    "_comment": "Mutually exclusive Air/Ground flags that create marker files.",
+    "options": [
+      {
+        "id": "Air",
+        "file": "openhd/air.txt",
+        "valueWritten": ""
+      },
+      {
+        "id": "Ground",
+        "file": "openhd/ground.txt",
+        "valueWritten": ""
+      }
+    ]
+  },
+  "sbc": {
+    "_comment": "Detected SBC marker files written as empty files.",
+    "options": [
+      {
+        "id": "rpi",
+        "file": "openhd/rpi.txt"
+      },
+      {
+        "id": "rock-5a",
+        "file": "openhd/rock-5a.txt"
+      },
+      {
+        "id": "rock-5b",
+        "file": "openhd/rock-5b.txt"
+      },
+      {
+        "id": "zero3w",
+        "file": "openhd/zero3w.txt"
+      },
+      {
+        "id": "radxa-cm3",
+        "file": "openhd/rock-rk3566.txt"
+      },
+      {
+        "id": "radxa-cm5",
+        "file": "openhd/radxa-cm5.txt"
+      },
+      {
+        "id": "x20",
+        "file": "openhd/x20.txt"
+      },
+      {
+        "id": "x21",
+        "file": "openhd/x21.txt"
+      },
+      {
+        "id": "cubie",
+        "file": "openhd/cubie.txt"
+      },
+      {
+        "id": "x86",
+        "file": "openhd/x86.txt"
+      },
+      {
+        "id": "qcs405",
+        "file": "openhd/qcs405.txt"
+      },
+      {
+        "id": "qrb5165",
+        "file": "openhd/qrb5165.txt"
+      },
+      {
+        "id": "openipc",
+        "file": "openhd/openipc.txt"
+      },
+      {
+        "id": "rockchip-rv",
+        "file": "openhd/rockchip-rv.txt"
+      },
+      {
+        "id": "orqa",
+        "file": "openhd/orqa.txt"
+      },
+      {
+        "id": "nvidia-xavier",
+        "file": "openhd/nvidia-xavier.txt"
+      },
+      {
+        "id": "uvx",
+        "file": "openhd/uvx.txt"
+      },
+      {
+        "id": "nxp-imx8",
+        "file": "openhd/nxp-imx8.txt"
+      },
+      {
+        "id": "unknown",
+        "file": "openhd/unknown.txt"
+      }
+    ]
+  },
+  "mode": {
+    "_comment": "Debug toggle currently supported.",
+    "options": [
+      {
+        "id": "debug",
+        "file": "openhd/debug.txt",
+        "valueWritten": ""
+      }
+    ]
+  },
+  "camera": {
+    "_comment": "Camera selection depends on SBC and vendor/category shown in the UI.",
+    "valueEncoding": "stringified OpenHD camera type integers written to openhd/settings.json",
+    "secondaryOptions": [
+      {
+        "id": "USB",
+        "displayName": "USB",
+        "valueWritten": "10"
+      },
+      {
+        "id": "IP-CAMERA",
+        "displayName": "IP CAMERA",
+        "valueWritten": "3"
+      },
+      {
+        "id": "TESTPATTERN",
+        "displayName": "DEV CAMERA",
+        "valueWritten": "0"
+      },
+      {
+        "id": "INFIRAY",
+        "displayName": "INFIRAY",
+        "valueWritten": "11"
+      },
+      {
+        "id": "INFIRAY_T2",
+        "displayName": "INFIRAY T2",
+        "valueWritten": "12"
+      },
+      {
+        "id": "INFIRAY_X2",
+        "displayName": "INFIRAY X2",
+        "valueWritten": "13"
+      },
+      {
+        "id": "INFIRAY_P2_PRO",
+        "displayName": "INFIRAY P2 PRO",
+        "valueWritten": "14"
+      },
+      {
+        "id": "FLIR_VUE",
+        "displayName": "FLIR VUE",
+        "valueWritten": "15"
+      },
+      {
+        "id": "FLIR_BOSON",
+        "displayName": "FLIR BOSON",
+        "valueWritten": "16"
+      }
+    ],
+    "commonVendors": [
+      {
+        "id": "network",
+        "displayName": "Network",
+        "options": [
+          {
+            "id": "IP-CAMERA",
+            "valueWritten": "3"
+          }
+        ]
+      }
+    ],
+    "sbcGroups": [
+      {
+        "sbc": [
+          "rpi"
+        ],
+        "bootTypeRequired": "Air",
+        "file": "openhd/camera1.txt",
+        "secondaryCsi": true,
+        "vendors": [
+          {
+            "id": "raspberry",
+            "displayName": "Raspberry",
+            "options": [
+              {
+                "id": "HDMI",
+                "valueWritten": "20"
+              },
+              {
+                "id": "OV5647",
+                "valueWritten": "30"
+              },
+              {
+                "id": "IMX219",
+                "valueWritten": "31"
+              },
+              {
+                "id": "IMX708",
+                "valueWritten": "32"
+              },
+              {
+                "id": "IMX477",
+                "valueWritten": "33"
+              }
+            ]
+          },
+          {
+            "id": "arducam",
+            "displayName": "Arducam",
+            "options": [
+              {
+                "id": "SkyMasterHDR708",
+                "valueWritten": "40"
+              },
+              {
+                "id": "SkyVisionPro519",
+                "valueWritten": "41"
+              },
+              {
+                "id": "IMX477m",
+                "valueWritten": "42"
+              },
+              {
+                "id": "IMX462",
+                "valueWritten": "43"
+              },
+              {
+                "id": "IMX327",
+                "valueWritten": "44"
+              },
+              {
+                "id": "IMX290",
+                "valueWritten": "45"
+              },
+              {
+                "id": "IMX462MINI",
+                "valueWritten": "46"
+              },
+              {
+                "id": "IMX662",
+                "valueWritten": "47"
+              }
+            ]
+          },
+          {
+            "id": "veye",
+            "displayName": "Veye",
+            "options": [
+              {
+                "id": "2MPCAMERAS",
+                "valueWritten": "60"
+              },
+              {
+                "id": "CSIMX307",
+                "valueWritten": "61"
+              },
+              {
+                "id": "CSSC137",
+                "valueWritten": "62"
+              },
+              {
+                "id": "MVCAM",
+                "valueWritten": "63"
+              },
+              {
+                "id": "GX/GXC IMX662 (ISP)",
+                "valueWritten": "64"
+              }
+            ]
+          },
+          {
+            "id": "advanced",
+            "displayName": "Advanced",
+            "options": [
+              {
+                "id": "USB",
+                "valueWritten": "10"
+              },
+              {
+                "id": "FILESRC",
+                "valueWritten": "4"
+              },
+              {
+                "id": "EXTERNAL",
+                "valueWritten": "2"
+              },
+              {
+                "id": "TESTPATTERN",
+                "valueWritten": "0"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sbc": [
+          "rock-5a",
+          "rock-5b",
+          "radxa-cm5"
+        ],
+        "bootTypeRequired": "Air",
+        "file": "openhd/camera1.txt",
+        "vendors": [
+          {
+            "id": "rock-default",
+            "displayName": "Rock5",
+            "options": [
+              {
+                "id": "HDMI",
+                "valueWritten": "80"
+              },
+              {
+                "id": "OV5647",
+                "valueWritten": "81"
+              },
+              {
+                "id": "IMX219",
+                "valueWritten": "82"
+              },
+              {
+                "id": "IMX708",
+                "valueWritten": "83"
+              },
+              {
+                "id": "IMX462",
+                "valueWritten": "84"
+              },
+              {
+                "id": "IMX415",
+                "valueWritten": "85"
+              },
+              {
+                "id": "IMX477",
+                "valueWritten": "86"
+              },
+              {
+                "id": "IMX519",
+                "valueWritten": "87"
+              },
+              {
+                "id": "OHD-JAGUAR",
+                "valueWritten": "88"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sbc": [
+          "zero3w",
+          "radxa-cm3"
+        ],
+        "bootTypeRequired": "Air",
+        "file": "openhd/camera1.txt",
+        "vendors": [
+          {
+            "id": "rock3-default",
+            "displayName": "Zero3W",
+            "options": [
+              {
+                "id": "HDMI",
+                "valueWritten": "90"
+              },
+              {
+                "id": "OV5647",
+                "valueWritten": "91"
+              },
+              {
+                "id": "IMX219",
+                "valueWritten": "92"
+              },
+              {
+                "id": "IMX708",
+                "valueWritten": "93"
+              },
+              {
+                "id": "IMX462",
+                "valueWritten": "94"
+              },
+              {
+                "id": "IMX519",
+                "valueWritten": "95"
+              },
+              {
+                "id": "OHD-JAGUAR",
+                "valueWritten": "96"
+              },
+              {
+                "id": "VEYE",
+                "valueWritten": "97"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sbc": [
+          "x86",
+          "unknown"
+        ],
+        "bootTypeRequired": "Air",
+        "file": "openhd/camera1.txt",
+        "vendors": [
+          {
+            "id": "generic",
+            "displayName": "Generic",
+            "options": [
+              {
+                "id": "USB",
+                "valueWritten": "10"
+              },
+              {
+                "id": "EXTERNAL",
+                "valueWritten": "2"
+              },
+              {
+                "id": "FILESRC",
+                "valueWritten": "4"
+              },
+              {
+                "id": "TESTPATTERN",
+                "valueWritten": "0"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sbc": [
+          "x20"
+        ],
+        "bootTypeRequired": "Air",
+        "file": "openhd/camera1.txt",
+        "vendors": [
+          {
+            "id": "x20",
+            "displayName": "X20",
+            "options": [
+              {
+                "id": "HDZERO",
+                "valueWritten": "70"
+              },
+              {
+                "id": "RUNCAM_V1",
+                "valueWritten": "71"
+              },
+              {
+                "id": "RUNCAM_V2",
+                "valueWritten": "72"
+              },
+              {
+                "id": "RUNCAM_V3",
+                "valueWritten": "73"
+              },
+              {
+                "id": "RUNCAM_NANO_90",
+                "valueWritten": "74"
+              },
+              {
+                "id": "OHD-JAGUAR",
+                "valueWritten": "75"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sbc": [
+          "x21"
+        ],
+        "bootTypeRequired": "Air",
+        "file": "openhd/camera1.txt",
+        "vendors": [
+          {
+            "id": "x21",
+            "displayName": "X21",
+            "options": [
+              {
+                "id": "OHD-JAGUAR-X21",
+                "valueWritten": "76"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sbc": [
+          "qcs405",
+          "qrb5165"
+        ],
+        "bootTypeRequired": "Air",
+        "file": "openhd/camera1.txt",
+        "vendors": [
+          {
+            "id": "qualcomm",
+            "displayName": "Qualcomm",
+            "options": [
+              {
+                "id": "IMX577",
+                "valueWritten": "120"
+              },
+              {
+                "id": "OV9282",
+                "valueWritten": "121"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sbc": [
+          "openipc"
+        ],
+        "bootTypeRequired": "Air",
+        "file": "openhd/camera1.txt",
+        "vendors": [
+          {
+            "id": "integrated",
+            "displayName": "Integrated camera",
+            "options": [
+              {
+                "id": "OPENIPC",
+                "valueWritten": "110"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sbc": [
+          "orqa"
+        ],
+        "bootTypeRequired": "Air",
+        "file": "openhd/camera1.txt",
+        "vendors": [
+          {
+            "id": "orqa",
+            "displayName": "Orqa",
+            "options": [
+              {
+                "id": "ORQA-HORNET",
+                "valueWritten": "122"
+              },
+              {
+                "id": "ORQA-JAGUAR",
+                "valueWritten": "123"
+              },
+              {
+                "id": "ORQA-REKINDLE",
+                "valueWritten": "124"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sbc": [
+          "rockchip-rv"
+        ],
+        "bootTypeRequired": "Air",
+        "file": "openhd/camera1.txt",
+        "vendors": [
+          {
+            "id": "integrated",
+            "displayName": "Integrated camera",
+            "options": [
+              {
+                "id": "ROCKCHIP-RV",
+                "valueWritten": "125"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sbc": [
+          "nvidia-xavier"
+        ],
+        "bootTypeRequired": "Air",
+        "file": "openhd/camera1.txt",
+        "vendors": [
+          {
+            "id": "nvidia",
+            "displayName": "Nvidia",
+            "options": [
+              {
+                "id": "XAVIER-IMX577",
+                "valueWritten": "101"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sbc": [
+          "cubie",
+          "uvx",
+          "nxp-imx8"
+        ],
+        "bootTypeRequired": "Air",
+        "file": "openhd/camera1.txt",
+        "vendors": []
+      }
+    ]
+  },
+  "cameraResolution": {
+    "_comment": "Resolution/fps choices keyed by OpenHD camera type value (widthxheight@fps).",
+    "valueEncoding": "string written to openhd/settings.json as camera_resolution_fps and camera2_resolution_fps",
+    "byCameraValue": {
+      "0": [
+        "640x480@30",
+        "1280x720@30",
+        "1280x720@60"
+      ],
+      "4": [
+        "848x480@60",
+        "1280x720@60",
+        "1920x1080@60"
+      ],
+      "10": [
+        "640x480@30",
+        "0x0@0"
+      ],
+      "11": [
+        "384x292@25"
+      ],
+      "12": [
+        "256x192@25",
+        "0x0@0"
+      ],
+      "13": [
+        "384x292@50"
+      ],
+      "14": [
+        "256x192@25"
+      ],
+      "15": [
+        "640x512@30"
+      ],
+      "16": [
+        "640x512@60"
+      ],
+      "20": [
+        "1280x720@30",
+        "1920x1080@25",
+        "1280x720@60"
+      ],
+      "30": [
+        "1280x720@30",
+        "1920x1080@30"
+      ],
+      "31": [
+        "640x480@47",
+        "896x504@47",
+        "1280x720@47",
+        "1920x1080@30"
+      ],
+      "32": [
+        "640x480@60",
+        "896x504@60",
+        "1280x720@60",
+        "1920x1080@30"
+      ],
+      "33": [
+        "640x480@50",
+        "896x504@50",
+        "1280x720@50",
+        "1920x1080@30"
+      ],
+      "40": [
+        "640x480@60",
+        "896x504@60",
+        "1280x720@60",
+        "1920x1080@30"
+      ],
+      "41": [
+        "640x480@60",
+        "896x504@60",
+        "1280x720@60",
+        "1920x1080@30"
+      ],
+      "42": [
+        "640x480@50",
+        "896x504@50",
+        "1280x720@50",
+        "1920x1080@30"
+      ],
+      "43": [
+        "640x480@60",
+        "896x504@30",
+        "896x504@60",
+        "1280x720@30",
+        "1280x720@60",
+        "1920x1080@30"
+      ],
+      "44": [
+        "640x480@60",
+        "896x504@60",
+        "1280x720@60",
+        "1920x1080@30"
+      ],
+      "46": [
+        "640x480@60",
+        "896x504@30",
+        "896x504@60",
+        "1280x720@30",
+        "1280x720@60",
+        "1920x1080@30"
+      ],
+      "47": [
+        "1280x720@60",
+        "1920x1080@30"
+      ],
+      "60": [
+        "1920x1080@30"
+      ],
+      "61": [
+        "1280x720@60",
+        "1920x1080@30"
+      ],
+      "62": [
+        "1920x1080@30"
+      ],
+      "63": [
+        "1920x1080@30"
+      ],
+      "70": [
+        "1280x720@60"
+      ],
+      "71": [
+        "1280x720@60"
+      ],
+      "72": [
+        "1280x720@60"
+      ],
+      "73": [
+        "1280x720@60"
+      ],
+      "74": [
+        "1280x720@60"
+      ],
+      "75": [
+        "1280x720@60"
+      ],
+      "76": [
+        "1280x720@60"
+      ],
+      "80": [
+        "1280x720@30",
+        "1280x720@60",
+        "1920x1080@30",
+        "1920x1080@60",
+        "3840x2160@30",
+        "3840x2160@60"
+      ],
+      "81": [
+        "640x480@60",
+        "1280x720@30",
+        "1920x1080@30"
+      ],
+      "82": [
+        "640x480@30",
+        "848x480@30",
+        "1280x720@30",
+        "1920x1080@30"
+      ],
+      "83": [
+        "1280x720@30",
+        "1280x720@60",
+        "1920x1080@60",
+        "4608x2592@14"
+      ],
+      "84": [
+        "1280x720@30",
+        "1280x720@60",
+        "1920x1080@30",
+        "1920x1080@60"
+      ],
+      "85": [
+        "1280x720@30",
+        "1280x720@30",
+        "1920x1080@30",
+        "3864x2192@30"
+      ],
+      "86": [
+        "1280x720@60",
+        "1920x1080@60",
+        "3840x2160@20",
+        "4056x3040@10"
+      ],
+      "87": [
+        "1280x720@60",
+        "1920x1080@60",
+        "3840x2160@20",
+        "4056x3040@9"
+      ],
+      "88": [
+        "1280x720@120",
+        "1920x1080@100",
+        "3840x2160@90"
+      ],
+      "90": [
+        "1280x720@30",
+        "1280x720@60"
+      ],
+      "91": [
+        "640x480@60",
+        "1280x720@30",
+        "1920x1080@30"
+      ],
+      "92": [
+        "640x480@30",
+        "848x480@30",
+        "1280x720@30",
+        "1920x1080@30"
+      ],
+      "93": [
+        "1280x720@30",
+        "1280x720@60",
+        "1920x1080@60"
+      ],
+      "94": [
+        "1280x720@60",
+        "1280x720@30",
+        "1920x1080@30",
+        "1920x1080@60"
+      ],
+      "95": [
+        "1280x720@60",
+        "1280x720@30",
+        "1920x1080@30",
+        "1920x1080@60"
+      ],
+      "96": [
+        "1280x720@60",
+        "1280x720@120",
+        "1920x1080@60",
+        "1920x1080@100"
+      ],
+      "101": [
+        "1280x720@60",
+        "1920x1080@60"
+      ],
+      "110": [
+        "1280x720@60"
+      ],
+      "120": [
+        "1280x720@30",
+        "1920x1080@30"
+      ],
+      "121": [
+        "1280x720@30"
+      ],
+      "122": [
+        "960x720@120"
+      ],
+      "123": [
+        "1280x720@120"
+      ],
+      "124": [
+        "1280x720@60"
+      ],
+      "125": [
+        "1280x720@60",
+        "1296x968@60",
+        "1920x1080@25",
+        "2592x1944@25"
+      ]
+    }
+  },
+  "ipCamera": {
+    "_comment": "Shown when primary or secondary camera type 3 (IP-CAMERA) is selected. Values are imported by openhd-sysutils and used as OpenHD's initial camera configuration.",
+    "primaryAddressKey": "ip_camera_address",
+    "primaryPipelineKey": "ip_camera_pipeline",
+    "secondaryAddressKey": "camera2_ip_camera_address",
+    "secondaryPipelineKey": "camera2_ip_camera_pipeline",
+    "reservedBitrateKey": "ip_camera_bitrate_mbits",
+    "defaultAddress": "192.168.144.108",
+    "defaultPipeline": "rtspsrc location=rtsp://{IP}:554/stream=0 latency=0 ! rtph264depay",
+    "reservedBitrateRangeMbits": [
+      1,
+      20
+    ],
+    "defaultReservedBitrateMbits": 2
+  },
+  "rpi5CameraConnectors": {
+    "_comment": "For Raspberry Pi CSI cameras, ImageWriter asks which Pi 5 connector is used. Sysutils applies ,cam0 for CAM0; CAM1 uses the overlay default.",
+    "primaryKey": "camera_port",
+    "secondaryKey": "camera2_port",
+    "options": [
+      "cam0",
+      "cam1"
+    ],
+    "primaryDefault": "cam1",
+    "secondaryDefault": "cam0"
+  },
+  "groundDisplay": {
+    "_comment": "Optional forced HDMI mode. Sysutils applies it to the DRM boot argument and OpenHD Glide, then reboots. Omit or set display_force_mode=false to retain automatic EDID mode selection.",
+    "enabledKey": "display_force_mode",
+    "widthKey": "display_width",
+    "heightKey": "display_height",
+    "refreshKey": "display_refresh_hz",
+    "connectorKey": "display_connector",
+    "defaultConnector": "HDMI-A-1",
+    "widthRange": [
+      320,
+      7680
+    ],
+    "heightRange": [
+      240,
+      4320
+    ],
+    "refreshRangeHz": [
+      20,
+      240
+    ]
+  },
+  "qopenhdConf": {
+    "_comment": "Optional full configuration file copied verbatim when provided by the user.",
+    "file": "openhd/QOpenHD.conf"
+  },
+  "mapboxApiKey": {
+    "_comment": "Optional Mapbox public access token. OpenHD SysUtils imports it into QOpenHD's map_api_key setting on first boot.",
+    "key": "mapbox_api_key"
+  },
+  "premiumCertificate": {
+    "_comment": "Optional signed premium certificate copied verbatim when provided by the user.",
+    "file": "openhd/premium_certificate.ohdcert"
+  },
+  "hotSpot": {
+    "_comment": "UI exposes WifiHotspot but creation of wifi_hotspot.txt is commented out in downloadthread.cpp.",
+    "options": []
+  },
+  "beep": {
+    "_comment": "Stored in settings but not written to FAT32 partition.",
+    "options": []
+  },
+  "eject": {
+    "_comment": "Stored in settings but not written to FAT32 partition.",
+    "options": []
+  },
+  "platforms": [
+    {
+      "id": "x86",
+      "label": "PC / x86_64",
+      "platformId": 1,
+      "sbc": "x86",
+      "aliases": [
+        "PC / x86_64 Ground Station",
+        "x86_64"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "rpi3",
+      "label": "Raspberry Pi 3",
+      "platformId": 10,
+      "sbc": "rpi",
+      "aliases": [],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "rpi4",
+      "label": "Raspberry Pi 4",
+      "platformId": 11,
+      "sbc": "rpi",
+      "aliases": [
+        "raspberry-pi-4"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "cm4",
+      "label": "Raspberry Pi CM4",
+      "platformId": 12,
+      "sbc": "rpi",
+      "aliases": [
+        "raspberry-pi-cm4"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "rpi5",
+      "label": "Raspberry Pi 5",
+      "platformId": 13,
+      "sbc": "rpi",
+      "aliases": [
+        "raspberry-pi-5"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "zero3w",
+      "label": "Radxa Zero 3W",
+      "platformId": 20,
+      "sbc": "zero3w",
+      "aliases": [
+        "radxa-zero3w",
+        "radxa-zero-3w"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "rock5a",
+      "label": "Radxa Rock 5A",
+      "platformId": 21,
+      "sbc": "rock-5a",
+      "aliases": [
+        "radxa-rock5a",
+        "rock-5a"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "rock5b",
+      "label": "Radxa Rock 5B",
+      "platformId": 22,
+      "sbc": "rock-5b",
+      "aliases": [
+        "radxa-rock5b",
+        "rock-5b"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "cm5",
+      "label": "Radxa CM5",
+      "platformId": 23,
+      "sbc": "radxa-cm5",
+      "aliases": [
+        "radxa-cm5"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "cm3",
+      "label": "Radxa CM3",
+      "platformId": 24,
+      "sbc": "radxa-cm3",
+      "aliases": [
+        "radxa-cm3"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "luckfox-pico",
+      "label": "Luckfox Pico / RV110X",
+      "platformId": 25,
+      "sbc": "rockchip-rv",
+      "aliases": [
+        "rockchip-rv",
+        "rv110x",
+        "luckfox-pico"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "luckfox-lyra",
+      "label": "Luckfox Lyra",
+      "platformId": 27,
+      "sbc": "rockchip-rv",
+      "aliases": [
+        "luckfox-lyra"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "x21b",
+      "label": "OpenHD Core X21",
+      "platformId": 28,
+      "sbc": "x21",
+      "aliases": [
+        "x21",
+        "OpenHD X21"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "luckfox-aura",
+      "label": "Luckfox Aura",
+      "platformId": 29,
+      "sbc": "rockchip-rv",
+      "aliases": [
+        "luckfox-aura"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "x20",
+      "label": "OpenHD Core X20",
+      "platformId": 30,
+      "sbc": "x20",
+      "aliases": [
+        "OpenHD X20",
+        "x20"
+      ],
+      "roles": [
+        "air"
+      ]
+    },
+    {
+      "id": "cubie-a7s",
+      "label": "Radxa Cubie A7S",
+      "platformId": 31,
+      "sbc": "cubie",
+      "aliases": [
+        "cubie-a7s"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "cubie-a7z",
+      "label": "Radxa Cubie A7Z",
+      "platformId": 32,
+      "sbc": "cubie",
+      "aliases": [
+        "cubie-a7z"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "openipc",
+      "label": "OpenIPC SigmaStar",
+      "platformId": 36,
+      "sbc": "openipc",
+      "aliases": [
+        "openipc"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "nvidia-xavier",
+      "label": "NVIDIA Xavier",
+      "platformId": 40,
+      "sbc": "nvidia-xavier",
+      "aliases": [
+        "nvidia-xavier"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "qrb5165",
+      "label": "Qualcomm QRB5165",
+      "platformId": 46,
+      "sbc": "qrb5165",
+      "aliases": [
+        "qrb5165"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "qcs405",
+      "label": "Qualcomm QCS405",
+      "platformId": 47,
+      "sbc": "qcs405",
+      "aliases": [
+        "qcs405"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "orqa",
+      "label": "Orqa",
+      "platformId": 51,
+      "sbc": "orqa",
+      "aliases": [
+        "orqa"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "uvx",
+      "label": "UVX Mod",
+      "platformId": 52,
+      "sbc": "uvx",
+      "aliases": [
+        "uvx"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "nxp-imx8",
+      "label": "NXP i.MX8",
+      "platformId": 61,
+      "sbc": "nxp-imx8",
+      "aliases": [
+        "nxp-imx8"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "rpi-zero",
+      "label": "Raspberry Pi Zero",
+      "platformId": 10,
+      "sbc": "rpi",
+      "aliases": [],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "rpi-zero-w",
+      "label": "Raspberry Pi Zero W",
+      "platformId": 10,
+      "sbc": "rpi",
+      "aliases": [],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "rpi-zero2w",
+      "label": "Raspberry Pi Zero 2W",
+      "platformId": 10,
+      "sbc": "rpi",
+      "aliases": [
+        "raspberry-pi-zero2w"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "rpi2",
+      "label": "Raspberry Pi 2",
+      "platformId": 10,
+      "sbc": "rpi",
+      "aliases": [],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "rpi-cm3",
+      "label": "Raspberry Pi CM3",
+      "platformId": 10,
+      "sbc": "rpi",
+      "aliases": [],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "rpi-cm5",
+      "label": "Raspberry Pi CM5",
+      "platformId": 13,
+      "sbc": "rpi",
+      "aliases": [],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "rock3",
+      "label": "Radxa Rock 3",
+      "platformId": 20,
+      "sbc": "zero3w",
+      "aliases": [
+        "radxa-rock3"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    }
+  ],
+  "_settingsContract": {
+    "version": 1,
+    "catalogHash": "6171a437338e86373c8ccd5372172af5e2609ab2351856803ca7a98668303e15"
+  },
+  "initialFields": [
+    {
+      "choices": [
+        {
+          "label": "DISABLE",
+          "value": 0
+        },
+        {
+          "label": "ENABLE",
+          "value": 1
+        },
+        {
+          "label": "AUTO(armed)",
+          "value": 2
+        }
+      ],
+      "description": "Record video data locally on your air unit. You can find the files under /home/openhd/Videos on the SD card and/or download them via the web ui.When AUTO is set, air recording automatically starts (and stops) when you arm/disarm your drone (requires inav / ardupilot FC).",
+      "group": "General",
+      "hidden": false,
+      "id": "AIR_RECORDING_E",
+      "label": "Air recording",
+      "maximum": 2,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32",
+      "provision": {
+        "componentId": 100,
+        "roles": [
+          "air"
+        ]
+      }
+    },
+    {
+      "choices": [
+        {
+          "label": "Disable",
+          "value": 0
+        },
+        {
+          "label": "Enable",
+          "value": 1
+        }
+      ],
+      "description": "Enable / disable streaming for this camera. Note that this setting is persistent at run time - once you disable streaming for a camera, you won't have video until you re-enable streaming or reboot your air unit. On by default",
+      "group": "General",
+      "hidden": true,
+      "id": "STREAMING_E",
+      "label": "Video streaming",
+      "maximum": 1,
+      "minimum": 0,
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32",
+      "provision": {
+        "componentId": 100,
+        "roles": [
+          "air"
+        ]
+      }
+    }
+  ]
+}

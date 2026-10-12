@@ -186,14 +186,14 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
       [this]() { return get_settings().rk_readout_mode; }}});
     const bool aura = rk_camera_modes::register_driver_present();
     ret.push_back(openhd::Setting{"RK_FPS_LOCK", openhd::IntSetting{
-      aura ? 1 : 0, [](std::string,int) { return false; }}});
+      aura ? 1 : 0, [](std::string,int) { return false; }},nullptr,true});
     for (int mode = 0; mode < 3; ++mode) {
       const char* id = mode == 0 ? "RK_FMT_FULL" : mode == 1 ? "RK_FMT_CROP" : "RK_FMT_HDR";
       ret.push_back(openhd::Setting{id, openhd::StringSetting{
-        rk_camera_modes::format_list(aura,mode), [](std::string,std::string) { return false; }}});
+        rk_camera_modes::format_list(aura,mode), [](std::string,std::string) { return false; }},nullptr,true});
     }
     ret.push_back(openhd::Setting{"RK_HDR_STATUS", openhd::StringSetting{
-      aura ? "ClearHDR DCG merge; cropped HDR experimental" : "HDR unavailable: X21 ISP merge not integrated", [](std::string,std::string) { return false; }}});
+      aura ? "ClearHDR DCG merge; cropped HDR experimental" : "HDR unavailable: X21 ISP merge not integrated", [](std::string,std::string) { return false; }},nullptr,true});
   }
   if (m_camera.requires_rpi_libcamera_pipeline()) {
     auto c_sensor_mode = [this](std::string, std::string value) {
@@ -607,6 +607,30 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
         openhd::IntSetting{
             get_settings().infiray_custom_control_zoom_absolute_colorpalete,
             cb_infiray}});
+  }
+  for (auto& setting:ret) {
+    setting.seed_allowed=created_defaults();
+    if (setting.id=="RESOLUTION_FPS") setting.metadata=[this] {
+      auto choices=nlohmann::json::array();
+      if (has_rk_camera_modes()) {
+        for (const auto& f:rk_camera_modes::formats(rk_camera_modes::register_driver_present(),get_settings().rk_readout_mode)) {
+          const auto value=openhd::video_format_from_int_values(f.width,f.height,f.fps);
+          choices.push_back({{"value",value},{"label",value}});
+        }
+      } else {
+        for (const auto& f:m_camera.get_supported_resolutions()) {
+          const auto value=openhd::video_format_from_int_values(f.width_px,f.height_px,f.fps);
+          choices.push_back({{"value",value},{"label",value}});
+        }
+      }
+      return nlohmann::json{{"choices",choices},{"choicesSource",has_rk_camera_modes() ? "backend" : "camera-registry"},
+                            {"enforce",has_rk_camera_modes()}};
+    };
+    if (setting.id=="RK_CAM_MODE") setting.metadata=[this] {
+      auto choices=nlohmann::json::array({{{"value",0},{"label","1080p"}},{{"value",1},{"label","720p"}}});
+      if (rk_camera_modes::register_driver_present()) choices.push_back({{"value",2},{"label","HDR"}});
+      return nlohmann::json{{"choices",choices},{"available",has_rk_camera_modes()},{"enforce",true}};
+    };
   }
   return ret;
 }

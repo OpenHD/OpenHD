@@ -1,0 +1,403 @@
+{
+  "version": 1,
+  "platforms": [
+    {
+      "id": "x86",
+      "label": "PC / x86_64",
+      "platformId": 1,
+      "sbc": "x86",
+      "aliases": [
+        "PC / x86_64 Ground Station",
+        "x86_64"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "rpi3",
+      "label": "Raspberry Pi 3",
+      "platformId": 10,
+      "sbc": "rpi",
+      "aliases": [],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "rpi4",
+      "label": "Raspberry Pi 4",
+      "platformId": 11,
+      "sbc": "rpi",
+      "aliases": [
+        "raspberry-pi-4"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "cm4",
+      "label": "Raspberry Pi CM4",
+      "platformId": 12,
+      "sbc": "rpi",
+      "aliases": [
+        "raspberry-pi-cm4"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "rpi5",
+      "label": "Raspberry Pi 5",
+      "platformId": 13,
+      "sbc": "rpi",
+      "aliases": [
+        "raspberry-pi-5"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "zero3w",
+      "label": "Radxa Zero 3W",
+      "platformId": 20,
+      "sbc": "zero3w",
+      "aliases": [
+        "radxa-zero3w",
+        "radxa-zero-3w"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "rock5a",
+      "label": "Radxa Rock 5A",
+      "platformId": 21,
+      "sbc": "rock-5a",
+      "aliases": [
+        "radxa-rock5a",
+        "rock-5a"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "rock5b",
+      "label": "Radxa Rock 5B",
+      "platformId": 22,
+      "sbc": "rock-5b",
+      "aliases": [
+        "radxa-rock5b",
+        "rock-5b"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "cm5",
+      "label": "Radxa CM5",
+      "platformId": 23,
+      "sbc": "radxa-cm5",
+      "aliases": [
+        "radxa-cm5"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "cm3",
+      "label": "Radxa CM3",
+      "platformId": 24,
+      "sbc": "radxa-cm3",
+      "aliases": [
+        "radxa-cm3"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "luckfox-pico",
+      "label": "Luckfox Pico / RV110X",
+      "platformId": 25,
+      "sbc": "rockchip-rv",
+      "aliases": [
+        "rockchip-rv",
+        "rv110x",
+        "luckfox-pico"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "luckfox-lyra",
+      "label": "Luckfox Lyra",
+      "platformId": 27,
+      "sbc": "rockchip-rv",
+      "aliases": [
+        "luckfox-lyra"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "x21b",
+      "label": "OpenHD Core X21",
+      "platformId": 28,
+      "sbc": "x21",
+      "aliases": [
+        "x21",
+        "OpenHD X21"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "luckfox-aura",
+      "label": "Luckfox Aura",
+      "platformId": 29,
+      "sbc": "rockchip-rv",
+      "aliases": [
+        "luckfox-aura"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "x20",
+      "label": "OpenHD Core X20",
+      "platformId": 30,
+      "sbc": "x20",
+      "aliases": [
+        "OpenHD X20",
+        "x20"
+      ],
+      "roles": [
+        "air"
+      ]
+    },
+    {
+      "id": "cubie-a7s",
+      "label": "Radxa Cubie A7S",
+      "platformId": 31,
+      "sbc": "cubie",
+      "aliases": [
+        "cubie-a7s"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "cubie-a7z",
+      "label": "Radxa Cubie A7Z",
+      "platformId": 32,
+      "sbc": "cubie",
+      "aliases": [
+        "cubie-a7z"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "openipc",
+      "label": "OpenIPC SigmaStar",
+      "platformId": 36,
+      "sbc": "openipc",
+      "aliases": [
+        "openipc"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "nvidia-xavier",
+      "label": "NVIDIA Xavier",
+      "platformId": 40,
+      "sbc": "nvidia-xavier",
+      "aliases": [
+        "nvidia-xavier"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "qrb5165",
+      "label": "Qualcomm QRB5165",
+      "platformId": 46,
+      "sbc": "qrb5165",
+      "aliases": [
+        "qrb5165"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "qcs405",
+      "label": "Qualcomm QCS405",
+      "platformId": 47,
+      "sbc": "qcs405",
+      "aliases": [
+        "qcs405"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "orqa",
+      "label": "Orqa",
+      "platformId": 51,
+      "sbc": "orqa",
+      "aliases": [
+        "orqa"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "uvx",
+      "label": "UVX Mod",
+      "platformId": 52,
+      "sbc": "uvx",
+      "aliases": [
+        "uvx"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "nxp-imx8",
+      "label": "NXP i.MX8",
+      "platformId": 61,
+      "sbc": "nxp-imx8",
+      "aliases": [
+        "nxp-imx8"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "rpi-zero",
+      "label": "Raspberry Pi Zero",
+      "platformId": 10,
+      "sbc": "rpi",
+      "aliases": [],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "rpi-zero-w",
+      "label": "Raspberry Pi Zero W",
+      "platformId": 10,
+      "sbc": "rpi",
+      "aliases": [],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "rpi-zero2w",
+      "label": "Raspberry Pi Zero 2W",
+      "platformId": 10,
+      "sbc": "rpi",
+      "aliases": [
+        "raspberry-pi-zero2w"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "rpi2",
+      "label": "Raspberry Pi 2",
+      "platformId": 10,
+      "sbc": "rpi",
+      "aliases": [],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "rpi-cm3",
+      "label": "Raspberry Pi CM3",
+      "platformId": 10,
+      "sbc": "rpi",
+      "aliases": [],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "rpi-cm5",
+      "label": "Raspberry Pi CM5",
+      "platformId": 13,
+      "sbc": "rpi",
+      "aliases": [],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "rock3",
+      "label": "Radxa Rock 3",
+      "platformId": 20,
+      "sbc": "zero3w",
+      "aliases": [
+        "radxa-rock3"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    }
+  ]
+}

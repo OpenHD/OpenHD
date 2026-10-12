@@ -79,6 +79,7 @@ SET(sources
     "src/mavsdk_temporary/sender.h"
     "src/mavsdk_temporary/sender_wrapper.h"
     "src/mavsdk_temporary/XMavlinkParamProvider.cpp"
+    "src/mavsdk_temporary/SettingsMavlinkServer.cpp"
     "src/mavsdk_temporary/XMavlinkParamProvider.h"
     
     "src/rc/JoystickReader.cpp"
@@ -159,6 +160,12 @@ target_link_libraries(test_joystick_reader OHDTelemetryLib)
 
 add_executable(test_parameter_reapply test/test_parameter_reapply.cpp)
 target_link_libraries(test_parameter_reapply OHDTelemetryLib)
+add_executable(test_settings_registry test/test_settings_registry.cpp)
+target_link_libraries(test_settings_registry OHDTelemetryLib)
+add_executable(test_settings_registry_tcp EXCLUDE_FROM_ALL test/test_settings_registry_tcp.cpp)
+target_link_libraries(test_settings_registry_tcp OHDTelemetryLib)
+add_executable(test_settings_server EXCLUDE_FROM_ALL test/test_settings_server.cpp)
+target_link_libraries(test_settings_server OHDTelemetryLib)
 
 ####
 # NOTE: We do not need MAVSDK for OpenHD, the small amount of code we share is directly included

@@ -85,12 +85,12 @@ openhd::Setting openhd::create_read_only_string(const std::string& id,
     value.resize(15);
   }
   auto cb = [](const std::string&, const std::string&) { return false; };
-  return Setting{id, openhd::StringSetting{value, cb}};
+  return Setting{id, openhd::StringSetting{value, cb}, nullptr, true};
 }
 
 openhd::Setting openhd::create_read_only_int(const std::string& id, int value) {
   auto cb = [](const std::string&, int) { return false; };
-  return Setting{id, openhd::IntSetting{value, cb}};
+  return Setting{id, openhd::IntSetting{value, cb}, nullptr, true};
 }
 
 void openhd::validate_provided_ids(const std::vector<Setting>& settings) {

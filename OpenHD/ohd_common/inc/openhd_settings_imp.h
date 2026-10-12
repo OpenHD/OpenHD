@@ -28,6 +28,7 @@
 #include <string>
 #include <variant>
 #include <vector>
+#include <nlohmann/json.hpp>
 
 namespace openhd {
 
@@ -70,6 +71,10 @@ struct Setting {
   // Do not mutate me
   std::string id;
   std::variant<IntSetting, StringSetting> setting;
+  // Overrides resolved from the active hardware/backend, never by a client.
+  std::function<nlohmann::json()> metadata = nullptr;
+  bool read_only = false;
+  bool seed_allowed = false;
 };
 
 // we need to have unique setting string ids. Creating duplicates by accident is

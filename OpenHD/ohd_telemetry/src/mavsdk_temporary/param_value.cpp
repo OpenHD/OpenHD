@@ -251,8 +251,8 @@ bool ParamValue::set_from_mavlink_param_ext_value(
       _value = temp;
     } break;
     case MAV_PARAM_EXT_TYPE_CUSTOM: {
-      std::size_t len =
-          std::min(std::size_t(128), strlen(mavlink_ext_value.param_value));
+      const auto* begin=mavlink_ext_value.param_value;
+      const std::size_t len=std::find(begin,begin+128,'\0')-begin;
       _value = std::string(mavlink_ext_value.param_value,
                            mavlink_ext_value.param_value + len);
     } break;

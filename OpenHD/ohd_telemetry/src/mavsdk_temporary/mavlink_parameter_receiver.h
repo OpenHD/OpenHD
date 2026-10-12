@@ -46,6 +46,10 @@ class MavlinkParameterReceiver {
   // std::optional<std::map<std::string,ParamValue>>
   // optional_param_values=std::nullopt);
   ~MavlinkParameterReceiver();
+  // Validate every user write, including requests that equal the cached value.
+  void set_request_validator(std::function<bool(const std::string&,const ParamValue&)> validator) {
+    _request_validator=std::move(validator);
+  }
 
   enum class Result {
     Success,            // All Ok
@@ -228,6 +232,7 @@ class MavlinkParameterReceiver {
   extract_request_read_param_identifier(int16_t param_index,
                                         const char* param_id);
   const bool enable_log_target_mismatch = false;
+  std::function<bool(const std::string&,const ParamValue&)> _request_validator;
   // not following the mavlink standard
   // have a minimum delay in between "broadcast all param(s)" requests
   std::chrono::steady_clock::time_point m_last_broadcast_all_request =

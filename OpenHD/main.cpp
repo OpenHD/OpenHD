@@ -26,6 +26,7 @@
 #include "openhd_reboot_util.h"
 
 #include <OHDTelemetry.h>
+#include "mavsdk_temporary/SettingsMavlinkServer.h"
 #include <getopt.h>
 #include <ohd_interface.h>
 #ifdef ENABLE_AIR
@@ -682,6 +683,7 @@ int main(int argc, char *argv[]) {
     }
 #ifdef ENABLE_AIR
     std::unique_ptr<OHDVideoAir> ohd_video_air = nullptr;
+    std::unique_ptr<openhd::settings::SettingsMavlinkServer> record_settings_server;
     if (profile.is_air) {
       auto cameras = OHDVideoAir::discover_cameras();
       if (!cameras.empty()) dashboard_camera = x_cam_type_to_string(cameras.front().camera_type);
@@ -708,6 +710,11 @@ int main(int argc, char *argv[]) {
         ohdTelemetry->add_settings_camera_component(1, settings_components[1]);
         // Then the rest
         ohdTelemetry->add_settings_generic(ohd_video_air->get_generic_settings());
+      } else if (options.record_only) {
+        const auto camera_settings=ohd_video_air->get_all_camera_settings();
+        record_settings_server=std::make_unique<openhd::settings::SettingsMavlinkServer>(101,
+          std::vector<openhd::settings::SettingsMavlinkServer::Component>{
+            {100,camera_settings[0]},{101,camera_settings[1]},{191,ohd_video_air->get_generic_settings()}});
       }
     }
 #endif  // ENABLE_AIR

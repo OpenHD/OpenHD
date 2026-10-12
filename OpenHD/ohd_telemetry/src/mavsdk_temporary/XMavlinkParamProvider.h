@@ -29,6 +29,7 @@
 #include <utility>
 
 #include "openhd_settings_imp.h"
+#include "metadata_ftp.h"
 #include "routing/MavlinkComponent.hpp"
 
 // mavsdk
@@ -62,6 +63,15 @@ class XMavlinkParamProvider : public MavlinkComponent {
 
  private:
   std::mutex _mutex{};
+  std::vector<openhd::Setting> m_registered_settings;
+  openhd::settings::MetadataFtpServer m_metadata_ftp;
+  bool m_ready = false;
+  void refresh_metadata();
+  bool process_metadata(const mavlink_message_t& message);
+  void poll_configuration_file();
+  void apply_initial_configuration();
+  std::string m_last_configuration;
+  std::chrono::steady_clock::time_point m_last_configuration_check{};
   const std::optional<std::chrono::milliseconds> m_opt_heartbeat_interval;
   std::chrono::steady_clock::time_point m_last_heartbeat =
       std::chrono::steady_clock::now();

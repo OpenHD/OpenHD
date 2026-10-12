@@ -245,10 +245,33 @@ OHDVideoAir::get_all_camera_settings() {
           openhd::IntSetting{
               m_generic_settings->get_settings().secondary_camera_type, cb2}});
     }
+    ret[i].front().metadata=[i] {
+      using namespace openhd::camera_registry;
+      const auto* platform=find_platform_camera_choices(OHDPlatform::instance().platform_type);
+      const auto* manufacturers=i==1 ? kSecondaryManufacturers :
+          platform ? platform->manufacturers : kFallbackManufacturers;
+      const auto count=i==1 ? kSecondaryManufacturerCount :
+          platform ? platform->manufacturer_count : kFallbackManufacturerCount;
+      auto choices=nlohmann::json::array(); std::vector<int> seen;
+      for (size_t g=0;g<count;++g) for (size_t c=0;c<manufacturers[g].camera_count;++c) {
+        const auto& camera=manufacturers[g].cameras[c];
+        if (i==0 ? !is_valid_primary_cam_type(camera.type) : !is_valid_secondary_cam_type(camera.type)) continue;
+#ifndef ENABLE_USB_CAMERAS
+        if (is_usb_camera(camera.type)) continue;
+#endif
+        if (std::find(seen.begin(),seen.end(),camera.type)!=seen.end()) continue;
+        seen.push_back(camera.type);
+        choices.push_back({{"value",camera.type},{"label",camera.label}});
+      }
+      const bool fixed=OHDPlatform::instance().is_x20() || OHDPlatform::instance().is_luckfox_pico();
+      return nlohmann::json{{"choices",choices},{"readOnly",fixed},{"enforce",true},
+          {"minimum",0},{"maximum",255},{"apply","restart-or-reboot"}};
+    };
     // Then add the generic camera settings (there might be none)
     if (i < m_camera_streams.size()) {
       auto settings = m_camera_streams[i]->m_camera_holder->get_all_settings();
       for (auto& setting : settings) {
+        if (m_record_only && (setting.id=="HIGH_ENCRYPTION" || setting.id=="STREAMING_E" || setting.id=="AIR_RECORDING_E")) continue;
         ret[i].push_back(setting);
       }
     }
@@ -409,6 +432,10 @@ std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
     }
 #endif
   }
+  if(m_record_only) ret.erase(std::remove_if(ret.begin(),ret.end(),[](const auto& setting){
+    return setting.id.rfind("AUDIO_",0)==0 || setting.id.rfind("AUD_",0)==0 ||
+        setting.id=="V_PRIMARY_PERC" || setting.id=="V_IP_CAM_MBITS";
+  }),ret.end());
   return ret;
 }
 

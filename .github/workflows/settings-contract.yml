@@ -1,0 +1,19 @@
+name: Settings contract
+on:
+  push:
+    paths: ['OpenHD/settings/**', 'OpenHD/ohd_video/misc/camera_registry.json', '.github/workflows/settings-contract.yml']
+  pull_request:
+    paths: ['OpenHD/settings/**', 'OpenHD/ohd_video/misc/camera_registry.json', '.github/workflows/settings-contract.yml']
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install jsonschema
+      - run: python OpenHD/settings/tools/generate.py --check
+      - run: python OpenHD/settings/tests/validate_schemas.py OpenHD/settings/tests/fixtures OpenHD/settings/upstream/baseline
+      - run: g++ -std=c++17 -IOpenHD/settings/include OpenHD/settings/tests/test_metadata_ftp.cpp -o /tmp/test-metadata-ftp
+      - run: /tmp/test-metadata-ftp

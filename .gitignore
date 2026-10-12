@@ -461,3 +461,5 @@ plugins/siyi/
 *.py
 !scripts/openhd-zerocd-recovery.py
 !scripts/tests/test_zerocd_recovery.py
+!OpenHD/settings/tools/*.py
+!OpenHD/settings/tests/*.py
