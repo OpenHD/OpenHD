@@ -6,6 +6,9 @@ OpenHD/mavlink-headers contains generated headers, client descriptors and
 the headers as submodules. FleetControl, WebUI and Glide keep generated client
 descriptors, synchronized by `scripts/sync_openhd_wire.py` in the XML repository.
 Do not add independent CRC tables, custom message structs or payload offsets.
+The eight internal statistics types and their telemetry conversions are also
+generated from XML. `ohd_common` uses plain generated fields without MAVLink
+transport headers; application-only state stays in its local wrappers.
 
 OpenHD commands use `MAV_CMD_OPENHD_*` constants generated from the MAV_CMD
 enum. Their numeric values are unchanged; the duplicate OPENHD_CMD enum and

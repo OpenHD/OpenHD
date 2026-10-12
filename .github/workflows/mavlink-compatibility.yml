@@ -1,9 +1,9 @@
 name: MAVLink compatibility
 on:
   push:
-    paths: ['OpenHD/ohd_telemetry/lib/mavlink-headers', 'OpenHD/ohd_telemetry/src/legacy_radio_settings.h', 'OpenHD/ohd_telemetry/test/test_legacy_radio_settings.cpp', '.github/workflows/mavlink-compatibility.yml']
+    paths: ['OpenHD/ohd_telemetry/**', 'OpenHD/ohd_common/inc/*statistics*', '.github/workflows/mavlink-compatibility.yml']
   pull_request:
-    paths: ['OpenHD/ohd_telemetry/lib/mavlink-headers', 'OpenHD/ohd_telemetry/src/legacy_radio_settings.h', 'OpenHD/ohd_telemetry/test/test_legacy_radio_settings.cpp', '.github/workflows/mavlink-compatibility.yml']
+    paths: ['OpenHD/ohd_telemetry/**', 'OpenHD/ohd_common/inc/*statistics*', '.github/workflows/mavlink-compatibility.yml']
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -11,6 +11,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: false
-      - run: git submodule update --init OpenHD/ohd_telemetry/lib/mavlink-headers
+      - run: git submodule update --init OpenHD/ohd_telemetry/lib/mavlink-headers OpenHD/ohd_common/lib/json OpenHD/ohd_common/lib/spdlog
+      - run: cmp OpenHD/ohd_common/inc/mavlink_statistics.hpp OpenHD/ohd_telemetry/lib/mavlink-headers/wire/mavlink_statistics.hpp
+      - run: cmp OpenHD/ohd_telemetry/src/mavlink_statistics_encode.hpp OpenHD/ohd_telemetry/lib/mavlink-headers/wire/mavlink_statistics_encode.hpp
       - run: g++ -std=c++17 -Wno-address-of-packed-member -IOpenHD/ohd_telemetry/lib/mavlink-headers/mavlink/v2.0 -IOpenHD/ohd_telemetry/src OpenHD/ohd_telemetry/test/test_legacy_radio_settings.cpp -o /tmp/test-legacy-radio
       - run: /tmp/test-legacy-radio
+      - run: g++ -std=c++17 -O2 -Wno-address-of-packed-member -IOpenHD/ohd_telemetry/src -IOpenHD/ohd_common/inc -IOpenHD/settings/include -IOpenHD/ohd_common/lib/json/include -IOpenHD/ohd_common/lib/spdlog/include -IOpenHD/ohd_telemetry/lib/mavlink-headers/mavlink/v2.0 OpenHD/ohd_telemetry/test/test_statistics_contract.cpp -o /tmp/test-statistics
+      - run: /tmp/test-statistics
