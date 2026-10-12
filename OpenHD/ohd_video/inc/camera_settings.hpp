@@ -148,6 +148,7 @@ struct CameraSettings {
   // RV1126/Luckfox/X21 can either use the GStreamer MPP elements or OpenHD's
   // direct V4L2 capture + Rockchip MPP implementation.
   int rockchip_impl = ROCKCHIP_IMPL_NATIVE_MPP;
+  int rk_readout_mode = 0; // 0 full-frame linear, 1 crop linear, 2 merged HDR.
   // The settings below can only be implemented on a "best effort" manner -
   // changing them does not necessarily mean the camera supports changing them.
   // Unsupported settings have to be ignored during pipeline construction In

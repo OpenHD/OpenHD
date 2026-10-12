@@ -102,7 +102,8 @@ struct XCamera {
   bool requires_rockchip1126_mpp_csi_pipeline() const {
     return camera_type == X_CAM_TYPE_ROCKCHIP_RV1126_CSI ||
            camera_type == X_CAM_TYPE_X21_OHD_Jaguar ||
-           (camera_type >= 143 && camera_type <= 150);
+           (camera_type >= 143 && camera_type <= 150) ||
+           camera_type == X_CAM_TYPE_LUCKFOX_AURA_IMX662;
   }
   bool requires_rockchip1126_mpp_testsrc_pipeline() const {
     return camera_type == X_CAM_TYPE_ROCKCHIP_RV1126_TEST;
@@ -111,6 +112,7 @@ struct XCamera {
   // the other immutable camera capabilities, so individual platforms, camera
   // types, or primary/secondary streams can receive different budgets later.
   [[nodiscard]] int get_max_video_bitrate_kbits(int platform_type) const {
+    if (camera_type == X_CAM_TYPE_LUCKFOX_AURA_IMX662) return 25000;
     if (platform_type == X_PLATFORM_TYPE_RPI_5 &&
         camera_type == X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V3_IMX708 &&
         index == 0) {

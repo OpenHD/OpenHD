@@ -2,6 +2,7 @@
 
 #include <fcntl.h>
 #include <linux/media-bus-format.h>
+#include <linux/media.h>
 #include <linux/v4l2-subdev.h>
 #include <linux/videodev2.h>
 #include <poll.h>
@@ -42,6 +43,65 @@
 #include "rockchip_stream_utils.h"
 
 namespace {
+// Reset the ISP input links when returning from HDR readback to online linear.
+// Sensor mode controls alone do not remove media links left by RKAIQ.
+bool reset_imx662_isp_links() {
+  for (int i = 0; i < 32; ++i) {
+    const auto node = "/dev/media"+std::to_string(i);
+    const int fd = open(node.c_str(),O_RDWR | O_CLOEXEC);
+    if (fd < 0) continue;
+    media_device_info info{};
+    if (ioctl(fd,MEDIA_IOC_DEVICE_INFO,&info) < 0 ||
+        std::strncmp(info.driver,"rkisp",5) != 0) { close(fd); continue; }
+    uint32_t isp = 0, raw0 = 0, raw2 = 0, cif = 0;
+    media_entity_desc entity{}; entity.id = MEDIA_ENT_ID_FLAG_NEXT;
+    while (ioctl(fd,MEDIA_IOC_ENUM_ENTITIES,&entity) == 0) {
+      const std::string name(entity.name);
+      if (name == "rkisp-isp-subdev") isp = entity.id;
+      else if (name == "rkisp_rawrd0_m") raw0 = entity.id;
+      else if (name == "rkisp_rawrd2_s") raw2 = entity.id;
+      else if (name.find("rkcif-mipi-lvds") != std::string::npos) cif = entity.id;
+      entity.id |= MEDIA_ENT_ID_FLAG_NEXT;
+    }
+    bool ok = isp && raw0 && raw2 && cif;
+    if (ok) {
+      for (const auto source : {raw0,raw2,cif}) {
+        media_link_desc link{};
+        link.source.entity = source; link.source.index = 0;
+        link.sink.entity = isp; link.sink.index = 0;
+        link.flags = source == cif ? MEDIA_LNK_FL_ENABLED : 0;
+        if (ioctl(fd,MEDIA_IOC_SETUP_LINK,&link) < 0) ok = false;
+      }
+    }
+    close(fd); return ok;
+  }
+  return false;
+}
+
+// Reprepare 3A after changing sensor dimensions/timing so AE uses this mode.
+class RkaiqRestart {
+ public:
+  explicit RkaiqRestart(const std::string& path) : service(path) {
+    active = access(service.c_str(), X_OK) == 0;
+    if (active) {
+      unlink("/run/rkaiq-mode-ready");
+      OHDUtil::run_command(service, {"stop"});
+    }
+  }
+  ~RkaiqRestart() {
+    if (active) {
+      OHDUtil::run_command(service, {"start"});
+      if (access("/etc/openhd-rkaiq-mode-policy",F_OK) == 0) {
+        for (int i = 0; i < 60 && access("/run/rkaiq-mode-ready",F_OK) != 0; ++i)
+          usleep(100000);
+      } else usleep(1500000);
+    }
+  }
+ private:
+  std::string service;
+  bool active = false;
+};
+
 constexpr RK_U32 align16(RK_U32 value) { return (value + 15U) & ~15U; }
 
 int retry_ioctl(int fd, unsigned long request, void* argument) {
@@ -186,6 +246,8 @@ class RockchipMppStream::Impl {
     const auto& f = s.streamed_video_format;
     width = f.width;
     height = f.height;
+    configured_fps = f.framerate;
+    configured_readout_mode = s.rk_readout_mode;
     hor_stride = align16(width);
     ver_stride = align16(height);
     coding = f.videoCodec == VideoCodec::H265 ? MPP_VIDEO_CodingHEVC
@@ -207,6 +269,12 @@ class RockchipMppStream::Impl {
     mpp_enc_cfg_set_s32(cfg, "prep:hor_stride", hor_stride);
     mpp_enc_cfg_set_s32(cfg, "prep:ver_stride", ver_stride);
     mpp_enc_cfg_set_s32(cfg, "prep:format", MPP_FMT_YUV420SP);
+    if (owner.m_camera_holder->get_camera().camera_type == X_CAM_TYPE_LUCKFOX_AURA_IMX662) {
+      // ISP35 CSM emits full-range BT.601; signal the same interpretation to decoders.
+      mpp_enc_cfg_set_s32(cfg, "prep:range", MPP_FRAME_RANGE_JPEG);
+      mpp_enc_cfg_set_s32(cfg, "prep:range_out", MPP_FRAME_RANGE_JPEG);
+      mpp_enc_cfg_set_s32(cfg, "prep:colorspace", MPP_FRAME_SPC_BT470BG);
+    }
     mpp_enc_cfg_set_s32(cfg, "prep:rotation", s.camera_rotation_degree / 90);
     mpp_enc_cfg_set_s32(cfg, "rc:mode", MPP_ENC_RC_MODE_CBR);
     mpp_enc_cfg_set_s32(cfg, "rc:fps_in_flex", 0);
@@ -280,6 +348,11 @@ class RockchipMppStream::Impl {
     mpp_enc_cfg_set_s32(record_cfg, "prep:hor_stride", hor_stride);
     mpp_enc_cfg_set_s32(record_cfg, "prep:ver_stride", ver_stride);
     mpp_enc_cfg_set_s32(record_cfg, "prep:format", MPP_FMT_YUV420SP);
+    if (owner.m_camera_holder->get_camera().camera_type == X_CAM_TYPE_LUCKFOX_AURA_IMX662) {
+      mpp_enc_cfg_set_s32(record_cfg, "prep:range", MPP_FRAME_RANGE_JPEG);
+      mpp_enc_cfg_set_s32(record_cfg, "prep:range_out", MPP_FRAME_RANGE_JPEG);
+      mpp_enc_cfg_set_s32(record_cfg, "prep:colorspace", MPP_FRAME_SPC_BT470BG);
+    }
     mpp_enc_cfg_set_s32(record_cfg, "rc:mode", MPP_ENC_RC_MODE_CBR);
     mpp_enc_cfg_set_s32(record_cfg, "rc:fps_in_flex", 0);
     mpp_enc_cfg_set_s32(record_cfg, "rc:fps_in_num", f.framerate);
@@ -471,9 +544,106 @@ class RockchipMppStream::Impl {
            (mode == AIR_RECORDING_AUTO_ARM_DISARM && armed.load());
   }
 
+  bool configure_x21_imx662() {
+    if (access("/usr/bin/x21-imx662-mode", X_OK) != 0) {
+      log->error("X21 IMX662 mode helper is missing"); return false;
+    }
+    const auto& s = owner.m_camera_holder->get_settings();
+    const bool cropped = s.rk_readout_mode == 1;
+    if (!rk_camera_modes::contains(false,s.rk_readout_mode,width,height,
+                                   s.streamed_video_format.framerate)) return false;
+    RkaiqRestart restart_aiq("/etc/init.d/S40rkaiq_3A");
+    return OHDUtil::run_command("/usr/bin/x21-imx662-mode",
+        {cropped ? "720p" : "full90", std::to_string(s.streamed_video_format.framerate),
+         "raw10"}) == 0;
+  }
+
+  bool configure_aura_imx662() {
+    const int fps = configured_fps;
+    const int mode = configured_readout_mode;
+    const bool hdr = mode == 2;
+    const bool cropped = mode == 1 || (hdr && width == 1280);
+    if (!rk_camera_modes::contains(true, mode, width, height, fps)) {
+      log->error("Unsupported Aura IMX662 output format");
+      return false;
+    }
+    RkaiqRestart restart_aiq(access("/etc/init.d/S97rkaiq",X_OK) == 0 ?
+        "/etc/init.d/S97rkaiq" : "/etc/init.d/S40rkaiq_3A");
+    if (!reset_imx662_isp_links()) { log->error("Cannot reset IMX662 ISP media links"); return false; }
+    const auto sensor = find_v4l2_subdev("imx662");
+    const int fd = open(sensor.c_str(), O_RDWR | O_CLOEXEC);
+    if (fd < 0) return false;
+    v4l2_control preset{};
+    preset.id = V4L2_CID_USER_BASE + 0x10f2;
+    preset.value = hdr ? (cropped ? (fps == 60 ? 73 : 74) : fps == 25 ? 19 : fps == 30 ? 21 : 23) : cropped ? (fps > 120 ? 72 : 71) : 0;
+    int preset_result = -1;
+    for (int attempt = 0; attempt < 40; ++attempt) {
+      preset_result = retry_ioctl(fd, VIDIOC_S_CTRL, &preset);
+      if (preset_result == 0 || errno != EBUSY) break;
+      usleep(50000); // CIF closes the old HDR receivers asynchronously.
+    }
+    if (preset_result < 0) {
+      log->error("Cannot select IMX662 preset {}: {}",preset.value,std::strerror(errno));
+      close(fd); return false;
+    }
+    const uint32_t sensor_height = cropped ? 752 : hdr ? 1100 : height;
+    const uint32_t sensor_width = hdr && !cropped ? 1936 : width;
+    const uint32_t requested_code = (cropped || hdr) ? MEDIA_BUS_FMT_SRGGB10_1X10 : MEDIA_BUS_FMT_SRGGB12_1X12;
+    if (!set_subdev_format(sensor, 0, sensor_width, sensor_height, requested_code)) { close(fd); return false; }
+    v4l2_subdev_frame_interval interval{};
+    interval.pad = 0;
+    interval.interval.numerator = 1;
+    interval.interval.denominator = fps;
+    v4l2_subdev_format selected{};
+    selected.which = V4L2_SUBDEV_FORMAT_ACTIVE;
+    selected.pad = 0;
+    const bool sensor_ok = retry_ioctl(fd, VIDIOC_SUBDEV_S_FRAME_INTERVAL, &interval) == 0 &&
+        retry_ioctl(fd, VIDIOC_SUBDEV_G_FMT, &selected) == 0;
+    close(fd);
+    if (!sensor_ok || selected.format.width != sensor_width || selected.format.height != sensor_height) {
+      log->error("Cannot select Aura IMX662 sensor timing/format");
+      return false;
+    }
+    // RKAIQ may apply sensor flips; propagate the resulting Bayer order.
+    const uint32_t code = selected.format.code;
+    const auto dphy = find_v4l2_subdev("rockchip-csi2-dphy0");
+    const auto mipi = find_v4l2_subdev("rockchip-mipi-csi2");
+    const auto cif = find_v4l2_subdev("rkcif-mipi-lvds");
+    const auto isp = find_v4l2_subdev("rkisp-isp-subdev");
+    if (!set_subdev_format(dphy, 0, sensor_width, sensor_height, code) ||
+        !set_subdev_format(dphy, 1, sensor_width, sensor_height, code) ||
+        !set_subdev_format(mipi, 0, sensor_width, sensor_height, code) ||
+        !set_subdev_format(mipi, 1, sensor_width, sensor_height, code) ||
+        !set_subdev_format(cif, 0, sensor_width, sensor_height, code) ||
+        !set_subdev_format(isp, 0, sensor_width, sensor_height, code)) {
+      log->error("Cannot configure Aura IMX662 RAW12 media graph");
+      return false;
+    }
+    const int isp_fd = open(isp.c_str(), O_RDWR | O_CLOEXEC);
+    if (isp_fd < 0) return false;
+    v4l2_subdev_selection crop{};
+    crop.which = V4L2_SUBDEV_FORMAT_ACTIVE; crop.pad = 0;
+    crop.target = V4L2_SEL_TGT_CROP;
+    crop.r.left = hdr && !cropped ? 8 : 0; crop.r.top = cropped ? 16 : hdr ? 8 : 0;
+    crop.r.width = width; crop.r.height = height;
+    const bool crop_ok = retry_ioctl(isp_fd, VIDIOC_SUBDEV_S_SELECTION, &crop) == 0 &&
+        crop.r.width == width && crop.r.height == height && crop.r.left == (hdr && !cropped ? 8 : 0) && crop.r.top == (cropped ? 16 : hdr ? 8 : 0);
+    if (!set_subdev_format(isp, 2, width, height, MEDIA_BUS_FMT_YUYV8_2X8)) {
+      close(isp_fd); return false;
+    }
+    crop.pad = 2; crop.r.left = 0; crop.r.top = 0;
+    const bool output_crop_ok = retry_ioctl(isp_fd, VIDIOC_SUBDEV_S_SELECTION, &crop) == 0;
+    close(isp_fd);
+    if (!output_crop_ok) return false;
+    if (!crop_ok) { log->error("Cannot configure IMX662 ISP output crop"); return false; }
+    log->info("Aura IMX662: sensor {}x{} RAW{}, requested {} fps, ISP {}x{}",
+              width, sensor_height, (cropped || hdr) ? 10 : 12, fps, width, height);
+    return true;
+  }
+
   bool configure_imx415_hfr() {
     const int requested_fps = std::max(
-        1, owner.m_camera_holder->get_settings().streamed_video_format.framerate);
+        1, configured_fps);
     if (requested_fps < 60 || width > 1920 || height > 1080) return true;
 
     const bool use_720p120 = requested_fps >= 100 && width <= 1280 && height <= 720;
@@ -537,12 +707,16 @@ class RockchipMppStream::Impl {
       return true;
     }
 
+    if (OHDPlatform::instance().is_x21() && owner.m_camera_holder->has_rk_camera_modes() &&
+        !rk_camera_modes::register_driver_present() &&
+        !configure_x21_imx662()) return false;
     std::string capture_device;
     // The X21 routes the HDZero camera's NV12 output through CIF
     // (stream_cif_mipi_id0). The Luckfox Aura and ISP-based cameras (IMX415,
     // VEYE, Arducam) route through rkisp_mainpath.
-    if (camera.camera_type == X_CAM_TYPE_LUCKFOX_AURA_IMX415 ||
-        OHDPlatform::instance().is_luckfox_aura()) {
+    if (owner.m_camera_holder->has_rk_camera_modes() &&
+        rk_camera_modes::register_driver_present() && !configure_aura_imx662()) return false;
+    if (camera.camera_type == X_CAM_TYPE_LUCKFOX_AURA_IMX415) {
       if (!configure_imx415_hfr()) {
         log->warn("IMX415 HFR configuration was not applied; attempting capture");
       }
@@ -579,10 +753,20 @@ class RockchipMppStream::Impl {
       return false;
     }
 
+    if (owner.m_camera_holder->has_rk_camera_modes()) {
+      v4l2_selection crop{};
+      crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+      crop.target = V4L2_SEL_TGT_CROP;
+      crop.r.width = width; crop.r.height = height;
+      if (retry_ioctl(capture_fd, VIDIOC_S_SELECTION, &crop) < 0 ||
+          crop.r.width != width || crop.r.height != height) {
+        log->error("Cannot reset ISP output crop for selected mode"); return false;
+      }
+    }
     // Ask the processed-frame capture node for the configured stream rate.
     // Sensor-specific mode selection belongs to the sensor's own driver.
     const int requested_fps = std::max(
-        1, owner.m_camera_holder->get_settings().streamed_video_format.framerate);
+        1, configured_fps);
     v4l2_streamparm streamparm{};
     streamparm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
     streamparm.parm.capture.timeperframe.numerator = 1;
@@ -619,6 +803,20 @@ class RockchipMppStream::Impl {
         sizeimage ? (sizeimage / capture_stride) * 2 / 3 : align16(height);
     if (luma_rows < height) luma_rows = align16(height);
     capture_uv_offset = static_cast<size_t>(capture_stride) * luma_rows;
+    if (owner.m_camera_holder->has_rk_camera_modes() && coding == MPP_VIDEO_CodingAVC &&
+        capture_stride == hor_stride && luma_rows >= height && luma_rows <= align16(height)) {
+      // VEPU511 uses the frame's real vertical stride to locate UV. A 1080-row
+      // ISP buffer need not be copied into an artificial 1088-row allocation.
+      const auto previous_stride = ver_stride;
+      ver_stride = luma_rows;
+      mpp_enc_cfg_set_s32(cfg, "prep:ver_stride", ver_stride);
+      if (mpi->control(ctx, MPP_ENC_SET_CFG, cfg) != MPP_OK) {
+        ver_stride = previous_stride;
+        mpp_enc_cfg_set_s32(cfg, "prep:ver_stride", ver_stride);
+        if (mpi->control(ctx, MPP_ENC_SET_CFG, cfg) != MPP_OK) return false;
+      } else log->info("IMX662 MPP uses native ISP vertical stride {}",ver_stride);
+    }
+
     v4l2_requestbuffers request{};
     request.count = 4;
     request.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
@@ -847,7 +1045,7 @@ class RockchipMppStream::Impl {
         owner.m_camera_holder->get_camera().index,
         CameraStream::CAM_STATUS_STREAMING);
     const int fps = std::max(
-        1, owner.m_camera_holder->get_settings().streamed_video_format.framerate);
+        1, configured_fps);
     const auto frame_period = std::chrono::microseconds(1000000 / fps);
     auto next_frame = std::chrono::steady_clock::now();
     uint64_t synthetic_index = 0;
@@ -1498,6 +1696,7 @@ class RockchipMppStream::Impl {
   int bootstrap_keyframes_remaining = 3;
   MppCodingType coding = MPP_VIDEO_CodingAVC;
   RK_U32 width = 0, height = 0, hor_stride = 0, ver_stride = 0;
+  int configured_fps = 30, configured_readout_mode = 0;
 };
 
 RockchipMppStream::RockchipMppStream(

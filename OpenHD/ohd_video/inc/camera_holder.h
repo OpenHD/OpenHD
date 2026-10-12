@@ -32,6 +32,7 @@
 
 #include "camera.hpp"
 #include "camera_settings.hpp"
+#include "rk_camera_modes.hpp"
 #include "openhd_action_handler.h"
 #include "openhd_bitrate.h"
 #include "openhd_plugin_manager.h"
@@ -63,6 +64,25 @@ class CameraHolder :
       for (const auto& control : veye_gx::controls) {
         const auto current = veye_gx::read(control);
         if (current) gx_isp_values[control.id] = *current;
+      }
+    }
+    if (has_rk_camera_modes()) {
+      auto& settings = unsafe_get_settings();
+      const auto& f = settings.streamed_video_format;
+      // Migrate older crop settings without switching the user's resolution.
+      const int inferred = f.width == 1280 && f.height == 720 ? 1 : 0;
+      if (!rk_camera_modes::contains(rk_camera_modes::register_driver_present(),
+                                     settings.rk_readout_mode, f.width,f.height,f.framerate)) {
+        if (rk_camera_modes::contains(rk_camera_modes::register_driver_present(),
+                                     inferred,f.width,f.height,f.framerate)) {
+          settings.rk_readout_mode = inferred;
+        } else {
+          settings.rk_readout_mode = 0;
+          settings.streamed_video_format.width = 1920;
+          settings.streamed_video_format.height = 1080;
+          settings.streamed_video_format.framerate = 30;
+        }
+        persist(false);
       }
     }
     // Hornet and Rekindle expose fixed CSI modes. Migrate values persisted by
@@ -153,9 +173,30 @@ class CameraHolder :
     notify_plugin_video_settings_changed();
     return true;
   }
+  bool has_rk_camera_modes() const {
+    return (OHDPlatform::instance().is_x21() || OHDPlatform::instance().is_luckfox_aura()) &&
+        m_camera.requires_rockchip1126_mpp_csi_pipeline() &&
+        get_settings().rockchip_impl == ROCKCHIP_IMPL_NATIVE_MPP &&
+        rk_camera_modes::sensor_present();
+  }
+  bool set_rk_readout_mode(int value) {
+    if (!has_rk_camera_modes() || value < 0 || value > 2 || (value == 2 && !rk_camera_modes::register_driver_present())) return false;
+    if (value == get_settings().rk_readout_mode) return true;
+    auto& settings = unsafe_get_settings();
+    settings.rk_readout_mode = value;
+    settings.streamed_video_format.width = value == 1 ? 1280 : 1920;
+    settings.streamed_video_format.height = value == 1 ? 720 : 1080;
+    settings.streamed_video_format.framerate = value == 1 ? 60 : 30;
+    persist();
+    notify_plugin_video_settings_changed();
+    return true;
+  }
   // it is only possible to validate setting the video width,height and fps
   // if we do them together
   bool set_video_width_height_framerate(int width, int height, int framerate) {
+    if (has_rk_camera_modes() && !rk_camera_modes::contains(
+        rk_camera_modes::register_driver_present(), get_settings().rk_readout_mode,
+        width,height,framerate)) return false;
     if (!openhd::validate_video_width_height_fps(width, height, framerate)) {
       return false;
     }

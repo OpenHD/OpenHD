@@ -45,7 +45,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
     mpp_debug_bitrate_sweep,
     mpp_debug_bitrate_min_kbits, mpp_debug_bitrate_max_kbits,
     mpp_debug_bitrate_period_seconds, streamed_video_format,
-    rpi_libcamera_sensor_mode, rpi_libcamera_impl, rockchip_impl,
+    rpi_libcamera_sensor_mode, rpi_libcamera_impl, rockchip_impl, rk_readout_mode,
     h26x_bitrate_kbits, h26x_keyframe_interval, h26x_intra_refresh_type,
     h26x_num_slices, nxp_enable_aud, air_recording, camera_rotation_degree,
     openhd_flip,
@@ -174,7 +174,26 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
         get_settings().streamed_video_format.framerate);
     ret.push_back(openhd::Setting{
         "RESOLUTION_FPS",
-        openhd::StringSetting{format_string, c_width_height_framerate}});
+        openhd::StringSetting{format_string, c_width_height_framerate, [this]() {
+          const auto& f = get_settings().streamed_video_format;
+          return openhd::video_format_from_int_values(f.width,f.height,f.framerate);
+        }}});
+  }
+  if (has_rk_camera_modes()) {
+    ret.push_back(openhd::Setting{"RK_CAM_MODE", openhd::IntSetting{
+      get_settings().rk_readout_mode,
+      [this](std::string,int value) { return set_rk_readout_mode(value); },
+      [this]() { return get_settings().rk_readout_mode; }}});
+    const bool aura = rk_camera_modes::register_driver_present();
+    ret.push_back(openhd::Setting{"RK_FPS_LOCK", openhd::IntSetting{
+      aura ? 1 : 0, [](std::string,int) { return false; }}});
+    for (int mode = 0; mode < 3; ++mode) {
+      const char* id = mode == 0 ? "RK_FMT_FULL" : mode == 1 ? "RK_FMT_CROP" : "RK_FMT_HDR";
+      ret.push_back(openhd::Setting{id, openhd::StringSetting{
+        rk_camera_modes::format_list(aura,mode), [](std::string,std::string) { return false; }}});
+    }
+    ret.push_back(openhd::Setting{"RK_HDR_STATUS", openhd::StringSetting{
+      aura ? "ClearHDR DCG merge; cropped HDR experimental" : "HDR unavailable: X21 ISP merge not integrated", [](std::string,std::string) { return false; }}});
   }
   if (m_camera.requires_rpi_libcamera_pipeline()) {
     auto c_sensor_mode = [this](std::string, std::string value) {

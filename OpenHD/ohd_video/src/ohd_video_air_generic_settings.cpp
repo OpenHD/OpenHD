@@ -189,7 +189,7 @@ AirCameraGenericSettings AirCameraGenericSettingsHolder::create_default()
     ret.primary_camera_type = X_CAM_TYPE_ROCKCHIP_RV1126_CSI;
   } else if (OHDPlatform::instance().platform_type ==
              X_PLATFORM_TYPE_LUCKFOX_AURA) {
-    ret.primary_camera_type = X_CAM_TYPE_LUCKFOX_AURA_IMX415;
+    ret.primary_camera_type = X_CAM_TYPE_LUCKFOX_AURA_IMX662;
   }
 
   return ret;

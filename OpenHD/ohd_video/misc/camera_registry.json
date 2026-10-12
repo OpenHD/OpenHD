@@ -754,6 +754,18 @@
       ]
     },
     {
+      "key": "X_CAM_TYPE_LUCKFOX_AURA_IMX662",
+      "id": 151,
+      "name": "LUCKFOX_AURA_IMX662",
+      "ui_label": "IMX662 (native CSI)",
+      "resolutions": [
+        {"width": 1920, "height": 1080, "fps": 30},
+        {"width": 1920, "height": 1080, "fps": 60},
+        {"width": 1280, "height": 720, "fps": 120},
+        {"width": 1280, "height": 720, "fps": 137}
+      ]
+    },
+    {
       "key": "X_CAM_TYPE_LUCKFOX_AURA_IMX415",
       "id": 147,
       "name": "LUCKFOX_AURA_IMX415",
@@ -1001,6 +1013,11 @@
       ]
     },
     {
+      "key": "X21_IMX662",
+      "name": "IMX662 CSI",
+      "cameras": ["X_CAM_TYPE_LUCKFOX_AURA_IMX662"]
+    },
+    {
       "key": "X21_ARDUCAM",
       "name": "ARDUCAM",
       "cameras": [
@@ -1009,6 +1026,11 @@
         "X_CAM_TYPE_X21_ARDUCAM_IMX708",
         "X_CAM_TYPE_X21_OHD_Jaguar"
       ]
+    },
+    {
+      "key": "LUCKFOX_AURA_IMX662",
+      "name": "IMX662",
+      "cameras": ["X_CAM_TYPE_LUCKFOX_AURA_IMX662"]
     },
     {
       "key": "LUCKFOX_AURA_IMX415",
@@ -1101,11 +1123,11 @@
     },
     {
       "platform": "X_PLATFORM_TYPE_OPENHD_X21",
-      "manufacturers": ["X21_HDZERO", "X21_ARDUCAM", "ROCKCHIP_RV1126_TEST", "IP_CAMERA", "USB"]
+      "manufacturers": ["X21_HDZERO", "X21_IMX662", "X21_ARDUCAM", "ROCKCHIP_RV1126_TEST", "IP_CAMERA", "USB"]
     },
     {
       "platform": "X_PLATFORM_TYPE_LUCKFOX_AURA",
-      "manufacturers": ["LUCKFOX_AURA_IMX415", "LUCKFOX_AURA_VEYE", "ROCKCHIP_RV1126_TEST", "IP_CAMERA", "USB"]
+      "manufacturers": ["LUCKFOX_AURA_IMX662", "LUCKFOX_AURA_IMX415", "LUCKFOX_AURA_VEYE", "ROCKCHIP_RV1126_TEST", "IP_CAMERA", "USB"]
     }
   ],
   "secondary_choices": ["DISABLE", "IP_CAMERA", "USB", "DEBUG"],
