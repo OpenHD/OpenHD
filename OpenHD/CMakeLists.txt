@@ -56,6 +56,10 @@ endif()
 
 # Install the OpenHD executable
 install(TARGETS openhd DESTINATION bin)
+install(FILES settings/generated/catalog.json
+              settings/generated/platforms.json
+              settings/generated/imagewriter-settings.json
+        DESTINATION share/openhd/settings)
 
 # Audio source used when an air unit has no capture device connected.
 set(OPENHD_FALLBACK_AUDIO_FILE

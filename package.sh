@@ -305,6 +305,11 @@ create_package_directory() {
 
   install -m 0755 scripts/openhd-fleet-setup "${PKGDIR}usr/local/bin/openhd-fleet-setup"
   install -m 0644 systemd/openhd-fleet-setup.service "${PKGDIR}etc/systemd/system/openhd-fleet-setup.service"
+  install -d "${PKGDIR}usr/share/openhd/settings"
+  install -m 0644 OpenHD/settings/generated/catalog.json \
+    OpenHD/settings/generated/platforms.json \
+    OpenHD/settings/generated/imagewriter-settings.json \
+    "${PKGDIR}usr/share/openhd/settings/"
 
   if [[ "${PACKAGE_ARCH}" != "x86_64" ]]; then
     echo "Non-x86 architecture detected"
