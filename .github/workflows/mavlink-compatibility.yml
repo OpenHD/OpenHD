@@ -1,0 +1,16 @@
+name: MAVLink compatibility
+on:
+  push:
+    paths: ['OpenHD/ohd_telemetry/lib/mavlink-headers', 'OpenHD/ohd_telemetry/src/legacy_radio_settings.h', 'OpenHD/ohd_telemetry/test/test_legacy_radio_settings.cpp', '.github/workflows/mavlink-compatibility.yml']
+  pull_request:
+    paths: ['OpenHD/ohd_telemetry/lib/mavlink-headers', 'OpenHD/ohd_telemetry/src/legacy_radio_settings.h', 'OpenHD/ohd_telemetry/test/test_legacy_radio_settings.cpp', '.github/workflows/mavlink-compatibility.yml']
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - run: git submodule update --init OpenHD/ohd_telemetry/lib/mavlink-headers
+      - run: g++ -std=c++17 -Wno-address-of-packed-member -IOpenHD/ohd_telemetry/lib/mavlink-headers/mavlink/v2.0 -IOpenHD/ohd_telemetry/src OpenHD/ohd_telemetry/test/test_legacy_radio_settings.cpp -o /tmp/test-legacy-radio
+      - run: /tmp/test-legacy-radio

@@ -159,6 +159,8 @@ add_executable(test_joystick_reader test/test_joystick_reader.cpp)
 target_link_libraries(test_joystick_reader OHDTelemetryLib)
 
 add_executable(test_parameter_reapply test/test_parameter_reapply.cpp)
+add_executable(test_legacy_radio_settings test/test_legacy_radio_settings.cpp)
+target_link_libraries(test_legacy_radio_settings OHDTelemetryLib)
 target_link_libraries(test_parameter_reapply OHDTelemetryLib)
 add_executable(test_settings_registry test/test_settings_registry.cpp)
 target_link_libraries(test_settings_registry OHDTelemetryLib)

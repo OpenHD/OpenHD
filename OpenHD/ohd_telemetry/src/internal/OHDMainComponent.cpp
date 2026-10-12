@@ -748,7 +748,7 @@ void OHDMainComponent::process_command_self(
       handle_storage_action(command.command,
                             static_cast<uint8_t>(command.param1), "format");
     }
-  } else if (command.command == OPENHD_CMD_STORAGE_MANAGE) {
+  } else if (command.command == MAV_CMD_OPENHD_STORAGE_MANAGE) {
     if (!RUNS_ON_AIR) {
       message_buffer.push_back(ack_command_result(
           source_sys_id, source_comp_id, command.command,
@@ -785,7 +785,7 @@ void OHDMainComponent::process_command_self(
             MAV_RESULT_DENIED));
       }
     }
-  } else if (command.command == OPENHD_CMD_INITIATE_CHANNEL_SEARCH) {
+  } else if (command.command == MAV_CMD_OPENHD_INITIATE_CHANNEL_SEARCH) {
     if (RUNS_ON_AIR) {
       m_console->debug("Scan channels is only a feature for ground unit");
       return;
@@ -793,7 +793,7 @@ void OHDMainComponent::process_command_self(
       const auto channels_to_scan = static_cast<uint32_t>(command.param1);
       const auto channel_widths_mask =
           parse_scan_channel_widths_param(command.param2);
-      m_console->debug("OPENHD_CMD_INITIATE_CHANNEL_SEARCH {}",
+      m_console->debug("MAV_CMD_OPENHD_INITIATE_CHANNEL_SEARCH {}",
                        channels_to_scan);
       bool success = false;
       if ((channels_to_scan == 0 || channels_to_scan == 1 ||
@@ -807,13 +807,13 @@ void OHDMainComponent::process_command_self(
           success = openhd::LinkActionHandler::instance().wb_cmd_scan_channels(
               scanChannelsParam);
         }
-        m_console->debug("OPENHD_CMD_INITIATE_CHANNEL_SEARCH result: {}",
+        m_console->debug("MAV_CMD_OPENHD_INITIATE_CHANNEL_SEARCH result: {}",
                          success);
       }
       message_buffer.push_back(
           ack_command(source_sys_id, source_comp_id, command.command, success));
     }
-  } else if (command.command == OPENHD_CMD_INITIATE_CHANNEL_ANALYZE) {
+  } else if (command.command == MAV_CMD_OPENHD_INITIATE_CHANNEL_ANALYZE) {
     const auto callback=openhd::LinkActionHandler::instance().wb_cmd_analyze_channels;
     const bool valid=std::isfinite(command.param1) && command.param1>=0 && command.param1<=2 && std::floor(command.param1)==command.param1;
     const int channels_to_scan=valid ? static_cast<int>(command.param1) : -1;

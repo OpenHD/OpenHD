@@ -22,6 +22,7 @@
  ******************************************************************************/
 
 #include "MEndpoint.h"
+#include "../legacy_radio_settings.h"
 
 #include "openhd_spdlog_include.h"
 
@@ -84,7 +85,7 @@ void MEndpoint::parseNewData(const uint8_t* data, const int data_len) {
   std::vector<MavlinkMessage> messages;
   mavlink_message_t msg;
   for (int i = 0; i < data_len; i++) {
-    uint8_t res = mavlink_parse_char(m_mavlink_channel, (uint8_t)data[i], &msg,
+    uint8_t res = openhd_parse_char(m_mavlink_channel, (uint8_t)data[i], &msg,
                                      &receiveMavlinkStatus);
     if (res) {
       messages.push_back(MavlinkMessage{msg});
