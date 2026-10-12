@@ -3,6 +3,10 @@
 #include <cassert>
 #include <iostream>
 
+// Common logging links against this application hook. Keep this protocol test
+// independent of the production recording directory, like the registry tests.
+const char* getVideoPath() { return "/tmp/"; }
+
 int main() {
   using namespace openhd::link_statistics;
   Xmavlink_openhd_stats_monitor_mode_wifi_card_t card{};
