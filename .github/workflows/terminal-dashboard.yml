@@ -12,19 +12,20 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
+      - name: Fetch common-library dependencies
+        run: git submodule update --init OpenHD/ohd_common/lib/json OpenHD/ohd_common/lib/spdlog
       - name: Install terminal dependencies
-        run: sudo apt-get update && sudo apt-get install -y libncurses-dev
+        run: sudo apt-get update && sudo apt-get install -y cmake g++ python3 libncurses-dev
       - name: Compile dashboard and headless fallback
         run: |
-          g++ -std=c++17 -Wall -Wextra -Werror -pthread \
-            -IOpenHD/ohd_common/inc -DOPENHD_HAVE_CURSES \
-            OpenHD/ohd_common/src/openhd_ncurses_ui.cpp \
-            OpenHD/ohd_common/test/test_ncurses_ui.cpp \
-            -lncurses -o /tmp/test_ncurses_ui
+          cmake -S OpenHD/ohd_common -B /tmp/dashboard-build \
+            -DCMAKE_BUILD_TYPE=Debug -DOPENHD_DEVELOPMENT_BUILD=OFF
+          cmake --build /tmp/dashboard-build --target test_ncurses_ui --parallel 2
           g++ -std=c++17 -Wall -Wextra -Werror \
             -IOpenHD/ohd_common/inc \
+            -IOpenHD/ohd_common/lib/spdlog/include \
             -c OpenHD/ohd_common/src/openhd_ncurses_ui.cpp -o /tmp/dashboard-headless.o
       - name: Exercise terminal resize, logs, and keyboard actions
         env:
           TERM: xterm
-        run: script -q -e -c /tmp/test_ncurses_ui /tmp/dashboard-test.log
+        run: script -q -e -c /tmp/dashboard-build/test_ncurses_ui /tmp/dashboard-test.log
