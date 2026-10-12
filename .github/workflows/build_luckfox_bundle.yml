@@ -52,6 +52,10 @@ jobs:
             url."https://x-access-token:${OPENHD_SUBMODULE_TOKEN}@github.com/".insteadOf \
             https://github.com/
           git submodule update --init
+          # Devourer has update=none for ordinary clones; production builds
+          # need its pinned core, without its reference-driver submodules.
+          git submodule update --init --checkout OpenHD/ohd_interface/lib/devourer
+          test -f OpenHD/ohd_interface/lib/devourer/CMakeLists.txt
           git -C OpenHD/ohd_interface/lib/devourer \
             config submodule.reference/rtl8852cu.update none
 
