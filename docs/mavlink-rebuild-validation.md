@@ -1,9 +1,9 @@
 # MAVLink migration validation
 
-Validation snapshot: 2026-10-12. The source contract and upgrade order are
+Validation snapshot: 2026-10-13. The source contract and upgrade order are
 described in [mavlink-dialect.md](mavlink-dialect.md).
 
-## Published revisions
+## Code revisions
 
 | Repository | Revision | Result |
 | --- | --- | --- |
@@ -11,9 +11,11 @@ described in [mavlink-dialect.md](mavlink-dialect.md).
 | OpenHD/mavlink-headers, main | 52540ad2 | Regeneration produces an identical checked-in tree |
 | OpenHD/OpenHD, openhd-3.0 | 6ec9e328 | Generated statistics and vendor compiler compatibility integrated |
 | OpenHD/QOpenHD, dev-release | ae57520c | All eight platform workflows passed |
-| OpenHD/openhd-glide, dev-release | d90dae6 | Wire regression passed; vendor security repository corrected |
+| OpenHD/openhd-glide, dev-release | 00146c2 | Wire regression passed; corrected Cubie package built and published |
 | OpenHD-Technologies/OpenHD-FleetControl, main | 57df9a61 | Build, 93 tests, wire check and production deployment passed |
 | OpenHD/OpenHD-WebUI, master | 88f490c3 | Package build and generated wire check passed |
+
+Later OpenHD commits update this report only.
 
 A subsequent OpenHD test-only correction supplies the recording-path hook
 required when linking the statistics regression against the common library.
@@ -22,7 +24,7 @@ It follows the same test convention as the settings registry tests.
 ## Build evidence
 
 - [OpenHD package matrix](https://github.com/OpenHD/OpenHD/actions/runs/38306025984):
-  AMD64, ARM64, ARMhf and Orqa succeeded. X20 status must be read from the run.
+  AMD64, ARM64, ARMhf, Orqa and X20 succeeded. The complete run is green.
 - [OpenHD X21B/Aura](https://github.com/OpenHD/OpenHD/actions/runs/38306025834),
   [Luckfox Lyra](https://github.com/OpenHD/OpenHD/actions/runs/38306025936) and
   [OpenHD build test](https://github.com/OpenHD/OpenHD/actions/runs/38306025853)
@@ -53,7 +55,12 @@ It follows the same test convention as the settings registry tests.
   from the active mirror but are available from Debian's signed archive. The
   chroot script now uses that archive for Bullseye security sources. The
   [new package matrix](https://github.com/OpenHD/openhd-glide/actions/runs/38312011287)
-  has passed AMD64, ARM64, ARMhf and Orqa; Cedar target results remain in that run.
+  passed AMD64, ARM64, ARMhf and Orqa. The archive URL expression has a fixture
+  check for both HTTP and HTTPS sources. The corrected
+  [targeted Cubie rebuild](https://github.com/OpenHD/openhd-glide/actions/runs/38313855709)
+  succeeded and published its package; its workflow also passed actionlint
+  1.7.12. Normal builds still
+  include both Cedar platforms; the manual `cubie_only` option skips other jobs.
 - [Terminal dashboard rebuild](https://github.com/OpenHD/OpenHD/actions/runs/38311512039)
   succeeded after switching to the existing common-library CMake target and
   fetching its dependencies. Local terminal and headless checks also passed.
