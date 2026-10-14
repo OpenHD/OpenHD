@@ -1495,12 +1495,6 @@ void WBLink::apply_txpower() {
     // Apply the power setting to this specific card
     if (m_wb_txrx->uses_devourer()) {
       int offset_qdb = devourer_power_offset_qdb(power_level);
-      // Retain the existing 40 MHz safety backoff for RTL8812A, now without
-      // flattening its calibrated rate table.
-      if (m_profile.is_air && settings.wb_air_tx_channel_width == 40 &&
-          m_broadcast_cards.at(i).type == WiFiCardType::DEVOURER_RTL8812A) {
-        offset_qdb = std::min(offset_qdb, -12);
-      }
       const int applied_qdb =
           m_wb_txrx->set_devourer_tx_power_level(i, power_level, offset_qdb);
       if (power_level > openhd::WB_TX_POWER_LEVEL_MAX_NORMAL) {
@@ -3194,6 +3188,69 @@ void WBLink::perform_channel_analyze(int channels_to_scan) {
   }
   if (openhd::NexmonScout::installed()) {
     perform_nexmon_analyze(channels_to_scan);
+    return;
+  }
+  if (m_wb_txrx->uses_devourer()) {
+    const auto& card = m_broadcast_cards.at(0);
+    const auto channels = openhd::wb::get_analyze_channels_frequencies(card, channels_to_scan);
+    if (channels.empty()) return;
+    // Retune without resuming injection between bins. Restore the configured
+    // channel and user passive-mode preference even if a USB operation throws.
+    struct RestoreChannel {
+      std::function<void()> restore;
+      ~RestoreChannel() { try { restore(); } catch (...) {} }
+    } restore{[this] {
+      if (!apply_frequency_and_channel_width_from_settings()) {
+        m_wb_txrx->set_passive_mode(true);
+        m_console->error("Channel survey could not restore the configured channel; injection stays paused");
+      }
+    }};
+    auto stats = openhd::LinkActionHandler::instance().get_link_stats();
+    stats.gnd_operating_mode.operating_mode = 2;
+    openhd::LinkActionHandler::instance().update_link_stats(stats);
+    m_wb_txrx->set_passive_mode(true);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    const uint32_t batch = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now().time_since_epoch()).count();
+    std::vector<uint16_t> packets, metrics;
+    for (size_t i = 0; i < channels.size(); ++i) {
+      uint16_t packed = 0x3fff, count = 0; // failed tune/observation, not a quiet bin
+      if (m_wb_txrx->set_devourer_channel(channels[i].frequency, 20)) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(30));
+        reset_all_rx_stats();
+        const auto sample = m_wb_txrx->measure_devourer_survey(0);
+        const auto rx = m_wb_txrx->get_rx_stats();
+        const auto foreign = rx.count_p_any >= rx.count_p_valid
+                                 ? rx.count_p_any - rx.count_p_valid : 0;
+        count = static_cast<uint16_t>(std::min<uint64_t>(foreign, UINT16_MAX));
+        if (sample) {
+          packed = (sample->nhm_valid ? 0x8000 : 0) |
+                   (sample->busy_valid ? 0x4000 : 0) |
+                   (std::min<int>(100, sample->nhm_env_percent) << 7) |
+                   std::min<int>(100, sample->busy_percent);
+        }
+      } else {
+        m_console->warn("Channel survey could not tune {}MHz", channels[i].frequency);
+      }
+      packets.push_back(count);
+      metrics.push_back(packed);
+      // Publish cumulative pages so a dropped progress packet is repaired by
+      // the next update, including band lists longer than 30 channels.
+      for (size_t offset = 0; offset <= i; offset += 30) {
+        openhd::LinkActionHandler::AnalyzeChannelsResult result{};
+        result.devourer_survey = true;
+        result.rf_batch_id = batch;
+        result.rf_page_offset = offset;
+        result.rf_total_channels = channels.size();
+        result.progress = OHDUtil::calculate_progress_perc(i + 1, channels.size());
+        for (size_t j = 0; j < 30 && offset + j <= i; ++j) {
+          result.channels_mhz[j] = channels[offset + j].frequency;
+          result.foreign_packets[j] = packets[offset + j];
+          result.survey_metrics[j] = metrics[offset + j];
+        }
+        openhd::LinkActionHandler::instance().add_analyze_result(result);
+      }
+    }
     return;
   }
   const auto analyze_begin = std::chrono::steady_clock::now();

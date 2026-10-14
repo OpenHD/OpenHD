@@ -376,6 +376,8 @@ class LinkActionHandler {
     uint32_t rf_batch_id = 0;
     uint16_t rf_page_offset = 0, rf_total_channels = 0;
     std::array<uint16_t, 30> rf_busy_centipercent{0};
+    bool devourer_survey = false;
+    std::array<uint16_t, 30> survey_metrics{0};
     int8_t progress;
   };
   void add_analyze_result(AnalyzeChannelsResult scan_result) {

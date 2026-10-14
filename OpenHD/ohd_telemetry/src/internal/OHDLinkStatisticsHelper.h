@@ -193,6 +193,14 @@ static MavlinkMessage generate_msg_analyze_channels_progress(
     tmp.dummy0=0x4553;  // ESP RF metric, not foreign packet counts.
     memcpy(tmp.dummy,progress.rf_busy_centipercent.data(),sizeof(tmp.dummy));
   }
+  if (progress.devourer_survey) {
+    // Versioned use of reserved fields; the MAVLink layout/CRC is unchanged.
+    // Per channel: bit15 NHM valid, bit14 CLM valid, bits7..13 NHM env %, bits0..6 busy %.
+    tmp.dummy0 = 0x4456;
+    tmp.dummy1 = progress.rf_batch_id;
+    tmp.dummy2 = (static_cast<uint32_t>(progress.rf_total_channels) << 16) | progress.rf_page_offset;
+    memcpy(tmp.dummy, progress.survey_metrics.data(), sizeof(tmp.dummy));
+  }
   tmp.progress_perc = progress.progress;
   mavlink_msg_openhd_wifbroadcast_analyze_channels_progress_encode(
       system_id, component_id, &msg.m, &tmp);
