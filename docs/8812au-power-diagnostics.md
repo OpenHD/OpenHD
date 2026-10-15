@@ -28,6 +28,25 @@ it does **not** mean RF power was measured. Other chips retain their existing
 representative power-state reporting; the A/B raw snapshot is Jaguar1-only.
 Readback exceptions are logged and do not cancel the power change.
 
+Jaguar1 snapshots also report `write_status_valid`, `txagc_attempted` and
+`txagc_failed` for the last power apply. These count per-rate register writes,
+excluding training writes. A failed USB control transfer is no longer silently
+discarded by the BB-write wrapper. Successful USB completion still does not
+prove the chip retained the value: compare the register readback as well.
+
+- Zero attempted writes narrows the problem to the per-rate programming path.
+- Failed writes identify transport-level rejection/short completion.
+- Successful writes with mismatched readback point to hardware retention,
+  bank/initialization state or another writer; these require further testing.
+
+The kernel driver's `usbctrl_vendorreq` retries eligible failed control
+requests (up to ten with its enabled vendor-request retry option) and logs
+failures. Devourer's synchronous `ctrl_write` uses one transfer; its old BB
+wrapper discarded the returned success flag. This is a candidate difference,
+not confirmation that the AC56's transfers failed. The register-model test
+`Jaguar1TxPowerWriteSelftest` verifies both normal programming and the exact
+stuck-TXAGC/changing-training pattern when TXAGC writes are deliberately rejected.
+
 ## Tester procedure
 
 1. Confirm Air identifies the ASUS USB-AC56 as `0b05:17d2`. Disable Air PIT
