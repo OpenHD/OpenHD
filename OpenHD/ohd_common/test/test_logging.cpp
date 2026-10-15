@@ -65,6 +65,7 @@ int main(int argc, char *argv[]) {
   openhd::log::get_default()->warn("OpenHD category warning");
   openhd::log::create_or_get("camera_test")->info("Camera category message");
   openhd::log::create_or_get("telemetry_test")->info("Other category message");
+  openhd::log::create_or_get("power")->info("Power readback diagnostic");
   if (openhd::log::persistent_logging_enabled()) {
     bool listener_saw_stop = false;
     bool listener_saw_start = false;
@@ -75,8 +76,10 @@ int main(int argc, char *argv[]) {
         });
     if (!openhd::log::set_persistent_logging_enabled(false, false)) return 1;
     openhd::log::create_or_get("camera_test")->warn("MUST_NOT_BE_SAVED");
+    openhd::log::create_or_get("power")->warn("POWER_MUST_NOT_BE_SAVED");
     if (!openhd::log::set_persistent_logging_enabled(true, false)) return 1;
     openhd::log::create_or_get("camera_test")->info("Runtime restart message");
+    openhd::log::create_or_get("power")->info("Power logging restarted");
     openhd::log::remove_persistent_logging_listener(listener);
     if (!listener_saw_stop || !listener_saw_start) return 1;
   }
@@ -86,6 +89,10 @@ int main(int argc, char *argv[]) {
        !contains(directory / "camera.log", "Camera category message") ||
        !contains(directory / "other.log", "Other category message") ||
        !contains(directory / "camera.log", "Runtime restart message") ||
+       !contains(directory / "power.log", "Power readback diagnostic") ||
+       !contains(directory / "power.log", "Power logging restarted") ||
+       contains(directory / "camera.log", "Power readback diagnostic") ||
+       contains(directory / "power.log", "POWER_MUST_NOT_BE_SAVED") ||
        contains(directory / "camera.log", "MUST_NOT_BE_SAVED"))) {
     std::cerr << "Persistent log contents do not match runtime controls\n";
     return 1;

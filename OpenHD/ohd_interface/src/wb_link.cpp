@@ -1495,9 +1495,29 @@ void WBLink::apply_txpower() {
 
     // Apply the power setting to this specific card
     if (m_wb_txrx->uses_devourer()) {
+      const bool diagnose = openhd::log::persistent_logging_enabled();
+      const auto power_log = openhd::log::create_or_get("power");
+      if (diagnose) {
+        power_log->info(
+            "power-diag-v1 role={} card={} iface={} configured_freq_mhz={} configured_air_bw={} "
+            "selected_level={} effective_level={} pit_setting={} armed={} rc_mode={} before: {}",
+            m_profile.is_air ? "Air" : "Ground", i,
+            m_broadcast_cards.at(i).device_name, settings.wb_frequency,
+            settings.wb_air_tx_channel_width, settings.wb_tx_power_level,
+            power_level, settings.wb_pit_mode, m_is_armed, rc_tx_mode_override,
+            m_wb_txrx->get_devourer_tx_power_diagnostics(i));
+      }
       int offset_qdb = devourer_power_offset_qdb(power_level);
       const int applied_qdb =
           m_wb_txrx->set_devourer_tx_power_level(i, power_level, offset_qdb);
+      if (diagnose) {
+        power_log->info(
+            "power-diag-v1 role={} card={} selected_level={} effective_level={} "
+            "normal_offset_qdb={} returned_offset_qdb={} after: {}",
+            m_profile.is_air ? "Air" : "Ground", i,
+            settings.wb_tx_power_level, power_level, offset_qdb, applied_qdb,
+            m_wb_txrx->get_devourer_tx_power_diagnostics(i));
+      }
       if (power_level > openhd::WB_TX_POWER_LEVEL_MAX_NORMAL) {
         m_console->debug(
             "Devourer card {} TX power target {}%: overdrive applied {} qdB",

@@ -76,6 +76,7 @@ struct PersistentLogState {
   std::string directory;
   std::shared_ptr<RuntimeFileSink> openhd;
   std::shared_ptr<RuntimeFileSink> camera;
+  std::shared_ptr<RuntimeFileSink> power;
   std::shared_ptr<RuntimeFileSink> other;
   std::unordered_map<std::string, spdlog::level::level_enum> previous_levels;
   uint64_t next_listener_id = 1;
@@ -100,6 +101,7 @@ std::string lowercase(std::string value) {
 std::shared_ptr<spdlog::sinks::sink> sink_for_logger(const std::string& name) {
   auto& state = persistent_state();
   const auto lower = lowercase(name);
+  if (lower == "power") return state.power;
   if (lower.find("cam") != std::string::npos || lower.find("video") != std::string::npos ||
       lower.find("gst") != std::string::npos || lower.find("mpp") != std::string::npos ||
       lower == "v_air" || lower == "v_gnd" || lower.find("rtp") != std::string::npos)
@@ -170,6 +172,7 @@ bool configure_persistent_logging(bool enabled) {
     state.previous_levels.clear();
     state.openhd->set_target(nullptr);
     state.camera->set_target(nullptr);
+    state.power->set_target(nullptr);
     state.other->set_target(nullptr);
     return true;
   }
@@ -185,6 +188,7 @@ bool configure_persistent_logging(bool enabled) {
     };
     state.openhd->set_target(make_sink("openhd.log"));
     state.camera->set_target(make_sink("camera.log"));
+    state.power->set_target(make_sink("power.log"));
     state.other->set_target(make_sink("other.log"));
     state.enabled.store(true);
     spdlog::apply_all([](const std::shared_ptr<spdlog::logger>& logger) {
@@ -194,6 +198,7 @@ bool configure_persistent_logging(bool enabled) {
   } catch (const std::exception& error) {
     state.openhd->set_target(nullptr);
     state.camera->set_target(nullptr);
+    state.power->set_target(nullptr);
     state.other->set_target(nullptr);
     state.enabled.store(false);
     std::cerr << "Cannot enable persistent OpenHD logs: " << error.what() << '\n';
@@ -338,6 +343,7 @@ void openhd::log::initialize_persistent_logging() {
   state.initialized = true;
   state.openhd = std::make_shared<RuntimeFileSink>();
   state.camera = std::make_shared<RuntimeFileSink>();
+  state.power = std::make_shared<RuntimeFileSink>();
   state.other = std::make_shared<RuntimeFileSink>();
   spdlog::apply_all([](const std::shared_ptr<spdlog::logger>& logger) {
     attach_persistent_sink(logger);
