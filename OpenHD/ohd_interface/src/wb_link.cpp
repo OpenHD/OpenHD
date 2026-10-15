@@ -1407,7 +1407,7 @@ void WBLink::apply_txpower() {
   const auto settings = m_settings->get_settings();
   const int rc_tx_mode_override = m_rc_tx_mode_override.load();
   const bool rc_tx_mode_pit =
-      rc_tx_mode_override ==
+      m_profile.is_air && rc_tx_mode_override ==
       static_cast<int>(openhd::wb::RCChannelHelper::TxMode::PIT);
   const auto before = std::chrono::steady_clock::now();
   const bool use_power_levels =
@@ -1430,7 +1430,8 @@ void WBLink::apply_txpower() {
     uint32_t card_pwr_idx = settings.wb_tx_power_idx_per_card.at(i);
     int power_level = settings.wb_tx_power_level;
     if (rc_tx_mode_pit ||
-        (rc_tx_mode_override < 0 && settings.wb_pit_mode && !m_is_armed)) {
+        (m_profile.is_air && rc_tx_mode_override < 0 && settings.wb_pit_mode &&
+         !m_is_armed)) {
       power_level = openhd::WB_TX_POWER_LEVEL_20;
     }
 
@@ -2109,15 +2110,19 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
       WB_TX_POWER_LEVEL,
       openhd::IntSetting{settings.wb_tx_power_level, cb_wb_tx_power_level}});
 
-  auto cb_wb_pit_mode = [this](std::string, int value) {
-    if (!openhd::validate_yes_or_no(value)) return false;
-    m_settings->unsafe_get_settings().wb_pit_mode = value;
-    m_settings->persist();
-    m_request_apply_tx_power = true;
-    return true;
-  };
-  ret.push_back(openhd::Setting{
-      WB_PIT_MODE, openhd::IntSetting{settings.wb_pit_mode, cb_wb_pit_mode}});
+  // PIT mode limits the Air transmitter only. Ground always uses its own
+  // selected power, including when an older settings file has PIT enabled.
+  if (m_profile.is_air) {
+    auto cb_wb_pit_mode = [this](std::string, int value) {
+      if (!openhd::validate_yes_or_no(value)) return false;
+      m_settings->unsafe_get_settings().wb_pit_mode = value;
+      m_settings->persist();
+      m_request_apply_tx_power = true;
+      return true;
+    };
+    ret.push_back(openhd::Setting{
+        WB_PIT_MODE, openhd::IntSetting{settings.wb_pit_mode, cb_wb_pit_mode}});
+  }
 
   auto cb_wb_enable_devourer_logging = [this](std::string, int value) {
     if (!openhd::validate_yes_or_no(value)) return false;
@@ -2290,7 +2295,7 @@ void WBLink::wt_update_statistics() {
   const auto& curr_settings = m_settings->unsafe_get_settings();
   const int rc_tx_mode_override = m_rc_tx_mode_override.load();
   const bool rc_tx_mode_pit =
-      rc_tx_mode_override ==
+      m_profile.is_air && rc_tx_mode_override ==
       static_cast<int>(openhd::wb::RCChannelHelper::TxMode::PIT);
   apply_retransmission_history_window(
       curr_settings.wb_retransmission_history_video_ms,
@@ -2332,8 +2337,8 @@ void WBLink::wt_update_statistics() {
           int level = curr_settings.wb_tx_power_level;
           if (rc_tx_mode_pit) {
             level = openhd::WB_TX_POWER_LEVEL_20;
-          } else if (rc_tx_mode_override < 0 && curr_settings.wb_pit_mode &&
-                     !armed) {
+          } else if (m_profile.is_air && rc_tx_mode_override < 0 &&
+                     curr_settings.wb_pit_mode && !armed) {
             level = openhd::WB_TX_POWER_LEVEL_20;
           }
           const int value = power_level_to_value(profile, level);
