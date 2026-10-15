@@ -34,6 +34,15 @@ excluding training writes. A failed USB control transfer is no longer silently
 discarded by the BB-write wrapper. Successful USB completion still does not
 prove the chip retained the value: compare the register readback as well.
 
+Each snapshot in `power.log` also includes `txagc_result`:
+`write_failed`, `no_writes_attempted`, `readback_mismatch`, or
+`sampled_readback_matches`. Unsupported/uninitialized diagnostics report
+`unavailable`; completed writes without usable readback report
+`writes_completed_readback_unavailable`. The result describes that snapshot:
+the `after` entry is the immediate check for the requested change, while
+`before` checks the preceding setting. Matching readback covers the sampled
+MCS0/MCS7 indices on each path, not every rate or actual RF output.
+
 - Zero attempted writes narrows the problem to the per-rate programming path.
 - Failed writes identify transport-level rejection/short completion.
 - Successful writes with mismatched readback point to hardware retention,
