@@ -5,9 +5,9 @@
 
 #include "camerastream.h"
 
-// Native i.MX8 capture and VPU encoding through the V4L2 API. This path does
-// not use GStreamer: raw NV12M frames are read from the ISI capture node,
-// passed to the vsi_v4l2 mem2mem encoder, and packetized by OpenHD's RTPHelper.
+// Native i.MX8 capture and VPU encoding. With the Hantro SDK, ORQA cameras
+// share capture/encoder memory through the direct VC8000E API. Other NXP
+// cameras retain the NV12M V4L2 mem2mem path. Both use OpenHD's RTPHelper.
 class NxpV4l2Stream final : public CameraStream {
  public:
   NxpV4l2Stream(std::shared_ptr<CameraHolder> camera_holder,

@@ -41,11 +41,16 @@ test -f "${SDKTARGETSYSROOT}/usr/lib/libsodium.so.26"
 test -f "${SDKTARGETSYSROOT}/usr/lib/gstreamer-1.0/libgstperf.so"
 test -f "${SDKTARGETSYSROOT}/usr/include/rtl-sdr.h"
 test -f "${SDKTARGETSYSROOT}/usr/lib/pkgconfig/librtlsdr.pc"
+test -f "${SDKTARGETSYSROOT}/usr/include/hantro_VC8000E_enc/hevcencapi.h"
+test -f "${SDKTARGETSYSROOT}/usr/lib/libhantro_vc8000e.so"
 find "${SDKTARGETSYSROOT}/usr/lib" -name 'librtlsdr.so*' -print -quit | grep -q .
 
 rm -rf "${build_dir}"
 cmake -S "${repo_root}/OpenHD" -B "${build_dir}" -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
+  -DOPENHD_ENABLE_ORQA_HANTRO=ON \
+  -DORQA_HANTRO_INCLUDE_DIR="${SDKTARGETSYSROOT}/usr/include/hantro_VC8000E_enc" \
+  -DORQA_HANTRO_LIBRARY="${SDKTARGETSYSROOT}/usr/lib/libhantro_vc8000e.so" \
   -DCMAKE_DISABLE_FIND_PACKAGE_SDL2=TRUE
 cmake --build "${build_dir}" --parallel "$(nproc)"
 
@@ -62,6 +67,7 @@ grep -q 'Shared library: \[libPocoFoundation.so.95\]' "${needed_file}"
 grep -q 'Shared library: \[libPocoNet.so.95\]' "${needed_file}"
 grep -q 'Shared library: \[libsodium.so.26\]' "${needed_file}"
 grep -q 'Shared library: \[librtlsdr.so' "${needed_file}"
+grep -q 'Shared library: \[libhantro_vc8000e.so.1\]' "${needed_file}"
 if grep -q 'Shared library: \[libSDL2' "${needed_file}"; then
   echo "SDL2 is not installed on the Orqa controller image." >&2
   exit 1

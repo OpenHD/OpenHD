@@ -80,7 +80,7 @@ openhd::RTPHelper::~RTPHelper() { rtp_payload_encode_destroy(encoder); }
 void openhd::RTPHelper::feed_multiple_nalu(const uint8_t* data, int data_len) {
   int offset = 0;
   while (offset < data_len) {
-    int nalu_len = find_next_nal(&data[offset], data_len);
+    int nalu_len = find_next_nal(&data[offset], data_len - offset);
     on_new_split_nalu(&data[offset], nalu_len);
     offset += nalu_len;
   }
@@ -122,6 +122,7 @@ void openhd::RTPHelper::on_new_split_nalu(const uint8_t* data, int data_len) {
         // we can discard this NAL
       } else {
         m_config_finder.reset();
+        m_codec_config_sent = false;
         m_config_finder.save_if_config(nalu);
       }
     } else {
@@ -143,7 +144,8 @@ void openhd::RTPHelper::on_new_nalu_frame(const uint8_t* data, int data_len) {
   }
   const auto elapsed_last_config =
       std::chrono::steady_clock::now() - m_last_codec_config_send_ts;
-  if (elapsed_last_config >= std::chrono::seconds(1)) {
+  if (!m_codec_config_sent || elapsed_last_config >= std::chrono::seconds(1)) {
+    m_codec_config_sent = true;
     m_last_codec_config_send_ts = std::chrono::steady_clock::now();
     auto config = m_config_finder.get_config_data(m_is_h265);
     feed_nalu(config->data(), config->size());

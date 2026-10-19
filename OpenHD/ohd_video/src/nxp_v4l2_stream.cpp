@@ -24,6 +24,9 @@
 
 #include "openhd_rtp.h"
 #include "openhd_spdlog.h"
+#ifdef OPENHD_ORQA_HANTRO_PRESENT
+#include "orqa_hantro_encoder.h"
+#endif
 
 namespace {
 
@@ -566,6 +569,58 @@ class NxpV4l2Stream::Impl {
     perf_started = now;
   }
 
+#ifdef OPENHD_ORQA_HANTRO_PRESENT
+  void run_hantro() {
+    const auto& settings = owner.m_camera_holder->get_settings();
+    if (!configure_orqa_media_graph()) return;
+    OrqaHantroEncoder::Config config;
+    config.device = capture_device;
+    config.width = width;
+    config.height = height;
+    config.fps = fps;
+    config.h265 = h265;
+    config.bitrate_kbits = std::max(10, bitrate_kbits.load());
+    config.qp_min = qp_min.load();
+    config.qp_max = qp_max.load();
+    config.keyframe_interval = std::max(1, settings.h26x_keyframe_interval);
+    config.slices = std::max(0, settings.h26x_num_slices);
+    config.rotation = settings.camera_rotation_degree;
+    OrqaHantroEncoder encoder(config,
+        [this](const uint8_t* data, size_t size, bool keyframe, int64_t) {
+          current_access_unit_is_keyframe = keyframe;
+          rtp->feed_multiple_nalu(data, static_cast<int>(size));
+          perf_bytes += size;
+          if (size && data) ++perf_frames;
+          current_access_unit_is_keyframe = false;
+        }, [this](const std::string& message) { log->info("{}", message); });
+    if (!encoder.start()) return;
+    openhd::LinkActionHandler::instance().set_cam_info_status(
+        owner.m_camera_holder->get_camera().index,
+        CameraStream::CAM_STATUS_STREAMING);
+    auto last_report = std::chrono::steady_clock::now();
+    while (running) {
+      const bool rate_changed = rate_dirty.exchange(false);
+      const bool qp_changed = qp_dirty.exchange(false);
+      if ((rate_changed || qp_changed) &&
+          !encoder.set_rate(std::max(10, bitrate_kbits.load()), qp_min.load(), qp_max.load()))
+        break;
+      if (force_keyframe.exchange(false)) encoder.request_keyframe();
+      if (!encoder.process()) break;
+      update_performance();
+      const auto now = std::chrono::steady_clock::now();
+      if (now - last_report >= std::chrono::seconds(10)) {
+        const auto& stats = encoder.stats();
+        log->info("ORQA Hantro frames={} dropped={} encode avg/max={}/{} us capture-to-output avg/max={}/{} us",
+                  stats.frames, stats.dropped,
+                  stats.frames ? stats.encode_us / stats.frames : 0, stats.max_encode_us,
+                  stats.frames ? stats.capture_to_output_us / stats.frames : 0,
+                  stats.max_capture_to_output_us);
+        last_report = now;
+      }
+    }
+  }
+#endif
+
   void run() {
     while (running &&
            !owner.m_camera_holder->get_settings().enable_streaming)
@@ -579,6 +634,22 @@ class NxpV4l2Stream::Impl {
     h265 = settings.streamed_video_format.videoCodec == VideoCodec::H265;
     setup_rtp(h265);
     publish_cam_info();
+#ifdef OPENHD_ORQA_HANTRO_PRESENT
+    if (owner.m_camera_holder->get_camera().requires_orqa_pipeline()) {
+      while (running) {
+        // run_hantro owns the hardware on this thread. Its destructor releases
+        // capture references and encoder allocations before another attempt.
+        run_hantro();
+        openhd::LinkActionHandler::instance().set_cam_info_status(
+            owner.m_camera_holder->get_camera().index,
+            CameraStream::CAM_STATUS_RESTARTING);
+        if (running) log->warn("Restarting direct ORQA capture/encoder after failure");
+        for (int i = 0; running && i < 10; ++i)
+          std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      }
+      return;
+    }
+#endif
     if (!setup_capture() || !setup_encoder()) {
       cleanup();
       running = false;

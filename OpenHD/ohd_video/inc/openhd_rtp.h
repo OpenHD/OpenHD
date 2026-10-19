@@ -74,6 +74,7 @@ class RTPHelper {
   std::shared_ptr<spdlog::logger> m_console;
   std::vector<std::shared_ptr<std::vector<uint8_t>>> m_frame_fragments;
   CodecConfigFinder m_config_finder;
+  bool m_codec_config_sent = false;
   std::chrono::steady_clock::time_point m_last_codec_config_send_ts =
       std::chrono::steady_clock::now();
 };
