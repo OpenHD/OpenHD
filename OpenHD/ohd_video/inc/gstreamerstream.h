@@ -32,6 +32,7 @@
 #include <condition_variable>
 #include <cstdint>
 #include <memory>
+#include <limits>
 #include <mutex>
 #include <string>
 #include <thread>
@@ -46,6 +47,7 @@
 #include "nalu/CodecConfigFinder.hpp"
 #include "openhd_rtp.h"
 #include "gst_video_output.h"
+#include "video_worker_ipc.h"
 
 // Implementation of OHD CameraStream for pretty much everything, using
 // gstreamer.
@@ -58,10 +60,17 @@ class GStreamerStream : public CameraStream {
  public:
   GStreamerStream(std::shared_ptr<CameraHolder> camera_holder,
                   openhd::ON_ENCODE_FRAME_CB out_cb,
-                  bool enable_video_outputs = true);
+                  bool enable_video_outputs = true,
+                  bool external_camera_plugin = false);
   ~GStreamerStream();
   void start_looping() override;
   void terminate_looping() override;
+  int64_t last_progress_ms() const { return m_last_progress_ms.load(); }
+  void queue_worker_settings(std::string snapshot, unsigned revision, bool restart);
+  void queue_worker_control(openhd::video_worker::Control control);
+  unsigned worker_settings_revision() const { return m_worker_revision.load(); }
+  int worker_recording_setting() const { return m_worker_recording.load(); }
+  static int clamp_runtime_bitrate(const CameraHolder& holder, int bitrate);
 
  private:
   // Creates a valid gstreamer pipeline for the given camera,
@@ -81,6 +90,8 @@ class GStreamerStream : public CameraStream {
   void handle_update_arming_state(bool armed) override;
   void loop_infinite();
   void stream_once();
+  void apply_worker_settings(bool restarting);
+  void apply_worker_control();
   // To reduce the time on the param callback(s) - they need to return
   // immediately to not block the param server
   void request_restart();
@@ -114,6 +125,16 @@ class GStreamerStream : public CameraStream {
   GstElement* m_gst_pipeline = nullptr;
   std::vector<std::unique_ptr<openhd::GstVideoOutput>> m_video_outputs;
   bool m_enable_video_outputs = true;
+  bool m_external_camera_plugin = false;
+  std::atomic<int64_t> m_last_progress_ms{0};
+  std::mutex m_worker_mutex;
+  std::optional<std::string> m_worker_settings;
+  unsigned m_pending_worker_revision = 0;
+  std::atomic<unsigned> m_worker_revision{std::numeric_limits<unsigned>::max()};
+  bool m_worker_settings_restart = false;
+  std::atomic<int> m_worker_recording{AIR_RECORDING_OFF};
+  openhd::video_worker::Control m_worker_control;
+  openhd::video_worker::Control m_applied_worker_control;
   // pull samples (fragments) out of the gstreamer pipeline
   GstElement* m_app_sink_element = nullptr;
   // not supported by all camera(s).

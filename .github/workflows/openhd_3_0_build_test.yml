@@ -88,6 +88,11 @@ jobs:
         run: |
           cd OpenHD
           ./build_cmake.sh
+      - name: Exercise camera worker isolation and libcamera recovery
+        run: |
+          sudo apt-get install -y gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly
+          cmake --build OpenHD/build --target test_gst_camera_process --parallel 2
+          timeout 120s ./OpenHD/build/ohd_video/test_gst_camera_process
       - name: Run as air (limited)
         run: |
           SYSUTIL_BIN="$(command -v openhd_sys_utils || command -v openhd-sys-utils || true)"

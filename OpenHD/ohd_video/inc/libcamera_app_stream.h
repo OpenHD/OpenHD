@@ -17,6 +17,7 @@ class LibcameraAppStream final : public CameraStream {
 
   void start_looping() override;
   void terminate_looping() override;
+  int recording_setting() const { return m_recording_setting.load(); }
 
   void handle_change_bitrate_request(
       openhd::LinkActionHandler::LinkBitrateInformation lb) override;
@@ -27,6 +28,7 @@ class LibcameraAppStream final : public CameraStream {
   void run();
 
   std::atomic<bool> m_run{false};
+  std::atomic<int> m_recording_setting{AIR_RECORDING_OFF};
   std::atomic<bool> m_thread_running{false};
   std::atomic<bool> m_restart_requested{false};
   std::atomic<bool> m_bitrate_update_requested{false};

@@ -34,6 +34,7 @@
 #include "openhd_platform.h"
 #include "openhd_profile.h"
 #include "openhd_util.h"
+#include "gst_camera_process.h"
 
 //
 // Can be used to test / validate a camera implementation.
@@ -41,6 +42,8 @@
 // (See DummyDebugLink)
 //
 int main(int argc, char* argv[]) {
+  const int worker_result = run_camera_worker_if_requested(argc, argv);
+  if (worker_result >= 0) return worker_result;
   // We need root to read / write camera settings.
   OHDUtil::terminate_if_not_root();
   const auto platform = OHDPlatform::instance();

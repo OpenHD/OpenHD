@@ -34,6 +34,7 @@
 #include <vector>
 
 #include "../mav_helper.h"
+#include "FcFirmwareDetector.h"
 #include "OnboardComputerStatusProvider.h"
 #include "last_known_position/LastKnowPosition.h"
 #include "openhd_action_handler.h"
@@ -58,7 +59,8 @@
 // generate_mavlink_messages() and then send out in the upper level.
 class OHDMainComponent : public MavlinkComponent {
  public:
-  explicit OHDMainComponent(uint8_t parent_sys_id, bool runsOnAir);
+  explicit OHDMainComponent(uint8_t parent_sys_id, bool runsOnAir,
+      openhd::telemetry::FcFirmwareDetector::Config detection = {});
   ~OHDMainComponent();
   // override from component
   std::vector<MavlinkMessage> generate_mavlink_messages() override;
@@ -75,6 +77,8 @@ class OHDMainComponent : public MavlinkComponent {
   std::optional<MavlinkMessage> handle_timesync_message(
       const MavlinkMessage& message);
   void set_fc_sys_id(uint8_t sys_id);
+  openhd::telemetry::FcFirmwareDetector::Result fc_firmware_result();
+  std::vector<MavlinkMessage> poll_fc_firmware();
 
  private:
   const bool RUNS_ON_AIR;
@@ -120,6 +124,9 @@ class OHDMainComponent : public MavlinkComponent {
   // Only set / used on air, where we have a uart connection to the FC and
   // therefore can be 100% sure about the FC sys id
   std::atomic_int16_t m_air_fc_sys_id = -1;
+  std::mutex m_fc_detection_mutex;
+  openhd::telemetry::FcFirmwareDetector m_fc_detector;
+  std::string m_fc_detection_log;
   std::atomic_int16_t m_configured_fc_sys_id = OHD_SYS_ID_FC;
   std::atomic_bool m_storage_format_running = false;
   std::atomic_bool m_storage_format_completed = false;

@@ -56,7 +56,8 @@ void put_u32(uint8_t* bytes, std::size_t offset, uint32_t value) {
 }
 }  // namespace
 
-OHDMainComponent::OHDMainComponent(uint8_t parent_sys_id, bool runsOnAir)
+OHDMainComponent::OHDMainComponent(uint8_t parent_sys_id, bool runsOnAir,
+    openhd::telemetry::FcFirmwareDetector::Config detection)
     : RUNS_ON_AIR(runsOnAir),
       MavlinkComponent(parent_sys_id, MAV_COMP_ID_ONBOARD_COMPUTER),
       m_heartbeats_interval(RUNS_ON_AIR ? std::chrono::milliseconds(500)
@@ -65,7 +66,8 @@ OHDMainComponent::OHDMainComponent(uint8_t parent_sys_id, bool runsOnAir)
                                              ? std::chrono::milliseconds(500)
                                              : std::chrono::milliseconds(200)),
       m_wb_stats_interval(RUNS_ON_AIR ? std::chrono::milliseconds(500)
-                                      : std::chrono::milliseconds(200)) {
+                                      : std::chrono::milliseconds(200)),
+      m_fc_detector(detection) {
   m_console = openhd::log::create_or_get("t_main_c");
   assert(m_console);
   m_onboard_computer_status_provider =
@@ -82,7 +84,37 @@ OHDMainComponent::~OHDMainComponent() {
   }
 }
 
+openhd::telemetry::FcFirmwareDetector::Result OHDMainComponent::fc_firmware_result() {
+  std::lock_guard<std::mutex> lock(m_fc_detection_mutex);
+  return m_fc_detector.result();
+}
+
+std::vector<MavlinkMessage> OHDMainComponent::poll_fc_firmware() {
+  std::vector<MavlinkMessage> requests;
+  if (!RUNS_ON_AIR) return requests;
+  std::lock_guard<std::mutex> lock(m_fc_detection_mutex);
+  const auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
+      std::chrono::steady_clock::now().time_since_epoch()).count();
+  for (const auto& request : m_fc_detector.tick(now)) {
+    MavlinkMessage message{}; message.m = request; requests.push_back(message);
+  }
+  const auto& result = m_fc_detector.result();
+  const auto description = std::string(openhd::telemetry::FcFirmwareDetector::name(result.firmware)) +
+      " (" + result.confidence + "): " + result.evidence + " sys=" +
+      std::to_string(result.system) + " comp=" + std::to_string(result.component) +
+      " version=" + std::to_string(result.version) + " generation=" + std::to_string(result.generation);
+  if (description != m_fc_detection_log) {
+    m_console->info("FC firmware: {}", description);
+    m_fc_detection_log = description;
+  }
+  return requests;
+}
+
 void OHDMainComponent::set_fc_sys_id(uint8_t sys_id) {
+  if (m_configured_fc_sys_id != sys_id) {
+    std::lock_guard<std::mutex> lock(m_fc_detection_mutex);
+    m_fc_detector.reset("Configured FC system changed");
+  }
   m_configured_fc_sys_id = sys_id;
 }
 
@@ -525,6 +557,15 @@ void OHDMainComponent::check_fc_messages_for_actions(
     const std::vector<MavlinkMessage>& messages) {
   const auto fc_sys_id = m_configured_fc_sys_id.load();
   for (const auto& msg : messages) {
+    const auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now().time_since_epoch()).count();
+    {
+      std::lock_guard<std::mutex> lock(m_fc_detection_mutex);
+      if (RUNS_ON_AIR && (msg.m.sysid == fc_sys_id || msg.m.sysid == OHD_SYS_ID_FC_BETAFLIGHT))
+        m_fc_detector.receive(msg.m, now);
+    }
+    if (msg.m.msgid == MAVLINK_MSG_ID_HEARTBEAT &&
+        !openhd::telemetry::FcFirmwareDetector::is_fc_heartbeat(msg.m)) continue;
     if (msg.m.msgid == MAVLINK_MSG_ID_HEARTBEAT) {
       // This is mainly for the user to debug
       if (RUNS_ON_AIR && (msg.m.sysid == fc_sys_id ||

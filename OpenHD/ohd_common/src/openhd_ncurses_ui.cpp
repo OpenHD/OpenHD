@@ -1,10 +1,16 @@
 #include "openhd_ncurses_ui.h"
 #include "openhd_spdlog.h"
+#ifdef OPENHD_PORTABLE_GROUND
+#include "ground_config.h"
+#endif
 
 #include <atomic>
 #include <mutex>
 #ifdef OPENHD_HAVE_CURSES
 #include <curses.h>
+#ifdef _WIN32
+#include "openhd_ui_windows.h"
+#else
 #include <unistd.h>
 #include <fcntl.h>
 #include <poll.h>
@@ -12,6 +18,7 @@
 #include <ifaddrs.h>
 #include <net/if.h>
 #include <sys/statvfs.h>
+#endif
 #include <algorithm>
 #include <chrono>
 #include <cctype>
@@ -24,6 +31,13 @@
 #include <sstream>
 #include <thread>
 #include <vector>
+#endif
+
+#if defined(OPENHD_HAVE_CURSES) && !defined(_WIN32)
+namespace ui_os {
+using ::dup; using ::dup2; using ::close; using ::read; using ::lseek;
+using ::fdopen; using ::fileno; using ::fsync; using ::isatty;
+}
 #endif
 
 namespace openhd::ui {
@@ -123,6 +137,9 @@ bool matches_filter(const LogLine& line, unsigned mask) {
   return (mask & (1u << static_cast<unsigned>(line.category))) != 0;
 }
 bool config_partition_mounted() {
+#ifdef _WIN32
+  return true;
+#else
   std::ifstream mounts("/proc/self/mountinfo");
   std::string line;
   while (std::getline(mounts, line)) {
@@ -133,6 +150,7 @@ bool config_partition_mounted() {
     }
   }
   return false;
+#endif
 }
 std::string toggle_persistent_logs() {
   const bool testing = std::getenv("OPENHD_LOG_CONTROL_DIR") != nullptr;
@@ -167,14 +185,14 @@ std::string save_logs_to_sd(UiState& state) {
          << "Debug sources selected: " << selection_name(state.debug_mask) << "\n\n";
   if (state.session_log) {
     std::fflush(state.session_log);
-    const int session_fd = dup(fileno(state.session_log));
+    const int session_fd = ui_os::dup(ui_os::fileno(state.session_log));
     if (session_fd >= 0) {
-      lseek(session_fd, 0, SEEK_SET);
+      ui_os::lseek(session_fd, 0, SEEK_SET);
       char buffer[4096];
       ssize_t count = 0;
-      while ((count = read(session_fd, buffer, sizeof(buffer))) > 0)
+      while ((count = ui_os::read(session_fd, buffer, sizeof(buffer))) > 0)
         output.write(buffer, count);
-      close(session_fd);
+      ui_os::close(session_fd);
     }
   } else {
     for (const auto& line : state.logs) output << line.text << '\n';
@@ -182,10 +200,16 @@ std::string save_logs_to_sd(UiState& state) {
   output.flush();
   if (!output) return "Save failed while writing " + path.string();
   output.close();
+#ifdef _WIN32
+  const int output_fd = _wopen(path.c_str(), _O_RDONLY | _O_BINARY);
+#else
   const int output_fd = open(path.c_str(), O_RDONLY);
-  if (output_fd >= 0) { fsync(output_fd); close(output_fd); }
+#endif
+  if (output_fd >= 0) { ui_os::fsync(output_fd); ui_os::close(output_fd); }
+#ifndef _WIN32
   const int directory_fd = open(directory.c_str(), O_RDONLY | O_DIRECTORY);
-  if (directory_fd >= 0) { fsync(directory_fd); close(directory_fd); }
+  if (directory_fd >= 0) { ui_os::fsync(directory_fd); ui_os::close(directory_fd); }
+#endif
   return "Saved all logs to " + path.string();
 }
 void capture_console(int fd) {
@@ -193,10 +217,17 @@ void capture_console(int fd) {
   char buffer[1024];
   auto& state = ui_state();
   while (state.capture_running.load()) {
+#ifdef _WIN32
+    DWORD available = 0;
+    if (!PeekNamedPipe(reinterpret_cast<HANDLE>(_get_osfhandle(fd)), nullptr, 0, nullptr, &available, nullptr) || available == 0) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(20)); continue;
+    }
+#else
     pollfd descriptor{fd, POLLIN, 0};
     const int ready = poll(&descriptor, 1, 100);
     if (ready <= 0) continue;
-    const auto count = read(fd, buffer, sizeof(buffer));
+#endif
+    const auto count = ui_os::read(fd, buffer, sizeof(buffer));
     if (count <= 0) break;
     pending.append(buffer, static_cast<size_t>(count));
     for (auto newline = pending.find('\n'); newline != std::string::npos;
@@ -239,6 +270,10 @@ void sample() {
   auto now = std::chrono::steady_clock::now();
   if (now-last < std::chrono::seconds(1)) return;
   last = now;
+#ifdef _WIN32
+  sample_windows(state.uptime, state.cpu, state.ram, state.disk, state.network,
+                 state.cpu_ratio, state.ram_ratio, state.disk_ratio);
+#else
   double seconds;
   if (std::ifstream("/proc/uptime") >> seconds) {
     const auto s = static_cast<long long>(seconds);
@@ -296,10 +331,11 @@ void sample() {
     }
     freeifaddrs(addresses);
   }
+#endif
 }
 void meter(int y, int x, int w, const std::string& name, const std::string& value, double ratio) {
   put(y,x,name + " " + value,0,w);
-  int bar = std::min(12,w-19);
+  int bar = std::min(12,w-static_cast<int>(name.size()+value.size())-2);
   if (bar < 3 || ratio < 0) return;
   const int start = x+w-bar;
   put(y,start,std::string(bar,'.'),0,bar);
@@ -325,11 +361,14 @@ void init_ncurses() {
   auto& state = ui_state();
   std::lock_guard<std::mutex> guard(state.mutex);
   const char* term = std::getenv("TERM");
-  if (active || !isatty(STDIN_FILENO) || !isatty(STDOUT_FILENO) || !term || std::string(term)=="dumb") return;
-  const int output_fd = dup(STDOUT_FILENO);
+#ifdef _WIN32
+  term = "wincon";
+#endif
+  if (active || !ui_os::isatty(STDIN_FILENO) || !ui_os::isatty(STDOUT_FILENO) || !term || std::string(term)=="dumb") return;
+  const int output_fd = ui_os::dup(STDOUT_FILENO);
   if (output_fd < 0) return;
-  state.terminal_output = fdopen(output_fd, "w");
-  if (!state.terminal_output) { close(output_fd); return; }
+  state.terminal_output = ui_os::fdopen(output_fd, "w");
+  if (!state.terminal_output) { ui_os::close(output_fd); return; }
   state.terminal = newterm(term, state.terminal_output, stdin);
   if (!state.terminal) {
     fclose(state.terminal_output); state.terminal_output = nullptr; return;
@@ -341,23 +380,32 @@ void init_ncurses() {
     init_pair(1,COLOR_GREEN,background); init_pair(2,COLOR_RED,background);
     init_pair(3,COLOR_YELLOW,background); init_pair(4,COLOR_CYAN,background);
   }
+#ifdef _WIN32
+  state.session_log = tmpfile();
+#else
   char session_template[] = "/tmp/openhd-ui-session-XXXXXX";
   const int session_fd = mkstemp(session_template);
   if (session_fd >= 0) {
     unlink(session_template);
-    state.session_log = fdopen(session_fd, "w+");
-    if (!state.session_log) close(session_fd);
+    state.session_log = ui_os::fdopen(session_fd, "w+");
+    if (!state.session_log) ui_os::close(session_fd);
   }
+#endif
   // Curses owns a duplicate of the console output. Keep library and child
   // process stdout/stderr from overwriting the dashboard between refreshes.
   fflush(stdout); fflush(stderr);
-  state.saved_stdout = dup(STDOUT_FILENO);
-  state.saved_stderr = dup(STDERR_FILENO);
+  state.saved_stdout = ui_os::dup(STDOUT_FILENO);
+  state.saved_stderr = ui_os::dup(STDERR_FILENO);
   int capture_pipe[2]{-1, -1};
-  if (state.saved_stdout >= 0 && state.saved_stderr >= 0 && pipe(capture_pipe) == 0) {
-    dup2(capture_pipe[1], STDOUT_FILENO);
-    dup2(capture_pipe[1], STDERR_FILENO);
-    close(capture_pipe[1]);
+#ifdef _WIN32
+  const int pipe_result = _pipe(capture_pipe, 65536, _O_BINARY | _O_NOINHERIT);
+#else
+  const int pipe_result = pipe(capture_pipe);
+#endif
+  if (state.saved_stdout >= 0 && state.saved_stderr >= 0 && pipe_result == 0) {
+    ui_os::dup2(capture_pipe[1], STDOUT_FILENO);
+    ui_os::dup2(capture_pipe[1], STDERR_FILENO);
+    ui_os::close(capture_pipe[1]);
     state.capture_read = capture_pipe[0];
     state.capture_running = true;
     state.capture_thread = std::thread(capture_console, state.capture_read);
@@ -376,17 +424,17 @@ void shutdown_ncurses() {
     if (state.terminal) { delscreen(state.terminal); state.terminal = nullptr; }
     if (state.terminal_output) { fclose(state.terminal_output); state.terminal_output = nullptr; }
     if (state.saved_stdout >= 0) {
-      dup2(state.saved_stdout, STDOUT_FILENO); close(state.saved_stdout); state.saved_stdout = -1;
+      ui_os::dup2(state.saved_stdout, STDOUT_FILENO); ui_os::close(state.saved_stdout); state.saved_stdout = -1;
     }
     if (state.saved_stderr >= 0) {
-      dup2(state.saved_stderr, STDERR_FILENO); close(state.saved_stderr); state.saved_stderr = -1;
+      ui_os::dup2(state.saved_stderr, STDERR_FILENO); ui_os::close(state.saved_stderr); state.saved_stderr = -1;
     }
     state.capture_running = false;
     auto* capture_thread = state.capture_thread.joinable() ? &state.capture_thread : nullptr;
     guard.unlock();
     if (capture_thread) capture_thread->join();
     guard.lock();
-    if (state.capture_read >= 0) { close(state.capture_read); state.capture_read = -1; }
+    if (state.capture_read >= 0) { ui_os::close(state.capture_read); state.capture_read = -1; }
     if (state.session_log) { fclose(state.session_log); state.session_log = nullptr; }
     unsetenv("OPENHD_TUI_DEBUG");
   }
@@ -411,6 +459,9 @@ void ncurses_log(const std::string& name, int level, const std::string& message)
   while (std::getline(stream,line)) {
     const auto text = prefix.str()+clean(line);
     state.logs.push_back({text, level, categorize(name, line)});
+#ifdef OPENHD_PORTABLE_GROUND
+    openhd::ground::record_console_line(text);
+#endif
     if (state.session_log) {
       std::fwrite(text.data(), 1, text.size(), state.session_log);
       std::fputc('\n', state.session_log);
@@ -429,6 +480,9 @@ void update_ncurses() {
   std::lock_guard<std::mutex> guard(state.mutex);
   if (!active) return;
   for (int key = getch(); key != ERR; key = getch()) {
+#ifdef PDCURSES
+    if (key == KEY_RESIZE) { resize_term(0, 0); continue; }
+#endif
     if (state.page == 3 || state.page == 5) {
       if (key == 'y' || key == 'Y') {
         state.action = state.page == 3 ? DashboardAction::Restart : DashboardAction::Shutdown;
@@ -472,6 +526,8 @@ void update_ncurses() {
       }
       continue;
     }
+    if (state.status.portable_controls && (key == 'c' || key == 'C')) state.action = DashboardAction::Configure;
+    if (state.status.portable_controls && (key == 'q' || key == 'Q')) state.action = DashboardAction::Exit;
     if (key == 'h' || key == 'H') state.page = state.page == 1 ? 0 : 1;
     if (key == 'd' || key == 'D') state.page = state.page == 2 ? 0 : 2;
     if (key == 'r' || key == 'R') state.page = 3;
@@ -526,16 +582,17 @@ void update_ncurses() {
     for (int i=0;i<5;++i) {
       put(header+i+1,2,third < 29 ? short_names[i] : names[i],0,third-4);
       const auto& value = state.status.links[i];
-      const int color = value == "Configured" ? 1 : value == "Unknown" ? 3 : 0;
+      const int color = value == "Error" ? 2 : (value == "Configured" || value == "Receiving") ? 1 :
+                        (value == "Unknown" || value == "Starting") ? 3 : 0;
       attron(COLOR_PAIR(color));
       mvaddch(header+i+1,third-14,ACS_BULLET);
       attroff(COLOR_PAIR(color));
       put(header+i+1,third-12,value,color,10);
     }
-    put(header+1,third+2,"Camera: " + state.status.camera,0,third-4);
-    put(header+2,third+2,"FC: Unknown",0,third-4);
+    put(header+1,third+2,state.status.portable_controls ? state.status.radio_summary : "Camera: " + state.status.camera,0,third-4);
+    put(header+2,third+2,state.status.portable_controls ? state.status.video_summary : "FC: Unknown",0,third-4);
     put(header+3,third+2,"WiFi: " + state.status.wifi,0,third-4);
-    put(header+4,third+2,"SDR: Unknown",0,third-4);
+    put(header+4,third+2,state.status.portable_controls ? state.status.telemetry_summary : "SDR: Unknown",0,third-4);
     if (state.network.empty()) put(header+1,third*2+2,"No IPv4 address",3,COLS-third*2-4);
     for (size_t i=0;i<state.network.size() && i<5;++i)
       put(header+1+static_cast<int>(i),third*2+2,state.network[i],0,COLS-third*2-4);
@@ -556,25 +613,28 @@ void update_ncurses() {
     const auto& line = *filtered[start+i];
     put(log_top+1+i,2,line.text,line.level>=4 ? 2 : line.level==3 ? 3 : 0,COLS-4);
   }
+  if (state.status.portable_controls)
+    put(LINES-1,1,"[C] Settings  [R] Start/Restart  [D] Debug  [N] Network  [P] Stop  [Q] Exit  [TAB] Logs",4);
+  else
   put(LINES-1,1,COLS >= 100 ? "[H] Help  [D] Debug  [R] Restart  [N] Network  [P] Power  [TAB] Switch View  [CTRL+C] Exit" : "H Help D Debug R Restart N Net P Power Tab View ^C",4);
   if (state.page) {
     const int width = std::min(COLS-4,76), left = (COLS-width)/2;
     const int top = state.page == 2 ? 2 : 3;
     const int height = state.page == 2 ? 15 : 11;
     for (int y=top;y<top+height;++y) put(y,left,std::string(width,' '));
-    panel(top,left,height,width,state.page==3 ? "Restart OpenHD" : state.page==5 ? "Power off board" : state.page==4 ? "Network addresses" : state.page==2 ? "Debug menu" : "Help");
+    panel(top,left,height,width,state.page==3 ? "Restart OpenHD" : state.page==5 ? (state.status.portable_controls ? "Stop ground backend" : "Power off board") : state.page==4 ? "Network addresses" : state.page==2 ? "Debug menu" : "Help");
     if (state.page==3 || state.page==5) {
-      put(5,left+2,state.page==3 ? "Restart OpenHD now? Video and telemetry will stop." : "Power off this board? Video and telemetry will stop.",3,width-4);
+      put(5,left+2,state.page==3 ? "Restart OpenHD now? Video and telemetry will stop." : (state.status.portable_controls ? "Stop the ground backend? Windows will keep running." : "Power off this board? Video and telemetry will stop."),3,width-4);
       put(7,left+2,"Y: confirm    N / Esc: cancel",0,width-4);
     } else if (state.page==4) {
       for (size_t i=0;i<state.network.size() && i<7;++i) put(5+static_cast<int>(i),left+2,state.network[i],0,width-4);
       if (state.network.empty()) put(5,left+2,"No IPv4 address assigned.");
     } else if (state.page == 2) {
-      static constexpr const char* entries[] = {
+      const char* entries[] = {
           "Devourer / USB radio", "Camera / video pipelines", "WiFiBroadcast / radio link",
           "Telemetry / MAVLink / serial", "System / plugins / other",
           "Enable all debug sources", "Clear all selections", "Runtime OpenHD logs",
-          "Save all logs to SD card"};
+          state.status.portable_controls ? "Save all logs to profile folder" : "Save all logs to SD card"};
       for (int i = 0; i < 9; ++i) {
         const bool cursor = i == state.menu_cursor;
         std::string shortcut;

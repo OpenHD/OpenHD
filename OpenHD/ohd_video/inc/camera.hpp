@@ -93,7 +93,7 @@ struct XCamera {
     return camera_type >= 90 && camera_type < 100;
   }
   bool requires_orqa_pipeline() const {
-    return camera_type >= 122 && camera_type <= 125;
+    return camera_type >= 122 && camera_type <= 126;
   }
   bool requires_nxp_imx8_v4l2_pipeline() const {
     return camera_type >= 130 && camera_type < 140;
@@ -173,7 +173,7 @@ static bool is_rock_csi_camera(int cam_type) {
   return cam_type >= 80 && cam_type <= 99;
 }
 static bool is_orqa_csi_camera(int cam_type) {
-  return cam_type >= 122 && cam_type <= 125;
+  return cam_type >= 122 && cam_type <= 126;
 }
 static bool is_usb_camera(int cam_type) {
   return cam_type >= 10 && cam_type < 19;
@@ -184,6 +184,8 @@ static bool is_valid_primary_cam_type(int cam_type) {
   return false;
 }
 static bool is_valid_secondary_cam_type(int cam_type) {
+  // ORQA exposes a separate CSI/ISI capture path for the second camera.
+  if (is_orqa_csi_camera(cam_type)) return true;
   if (is_usb_camera(cam_type)) return true;
   if (cam_type == X_CAM_TYPE_DUMMY_SW || cam_type == X_CAM_TYPE_EXTERNAL ||
       cam_type == X_CAM_TYPE_EXTERNAL_IP || cam_type == X_CAM_TYPE_DISABLED) {

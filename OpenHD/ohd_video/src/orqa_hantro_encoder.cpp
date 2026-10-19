@@ -134,7 +134,16 @@ class OrqaHantroEncoder::Impl {
         config.h265 ? VCENC_VIDEO_CODEC_HEVC : VCENC_VIDEO_CODEC_H264;
     cfg.profile =
         config.h265 ? VCENC_HEVC_MAIN_PROFILE : VCENC_H264_BASE_PROFILE;
-    cfg.level = config.h265 ? VCENC_HEVC_LEVEL_5_1 : VCENC_H264_LEVEL_5_1;
+    // Advertising AVC 5.1 unnecessarily rejects these streams on embedded
+    // decoders. 1080p60 and 960x720p120 both fit level 4.2's macroblock limits.
+    const uint64_t macroblocks =
+        uint64_t((config.width + 15) / 16) * ((config.height + 15) / 16);
+    cfg.level = config.h265 ? VCENC_HEVC_LEVEL_5_1
+                           : (macroblocks <= 8704 &&
+                              macroblocks * config.fps <= 522240 &&
+                              config.bitrate_kbits <= 50000
+                                  ? VCENC_H264_LEVEL_4_2
+                                  : VCENC_H264_LEVEL_5_1);
     cfg.width = config.width;
     cfg.height = config.height;
     if (config.rotation == 90 || config.rotation == 270)

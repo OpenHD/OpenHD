@@ -33,6 +33,7 @@
 #include <camera.hpp>
 #include <ohd_video_air.h>
 #include <ohd_video_air_generic_settings.h>
+#include "gst_camera_process.h"
 #endif  // ENABLE_AIR
 #include <ohd_video_ground.h>
 
@@ -490,6 +491,11 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
 }
 
 int main(int argc, char *argv[]) {
+#ifdef ENABLE_AIR
+  // Workers must bypass the singleton guard, dashboard, telemetry and radio.
+  const int worker_result = run_camera_worker_if_requested(argc, argv);
+  if (worker_result >= 0) return worker_result;
+#endif
   openhd::ui::DashboardAction dashboard_action = openhd::ui::DashboardAction::None;
   // Curses changes the terminal's stdio state. Initialize it before OpenHD
   // starts any worker threads that can concurrently log to stdout.

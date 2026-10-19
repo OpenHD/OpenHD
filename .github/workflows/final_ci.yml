@@ -448,6 +448,8 @@ jobs:
           "${READELF}" -h build-orqa-sysutils/openhd_sys_utils | \
             grep -q 'Machine:.*AArch64'
           "${STRIP}" --strip-unneeded build-orqa-sysutils/openhd_sys_utils
+          bash OpenHD-SysUtils/scripts/build_usb_modeswitch.sh \
+            "${GITHUB_WORKSPACE}/build-orqa-sysutils/usb_modeswitch"
       - name: Bundle Orqa deploy package
         run: |
           deploy="${GITHUB_WORKSPACE}/build-orqa/deploy"
@@ -457,6 +459,14 @@ jobs:
           cp build-orqa/openhd                       "${deploy}/"
           cp build-orqa/iwconfig                     "${deploy}/"
           cp build-orqa-sysutils/openhd_sys_utils    "${deploy}/"
+          # Yocto images do not install the Debian usb-modeswitch dependency.
+          mkdir -p "${deploy}/usr/sbin" "${deploy}/usr/share/licenses/usb-modeswitch"
+          cp build-orqa-sysutils/usb_modeswitch "${deploy}/usr/sbin/"
+          cp build-orqa-sysutils/usb_modeswitch.COPYING \
+            "${deploy}/usr/share/licenses/usb-modeswitch/COPYING"
+          mkdir -p "${deploy}/usr/local/sbin"
+          install -m 0755 build-orqa-sysutils/openhd-orqa-camera-probe \
+            "${deploy}/usr/local/sbin/"
 
           # Poco shared libraries  → /usr/lib
           unzip -o "${RUNNER_TEMP}/poco-libraries.zip"    -d "${deploy}/usr/lib/"

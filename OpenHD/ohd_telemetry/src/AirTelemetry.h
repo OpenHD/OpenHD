@@ -136,6 +136,7 @@ class AirTelemetry : public MavlinkSystem {
   std::unique_ptr<openhd::telemetry::rpi::GPIOControl> m_opt_gpio_control =
       nullptr;
   std::shared_ptr<spdlog::logger> m_console;
+  std::chrono::steady_clock::time_point m_last_fc_identity{};
   const bool m_ignoreSerial;
   // EXP - always on TCP mavlink server
   std::unique_ptr<TCPEndpoint> m_tcp_server = nullptr;

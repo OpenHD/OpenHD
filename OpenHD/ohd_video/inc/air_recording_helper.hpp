@@ -27,6 +27,11 @@
 #include <iomanip>
 #include <sstream>
 #include <string>
+#include <stdexcept>
+#include <cerrno>
+#include <fcntl.h>
+#include <sys/file.h>
+#include <unistd.h>
 
 #include "config_paths.h"
 #include "openhd_util.h"
@@ -59,6 +64,18 @@ static std::string format_track_count(int count) {
 static int get_recording_index_track_count() {
   const std::string recording_track_filename =
       std::string(getVideoPath()) + "track_count.txt";
+  // Camera workers have separate address spaces. Serialize index allocation
+  // across both cameras (and native stream backends) using the counter inode.
+  const int lock_fd = open(recording_track_filename.c_str(),
+                            O_RDWR | O_CREAT | O_CLOEXEC, 0666);
+  if (lock_fd < 0) throw std::runtime_error("Cannot open recording counter");
+  struct CounterLock {
+    int fd;
+    ~CounterLock() { close(fd); }
+  } counter_lock{lock_fd};
+  int result;
+  do { result = flock(lock_fd, LOCK_EX); } while (result != 0 && errno == EINTR);
+  if (result != 0) throw std::runtime_error("Cannot lock recording counter");
   int track_count = 1;
   const auto opt_content =
       OHDFilesystemUtil::opt_read_file(recording_track_filename);

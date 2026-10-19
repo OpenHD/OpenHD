@@ -56,7 +56,7 @@ class RTPHelper {
   // Needs to be aligned on NAL !
   void feed_multiple_nalu(const uint8_t* data, int data_len);
 
-  // Feeds exactly one NALU
+  // Feeds one complete access unit (one or more Annex B NALUs).
   void feed_nalu(const uint8_t* data, int data_len);
 
  public:
@@ -73,6 +73,10 @@ class RTPHelper {
   void* encoder;
   std::shared_ptr<spdlog::logger> m_console;
   std::vector<std::shared_ptr<std::vector<uint8_t>>> m_frame_fragments;
+  // Packetizer callbacks from different cameras run concurrently.
+  std::vector<uint8_t> m_packet_buffer = std::vector<uint8_t>(2 * 1024 * 1024 + 4);
+  std::vector<uint8_t> m_access_unit_data;
+  bool m_collect_access_unit = false;
   CodecConfigFinder m_config_finder;
   bool m_codec_config_sent = false;
   std::chrono::steady_clock::time_point m_last_codec_config_send_ts =

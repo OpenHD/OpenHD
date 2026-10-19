@@ -32,17 +32,6 @@
 #include "rtp-profile.h"
 #include "rtp_eof_helper.h"
 
-static void* rtp_alloc(void* /*param*/, int bytes) {
-  static uint8_t buffer[2 * 1024 * 1024 + 4] = {
-      0,
-      0,
-      0,
-      1,
-  };
-  assert(bytes <= sizeof(buffer) - 4);
-  return buffer + 4;
-}
-
 static void rtp_free(void* /*param*/, void* /*packet*/) {}
 
 static int rtp_encode_packet(void* param, const void* packet, int bytes,
@@ -58,7 +47,12 @@ static int rtp_encode_packet(void* param, const void* packet, int bytes,
 openhd::RTPHelper::RTPHelper(bool is_h265) : m_is_h265(is_h265) {
   m_console = openhd::log::create_or_get("RTPHelp");
 
-  m_handler.alloc = rtp_alloc;
+  m_packet_buffer[3] = 1;
+  m_handler.alloc = [](void* param, int bytes) -> void* {
+    auto* self = static_cast<RTPHelper*>(param);
+    assert(bytes >= 0 && static_cast<size_t>(bytes) <= self->m_packet_buffer.size() - 4);
+    return self->m_packet_buffer.data() + 4;
+  };
   m_handler.free = rtp_free;
   m_handler.packet = rtp_encode_packet;
 
@@ -78,18 +72,32 @@ openhd::RTPHelper::RTPHelper(bool is_h265) : m_is_h265(is_h265) {
 openhd::RTPHelper::~RTPHelper() { rtp_payload_encode_destroy(encoder); }
 
 void openhd::RTPHelper::feed_multiple_nalu(const uint8_t* data, int data_len) {
+  m_access_unit_data.clear();
+  m_collect_access_unit = true;
   int offset = 0;
   while (offset < data_len) {
     int nalu_len = find_next_nal(&data[offset], data_len - offset);
     on_new_split_nalu(&data[offset], nalu_len);
     offset += nalu_len;
   }
+  m_collect_access_unit = false;
+  if (!m_access_unit_data.empty()) {
+    // All slices and repeated configuration belong to one picture: one RTP
+    // timestamp, one final marker, and one wifibroadcast queue item.
+    feed_nalu(m_access_unit_data.data(), static_cast<int>(m_access_unit_data.size()));
+  }
 }
 
 void openhd::RTPHelper::feed_nalu(const uint8_t* data, int data_len) {
+  if (m_collect_access_unit) {
+    m_access_unit_data.insert(m_access_unit_data.end(), data, data + data_len);
+    return;
+  }
   // m_console->debug("feed_nalu {}", data_len);
-  int32_t timestamp = 0;
-  timestamp = openhd::util::steady_clock_time_epoch_ms();
+  const auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(
+      std::chrono::steady_clock::now().time_since_epoch()).count();
+  const uint32_t timestamp = static_cast<uint32_t>(
+      static_cast<uint64_t>(microseconds) * 9 / 100);  // H.264/H.265: 90 kHz.
   rtp_payload_encode_input(encoder, data, data_len, timestamp);
   // all frames processed
   // m_console->debug("Done, got {} fragments", m_frame_fragments.size());

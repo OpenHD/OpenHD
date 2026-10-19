@@ -5061,22 +5061,6 @@
           "value": "/dev/ttyS2"
         },
         {
-          "label": "/dev/ttyUSB0",
-          "value": "/dev/ttyUSB0"
-        },
-        {
-          "label": "/dev/ttyUSB1",
-          "value": "/dev/ttyUSB1"
-        },
-        {
-          "label": "/dev/ttyACM0",
-          "value": "/dev/ttyACM0"
-        },
-        {
-          "label": "/dev/ttyACM1",
-          "value": "/dev/ttyACM1"
-        },
-        {
           "label": "/dev/ttyS7",
           "value": "/dev/ttyS7"
         }
@@ -5087,6 +5071,26 @@
       "id": "FC_UART_CONN",
       "label": "FC_UART_CONN",
       "readOnly": false,
+      "requiresReboot": false,
+      "type": "string"
+    },
+    {
+      "description": "Evidence supporting the current FC firmware identification. Read only.",
+      "group": "Status",
+      "hidden": true,
+      "id": "FC_FW_EVID",
+      "label": "FC identification evidence",
+      "readOnly": true,
+      "requiresReboot": false,
+      "type": "string"
+    },
+    {
+      "description": "MAVLink-only firmware family, confidence, version and FC session identity. Read only.",
+      "group": "Status",
+      "hidden": true,
+      "id": "FC_FW_INFO",
+      "label": "FC firmware identification",
+      "readOnly": true,
       "requiresReboot": false,
       "type": "string"
     },

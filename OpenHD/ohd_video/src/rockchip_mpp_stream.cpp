@@ -1726,6 +1726,7 @@ RockchipMppStream::RockchipMppStream(
 }
 
 RockchipMppStream::~RockchipMppStream() {
+  m_camera_holder->register_listener(nullptr);
   m_camera_holder->register_video_bitrate_listener(nullptr);
   m_camera_holder->register_video_qp_listener(nullptr);
   m_camera_holder->register_video_roi_listener(nullptr);
@@ -1742,10 +1743,27 @@ void RockchipMppStream::start_looping() {
 
 void RockchipMppStream::terminate_looping() { m_impl->stop(); }
 
+void RockchipMppStream::request_keyframe() {
+  m_impl->force_keyframe_pending = true;
+}
+
+void RockchipMppStream::set_qp_limits(int minimum, int maximum) {
+  m_impl->qp_min = minimum;
+  m_impl->qp_max = maximum;
+  m_impl->rate_dirty = true;
+}
+
+int RockchipMppStream::recording_setting() const {
+  return m_impl->record_mode.load();
+}
+
 void RockchipMppStream::handle_change_bitrate_request(
     openhd::LinkActionHandler::LinkBitrateInformation lb) {
   m_impl->requested_bitrate_kbits = m_camera_holder->clamp_video_bitrate_kbits(
-      lb.recommended_encoder_bitrate_kbits);
+      lb.is_link_capacity_limit
+          ? std::min(lb.recommended_encoder_bitrate_kbits,
+                     m_camera_holder->get_settings().h26x_bitrate_kbits)
+          : lb.recommended_encoder_bitrate_kbits);
   openhd::LinkActionHandler::instance().set_cam_info_bitrate(
       m_camera_holder->get_camera().index,
       static_cast<uint16_t>(m_impl->requested_bitrate_kbits.load()));

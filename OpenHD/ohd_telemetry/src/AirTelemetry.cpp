@@ -104,7 +104,13 @@ AirTelemetry::AirTelemetry(bool ignoreSerial)
   m_fc_serial = std::make_unique<SerialEndpointManager>();
   m_openhd_uart_serial = std::make_unique<SerialEndpointManager>();
   m_sbus_output = std::make_unique<SbusOutput>();
-  m_ohd_main_component = std::make_shared<OHDMainComponent>(_sys_id, true);
+  const auto& settings = m_air_settings->get_settings();
+  openhd::telemetry::FcFirmwareDetector::Config detection;
+  detection.version_timeout_ms = std::clamp(settings.fc_detection_version_timeout_ms, 250, 30000);
+  detection.parameter_timeout_ms = std::clamp(settings.fc_detection_parameter_timeout_ms, 250, 30000);
+  detection.disconnect_timeout_ms = std::clamp(settings.fc_detection_disconnect_timeout_ms, 4000, 60000);
+  detection.retries = std::clamp(settings.fc_detection_retries, 0, 2);
+  m_ohd_main_component = std::make_shared<OHDMainComponent>(_sys_id, true, detection);
   m_ohd_main_component->set_fc_sys_id(
       static_cast<uint8_t>(m_air_settings->get_settings().fc_sys_id));
   m_components.push_back(m_ohd_main_component);
@@ -188,8 +194,7 @@ void AirTelemetry::send_messages_ground_unit(
 void AirTelemetry::on_messages_fc(std::vector<MavlinkMessage>& messages) {
   // openhd::log::get_default()->debug("on_messages_fc {}",messages.size());
   // debugMavlinkMessage(message.m,"AirTelemetry::onMessageFC");
-  //  Note: No OpenHD component ever talks to the FC, FC is completely passed
-  //  through
+  // FC traffic is forwarded unchanged; detection only observes these messages.
   // debugMavlinkMessages(messages,"FC");
   MavlinkHelpers::maybe_sync_system_time_from_gps(messages);
   record_mavlink_messages(messages, "received", "flight_controller",
@@ -462,6 +467,17 @@ void AirTelemetry::loop_infinite(bool& terminate,
         m_console->debug(m_wb_endpoint->createInfo());
       }
     }
+    auto fc_requests = m_ohd_main_component->poll_fc_firmware();
+    if (!fc_requests.empty()) send_messages_fc(fc_requests);
+    if (loopBegin - m_last_fc_identity >= std::chrono::seconds(2)) {
+      m_last_fc_identity = loopBegin;
+      std::vector<MavlinkMessage> identity;
+      for (const auto& id : {"FC_FW_INFO", "FC_FW_EVID"}) {
+        auto message = m_generic_mavlink_param_provider->broadcast_read_only_string(id);
+        if (message) identity.push_back(*message);
+      }
+      send_messages_ground_unit(identity);
+    }
     // send messages to the ground pi in regular intervals, includes heartbeat.
     // everything else is handled by the callbacks and their threads
     {
@@ -686,6 +702,18 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
       openhd::StringSetting{
           m_air_settings->get_settings().fc_uart_connection_type,
           c_fc_uart_connection_type}});
+  for (const auto& id : {"FC_FW_INFO", "FC_FW_EVID"}) {
+    const auto read = [this, id = std::string(id)] {
+      const auto r = m_ohd_main_component->fc_firmware_result();
+      if (id == "FC_FW_EVID") return nlohmann::json{{"gen", r.generation},
+          {"type", int(r.firmware)}, {"evidence", r.evidence.substr(0, 88)}}.dump();
+      return nlohmann::json{{"type", int(r.firmware)}, {"sys", r.system},
+          {"comp", r.component}, {"gen", r.generation}, {"ver", r.version},
+          {"confidence", r.confidence}}.dump();
+    };
+    ret.push_back(openhd::Setting{id, openhd::StringSetting{read(),
+        [](std::string, std::string) { return false; }, read}, nullptr, true});
+  }
   ret.push_back(openhd::Setting{
       air::FC_UART_BAUD_RATE,
       openhd::IntSetting{

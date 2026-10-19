@@ -18,6 +18,9 @@ class RockchipMppStream final : public CameraStream {
 
   void start_looping() override;
   void terminate_looping() override;
+  void request_keyframe();
+  void set_qp_limits(int minimum, int maximum);
+  int recording_setting() const;
   void handle_change_bitrate_request(
       openhd::LinkActionHandler::LinkBitrateInformation lb) override;
   void handle_update_arming_state(bool armed) override;

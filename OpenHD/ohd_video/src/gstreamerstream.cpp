@@ -240,10 +240,12 @@ void send_pipeline_debug_over_mavlink(int cam_index,
 
 GStreamerStream::GStreamerStream(std::shared_ptr<CameraHolder> camera_holder,
                                  openhd::ON_ENCODE_FRAME_CB out_cb,
-                                 bool enable_video_outputs)
+                                 bool enable_video_outputs,
+                                 bool external_camera_plugin)
     //: CameraStream(platform, camera_holder, video_udp_port) {
     : CameraStream(std::move(camera_holder), std::move(out_cb)),
-      m_enable_video_outputs(enable_video_outputs) {
+      m_enable_video_outputs(enable_video_outputs),
+      m_external_camera_plugin(external_camera_plugin) {
   m_console = openhd::log::create_or_get(
       fmt::format("cam{}", m_camera_holder->get_camera().index));
   assert(m_console);
@@ -1244,7 +1246,8 @@ bool GStreamerStream::setup() {
       m_gst_pipeline, *m_camera_holder);
   const bool plugin_managed_ip_camera =
       m_camera_holder->get_camera().camera_type == X_CAM_TYPE_EXTERNAL_IP &&
-      (openhd::PluginManager::instance().is_plugin_loaded("topotek") ||
+      (m_external_camera_plugin ||
+       openhd::PluginManager::instance().is_plugin_loaded("topotek") ||
        openhd::PluginManager::instance().is_plugin_loaded("siyi"));
   openhd::LinkActionHandler::instance().set_cam_info_supports_variable_bitrate(
       m_camera_holder->get_camera().index,
@@ -1381,6 +1384,40 @@ void GStreamerStream::cleanup_pipe() {
 
 void GStreamerStream::request_restart() { m_request_restart = true; }
 
+int GStreamerStream::clamp_runtime_bitrate(const CameraHolder& holder,
+                                         int bitrate_for_encoder_kbits) {
+  const auto& camera = holder.get_camera();
+  int MIN_BITRATE_KBITS = 1 * 1000;
+  // RPi cannot do less than 2MBit/s
+  if (OHDPlatform::instance().is_rpi() &&
+      !is_usb_camera(camera.camera_type) &&
+      camera.camera_type != X_CAM_TYPE_DUMMY_SW &&
+      !holder.get_settings().force_sw_encode &&
+      !OHDPlatform::instance().is_rpi5()) {
+    MIN_BITRATE_KBITS = 2 * 1000;
+  }
+  if (bitrate_for_encoder_kbits < MIN_BITRATE_KBITS) {
+    // m_console->debug("Cam cannot do <{}",
+    // kbits_per_second_to_string(MIN_BITRATE_KBITS));
+    bitrate_for_encoder_kbits = MIN_BITRATE_KBITS;
+  }
+  if (camera.requires_rockchip1126_mpp_csi_pipeline() ||
+      camera.requires_rockchip1126_mpp_testsrc_pipeline() ||
+      camera.requires_rockchip3_mpp_pipeline() ||
+      camera.requires_rockchip5_mpp_pipeline()) {
+    bitrate_for_encoder_kbits =
+        OHDGstHelper::clampRockchipMppEncoderKbits(bitrate_for_encoder_kbits);
+  }
+  const int clamped = holder.clamp_video_bitrate_kbits(bitrate_for_encoder_kbits);
+  if (clamped != bitrate_for_encoder_kbits) {
+    openhd::log::get_default()->warn(
+        "Camera{} runtime bitrate request {} kbit/s limited to per-video "
+        "maximum {} kbit/s", camera.index, bitrate_for_encoder_kbits,
+        holder.get_max_video_bitrate_kbits());
+  }
+  return clamped;
+}
+
 void GStreamerStream::handle_change_bitrate_request(
     openhd::LinkActionHandler::LinkBitrateInformation lb) {
   if (should_skip_runtime_bitrate_update()) {
@@ -1411,37 +1448,8 @@ void GStreamerStream::handle_change_bitrate_request(
   //     kBit/s)", bitrate_for_encoder_kbits,
   //     m_curr_dynamic_bitrate_kbits.load());
   const auto& camera = m_camera_holder->get_camera();
-  int MIN_BITRATE_KBITS = 1 * 1000;
-  // RPi cannot do less than 2MBit/s
-  if (OHDPlatform::instance().is_rpi() &&
-      !is_usb_camera(camera.camera_type) &&
-      camera.camera_type != X_CAM_TYPE_DUMMY_SW &&
-      !m_camera_holder->get_settings().force_sw_encode &&
-      !OHDPlatform::instance().is_rpi5()) {
-    MIN_BITRATE_KBITS = 2 * 1000;
-  }
-  if (bitrate_for_encoder_kbits < MIN_BITRATE_KBITS) {
-    // m_console->debug("Cam cannot do <{}",
-    // kbits_per_second_to_string(MIN_BITRATE_KBITS));
-    bitrate_for_encoder_kbits = MIN_BITRATE_KBITS;
-  }
-  if (camera.requires_rockchip1126_mpp_csi_pipeline() ||
-      camera.requires_rockchip1126_mpp_testsrc_pipeline() ||
-      camera.requires_rockchip3_mpp_pipeline() ||
-      camera.requires_rockchip5_mpp_pipeline()) {
-    bitrate_for_encoder_kbits =
-        OHDGstHelper::clampRockchipMppEncoderKbits(bitrate_for_encoder_kbits);
-  }
-  const int unclamped_bitrate_kbits = bitrate_for_encoder_kbits;
   bitrate_for_encoder_kbits =
-      m_camera_holder->clamp_video_bitrate_kbits(bitrate_for_encoder_kbits);
-  if (unclamped_bitrate_kbits != bitrate_for_encoder_kbits) {
-    m_console->warn(
-        "Camera{} runtime bitrate request {} kbit/s limited to per-video "
-        "maximum {} kbit/s",
-        m_camera_holder->get_camera().index, unclamped_bitrate_kbits,
-        m_camera_holder->get_max_video_bitrate_kbits());
-  }
+      clamp_runtime_bitrate(*m_camera_holder, bitrate_for_encoder_kbits);
   // The gst thread is responsible for changing the bitrate - it will be applied
   // (as long as the cam is not bugged or the OS is overloaded) after a max
   // delay of 40ms
@@ -1481,9 +1489,62 @@ void GStreamerStream::handle_update_arming_state(bool armed) {
   }
 }
 
+void GStreamerStream::queue_worker_settings(std::string snapshot,
+                                           unsigned revision, bool restart) {
+  std::lock_guard<std::mutex> lock(m_worker_mutex);
+  m_worker_settings = std::move(snapshot);
+  m_pending_worker_revision = revision;
+  m_worker_settings_restart = m_worker_settings_restart || restart;
+  if (restart) request_restart();
+}
+
+void GStreamerStream::queue_worker_control(
+    openhd::video_worker::Control control) {
+  std::lock_guard<std::mutex> lock(m_worker_mutex);
+  m_worker_control = control;
+}
+
+void GStreamerStream::apply_worker_settings(bool restarting) {
+  std::lock_guard<std::mutex> lock(m_worker_mutex);
+  if (!m_worker_settings) return;
+  if (m_worker_settings_restart && !restarting) return;
+  if (!m_camera_holder->apply_settings_snapshot(*m_worker_settings))
+    throw std::runtime_error("Invalid camera worker settings snapshot");
+  m_worker_settings.reset();
+  m_worker_settings_restart = false;
+  m_worker_recording = m_camera_holder->get_settings().air_recording;
+  m_armed_enable_air_recording =
+      m_worker_control.armed && m_worker_recording == AIR_RECORDING_AUTO_ARM_DISARM;
+  m_worker_revision = m_pending_worker_revision;
+  if (restarting) m_request_restart = false;
+}
+
+void GStreamerStream::apply_worker_control() {
+  openhd::video_worker::Control control;
+  {
+    std::lock_guard<std::mutex> lock(m_worker_mutex);
+    control = m_worker_control;
+  }
+  if (control.bitrate >= 0 &&
+      (control.bitrate != m_applied_worker_control.bitrate ||
+       control.capacity_limit != m_applied_worker_control.capacity_limit))
+    handle_change_bitrate_request({control.bitrate, control.capacity_limit});
+  if (control.armed != m_applied_worker_control.armed)
+    handle_update_arming_state(control.armed);
+  if (control.qp_min >= 0 && control.qp_max >= 0 &&
+      (control.qp_min != m_applied_worker_control.qp_min ||
+       control.qp_max != m_applied_worker_control.qp_max))
+    handle_change_qp_request(control.qp_min, control.qp_max);
+  m_applied_worker_control = control;
+  m_worker_recording = m_camera_holder->get_settings().air_recording;
+}
+
 void GStreamerStream::loop_infinite() {
   while (m_keep_looping) {
+    m_last_progress_ms = steady_clock_ms();
     try {
+      apply_worker_settings(true);
+      apply_worker_control();
       stream_once();
     } catch (std::exception& ex) {
       std::cerr << "GStreamerStream::Error: " << ex.what() << std::endl;
@@ -1570,6 +1631,10 @@ void GStreamerStream::stream_once() {
   int currently_applied_qp_max = m_camera_holder->get_settings().qp_max;
   m_curr_dynamic_qp_min = currently_applied_qp_min;
   m_curr_dynamic_qp_max = currently_applied_qp_max;
+  // A rebuilt encoder needs its current link limit and QP applied again.
+  m_applied_worker_control.bitrate = -1;
+  m_applied_worker_control.qp_min = -1;
+  m_applied_worker_control.qp_max = -1;
   reset_qp_pid_controller();
   reset_rockchip_bitrate_pid_controller();
   // Now we should have a running pipeline and are able to pull samples from it
@@ -1594,6 +1659,9 @@ void GStreamerStream::stream_once() {
   std::chrono::steady_clock::time_point m_last_bitrate_diag_log =
       std::chrono::steady_clock::now();
   while (true) {
+    m_last_progress_ms = steady_clock_ms();
+    apply_worker_settings(false);
+    apply_worker_control();
     const auto loop_now = std::chrono::steady_clock::now();
     const int64_t loop_now_ms = steady_clock_ms();
     // Quickly terminate if openhd wants to terminate

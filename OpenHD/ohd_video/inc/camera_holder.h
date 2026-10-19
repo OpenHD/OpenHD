@@ -51,10 +51,14 @@ class CameraHolder :
     // persistence via JSON
     public openhd::PersistentSettings<CameraSettings> {
  public:
-  explicit CameraHolder(XCamera camera)
+  explicit CameraHolder(XCamera camera, bool in_memory = false)
       : m_camera(std::move(camera)),
         openhd::PersistentSettings<CameraSettings>(
             openhd::get_video_settings_directory()) {
+    if (in_memory) {
+      init_in_memory(create_default());
+      return;
+    }
     // read previous settings or create default ones
     init();
     if (m_camera.camera_type == X_CAM_TYPE_RPI_V4L2_VEYE_GX_IMX662) {
@@ -102,6 +106,15 @@ class CameraHolder :
     }
   }
   [[nodiscard]] const XCamera& get_camera() const { return m_camera; }
+  // Workers receive snapshots from the parent's parameter service. They must
+  // not race that service by persisting their private copy of the settings.
+  std::string settings_snapshot() const { return imp_serialize(get_settings()); }
+  bool apply_settings_snapshot(const std::string& snapshot) {
+    const auto settings = impl_deserialize(snapshot);
+    if (!settings) return false;
+    unsafe_get_settings() = *settings;
+    return true;
+  }
   std::map<std::string, int> gx_isp_values;
   void restore_gx_isp_controls() {
     // Apply after configuring frame rate: firmware can reject a shutter longer

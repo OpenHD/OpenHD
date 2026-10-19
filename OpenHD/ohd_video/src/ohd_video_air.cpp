@@ -27,6 +27,7 @@
 #include <utility>
 
 #include "camera_discovery.h"
+#include "gst_camera_process.h"
 #include "camera_enums.hpp"
 #include "libcamera_app_stream.h"
 #ifdef OPENHD_NXP_V4L2_PRESENT
@@ -189,19 +190,21 @@ void OHDVideoAir::configure(
           ROCKCHIP_IMPL_NATIVE_MPP) {
     m_console->info("Native Rockchip MPP stream for Camera index:{}",
                     camera.index);
-    stream = std::make_shared<RockchipMppStream>(camera_holder, frame_cb);
+    stream = std::make_shared<CameraProcess>(camera_holder, frame_cb, !m_record_only,
+                                              CameraProcess::Backend::Mpp);
   } else
 #endif
   if (camera.requires_rpi_libcamera_pipeline() &&
       camera_holder->get_settings().rpi_libcamera_impl ==
           RPI_LIBCAMERA_IMPL_NATIVE) {
     m_console->info("LibcameraAppStream for Camera index:{}", camera.index);
-    stream = std::make_shared<LibcameraAppStream>(camera_holder, frame_cb);
+    stream = std::make_shared<CameraProcess>(camera_holder, frame_cb, !m_record_only,
+                                              CameraProcess::Backend::Libcamera);
   } else
 #ifdef OPENHD_GSTREAMER_PRESENT
   {
-    m_console->debug("GStreamerStream for Camera index:{}", camera.index);
-    stream = std::make_shared<GStreamerStream>(camera_holder, frame_cb, !m_record_only);
+    m_console->debug("Isolated GStreamer worker for Camera index:{}", camera.index);
+    stream = std::make_shared<CameraProcess>(camera_holder, frame_cb, !m_record_only);
   }
 #else
   {

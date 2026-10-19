@@ -14,6 +14,10 @@
 #include <thread>
 #include <unistd.h>
 #include <vector>
+#include <fcntl.h>
+#include <sys/prctl.h>
+#include <sys/socket.h>
+#include <cstdlib>
 
 #include "air_recording_helper.hpp"
 #include "openhd_spdlog.h"
@@ -39,6 +43,7 @@ LibcameraAppStream::LibcameraAppStream(
     this->m_output_cb(this->m_camera_holder->get_camera().index, frame);
   });
   m_requested_bitrate_kbits = m_camera_holder->get_settings().h26x_bitrate_kbits;
+  m_recording_setting = m_camera_holder->get_settings().air_recording;
   m_armed = openhd::ArmingStateHelper::instance().is_currently_armed();
   m_camera_holder->register_listener([this]() { m_restart_requested = true; });
   m_camera_holder->register_video_bitrate_listener([this](int bitrate_kbits) {
@@ -53,6 +58,7 @@ LibcameraAppStream::LibcameraAppStream(
 }
 
 LibcameraAppStream::~LibcameraAppStream() {
+  m_camera_holder->register_listener(nullptr);
   m_camera_holder->register_video_bitrate_listener(nullptr);
   m_camera_holder->register_video_qp_listener(nullptr);
   terminate_looping();
@@ -64,7 +70,7 @@ void LibcameraAppStream::start_looping() {
 }
 
 void LibcameraAppStream::terminate_looping() {
-  if (!m_run.exchange(false)) return;
+  m_run = false;
   if (m_thread.joinable()) {
     m_thread.join();
   }
@@ -112,7 +118,10 @@ void LibcameraAppStream::run() {
   m_thread_running = true;
   auto log = openhd::log::get_default();
   const char* camera_app = nullptr;
-  if (access("/usr/bin/rpicam-vid", X_OK) == 0) {
+  const char* override_app = std::getenv("OPENHD_LIBCAMERA_APP");
+  if (override_app && override_app[0] == '/' && access(override_app, X_OK) == 0) {
+    camera_app = override_app;
+  } else if (access("/usr/bin/rpicam-vid", X_OK) == 0) {
     camera_app = "/usr/bin/rpicam-vid";
   } else if (access("/usr/bin/libcamera-vid", X_OK) == 0) {
     camera_app = "/usr/bin/libcamera-vid";
@@ -124,6 +133,10 @@ void LibcameraAppStream::run() {
   }
 
   while (m_run) {
+    if (!m_camera_holder->get_settings().enable_streaming) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      continue;
+    }
     m_restart_requested = false;
     const auto settings = m_camera_holder->get_settings();
     const int width = settings.streamed_video_format.width;
@@ -267,7 +280,8 @@ void LibcameraAppStream::run() {
     log->info("LibcameraAppStream starting: {}", command_for_log.str());
     int pipe_fds[2] = {-1, -1};
     int control_fds[2] = {-1, -1};
-    if (pipe(pipe_fds) != 0 || pipe(control_fds) != 0) {
+    if (pipe2(pipe_fds, O_CLOEXEC) != 0 ||
+        socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, control_fds) != 0) {
       log->error("LibcameraAppStream pipe failed: {}", strerror(errno));
       if (pipe_fds[0] >= 0) {
         close(pipe_fds[0]);
@@ -283,8 +297,12 @@ void LibcameraAppStream::run() {
     argv.reserve(args.size() + 1);
     for (auto& arg : args) argv.emplace_back(arg.data());
     argv.emplace_back(nullptr);
+    const pid_t parent = getpid();
     const pid_t child = fork();
     if (child == 0) {
+      // Killing the supervising camera worker must also release rpicam-vid.
+      prctl(PR_SET_PDEATHSIG, SIGKILL);
+      if (getppid() != parent) _exit(125);
       setpgid(0, 0);
       close(pipe_fds[0]);
       close(control_fds[1]);
@@ -304,6 +322,9 @@ void LibcameraAppStream::run() {
       break;
     }
     setpgid(child, child);
+    fcntl(control_fds[1], F_SETFL, fcntl(control_fds[1], F_GETFL) | O_NONBLOCK);
+    close(control_fds[0]);
+    control_fds[0] = -1;
 
     const int fd = pipe_fds[0];
     uint8_t buffer[65536];
@@ -313,17 +334,21 @@ void LibcameraAppStream::run() {
     auto perf_started = std::chrono::steady_clock::now();
     bool received_video = false;
     bool child_ended = false;
+    auto last_video_data = std::chrono::steady_clock::now();
 
     while (m_run && !m_restart_requested) {
     if (m_bitrate_update_requested.exchange(false)) {
       const int updated_bitrate_kbits = m_requested_bitrate_kbits.load();
       const std::string control_message =
           "b" + std::to_string(updated_bitrate_kbits * 1000) + "\n";
-      if (write(control_fds[1], control_message.data(),
-                control_message.size()) !=
+      if (send(control_fds[1], control_message.data(),
+                control_message.size(), MSG_NOSIGNAL) !=
           static_cast<ssize_t>(control_message.size())) {
         log->warn("Cannot send live bitrate update to rpicam-vid: {}",
                   strerror(errno));
+        // Never block on a full control pipe or silently lose the update.
+        m_restart_requested = true;
+        break;
       }
     }
     struct timeval tv;
@@ -338,6 +363,7 @@ void LibcameraAppStream::run() {
     if (ret > 0 && FD_ISSET(fd, &read_fds)) {
       const ssize_t count = read(fd, buffer, sizeof(buffer));
       if (count > 0) {
+        last_video_data = std::chrono::steady_clock::now();
         if (!received_video) {
           received_video = true;
           openhd::LinkActionHandler::instance().set_cam_info_status(
@@ -422,6 +448,11 @@ void LibcameraAppStream::run() {
     }
 
       const auto now = std::chrono::steady_clock::now();
+      if (now - last_video_data > std::chrono::seconds(10)) {
+        log->warn("Libcamera encoder produced no data for 10 seconds; restarting");
+        m_restart_requested = true;
+        break;
+      }
       const auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                                   now - perf_started)
                                   .count();
@@ -442,6 +473,7 @@ void LibcameraAppStream::run() {
             }
           }
           m_camera_holder->check_remaining_space_air_recording(true);
+          m_recording_setting = m_camera_holder->get_settings().air_recording;
         }
         const auto bitrate_bps = static_cast<uint32_t>(
             perf_bytes * 8ULL * 1000ULL /
@@ -506,7 +538,20 @@ void LibcameraAppStream::run() {
     if (!reaped) {
       log->warn("rpicam-vid did not stop gracefully; forcing shutdown");
       kill(-child, SIGKILL);
-      while (waitpid(child, nullptr, 0) < 0 && errno == EINTR) {
+      const auto kill_deadline = std::chrono::steady_clock::now() + std::chrono::seconds(1);
+      while (std::chrono::steady_clock::now() < kill_deadline) {
+        const auto result = waitpid(child, nullptr, WNOHANG);
+        if (result == child || (result < 0 && errno == ECHILD)) {
+          reaped = true;
+          break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      }
+      // Never launch a competing encoder while a killed child still owns the
+      // camera. The outer worker supervisor will handle the stalled backend.
+      if (!reaped) {
+        log->error("Killed libcamera encoder could not be reaped; stopping stream");
+        m_run = false;
       }
     }
     close(fd);

@@ -3,7 +3,7 @@
 #include <memory>
 namespace openhd {
 namespace ui {
-    enum class DashboardAction { None, Restart, Shutdown };
+    enum class DashboardAction { None, Restart, Shutdown, Configure, Exit };
     DashboardAction take_dashboard_action();
     struct DashboardStatus {
         std::string version = "OpenHD";
@@ -11,6 +11,8 @@ namespace ui {
         std::string camera = "N/A";
         std::string wifi = "Unknown";
         std::string links[5] = {"Unknown", "Unknown", "Unknown", "Unknown", "Unknown"};
+        bool portable_controls = false;
+        std::string radio_summary, video_summary, telemetry_summary;
     };
     void set_dashboard_status(const DashboardStatus& status);
     bool ncurses_active();

@@ -34,7 +34,9 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
     openhd_uart_telemetry_flow_control, openhd_uart_priority_rc,
     openhd_uart_priority_openhd, openhd_uart_priority_fc,
     telemetry_logging_enabled, adsb_enable, sbus_out_enabled, sbus_uart_device,
-    sbus_update_rate_hz);
+    sbus_update_rate_hz, fc_detection_version_timeout_ms,
+    fc_detection_parameter_timeout_ms, fc_detection_disconnect_timeout_ms,
+    fc_detection_retries);
 
 std::optional<Settings> SettingsHolder::impl_deserialize(
     const std::string &file_as_string) const {
@@ -52,6 +54,10 @@ std::optional<Settings> SettingsHolder::impl_deserialize(
   settings.fc_battery_n_cells =
       parsed.value("fc_battery_n_cells", settings.fc_battery_n_cells);
   settings.fc_sys_id = parsed.value("fc_sys_id", settings.fc_sys_id);
+  settings.fc_detection_version_timeout_ms = parsed.value("fc_detection_version_timeout_ms", 1500);
+  settings.fc_detection_parameter_timeout_ms = parsed.value("fc_detection_parameter_timeout_ms", 2000);
+  settings.fc_detection_disconnect_timeout_ms = parsed.value("fc_detection_disconnect_timeout_ms", 10000);
+  settings.fc_detection_retries = parsed.value("fc_detection_retries", 2);
   settings.openhd_uart_telemetry_connection = parsed.value(
       "openhd_uart_telemetry_connection",
       settings.openhd_uart_telemetry_connection);

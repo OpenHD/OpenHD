@@ -45,17 +45,8 @@ static constexpr auto DEFAULT_UART_CONNECTION =
     UART_CONNECTION_TYPE_DISABLE;  // Default to UART disabled (FC)
 
 struct Settings {
-  // Mapped in QOpenHD - "" means disabled
-  // In general, we do not really validate the user input - if the fd path
-  // doesn't exist for example, the Serial endpoint implementation will cry a
-  // warning in regular intervals anyways. 1: RPI UART0 (/dev/serial0) 2: RPI
-  // UART1 (/dev/serial1) 3: UART USB ADAPTER (/dev/ttyUSB0)
-  //  My ardupilot shows up as either /dev/ttyACM0 or /dev/ttyACM1 if I connect
-  //  it via
-  // usb cable (micro usb on FC to rpi USB port)
-  // 4: /dev/ttyACM0
-  // 5: /dev/ttyACM1
-  // 6: Rock5B UART7_M2 (/dev/ttyS7)
+  // FC UART device path. An empty path disables the connection; DEFAULT uses
+  // this board's primary telemetry UART. Baud rate must match the FC.
   std::string fc_uart_connection_type = DEFAULT_UART_CONNECTION;
   int fc_uart_baudrate = DEFAULT_UART_BAUDRATE;
   bool fc_uart_flow_control = false;
@@ -63,6 +54,10 @@ struct Settings {
   // 0 means not configured (do not use)
   int fc_battery_n_cells = 0;
   int fc_sys_id = DEFAULT_FC_SYS_ID;
+  int fc_detection_version_timeout_ms = 1500;
+  int fc_detection_parameter_timeout_ms = 2000;
+  int fc_detection_disconnect_timeout_ms = 10000;
+  int fc_detection_retries = 2;
   // Full bidirectional OpenHD unit-to-unit telemetry link. This is separate
   // from the FC UART and must use matching settings on Air and Ground.
   std::string openhd_uart_telemetry_connection = UART_CONNECTION_TYPE_DISABLE;

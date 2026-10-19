@@ -97,7 +97,7 @@ class PersistentSettings {
   }
   typedef std::function<void()> SETTINGS_CHANGED_CALLBACK;
   void register_listener(SETTINGS_CHANGED_CALLBACK callback) {
-    assert(!_settings_changed_callback);
+    assert(!callback || !_settings_changed_callback);
     _settings_changed_callback = std::move(callback);
   }
   /*
@@ -126,6 +126,12 @@ class PersistentSettings {
   bool created_defaults() const { return _created_defaults; }
 
  protected:
+  // A subprocess can use an owner's settings snapshot without reading or
+  // writing that owner's persistent files.
+  void init_in_memory(T settings) {
+    _in_memory = true;
+    _settings = std::make_unique<T>(std::move(settings));
+  }
   bool _created_defaults = false;
   // NEEDS TO BE OVERRIDDEN
   [[nodiscard]] virtual std::string get_unique_filename() const = 0;
@@ -135,6 +141,7 @@ class PersistentSettings {
   virtual std::string imp_serialize(const T& data) const = 0;
 
  private:
+  bool _in_memory = false;
   const std::string _base_path;
   std::unique_ptr<T> _settings;
   SETTINGS_CHANGED_CALLBACK _settings_changed_callback = nullptr;
@@ -145,6 +152,7 @@ class PersistentSettings {
    * serialize settings to json and write to file for persistence
    */
   void persist_settings() const {
+    if (_in_memory) return;
     assert(_settings);
     const auto file_path = get_file_path();
     // Serialize, then write to file

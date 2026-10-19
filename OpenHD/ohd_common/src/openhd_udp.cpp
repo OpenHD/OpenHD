@@ -21,53 +21,50 @@
  * © OpenHD, All Rights Reserved.
  ******************************************************************************/
 
-#include "openhd_udp.h"
-
-#include <arpa/inet.h>
-#include <unistd.h>
-
-#include <algorithm>
-#include <cstring>
-#include <sstream>
-
 #include "openhd_spdlog.h"
+#include "openhd_udp.h"
+#include <spdlog/spdlog.h>
+#include <array>
+#include <stdexcept>
+#include <utility>
+#ifndef _WIN32
+#include <poll.h>
+#endif
 
-static std::shared_ptr<spdlog::logger> get_console() {
-  return openhd::log::create_or_get("UDP");
+namespace {
+auto get_console() { return openhd::log::create_or_get("UDP"); }
+sockaddr_in destination(const std::string& address, int port) {
+  if (port < 0 || port > 65535) throw std::invalid_argument("Invalid UDP port");
+  sockaddr_in result{};
+  result.sin_family = AF_INET;
+  result.sin_port = htons(static_cast<uint16_t>(port));
+  if (inet_pton(AF_INET, address.c_str(), &result.sin_addr) != 1)
+    throw std::invalid_argument("Invalid IPv4 address: " + address);
+  return result;
+}
+void send_packet(openhd::net::Socket socket, const sockaddr_in& address,
+                 const uint8_t* packet, std::size_t size) {
+  if (size > openhd::UDPReceiver::UDP_PACKET_MAX_SIZE)
+    throw std::invalid_argument("UDP datagram too large");
+  const auto sent = sendto(socket, reinterpret_cast<const char*>(packet),
+                           static_cast<int>(size), 0,
+                           reinterpret_cast<const sockaddr*>(&address), sizeof(address));
+  if (sent < 0 || static_cast<std::size_t>(sent) != size)
+    get_console()->warn("UDP send failed: {}", openhd::net::error_message());
+}
 }
 
-openhd::UDPForwarder::UDPForwarder(std::string client_addr1,
-                                   int client_udp_port1)
-    : client_addr(std::move(client_addr1)), client_udp_port(client_udp_port1) {
-  sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-  if (sockfd < 0) {
-    std::stringstream message;
-    message << "Error opening socket:" << strerror(errno) << "\n";
-    get_console()->warn(message.str());
-  }
-  // set up the destination
-  bzero((char *)&saddr, sizeof(saddr));
-  saddr.sin_family = AF_INET;
-  // saddr.sin_addr.s_addr = inet_addr(client_addr.c_str());
-  inet_aton(client_addr.c_str(), (in_addr *)&saddr.sin_addr.s_addr);
-  saddr.sin_port = htons((uint16_t)client_udp_port);
-  get_console()->info("UDPForwarder::configured for {} {}", client_addr,
-                      client_udp_port);
+openhd::UDPForwarder::UDPForwarder(std::string address, int port)
+    : client_addr(std::move(address)), client_udp_port(port) {
+  net::initialize();
+  saddr = destination(client_addr, client_udp_port);
+  sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+  if (sockfd == net::invalid_socket)
+    throw std::runtime_error("UDP socket: " + net::error_message());
 }
-
-openhd::UDPForwarder::~UDPForwarder() { close(sockfd); }
-
-void openhd::UDPForwarder::forwardPacketViaUDP(
-    const uint8_t *packet, const std::size_t packetSize) const {
-  // send(sockfd,packet,packetSize, MSG_DONTWAIT);
-  // openhd::log::get_default()->debug("Forward {}",packetSize);
-  const auto ret = sendto(sockfd, packet, packetSize, 0,
-                          (const struct sockaddr *)&saddr, sizeof(saddr));
-  if (ret < 0 || ret != packetSize) {
-    get_console()->warn("Error sending packet of size:{} to {}:{} code:{} {}",
-                        packetSize, client_addr, client_udp_port, ret,
-                        strerror(errno));
-  }
+openhd::UDPForwarder::~UDPForwarder() { net::close_socket(sockfd); }
+void openhd::UDPForwarder::forwardPacketViaUDP(const uint8_t* packet, std::size_t size) const {
+  send_packet(sockfd, saddr, packet, size);
 }
 
 void openhd::UDPMultiForwarder::addForwarder(const std::string &client_addr,
@@ -91,12 +88,12 @@ void openhd::UDPMultiForwarder::addForwarder(const std::string &client_addr,
 void openhd::UDPMultiForwarder::removeForwarder(const std::string &client_addr,
                                                 int client_udp_port) {
   std::lock_guard<std::mutex> guard(udpForwardersLock);
-  udpForwarders.erase(
-      std::find_if(udpForwarders.begin(), udpForwarders.end(),
+  const auto found = std::find_if(udpForwarders.begin(), udpForwarders.end(),
                    [&client_addr, &client_udp_port](const auto &udpForwarder) {
                      return udpForwarder->client_addr == client_addr &&
                             udpForwarder->client_udp_port == client_udp_port;
-                   }));
+                   });
+  if (found != udpForwarders.end()) udpForwarders.erase(found);
 }
 
 void openhd::UDPMultiForwarder::forwardPacketViaUDP(
@@ -112,124 +109,84 @@ const std::list<std::unique_ptr<openhd::UDPForwarder>>
   return udpForwarders;
 }
 
-openhd::UDPReceiver::UDPReceiver(std::string client_addr, int client_udp_port,
-                                 openhd::UDPReceiver::OUTPUT_DATA_CALLBACK cb)
-    : mCb(cb) {
-  mSocket = openhd::openUdpSocketForReceiving(client_addr, client_udp_port);
-  get_console()->info("UDPReceiver created with {}:{}", client_addr,
-                      client_udp_port);
+openhd::UDPReceiver::UDPReceiver(std::string address, int port, OUTPUT_DATA_CALLBACK cb)
+    : mCb(std::move(cb)), mSocket(openUdpSocketForReceiving(address, port)) {}
+openhd::UDPReceiver::~UDPReceiver() {
+  stopBackground();
+  net::close_socket(mSocket);
 }
-
-openhd::UDPReceiver::~UDPReceiver() { stopBackground(); }
-
 void openhd::UDPReceiver::loopUntilError() {
-  const auto buff =
-      std::make_unique<std::array<uint8_t, UDP_PACKET_MAX_SIZE>>();
-  // sockaddr_in source;
-  // socklen_t sourceLen= sizeof(sockaddr_in);
-  while (receiving) {
-    // const ssize_t message_length =
-    // recvfrom(mSocket,buff->data(),UDP_PACKET_MAX_SIZE,
-    // MSG_WAITALL,(sockaddr*)&source,&sourceLen);
-    const ssize_t message_length =
-        recv(mSocket, buff->data(), buff->size(), MSG_WAITALL);
-    if (message_length > 0) {
-      mCb(buff->data(), (size_t)message_length);
-    } else {
-      // this can also come from the shutdown, in which case it is not an error.
-      // But this way we break out of the loop.
-      if (receiving) {
-        if (std::chrono::steady_clock::now() - m_last_receive_error_log >=
-            std::chrono::seconds(3)) {
-          get_console()->warn("Got message length of: {} log_skip_count:{}",
-                              message_length,
-                              m_last_receive_error_log_skip_count);
-          m_last_receive_error_log = std::chrono::steady_clock::now();
-          m_last_receive_error_log_skip_count = 0;
-        } else {
-          m_last_receive_error_log_skip_count++;
-        }
-      }
+  std::array<uint8_t, UDP_PACKET_MAX_SIZE> buffer{};
+  while (receiving.load()) {
+#ifdef _WIN32
+    fd_set readable;
+    FD_ZERO(&readable);
+    FD_SET(mSocket, &readable);
+    // Bounded wait avoids closing a descriptor while the receive thread uses it.
+    timeval timeout{0, 100000};
+    const int ready = select(0, &readable, nullptr, nullptr, &timeout);
+#else
+    // poll also works for Linux descriptors above FD_SETSIZE.
+    pollfd readable{mSocket, POLLIN, 0};
+    const int ready = poll(&readable, 1, 100);
+#endif
+    if (!receiving.load()) break;
+    if (ready < 0) {
+#ifndef _WIN32
+      if (errno == EINTR) continue;
+#endif
+      get_console()->warn("UDP wait failed: {}", net::error_message());
+      break;
+    }
+    if (ready == 0) continue;
+    const auto length = recv(mSocket, reinterpret_cast<char*>(buffer.data()),
+                              static_cast<int>(buffer.size()), 0);
+    if (length >= 0) {
+      mCb(buffer.data(), static_cast<std::size_t>(length));
+    } else if (std::chrono::steady_clock::now() - m_last_receive_error_log >=
+               std::chrono::seconds(3)) {
+      get_console()->warn("UDP receive failed: {}", net::error_message());
+      m_last_receive_error_log = std::chrono::steady_clock::now();
     }
   }
-  get_console()->debug("UDP end");
 }
-
-void openhd::UDPReceiver::forwardPacketViaUDP(
-    const std::string &destIp, const int destPort, const uint8_t *packet,
-    const std::size_t packetSize) const {
-  // set up the destination
-  struct sockaddr_in saddr {};
-  bzero((char *)&saddr, sizeof(saddr));
-  saddr.sin_family = AF_INET;
-  // saddr.sin_addr.s_addr = inet_addr(client_addr.c_str());
-  inet_aton(destIp.c_str(), (in_addr *)&saddr.sin_addr.s_addr);
-  saddr.sin_port = htons((uint16_t)destPort);
-  // send from the currently bound UDP port to the destination address
-  const auto ret = sendto(mSocket, packet, packetSize, 0,
-                          (const struct sockaddr *)&saddr, sizeof(saddr));
-  if (ret < 0 || ret != packetSize) {
-    get_console()->warn("Error sending packet of size:{} to {}:{} code:{} {}",
-                        packetSize, destIp, destPort, ret, strerror(errno));
-  }
+void openhd::UDPReceiver::forwardPacketViaUDP(const std::string& address, int port,
+                                             const uint8_t* packet, std::size_t size) const {
+  send_packet(mSocket, destination(address, port), packet, size);
 }
-
-void openhd::UDPReceiver::stopLooping() {
-  receiving = false;
-  // from
-  // https://github.com/mavlink/MAVSDK/blob/main/src/mavsdk/core/udp_connection.cpp#L102
-  shutdown(mSocket, SHUT_RDWR);
-  close(mSocket);
-}
-
+void openhd::UDPReceiver::stopLooping() { receiving.store(false); }
 void openhd::UDPReceiver::runInBackground() {
-  if (receiverThread) {
-    get_console()->warn(
-        "Receiver thread is already running or has not been properly stopped");
-    return;
-  }
-  receiving = true;
-  receiverThread =
-      std::make_unique<std::thread>(&UDPReceiver::loopUntilError, this);
+  if (receiverThread) return;
+  receiving.store(true);
+  receiverThread = std::make_unique<std::thread>(&UDPReceiver::loopUntilError, this);
 }
-
 void openhd::UDPReceiver::stopBackground() {
   stopLooping();
-  if (receiverThread && receiverThread->joinable()) {
-    receiverThread->join();
-  }
-  receiverThread = nullptr;
+  if (receiverThread && receiverThread->joinable()) receiverThread->join();
+  receiverThread.reset();
 }
-
-int openhd::openUdpSocketForReceiving(const std::string &address,
-                                      const int port) {
-  int fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-  if (fd < 0) {
-    std::stringstream ss;
-    ss << "Error opening socket " << port << " " << strerror(errno) << "\n";
-    get_console()->warn(ss.str());
-    return -1;
-  }
+openhd::net::Socket openhd::openUdpSocketForReceiving(const std::string& address, int port) {
+  net::initialize();
+  const auto addr = destination(address, port);
+  const auto fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+  if (fd == net::invalid_socket)
+    throw std::runtime_error("UDP socket: " + net::error_message());
   setSocketReuse(fd);
-  struct sockaddr_in saddr {};
-  bzero((char *)&saddr, sizeof(saddr));
-  saddr.sin_family = AF_INET;
-  // saddr.sin_addr.s_addr = htonl(INADDR_ANY);
-  inet_aton(address.c_str(), (in_addr *)&saddr.sin_addr.s_addr);
-  saddr.sin_port = htons((unsigned short)port);
-  if (bind(fd, (struct sockaddr *)&saddr, sizeof(saddr)) < 0) {
-    std::stringstream ss;
-    ss << "Bind error on socket " << address.c_str() << ":" << port << " "
-       << strerror(errno) << "\n";
-    get_console()->warn(ss.str());
-    return -1;
+  if (bind(fd, reinterpret_cast<const sockaddr*>(&addr), sizeof(addr)) != 0) {
+    const auto error = net::error_message();
+    net::close_socket(fd);
+    throw std::runtime_error("UDP bind " + address + ":" + std::to_string(port) + ": " + error);
   }
   return fd;
 }
-
-void openhd::setSocketReuse(int sockfd) {
-  int enable = 1;
-  if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0) {
-    get_console()->warn("Cannot set socket reuse");
-  }
+void openhd::setSocketReuse(net::Socket fd) {
+  const int enabled = 1;
+#ifdef _WIN32
+  // Windows SO_REUSEADDR permits competing processes to steal datagrams.
+  constexpr int option = SO_EXCLUSIVEADDRUSE;
+#else
+  constexpr int option = SO_REUSEADDR;
+#endif
+  if (setsockopt(fd, SOL_SOCKET, option, reinterpret_cast<const char*>(&enabled), sizeof(enabled)) != 0)
+    get_console()->warn("UDP socket option failed: {}", net::error_message());
 }

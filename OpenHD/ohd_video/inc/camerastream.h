@@ -66,6 +66,7 @@ class CameraStream {
    */
   CameraStream(std::shared_ptr<CameraHolder> camera_holder,
                openhd::ON_ENCODE_FRAME_CB out_cb);
+  virtual ~CameraStream() = default;
   CameraStream(const CameraStream&) = delete;
   CameraStream(const CameraStream&&) = delete;
 

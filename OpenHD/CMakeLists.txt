@@ -5,6 +5,16 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+option(OPENHD_PORTABLE_GROUND "Build the portable Devourer ground backend" ${WIN32})
+if(OPENHD_PORTABLE_GROUND)
+    enable_testing()
+    add_subdirectory(platform/ground)
+    return()
+endif()
+if(WIN32)
+    message(FATAL_ERROR "Windows requires OPENHD_PORTABLE_GROUND=ON")
+endif()
+
 # Allows to explicitly disable air support - removes a few dependencies
 option(ENABLE_AIR "Enable air support" ON)
 message("Air support enabled: ${ENABLE_AIR}")

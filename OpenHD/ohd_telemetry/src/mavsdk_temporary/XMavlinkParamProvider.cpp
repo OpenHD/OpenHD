@@ -286,6 +286,26 @@ std::vector<MavlinkMessage> XMavlinkParamProvider::process_mavlink_messages(
   return msges;
 }
 
+std::optional<MavlinkMessage> XMavlinkParamProvider::broadcast_read_only_string(const std::string& id) {
+  std::lock_guard<std::mutex> lock(_mutex);
+  if (!m_ready) return std::nullopt;
+  for (size_t i = 0; i < m_registered_settings.size(); ++i) {
+    const auto& setting = m_registered_settings[i];
+    if (setting.id != id || !setting.read_only ||
+        !std::holds_alternative<openhd::StringSetting>(setting.setting)) continue;
+    const auto& value = std::get<openhd::StringSetting>(setting.setting);
+    const auto text = value.get_callback ? value.get_callback() : value.value;
+    char param_id[16]{}; char param_value[128]{};
+    std::copy_n(id.data(), std::min(id.size(), sizeof(param_id)), param_id);
+    std::copy_n(text.data(), std::min(text.size(), sizeof(param_value)), param_value);
+    MavlinkMessage message{};
+    mavlink_msg_param_ext_value_pack(m_sys_id, m_comp_id, &message.m, param_id,
+        param_value, MAV_PARAM_EXT_TYPE_CUSTOM, m_registered_settings.size(), i);
+    return message;
+  }
+  return std::nullopt;
+}
+
 std::vector<MavlinkMessage> XMavlinkParamProvider::generate_mavlink_messages() {
   std::lock_guard<std::mutex> lock(_mutex);
   poll_configuration_file();

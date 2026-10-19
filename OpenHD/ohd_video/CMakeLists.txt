@@ -72,6 +72,7 @@ if(ENABLE_AIR)
     # build the part(s) required for air
     list(APPEND sources
             src/camerastream.cpp
+            src/gst_camera_process.cpp
             src/camera_discovery.cpp
             src/nxp_v4l2_stream.cpp
             src/ip_camera_network.cpp
@@ -209,6 +210,9 @@ target_link_libraries(test_video OHDVideoLib)
 add_executable(test_rtp_nalu_bounds test/test_rtp_nalu_bounds.cpp
         ../ohd_common/src/config_paths.cpp)
 target_link_libraries(test_rtp_nalu_bounds OHDVideoLib)
+add_executable(test_rtp_stream_isolation test/test_rtp_stream_isolation.cpp
+        ../ohd_common/src/config_paths.cpp)
+target_link_libraries(test_rtp_stream_isolation OHDVideoLib)
 if(ENABLE_AIR AND ENABLE_USB_CAMERAS AND ENABLE_GSTREAMER AND NOT OPENHD_MPP_ONLY)
     add_executable(test_usb_output test/test_usb_output.cpp
             ../ohd_common/src/config_paths.cpp)
@@ -216,6 +220,13 @@ if(ENABLE_AIR AND ENABLE_USB_CAMERAS AND ENABLE_GSTREAMER AND NOT OPENHD_MPP_ONL
 endif()
 add_executable(test_audio test/test_audio.cpp)
 target_link_libraries(test_audio OHDVideoLib)
+if(ENABLE_AIR AND ENABLE_GSTREAMER AND NOT OPENHD_MPP_ONLY)
+    add_executable(test_gst_camera_process test/test_gst_camera_process.cpp
+            ../ohd_common/src/config_paths.cpp)
+    target_link_libraries(test_gst_camera_process OHDVideoLib PkgConfig::gstreamer-app)
+    target_include_directories(test_gst_camera_process PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/src)
+endif()
 add_executable(test_matroska_recorder
         test/test_matroska_recorder.cpp
         src/matroska_recorder.cpp)

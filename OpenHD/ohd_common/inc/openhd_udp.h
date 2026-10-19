@@ -24,7 +24,11 @@
 #ifndef OPENHD_OPENHD_UDP_H
 #define OPENHD_OPENHD_UDP_H
 
-#include <netinet/in.h>
+#include "openhd_socket_platform.h"
+
+#include <atomic>
+#include <chrono>
+#include <cstdint>
 
 #include <functional>
 #include <list>
@@ -50,7 +54,7 @@ class UDPForwarder {
 
  private:
   struct sockaddr_in saddr {};
-  int sockfd;
+  net::Socket sockfd = net::invalid_socket;
 
  public:
   const std::string client_addr;
@@ -91,12 +95,12 @@ class UDPMultiForwarder {
 
 // Open the specified port for udp receiving
 // sets SO_REUSEADDR to true if possible
-// throws a runtime exception if opening the socket fails
-static int openUdpSocketForReceiving(const std::string &address, int port);
+// Throws a runtime exception if opening or binding the socket fails.
+static net::Socket openUdpSocketForReceiving(const std::string &address, int port);
 
 // Set the reuse flag on the socket, so it doesn't care if there is a broken
 // down process still on the socket or not.
-static void setSocketReuse(int sockfd);
+static void setSocketReuse(net::Socket sockfd);
 
 class UDPReceiver {
  public:
@@ -110,6 +114,8 @@ class UDPReceiver {
    */
   explicit UDPReceiver(std::string client_addr, int client_udp_port,
                        OUTPUT_DATA_CALLBACK cb);
+  UDPReceiver(const UDPReceiver&) = delete;
+  UDPReceiver& operator=(const UDPReceiver&) = delete;
   ~UDPReceiver();
   void loopUntilError();
   // Now this one is kinda special - for mavsdk we need to send messages from
@@ -124,13 +130,12 @@ class UDPReceiver {
 
  private:
   const OUTPUT_DATA_CALLBACK mCb;
-  bool receiving = true;
-  int mSocket;
+  std::atomic<bool> receiving{true};
+  net::Socket mSocket = net::invalid_socket;
   std::unique_ptr<std::thread> receiverThread = nullptr;
   // Limit receive error log to every 3 seconds
   std::chrono::steady_clock::time_point m_last_receive_error_log =
       std::chrono::steady_clock::now();
-  int m_last_receive_error_log_skip_count = 0;
 };
 
 static const std::string ADDRESS_LOCALHOST = "127.0.0.1";
