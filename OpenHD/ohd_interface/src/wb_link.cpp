@@ -2726,9 +2726,8 @@ void WBLink::wt_perform_rate_adjustment() {
           max_video_rate_for_current_wifi_fec_config ||
       m_rate_adjustment_frequency_changed) {
     m_rate_adjustment_frequency_changed = false;
-    // Apply the default for this configuration, then return - we will start the
-    // auto-adjustment depending on tx error(s) next time the rate adjustment is
-    // called
+    // Apply the capacity for the new configuration. TX/RX errors and dropped
+    // frames do not reduce this recommendation on subsequent calls.
     m_console->debug(
         "MCS:{} ch_width:{} Calculated max_rate:{}, max_video_rate:{}",
         settings.wb_air_mcs_index, settings.wb_air_tx_channel_width,
@@ -2741,9 +2740,8 @@ void WBLink::wt_perform_rate_adjustment() {
         m_max_video_rate_for_current_wifi_fec_config;
     m_curr_n_rate_adjustments = 0;
     recommend_bitrate_to_encoder(m_recommended_video_bitrate_kbits);
-    // We 'give' the camera up to X seconds to adjust to the newly set rate. If
-    // we drop frames during this period, we do not count it as errors that need
-    // bitrate reduction.
+    // Reset drop diagnostics after a configuration change; these counters do
+    // not drive encoder bitrate reduction.
     m_frame_drop_helper.delay_for(std::chrono::seconds(5));
     m_primary_total_dropped_frames = 0;
     m_secondary_total_dropped_frames = 0;

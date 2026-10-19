@@ -115,3 +115,85 @@ systemctl start openhd
 Local binaries and validation logs are in `out/orqa-low-latency/`. Test camera
 settings were restored before restarting the normal service. Hardware validation
 did not include a reboot, receiver/display timing, RF testing or a CI run.
+
+## Bitrate tracking: fixed link target
+
+The first encoded-output budget governor was rejected. Short tests passed, but
+longer operation drove the SDK to QP 51 and left both encoders far below target.
+Its earlier verification results do not establish a reliable bitrate fix.
+That governor has now been removed.
+
+The link recommendation uses configured MCS, channel width and FEC capacity.
+TX drops and receiver loss do not reduce it, matching the existing Pi policy.
+The direct Orqa encoder keeps that requested bitrate unchanged and controls QP
+over complete IDR periods to hit it. There is no packet-loss, TX-queue, receiver,
+or frame-drop input to the quantizer controller. User QP limits bound its state.
+Unchanged link recommendations preserve tracking history.
+
+The SDK's picture controller is disabled. qpHdr alone did not reliably apply
+live quantizer requests in hardware tests, so the chosen QP is also applied to
+the SDK's I/P min/max bounds. Only quantization changes between IDR periods;
+bitPerSecond always remains the link's requested bitrate. No paced queue,
+padding, encoder restart, frame skipping or longer IDR interval is introduced.
+GOP lambda factors use the square root expected by NXP's GOP parser.
+
+Final fixed-target hardware regressions on 19 October 2026, board
+root@192.168.1.75, five-frame IDR interval, repeated targets every 100 ms:
+
+| Codec / camera | Requested Mbit/s | Measured phase averages Mbit/s |
+| --- | --- | --- |
+| H.264 1920x1080/60 | 10.3 -> 3 | 10.345 -> 2.979 |
+| H.264 960x720/120 | 6.867 -> 8.8 | 6.881 -> 8.851 |
+| H.265 1920x1080/60 | 10.3 -> 3 | 10.301 -> 3.016 |
+| H.265 960x720/120 | 6.867 -> 8.8 | 6.922 -> 8.888 |
+| H.264 1920x1080/60 | 3 -> 8 | 3.005 -> 8.020 |
+
+Each run lasted 16 seconds; phase averages exclude two seconds after startup
+and the live rate change. H.264 cameras ran together, then H.265 cameras ran
+together. Every encoded picture reached the callback; the maximum callback gap
+was 17.9 ms. These short runs do not establish long-duration stability.
+
+The fixed-target application was deployed at approximately 19:59 UTC. Initial
+settled ten-second live measurements were 10.343 Mbit/s at the 10.3 Mbit/s
+primary target and 6.888 Mbit/s at the 6.867 Mbit/s secondary target, at 60/120
+fps. Long-duration verification beyond the previous collapse point remains
+outstanding. Individual IDR pictures can still burst above average bitrate;
+QP limits and scene complexity can make a target unattainable.
+
+Deployed SHA256:
+598b4a90278ce15cfdaf672b4007ea54877cb1e591eefc743ac1cce4d77acf2a
+
+The original pre-governor application is preserved at
+/usr/local/bin/openhd.before-bitrate-20261019, SHA256
+1523697b3d32c18896769715bc83607529c43e5c23d929f22aff98ac3dad7ef2.
+Do not use openhd.before-fixed-target-20261019 for rollback: that is the rejected
+budget-governor binary. Reverting to the original does not fix its bitrate bias.
+
+Windows rendering was restored by forwarding both UDP video streams over the
+working SSH connection. The board saw the TCP client as 192.168.1.20, while the
+Windows machine was on 10.44.178.134; direct UDP did not reach QOpenHD. Both
+videos were visually verified after starting the bridge. No QOpenHD source or
+settings changes were needed. The temporary bridge remains running from
+out/orqa-bitrate/video_bridge.py; its PID and logs are alongside that script.
+This is a routing workaround, not a permanent UDP network configuration fix.
+
+The original packet-capture bridge exited after an SSH reset. The maintained
+bridge now opens its own local TCP forwarding registration on the board,
+receives both loopback UDP streams, and carries framed packets over SSH. It
+reconnects after OpenHD or SSH closes and times out after 15 seconds without
+video. It no longer depends on a particular TCP client's NAT address or on that
+client staying connected. Python 3 and SSH/SCP are required on the receiving
+machine; Python 3 is required on the board. Run one instance per receiver:
+
+```sh
+python scripts/video_bridge.py root@192.168.1.75
+```
+
+The script uploads `scripts/video_bridge_remote.py` to `/tmp` on the board,
+forwards to local UDP ports 5600/5601, and uses `out/video-bridge` for SSH logs.
+Press Ctrl-C to stop it. Both streams were confirmed working by the user after
+recovery. This verifies the SSH path; physical RF reception is a separate check.
+
+Artifacts and logs are in out/orqa-bitrate/. The final test streams/logs use the
+qp-final2- prefix. The source snapshot for the board build preserves its existing
+application changes; unrelated ongoing telemetry edits were not incorporated.

@@ -208,7 +208,8 @@ class OrqaHantroEncoder::Impl {
     in.outBufSize[0] = bitstream.size;
     // IPPP only: each P picture references the immediately preceding picture.
     pic.poc = 1;
-    pic.QpFactor = config.h265 ? 0.578 : 0.4;
+    // The API takes sqrt(lambda factor), as in NXP's GOP parser.
+    pic.QpFactor = std::sqrt(config.h265 ? 0.578 : 0.4);
     pic.codingType = VCENC_PREDICTED_FRAME;
     pic.numRefPics = 1;
     pic.refPics[0].ref_pic = -1;
@@ -300,66 +301,72 @@ class OrqaHantroEncoder::Impl {
     return true;
   }
 
-  bool set_rate(unsigned bitrate, unsigned minimum, unsigned maximum) {
-    if (!encoder || minimum > maximum || maximum > 51 || bitrate < 10 ||
-        bitrate > 288000)
-      return fail("invalid direct encoder rate", bitrate);
+  bool program_quantizer(unsigned bitrate, int qp) {
     VCEncRateCtrl rate{};
-    if (!api(VCEncGetRateCtrl(encoder, &rate), "VCEncGetRateCtrl"))
-      return false;
-    if (!encoder_started) {
-      rate.crf = -1;
-      rate.pictureRc = 1;
-      rate.vbr = 0;
-      rate.ctbRc = 0;
-      rate.blockRCSize = config.h265 ? 0 : 2;
-      rate.ctbRcRowQpStep = config.h265 ? 16 : 4;
-      rate.pictureSkip = 0;
-      rate.qpHdr = -1;
-    }
-    rate.qpMinI = rate.qpMinPB = minimum;
-    rate.qpMaxI = rate.qpMaxPB = maximum;
-    if (encoder_started && bitrate != config.bitrate_kbits) {
-      int previous_qp = 0;
-      if (VCEncGetAverageQp(encoder, &previous_qp) == VCENC_OK) {
-        // Start a bandwidth change near the previous picture's quantizer,
-        // rather than spending another GOP at the old bitrate. Limit the
-        // initial step; picture RC continues adapting on subsequent frames.
-        const int step = std::clamp(
-            static_cast<int>(std::lround(
-                6.0 * std::log2(static_cast<double>(config.bitrate_kbits) /
-                                bitrate))),
-            -4, 4);
-        rate.qpHdr = std::clamp(previous_qp + step, static_cast<int>(minimum),
-                                static_cast<int>(maximum));
-      }
-    }
+    if (!api(VCEncGetRateCtrl(encoder, &rate), "VCEncGetRateCtrl")) return false;
+    // Keep the requested bitrate fixed. The SDK's picture RC can get stuck at
+    // QP 51; its qpHdr setter alone also does not reliably apply live QP.
+    // Pin its I/P bounds to the selected quantizer and control picture quality
+    // here, within the user's QP limits. There is no link/drop/loss input.
+    rate.pictureRc = 0;
+    rate.ctbRc = 0;
+    rate.vbr = 0;
+    rate.hrd = 0;
+    rate.pictureSkip = 0;
+    rate.crf = -1;
+    rate.qpHdr = qp;
+    rate.intraQpDelta = 0;
+    rate.fixedIntraQp = 0;
+    rate.qpMinI = rate.qpMinPB = qp;
+    rate.qpMaxI = rate.qpMaxPB = qp;
     rate.bitPerSecond = bitrate * 1000;
-    if (!encoder_started) {
-      rate.hrd = 0;
-      rate.bitrateWindow = std::min(300u, config.keyframe_interval);
-      // The SDK defaults allow very large bitrate excursions. Match ORQA's
-      // bounded rate-control window, without adding a paced output queue.
-      rate.bitVarRangeI = rate.bitVarRangeP = rate.bitVarRangeB = 50;
-      rate.tolMovingBitRate = 0;
-      rate.monitorFrames = std::min(120u, std::max(10u, config.fps));
-    }
-    if (!api(VCEncSetRateCtrl(encoder, &rate), "VCEncSetRateCtrl"))
-      return false;
-    VCEncRateCtrl readback{};
-    if (!api(VCEncGetRateCtrl(encoder, &readback), "VCEncGetRateCtrl readback"))
-      return false;
-    if (log)
-      log("Hantro rate target=" + std::to_string(readback.bitPerSecond) +
-          " pictureRc=" + std::to_string(readback.pictureRc) +
-          " QP=" + std::to_string(readback.qpMinPB) + ".." +
-          std::to_string(readback.qpMaxPB));
-    config.bitrate_kbits = bitrate;
-    config.qp_min = minimum;
-    config.qp_max = maximum;
+    if (!api(VCEncSetRateCtrl(encoder, &rate), "VCEncSetRateCtrl")) return false;
+    applied_qp = qp;
     return true;
   }
 
+  bool set_rate(unsigned bitrate, unsigned minimum, unsigned maximum) {
+    if (!encoder || minimum > maximum || maximum > 51 || bitrate < 10 || bitrate > 288000)
+      return fail("invalid direct encoder rate", bitrate);
+    // The link repeats its capacity recommendation. An unchanged request must
+    // not reset quantizer tracking or reprogram the vendor API.
+    if (encoder_started && bitrate == config.bitrate_kbits &&
+        minimum == config.qp_min && maximum == config.qp_max) return true;
+    if (!encoder_started) quantizer = config.h265 ? 32 : 35;
+    else if (bitrate != config.bitrate_kbits)
+      quantizer += std::clamp(6.0 * std::log2(double(config.bitrate_kbits) / bitrate), -6.0, 6.0);
+    quantizer = std::clamp(quantizer, double(minimum), double(maximum));
+    if (!program_quantizer(bitrate, std::lround(quantizer))) return false;
+    config.bitrate_kbits = bitrate;
+    config.qp_min = minimum;
+    config.qp_max = maximum;
+    rate_window_started_us = 0;
+    rate_window_bytes = 0;
+    if (log) log("Hantro fixed bitrate device=" + config.device + " target=" + std::to_string(bitrate) + " kbit/s");
+    return true;
+  }
+
+  bool update_quantizer(unsigned bytes, int64_t now_us) {
+    if (!rate_window_started_us) rate_window_started_us = now_us - 1000000 / config.fps;
+    rate_window_bytes += bytes;
+    // Include an entire IDR period, rather than reacting to its large I picture
+    // independently. Only QP changes; the link's bitrate request stays intact.
+    if (frames_since_idr < config.keyframe_interval) return true;
+    const auto elapsed = now_us - rate_window_started_us;
+    const double measured = double(rate_window_bytes) * 8000 / std::max<int64_t>(1, elapsed);
+    rate_window_started_us = now_us;
+    rate_window_bytes = 0;
+    if (measured <= 0) return true;
+
+    // Approximately six QP steps halve the byte rate. Apply half the inferred
+    // correction per period, bounded to avoid sudden quality jumps. Clamping
+    // the state as well as the programmed QP prevents integral windup.
+    quantizer += std::clamp(3.0 * std::log2(measured / config.bitrate_kbits), -3.0, 3.0);
+    quantizer = std::clamp(quantizer, double(config.qp_min), double(config.qp_max));
+    const int qp = std::lround(quantizer);
+    if (qp == applied_qp) return true;
+    return program_quantizer(config.bitrate_kbits, qp);
+  }
   bool emit(const VCEncOut& out, bool keyframe, int64_t capture_us) {
     if (out.streamSize > bitstream.size)
       return fail("encoder output exceeds allocation", out.streamSize);
@@ -456,7 +463,8 @@ class OrqaHantroEncoder::Impl {
     if (log && statistics.frames % 600 == 0) {
       int average_qp = 0;
       if (VCEncGetAverageQp(encoder, &average_qp) == VCENC_OK)
-        log("Hantro frame=" + std::to_string(statistics.frames) +
+        log("Hantro device=" + config.device +
+            " frame=" + std::to_string(statistics.frames) +
             " average QP=" + std::to_string(average_qp));
     }
     statistics.bytes += out.streamSize;
@@ -469,7 +477,8 @@ class OrqaHantroEncoder::Impl {
       statistics.max_capture_to_output_us =
           std::max(statistics.max_capture_to_output_us, age);
     }
-    return emit(out, out.codingType == VCENC_INTRA_FRAME, capture_us);
+    return emit(out, out.codingType == VCENC_INTRA_FRAME, capture_us) &&
+           update_quantizer(out.streamSize, capture_us > 0 ? capture_us : last_capture_us);
   }
 
   void close() {
@@ -502,6 +511,10 @@ class OrqaHantroEncoder::Impl {
   bool force_keyframe = true;
   unsigned buffer_count = 0, stride = 0, image_bytes = 0, frames_since_idr = 0;
   int64_t last_capture_us = 0;
+  int applied_qp = 35;
+  double quantizer = 35;
+  int64_t rate_window_started_us = 0;
+  uint64_t rate_window_bytes = 0;
   v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
   v4l2_memory memory_type = V4L2_MEMORY_USERPTR;
   VCEncInst encoder = nullptr;

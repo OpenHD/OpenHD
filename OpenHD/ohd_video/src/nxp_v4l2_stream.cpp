@@ -598,6 +598,7 @@ class NxpV4l2Stream::Impl {
         owner.m_camera_holder->get_camera().index,
         CameraStream::CAM_STATUS_STREAMING);
     auto last_report = std::chrono::steady_clock::now();
+    uint64_t last_report_bytes = 0, last_report_frames = 0;
     while (running) {
       const bool rate_changed = rate_dirty.exchange(false);
       const bool qp_changed = qp_dirty.exchange(false);
@@ -610,12 +611,18 @@ class NxpV4l2Stream::Impl {
       const auto now = std::chrono::steady_clock::now();
       if (now - last_report >= std::chrono::seconds(10)) {
         const auto& stats = encoder.stats();
-        log->info("ORQA Hantro frames={} dropped={} encode avg/max={}/{} us capture-to-output avg/max={}/{} us",
+        const double seconds = std::chrono::duration<double>(now - last_report).count();
+        log->info("ORQA Hantro camera={} target={} kbit/s measured={} kbit/s fps={} frames={} dropped={} encode avg/max={}/{} us capture-to-output avg/max={}/{} us",
+                  owner.m_camera_holder->get_camera().index, bitrate_kbits.load(),
+                  (stats.bytes - last_report_bytes) * 8 / seconds / 1000,
+                  (stats.frames - last_report_frames) / seconds,
                   stats.frames, stats.dropped,
                   stats.frames ? stats.encode_us / stats.frames : 0, stats.max_encode_us,
                   stats.frames ? stats.capture_to_output_us / stats.frames : 0,
                   stats.max_capture_to_output_us);
         last_report = now;
+        last_report_bytes = stats.bytes;
+        last_report_frames = stats.frames;
       }
     }
   }
@@ -785,9 +792,10 @@ void NxpV4l2Stream::terminate_looping() { m_impl->stop(); }
 
 void NxpV4l2Stream::handle_change_bitrate_request(
     openhd::LinkActionHandler::LinkBitrateInformation lb) {
-  m_impl->bitrate_kbits = m_camera_holder->clamp_video_bitrate_kbits(
+  const int bitrate = m_camera_holder->clamp_video_bitrate_kbits(
       lb.recommended_encoder_bitrate_kbits);
-  m_impl->rate_dirty = true;
+  if (m_impl->bitrate_kbits.exchange(bitrate) != bitrate)
+    m_impl->rate_dirty = true;
   openhd::LinkActionHandler::instance().set_cam_info_bitrate(
       m_camera_holder->get_camera().index,
       static_cast<uint16_t>(m_impl->bitrate_kbits.load()));
