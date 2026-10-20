@@ -61,7 +61,19 @@ set(OPENHD_TARGET_LIBRARY_DIRS
     "${OPENHD_GCC_RUNTIME_DIR}"
     "${OPENHD_SYSROOT}/usr/lib/${OPENHD_CROSS_TRIPLET}"
     "${OPENHD_SYSROOT}/lib/${OPENHD_CROSS_TRIPLET}")
+# --sysroot and -L do not override GCC's startup-object search. Ubuntu's
+# Scrt1.o passes a NULL init callback (glibc >= 2.34), which silently skips
+# executable constructors on Bullseye's glibc 2.31. Select the target glibc's
+# startup objects as well as its libraries; retain GCC's own crtbegin/crtend.
+set(OPENHD_GLIBC_STARTFILE_DIR
+    "${OPENHD_SYSROOT}/usr/lib/${OPENHD_CROSS_TRIPLET}")
+foreach(startfile crt1.o Scrt1.o crti.o crtn.o libc_nonshared.a)
+    if(NOT EXISTS "${OPENHD_GLIBC_STARTFILE_DIR}/${startfile}")
+        message(FATAL_ERROR "Target glibc startup file is missing: ${OPENHD_GLIBC_STARTFILE_DIR}/${startfile}")
+    endif()
+endforeach()
 string(JOIN " " OPENHD_TARGET_LINK_FLAGS
+    "-B${OPENHD_GLIBC_STARTFILE_DIR}/"
     "-L${OPENHD_GCC_RUNTIME_DIR}"
     "-L${OPENHD_SYSROOT}/usr/lib/${OPENHD_CROSS_TRIPLET}"
     "-L${OPENHD_SYSROOT}/lib/${OPENHD_CROSS_TRIPLET}"

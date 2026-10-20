@@ -91,7 +91,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             ${{ matrix.compiler_packages }} \
-            autoconf automake cmake curl dpkg-dev git libtool make pkg-config zstd
+            autoconf automake cmake curl dpkg-dev git libtool make pkg-config qemu-user zstd
 
       - name: Fetch verified Cloudsmith sysroot
         if: matrix.architecture != 'amd64'
@@ -104,6 +104,12 @@ jobs:
             "${base}/${archive}" \
             "${checksum}" \
             "${RUNNER_TEMP}/sysroot-${{ matrix.architecture }}"
+
+      - name: Verify constructors with baseline glibc
+        if: matrix.architecture != 'amd64'
+        run: |
+          bash scripts/tests/test_cross_startup.sh \
+            "${{ matrix.architecture }}" "${RUNNER_TEMP}/sysroot-${{ matrix.architecture }}"
 
       - name: Cross-build and package OpenHD
         if: matrix.architecture != 'amd64'

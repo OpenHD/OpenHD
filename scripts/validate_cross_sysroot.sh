@@ -57,7 +57,8 @@ printf '%s\n' \
   '      + (display != EGL_NO_DISPLAY) + (gl_version != nullptr) + ft_status' \
   '      + (linked_zlib_version == nullptr) + (rtl_devices > 0);' \
   '}' \
-  | "${compiler}" --sysroot="${sysroot}" -x c++ - \
+  | "${compiler}" --sysroot="${sysroot}" \
+      -B"${sysroot}/usr/lib/${triplet}/" -x c++ - \
       "${pkg_config_flags[@]}" \
       -L"${gcc_runtime_dir}" \
       -L"${sysroot}/usr/lib/${triplet}" \
@@ -79,7 +80,8 @@ if [[ "${architecture}" == "arm64" ]]; then
     'int main() {' \
     '  return mpp_check_support_format(MPP_CTX_ENC, MPP_VIDEO_CodingAVC);' \
     '}' \
-    | "${compiler}" --sysroot="${sysroot}" -x c++ - \
+    | "${compiler}" --sysroot="${sysroot}" \
+        -B"${sysroot}/usr/lib/${triplet}/" -x c++ - \
         "${mpp_flags[@]}" \
         -L"${gcc_runtime_dir}" \
         -L"${sysroot}/usr/lib/${triplet}" \

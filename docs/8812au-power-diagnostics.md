@@ -1,5 +1,40 @@
 # 8812AU power diagnostics
 
+## Bullseye cross-build startup failure
+
+The AC56 investigation on 2026-10-20 identified a package startup problem:
+Ubuntu's newer glibc startup objects pass a null initialization callback to
+`__libc_start_main`. Bullseye's glibc 2.31 does not handle that convention, so
+executable C++ constructors are skipped. Jaguar1's rate-section vectors remain
+empty: power updates change the training registers but attempt zero TXAGC
+writes, leaving TXAGC at its initialization value `0x12121212`.
+
+`--sysroot` and target-library `-L` flags alone do not select target startup
+objects. The portable toolchain uses `-B<sysroot>/usr/lib/<triplet>/` to select
+Bullseye's `crt1.o`/`Scrt1.o`, `crti.o`, and `crtn.o`, while continuing to use
+the compiler's GCC startup support. It also requires the target
+`libc_nonshared.a`. This fixes executable initialization rather than changing
+Devourer's power calculations.
+
+`scripts/tests/test_cross_startup.sh <armhf|arm64> <sysroot>` builds through the
+production CMake toolchain and runs a global-constructor/vector-copy regression
+under QEMU with the baseline loader and libc. The old toolchain fails this
+test even though compilation and library-version checks succeed.
+
+On two Raspberry Pis with ASUS USB-AC56 radios, temporarily restoring Air's
+constructor execution produced 88 TXAGC writes with zero failures and matching
+sampled register readback. Two RF sweeps at 5745 MHz / 20 MHz measured Ground
+antenna 2 medians of approximately -32, -25/-26, -20, and -32 dBm for
+20% -> 60% -> 100% -> 20%. The packaged startup before and after the test
+attempted zero writes and showed no comparable power-step response. This
+verifies a received-signal response; it is not calibrated transmitter-power,
+range, or sustained-video validation.
+
+For the upstream startup ABI change, see
+[glibc commit 035c012e](https://sourceware.org/pipermail/glibc-cvs/2021q1/072013.html).
+
+## Diagnostic logging
+
 Build the normal OpenHD target and image; package, service and executable names
 are unchanged. This adds diagnostics, without replacing EFUSE-relative power
 control or changing the requested power levels.
