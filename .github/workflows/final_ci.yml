@@ -447,8 +447,10 @@ jobs:
       - name: Cross-build OpenHD SysUtils for Orqa
         run: |
           source "${RUNNER_TEMP}/orqa-sdk/environment-setup-armv8a-poky-linux"
+          export HOST_CXX=/usr/bin/g++
           cmake -S OpenHD-SysUtils -B build-orqa-sysutils -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCPACK_DEBIAN_PACKAGE_ARCHITECTURE=arm64
           cmake --build build-orqa-sysutils --parallel "$(nproc)" \
             --target openhd_sys_utils
           "${READELF}" -h build-orqa-sysutils/openhd_sys_utils | \
@@ -456,6 +458,20 @@ jobs:
           "${STRIP}" --strip-unneeded build-orqa-sysutils/openhd_sys_utils
           bash OpenHD-SysUtils/scripts/build_usb_modeswitch.sh \
             "${GITHUB_WORKSPACE}/build-orqa-sysutils/usb_modeswitch"
+      - name: Package OpenHD SysUtils for Orqa
+        working-directory: build-orqa-sysutils
+        run: cpack -G DEB
+      - name: Upload OpenHD SysUtils for Orqa
+        uses: actions/upload-artifact@v7
+        with:
+          name: openhd-sysutils-aarch64
+          path: |
+            build-orqa-sysutils/*.deb
+            build-orqa-sysutils/openhd_sys_utils
+            build-orqa-sysutils/openhd-orqa-camera-probe
+            build-orqa-sysutils/usb_modeswitch
+            build-orqa-sysutils/usb_modeswitch.COPYING
+          if-no-files-found: error
       - name: Bundle Orqa deploy package
         run: |
           deploy="${GITHUB_WORKSPACE}/build-orqa/deploy"
