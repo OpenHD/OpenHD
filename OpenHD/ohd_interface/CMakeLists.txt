@@ -390,6 +390,10 @@ target_link_libraries(test_wb_link_rate_helper OHDInterfaceLib)
 add_executable(test_multi_link test/test_multi_link.cpp)
 target_link_libraries(test_multi_link OHDInterfaceLib)
 
+add_executable(test_microhard_config test/test_microhard_config.cpp)
+target_link_libraries(test_microhard_config OHDInterfaceLib)
+target_compile_options(test_microhard_config PRIVATE -UNDEBUG)
+
 add_executable(test_wifi_card_recovery test/test_wifi_card_recovery.cpp)
 target_link_libraries(test_wifi_card_recovery OHDInterfaceLib)
 target_compile_options(test_wifi_card_recovery PRIVATE -UNDEBUG)
@@ -405,6 +409,7 @@ set(OPENHD_INTERFACE_TEST_TARGETS
     test_wifi_set_channel
     test_wb_link_rate_helper
     test_multi_link
+    test_microhard_config
     test_wifi_card_recovery)
 foreach(test_target IN LISTS OPENHD_INTERFACE_TEST_TARGETS)
     target_sources(${test_target} PRIVATE ../ohd_common/src/config_paths.cpp)

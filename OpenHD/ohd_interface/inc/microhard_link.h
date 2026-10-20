@@ -28,6 +28,7 @@
 #include <cstdint>
 #include <thread>
 
+#include "microhard_config.h"
 #include "non_wb_video_bitrate_meter.h"
 #include "openhd_link.hpp"
 #include "openhd_settings_imp.h"
@@ -39,6 +40,7 @@
 class MicrohardLink : public OHDLink {
  public:
   explicit MicrohardLink(OHDProfile profile);
+  MicrohardLink(const openhd::Config& config, OHDProfile profile);
   ~MicrohardLink();
   void transmit_telemetry_data(TelemetryTxPacket packet) override;
   void transmit_video_data(
@@ -52,7 +54,9 @@ class MicrohardLink : public OHDLink {
    * and/or the used hardware
    */
   std::vector<openhd::Setting> get_all_settings();
-  static void monitor_gateway_signal_strength(const std::string& gateway_ip);
+  static void monitor_gateway_signal_strength(const std::string& gateway_ip,
+                                              const std::string& username,
+                                              const std::string& password);
 
  private:
   void start_stats_thread();
@@ -62,6 +66,7 @@ class MicrohardLink : public OHDLink {
 
  private:
   const OHDProfile m_profile;
+  const openhd::microhard::RuntimeConfig m_config;
   std::unique_ptr<openhd::UDPForwarder> m_video_tx;
   std::unique_ptr<openhd::UDPReceiver> m_video_rx;
   //

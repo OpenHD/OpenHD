@@ -84,69 +84,6 @@ const std::string command5 = "AT+MWVRATE\n";
 const std::string command6 = "AT+MWNOISEFLOOR\n";
 const std::string command7 = "AT+MWSNR\n";
 
-static const auto MICROHARD_IP_RANGE = "192.168.168";
-static const auto MICROHARD_AIR_IP = "";
-static const auto MICROHARD_GND_IP = "";
-static const int MICROHARD_UDP_PORT_TELEMETRY_AIR_TX = 5000;
-static const int MICROHARD_UDP_PORT_VIDEO_AIR_TX = 5001;
-static const std::string DEFAULT_DEVICE_IP_GND = "";
-static const std::string DEFAULT_DEVICE_IP_AIR = "";
-const std::string username = "admin\n";
-const std::string password = "qwertz1\n";
-
-// Helper function to retrieve IP addresses starting with a specific prefix
-std::vector<std::string> get_ip_addresses(const std::string& prefix) {
-  std::vector<std::string> ip_addresses;
-  int sockfd;
-  struct ifreq ifr;
-  struct ifconf ifc;
-  char buf[4096];
-  struct ifreq* it;
-  struct ifreq* end;
-
-  sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-  if (sockfd < 0) {
-    perror("socket");
-    openhd::log::get_default()->warn(
-        "Failed to create socket for IP retrieval.");
-    return ip_addresses;
-  }
-
-  ifc.ifc_len = sizeof(buf);
-  ifc.ifc_buf = buf;
-  if (ioctl(sockfd, SIOCGIFCONF, &ifc) < 0) {
-    perror("ioctl");
-    openhd::log::get_default()->warn(
-        "ioctl failed while getting interface configuration.");
-    close(sockfd);
-    return ip_addresses;
-  }
-
-  it = ifc.ifc_req;
-  end = (struct ifreq*)(buf + ifc.ifc_len);
-
-  for (; it != end; ++it) {
-    strncpy(ifr.ifr_name, it->ifr_name, IFNAMSIZ - 1);
-    if (ioctl(sockfd, SIOCGIFADDR, &ifr) < 0) {
-      perror("ioctl");
-      openhd::log::get_default()->warn(
-          "ioctl failed while getting IP address for interface {}",
-          ifr.ifr_name);
-      continue;
-    }
-    auto* addr = (struct sockaddr_in*)&ifr.ifr_addr;
-    std::string ip = inet_ntoa(addr->sin_addr);
-    if (ip.find(prefix) == 0) {
-      ip_addresses.push_back(ip);
-      openhd::log::get_default()->warn("Found IP address: {}", ip);
-    }
-  }
-
-  close(sockfd);
-
-  return ip_addresses;
-}
-
 void send_command_and_process_response(Poco::Net::SocketStream& stream,
                                        const std::string& command,
                                        const std::regex& regex,
@@ -170,13 +107,16 @@ void send_command_and_process_response(Poco::Net::SocketStream& stream,
         "{} value: {} {}", value_name, value,
         (value_name == "SNR" || value_name == "NoiseFloor") ? "dBm" : "MHz");
   } else {
-    openhd::log::get_default()->warn("{} not found in response: '{}'",
-                                     value_name, response);
+    // Modems may echo login input before the first command response.
+    openhd::log::get_default()->warn("{} not found in modem response",
+                                     value_name);
   }
 }
 
 void communicate_with_device(const std::string& ip,
-                             const std::string& command) {
+                             const std::string& command,
+                             const std::string& username,
+                             const std::string& password) {
   openhd::log::get_default()->warn(
       "Starting communication with device at IP: {}", ip);
 
@@ -188,13 +128,11 @@ void communicate_with_device(const std::string& ip,
     // Login to the device
     std::this_thread::sleep_for(
         std::chrono::seconds(1));  // Wait for a second to process username
-    openhd::log::get_default()->debug("Sending username: {}", username);
-    stream << username << std::flush;
+    stream << username << "\n" << std::flush;
     std::this_thread::sleep_for(
         std::chrono::seconds(1));  // Wait for a second to process username
 
-    openhd::log::get_default()->debug("Sending password: {}", password);
-    stream << password << std::flush;
+    stream << password << "\n" << std::flush;
     std::this_thread::sleep_for(
         std::chrono::seconds(3));  // Wait for a second to process password
 
@@ -238,7 +176,9 @@ void communicate_with_device(const std::string& ip,
 }
 
 void communicate_with_device_slow(const std::string& ip,
-                                  const std::string& command2) {
+                                  const std::string& command2,
+                                  const std::string& username,
+                                  const std::string& password) {
   openhd::log::get_default()->warn(
       "Starting slower communication with device at IP: {}", ip);
 
@@ -250,12 +190,10 @@ void communicate_with_device_slow(const std::string& ip,
 
     // Login to the device
     std::this_thread::sleep_for(std::chrono::seconds(1));
-    openhd::log::get_default()->debug("Sending username: {}", username);
-    stream << username << std::flush;
+    stream << username << "\n" << std::flush;
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
-    openhd::log::get_default()->debug("Sending password: {}", password);
-    stream << password << std::flush;
+    stream << password << "\n" << std::flush;
     std::this_thread::sleep_for(std::chrono::seconds(3));
 
     const std::vector<std::pair<std::string, std::regex>> commands = {
@@ -285,7 +223,8 @@ void communicate_with_device_slow(const std::string& ip,
 }
 
 void MicrohardLink::monitor_gateway_signal_strength(
-    const std::string& gateway_ip) {
+    const std::string& gateway_ip, const std::string& username,
+    const std::string& password) {
   if (gateway_ip.empty()) {
     openhd::log::get_default()->warn(
         "Gateway IP is empty. Exiting monitoring.");
@@ -299,7 +238,7 @@ void MicrohardLink::monitor_gateway_signal_strength(
                                      gateway_ip);
     try {
       std::string command2 = "AT+MWRSSI\n";
-      communicate_with_device(gateway_ip, command2);
+      communicate_with_device(gateway_ip, command2, username, password);
       openhd::log::get_default()->warn("RSSI data retrieval complete.");
     } catch (const std::exception& e) {
       openhd::log::get_default()->warn(
@@ -310,30 +249,30 @@ void MicrohardLink::monitor_gateway_signal_strength(
   }
 }
 
-std::string get_gateway_ip() {
-  std::string cmd =
-      "ip route show default | awk '/default/ {print $3}' | grep "
-      "'^192\\.168\\.168'";
-  FILE* pipe = popen(cmd.c_str(), "r");
+// Discover only the local modem management address. Never use local interface
+// enumeration as discovery for the remote OpenHD host.
+static std::string get_gateway_ip(const std::string& ip_range) {
+  FILE* pipe = popen("ip -4 route show default", "r");
   if (!pipe) {
-    openhd::log::get_default()->warn("Failed to run command: {}", cmd.c_str());
-    throw std::runtime_error("Failed to run command.");
+    openhd::log::get_default()->warn("Failed to read default routes");
+    return "";
   }
-
-  char buffer[128];
+  char buffer[1024];
   std::string result;
-  if (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
-    result = buffer;
+  while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+    std::istringstream route(buffer);
+    std::string token;
+    while (route >> token) {
+      if (token == "via" && route >> token) {
+        if (openhd::microhard::matches_ip_range(token, ip_range)) {
+          result = token;
+        }
+        break;
+      }
+    }
+    if (!result.empty()) break;
   }
   pclose(pipe);
-
-  // Trim trailing newline
-  if (!result.empty()) {
-    result.erase(result.find_last_not_of("\n\r") + 1);
-  }
-
-  openhd::log::get_default()->warn("Filtered Gateway IP: {}", result.c_str());
-
   return result;
 }
 
@@ -361,68 +300,10 @@ bool check_ip_alive(const std::string& ip, int port = 23) {
   return connected;
 }
 
-std::string find_device_ip_gnd() {
-  auto ip_addresses = get_ip_addresses(MICROHARD_IP_RANGE);
-  for (const auto& ip : ip_addresses) {
-    if (ip != MICROHARD_AIR_IP && ip != MICROHARD_GND_IP) {
-      return ip;
-    }
-  }
-  openhd::log::get_default()->warn(
-      "No suitable IP address found for DEVICE_IP_GND. Using default.");
-
-  return DEFAULT_DEVICE_IP_GND;
-}
-
-std::string find_device_ip_air() {
-  auto ip_addresses = get_ip_addresses(MICROHARD_IP_RANGE);
-  for (const auto& ip : ip_addresses) {
-    if (ip != MICROHARD_AIR_IP && ip != MICROHARD_GND_IP) {
-      return ip;
-    }
-  }
-  openhd::log::get_default()->warn(
-      "No suitable IP address found for DEVICE_IP_AIR. Using default.");
-
-  return DEFAULT_DEVICE_IP_AIR;
-}
-
-// The assigned IP
-static const std::string DEVICE_IP_GND = find_device_ip_gnd();
-static const std::string DEVICE_IP_AIR = find_device_ip_air();
-
-void log_ip_addresses() {
-  auto ip_addresses = get_ip_addresses(MICROHARD_IP_RANGE);
-  if (!ip_addresses.empty()) {
-    for (const auto& ip : ip_addresses) {
-      openhd::log::get_default()->warn("Found IP address: {}", ip);
-      std::string gateway_ip = get_gateway_ip();
-      openhd::log::get_default()->warn("Gateway IP for {}: {}", ip, gateway_ip);
-    }
-  } else {
-    openhd::log::get_default()->warn("No IP addresses starting with {} found.",
-                                     MICROHARD_IP_RANGE);
-  }
-}
-
-std::string get_detected_ip_address() {
-  auto ip_addresses = get_ip_addresses(MICROHARD_IP_RANGE);
-  if (!ip_addresses.empty()) {
-    return ip_addresses.front();
-  } else {
-    openhd::log::get_default()->warn("No IP addresses starting with {} found.",
-                                     MICROHARD_IP_RANGE);
-
-    return "";  // Return an empty string if no IP found
-  }
-}
-
-static void wait_for_microhard_module(bool is_air) {
-  const std::string microhard_device_ip = get_gateway_ip();
-
+static void wait_for_microhard_module(const std::string& microhard_device_ip) {
   if (microhard_device_ip.empty()) {
     openhd::log::get_default()->warn(
-        "No microhard device IP address detected. Exiting.");
+        "No local Microhard management address found; skipping modem monitoring.");
     return;
   }
 
@@ -436,12 +317,20 @@ static void wait_for_microhard_module(bool is_air) {
   }
 }
 
-MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
-  wait_for_microhard_module(m_profile.is_air);
+MicrohardLink::MicrohardLink(OHDProfile profile)
+    : MicrohardLink(openhd::load_config(), profile) {}
+
+MicrohardLink::MicrohardLink(const openhd::Config& config, OHDProfile profile)
+    : m_profile(profile),
+      m_config(openhd::microhard::make_config(config, profile.is_air)) {
+  const auto modem_ip = m_config.modem_ip.empty()
+                            ? get_gateway_ip(m_config.ip_range)
+                            : m_config.modem_ip;
+  wait_for_microhard_module(modem_ip);
 
   if (m_profile.is_air) {
     m_video_tx = std::make_unique<openhd::UDPForwarder>(
-        DEVICE_IP_GND, MICROHARD_UDP_PORT_VIDEO_AIR_TX);
+        m_config.peer_ip, m_config.video_port);
     auto cb_telemetry_rx = [this](const uint8_t* data, std::size_t data_len) {
       m_rx_total_bytes.fetch_add(static_cast<uint64_t>(data_len),
                                  std::memory_order_relaxed);
@@ -456,7 +345,7 @@ MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
       on_receive_telemetry_data(shared);
     };
     m_telemetry_tx_rx = std::make_unique<openhd::UDPReceiver>(
-        DEVICE_IP_AIR, MICROHARD_UDP_PORT_TELEMETRY_AIR_TX, cb_telemetry_rx);
+        "0.0.0.0", m_config.telemetry_port, cb_telemetry_rx);
   } else {
     auto cb_video_rx = [this](const uint8_t* payload, std::size_t payloadSize) {
       m_rx_total_bytes.fetch_add(static_cast<uint64_t>(payloadSize),
@@ -467,7 +356,7 @@ MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
       on_receive_video_data(0, payload, payloadSize);
     };
     m_video_rx = std::make_unique<openhd::UDPReceiver>(
-        DEVICE_IP_GND, MICROHARD_UDP_PORT_VIDEO_AIR_TX, cb_video_rx);
+        "0.0.0.0", m_config.video_port, cb_video_rx);
 
     auto cb_telemetry_rx = [this](const uint8_t* data, std::size_t data_len) {
       m_rx_total_bytes.fetch_add(static_cast<uint64_t>(data_len),
@@ -483,7 +372,7 @@ MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
       on_receive_telemetry_data(shared);
     };
     m_telemetry_tx_rx = std::make_unique<openhd::UDPReceiver>(
-        DEVICE_IP_GND, MICROHARD_UDP_PORT_TELEMETRY_AIR_TX, cb_telemetry_rx);
+        "0.0.0.0", m_config.telemetry_port, cb_telemetry_rx);
   }
 
   if (m_telemetry_tx_rx) {
@@ -494,14 +383,13 @@ MicrohardLink::MicrohardLink(OHDProfile profile) : m_profile(profile) {
     m_video_rx->runInBackground();
   }
 
-  // Start monitoring gateway signal strength
-  std::thread monitor_thread(monitor_gateway_signal_strength, get_gateway_ip());
-  monitor_thread.detach();  // Run in the background
-
-  // Start the second communication thread
-  std::thread second_thread(communicate_with_device_slow, get_gateway_ip(),
-                            command2);
-  second_thread.detach();  // Run in the background
+  // Detached workers own their credential copies and never log them.
+  if (!modem_ip.empty()) {
+    std::thread(monitor_gateway_signal_strength, modem_ip, m_config.username,
+                m_config.password).detach();
+    std::thread(communicate_with_device_slow, modem_ip, command2,
+                m_config.username, m_config.password).detach();
+  }
   start_stats_thread();
 }
 
@@ -512,9 +400,8 @@ MicrohardLink::~MicrohardLink() {
 }
 
 void MicrohardLink::transmit_telemetry_data(OHDLink::TelemetryTxPacket packet) {
-  const auto destination_ip = m_profile.is_air ? DEVICE_IP_GND : DEVICE_IP_AIR;
   m_telemetry_tx_rx->forwardPacketViaUDP(
-      destination_ip, MICROHARD_UDP_PORT_TELEMETRY_AIR_TX, packet.data->data(),
+      m_config.peer_ip, m_config.telemetry_port, packet.data->data(),
       packet.data->size());
   m_tx_total_bytes.fetch_add(static_cast<uint64_t>(packet.data->size()),
                              std::memory_order_relaxed);
