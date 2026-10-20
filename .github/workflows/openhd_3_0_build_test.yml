@@ -90,7 +90,21 @@ jobs:
           ./build_cmake.sh
       - name: Exercise camera worker isolation and libcamera recovery
         run: |
-          sudo apt-get install -y gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly
+          sudo apt-get install -y gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-tools
+          # Ubuntu's plugins-bad package does not contain RidgeRun's perf
+          # element. Use the same release as the ORQA SDK setup.
+          curl --fail --location --retry 3 \
+            https://github.com/RidgeRun/gst-perf/archive/refs/tags/v0.3.1.tar.gz \
+            -o "${RUNNER_TEMP}/gst-perf.tar.gz"
+          tar -xf "${RUNNER_TEMP}/gst-perf.tar.gz" -C "${RUNNER_TEMP}"
+          (
+            cd "${RUNNER_TEMP}/gst-perf-0.3.1"
+            ./autogen.sh
+            ./configure --prefix=/usr --libdir="/usr/lib/$(dpkg-architecture -qDEB_HOST_MULTIARCH)"
+            make -j2
+            sudo make install
+          )
+          gst-inspect-1.0 perf
           cmake --build OpenHD/build --target test_gst_camera_process --parallel 2
           timeout 120s ./OpenHD/build/ohd_video/test_gst_camera_process
       - name: Run as air (limited)

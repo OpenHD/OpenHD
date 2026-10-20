@@ -96,6 +96,29 @@ if(ENABLE_AIR)
             target_include_directories(openhd_orqa_hantro PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/inc)
             target_include_directories(openhd_orqa_hantro PRIVATE ${ORQA_HANTRO_INCLUDE_DIR})
             target_link_libraries(openhd_orqa_hantro PUBLIC ${ORQA_HANTRO_LIBRARY})
+            # Older ORQA SDKs lack this optional diagnostic API. Check both
+            # the declaration and library symbol with the selected toolchain.
+            include(CheckCXXSourceCompiles)
+            include(CMakePushCheckState)
+            cmake_push_check_state(RESET)
+            set(CMAKE_REQUIRED_INCLUDES ${ORQA_HANTRO_INCLUDE_DIR})
+            set(CMAKE_REQUIRED_LIBRARIES ${ORQA_HANTRO_LIBRARY})
+            check_cxx_source_compiles("
+                #include <cstdint>
+                extern \"C\" {
+                #define bool uint32_t
+                #include <hevcencapi.h>
+                #undef bool
+                }
+                int main() {
+                    int qp = 0;
+                    return VCEncGetAverageQp(nullptr, &qp);
+                }
+                " OPENHD_HANTRO_HAS_AVERAGE_QP)
+            cmake_pop_check_state()
+            if(OPENHD_HANTRO_HAS_AVERAGE_QP)
+                target_compile_definitions(openhd_orqa_hantro PRIVATE OPENHD_HANTRO_HAS_AVERAGE_QP)
+            endif()
             target_link_libraries(OHDVideoLib PRIVATE openhd_orqa_hantro)
             target_compile_definitions(OHDVideoLib PRIVATE OPENHD_ORQA_HANTRO_PRESENT)
             add_executable(test_orqa_hantro test/test_orqa_hantro.cpp)

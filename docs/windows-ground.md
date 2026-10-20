@@ -61,20 +61,20 @@ still needs a compatible adapter and a matching air unit.
 
 ## Build
 
-Use a 64-bit MSYS2 MINGW64 shell:
+Use a 64-bit MSYS2 UCRT64 shell:
 
 ```sh
-pacman -S --needed mingw-w64-x86_64-{gcc,cmake,ninja,pkgconf,libusb,libsodium,pdcurses}
+pacman -S --needed mingw-w64-ucrt-x86_64-{gcc,cmake,ninja,pkgconf,libusb,libsodium,pdcurses}
 git submodule update --init OpenHD/ohd_common/lib/spdlog OpenHD/ohd_common/lib/json OpenHD/ohd_interface/lib/wifibroadcast OpenHD/ohd_interface/lib/devourer
 cmake -S OpenHD -B out/windows-ground -G Ninja -DCMAKE_BUILD_TYPE=Release \
-  -DOPENHD_PORTABLE_GROUND=ON -Dsodium_DIR=C:/msys64/mingw64
+  -DOPENHD_PORTABLE_GROUND=ON -Dsodium_DIR="$(cygpath -m "$MINGW_PREFIX")"
 cmake --build out/windows-ground --target openhd_ground test_ground_udp test_ground_pipeline test_ground_dashboard test_ground_app -j4
 ctest --test-dir out/windows-ground -R '^ground_' --output-on-failure
 ./out/windows-ground/platform/ground/openhd_ground.exe
 ```
 
 GCC 13 or newer is supported initially. MSVC is not supported by this target yet.
-PDCurses' Win32 console backend is linked statically. Outside the MINGW64 shell,
+PDCurses' Win32 console backend is linked statically. Outside the UCRT64 shell,
 keep the packaged libusb, libsodium, libstdc++, libgcc and libwinpthread DLLs
 beside the executable. Normal Linux builds keep their existing entry point and
 startup behavior.

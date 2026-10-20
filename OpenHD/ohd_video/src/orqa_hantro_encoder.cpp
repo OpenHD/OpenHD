@@ -469,6 +469,7 @@ class OrqaHantroEncoder::Impl {
     ++frames_since_idr;
     VCEncFindNextPic(encoder, &in, 1, in.gopConfig.gopCfgOffset, 0);
     ++statistics.frames;
+#ifdef OPENHD_HANTRO_HAS_AVERAGE_QP
     if (log && statistics.frames % 600 == 0) {
       int average_qp = 0;
       if (VCEncGetAverageQp(encoder, &average_qp) == VCENC_OK)
@@ -476,6 +477,7 @@ class OrqaHantroEncoder::Impl {
             " frame=" + std::to_string(statistics.frames) +
             " average QP=" + std::to_string(average_qp));
     }
+#endif
     statistics.bytes += out.streamSize;
     const uint64_t duration = finished - started;
     statistics.encode_us += duration;
