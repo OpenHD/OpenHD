@@ -8,7 +8,7 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: false
       - run: git submodule update --init OpenHD/ohd_telemetry/lib/mavlink-headers OpenHD/ohd_common/lib/json OpenHD/ohd_common/lib/spdlog

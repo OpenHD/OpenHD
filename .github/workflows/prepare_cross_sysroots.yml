@@ -29,7 +29,7 @@ jobs:
             triplet: arm-linux-gnueabihf
             compiler_packages: gcc-10-arm-linux-gnueabihf g++-10-arm-linux-gnueabihf
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install sysroot tooling
         run: |
@@ -59,7 +59,7 @@ jobs:
             "sysroot-${{ matrix.architecture }}"
 
       - name: Upload hostable sysroot
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: openhd-sysroot-bullseye-${{ matrix.architecture }}
           path: |

@@ -31,7 +31,7 @@ jobs:
           }
 
       - name: Download cached X21B SDK
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           repository: OpenHD/OpenHD-X21B
           run-id: ${{ inputs.source_run_id }}
@@ -40,7 +40,7 @@ jobs:
           path: publish-inputs
 
       - name: Download cached X21B OHD filesystem seed
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           repository: OpenHD/OpenHD-X21B
           run-id: ${{ inputs.source_run_id }}

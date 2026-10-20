@@ -22,7 +22,7 @@ jobs:
       CCACHE_DIR: ${{ github.workspace }}/.ccache
     steps:
       - name: Checkout repository and submodules
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           submodules: true
           fetch-depth: 0
@@ -58,14 +58,14 @@ jobs:
           sudo apt install -y openhd-sys-utils
 
       - name: Cache ccache data
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .ccache
           key: ${{ runner.os }}-ccache-${{ github.sha }}
           restore-keys: ${{ runner.os }}-ccache-
 
       - name: Cache SonarCloud scanner and analysis data
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.sonar/cache

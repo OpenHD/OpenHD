@@ -51,7 +51,7 @@ jobs:
             release: bullseye
     steps:
       - name: Checkout repository and submodules
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: true
@@ -182,7 +182,7 @@ jobs:
           fi
 
       - name: Upload architecture package
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: openhd-${{ matrix.architecture }}
           path: |
@@ -301,7 +301,7 @@ jobs:
           remove-android: "true"
           remove-haskell: "true"
           overprovision-lvm: "true"
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: true
@@ -357,7 +357,7 @@ jobs:
             echo "Zstandard-compressed Debian members are incompatible with Bullseye dpkg."
             exit 1
           fi
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: openhd-x20
           path: openhd-x20*.deb
@@ -391,7 +391,7 @@ jobs:
       DOWNLOAD_KEY: ${{ secrets.DOWNLOAD_KEY }}
       DOWNLOAD_URL: ${{ secrets.DOWNLOAD_URL }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: true
           token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
@@ -408,7 +408,7 @@ jobs:
           git -C "${devourer_dir}" checkout --detach "${devourer_commit}"
           test -f "${devourer_dir}/CMakeLists.txt"
       - name: Checkout OpenHD SysUtils
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: OpenHD/OpenHD-SysUtils
           ref: dev-release
@@ -493,7 +493,7 @@ jobs:
           tar -tzf "${GITHUB_WORKSPACE}/build-orqa/openhd-orqa-deploy.tar.gz"
 
       - name: Checkout the ORQA image assembler
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: OpenHD/OpenHD-ImageBuilder
           ref: dev-release
@@ -528,7 +528,7 @@ jobs:
           sha256sum "build-orqa/${OUTPUT_IMAGE}-${DT}.zip" > \
             "build-orqa/${OUTPUT_IMAGE}-${DT}.zip.sha256"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: openhd-orqa
           path: |
@@ -537,7 +537,7 @@ jobs:
             build-orqa/gst-perf-needed.txt
           if-no-files-found: error
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: openhd-image-orqa-${{ env.DT }}
           path: |

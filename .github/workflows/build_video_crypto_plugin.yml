@@ -35,12 +35,12 @@ jobs:
             release: bullseye
     steps:
       - name: Checkout OpenHD
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           path: openhd
 
       - name: Checkout private plugin
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: OpenHD-Technologies/video_crypto_private
           ref: main
@@ -98,7 +98,7 @@ jobs:
           echo "file=${package}" >> "${GITHUB_OUTPUT}"
 
       - name: Upload package
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: openhd-plugin-video-crypto-${{ matrix.architecture }}
           path: plugin/${{ steps.package.outputs.file }}

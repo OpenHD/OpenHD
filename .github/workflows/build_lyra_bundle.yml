@@ -36,7 +36,7 @@ jobs:
           }
 
       - name: Checkout OpenHD
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: false
@@ -100,7 +100,7 @@ jobs:
           ./scripts/build_lyra_ground_component.sh "${LYRA_SYSROOT_DIR}" "${GITHUB_WORKSPACE}/lyra-component"
 
       - name: Upload OpenHD Ground component artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: openhd-lyra-ground-component
           path: lyra-component/

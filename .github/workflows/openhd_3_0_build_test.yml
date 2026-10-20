@@ -25,7 +25,7 @@ jobs:
       ARTLINK_GIT_AUTH: "raphael@openhdfpv.org:${{ secrets.OPENHD_SUBMODULE_TOKEN }}"
     steps:
       - name: Checkout repository and submodules
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: true
@@ -41,7 +41,7 @@ jobs:
           git -C "${devourer_dir}" checkout --detach "${devourer_commit}"
           test -f "${devourer_dir}/CMakeLists.txt"
       - name: Checkout private video crypto
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: OpenHD-Technologies/video_crypto_private
           ref: main
@@ -157,7 +157,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout X21 Buildroot
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: OpenHD/openhd_x21b_buildroot
           ref: master

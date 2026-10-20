@@ -11,7 +11,7 @@ jobs:
       run:
         shell: msys2 {0}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Fetch public transport dependencies
         shell: pwsh
         run: git submodule update --init --checkout OpenHD/ohd_common/lib/spdlog OpenHD/ohd_common/lib/json OpenHD/ohd_interface/lib/wifibroadcast OpenHD/ohd_interface/lib/devourer
@@ -42,7 +42,7 @@ jobs:
           cp docs/windows-ground.md out/windows-ground-package/README.md
           cp LICENSE out/windows-ground-package/
           cp -r "$MINGW_PREFIX"/share/licenses/{libusb,libsodium} out/windows-ground-package/
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: openhd-windows-ground
           path: out/windows-ground-package

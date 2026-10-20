@@ -36,7 +36,7 @@ jobs:
           }
 
       - name: Checkout OpenHD
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: false
@@ -84,7 +84,7 @@ jobs:
         run: ./scripts/build_luckfox_component.sh "${LUCKFOX_SDK_DIR}" "${GITHUB_WORKSPACE}/luckfox-component"
 
       - name: Upload OpenHD component artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: openhd-luckfox-pico-component
           path: luckfox-component/

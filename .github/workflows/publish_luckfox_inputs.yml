@@ -28,7 +28,7 @@ jobs:
           }
 
       - name: Download cached Luckfox Pico SDK
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           repository: ${{ inputs.source_repository }}
           run-id: ${{ inputs.source_run_id }}

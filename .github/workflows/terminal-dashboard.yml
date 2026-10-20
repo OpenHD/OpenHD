@@ -11,7 +11,7 @@ jobs:
   terminal:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Fetch common-library dependencies
         run: git submodule update --init OpenHD/ohd_common/lib/json OpenHD/ohd_common/lib/spdlog
       - name: Install terminal dependencies
