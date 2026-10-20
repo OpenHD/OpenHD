@@ -1,9 +1,34 @@
 #include <array>
 
 #include "wb_link_helper.h"
+#include "channel_survey_average.h"
 
 int main() {
+  openhd::wb::ChannelSurveyAverage average;
+  if (average.metrics() != 0x3fff) return 40;
+  average.add(20, 0xc000 | (80 << 7) | 60);
+  average.add(0, 0x3fff);  // failed visit must not halve the first reading
+  if (average.packets() != 20) return 41;
+  average.add(40, 0xc000 | (20 << 7) | 40);
+  if (average.packets() != 30 || average.metrics() != (0xc000 | (50 << 7) | 50)) return 42;
+  average.add(0, 0); // valid quiet packets, unsupported CCX
+  if (average.packets() != 20 || average.metrics() != (0xc000 | (50 << 7) | 50)) return 43;
   WiFiCard card{};
+  // Full-band analysis must include both halves of 40 MHz channel pairs.
+  card.supported_frequencies_5G = {5100, 5180, 5200, 5220, 5240,
+                                   5745, 5765, 5785, 5805, 5845, 5865, 5885};
+  const auto survey = openhd::wb::get_analyze_channels_frequencies(card, 2);
+  const auto expected = card.supported_frequencies_5G;
+  if (survey.size() != expected.size()) return 30;
+  for (size_t i = 0; i < expected.size(); ++i)
+    if (survey[i].frequency != expected[i]) return 31;
+  card.supported_frequencies_2G = openhd::get_all_channel_frequencies(
+      openhd::get_channels_2G_legal_at_least_one_country());
+  const auto survey2g = openhd::wb::get_analyze_channels_frequencies(card, 1);
+  if (survey2g.size() != 14) return 32;
+  for (int i = 0; i < 13; ++i)
+    if (survey2g[i].frequency != 2412 + i * 5) return 33;
+  if (survey2g.back().frequency != 2484) return 34;
   card.devourer_wb_enabled = true;
 
   constexpr std::array devourer_types{
@@ -35,6 +60,10 @@ int main() {
 
   // Disabled widths must be rejected even when the radio supports them.
   auto logger = openhd::log::get_default();
+  // Advertised 2.4 GHz primaries must also pass the actual setting validator.
+  for (const auto frequency : card.supported_frequencies_2G)
+    if (!openhd::wb::all_cards_support_frequency_and_channel_width(
+            frequency, 20, {card}, logger)) return 35;
   for (const auto width : {5}) {
     if (openhd::wb::validate_air_channel_width_change(width, card, logger) ||
         openhd::wb::all_cards_support_frequency_and_channel_width(

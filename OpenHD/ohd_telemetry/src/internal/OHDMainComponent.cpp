@@ -857,8 +857,11 @@ void OHDMainComponent::process_command_self(
   } else if (command.command == MAV_CMD_OPENHD_INITIATE_CHANNEL_ANALYZE) {
     const auto callback=openhd::LinkActionHandler::instance().wb_cmd_analyze_channels;
     const bool valid=std::isfinite(command.param1) && command.param1>=0 && command.param1<=2 && std::floor(command.param1)==command.param1;
+    // param2: 0 quick (legacy default), 1 medium, 2 detailed.
+    const bool valid_profile=std::isfinite(command.param2) && command.param2>=0 && command.param2<=2 && std::floor(command.param2)==command.param2;
     const int channels_to_scan=valid ? static_cast<int>(command.param1) : -1;
-    const bool success=valid && callback && callback(channels_to_scan);
+    const int scan_profile=valid_profile ? static_cast<int>(command.param2) : -1;
+    const bool success=valid && valid_profile && callback && callback(channels_to_scan, scan_profile);
     message_buffer.push_back(ack_command(source_sys_id,source_comp_id,command.command,success));
   } else {
     m_console->debug("Unknown command {}", command.command);

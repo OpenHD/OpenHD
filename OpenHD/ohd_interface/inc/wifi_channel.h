@@ -110,17 +110,17 @@ static std::vector<WifiChannel> get_channels_2G() {
       // Now to the standard Wi-Fi channel(s)
       // https://en.wikipedia.org/wiki/List_of_WLAN_channels#2.4_GHz_(802.11b/g/n/ax)
       WifiChannel{2412, 1, WifiSpace::G2_4, true, true, true, true},
-      // WifiChannel{2417, 2, WifiSpace::G2_4, true},
-      // WifiChannel{2422, 3, WifiSpace::G2_4, true},
-      // WifiChannel{2427, 4, WifiSpace::G2_4, true},
+      WifiChannel{2417, 2, WifiSpace::G2_4, true, true, true, true},
+      WifiChannel{2422, 3, WifiSpace::G2_4, true, true, true, true},
+      WifiChannel{2427, 4, WifiSpace::G2_4, true, true, true, true},
       WifiChannel{2432, 5, WifiSpace::G2_4, true, true, true, false},
-      // WifiChannel{2437, 6, WifiSpace::G2_4, true},
-      // WifiChannel{2442, 7, WifiSpace::G2_4, true},
-      // WifiChannel{2447, 8, WifiSpace::G2_4, true},
+      WifiChannel{2437, 6, WifiSpace::G2_4, true, true, true, false},
+      WifiChannel{2442, 7, WifiSpace::G2_4, true, true, true, false},
+      WifiChannel{2447, 8, WifiSpace::G2_4, true, true, true, false},
       WifiChannel{2452, 9, WifiSpace::G2_4, true, true, true, true},
-      // WifiChannel{2457, 10, WifiSpace::G2_4, true},
-      // WifiChannel{2462, 11, WifiSpace::G2_4, true},
-      // WifiChannel{2467, 12, WifiSpace::G2_4, true},
+      WifiChannel{2457, 10, WifiSpace::G2_4, true, true, true, false},
+      WifiChannel{2462, 11, WifiSpace::G2_4, true, true, true, false},
+      WifiChannel{2467, 12, WifiSpace::G2_4, true, true, true, false},
       WifiChannel{2472, 13, WifiSpace::G2_4, true, true, true, false},
       // until here it is consistent (5Mhz increments)
       // this one is neither allowed in EU nor USA

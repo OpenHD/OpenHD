@@ -1,3 +1,4 @@
+#include "channel_survey_average.h"
 /******************************************************************************
  * OpenHD
  *
@@ -749,8 +750,8 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
         return request_start_scan_channels(param);
       };
   openhd::LinkActionHandler::instance().wb_cmd_scan_channels = cb_scan;
-  std::function<bool(int)> cb_analyze = [this](int channels_to_scan) {
-    return request_start_analyze_channels(channels_to_scan);
+  std::function<bool(int, int)> cb_analyze = [this](int channels_to_scan, int scan_profile) {
+    return request_start_analyze_channels(channels_to_scan, scan_profile);
   };
   openhd::LinkActionHandler::instance().wb_cmd_analyze_channels = cb_analyze;
   openhd::LinkActionHandler::instance().wb_cmd_apply_radio_settings =
@@ -1269,8 +1270,8 @@ bool WBLink::request_start_scan_channels(
   return try_schedule_work_item(work_item);
 }
 
-bool WBLink::request_start_analyze_channels(int channels_to_scan) {
-  if(channels_to_scan<0 || channels_to_scan>2) return false;
+bool WBLink::request_start_analyze_channels(int channels_to_scan, int scan_profile) {
+  if(channels_to_scan<0 || channels_to_scan>2 || scan_profile<0 || scan_profile>2) return false;
   if(m_profile.is_air) {
     const auto esp=m_settings->get_settings().wb_enable_esp_analyse ? openhd::latest_esp_analysis() : std::nullopt;
     if(!esp) {
@@ -1289,7 +1290,10 @@ bool WBLink::request_start_analyze_channels(int channels_to_scan) {
   }
   auto work_item = std::make_shared<WorkItem>(
       "ANALYZE_CHANNELS",
-      [this, channels_to_scan]() { perform_channel_analyze(channels_to_scan); },
+      [this, channels_to_scan, scan_profile]() {
+        openhd::LinkActionHandler::instance().reset_analyze_results();
+        perform_channel_analyze(channels_to_scan, scan_profile);
+      },
       std::chrono::steady_clock::now());
   return try_schedule_work_item(work_item);
 }
@@ -3173,7 +3177,9 @@ void WBLink::perform_channel_scan(
   openhd::LinkActionHandler::instance().add_scan_channels_progress(tmp);
 }
 
-void WBLink::perform_channel_analyze(int channels_to_scan) {
+void WBLink::perform_channel_analyze(int channels_to_scan, int scan_profile) {
+  const int observation_multiplier = scan_profile == 0 ? 2 : 4;
+  const int sweep_count = scan_profile == 2 ? 2 : 1;
   if (m_settings->get_settings().wb_enable_esp_analyse) {
     if (const auto esp=openhd::latest_esp_analysis()) {
       const auto& card=m_broadcast_cards.at(0);
@@ -3209,10 +3215,21 @@ void WBLink::perform_channel_analyze(int channels_to_scan) {
     m_console->warn("ESP analysis lost availability; Air primary radio remains unchanged");
     return;
   }
-  if (openhd::NexmonScout::installed()) {
-    perform_nexmon_analyze(channels_to_scan);
+  // Prefer the primary Devourer survey: it provides NHM/CLM as well as
+  // packets. An installed internal-Wi-Fi helper is not proof it can be leased.
+  if (!m_wb_txrx->uses_devourer() && openhd::NexmonScout::installed()) {
+    perform_nexmon_analyze(channels_to_scan, scan_profile);
     return;
   }
+  struct PauseChannelUpdates {
+    ManagementGround* ground;
+    explicit PauseChannelUpdates(ManagementGround* value) : ground(value) {
+      if (ground) ground->set_channel_updates_enabled(false);
+    }
+    ~PauseChannelUpdates() {
+      if (ground) ground->set_channel_updates_enabled(true);
+    }
+  } pause_channel_updates(m_management_gnd.get());
   if (m_wb_txrx->uses_devourer()) {
     const auto& card = m_broadcast_cards.at(0);
     const auto channels = openhd::wb::get_analyze_channels_frequencies(card, channels_to_scan);
@@ -3235,43 +3252,48 @@ void WBLink::perform_channel_analyze(int channels_to_scan) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     const uint32_t batch = std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::steady_clock::now().time_since_epoch()).count();
-    std::vector<uint16_t> packets, metrics;
-    for (size_t i = 0; i < channels.size(); ++i) {
-      uint16_t packed = 0x3fff, count = 0; // failed tune/observation, not a quiet bin
-      if (m_wb_txrx->set_devourer_channel(channels[i].frequency, 20)) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(30));
-        reset_all_rx_stats();
-        const auto sample = m_wb_txrx->measure_devourer_survey(0);
-        const auto rx = m_wb_txrx->get_rx_stats();
-        const auto foreign = rx.count_p_any >= rx.count_p_valid
-                                 ? rx.count_p_any - rx.count_p_valid : 0;
-        count = static_cast<uint16_t>(std::min<uint64_t>(foreign, UINT16_MAX));
-        if (sample) {
-          packed = (sample->nhm_valid ? 0x8000 : 0) |
-                   (sample->busy_valid ? 0x4000 : 0) |
-                   (std::min<int>(100, sample->nhm_env_percent) << 7) |
-                   std::min<int>(100, sample->busy_percent);
+    std::vector<openhd::wb::ChannelSurveyAverage> averages(channels.size());
+    size_t measured_channels = 0;
+    for (int sweep = 0; sweep < sweep_count; ++sweep) {
+      for (size_t i = 0; i < channels.size(); ++i) {
+        uint16_t packed = 0x3fff, count = 0; // failed tune/observation, not a quiet bin
+        if (m_wb_txrx->set_devourer_channel(channels[i].frequency, 20)) {
+          std::this_thread::sleep_for(std::chrono::milliseconds(30));
+          reset_all_rx_stats();
+          const auto sample = m_wb_txrx->measure_devourer_survey(0, 5 * observation_multiplier);
+          // Packet reception remains measurable even when CCX is unsupported.
+          packed = 0;
+          const auto rx = m_wb_txrx->get_rx_stats();
+          const auto foreign = rx.count_p_any >= rx.count_p_valid
+                                   ? rx.count_p_any - rx.count_p_valid : 0;
+          count = static_cast<uint16_t>(std::min<uint64_t>(foreign, UINT16_MAX));
+          if (sample) {
+            packed = (sample->nhm_valid ? 0x8000 : 0) |
+                     (sample->busy_valid ? 0x4000 : 0) |
+                     (std::min<int>(100, sample->nhm_env_percent) << 7) |
+                     std::min<int>(100, sample->busy_percent);
+          }
+        } else {
+          m_console->warn("Channel survey could not tune {}MHz", channels[i].frequency);
         }
-      } else {
-        m_console->warn("Channel survey could not tune {}MHz", channels[i].frequency);
-      }
-      packets.push_back(count);
-      metrics.push_back(packed);
-      // Publish cumulative pages so a dropped progress packet is repaired by
-      // the next update, including band lists longer than 30 channels.
-      for (size_t offset = 0; offset <= i; offset += 30) {
-        openhd::LinkActionHandler::AnalyzeChannelsResult result{};
-        result.devourer_survey = true;
-        result.rf_batch_id = batch;
-        result.rf_page_offset = offset;
-        result.rf_total_channels = channels.size();
-        result.progress = OHDUtil::calculate_progress_perc(i + 1, channels.size());
-        for (size_t j = 0; j < 30 && offset + j <= i; ++j) {
-          result.channels_mhz[j] = channels[offset + j].frequency;
-          result.foreign_packets[j] = packets[offset + j];
-          result.survey_metrics[j] = metrics[offset + j];
+        averages[i].add(count, packed);
+        measured_channels = std::max(measured_channels, i + 1);
+        // Publish cumulative pages so a dropped progress packet is repaired by
+        // the next update, including band lists longer than 30 channels.
+        for (size_t offset = 0; offset < measured_channels; offset += 30) {
+          openhd::LinkActionHandler::AnalyzeChannelsResult result{};
+          result.devourer_survey = true;
+          result.rf_batch_id = batch;
+          result.rf_page_offset = offset;
+          result.rf_total_channels = channels.size();
+          result.progress = OHDUtil::calculate_progress_perc(sweep * channels.size() + i + 1, sweep_count * channels.size());
+          for (size_t j = 0; j < 30 && offset + j < measured_channels; ++j) {
+            result.channels_mhz[j] = channels[offset + j].frequency;
+            result.foreign_packets[j] = averages[offset + j].packets();
+            result.survey_metrics[j] = averages[offset + j].metrics();
+          }
+          openhd::LinkActionHandler::instance().add_analyze_result(result);
         }
-        openhd::LinkActionHandler::instance().add_analyze_result(result);
       }
     }
     return;
@@ -3288,41 +3310,52 @@ void WBLink::perform_channel_analyze(int channels_to_scan) {
   stats_current.gnd_operating_mode.operating_mode = 2;
   openhd::LinkActionHandler::instance().update_link_stats(stats_current);
   std::vector<AnalyzeResult> results{};
-  for (int i = 0; i < channels_to_analyze.size(); i++) {
-    const auto channel = channels_to_analyze[i];
-    // We use fixed 20Mhz during analyze (management frames are always 20Mhz).
-    const int channel_width = 20;
-    // set new frequency, reset the packet count, sleep, then check if any
-    // openhd packets have been received
-    apply_frequency_and_channel_width(channel.frequency, channel_width, 20);
-    // Disable injection during analyze
-    m_wb_txrx->set_passive_mode(true);
-    // Sleep a bit to give the card time to switch
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    m_console->debug("Analyzing [{}] {}Mhz@{}Mhz", channel.channel,
-                     channel.frequency, channel_width);
-    reset_all_rx_stats();
-    std::this_thread::sleep_for(std::chrono::seconds(4));
-    const auto stats = m_wb_txrx->get_rx_stats();
-    const auto n_foreign_packets = stats.count_p_any - stats.count_p_valid;
-    m_console->debug("Got {} foreign packets {}:{}", n_foreign_packets,
-                     stats.count_p_any, stats.count_p_valid);
-    results.push_back(
-        AnalyzeResult{(int)channel.frequency, (int)n_foreign_packets});
+  std::vector<openhd::wb::ChannelSurveyAverage> averages(channels_to_analyze.size());
+  for (int sweep = 0; sweep < sweep_count; ++sweep) {
+    for (int i = 0; i < channels_to_analyze.size(); i++) {
+      const auto channel = channels_to_analyze[i];
+      // We use fixed 20Mhz during analyze (management frames are always 20Mhz).
+      const int channel_width = 20;
+      // set new frequency, reset the packet count, sleep, then check if any
+      // openhd packets have been received
+      apply_frequency_and_channel_width(channel.frequency, channel_width, 20);
+      // Disable injection during analyze
+      m_wb_txrx->set_passive_mode(true);
+      // Sleep a bit to give the card time to switch
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      m_console->debug("Analyzing [{}] {}Mhz@{}Mhz", channel.channel,
+                       channel.frequency, channel_width);
+      reset_all_rx_stats();
+      std::this_thread::sleep_for(std::chrono::seconds(4 * observation_multiplier));
+      const auto stats = m_wb_txrx->get_rx_stats();
+      const auto n_foreign_packets = stats.count_p_any >= stats.count_p_valid
+          ? stats.count_p_any - stats.count_p_valid : 0;
+      m_console->debug("Got {} foreign packets {}:{}", n_foreign_packets,
+                       stats.count_p_any, stats.count_p_valid);
+      averages[i].add(static_cast<uint16_t>(std::min<uint64_t>(n_foreign_packets, UINT16_MAX)), 0);
+      const AnalyzeResult averaged{(int)channel.frequency, averages[i].packets()};
+      if (i >= results.size()) results.push_back(averaged);
+      else results[i] = averaged;
 
-    openhd::LinkActionHandler::AnalyzeChannelsResult tmp{};
-    for (int j = 0; j < 30; j++) {
-      if (j < results.size()) {
-        tmp.channels_mhz[j] = results[j].frequency;
-        tmp.foreign_packets[j] = results[j].n_foreign_packets;
-      } else {
-        tmp.channels_mhz[j] = 0;
-        tmp.foreign_packets[j] = 0;
+      // Packet-only backends also need pagination for full band scans.
+      // Reuse the reserved page metadata without claiming NHM/CLM support.
+      for (size_t offset = 0; offset < results.size(); offset += 30) {
+        openhd::LinkActionHandler::AnalyzeChannelsResult tmp{};
+        tmp.rf_batch_id = std::chrono::duration_cast<std::chrono::milliseconds>(
+            analyze_begin.time_since_epoch()).count();
+        tmp.rf_page_offset = offset;
+        tmp.rf_total_channels = channels_to_analyze.size();
+        for (size_t j = 0; j < 30 && offset + j < results.size(); ++j) {
+          tmp.channels_mhz[j] = results[offset + j].frequency;
+          tmp.foreign_packets[j] = static_cast<uint16_t>(
+              std::clamp(results[offset + j].n_foreign_packets, 0, (int)UINT16_MAX));
+        }
+        tmp.progress = OHDUtil::calculate_progress_perc(
+            sweep * channels_to_analyze.size() + i + 1,
+            sweep_count * channels_to_analyze.size());
+        openhd::LinkActionHandler::instance().add_analyze_result(tmp);
       }
     }
-    tmp.progress = OHDUtil::calculate_progress_perc(
-        i + 1, (int)channels_to_analyze.size());
-    openhd::LinkActionHandler::instance().add_analyze_result(tmp);
   }
   /*std::stringstream ss;
   for(int i=0;i<results.size();i++){

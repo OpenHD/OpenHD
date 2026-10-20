@@ -278,8 +278,15 @@ void ManagementGround::start() {
   m_tx_thread = std::make_unique<std::thread>(&ManagementGround::loop, this);
 }
 
+void ManagementGround::set_channel_updates_enabled(bool enabled) {
+  std::lock_guard<std::mutex> lock(m_channel_updates_mutex);
+  m_channel_updates_enabled = enabled;
+}
+
 void ManagementGround::on_new_management_packet(const uint8_t *data,
                                                 int data_len) {
+  std::lock_guard<std::mutex> lock(m_channel_updates_mutex);
+  if (!m_channel_updates_enabled) return;
   if (data_len == sizeof(DataManagementTxBandwidth) + 1 &&
       data[0] == MNGMNT_PACKET_ID_CHANNEL_WIDTH) {
     m_last_received_packet_timestamp_ms =

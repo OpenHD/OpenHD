@@ -356,7 +356,8 @@ class LinkActionHandler {
 
  public:
   std::function<std::vector<uint16_t>()> wb_get_supported_channels = nullptr;
-  std::function<bool(int)> wb_cmd_analyze_channels = nullptr;
+  // Analysis profile: 0 quick, 1 medium (2x), 2 detailed (two medium sweeps).
+  std::function<bool(int, int)> wb_cmd_analyze_channels = nullptr;
   struct RadioSettingsParam {
     bool enable_rc_openhd_control = false;
     uint8_t mcs_via_rc_channel = 0;
@@ -380,20 +381,81 @@ class LinkActionHandler {
     std::array<uint16_t, 30> survey_metrics{0};
     int8_t progress;
   };
+  void reset_analyze_results() {
+    std::lock_guard<std::mutex> guard(m_scan_results_mutex);
+    m_scan_results.clear();
+    m_latest_analyze_results.clear();
+    m_completed_analyze_results.clear();
+    m_analyze_replays_remaining = 0;
+  }
   void add_analyze_result(AnalyzeChannelsResult scan_result) {
     std::lock_guard<std::mutex> guard(m_scan_results_mutex);
+    m_analyze_replays_remaining = 0;
+    m_completed_analyze_results.clear();
+    if (scan_result.rf_total_channels == 0) m_latest_analyze_results.clear();
+    if (scan_result.rf_total_channels > 0) {
+      if (!m_latest_analyze_results.empty() &&
+          (m_latest_analyze_results.front().rf_batch_id != scan_result.rf_batch_id ||
+           m_latest_analyze_results.front().devourer_survey != scan_result.devourer_survey ||
+           m_latest_analyze_results.front().rf_sampled_busy != scan_result.rf_sampled_busy)) {
+        m_latest_analyze_results.clear();
+      }
+      bool replaced = false;
+      for (auto& page : m_latest_analyze_results) {
+        if (page.rf_page_offset == scan_result.rf_page_offset) {
+          page = scan_result;
+          replaced = true;
+          break;
+        }
+      }
+      if (!replaced) m_latest_analyze_results.push_back(scan_result);
+      // Each page is cumulative. Keep only its newest version until telemetry
+      // drains the queue, rather than transmitting every intermediate copy.
+      for (auto& pending : m_scan_results) {
+        if (pending.rf_batch_id == scan_result.rf_batch_id &&
+            pending.rf_page_offset == scan_result.rf_page_offset &&
+            pending.devourer_survey == scan_result.devourer_survey &&
+            pending.rf_sampled_busy == scan_result.rf_sampled_busy) {
+          pending = scan_result;
+          return;
+        }
+      }
+    }
     m_scan_results.push_back(scan_result);
   }
   std::vector<AnalyzeChannelsResult> get_analyze_results() {
     std::lock_guard<std::mutex> guard(m_scan_results_mutex);
-    auto ret = m_scan_results;
+    if (m_scan_results.empty()) {
+      if (m_analyze_replays_remaining > 0) {
+        --m_analyze_replays_remaining;
+        return m_completed_analyze_results;
+      }
+      return {};
+    }
+    auto ret = std::move(m_scan_results);
     m_scan_results.clear();
+    size_t completed_channels = 0;
+    bool complete = !m_latest_analyze_results.empty();
+    for (const auto& page : m_latest_analyze_results) {
+      complete = complete && page.progress == 100;
+      for (const auto frequency : page.channels_mhz)
+        if (frequency != 0) ++completed_channels;
+    }
+    if (complete && completed_channels == m_latest_analyze_results.front().rf_total_channels) {
+      // Keep the whole completed batch, even if telemetry drained between
+      // the producer's final pages. Repeat on two subsequent telemetry ticks.
+      m_completed_analyze_results = m_latest_analyze_results;
+      m_analyze_replays_remaining = 2;
+    }
     return ret;
   }
 
  private:
   std::mutex m_scan_results_mutex;
   std::vector<AnalyzeChannelsResult> m_scan_results;
+  std::vector<AnalyzeChannelsResult> m_completed_analyze_results;
+  std::vector<AnalyzeChannelsResult> m_latest_analyze_results;
+  int m_analyze_replays_remaining = 0;
 
  public:
   struct ScanChannelsProgress {

@@ -26,6 +26,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <string>
 #include <utility>
@@ -112,6 +113,9 @@ class ManagementGround {
   int get_last_received_packet_ts_ms();
   std::optional<FrequencyChangeRequest> get_prepare_request() const;
   void retry_frequency_change(int target_frequency, int channel_width);
+  // Off-channel surveys must not replace the home link with announcements
+  // received while visiting other channels.
+  void set_channel_updates_enabled(bool enabled);
 
  private:
   void loop();
@@ -130,6 +134,8 @@ class ManagementGround {
   std::atomic<uint32_t> m_retry_target_frequency_mhz{0};
   std::atomic<uint8_t> m_retry_channel_width_mhz{20};
   std::atomic<uint8_t> m_retry_packets_remaining{0};
+  std::mutex m_channel_updates_mutex;
+  bool m_channel_updates_enabled = true;
   // 40Mhz / 20Mhz link management
   void on_new_management_packet(const uint8_t *data, int data_len);
 };

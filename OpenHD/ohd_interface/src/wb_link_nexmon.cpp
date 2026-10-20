@@ -131,7 +131,7 @@ void WBLink::perform_nexmon_scan(
   actions.add_scan_channels_progress(progress);
 }
 
-void WBLink::perform_nexmon_analyze(int selection) {
+void WBLink::perform_nexmon_analyze(int selection, int scan_profile) {
   auto& actions = openhd::LinkActionHandler::instance();
   auto link_stats = actions.get_link_stats();
   link_stats.gnd_operating_mode.operating_mode = 2;
@@ -162,7 +162,8 @@ void WBLink::perform_nexmon_analyze(int selection) {
     // Retain the ranking, but do not qualify automatic migration candidates.
     engine.note_scout_health(false);
 #endif
-    for (int round = 0; round < 3; ++round) {
+    const int rounds = scan_profile == 2 ? 6 : 3;
+    for (int round = 0; round < rounds; ++round) {
       for (size_t i = 0; i < channels.size(); ++i) {
         const auto& channel = channels[i];
         if (scout.tune(channel.frequency)) {
@@ -170,7 +171,7 @@ void WBLink::perform_nexmon_analyze(int selection) {
           if (!rx->restart_interfaces({{openhd::NexmonScout::monitor_interface, 0}}))
             throw std::runtime_error("Cannot reopen scout capture");
           const auto start = openhd::util::steady_clock_time_epoch_ms();
-          const auto sample = openhd::observe_nexmon(channel.frequency, 1100);
+          const auto sample = openhd::observe_nexmon(channel.frequency, 1100 * (scan_profile == 0 ? 2 : 4));
           rx->stop_receiving();
           const auto received = rx->get_rx_stats();
           result.channels_mhz[i] = channel.frequency;
@@ -198,7 +199,7 @@ void WBLink::perform_nexmon_analyze(int selection) {
                           channel.frequency, foreign, sample.decoded_airtime_us, sample.unknown_rate_packets);
         }
         result.progress = std::min<int>(99, OHDUtil::calculate_progress_perc(
-            round*channels.size()+i+1, 3*channels.size()));
+            round*channels.size()+i+1, rounds*channels.size()));
         actions.add_analyze_result(result);
       }
     }

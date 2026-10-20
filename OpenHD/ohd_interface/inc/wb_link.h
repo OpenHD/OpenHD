@@ -143,7 +143,7 @@ class WBLink : public OHDLink {
   // does the long-running async operation)
   bool request_start_scan_channels(
       openhd::LinkActionHandler::ScanChannelsParam scan_channels_params);
-  bool request_start_analyze_channels(int channels_to_scan);
+  bool request_start_analyze_channels(int channels_to_scan, int scan_profile = 0);
 
   // apply the frequency (wifi channel) and channel with for all wifibroadcast
   // cards r.n uses both iw and modifies the radiotap header
@@ -215,10 +215,10 @@ class WBLink : public OHDLink {
   void perform_channel_scan(
       const openhd::LinkActionHandler::ScanChannelsParam& scan_channels_params);
   // similar to channel scan, analyze channel(s) for interference
-  void perform_channel_analyze(int channels_to_scan);
+  void perform_channel_analyze(int channels_to_scan, int scan_profile = 0);
   void perform_nexmon_scan(
       const openhd::LinkActionHandler::ScanChannelsParam& params);
-  void perform_nexmon_analyze(int channels_to_scan);
+  void perform_nexmon_analyze(int channels_to_scan, int scan_profile = 0);
   std::optional<wb::KeyPairTxRx> m_scout_keypair;
   void reset_all_rx_stats();
   void recommend_bitrate_to_encoder(int recommended_video_bitrate_kbits);

@@ -250,11 +250,13 @@ std::vector<openhd::WifiChannel> openhd::wb::get_analyze_channels_frequencies(
     return openhd::get_openhd_channels_1_to_7();
   }
   if (channels_to_scan == 1) {
-    // 2.4G but we scan in 40Mhz increments
+    // Every supported 2.4 GHz frequency, observed at 20 MHz.
     auto supported = card.supported_frequencies_2G;
     return openhd::frequencies_to_channels(supported);
   }
-  return openhd::filter_ht40plus_only(card.supported_frequencies_5G);
+  // Observe every frequency the driver advertises, including HT40- halves
+  // and extended channels. Each observation itself uses 20 MHz.
+  return openhd::frequencies_to_channels(card.supported_frequencies_5G);
 }
 
 bool openhd::wb::has_any_rtl8812au(const std::vector<WiFiCard>& cards) {
