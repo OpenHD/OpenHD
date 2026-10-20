@@ -51,7 +51,7 @@ jobs:
             release: bullseye
     steps:
       - name: Checkout repository and submodules
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: recursive
@@ -122,7 +122,7 @@ jobs:
           fi
 
       - name: Upload architecture package
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: openhd-${{ matrix.architecture }}
           path: |
@@ -185,7 +185,7 @@ jobs:
           remove-android: "true"
           remove-haskell: "true"
           overprovision-lvm: "true"
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: false
           persist-credentials: false
@@ -216,7 +216,7 @@ jobs:
           sudo bash install_dep.sh
           sudo bash ./build.sh x20-compile "${CLOUDSMITH_API_KEY}" debian bullseye
           cp /opt/OpenHD-ChrootCompiler/out/*.deb "${GITHUB_WORKSPACE}/"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: openhd-x20
           path: openhd-x20*.deb
@@ -251,7 +251,7 @@ jobs:
       DOWNLOAD_KEY: ${{ secrets.DOWNLOAD_KEY }}
       DOWNLOAD_URL: ${{ secrets.DOWNLOAD_URL }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
           token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
@@ -284,7 +284,7 @@ jobs:
           grep -q 'Shared library: \[libsodium.so.26\]' build-orqa/openhd-needed.txt
           test -f "${SDKTARGETSYSROOT}/usr/lib/gstreamer-1.0/libgstperf.so"
           "${STRIP}" --strip-unneeded build-orqa/openhd
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: openhd-orqa
           path: |
