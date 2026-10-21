@@ -35,6 +35,8 @@
 static int OPENHD_AUDIO_DISABLE = 1;
 static int OPENHD_AUDIO_TEST = 100;
 static int OPENHD_AUDIO_EXAMPLE = 101;
+// GStreamer's volume property supports up to 10x amplitude (+20 dB).
+static constexpr int OPENHD_AUDIO_GAIN_MAX_PERCENT = 1000;
 
 struct AirCameraGenericSettings {
   // Make primary camera secondary camera and other way around (aka if they are
@@ -61,7 +63,7 @@ struct AirCameraGenericSettings {
 };
 
 static bool is_valid_audio_mic_gain_percent(int gain_percent) {
-  return gain_percent >= 0 && gain_percent <= 200;
+  return gain_percent >= 0 && gain_percent <= OPENHD_AUDIO_GAIN_MAX_PERCENT;
 }
 
 static bool is_valid_dualcam_primary_video_allocated_bandwidth(

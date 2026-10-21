@@ -58,7 +58,8 @@ std::string escape_gst_string(const std::string& value) {
 
 GstAudioStream::GstAudioStream(std::string device_token, int mic_gain_percent)
     : m_device_token(std::move(device_token)),
-      m_mic_gain_percent(mic_gain_percent) {
+      m_mic_gain_percent(
+          std::clamp(mic_gain_percent, 0, OPENHD_AUDIO_GAIN_MAX_PERCENT)) {
   OHDGstHelper::initGstreamerOrThrow();
   m_console = openhd::log::create_or_get("audio");
 }
@@ -160,7 +161,8 @@ GstAudioStream::discover_usb_audio_cards() {
 }
 
 void GstAudioStream::set_mic_gain_percent(int gain_percent) {
-  m_mic_gain_percent = std::clamp(gain_percent, 0, 200);
+  m_mic_gain_percent =
+      std::clamp(gain_percent, 0, OPENHD_AUDIO_GAIN_MAX_PERCENT);
 }
 
 void GstAudioStream::start_looping() {
