@@ -45,9 +45,10 @@ config ENABLE_AIR
 config ENABLE_USB_CAMERAS
     bool "USB camera support"
     default y
-    depends on ENABLE_AIR
+    depends on ENABLE_AIR && ENABLE_GSTREAMER && !OPENHD_MPP_ONLY
     help
-      USB camera discovery; requires libusb and libv4l2.
+      USB camera discovery; requires libusb and libv4l2, which are only
+      linked together with the GStreamer camera stack.
 
 config ENABLE_LIBCAMERA
     bool "libcamera support"
