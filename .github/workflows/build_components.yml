@@ -1,0 +1,204 @@
+name: Build platform components
+
+# X21B / Luckfox Aura (RV1126B), Luckfox Pico and Luckfox Lyra (RK3506) ground
+# components. Each is cross-compiled by its scripts/build_*_component.sh and
+# published as raw files to Cloudsmith. Pull requests build and upload the
+# artifacts only; publishing happens from openhd-3.0.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - openhd-3.0
+    paths:
+      - OpenHD/**
+      - scripts/build_x21_component.sh
+      - scripts/build_luckfox_component.sh
+      - scripts/build_lyra_ground_component.sh
+      - .github/actions/**
+      - .github/workflows/build_components.yml
+  pull_request:
+    branches:
+      - openhd-3.0
+    paths:
+      - OpenHD/**
+      - scripts/build_x21_component.sh
+      - scripts/build_luckfox_component.sh
+      - scripts/build_lyra_ground_component.sh
+      - .github/actions/**
+      - .github/workflows/build_components.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: openhd-components-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  INPUT_BASE_URL: https://dl.cloudsmith.io/public/openhd/dev-release/raw/files
+
+jobs:
+  component:
+    name: ${{ matrix.platform }}
+    # Pull requests from forks have no access to the private SDKs.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: x21
+            runner: ubuntu-24.04
+            script: build_x21_component.sh
+            artifact: openhd-x21b-component
+            # SDK archive, its top-level directory and the manifest key of
+            # the SDK revision. The build script records both in its manifest
+            # through <ENV_PREFIX>_SDK_SHA256 / _SDK_BUILDROOT_COMMIT.
+            sdk: openhd-x21b-sdk
+            sdk_has_top_dir: true
+            sdk_commit_key: buildroot_commit
+            env_prefix: X21
+          - platform: luckfox
+            runner: ubuntu-22.04
+            script: build_luckfox_component.sh
+            artifact: openhd-luckfox-pico-component
+            sdk: openhd-luckfox-pico-sdk
+            sdk_has_top_dir: false
+            sdk_commit_key: luckfox_sdk_commit
+            env_prefix: LUCKFOX
+          - platform: lyra
+            runner: ubuntu-22.04
+            script: build_lyra_ground_component.sh
+            artifact: openhd-lyra-ground-component
+            extra_packages: zstd gcc-10-arm-linux-gnueabihf g++-10-arm-linux-gnueabihf
+            cross_compile: arm-linux-gnueabihf-
+            cc: arm-linux-gnueabihf-gcc-10
+            cxx: arm-linux-gnueabihf-g++-10
+    env:
+      CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
+      PUBLISH: ${{ github.ref == 'refs/heads/openhd-3.0' && secrets.CLOUDSMITH_API_KEY != '' }}
+      COMPONENT_DIR: ${{ github.workspace }}/${{ matrix.platform }}-component
+    steps:
+      - name: Validate credentials
+        env:
+          OPENHD_SUBMODULE_TOKEN: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+        run: |
+          test -n "${OPENHD_SUBMODULE_TOKEN}" || {
+            echo "::error::OPENHD_SUBMODULE_TOKEN needs read access to the private OpenHD repositories and submodules"
+            exit 1
+          }
+
+      - name: Checkout OpenHD
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          submodules: true
+          token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+
+      - uses: ./.github/actions/fetch-devourer
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends cmake g++ ninja-build ${{ matrix.extra_packages }}
+
+      - name: Download and verify the stable SDK
+        if: matrix.sdk != ''
+        run: |
+          set -euo pipefail
+          sdk="${{ matrix.sdk }}"
+          prefix="${{ matrix.env_prefix }}"
+          mkdir -p sdk-artifact
+          cd sdk-artifact
+          for name in "${sdk}.tar.gz" "${sdk}.tar.gz.sha256" "${sdk}.manifest.json"; do
+            curl --fail --location --retry 5 --retry-delay 3 \
+              "${INPUT_BASE_URL}/${name}" -o "${name}"
+          done
+          sha256sum -c "${sdk}.tar.gz.sha256"
+          sdk_dir="${RUNNER_TEMP}/${sdk}"
+          if [[ "${{ matrix.sdk_has_top_dir }}" == "true" ]]; then
+            tar -xzf "${sdk}.tar.gz" -C "${RUNNER_TEMP}"
+          else
+            mkdir -p "${sdk_dir}"
+            tar -xzf "${sdk}.tar.gz" -C "${sdk_dir}"
+          fi
+          test -d "${sdk_dir}"
+          commit="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1])).get(sys.argv[2], "unknown"))' \
+            "${sdk}.manifest.json" "${{ matrix.sdk_commit_key }}")"
+          {
+            echo "${prefix}_SDK_SHA256=$(sha256sum "${sdk}.tar.gz" | awk '{print $1}')"
+            echo "${prefix}_SDK_BUILDROOT_COMMIT=${commit}"
+            echo "SDK_DIR=${sdk_dir}"
+          } >>"${GITHUB_ENV}"
+
+      - name: Download or prepare armhf sysroot
+        if: matrix.platform == 'lyra'
+        run: |
+          set -euo pipefail
+          sysroot_dir="${RUNNER_TEMP}/lyra-armhf-sysroot"
+          mkdir -p "${sysroot_dir}"
+
+          if curl --fail --silent --head "${INPUT_BASE_URL}/openhd-lyra-sdk.tar.gz" >/dev/null 2>&1; then
+            echo "Fetching prebuilt Luckfox Lyra SDK..."
+            curl --fail --location --retry 3 "${INPUT_BASE_URL}/openhd-lyra-sdk.tar.gz" -o /tmp/lyra-sdk.tar.gz
+            tar -xzf /tmp/lyra-sdk.tar.gz -C "${sysroot_dir}"
+          elif curl --fail --silent --head "${INPUT_BASE_URL}/openhd-sysroot-bullseye-armhf.tar.zst" >/dev/null 2>&1; then
+            echo "Fetching prebuilt armhf sysroot from Cloudsmith..."
+            curl --fail --location --retry 3 "${INPUT_BASE_URL}/openhd-sysroot-bullseye-armhf.tar.zst" -o /tmp/sysroot.tar.zst
+            sudo tar -I 'zstd -d' -xf /tmp/sysroot.tar.zst -C "${sysroot_dir}"
+            sudo chown -R "$(id -u):$(id -g)" "${sysroot_dir}"
+          else
+            echo "Bootstrapping minimal cross sysroot..."
+            sudo apt-get install -y --no-install-recommends mmdebstrap debian-archive-keyring gnupg
+            sudo ./scripts/create_cross_sysroot.sh armhf "${sysroot_dir}" bullseye
+            sudo chown -R "$(id -u):$(id -g)" "${sysroot_dir}"
+          fi
+
+          echo "SDK_DIR=${sysroot_dir}" >>"${GITHUB_ENV}"
+
+      - name: Cross-compile and package OpenHD
+        run: |
+          set -euo pipefail
+          if [[ -n "${{ matrix.cxx }}" ]]; then
+            export CROSS_COMPILE="${{ matrix.cross_compile }}"
+            export CC="${{ matrix.cc }}"
+            export CXX="${{ matrix.cxx }}"
+          fi
+          bash "./scripts/${{ matrix.script }}" "${SDK_DIR}" "${COMPONENT_DIR}"
+
+      - name: Upload component artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ env.COMPONENT_DIR }}/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish component files to Cloudsmith
+        if: env.PUBLISH == 'true'
+        run: |
+          set -euo pipefail
+          pipx install cloudsmith-cli
+          for package in "${COMPONENT_DIR}"/*; do
+            cloudsmith push raw --republish openhd/dev-release "${package}"
+          done
+
+      - name: Trigger ImageBuilder X21 assembly
+        if: env.PUBLISH == 'true' && matrix.platform == 'x21'
+        env:
+          GH_TOKEN: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+        run: |
+          set -euo pipefail
+          if ! curl --fail --silent --show-error --location \
+            "${INPUT_BASE_URL}/openhd-x21b-latest.tar.gz.manifest.json" -o /tmp/openhd.json || \
+             ! curl --fail --silent --show-error --location \
+            "${INPUT_BASE_URL}/openhd-sys-utils-x21b-latest.tar.gz.manifest.json" -o /tmp/sysutils.json; then
+            echo "The other X21B component is not published yet; ImageBuilder will be triggered by its workflow."
+            exit 0
+          fi
+          if ! python3 -c 'import json; a=json.load(open("/tmp/openhd.json")); b=json.load(open("/tmp/sysutils.json")); assert a["sdk_sha256"] == b["sdk_sha256"]'; then
+            echo "The published X21B components use different SDKs; waiting for the other component to rebuild."
+            exit 0
+          fi
+          gh workflow run update-image.yml --repo OpenHD/OpenHD-ImageBuilder --ref dev-release -f target=x21-update
