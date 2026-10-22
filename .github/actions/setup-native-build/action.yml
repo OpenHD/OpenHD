@@ -1,0 +1,36 @@
+name: Set up native OpenHD build
+description: >
+  Installs the Ubuntu x86 build dependencies (install_build_dep.sh) plus the
+  tools the Makefile uses, and optionally OpenHD SysUtils from Cloudsmith.
+
+inputs:
+  sysutils:
+    description: Install openhd-sys-utils for runtime tests
+    default: "false"
+  extra-packages:
+    description: Additional apt packages
+    default: ""
+  make-setup:
+    description: Create .venv with kconfiglib for the Makefile
+    default: "true"
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        set -euo pipefail
+        sudo mkdir -p /Videos/
+        sudo apt-get update
+        sudo apt-get install -y libsodium-dev libpoco-dev ninja-build python3-venv ${{ inputs.extra-packages }}
+        sudo ./install_build_dep.sh ubuntu-x86
+    - if: inputs.sysutils == 'true'
+      shell: bash
+      run: |
+        set -euo pipefail
+        curl --proto '=https' --proto-redir '=https' -1sLf 'https://dl.cloudsmith.io/public/openhd/dev-release/setup.deb.sh' | sudo -E bash
+        sudo apt-get update
+        sudo apt-get install -y openhd-sys-utils
+    - if: inputs.make-setup == 'true'
+      shell: bash
+      run: make setup
