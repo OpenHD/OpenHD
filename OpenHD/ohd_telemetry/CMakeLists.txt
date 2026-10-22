@@ -134,6 +134,10 @@ target_include_directories(mavlink INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/lib/mav
 target_link_libraries(OHDTelemetryLib PUBLIC mavlink)
 
 # All the test files for development
+add_executable(test_cpu_usage test/test_cpu_usage.cpp)
+target_include_directories(test_cpu_usage PRIVATE src)
+add_test(NAME cpu_usage COMMAND test_cpu_usage)
+
 add_executable(test_fc_firmware_detector test/test_fc_firmware_detector.cpp)
 target_include_directories(test_fc_firmware_detector PRIVATE src)
 target_link_libraries(test_fc_firmware_detector PRIVATE mavlink)

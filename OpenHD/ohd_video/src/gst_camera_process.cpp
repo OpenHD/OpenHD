@@ -1,6 +1,5 @@
 #include "gst_camera_process.h"
 
-#include <dirent.h>
 #include <poll.h>
 #include <sys/prctl.h>
 
@@ -38,15 +37,6 @@ bool external_plugin() {
          openhd::PluginManager::instance().is_plugin_loaded("siyi");
 }
 
-void close_inherited_descriptors() {
-  if (auto* directory = opendir("/proc/self/fd")) {
-    while (auto* item = readdir(directory)) {
-      const int fd = std::atoi(item->d_name);
-      if (fd > 3 && fd != dirfd(directory)) close(fd);
-    }
-    closedir(directory);
-  }
-}
 }  // namespace
 
 CameraProcess::CameraProcess(std::shared_ptr<CameraHolder> camera,
@@ -306,7 +296,6 @@ int run_camera_worker_if_requested(int argc, char* argv[]) {
   if (getppid() != std::atoi(argv[10])) return EXIT_FAILURE;
   std::signal(SIGTERM, stop_worker);
   std::signal(SIGINT, stop_worker);
-  close_inherited_descriptors();
   // Native libcamera execs a nested encoder. It must not retain the private
   // parent/worker socket or keep the parent from observing worker death.
   fcntl(3, F_SETFD, FD_CLOEXEC);

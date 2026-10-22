@@ -104,6 +104,33 @@ class RkaiqRestart {
 
 constexpr RK_U32 align16(RK_U32 value) { return (value + 15U) & ~15U; }
 
+// The X21B kernel's encoder runtime-PM transition interrupts Pivariety CIF
+// capture. Keep VEPU awake before STREAMON and until both DMA users stop.
+class X21EncoderPower {
+ public:
+  bool acquire() {
+    std::ifstream input(path);
+    if (!(input >> previous)) return false;
+    if (previous == "on") return true;
+    std::ofstream output(path);
+    output << "on";
+    output.close();
+    changed = !output.fail();
+    return changed;
+  }
+  ~X21EncoderPower() {
+    if (changed) {
+      std::ofstream output(path);
+      output << previous;
+    }
+  }
+ private:
+  static constexpr const char* path =
+      "/sys/bus/platform/devices/21f40000.rkvenc/power/control";
+  std::string previous;
+  bool changed = false;
+};
+
 int retry_ioctl(int fd, unsigned long request, void* argument) {
   int result;
   do {
@@ -707,6 +734,45 @@ class RockchipMppStream::Impl {
       return true;
     }
 
+    if (camera.camera_type == X_CAM_TYPE_X21_ARDUCAM_PIVARIETY) {
+      // Pivariety supplies processed UYVY to CIF. Select its actual sensor
+      // mode before configuring CIF's NV12 conversion; the ISP is bypassed.
+      const auto sensor = find_v4l2_subdev("arducam-pivariety");
+      const int fd = open(sensor.c_str(), O_RDWR | O_CLOEXEC);
+      if (fd < 0) return false;
+      v4l2_subdev_format selected{};
+      selected.which = V4L2_SUBDEV_FORMAT_ACTIVE;
+      selected.format.width = width;
+      selected.format.height = height;
+      selected.format.code = MEDIA_BUS_FMT_UYVY8_1X16;
+      const bool format_ok =
+          retry_ioctl(fd, VIDIOC_SUBDEV_S_FMT, &selected) == 0 &&
+          selected.format.width == width && selected.format.height == height;
+      const bool links_ok = format_ok &&
+          set_subdev_format(find_v4l2_subdev("rockchip-csi2-dphy0"), 0,
+                            width, height, selected.format.code) &&
+          set_subdev_format(find_v4l2_subdev("rockchip-mipi-csi2"), 0,
+                            width, height, selected.format.code);
+      // Bridge format changes may propagate back into Pivariety and reset its
+      // ISP mode. Apply the requested frame rate after the entire format chain.
+      v4l2_subdev_frame_interval interval{};
+      interval.interval.numerator = 1;
+      interval.interval.denominator = std::max(1, configured_fps);
+      const bool fps_set = retry_ioctl(fd, VIDIOC_SUBDEV_S_FRAME_INTERVAL, &interval) == 0;
+      const bool fps_ok = fps_set || errno == ENOTTY || errno == EINVAL;
+      if (!fps_set) retry_ioctl(fd, VIDIOC_SUBDEV_G_FRAME_INTERVAL, &interval);
+      close(fd);
+      if (!links_ok || !fps_ok) {
+        log->error("Cannot configure detected Arducam Pivariety {}x{}@{}",
+                   width, height, configured_fps);
+        return false;
+      }
+      log->info("Detected Arducam Pivariety: {}x{}@{:.2f} via CIF", width,
+                height, interval.interval.numerator ?
+                static_cast<double>(interval.interval.denominator) /
+                    interval.interval.numerator : 0.0);
+    }
+
     if (OHDPlatform::instance().is_x21() && owner.m_camera_holder->has_rk_camera_modes() &&
         !rk_camera_modes::register_driver_present() &&
         !configure_x21_imx662()) return false;
@@ -721,7 +787,8 @@ class RockchipMppStream::Impl {
         log->warn("IMX415 HFR configuration was not applied; attempting capture");
       }
     }
-    if (camera.camera_type == X_CAM_TYPE_ROCKCHIP_RV1126_CSI ||
+    if (camera.camera_type == X_CAM_TYPE_X21_ARDUCAM_PIVARIETY ||
+        camera.camera_type == X_CAM_TYPE_ROCKCHIP_RV1126_CSI ||
         camera.camera_type == X_CAM_TYPE_X21_HDZERO_RUNCAM_NANO_90) {
       capture_device = find_v4l2_video("stream_cif_mipi_id0");
       if (capture_device.empty()) capture_device = find_v4l2_video("rkisp_mainpath");
@@ -753,7 +820,8 @@ class RockchipMppStream::Impl {
       return false;
     }
 
-    if (owner.m_camera_holder->has_rk_camera_modes()) {
+    if (owner.m_camera_holder->has_rk_camera_modes() ||
+        camera.camera_type == X_CAM_TYPE_X21_ARDUCAM_PIVARIETY) {
       v4l2_selection crop{};
       crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
       crop.target = V4L2_SEL_TGT_CROP;
@@ -761,6 +829,15 @@ class RockchipMppStream::Impl {
       if (retry_ioctl(capture_fd, VIDIOC_S_SELECTION, &crop) < 0 ||
           crop.r.width != width || crop.r.height != height) {
         log->error("Cannot reset ISP output crop for selected mode"); return false;
+      }
+      // CIF calculates bytesperline/sizeimage from its current crop. Reapply
+      // the format after changing that crop before deriving the DMA layout.
+      if (camera.camera_type == X_CAM_TYPE_X21_ARDUCAM_PIVARIETY &&
+          (retry_ioctl(capture_fd, VIDIOC_S_FMT, &format) < 0 ||
+           format.fmt.pix_mp.width != width ||
+           format.fmt.pix_mp.height != height)) {
+        log->error("Cannot refresh CIF buffer layout after crop change");
+        return false;
       }
     }
     // Ask the processed-frame capture node for the configured stream rate.
@@ -803,7 +880,9 @@ class RockchipMppStream::Impl {
         sizeimage ? (sizeimage / capture_stride) * 2 / 3 : align16(height);
     if (luma_rows < height) luma_rows = align16(height);
     capture_uv_offset = static_cast<size_t>(capture_stride) * luma_rows;
-    if (owner.m_camera_holder->has_rk_camera_modes() && coding == MPP_VIDEO_CodingAVC &&
+    if ((owner.m_camera_holder->has_rk_camera_modes() ||
+         camera.camera_type == X_CAM_TYPE_X21_ARDUCAM_PIVARIETY) &&
+        coding == MPP_VIDEO_CodingAVC &&
         capture_stride == hor_stride && luma_rows >= height && luma_rows <= align16(height)) {
       // VEPU511 uses the frame's real vertical stride to locate UV. A 1080-row
       // ISP buffer need not be copied into an artificial 1088-row allocation.
@@ -814,7 +893,7 @@ class RockchipMppStream::Impl {
         ver_stride = previous_stride;
         mpp_enc_cfg_set_s32(cfg, "prep:ver_stride", ver_stride);
         if (mpi->control(ctx, MPP_ENC_SET_CFG, cfg) != MPP_OK) return false;
-      } else log->info("IMX662 MPP uses native ISP vertical stride {}",ver_stride);
+      } else log->info("MPP uses native capture vertical stride {}",ver_stride);
     }
 
     v4l2_requestbuffers request{};
@@ -1022,6 +1101,17 @@ class RockchipMppStream::Impl {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     if (!running) return;
+    X21EncoderPower encoder_power;
+    if (OHDPlatform::instance().is_x21() &&
+        owner.m_camera_holder->get_camera().camera_type ==
+            X_CAM_TYPE_X21_ARDUCAM_PIVARIETY) {
+      if (!encoder_power.acquire()) {
+        log->error("Cannot keep X21 encoder powered for Pivariety capture");
+        running = false;
+        return;
+      }
+      log->info("X21 encoder runtime suspend disabled during Pivariety capture");
+    }
     openhd::LinkActionHandler::instance().set_cam_info_status(
         owner.m_camera_holder->get_camera().index,
         CameraStream::CAM_STATUS_RESTARTING);
@@ -1125,13 +1215,15 @@ class RockchipMppStream::Impl {
         log->error("Cannot copy capture input into MPP buffer");
         return false;
       }
+      if (debug_noise_percent.load() > 0) {
 #if !defined(OPENHD_LEGACY_MPP_API)
-      if (mpp_buffer_sync_begin(input_buffer) != MPP_OK) return false;
+        if (mpp_buffer_sync_begin(input_buffer) != MPP_OK) return false;
 #endif
-      add_noise(static_cast<uint8_t*>(mpp_buffer_get_ptr(input_buffer)));
+        add_noise(static_cast<uint8_t*>(mpp_buffer_get_ptr(input_buffer)));
 #if !defined(OPENHD_LEGACY_MPP_API)
-      if (mpp_buffer_sync_end(input_buffer) != MPP_OK) return false;
+        if (mpp_buffer_sync_end(input_buffer) != MPP_OK) return false;
 #endif
+      }
       source = static_cast<const uint8_t*>(mpp_buffer_get_ptr(input_buffer));
       source_size = hor_stride * ver_stride * 3 / 2;
       layout = {hor_stride, static_cast<size_t>(hor_stride) * ver_stride};

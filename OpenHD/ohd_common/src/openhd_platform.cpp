@@ -75,12 +75,14 @@ void write_cached_platform_type(int platform_type) {
 }
 
 int request_platform_from_sysutils() {
-  if (openhd::is_wifi_monitor_card_emulate_override_enabled()) {
-    return X_PLATFORM_TYPE_UNKNOWN;
-  }
   auto cached = read_cached_platform_type();
   if (cached.has_value() && cached.value() != X_PLATFORM_TYPE_UNKNOWN) {
     return cached.value();
+  }
+  // Radio emulation is also used to debug real boards over USB. Preserve a
+  // known platform so camera detection and hardware setup still run there.
+  if (openhd::is_wifi_monitor_card_emulate_override_enabled()) {
+    return X_PLATFORM_TYPE_UNKNOWN;
   }
   auto platform_opt = openhd::request_platform_type();
   if (!platform_opt.has_value()) {

@@ -68,6 +68,7 @@ copy_library_family 'libPocoEncodings.so*'
 copy_library_family 'libpcap.so*'
 copy_library_family 'libsodium.so*'
 copy_library_family 'libusb-1.0.so*'
+copy_library_family 'librtlsdr.so*'
 bash "${repo_root}/scripts/bundle_terminal_runtime.sh" "${STAGING_DIR}" "${stage_dir}" "${stage_dir}/usr/bin/openhd"
 
 version_header="${repo_root}/OpenHD/ohd_common/inc/openhd_global_constants.hpp"

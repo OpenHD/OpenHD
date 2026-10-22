@@ -230,6 +230,16 @@ add_dependencies(OHDVideoLib generate_camera_registry)
 # Executables for testing manually, note that some might need to run after discovery
 add_executable(test_video test/test_video.cpp)
 target_link_libraries(test_video OHDVideoLib)
+add_executable(test_video_worker_descriptors test/test_video_worker_descriptors.cpp)
+target_include_directories(test_video_worker_descriptors PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/inc)
+target_link_libraries(test_video_worker_descriptors PRIVATE Threads::Threads)
+add_executable(test_x21_camera_detection test/test_x21_camera_detection.cpp)
+target_include_directories(test_x21_camera_detection PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/inc ${CMAKE_CURRENT_BINARY_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/../ohd_common/inc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../settings/generated)
+add_dependencies(test_x21_camera_detection generate_camera_registry)
 add_executable(test_rtp_nalu_bounds test/test_rtp_nalu_bounds.cpp
         ../ohd_common/src/config_paths.cpp)
 target_link_libraries(test_rtp_nalu_bounds OHDVideoLib)
