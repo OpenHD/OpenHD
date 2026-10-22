@@ -72,7 +72,7 @@ jobs:
 
       - name: Generate Coverage Report
         run: |
-          pip3 install gcovr
+          pip3 install --only-binary :all: gcovr==8.7
           gcovr --sonarqube -o coverage.xml -r . --exclude '.*lib/.*' --exclude '.*test/.*'
 
       - name: SonarCloud Scan

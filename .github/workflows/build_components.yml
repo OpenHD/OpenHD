@@ -60,7 +60,9 @@ jobs:
             sdk_commit_key: buildroot_commit
             env_prefix: X21
           - platform: luckfox
-            runner: ubuntu-22.04
+            # Same release as build_luckfox_sysroot.yml: the SDK ships host
+            # tools built there.
+            runner: ubuntu-24.04
             script: build_luckfox_component.sh
             artifact: openhd-luckfox-pico-component
             sdk: openhd-luckfox-pico-sdk
@@ -112,7 +114,7 @@ jobs:
           mkdir -p sdk-artifact
           cd sdk-artifact
           for name in "${sdk}.tar.gz" "${sdk}.tar.gz.sha256" "${sdk}.manifest.json"; do
-            curl --fail --location --retry 5 --retry-delay 3 \
+            curl --proto '=https' --proto-redir '=https' --fail --location --retry 5 --retry-delay 3 \
               "${INPUT_BASE_URL}/${name}" -o "${name}"
           done
           sha256sum -c "${sdk}.tar.gz.sha256"
@@ -139,13 +141,13 @@ jobs:
           sysroot_dir="${RUNNER_TEMP}/lyra-armhf-sysroot"
           mkdir -p "${sysroot_dir}"
 
-          if curl --fail --silent --head "${INPUT_BASE_URL}/openhd-lyra-sdk.tar.gz" >/dev/null 2>&1; then
+          if curl --proto '=https' --proto-redir '=https' --fail --silent --head "${INPUT_BASE_URL}/openhd-lyra-sdk.tar.gz" >/dev/null 2>&1; then
             echo "Fetching prebuilt Luckfox Lyra SDK..."
-            curl --fail --location --retry 3 "${INPUT_BASE_URL}/openhd-lyra-sdk.tar.gz" -o /tmp/lyra-sdk.tar.gz
+            curl --proto '=https' --proto-redir '=https' --fail --location --retry 3 "${INPUT_BASE_URL}/openhd-lyra-sdk.tar.gz" -o /tmp/lyra-sdk.tar.gz
             tar -xzf /tmp/lyra-sdk.tar.gz -C "${sysroot_dir}"
-          elif curl --fail --silent --head "${INPUT_BASE_URL}/openhd-sysroot-bullseye-armhf.tar.zst" >/dev/null 2>&1; then
+          elif curl --proto '=https' --proto-redir '=https' --fail --silent --head "${INPUT_BASE_URL}/openhd-sysroot-bullseye-armhf.tar.zst" >/dev/null 2>&1; then
             echo "Fetching prebuilt armhf sysroot from Cloudsmith..."
-            curl --fail --location --retry 3 "${INPUT_BASE_URL}/openhd-sysroot-bullseye-armhf.tar.zst" -o /tmp/sysroot.tar.zst
+            curl --proto '=https' --proto-redir '=https' --fail --location --retry 3 "${INPUT_BASE_URL}/openhd-sysroot-bullseye-armhf.tar.zst" -o /tmp/sysroot.tar.zst
             sudo tar -I 'zstd -d' -xf /tmp/sysroot.tar.zst -C "${sysroot_dir}"
             sudo chown -R "$(id -u):$(id -g)" "${sysroot_dir}"
           else
@@ -190,9 +192,9 @@ jobs:
           GH_TOKEN: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
         run: |
           set -euo pipefail
-          if ! curl --fail --silent --show-error --location \
+          if ! curl --proto '=https' --proto-redir '=https' --fail --silent --show-error --location \
             "${INPUT_BASE_URL}/openhd-x21b-latest.tar.gz.manifest.json" -o /tmp/openhd.json || \
-             ! curl --fail --silent --show-error --location \
+             ! curl --proto '=https' --proto-redir '=https' --fail --silent --show-error --location \
             "${INPUT_BASE_URL}/openhd-sys-utils-x21b-latest.tar.gz.manifest.json" -o /tmp/sysutils.json; then
             echo "The other X21B component is not published yet; ImageBuilder will be triggered by its workflow."
             exit 0
