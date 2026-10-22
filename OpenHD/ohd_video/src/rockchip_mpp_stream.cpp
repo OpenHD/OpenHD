@@ -216,6 +216,7 @@ class RockchipMppStream::Impl {
     requested_bitrate_kbits = settings.h26x_bitrate_kbits;
     qp_min = settings.qp_min;
     qp_max = settings.qp_max;
+    orientation = (settings.camera_rotation_degree / 90 << 2) | settings.openhd_flip;
     update_roi_snapshot();
     update_recording_snapshot();
     update_debug_snapshot();
@@ -302,7 +303,8 @@ class RockchipMppStream::Impl {
       mpp_enc_cfg_set_s32(cfg, "prep:range_out", MPP_FRAME_RANGE_JPEG);
       mpp_enc_cfg_set_s32(cfg, "prep:colorspace", MPP_FRAME_SPC_BT470BG);
     }
-    mpp_enc_cfg_set_s32(cfg, "prep:rotation", s.camera_rotation_degree / 90);
+    const int initial_orientation = orientation.load();
+    if (!configure_orientation(cfg, initial_orientation)) return false;
     mpp_enc_cfg_set_s32(cfg, "rc:mode", MPP_ENC_RC_MODE_CBR);
     mpp_enc_cfg_set_s32(cfg, "rc:fps_in_flex", 0);
     mpp_enc_cfg_set_s32(cfg, "rc:fps_in_num", f.framerate);
@@ -325,6 +327,7 @@ class RockchipMppStream::Impl {
       log->error("MPP rejected encoder configuration");
       return false;
     }
+    applied_orientation = initial_orientation;
     const auto buffer_type = static_cast<MppBufferType>(
         MPP_BUFFER_TYPE_DRM | MPP_BUFFER_FLAGS_CACHABLE);
     if (mpp_buffer_group_get_internal(&group, buffer_type) ||
@@ -375,6 +378,11 @@ class RockchipMppStream::Impl {
     mpp_enc_cfg_set_s32(record_cfg, "prep:hor_stride", hor_stride);
     mpp_enc_cfg_set_s32(record_cfg, "prep:ver_stride", ver_stride);
     mpp_enc_cfg_set_s32(record_cfg, "prep:format", MPP_FMT_YUV420SP);
+    const int initial_orientation = orientation.load();
+    if (!configure_orientation(record_cfg, initial_orientation)) {
+      destroy_record_encoder();
+      return false;
+    }
     if (owner.m_camera_holder->get_camera().camera_type == X_CAM_TYPE_LUCKFOX_AURA_IMX662) {
       mpp_enc_cfg_set_s32(record_cfg, "prep:range", MPP_FRAME_RANGE_JPEG);
       mpp_enc_cfg_set_s32(record_cfg, "prep:range_out", MPP_FRAME_RANGE_JPEG);
@@ -399,6 +407,21 @@ class RockchipMppStream::Impl {
     if (record_mpi->control(record_ctx, MPP_ENC_SET_CFG, record_cfg)) {
       log->error("MPP rejected the recording-channel configuration");
       destroy_record_encoder();
+      return false;
+    }
+    recorded_orientation = initial_orientation;
+    return true;
+  }
+
+  bool configure_orientation(MppEncCfg target, int value) {
+    const bool horizontal = value & 1;
+    const bool vertical = value & 2;
+    // MPP mirrors horizontally. A vertical flip is a half turn plus that
+    // mirror; both flips therefore reduce to a half turn without a mirror.
+    const int rotation = ((value >> 2) + (vertical ? 2 : 0)) & 3;
+    if (mpp_enc_cfg_set_s32(target, "prep:rotation", rotation) ||
+        mpp_enc_cfg_set_s32(target, "prep:mirroring", horizontal != vertical)) {
+      log->error("MPP does not support requested rotation/mirroring");
       return false;
     }
     return true;
@@ -1215,6 +1238,19 @@ class RockchipMppStream::Impl {
       return true;
     }
     update_bitrate_sweep();
+    const int requested_orientation = orientation.load();
+    if (requested_orientation != applied_orientation) {
+      if (configure_orientation(cfg, requested_orientation) &&
+          !mpi->control(ctx, MPP_ENC_SET_CFG, cfg)) {
+        applied_orientation = requested_orientation;
+        force_keyframe_pending = true;
+        log->info("Live MPP orientation: rotation={} flip={}",
+                  (requested_orientation >> 2) * 90, requested_orientation & 3);
+      } else {
+        log->warn("MPP rejected a live orientation update");
+        orientation = applied_orientation;
+      }
+    }
     if (rate_dirty.exchange(false)) {
       apply_rate_control();
       if (mpi->control(ctx, MPP_ENC_SET_CFG, cfg))
@@ -1495,6 +1531,13 @@ class RockchipMppStream::Impl {
           if (record_mpi->control(record_ctx, MPP_ENC_SET_CFG, record_cfg))
             log->warn("MPP rejected a dynamic recording-quality update");
         }
+        const int requested_orientation = orientation.load();
+        if (requested_orientation != recorded_orientation &&
+            configure_orientation(record_cfg, requested_orientation) &&
+            !record_mpi->control(record_ctx, MPP_ENC_SET_CFG, record_cfg)) {
+          recorded_orientation = requested_orientation;
+          record_mpi->control(record_ctx, MPP_ENC_SET_IDR_FRAME, nullptr);
+        }
         ok = encode_context(record_ctx, record_mpi, record_inputs[slot], false);
       }
       if (!ok) {
@@ -1710,6 +1753,8 @@ class RockchipMppStream::Impl {
   std::thread thread;
   std::atomic_bool running{false};
   std::atomic_bool rate_dirty{false};
+  std::atomic<int> orientation{0};
+  int applied_orientation = -1, recorded_orientation = -1;
   std::atomic<int> bitrate_kbits{8000};
   std::atomic<int> requested_bitrate_kbits{8000};
   std::atomic<int> qp_min{5};
@@ -1831,6 +1876,8 @@ RockchipMppStream::RockchipMppStream(
       [this]() { m_impl->update_debug_snapshot(); });
   m_camera_holder->register_video_force_keyframe_listener(
       [this]() { m_impl->force_keyframe_pending = true; });
+  m_camera_holder->register_video_orientation_listener(
+      [this](int degree, int flip) { set_orientation(degree, flip); });
 }
 
 RockchipMppStream::~RockchipMppStream() {
@@ -1841,6 +1888,7 @@ RockchipMppStream::~RockchipMppStream() {
   m_camera_holder->register_video_recording_listener(nullptr);
   m_camera_holder->register_video_debug_listener(nullptr);
   m_camera_holder->register_video_force_keyframe_listener(nullptr);
+  m_camera_holder->register_video_orientation_listener(nullptr);
   terminate_looping();
 }
 
@@ -1853,6 +1901,10 @@ void RockchipMppStream::terminate_looping() { m_impl->stop(); }
 
 void RockchipMppStream::request_keyframe() {
   m_impl->force_keyframe_pending = true;
+}
+
+void RockchipMppStream::set_orientation(int rotation_degree, int flip) {
+  m_impl->orientation = (rotation_degree / 90 << 2) | flip;
 }
 
 void RockchipMppStream::set_qp_limits(int minimum, int maximum) {

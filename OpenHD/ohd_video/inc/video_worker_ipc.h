@@ -38,6 +38,8 @@ struct Control {
   bool armed = false;
   bool capacity_limit = false;
   unsigned keyframe_revision = 0;
+  int rotation_degree = -1;
+  int flip = -1;
 };
 
 inline bool send_packet(int fd, Header header, const void* data = nullptr,

@@ -38,6 +38,8 @@ class CameraProcess : public CameraStream {
   int m_qp_min = -1;
   int m_qp_max = -1;
   bool m_armed = false;
+  int m_rotation_degree = -1;
+  int m_flip = -1;
 };
 
 // Must be called before starting the ordinary application's services/threads.

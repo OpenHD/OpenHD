@@ -3293,19 +3293,19 @@
           "value": 0
         },
         {
-          "label": "VFLIP°",
+          "label": "Horizontal mirror",
           "value": 1
         },
         {
-          "label": "HFLIP",
+          "label": "Vertical flip",
           "value": 2
         },
         {
-          "label": "BOTH",
+          "label": "Both (180°)",
           "value": 3
         }
       ],
-      "description": "Flip video vertically / horizontally (ROTATE)",
+      "description": "Mirror horizontally, flip vertically, or combine both into a 180-degree turn.",
       "group": "General",
       "hidden": false,
       "id": "ROTATION_FLIP",

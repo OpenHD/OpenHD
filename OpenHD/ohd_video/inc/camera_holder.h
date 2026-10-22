@@ -147,6 +147,7 @@ class CameraHolder :
   using VIDEO_RECORDING_CHANGED_CALLBACK = std::function<void()>;
   using VIDEO_DEBUG_CHANGED_CALLBACK = std::function<void()>;
   using VIDEO_FORCE_KEYFRAME_CALLBACK = std::function<void()>;
+  using VIDEO_ORIENTATION_CALLBACK = std::function<void(int, int)>;
   void register_video_bitrate_listener(VIDEO_BITRATE_CHANGED_CALLBACK cb) {
     m_video_bitrate_changed_callback = std::move(cb);
   }
@@ -164,6 +165,9 @@ class CameraHolder :
   }
   void register_video_force_keyframe_listener(VIDEO_FORCE_KEYFRAME_CALLBACK cb) {
     m_video_force_keyframe_callback = std::move(cb);
+  }
+  void register_video_orientation_listener(VIDEO_ORIENTATION_CALLBACK cb) {
+    m_video_orientation_callback = std::move(cb);
   }
   // Settings hacky begin
   std::vector<openhd::Setting> get_all_settings();
@@ -611,8 +615,10 @@ class CameraHolder :
     if (!openhd::validate_camera_rotation(value)) {
       return false;
     }
+    const bool same_dimensions =
+        (get_settings().camera_rotation_degree % 180) == (value % 180);
     unsafe_get_settings().camera_rotation_degree = value;
-    persist();
+    persist_orientation(same_dimensions);
     return true;
   }
   bool set_keyframe_interval(int value) {
@@ -643,7 +649,7 @@ class CameraHolder :
           value <= OPENHD_FLIP_VERTICAL_AND_HORIZONTAL))
       return false;
     unsafe_get_settings().openhd_flip = value;
-    persist();
+    persist_orientation();
     return true;
   }
   bool set_openhd_iso(int value) {
@@ -837,6 +843,18 @@ class CameraHolder :
   }
   // Settings hacky end
  private:
+  void persist_orientation(bool same_dimensions = true) {
+    const auto& s = get_settings();
+    // Half turns and mirrors retain the encoded dimensions. Native MPP can
+    // change these on the next frame without restarting capture or the ISP.
+    if (same_dimensions && m_video_orientation_callback &&
+        (s.camera_rotation_degree == 0 || s.camera_rotation_degree == 180)) {
+      persist(false);
+      m_video_orientation_callback(s.camera_rotation_degree, s.openhd_flip);
+    } else {
+      persist();
+    }
+  }
   void notify_video_debug_changed() {
     if (m_video_debug_changed_callback) m_video_debug_changed_callback();
   }
@@ -848,6 +866,7 @@ class CameraHolder :
   VIDEO_RECORDING_CHANGED_CALLBACK m_video_recording_changed_callback = nullptr;
   VIDEO_DEBUG_CHANGED_CALLBACK m_video_debug_changed_callback = nullptr;
   VIDEO_FORCE_KEYFRAME_CALLBACK m_video_force_keyframe_callback = nullptr;
+  VIDEO_ORIENTATION_CALLBACK m_video_orientation_callback = nullptr;
 
  private:
   [[nodiscard]] std::string get_unique_filename() const override {

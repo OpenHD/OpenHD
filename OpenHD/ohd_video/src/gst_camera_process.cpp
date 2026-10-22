@@ -63,6 +63,12 @@ CameraProcess::CameraProcess(std::shared_ptr<CameraHolder> camera,
     if (m_backend != Backend::Mpp) ++m_revision;
   });
   if (m_backend == Backend::Mpp) {
+    m_camera_holder->register_video_orientation_listener([this](int degree, int flip) {
+      std::lock_guard<std::mutex> lock(m_control_mutex);
+      m_rotation_degree = degree;
+      m_flip = flip;
+      m_snapshot = m_camera_holder->settings_snapshot();
+    });
     m_camera_holder->register_video_roi_listener(
         [this]() { refresh_settings(true); });
     m_camera_holder->register_video_recording_listener(
@@ -77,6 +83,8 @@ CameraProcess::CameraProcess(std::shared_ptr<CameraHolder> camera,
 void CameraProcess::refresh_settings(bool restart) {
   std::lock_guard<std::mutex> lock(m_control_mutex);
   m_snapshot = m_camera_holder->settings_snapshot();
+  m_rotation_degree = m_camera_holder->get_settings().camera_rotation_degree;
+  m_flip = m_camera_holder->get_settings().openhd_flip;
   m_settings_restart = m_settings_restart || restart;
   ++m_revision;
 }
@@ -86,6 +94,7 @@ CameraProcess::~CameraProcess() {
   m_camera_holder->register_video_bitrate_listener(nullptr);
   m_camera_holder->register_video_qp_listener(nullptr);
   if (m_backend == Backend::Mpp) {
+    m_camera_holder->register_video_orientation_listener(nullptr);
     m_camera_holder->register_video_roi_listener(nullptr);
     m_camera_holder->register_video_recording_listener(nullptr);
     m_camera_holder->register_video_debug_listener(nullptr);
@@ -200,7 +209,8 @@ void CameraProcess::run() {
           m_settings_restart = false;
         }
         control = {m_bitrate, m_qp_min,         m_qp_max,
-                   m_armed,   m_capacity_limit, m_keyframe_revision.load()};
+                   m_armed,   m_capacity_limit, m_keyframe_revision.load(),
+                   m_rotation_degree, m_flip};
       }
       send_packet(child.fd, {Type::Control}, &control, sizeof(control));
       pollfd event{child.fd, POLLIN, 0};
@@ -411,6 +421,11 @@ int run_camera_worker_if_requested(int argc, char* argv[]) {
           if (control.armed != applied.armed)
             stream->handle_update_arming_state(control.armed);
 #ifdef OPENHD_ROCKCHIP_MPP_PRESENT
+          if (use_mpp && control.rotation_degree >= 0 && control.flip >= 0 &&
+              (control.rotation_degree != applied.rotation_degree ||
+               control.flip != applied.flip))
+            static_cast<RockchipMppStream*>(stream.get())
+                ->set_orientation(control.rotation_degree, control.flip);
           if (use_mpp && control.qp_min >= 0 && control.qp_max >= 0 &&
               (control.qp_min != applied.qp_min ||
                control.qp_max != applied.qp_max))
