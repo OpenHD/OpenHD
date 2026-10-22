@@ -37,12 +37,14 @@ jobs:
             package_arch: x86_64
             distro: ubuntu
             release: jammy
+            extra_targets: ubuntu/noble
           - architecture: arm64
             package_arch: arm64
             triplet: aarch64-linux-gnu
             compiler_packages: gcc-10-aarch64-linux-gnu g++-10-aarch64-linux-gnu
             distro: debian
             release: bullseye
+            extra_targets: debian/bookworm raspbian/bullseye raspbian/bookworm
           - architecture: armhf
             package_arch: armhf
             triplet: arm-linux-gnueabihf
@@ -57,26 +59,13 @@ jobs:
           submodules: true
           token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
 
-      # Keep Devourer optional for ordinary checkouts (`update = none`) and do
-      # not initialize its reference-driver submodules. Package CI only needs
-      # the exact Devourer commit pinned by this repository.
-      - name: Fetch Devourer backend without nested submodules
-        run: |
-          devourer_dir="OpenHD/ohd_interface/lib/devourer"
-          devourer_commit="$(git rev-parse "HEAD:${devourer_dir}")"
-          mkdir -p "${devourer_dir}"
-          git -C "${devourer_dir}" init
-          git -C "${devourer_dir}" remote add origin https://github.com/OpenHD/devourer.git
-          git -C "${devourer_dir}" fetch --depth=1 origin "${devourer_commit}"
-          git -C "${devourer_dir}" checkout --detach "${devourer_commit}"
-          test -f "${devourer_dir}/CMakeLists.txt"
+      - uses: ./.github/actions/fetch-devourer
 
       - name: Install native package dependencies
         if: matrix.architecture == 'amd64'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libpoco-dev
-          sudo ./install_build_dep.sh ubuntu-x86
+        uses: ./.github/actions/setup-native-build
+        with:
+          make-setup: "false"
 
       - name: Build native AMD64 package
         if: matrix.architecture == 'amd64'
@@ -206,89 +195,22 @@ jobs:
             echo "repo=${GITHUB_REF_NAME}" >> "${GITHUB_OUTPUT}"
           fi
 
-      - name: Publish universal architecture package
+      # Every package goes to any-distro/any-version, its build distribution
+      # and the matrix entry's extra_targets.
+      - name: Publish architecture package to Cloudsmith
         if: github.event_name != 'pull_request'
-        uses: cloudsmith-io/action@master
-        with:
-          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
-          command: push
-          format: deb
-          owner: openhd
-          repo: ${{ steps.cloudsmith.outputs.repo }}
-          distro: any-distro
-          release: any-version
-          republish: "true"
-          file: "openhd_*.deb"
-
-      - name: Publish architecture package for its build distribution
-        if: github.event_name != 'pull_request'
-        uses: cloudsmith-io/action@master
-        with:
-          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
-          command: push
-          format: deb
-          owner: openhd
-          repo: ${{ steps.cloudsmith.outputs.repo }}
-          distro: ${{ matrix.distro }}
-          release: ${{ matrix.release }}
-          republish: "true"
-          file: "openhd_*.deb"
-
-      - name: Publish ARM64 package for Debian Bookworm
-        if: github.event_name != 'pull_request' && matrix.architecture == 'arm64'
-        uses: cloudsmith-io/action@master
-        with:
-          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
-          command: push
-          format: deb
-          owner: openhd
-          repo: ${{ steps.cloudsmith.outputs.repo }}
-          distro: debian
-          release: bookworm
-          republish: "true"
-          file: "openhd_*.deb"
-
-      - name: Publish ARM64 package for Raspbian Bullseye
-        if: github.event_name != 'pull_request' && matrix.architecture == 'arm64'
-        uses: cloudsmith-io/action@master
-        with:
-          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
-          command: push
-          format: deb
-          owner: openhd
-          repo: ${{ steps.cloudsmith.outputs.repo }}
-          distro: raspbian
-          release: bullseye
-          republish: "true"
-          file: "openhd_*.deb"
-
-      - name: Publish ARM64 package for Raspbian Bookworm
-        if: github.event_name != 'pull_request' && matrix.architecture == 'arm64'
-        uses: cloudsmith-io/action@master
-        with:
-          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
-          command: push
-          format: deb
-          owner: openhd
-          repo: ${{ steps.cloudsmith.outputs.repo }}
-          distro: raspbian
-          release: bookworm
-          republish: "true"
-          file: "openhd_*.deb"
-
-      - name: Publish AMD64 package for Ubuntu Noble
-        if: github.event_name != 'pull_request' && matrix.architecture == 'amd64'
-        uses: cloudsmith-io/action@master
-        with:
-          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
-          command: push
-          format: deb
-          owner: openhd
-          repo: ${{ steps.cloudsmith.outputs.repo }}
-          distro: ubuntu
-          release: noble
-          republish: "true"
-          file: "openhd_*.deb"
+        env:
+          CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
+        run: |
+          set -euo pipefail
+          pipx install cloudsmith-cli
+          package="$(find . -maxdepth 1 -name 'openhd_*.deb' -print -quit)"
+          for target in any-distro/any-version \
+                        "${{ matrix.distro }}/${{ matrix.release }}" \
+                        ${{ matrix.extra_targets }}; do
+            cloudsmith push deb --republish \
+              "openhd/${{ steps.cloudsmith.outputs.repo }}/${target}" "${package}"
+          done
 
   x20:
     name: package-x20
@@ -401,18 +323,7 @@ jobs:
         with:
           submodules: true
           token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
-      # Devourer has update=none to avoid fetching its vendor reference trees.
-      # Fetch the pinned backend explicitly, as in the architecture jobs.
-      - name: Fetch Devourer backend without nested submodules
-        run: |
-          devourer_dir="OpenHD/ohd_interface/lib/devourer"
-          devourer_commit="$(git rev-parse "HEAD:${devourer_dir}")"
-          mkdir -p "${devourer_dir}"
-          git -C "${devourer_dir}" init
-          git -C "${devourer_dir}" remote add origin https://github.com/OpenHD/devourer.git
-          git -C "${devourer_dir}" fetch --depth=1 origin "${devourer_commit}"
-          git -C "${devourer_dir}" checkout --detach "${devourer_commit}"
-          test -f "${devourer_dir}/CMakeLists.txt"
+      - uses: ./.github/actions/fetch-devourer
       - name: Checkout OpenHD SysUtils
         uses: actions/checkout@v7
         with:
