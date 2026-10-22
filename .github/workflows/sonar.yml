@@ -28,13 +28,7 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
 
-      - name: Sync submodules
-        run: |
-          git submodule sync
-          git submodule update --init
-          # Only initialize devourer, but avoid its broken/heavy reference sub-submodules
-          git submodule update --init OpenHD/ohd_interface/lib/devourer
-          git submodule status
+      - uses: ./.github/actions/fetch-devourer
 
       - name: Ensure private submodule content
         run: |
@@ -44,18 +38,11 @@ jobs:
             git -C OpenHD/ohd_interface/video_crypto_private checkout -f origin/main || true
           fi
 
-      - name: Install Dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y libsodium-dev libpoco-dev python3-pip ccache ninja-build
-          pip3 install gcovr
-          sudo ./install_build_dep.sh ubuntu-x86
-
-      - name: Install sysutils
-        run: |
-          curl -1sLf 'https://dl.cloudsmith.io/public/openhd/dev-release/setup.deb.sh' | sudo -E bash
-          sudo apt update
-          sudo apt install -y openhd-sys-utils
+      - name: Install dependencies and sysutils
+        uses: ./.github/actions/setup-native-build
+        with:
+          sysutils: "true"
+          extra-packages: ccache python3-pip
 
       - name: Cache ccache data
         uses: actions/cache@v6
@@ -73,36 +60,19 @@ jobs:
           key: ${{ runner.os }}-sonar-${{ github.sha }}
           restore-keys: ${{ runner.os }}-sonar-
 
-      - name: Configure and Build with Coverage and ccache
+      - name: Build with coverage and run the unit tests
+        env:
+          CCACHE_COMPILERCHECK: content
+          CCACHE_BASEDIR: ${{ github.workspace }}
         run: |
-          mkdir build
-          cd build
-          source ../OpenHD/scripts/resolve_artosyn_sdk.sh
-          resolve_artosyn_sdk
-          
-          export CCACHE_COMPILERCHECK=content
-          export CCACHE_BASEDIR=$GITHUB_WORKSPACE
-          
-          cmake ../OpenHD -G Ninja \
-            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-            -DARTOSYN_SDK_ROOT="${ARTOSYN_SDK_ROOT}" \
-            -DARTOSYN_SDK_LIB="${ARTOSYN_SDK_LIB}" \
-            -DARTOSYN_SDK_DAEMON="${ARTOSYN_SDK_DAEMON:-}" \
-            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
-            -DCMAKE_CXX_FLAGS="--coverage" \
-            -DCMAKE_EXE_LINKER_FLAGS="--coverage"
-          ninja -j$(nproc)
-
-      - name: Run Tests
-        run: |
-          cd build
-          ./test_openhd_util || true
-          ./test_config || true
-          ./test_logging || true
+          make ci_defconfig
+          make test BUILD_DIR=build CMAKE_ARGS="-DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_FLAGS=--coverage -DCMAKE_EXE_LINKER_FLAGS=--coverage"
 
       - name: Generate Coverage Report
         run: |
+          pip3 install gcovr
           gcovr --sonarqube -o coverage.xml -r . --exclude '.*lib/.*' --exclude '.*test/.*'
 
       - name: SonarCloud Scan
