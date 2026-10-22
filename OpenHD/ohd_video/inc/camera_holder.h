@@ -204,7 +204,7 @@ class CameraHolder :
     if ((value != 0 && value != 1) || !has_arducam_hdr()) return false;
     if (value == get_settings().arducam_hdr) return true;
     const auto ae = get_settings().arducam_isp.find("ISP_AE_MODE");
-    if (value && ae != get_settings().arducam_isp.end() && ae->second == 0)
+    if (value && (ae == get_settings().arducam_isp.end() || ae->second == 0))
       return false;
     auto& s = unsafe_get_settings();
     s.arducam_hdr = value;

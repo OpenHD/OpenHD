@@ -5522,7 +5522,7 @@
       "id": "ISP_AE_MODE",
       "type": "int32",
       "label": "ISP exposure mode",
-      "description": "ISP manual exposure or experimental automatic exposure. Custom 120 fps and HDR readouts currently require manual mode. Applies live without restarting video.",
+      "description": "Automatic shutter and gain are the default in standard video modes, including 720p120. Manual controls remain available. Experimental HDR requires Manual. Applies live; switching to the custom manual 120 fps readout may briefly pause video.",
       "group": "Camera",
       "minimum": 0,
       "maximum": 1,
@@ -5530,8 +5530,40 @@
       "requiresReboot": false,
       "hidden": false,
       "choices": [
-        {"label": "Auto (experimental)", "value": 0},
-        {"label": "Manual", "value": 1}
+        {
+          "label": "Auto",
+          "value": 0
+        },
+        {
+          "label": "Manual",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "ISP_AE_PROFILE",
+      "type": "int32",
+      "label": "Auto exposure profile",
+      "description": "Normal: native automatic exposure. Sport: native Sports scene and a 2 ms shutter cap to reduce motion blur. Fly: 4 ms shutter cap, native backlight scene and lower-image exposure feedback, allowing a bright sky to clip. Fly is experimental and awaits outdoor validation. Profiles apply live without restarting capture; retained while Manual is selected.",
+      "group": "Camera",
+      "minimum": 0,
+      "maximum": 2,
+      "readOnly": false,
+      "requiresReboot": false,
+      "hidden": false,
+      "choices": [
+        {
+          "label": "Normal",
+          "value": 0
+        },
+        {
+          "label": "Sport (2 ms shutter)",
+          "value": 1
+        },
+        {
+          "label": "Fly (ground priority, experimental)",
+          "value": 2
+        }
       ]
     },
     {

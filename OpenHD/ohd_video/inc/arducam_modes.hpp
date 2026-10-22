@@ -20,13 +20,14 @@ inline constexpr Control controls[] = {
   {"CONTRAST",5,0,200,10,100},
   {"SATURATION",6,0,200,10,100},
   {"ISP_GAMMA",7,0,200,10,0}, // 0 selects the ISP sRGB curve.
-  {"ISP_AE_MODE",8,0,1,1,1}, // Standard V4L2 auto=0, manual=1.
+  {"ISP_AE_MODE",8,0,1,1,0}, // Standard V4L2 auto=0, manual=1; automatic by default.
+  {"ISP_AE_PROFILE",9,0,2,1,0}, // Normal, Sport, Fly (ground-priority feedback).
 };
 inline unsigned int native_id(const Control& c) {
   constexpr unsigned int ids[] = {V4L2_CID_EXPOSURE_ABSOLUTE,V4L2_CID_GAIN,
     V4L2_CID_AUTO_WHITE_BALANCE,V4L2_CID_WHITE_BALANCE_TEMPERATURE,
     V4L2_CID_BRIGHTNESS,V4L2_CID_CONTRAST,V4L2_CID_SATURATION,
-    V4L2_CID_GAMMA,V4L2_CID_EXPOSURE_AUTO};
+    V4L2_CID_GAMMA,V4L2_CID_EXPOSURE_AUTO,V4L2_CID_SCENE_MODE};
   return ids[c.index];
 }
 inline std::string sensor_node() {
@@ -43,6 +44,8 @@ inline int native_value(const Control& c,int value) {
   if(c.index==1)return value*256/100;
   if(c.index==4)return (value-100)*4096/100;
   if(c.index>=5 && c.index<=7)return value*4096/100;
+  if(c.index==9)return value==1?V4L2_SCENE_MODE_SPORTS:
+                           value==2?V4L2_SCENE_MODE_BACKLIGHT:V4L2_SCENE_MODE_NONE;
   return value;
 }
 inline bool live_supported() {
@@ -52,6 +55,16 @@ inline bool live_supported() {
   const bool ok=ioctl(fd,VIDIOC_QUERYCTRL,&q)==0;
   close(fd);return ok;
 }
+inline bool control_supported(const Control& c) {
+  const auto node=sensor_node();if(node.empty())return false;
+  const int fd=open(node.c_str(),O_RDONLY|O_CLOEXEC);if(fd<0)return false;
+  v4l2_queryctrl q{};q.id=native_id(c);
+  const bool ok=ioctl(fd,VIDIOC_QUERYCTRL,&q)==0 && !(q.flags&V4L2_CTRL_FLAG_DISABLED);
+  close(fd);return ok;
+}
+inline int default_value(const Control& c,bool hdr=false) {
+  return c.index==8 && hdr?1:c.def; // Existing HDR profiles remain manual-only.
+}
 inline bool write_control(const Control& c,int value) {
   if(value<c.min || value>c.max || (value-c.min)%c.step)return false;
   const auto node=sensor_node();if(node.empty())return false;
@@ -60,10 +73,18 @@ inline bool write_control(const Control& c,int value) {
   ctrl.value=native_value(c,value);
   const bool ok=ioctl(fd,VIDIOC_S_CTRL,&ctrl)==0;close(fd);return ok;
 }
-inline bool restore_controls(int fd,const std::map<std::string,int>& values) {
+inline bool restore_controls(int fd,const std::map<std::string,int>& values,bool hdr=false) {
   for(const auto& c:controls) {
-    auto found=values.find(c.id);int value=found==values.end()?c.def:found->second;
+    auto found=values.find(c.id);int value=found==values.end()?default_value(c,hdr):found->second;
     if(value<c.min || value>c.max || (value-c.min)%c.step)return false;
+    // New optional profiles must not break ordinary capture on older kernels.
+    if(c.index==9) {
+      v4l2_queryctrl q{};q.id=native_id(c);
+      if(ioctl(fd,VIDIOC_QUERYCTRL,&q)<0) {
+        if(value==0)continue;
+        return false;
+      }
+    }
     v4l2_control ctrl{};ctrl.id=native_id(c);
     ctrl.value=native_value(c,value);
     if(ioctl(fd,VIDIOC_S_CTRL,&ctrl)<0)return false;

@@ -1,6 +1,7 @@
 #include "rockchip_mpp_stream.h"
 
 #include <fcntl.h>
+#include <linux/dma-buf.h>
 #include <linux/media-bus-format.h>
 #include <linux/media.h>
 #include <linux/v4l2-subdev.h>
@@ -41,6 +42,8 @@
 #include "openhd_rtp.h"
 #include "openhd_spdlog.h"
 #include "rockchip_stream_utils.h"
+#include "arducam_modes.hpp"
+#include "ground_ae.hpp"
 
 namespace {
 // Reset the ISP input links when returning from HDR readback to online linear.
@@ -782,6 +785,15 @@ class RockchipMppStream::Impl {
       const bool hdr_supported = retry_ioctl(fd, VIDIOC_QUERYCTRL, &hdr_query) == 0;
       v4l2_control hdr{}; hdr.id = V4L2_CID_WIDE_DYNAMIC_RANGE;
       hdr.value = owner.m_camera_holder->get_settings().arducam_hdr;
+      if (hdr.value) {
+        // A new kernel defaults to Auto. The manual-only HDR selector must
+        // see the persisted exposure mode before it validates the request.
+        const auto& values = owner.m_camera_holder->get_settings().arducam_isp;
+        auto saved = values.find("ISP_AE_MODE");
+        v4l2_control ae{}; ae.id = V4L2_CID_EXPOSURE_AUTO;
+        ae.value = saved == values.end() ? V4L2_EXPOSURE_MANUAL : saved->second;
+        if (retry_ioctl(fd, VIDIOC_S_CTRL, &ae) < 0) { close(fd); return false; }
+      }
       if ((hdr_supported && retry_ioctl(fd, VIDIOC_S_CTRL, &hdr) < 0) ||
           (!hdr_supported && hdr.value)) {
         log->error("Arducam HDR mode rejected by sensor driver");
@@ -789,7 +801,8 @@ class RockchipMppStream::Impl {
       }
       v4l2_queryctrl iq_query{}; iq_query.id = V4L2_CID_EXPOSURE_ABSOLUTE;
       if (retry_ioctl(fd, VIDIOC_QUERYCTRL, &iq_query) == 0 &&
-          !arducam_modes::restore_controls(fd, owner.m_camera_holder->get_settings().arducam_isp)) {
+          !arducam_modes::restore_controls(fd, owner.m_camera_holder->get_settings().arducam_isp,
+                                          hdr.value != 0)) {
         log->error("Cannot restore Arducam ISP image controls");close(fd);return false;
       }
       // Bridge format changes may propagate back into Pivariety and reset its
@@ -1064,6 +1077,84 @@ class RockchipMppStream::Impl {
     }
   }
 
+  void sample_ground(const CaptureBuffer& buffer, size_t offset, size_t bytes) {
+    if (!ground_ae_sampling || Clock::now() < next_ground_sample) return;
+    next_ground_sample = Clock::now() + std::chrono::milliseconds(100);
+    dma_buf_sync sync{};
+    sync.flags = DMA_BUF_SYNC_START | DMA_BUF_SYNC_READ;
+    if (buffer.dma_fd < 0 || ioctl(buffer.dma_fd, DMA_BUF_IOCTL_SYNC, &sync) < 0)
+      return;
+    const int luma = openhd::ground_ae::meter(
+        static_cast<const uint8_t*>(buffer.data) + offset, bytes,
+        capture_stride, width, height, orientation.load());
+    sync.flags = DMA_BUF_SYNC_END | DMA_BUF_SYNC_READ;
+    if (ioctl(buffer.dma_fd, DMA_BUF_IOCTL_SYNC, &sync) == 0)
+      ground_luma = luma;
+  }
+
+  void start_ground_ae() {
+    if (owner.m_camera_holder->get_camera().camera_type !=
+        X_CAM_TYPE_X21_ARDUCAM_PIVARIETY) return;
+    const auto node = arducam_modes::sensor_node();
+    const int fd = open(node.c_str(), O_RDWR | O_CLOEXEC);
+    if (fd < 0) return;
+    v4l2_queryctrl query{};
+    query.id = V4L2_CID_AUTO_EXPOSURE_BIAS;
+    if (ioctl(fd, VIDIOC_QUERYCTRL, &query) < 0 || query.minimum != 0 ||
+        query.maximum != 16 || query.default_value != 8) {
+      close(fd);
+      return;
+    }
+    ground_ae_running = true;
+    ground_ae_thread = std::thread([this, fd]() {
+      openhd::ground_ae::Controller controller;
+      bool was_flying = false;
+      while (ground_ae_running) {
+        v4l2_control scene{}, ae{}, bias{};
+        scene.id = V4L2_CID_SCENE_MODE;
+        ae.id = V4L2_CID_EXPOSURE_AUTO;
+        bias.id = V4L2_CID_AUTO_EXPOSURE_BIAS;
+        const bool valid = ioctl(fd, VIDIOC_G_CTRL, &scene) == 0 &&
+            ioctl(fd, VIDIOC_G_CTRL, &ae) == 0 &&
+            ioctl(fd, VIDIOC_G_CTRL, &bias) == 0;
+        const bool flying = valid && scene.value == V4L2_SCENE_MODE_BACKLIGHT &&
+                            ae.value == V4L2_EXPOSURE_AUTO;
+        if (flying != was_flying) {
+          controller.reset();
+          ground_luma = -1;
+          log->info("Fly ground metering {}", flying ? "enabled" : "disabled");
+        }
+        ground_ae_sampling = flying;
+        if (valid) {
+          const int desired = flying
+              ? controller.update(ground_luma.exchange(-1), bias.value) : 8;
+          if (desired != bias.value) {
+            bias.value = desired;
+            // A separate thread performs the ISP transaction. Capture and
+            // encoding never wait for an exposure-register write.
+            if (ioctl(fd, VIDIOC_S_CTRL, &bias) < 0 && errno != EBUSY)
+              log->warn("Cannot apply Fly AE compensation: {}", std::strerror(errno));
+          }
+        }
+        was_flying = flying;
+        for (int i=0; i<8 && ground_ae_running; ++i)
+          std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      }
+      ground_ae_sampling = false;
+      v4l2_control bias{};
+      bias.id = V4L2_CID_AUTO_EXPOSURE_BIAS;
+      bias.value = 8;
+      ioctl(fd, VIDIOC_S_CTRL, &bias);
+      close(fd);
+    });
+  }
+
+  void stop_ground_ae() {
+    ground_ae_running = false;
+    ground_ae_sampling = false;
+    if (ground_ae_thread.joinable()) ground_ae_thread.join();
+  }
+
   bool capture_one_frame() {
     pollfd descriptor{capture_fd, POLLIN, 0};
     const int poll_result = poll(&descriptor, 1, 100);
@@ -1113,6 +1204,7 @@ class RockchipMppStream::Impl {
       const size_t bytes = std::min<size_t>(planes[0].bytesused, mapped.size);
       const size_t offset = planes[0].data_offset;
       if (!(buffer.flags & V4L2_BUF_FLAG_ERROR) && offset <= bytes) {
+        sample_ground(mapped, offset, bytes - offset);
         encoded = encode_nv12(static_cast<const uint8_t*>(mapped.data) + offset,
                               bytes - offset,
                               offset == 0 ? mapped.imported : nullptr);
@@ -1161,6 +1253,7 @@ class RockchipMppStream::Impl {
       return;
     }
     init_record_worker();
+    start_ground_ae();
     const auto imported_count =
         std::count_if(capture_buffers.begin(), capture_buffers.end(),
                       [](const auto& b) { return b.imported != nullptr; });
@@ -1706,6 +1799,7 @@ class RockchipMppStream::Impl {
   }
 
   void cleanup() {
+    stop_ground_ae();
     stop_record_worker();
     // Retire encoder DMA before releasing imported capture buffers.
     if (ctx) mpp_destroy(ctx);
@@ -1752,6 +1846,10 @@ class RockchipMppStream::Impl {
   std::shared_ptr<openhd::RTPHelper> rtp;
   std::thread thread;
   std::atomic_bool running{false};
+  std::thread ground_ae_thread;
+  std::atomic_bool ground_ae_running{false}, ground_ae_sampling{false};
+  std::atomic<int> ground_luma{-1};
+  Clock::time_point next_ground_sample{};
   std::atomic_bool rate_dirty{false};
   std::atomic<int> orientation{0};
   int applied_orientation = -1, recorded_orientation = -1;

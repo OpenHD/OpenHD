@@ -182,8 +182,10 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
   if (m_camera.camera_type == X_CAM_TYPE_X21_ARDUCAM_PIVARIETY &&
       arducam_modes::live_supported()) {
     for (const auto& control : arducam_modes::controls) {
+      if (control.index == 9 && !arducam_modes::control_supported(control)) continue;
       auto stored=get_settings().arducam_isp.find(control.id);
-      const int value=stored==get_settings().arducam_isp.end()?control.def:stored->second;
+      const int value=stored==get_settings().arducam_isp.end()?
+          arducam_modes::default_value(control,get_settings().arducam_hdr):stored->second;
       ret.push_back(openhd::Setting{control.id,openhd::IntSetting{value,
         [this,control](std::string,int value) {
           if (control.index == 8 && value == 0 && get_settings().arducam_hdr) return false;
@@ -192,7 +194,8 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
           persist(false);return true;
         },[this,control]() {
           auto it=get_settings().arducam_isp.find(control.id);
-          return it==get_settings().arducam_isp.end()?control.def:it->second;
+          return it==get_settings().arducam_isp.end()?
+              arducam_modes::default_value(control,get_settings().arducam_hdr):it->second;
         }}});
     }
   }
@@ -664,6 +667,13 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
               choices.push_back({{"value",0},{"label","Auto"}});
             choices.push_back({{"value",1},{"label","Manual"}});
             return nlohmann::json{{"choices",choices},{"enforce",true}};
+          }
+          if (control.index == 9) {
+            return nlohmann::json{{"choices",nlohmann::json::array({
+                {{"value",0},{"label","Normal"}},
+                {{"value",1},{"label","Sport (2 ms shutter)"}},
+                {{"value",2},{"label","Fly (ground priority, experimental)"}}})},
+                {"enforce",true}};
           }
           for(int v=control.min;v<=control.max;v+=control.step)
             choices.push_back({{"value",v},{"label",control.index == 7 && v == 0 ?
