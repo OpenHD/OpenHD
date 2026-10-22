@@ -1,5 +1,6 @@
 #pragma once
 
+#include <dirent.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <spawn.h>
@@ -8,6 +9,7 @@
 #include <unistd.h>
 
 #include <cerrno>
+#include <cstdlib>
 #include <string>
 #include <vector>
 
@@ -43,7 +45,22 @@ class Child {
     posix_spawn_file_actions_t actions;
     posix_spawn_file_actions_init(&actions);
     posix_spawn_file_actions_adddup2(&actions, source, 3);
-    posix_spawn_file_actions_addclose(&actions, source);
+    // Close parent descriptors before exec. Libraries such as Rockchip MPP
+    // open DMA heaps in ELF constructors; closing descriptors in worker main
+    // would also close those newly opened heaps and break the encoder.
+    auto* directory = opendir("/proc/self/fd");
+    if (!directory) {
+      posix_spawn_file_actions_destroy(&actions);
+      close(source);
+      close(sockets[0]);
+      return false;
+    }
+    while (auto* item = readdir(directory)) {
+      const int inherited_fd = std::atoi(item->d_name);
+      if (inherited_fd > 3 && inherited_fd != dirfd(directory))
+        posix_spawn_file_actions_addclose(&actions, inherited_fd);
+    }
+    closedir(directory);
     arguments.insert(arguments.begin(), executable);
     std::vector<char*> argv;
     for (auto& arg : arguments) argv.push_back(arg.data());

@@ -763,6 +763,19 @@
       ]
     },
     {
+      "key": "X_CAM_TYPE_X21_ARDUCAM_PIVARIETY",
+      "id": 152,
+      "name": "X21_ARDUCAM_PIVARIETY",
+      "ui_label": "Pivariety (detected)",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 120},
+        {"width": 1280, "height": 720, "fps": 60},
+        {"width": 1280, "height": 720, "fps": 30},
+        {"width": 1920, "height": 1080, "fps": 60},
+        {"width": 1920, "height": 1080, "fps": 30}
+      ]
+    },
+    {
       "key": "X_CAM_TYPE_LUCKFOX_AURA_IMX662",
       "id": 151,
       "name": "LUCKFOX_AURA_IMX662",
@@ -1031,6 +1044,7 @@
       "key": "X21_ARDUCAM",
       "name": "ARDUCAM",
       "cameras": [
+        "X_CAM_TYPE_X21_ARDUCAM_PIVARIETY",
         "X_CAM_TYPE_X21_ARDUCAM_IMX462",
         "X_CAM_TYPE_X21_ARDUCAM_IMX519",
         "X_CAM_TYPE_X21_ARDUCAM_IMX708",

@@ -45,6 +45,7 @@
 #include "openhd_config.h"
 #include "openhd_reboot_util.h"
 #include "openhd_sock.h"
+#include "x21_camera_detection.h"
 
 OHDVideoAir::OHDVideoAir(std::vector<XCamera> cameras,
                          std::shared_ptr<OHDLink> link, bool record_only)
@@ -225,7 +226,15 @@ OHDVideoAir::get_all_camera_settings() {
   for (int i = 0; i < 2; i++) {
     // Changing the cam type is special - it requires a restart of openhd
     // (often also an OS reboot)
-    auto cb1 = [this](std::string, int value) {
+    const auto detected = OHDPlatform::instance().is_x21()
+                              ? openhd::x21::detect_camera_type()
+                              : std::optional<int>{};
+    const bool detected_primary = i == 0 && detected &&
+        openhd::x21::is_native_csi_type(
+            m_generic_settings->get_settings().primary_camera_type);
+    auto cb1 = [this, detected_primary](std::string, int value) {
+      if (detected_primary)
+        return value == m_generic_settings->get_settings().primary_camera_type;
       if (OHDPlatform::instance().is_x20() ||
           OHDPlatform::instance().is_luckfox_pico())
         return false;
@@ -248,7 +257,7 @@ OHDVideoAir::get_all_camera_settings() {
           openhd::IntSetting{
               m_generic_settings->get_settings().secondary_camera_type, cb2}});
     }
-    ret[i].front().metadata=[i] {
+    ret[i].front().metadata=[i, detected_primary, detected] {
       using namespace openhd::camera_registry;
       const auto* platform=find_platform_camera_choices(OHDPlatform::instance().platform_type);
       const auto* manufacturers=i==1 ? kSecondaryManufacturers :
@@ -258,6 +267,7 @@ OHDVideoAir::get_all_camera_settings() {
       auto choices=nlohmann::json::array(); std::vector<int> seen;
       for (size_t g=0;g<count;++g) for (size_t c=0;c<manufacturers[g].camera_count;++c) {
         const auto& camera=manufacturers[g].cameras[c];
+        if (detected_primary && camera.type != *detected) continue;
         if (i==0 ? !is_valid_primary_cam_type(camera.type) : !is_valid_secondary_cam_type(camera.type)) continue;
 #ifndef ENABLE_USB_CAMERAS
         if (is_usb_camera(camera.type)) continue;
@@ -266,7 +276,7 @@ OHDVideoAir::get_all_camera_settings() {
         seen.push_back(camera.type);
         choices.push_back({{"value",camera.type},{"label",camera.label}});
       }
-      const bool fixed=OHDPlatform::instance().is_x20() || OHDPlatform::instance().is_luckfox_pico();
+      const bool fixed=detected_primary || OHDPlatform::instance().is_x20() || OHDPlatform::instance().is_luckfox_pico();
       return nlohmann::json{{"choices",choices},{"readOnly",fixed},{"enforce",true},
           {"minimum",0},{"maximum",255},{"apply","restart-or-reboot"}};
     };

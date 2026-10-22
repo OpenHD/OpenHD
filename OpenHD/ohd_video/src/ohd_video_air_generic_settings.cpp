@@ -22,6 +22,7 @@
  ******************************************************************************/
 
 #include "ohd_video_air_generic_settings.h"
+#include "x21_camera_detection.h"
 
 #include <stdexcept>
 
@@ -94,6 +95,11 @@ AirCameraGenericSettingsHolder::impl_deserialize(
         "Pi 5 does not support the legacy MMAL camera pipeline; manual camera "
         "selection is required");
     parsed->primary_camera_type = X_CAM_TYPE_DUMMY_SW;
+  }
+  if (OHDPlatform::instance().is_x21() &&
+      openhd::x21::is_native_csi_type(parsed->primary_camera_type)) {
+    if (const auto detected = openhd::x21::detect_camera_type())
+      parsed->primary_camera_type = *detected;
   }
   return parsed;
 }
@@ -187,6 +193,8 @@ AirCameraGenericSettings AirCameraGenericSettingsHolder::create_default()
   } else if (OHDPlatform::instance().platform_type ==
              X_PLATFORM_TYPE_OPENHD_X21) {
     ret.primary_camera_type = X_CAM_TYPE_ROCKCHIP_RV1126_CSI;
+    if (const auto detected = openhd::x21::detect_camera_type())
+      ret.primary_camera_type = *detected;
   } else if (OHDPlatform::instance().platform_type ==
              X_PLATFORM_TYPE_LUCKFOX_AURA) {
     ret.primary_camera_type = X_CAM_TYPE_LUCKFOX_AURA_IMX662;

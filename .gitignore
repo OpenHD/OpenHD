@@ -461,5 +461,6 @@ plugins/siyi/
 *.py
 !scripts/openhd-zerocd-recovery.py
 !scripts/tests/test_zerocd_recovery.py
+!scripts/diagnostics/arducam_isp_decode_bootdata.py
 !OpenHD/settings/tools/*.py
 !OpenHD/settings/tests/*.py
