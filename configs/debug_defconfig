@@ -1,0 +1,2 @@
+# Full build with debug symbols and no optimisation.
+CONFIG_MAKE_BUILD_TYPE_DEBUG=y

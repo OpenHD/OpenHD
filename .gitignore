@@ -464,3 +464,8 @@ plugins/siyi/
 !scripts/diagnostics/arducam_isp_decode_bootdata.py
 !OpenHD/settings/tools/*.py
 !OpenHD/settings/tests/*.py
+
+# Makefile / Kconfig build
+/.config
+/.config.old
+/.venv/

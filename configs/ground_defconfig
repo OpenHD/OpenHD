@@ -1,0 +1,2 @@
+# Ground-only binary: no camera/encoder stack.
+# CONFIG_ENABLE_AIR is not set
