@@ -137,13 +137,13 @@ set_target_properties(OHDCommonLib PROPERTIES
 #----------------------------------------------------------------------------------------------------------------------
 # Test Executables
 #----------------------------------------------------------------------------------------------------------------------
-add_executable(test_openhd_util test/test_openhd_util.cpp)
+add_executable(test_openhd_util test/test_openhd_util.cpp src/config_paths.cpp)
 target_link_libraries(test_openhd_util OHDCommonLib)
 
 add_executable(test_ohd_reboot test/test_ohd_reboot.cpp)
 target_link_libraries(test_ohd_reboot OHDCommonLib)
 
-add_executable(test_config test/test_config.cpp)
+add_executable(test_config test/test_config.cpp src/config_paths.cpp)
 target_link_libraries(test_config OHDCommonLib)
 
 add_executable(test_logging test/test_logging.cpp src/config_paths.cpp)
