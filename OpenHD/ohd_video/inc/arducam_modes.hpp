@@ -4,6 +4,7 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <fstream>
+#include <iterator>
 #include <string>
 #include <map>
 #include <optional>
@@ -54,6 +55,13 @@ inline bool live_supported() {
   v4l2_queryctrl q{};q.id=V4L2_CID_EXPOSURE_ABSOLUTE;
   const bool ok=ioctl(fd,VIDIOC_QUERYCTRL,&q)==0;
   close(fd);return ok;
+}
+inline bool custom_arducam_openhd_profile() {
+  const auto node=sensor_node();if(node.empty())return false;
+  const auto name=node.substr(node.find_last_of('/')+1);
+  std::ifstream f("/sys/class/video4linux/"+name+"/device/of_node/compatible");
+  const std::string compatible((std::istreambuf_iterator<char>(f)),{});
+  return compatible.find("openhd,x21-arducam_openhd")!=std::string::npos;
 }
 inline bool control_supported(const Control& c) {
   const auto node=sensor_node();if(node.empty())return false;

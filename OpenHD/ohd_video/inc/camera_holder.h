@@ -884,6 +884,13 @@ class CameraHolder :
       ret.force_sw_encode = true;
     }
     auto default_resolution = m_camera.get_default_resolution_fps();
+    if (m_camera.camera_type == X_CAM_TYPE_X21_ARDUCAM_PIVARIETY &&
+        arducam_modes::custom_arducam_openhd_profile()) {
+      // Only the explicitly selected, qualified ARDUCAM_OPENHD board profile gets
+      // the tested fast-mode defaults. Saved settings remain authoritative.
+      default_resolution = {1280, 720, 120};
+      ret.h26x_bitrate_kbits = 11000;
+    }
     ret.streamed_video_format.width = default_resolution.width_px;
     ret.streamed_video_format.height = default_resolution.height_px;
     ret.streamed_video_format.framerate = default_resolution.fps;
