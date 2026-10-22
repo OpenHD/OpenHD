@@ -1,0 +1,60 @@
+name: make_build_test
+
+# Exercises the Kconfig/Makefile entry point. The plain CMake path is covered
+# by openhd_3_0_build_test.yml.
+
+on:
+  push:
+    branches:
+      - openhd-3.0
+    paths:
+      - Makefile
+      - Kconfig
+      - configs/**
+      - scripts/kconfig.py
+      - requirements.txt
+      - OpenHD/**
+      - .github/workflows/make_build_test.yml
+  pull_request:
+    branches:
+      - openhd-3.0
+  workflow_dispatch:
+
+jobs:
+  make:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [ground, air]
+    steps:
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v7
+        with:
+          submodules: true
+          token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+      - name: Fetch Devourer backend without nested submodules
+        run: |
+          devourer_dir="OpenHD/ohd_interface/lib/devourer"
+          devourer_commit="$(git rev-parse "HEAD:${devourer_dir}")"
+          mkdir -p "${devourer_dir}"
+          git -C "${devourer_dir}" init
+          git -C "${devourer_dir}" remote add origin https://github.com/OpenHD/devourer.git
+          git -C "${devourer_dir}" fetch --depth=1 origin "${devourer_commit}"
+          git -C "${devourer_dir}" checkout --detach "${devourer_commit}"
+      - name: Install Dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y libsodium-dev ninja-build python3-venv
+          sudo ./install_build_dep.sh ubuntu-x86
+      - name: Set up Kconfig
+        run: make setup
+      - name: Build
+        run: make ${{ matrix.target }}
+      - name: Check generated configuration
+        run: |
+          expected=$([ "${{ matrix.target }}" = air ] && echo ON || echo OFF)
+          grep -qx "ENABLE_AIR:BOOL=${expected}" OpenHD/build/CMakeCache.txt
+          ./OpenHD/build/openhd --help
+      - name: Unit tests
+        run: make test
