@@ -344,6 +344,30 @@ struct OHDRunOptions {
   std::optional<std::string> openhd_uart_telemetry_device;
 };
 
+static void print_usage() {
+  std::stringstream ss;
+  ss << "Usage: \n";
+  ss << "--help -h         [Print this help message] \n";
+  ss << "--air -a          [Run as air, creates dummy camera if no "
+        "camera is found] \n";
+  ss << "--ground -g       [Run as ground, no camera detection] \n";
+  ss << "--clean-start -c  [Wipe all persistent settings OpenHD has "
+        "written, can fix any boot issues when switching hw around] \n";
+  ss << "--no-hotspot      [disable WiFi hotspot on ground] \n";
+  ss << "--record-only -r  [Record video without streaming it";
+  if (!kRecordModeEnabled) {
+    ss << " (disabled)";
+  }
+  ss << "] \n";
+  ss << "--emulate-monitor-card -e [Use a simulated monitor-mode WiFi card] \n";
+  ss << "--run-time-seconds -t [Manually specify run time (default "
+        "infinite),for debugging] \n";
+  ss << "--openhd_uart_telemetry [optional serial device, default "
+     << default_openhd_uart_telemetry_device_for_platform() << "] \n";
+  ss << "--ignore-serial [Do not set up any serial telemetry endpoints] \n";
+  std::cout << ss.str() << std::flush;
+}
+
 static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
   OHDRunOptions ret{};
   int c;
@@ -411,28 +435,8 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
         ret.run_time_seconds = atoi(tmp_optarg);
         break;
       case '?':
-      default: {
-        std::stringstream ss;
-        ss << "Usage: \n";
-        ss << "--air -a          [Run as air, creates dummy camera if no "
-              "camera is found] \n";
-        ss << "--ground -g       [Run as ground, no camera detection] \n";
-        ss << "--clean-start -c  [Wipe all persistent settings OpenHD has "
-              "written, can fix any boot issues when switching hw around] \n";
-        ss << "--no-hotspot      [disable WiFi hotspot on ground] \n";
-        ss << "--record-only -r  [Record video without streaming it";
-        if (!kRecordModeEnabled) {
-          ss << " (disabled)";
-        }
-        ss << "] \n";
-        ss << "--emulate-monitor-card -e [Use a simulated monitor-mode WiFi card] \n";
-        ss << "--run-time-seconds -t [Manually specify run time (default "
-              "infinite),for debugging] \n";
-        ss << "--openhd_uart_telemetry [optional serial device, default "
-           << default_openhd_uart_telemetry_device_for_platform() << "] \n";
-        ss << "--ignore-serial [Do not set up any serial telemetry endpoints] \n";
-        std::cout << ss.str() << std::flush;
-      }
+      default:
+        print_usage();
         exit(1);
     }
   }
@@ -491,6 +495,13 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]) {
 }
 
 int main(int argc, char *argv[]) {
+  // Answer --help before the root check, the dashboard and the sysutils wait.
+  for (int i = 1; i < argc; i++) {
+    if (std::strcmp(argv[i], "--help") == 0 || std::strcmp(argv[i], "-h") == 0) {
+      print_usage();
+      return 0;
+    }
+  }
 #ifdef ENABLE_AIR
   // Workers must bypass the singleton guard, dashboard, telemetry and radio.
   const int worker_result = run_camera_worker_if_requested(argc, argv);
