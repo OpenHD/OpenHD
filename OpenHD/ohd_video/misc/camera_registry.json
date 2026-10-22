@@ -766,7 +766,7 @@
       "key": "X_CAM_TYPE_X21_ARDUCAM_PIVARIETY",
       "id": 152,
       "name": "X21_ARDUCAM_PIVARIETY",
-      "ui_label": "Pivariety (detected)",
+      "ui_label": "arducam_openhd cam (detected)",
       "resolutions": [
         {"width": 1280, "height": 720, "fps": 120},
         {"width": 1280, "height": 720, "fps": 60},
