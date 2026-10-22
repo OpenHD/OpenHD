@@ -1,0 +1,21 @@
+name: Fetch Devourer backend
+description: >
+  Checks out the Devourer commit pinned by this repository. The submodule is
+  marked update=none so ordinary clones skip it; its large reference-driver
+  submodules are never fetched.
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        set -euo pipefail
+        devourer_dir="OpenHD/ohd_interface/lib/devourer"
+        devourer_commit="$(git rev-parse "HEAD:${devourer_dir}")"
+        rm -rf "${devourer_dir}"
+        mkdir -p "${devourer_dir}"
+        git -C "${devourer_dir}" init -q
+        git -C "${devourer_dir}" remote add origin https://github.com/OpenHD/devourer.git
+        git -C "${devourer_dir}" fetch -q --depth=1 origin "${devourer_commit}"
+        git -C "${devourer_dir}" checkout -q --detach "${devourer_commit}"
+        test -f "${devourer_dir}/CMakeLists.txt"
