@@ -28,8 +28,10 @@ neither the rejected startup experiment nor the higher-clock experiments.
 | Request | Measured result | Scope |
 | --- | --- | --- |
 | 1080p60 | About 60 fps | CIF counters and Windows RTP delivery |
-| 720p120 | About 83.3 fps | MAX_FPS readback 120; measured CIF counter deltas |
-| 1080p120 | Not enabled | Driver clamps 1080p requests to 60 |
+| 720p120, original mode | About 83.3 fps | MAX_FPS readback 120; measured CIF counter deltas |
+| 720p120, staged linear timing | About 119.9 fps in a successful bench run | CIF counter deltas, Windows RTP and complete H.264 decoding; repeatability remains under test |
+| 1080p100 | Experimental only | Short capture near 100 fps; no accepted sustained encoder/output test |
+| 1080p120 | Not enabled | Driver still clamps 1080p requests to 60 |
 
 The final 1080p check advanced 1825 frames in 30.42 seconds, with seven zero ISP
 error/CSI error snapshots and no worker restart in that run. MPP reported 8120
@@ -38,10 +40,66 @@ A Windows 8-second RTP sample had no sequence gaps or invalid packets. Aggregate
 CPU use was 15.61% over 10.72 seconds, including USB/debug activity; camera-worker
 use was 34.7% of one core and main OpenHD use 9.42% of one core.
 
-These are bounded bench measurements, not long-term or RF validation. Automatic
-exposure and stable 120 fps output remain unresolved. MIPI target numbers are not
-physical lane-clock measurements. Higher targets and sensor timing experiments
-did not establish stable 120 fps end-to-end output.
+These CPU measurements apply to the 60 fps run. These are bounded bench
+measurements, not long-term or RF validation. Automatic exposure remains
+unresolved. MIPI target numbers are not physical lane-clock measurements.
+
+## Staged 720p120 timing experiment
+
+The original 83 fps ceiling can be exceeded without increasing the MCU's target
+600. The successful sequence selects linear RAW12 sensor readout, acquires it at
+frame length 1152 / line length 1216, then changes blanking to frame length 1164 /
+line length 1180. AP1302 continues to supply UYVY over four lanes. It retains HINF
+spoofing and the full binned field of view; no digital zoom or PLL write is used.
+Exposure is fixed at 4 ms and the flicker/FRC bits are cleared with unrelated
+bits preserved. The direct-sensor [Kurokesu driver](https://github.com/Kurokesu/ar0822-rpi-driver)
+provides register references, but its mode table cannot replace the module's ISP
+firmware or establish the measured output rate.
+
+One ten-minute userspace-profile run advanced 72640 CIF frames over 608.53 seconds,
+including initial transients. Steady Windows delivery measured 119.9 fps, with
+1200 RTP frame timestamps, no sequence gaps and no invalid packets. A trimmed
+capture decoded 1120 complete 1280x720 frames with no corrupt frames. ISP error
+and sampled receiver error counters were zero; sticky ISP warning 0x0302 remained.
+Other attempts stalled, so this successful run does not establish repeatable
+startup or reliable mode switching.
+
+The companion kernel adds a guarded, volatile timing transaction with identity
+checks, bounded DMA waits, sensor-write readback and best-effort sensor restart
+on failure. Nine host fault tests cover the transaction. Integration testing
+found that immediate stream-on application was unreliable. The deferred startup
+integration is disabled by default; `x21_experimental_timing=1` explicitly opts
+in to the unvalidated sequence. No new MCU image
+or external EEPROM write is involved in this timing change.
+
+Later startup tests also found an ISP output of 1920x1080 behind a cached 720p
+selection. Neither a ten-second readiness wait nor an atomic output update while
+stalled resolved this. The atomic/stall geometry experiment was rejected and
+removed from the timing helper. The automatic driver path has not passed
+sustained capture.
+
+A separate MCU revision 0102 fixes its busy-status pre-dispatch gap by including
+both queued and active commands. The ISR patch passed all four pending/active
+instruction-emulation cases, and the guarded automatic upgrade from revision
+0101 completed on hardware. Its new marker was verified. Startup still failed
+afterward, so this protocol repair is not evidence that the video issue is fixed.
+Kernel19, including the atomic/stall experiment, was installed and its flash
+readback verified. It failed on hardware. Repeating the minimal userspace timing
+sequence reached about 119 fps but stopped after roughly six seconds. Restoring
+the exact revision0101 MCU and kernel9 did not eliminate startup error15, so the
+new MCU busy hook and driver integration alone do not explain all failures.
+
+In a failed 60-fps state, the AP1302 ICP input counter continued at about 60 fps
+while its HINF output and CIF capture counters stopped. A raw V4L2 capture also
+stalled with OpenHD and the encoder absent. Four sensor-input MIPI lane status
+registers showed neither error nor abort flags, and the X21 CSI counters remained
+zero. These observations locate the stall inside the ISP path but do not prove
+the root cause. Enabling SYS_START restart-error did not prevent a later stall.
+
+The Windows RTP probe now reports the requested and observed duration, trailing
+idle time, maximum frame gap and continuity result. It exits unsuccessfully for
+a short burst followed by a stall, even if the burst's active FPS looks correct.
+USB helpers now rediscover the NCM interface; Windows renumbered it from59 to10.
 
 ## ISP failure and rejected experiment
 
@@ -85,10 +143,14 @@ vendor files, credentials, captures and rejected firmware remain local.
 
 CPU accounting, worker descriptor inheritance, camera detection and MCU update
 fault checks have host tests. OpenHD and the integrated kernel were cross-built
-and exercised on the board. The deployed kernel9 was built from SDK kernel
+and exercised on the board. The test kernels were built from SDK kernel
 commit 32e6c42 with these driver changes; the native kernel repository branch has
 a different base, so deployment does not prove a full build of that branch.
 
-For Windows debugging, the local relay carries framed TCP over ADB and recreates
-forwards after reboot. This image's ADB sync upload stalled; shell transport and
-temporary key-authenticated SSH over USB Ethernet were used for recovery.
+For Windows debugging, video uses framed TCP directly over USB Ethernet and is
+recreated as localhost UDP for QOpenHD. Encrypted video tunneling did not sustain
+the higher-rate test. Telemetry uses a separate localhost TCP5760 tunnel through
+temporary key-authenticated SSH. Helpers refresh the Windows USB source address
+after reboot. A working picture alone does not establish a telemetry connection:
+camera status, bitrate and configured FPS were separately verified as valid
+OpenHD MAVLink messages. Configured FPS is not a measurement of delivered frames.
