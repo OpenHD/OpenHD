@@ -31,6 +31,7 @@
 #include <sstream>
 
 #include "camera.hpp"
+#include "arducam_modes.hpp"
 #include "camera_settings.hpp"
 #include "rk_camera_modes.hpp"
 #include "openhd_action_handler.h"
@@ -88,6 +89,10 @@ class CameraHolder :
         }
         persist(false);
       }
+    }
+    if (get_settings().arducam_hdr && !has_arducam_hdr()) {
+      unsafe_get_settings().arducam_hdr = 0;
+      persist(false);
     }
     // Hornet and Rekindle expose fixed CSI modes. Migrate values persisted by
     // older releases so CamInfo and RESOLUTION_FPS match the native capture.
@@ -186,6 +191,31 @@ class CameraHolder :
     notify_plugin_video_settings_changed();
     return true;
   }
+  bool has_arducam_hdr() const {
+    return m_camera.camera_type == X_CAM_TYPE_X21_ARDUCAM_PIVARIETY &&
+        get_settings().rockchip_impl == ROCKCHIP_IMPL_NATIVE_MPP &&
+        arducam_modes::hdr_supported();
+  }
+  bool set_arducam_hdr(int value) {
+    if ((value != 0 && value != 1) || !has_arducam_hdr()) return false;
+    if (value == get_settings().arducam_hdr) return true;
+    const auto ae = get_settings().arducam_isp.find("ISP_AE_MODE");
+    if (value && ae != get_settings().arducam_isp.end() && ae->second == 0)
+      return false;
+    auto& s = unsafe_get_settings();
+    s.arducam_hdr = value;
+    if (value) {
+      if (!arducam_modes::hdr_format(s.streamed_video_format.width,
+                                    s.streamed_video_format.height, 30)) {
+        s.streamed_video_format.width = 1280;
+        s.streamed_video_format.height = 720;
+      }
+      s.streamed_video_format.framerate = 30;
+    }
+    persist();
+    notify_plugin_video_settings_changed();
+    return true;
+  }
   bool has_rk_camera_modes() const {
     return (OHDPlatform::instance().is_x21() || OHDPlatform::instance().is_luckfox_aura()) &&
         m_camera.requires_rockchip1126_mpp_csi_pipeline() &&
@@ -207,6 +237,13 @@ class CameraHolder :
   // it is only possible to validate setting the video width,height and fps
   // if we do them together
   bool set_video_width_height_framerate(int width, int height, int framerate) {
+    if (m_camera.camera_type == X_CAM_TYPE_X21_ARDUCAM_PIVARIETY && framerate > 60) {
+      const auto ae = get_settings().arducam_isp.find("ISP_AE_MODE");
+      if (ae != get_settings().arducam_isp.end() && ae->second == 0) return false;
+    }
+    if (m_camera.camera_type == X_CAM_TYPE_X21_ARDUCAM_PIVARIETY &&
+        get_settings().arducam_hdr &&
+        !arducam_modes::hdr_format(width, height, framerate)) return false;
     if (has_rk_camera_modes() && !rk_camera_modes::contains(
         rk_camera_modes::register_driver_present(), get_settings().rk_readout_mode,
         width,height,framerate)) return false;

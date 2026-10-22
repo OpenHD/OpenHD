@@ -45,7 +45,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
     mpp_debug_bitrate_sweep,
     mpp_debug_bitrate_min_kbits, mpp_debug_bitrate_max_kbits,
     mpp_debug_bitrate_period_seconds, streamed_video_format,
-    rpi_libcamera_sensor_mode, rpi_libcamera_impl, rockchip_impl, rk_readout_mode,
+    rpi_libcamera_sensor_mode, rpi_libcamera_impl, rockchip_impl, rk_readout_mode, arducam_hdr, arducam_isp,
     h26x_bitrate_kbits, h26x_keyframe_interval, h26x_intra_refresh_type,
     h26x_num_slices, nxp_enable_aud, air_recording, camera_rotation_degree,
     openhd_flip,
@@ -178,6 +178,34 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
           const auto& f = get_settings().streamed_video_format;
           return openhd::video_format_from_int_values(f.width,f.height,f.framerate);
         }}});
+  }
+  if (m_camera.camera_type == X_CAM_TYPE_X21_ARDUCAM_PIVARIETY &&
+      arducam_modes::live_supported()) {
+    for (const auto& control : arducam_modes::controls) {
+      auto stored=get_settings().arducam_isp.find(control.id);
+      const int value=stored==get_settings().arducam_isp.end()?control.def:stored->second;
+      ret.push_back(openhd::Setting{control.id,openhd::IntSetting{value,
+        [this,control](std::string,int value) {
+          if (control.index == 8 && value == 0 &&
+              (get_settings().arducam_hdr ||
+               get_settings().streamed_video_format.framerate > 60)) return false;
+          if(!arducam_modes::write_control(control,value))return false;
+          unsafe_get_settings().arducam_isp[control.id]=value;
+          persist(false);return true;
+        },[this,control]() {
+          auto it=get_settings().arducam_isp.find(control.id);
+          return it==get_settings().arducam_isp.end()?control.def:it->second;
+        }}});
+    }
+  }
+  if (has_arducam_hdr()) {
+    ret.push_back(openhd::Setting{"ARDUCAM_HDR", openhd::IntSetting{
+        get_settings().arducam_hdr,
+        [this](std::string, int value) { return set_arducam_hdr(value); },
+        [this]() { return get_settings().arducam_hdr; }}});
+    ret.push_back(openhd::Setting{"ARDUCAM_HDR_INFO", openhd::StringSetting{
+        "3-exposure HDR; full-field binning; 30 fps; manual exposure; ISP tuning experimental",
+        [](std::string,std::string) { return false; }},nullptr,true});
   }
   if (has_rk_camera_modes()) {
     ret.push_back(openhd::Setting{"RK_CAM_MODE", openhd::IntSetting{
@@ -612,7 +640,10 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
     setting.seed_allowed=created_defaults();
     if (setting.id=="RESOLUTION_FPS") setting.metadata=[this] {
       auto choices=nlohmann::json::array();
-      if (has_rk_camera_modes()) {
+      if (m_camera.camera_type == X_CAM_TYPE_X21_ARDUCAM_PIVARIETY && get_settings().arducam_hdr) {
+        for (const char* f : {"1280x720@30", "1920x1080@30"})
+          choices.push_back({{"value",f},{"label",f}});
+      } else if (has_rk_camera_modes()) {
         for (const auto& f:rk_camera_modes::formats(rk_camera_modes::register_driver_present(),get_settings().rk_readout_mode)) {
           const auto value=openhd::video_format_from_int_values(f.width,f.height,f.fps);
           choices.push_back({{"value",value},{"label",value}});
@@ -623,8 +654,31 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
           choices.push_back({{"value",value},{"label",value}});
         }
       }
-      return nlohmann::json{{"choices",choices},{"choicesSource",has_rk_camera_modes() ? "backend" : "camera-registry"},
-                            {"enforce",has_rk_camera_modes()}};
+      return nlohmann::json{{"choices",choices},{"choicesSource",(has_rk_camera_modes() || get_settings().arducam_hdr != 0) ? "backend" : "camera-registry"},
+                            {"enforce",has_rk_camera_modes() || get_settings().arducam_hdr != 0}};
+    };
+    if (m_camera.camera_type == X_CAM_TYPE_X21_ARDUCAM_PIVARIETY) {
+      for(const auto& control:arducam_modes::controls) if(setting.id==control.id) {
+        setting.metadata=[this,control] {
+          auto choices=nlohmann::json::array();
+          if (control.index == 8) {
+            if (!get_settings().arducam_hdr &&
+                get_settings().streamed_video_format.framerate <= 60)
+              choices.push_back({{"value",0},{"label","Auto (experimental)"}});
+            choices.push_back({{"value",1},{"label","Manual"}});
+            return nlohmann::json{{"choices",choices},{"enforce",true}};
+          }
+          for(int v=control.min;v<=control.max;v+=control.step)
+            choices.push_back({{"value",v},{"label",control.index == 7 && v == 0 ?
+                "sRGB (default)" : std::to_string(v)}});
+          return nlohmann::json{{"choices",choices},{"enforce",true}};
+        };
+      }
+    }
+    if (setting.id=="ARDUCAM_HDR") setting.metadata=[] {
+      return nlohmann::json{{"choices",nlohmann::json::array({
+          {{"value",0},{"label","Standard"}},
+          {{"value",1},{"label","3-exposure HDR (experimental)"}}})}, {"enforce",true}};
     };
     if (setting.id=="RK_CAM_MODE") setting.metadata=[this] {
       auto choices=nlohmann::json::array({{{"value",0},{"label","1080p"}},{{"value",1},{"label","720p"}}});

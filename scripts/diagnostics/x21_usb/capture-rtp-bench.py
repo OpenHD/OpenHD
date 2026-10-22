@@ -100,7 +100,7 @@ report={'packets':packets,'invalid_packets':invalid,'sequence_gaps':sequence_gap
         'trailing_frame_idle_seconds':trailing_idle,'max_frame_gap_seconds':max_frame_gap,
         'continuous_for_requested_duration':full_duration,
         'ssrc_changes':stream_changes,'timestamp_discontinuities':timestamp_discontinuities,
-        'lossless_rtp':not (invalid or sequence_gaps or duplicates or stream_changes or timestamp_discontinuities),
+        'lossless_rtp':bool(packets) and not (invalid or sequence_gaps or duplicates or stream_changes or timestamp_discontinuities),
         'observation_fps':len(frames)/observed if observed else None,
         'duplicates':duplicates,'distinct_frame_timestamps':len(frames),
         'wall_interval_seconds':elapsed,'wall_fps':(len(frames)-1)/elapsed if elapsed else None,

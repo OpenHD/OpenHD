@@ -5496,6 +5496,130 @@
           "connector"
         ]
       }
+    },
+    {
+      "id": "ARDUCAM_HDR",
+      "type": "int32",
+      "label": "Arducam sensor mode",
+      "description": "Select experimental three-exposure full-field binned HDR. HDR uses 30 fps and manual exposure; 120 dB has not been measured end-to-end.",
+      "group": "Camera",
+      "minimum": 0,
+      "maximum": 1,
+      "readOnly": false,
+      "requiresReboot": false,
+      "hidden": false,
+      "choices": [
+        {
+          "label": "Standard",
+          "value": 0
+        },
+        {
+          "label": "3-exposure HDR (experimental)",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "ISP_AE_MODE",
+      "type": "int32",
+      "label": "ISP exposure mode",
+      "description": "ISP manual exposure or experimental automatic exposure. Custom 120 fps and HDR readouts currently require manual mode. Applies live without restarting video.",
+      "group": "Camera",
+      "minimum": 0,
+      "maximum": 1,
+      "readOnly": false,
+      "requiresReboot": false,
+      "hidden": false,
+      "choices": [
+        {
+          "label": "Auto (experimental)",
+          "value": 0
+        },
+        {
+          "label": "Manual",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "ISP_EXPOSURE_US",
+      "type": "int32",
+      "label": "ISP exposure (us)",
+      "description": "Manual ISP shutter request in microseconds; applies live. This experimental profile limits exposure to 4 ms.",
+      "group": "Camera",
+      "minimum": 100,
+      "maximum": 4000,
+      "readOnly": false,
+      "requiresReboot": false,
+      "hidden": false
+    },
+    {
+      "id": "ISP_GAIN",
+      "type": "int32",
+      "label": "ISP gain (%)",
+      "description": "Manual ISP gain, 100 percent is unity. Applies live without restarting video.",
+      "group": "Camera",
+      "minimum": 100,
+      "maximum": 800,
+      "readOnly": false,
+      "requiresReboot": false,
+      "hidden": false
+    },
+    {
+      "id": "ISP_WB_AUTO",
+      "type": "int32",
+      "label": "Automatic white balance",
+      "description": "Enable ISP automatic white balance. Disable to apply the saved manual Kelvin temperature.",
+      "group": "Camera",
+      "minimum": 0,
+      "maximum": 1,
+      "readOnly": false,
+      "requiresReboot": false,
+      "hidden": false,
+      "choices": [
+        {
+          "label": "Manual",
+          "value": 0
+        },
+        {
+          "label": "Automatic",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "ISP_WB_K",
+      "type": "int32",
+      "label": "Color temperature (K)",
+      "description": "Manual ISP white-balance temperature in Kelvin, active while automatic white balance is off.",
+      "group": "Camera",
+      "minimum": 2000,
+      "maximum": 10000,
+      "readOnly": false,
+      "requiresReboot": false,
+      "hidden": false
+    },
+    {
+      "id": "ISP_GAMMA",
+      "type": "int32",
+      "label": "ISP gamma (%)",
+      "description": "ISP gamma control: zero selects sRGB; other values are percentages of S3.12 unity. Applies live.",
+      "group": "Camera",
+      "minimum": 0,
+      "maximum": 200,
+      "readOnly": false,
+      "requiresReboot": false,
+      "hidden": false
+    },
+    {
+      "id": "ARDUCAM_HDR_INFO",
+      "type": "string",
+      "label": "Arducam HDR status",
+      "description": "HDR implementation and validation limits supplied by the camera backend.",
+      "group": "Camera",
+      "readOnly": true,
+      "requiresReboot": false,
+      "hidden": false
     }
   ]
 }

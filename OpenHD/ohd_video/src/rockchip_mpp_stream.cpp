@@ -753,6 +753,22 @@ class RockchipMppStream::Impl {
                             width, height, selected.format.code) &&
           set_subdev_format(find_v4l2_subdev("rockchip-mipi-csi2"), 0,
                             width, height, selected.format.code);
+      // The selector is applied with capture stopped, before FPS/stream-on.
+      // Older kernels remain usable in standard mode.
+      v4l2_queryctrl hdr_query{}; hdr_query.id = V4L2_CID_WIDE_DYNAMIC_RANGE;
+      const bool hdr_supported = retry_ioctl(fd, VIDIOC_QUERYCTRL, &hdr_query) == 0;
+      v4l2_control hdr{}; hdr.id = V4L2_CID_WIDE_DYNAMIC_RANGE;
+      hdr.value = owner.m_camera_holder->get_settings().arducam_hdr;
+      if ((hdr_supported && retry_ioctl(fd, VIDIOC_S_CTRL, &hdr) < 0) ||
+          (!hdr_supported && hdr.value)) {
+        log->error("Arducam HDR mode rejected by sensor driver");
+        close(fd); return false;
+      }
+      v4l2_queryctrl iq_query{}; iq_query.id = V4L2_CID_EXPOSURE_ABSOLUTE;
+      if (retry_ioctl(fd, VIDIOC_QUERYCTRL, &iq_query) == 0 &&
+          !arducam_modes::restore_controls(fd, owner.m_camera_holder->get_settings().arducam_isp)) {
+        log->error("Cannot restore Arducam ISP image controls");close(fd);return false;
+      }
       // Bridge format changes may propagate back into Pivariety and reset its
       // ISP mode. Apply the requested frame rate after the entire format chain.
       v4l2_subdev_frame_interval interval{};
