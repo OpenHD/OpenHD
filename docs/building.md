@@ -13,7 +13,7 @@ make setup          # .venv with kconfiglib (uses uv when installed)
 make air            # full binary (air and ground at runtime)
 make ground         # ground-only binary without the camera stack
 make menuconfig     # adjust .config, then: make
-make test           # ohd_common unit tests
+make test           # ohd_common unit tests (also run by openhd_3_0_build_test)
 ```
 
 `make` writes `.config` (Kconfig) and turns it into

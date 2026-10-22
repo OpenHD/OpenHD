@@ -1,0 +1,2 @@
+# Full build plus Artosyn SDK resolution, as used by CI.
+CONFIG_MAKE_ARTOSYN=y
