@@ -69,6 +69,11 @@ copy_library_family 'libpcap.so*'
 copy_library_family 'libsodium.so*'
 copy_library_family 'libusb-1.0.so*'
 copy_library_family 'librtlsdr.so*'
+if compgen -G "${STAGING_DIR}/usr/lib/librockchip_mpp.so*" >/dev/null; then
+  copy_library_family 'librockchip_mpp.so*'
+  # A production X21 SDK must actually enable the native capture path.
+  strings "${build_dir}/openhd" | grep -F 'Fly ground metering' >/dev/null
+fi
 bash "${repo_root}/scripts/bundle_terminal_runtime.sh" "${STAGING_DIR}" "${stage_dir}" "${stage_dir}/usr/bin/openhd"
 
 version_header="${repo_root}/OpenHD/ohd_common/inc/openhd_global_constants.hpp"

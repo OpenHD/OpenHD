@@ -199,8 +199,13 @@ jobs:
             echo "The other X21B component is not published yet; ImageBuilder will be triggered by its workflow."
             exit 0
           fi
-          if ! python3 -c 'import json; a=json.load(open("/tmp/openhd.json")); b=json.load(open("/tmp/sysutils.json")); assert a["sdk_sha256"] == b["sdk_sha256"]'; then
-            echo "The published X21B components use different SDKs; waiting for the other component to rebuild."
+          if ! curl --proto '=https' --proto-redir '=https' --fail --silent --show-error --location \
+            "${INPUT_BASE_URL}/openhd-x21b-base-latest.json" -o /tmp/base.json; then
+            echo "The production X21B base is not published yet; its workflow will dispatch ImageBuilder."
+            exit 0
+          fi
+          if ! python3 -c 'import json; a=json.load(open("/tmp/openhd.json")); b=json.load(open("/tmp/sysutils.json")); c=json.load(open("/tmp/base.json")); assert a["sdk_sha256"] == b["sdk_sha256"] == c["sdk_sha256"]'; then
+            echo "The production base and both X21B components must share an SDK; waiting for publication."
             exit 0
           fi
           gh workflow run update-image.yml --repo OpenHD/OpenHD-ImageBuilder --ref dev-release -f target=x21-update
