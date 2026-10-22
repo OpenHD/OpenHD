@@ -4,14 +4,27 @@ on:
   push:
     branches:
       - openhd-3.0
+  pull_request:
+    branches:
+      - openhd-3.0
   workflow_dispatch:
+
+# CI-based analysis replaces SonarCloud's Automatic Analysis, which has to
+# stay disabled for this project (Administration > Analysis Method); only
+# CI-based analysis can import coverage and the compilation database.
 
 permissions:
   pull-requests: read
 
+concurrency:
+  group: sonar-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   sonarcloud:
     name: Build and Analyze
+    # Pull requests from forks have no access to SONAR_TOKEN.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-22.04
     env:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -19,6 +32,11 @@ jobs:
       DOWNLOAD_KEY: ${{ secrets.DOWNLOAD_KEY }}
       DOWNLOAD_URL: ${{ secrets.DOWNLOAD_URL }}
       OPENHD_SUBMODULE_TOKEN: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+      ARTLINK_REPO: https://github.com/OpenHD-Technologies/OpenHD-ArtLink.git
+      ARTLINK_BRANCH: sdk
+      ARTLINK_FETCH_MODE: git-first
+      ARTLINK_GIT_AUTH_USERNAME: raphael@openhdfpv.org
+      ARTLINK_GIT_AUTH: "raphael@openhdfpv.org:${{ secrets.OPENHD_SUBMODULE_TOKEN }}"
       CCACHE_DIR: ${{ github.workspace }}/.ccache
     steps:
       - name: Checkout repository and submodules
@@ -78,9 +96,9 @@ jobs:
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v6
         with:
+          # Sources, compile commands and coverage come from
+          # sonar-project.properties.
           args: >
-            -Dsonar.cfamily.compile-commands=build/compile_commands.json
-            -Dsonar.coverageReportPaths=coverage.xml
             -Dsonar.cfamily.analysisCache.path=.sonar/analysis-cache
             -Dsonar.cfamily.analysisCache.mode=fs
         env:
