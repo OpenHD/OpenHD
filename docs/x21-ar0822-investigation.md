@@ -68,8 +68,8 @@ The companion kernel adds a guarded, volatile timing transaction with identity
 checks, bounded DMA waits, sensor-write readback and best-effort sensor restart
 on failure. Nine host fault tests cover the transaction. Integration testing
 found that immediate stream-on application was unreliable. The deferred startup
-integration is disabled by default; `x21_experimental_timing=1` explicitly opts
-in to the unvalidated sequence. No new MCU image
+integration now applies automatically after a 15-second preview settling period;
+`x21_linear_720p120=0` opts out. Reliability remains experimental. No new MCU image
 or external EEPROM write is involved in this timing change.
 
 Later startup tests also found an ISP output of 1920x1080 behind a cached 720p
@@ -154,3 +154,39 @@ temporary key-authenticated SSH. Helpers refresh the Windows USB source address
 after reboot. A working picture alone does not establish a telemetry connection:
 camera status, bitrate and configured FPS were separately verified as valid
 OpenHD MAVLink messages. Configured FPS is not a measurement of delivered frames.
+
+## Context-disabled mode integration
+
+Revision0103 clears context2010 before HINF enable and retains manual AE and
+the revision0102 pending-command busy fix. The context-bit interpretation is
+inferred rather than a documented face-control API. Clearing AE's face-ROI bit
+or selecting manual AWB separately did not prevent freezes. Explicit4 ms manual
+exposure before output extended one run to about100 seconds but also froze.
+
+The context-disabled diagnostic completed a180-second60-fps baseline and then
+captured about120 fps for roughly9.5 minutes. It subsequently failed with ISP
+error15, file00071975, line1230. Input counters kept advancing at about120 fps
+while HINF/CIF stopped. A30-second steady USB sample measured119.7 fps with zero
+RTP packet loss; the user confirmed continuous motion and a complete image.
+The late freeze remains unresolved and this mode is experimental.
+
+Kernel20 was cross-built from SDK32e6c42 with the integration, packaged, flashed
+and read back successfully. Its probe automatically upgraded diagnostic01e1 to
+revision0103, and its driver automatically reached720p120 without a userspace
+register sequence. The selected format and telemetry can therefore report120.
+This does not establish a full build of the separate native kernel branch.
+
+Reusable Windows USB adapter discovery, video relay, telemetry tunnel and RTP
+measurement tools are in `scripts/diagnostics/x21_usb/`. The relay bypasses the
+image's208 KiB rmem_max cap and drains stale datagrams on viewer reconnection.
+Private keys, host keys, temporary SSH server configuration, vendor archives,
+rejected firmware and video captures remain local.
+
+Onsemi specifies120 dB for three-exposure eHDR at4K30 and lists binned1080p120
+as linear: https://www.onsemi.com/download/public-data-sheet/pdf/ar0822-pd-d.pdf.
+1080p100 and full three-exposure HDR are separate investigations; neither is
+currently presented as a validated mode.
+The automatic kernel20 run delivered 2399 complete RTP frame timestamps in
+20 seconds (119.9 fps), with zero sequence gaps or timestamp discontinuities.
+Native camera telemetry reported 1280x720 and configured FPS 120. This short
+sample does not resolve the earlier late ISP freeze.
