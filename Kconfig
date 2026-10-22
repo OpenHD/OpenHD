@@ -1,0 +1,74 @@
+# OpenHD build configuration, used by the top-level Makefile.
+#
+# Symbol names match the CMake cache variables in OpenHD/ (without the
+# CONFIG_ prefix Kconfig adds in .config). scripts/kconfig.py turns the
+# selection into a CMake initial-cache file that the Makefile passes with -C.
+# Plain cmake invocations (CI scripts, Buildroot, Yocto) never read this file
+# and keep the option() defaults from the CMakeLists.
+#
+# Symbols prefixed with MAKE_ only steer the Makefile and are not exported.
+
+mainmenu "OpenHD Build Configuration"
+
+choice MAKE_BUILD_TYPE
+    prompt "Build type"
+    default MAKE_BUILD_TYPE_RELEASE
+
+config MAKE_BUILD_TYPE_RELEASE
+    bool "Release"
+
+config MAKE_BUILD_TYPE_RELWITHDEBINFO
+    bool "RelWithDebInfo"
+
+config MAKE_BUILD_TYPE_DEBUG
+    bool "Debug"
+
+endchoice
+
+config MAKE_ARTOSYN
+    bool "Resolve and build Artosyn SDK support"
+    default n
+    help
+      Runs OpenHD/scripts/resolve_artosyn_sdk.sh before configuring and
+      passes the resolved ARTOSYN_SDK_* paths to CMake. Fetching the SDK
+      needs ARTLINK_* / OPENHD_SUBMODULE_TOKEN credentials.
+
+menu "Features"
+
+config ENABLE_AIR
+    bool "Air unit support"
+    default y
+    help
+      Build the camera and encoder pipeline. Disable for ground-only
+      binaries with fewer dependencies.
+
+config ENABLE_USB_CAMERAS
+    bool "USB camera support"
+    default y
+    depends on ENABLE_AIR
+    help
+      USB camera discovery; requires libusb and libv4l2.
+
+config ENABLE_LIBCAMERA
+    bool "libcamera support"
+    default y
+    depends on ENABLE_AIR
+
+config ENABLE_GSTREAMER
+    bool "GStreamer video pipeline"
+    default y
+
+config OPENHD_MPP_ONLY
+    bool "RV1126 MPP-only video path (no GStreamer camera stack)"
+    default n
+    depends on ENABLE_AIR
+
+config OPENHD_ENABLE_NCURSES
+    bool "Interactive terminal dashboard (ncurses)"
+    default y
+
+config OPENHD_DEVELOPMENT_BUILD
+    bool "Development-release defaults"
+    default y
+
+endmenu
