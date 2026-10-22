@@ -86,8 +86,12 @@ jobs:
           ./OpenHD/ohd_interface/lib/wifibroadcast/build/test_dummy_link
       - name: Build
         run: |
-          cd OpenHD
-          ./build_cmake.sh
+          sudo apt install -y python3-venv
+          make setup
+          make ci_defconfig
+          make
+      - name: Unit tests
+        run: make test
       - name: Exercise Microhard configuration and UDP transport
         run: |
           cmake --build OpenHD/build --target test_microhard_config --parallel 2
