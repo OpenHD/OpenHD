@@ -24,6 +24,7 @@
 #ifndef OPENHD_OPENHD_OHD_TELEMETRY_SRC_ROUTING_MAVLINKSYSTEM_H_
 #define OPENHD_OPENHD_OHD_TELEMETRY_SRC_ROUTING_MAVLINKSYSTEM_H_
 
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <vector>
