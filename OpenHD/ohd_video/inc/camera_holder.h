@@ -241,10 +241,6 @@ class CameraHolder :
   // it is only possible to validate setting the video width,height and fps
   // if we do them together
   bool set_video_width_height_framerate(int width, int height, int framerate) {
-    if (m_camera.camera_type == X_CAM_TYPE_X21_ARDUCAM_PIVARIETY && framerate > 60) {
-      const auto ae = get_settings().arducam_isp.find("ISP_AE_MODE");
-      if (ae != get_settings().arducam_isp.end() && ae->second == 0) return false;
-    }
     if (m_camera.camera_type == X_CAM_TYPE_X21_ARDUCAM_PIVARIETY &&
         get_settings().arducam_hdr &&
         !arducam_modes::hdr_format(width, height, framerate)) return false;

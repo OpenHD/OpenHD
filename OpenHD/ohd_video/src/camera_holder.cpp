@@ -186,9 +186,7 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
       const int value=stored==get_settings().arducam_isp.end()?control.def:stored->second;
       ret.push_back(openhd::Setting{control.id,openhd::IntSetting{value,
         [this,control](std::string,int value) {
-          if (control.index == 8 && value == 0 &&
-              (get_settings().arducam_hdr ||
-               get_settings().streamed_video_format.framerate > 60)) return false;
+          if (control.index == 8 && value == 0 && get_settings().arducam_hdr) return false;
           if(!arducam_modes::write_control(control,value))return false;
           unsafe_get_settings().arducam_isp[control.id]=value;
           persist(false);return true;
@@ -662,9 +660,8 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
         setting.metadata=[this,control] {
           auto choices=nlohmann::json::array();
           if (control.index == 8) {
-            if (!get_settings().arducam_hdr &&
-                get_settings().streamed_video_format.framerate <= 60)
-              choices.push_back({{"value",0},{"label","Auto (experimental)"}});
+            if (!get_settings().arducam_hdr)
+              choices.push_back({{"value",0},{"label","Auto"}});
             choices.push_back({{"value",1},{"label","Manual"}});
             return nlohmann::json{{"choices",choices},{"enforce",true}};
           }
