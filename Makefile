@@ -94,7 +94,12 @@ debug: debug_defconfig
 
 test: build
 	@cmake --build "$(BUILD_DIR)" --parallel $(NPROC) --target $(UNIT_TESTS)
-	@set -e; for t in $(UNIT_TESTS); do echo "== $$t"; "$(BUILD_DIR)/ohd_common/$$t"; done
+	@set -e; for t in test_openhd_util test_config; do echo "== $$t"; "$(BUILD_DIR)/ohd_common/$$t"; done
+	@# Isolated directories and forced logging, so a failed initialisation
+	@# fails the test instead of silently skipping its checks.
+	@set -e; tmp=$$(mktemp -d); trap 'rm -rf "$$tmp"' EXIT; echo "== test_logging"; \
+	OPENHD_TEST_RECORDINGS_DIR="$$tmp/rec" OPENHD_LOG_CONTROL_DIR="$$tmp/ctl" \
+	OPENHD_FORCE_PERSISTENT_LOGS=1 "$(BUILD_DIR)/ohd_common/test_logging" enabled
 
 install:
 	@cmake --install "$(BUILD_DIR)"

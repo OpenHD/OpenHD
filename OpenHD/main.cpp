@@ -362,8 +362,10 @@ static void print_usage() {
   ss << "--emulate-monitor-card -e [Use a simulated monitor-mode WiFi card] \n";
   ss << "--run-time-seconds -t [Manually specify run time (default "
         "infinite),for debugging] \n";
+  // Static text: resolving the platform default here would run platform
+  // discovery, which needs root and sysutils.
   ss << "--openhd_uart_telemetry [optional serial device, default "
-     << default_openhd_uart_telemetry_device_for_platform() << "] \n";
+        "/dev/OpenHD if present, /dev/ttymxc1 on ORQA, else /dev/serial1] \n";
   ss << "--ignore-serial [Do not set up any serial telemetry endpoints] \n";
   std::cout << ss.str() << std::flush;
 }
