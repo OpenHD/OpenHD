@@ -61,23 +61,35 @@ still needs a compatible adapter and a matching air unit.
 
 ## Build
 
-Use a 64-bit MSYS2 UCRT64 shell:
+Libraries (libusb, libsodium, PDCursesMod, spdlog, nlohmann-json) come from
+[vcpkg](https://vcpkg.io) in manifest mode (`OpenHD/vcpkg.json`, versions pinned by
+the baseline in `OpenHD/vcpkg-configuration.json`). You need:
+
+- vcpkg with `VCPKG_ROOT` set (e.g. `scoop install vcpkg`, or a clone of
+  microsoft/vcpkg plus `bootstrap-vcpkg.bat`),
+- a MinGW-w64 GCC 13+ (UCRT), CMake 3.21+ and Ninja on `PATH` — MSYS2 UCRT64
+  (`pacman -S mingw-w64-ucrt-x86_64-{gcc,cmake,ninja,pkgconf}`) or scoop
+  (`mingw`, `cmake`, `ninja`, `pkg-config`).
 
 ```sh
-pacman -S --needed mingw-w64-ucrt-x86_64-{gcc,cmake,ninja,pkgconf,libusb,libsodium,pdcurses}
-git submodule update --init OpenHD/ohd_common/lib/spdlog OpenHD/ohd_common/lib/json OpenHD/ohd_interface/lib/wifibroadcast OpenHD/ohd_interface/lib/devourer
-cmake -S OpenHD -B out/windows-ground -G Ninja -DCMAKE_BUILD_TYPE=Release \
-  -DOPENHD_PORTABLE_GROUND=ON -Dsodium_DIR="$(cygpath -m "$MINGW_PREFIX")"
-cmake --build out/windows-ground --target openhd_ground test_ground_udp test_ground_pipeline test_ground_dashboard test_ground_app -j4
-ctest --test-dir out/windows-ground -R '^ground_' --output-on-failure
-./out/windows-ground/platform/ground/openhd_ground.exe
+git submodule update --init OpenHD/ohd_interface/lib/wifibroadcast OpenHD/ohd_interface/lib/devourer
+cd OpenHD
+cmake --preset windows-ground
+cmake --build --preset windows-ground
+ctest --preset windows-ground
+../out/windows-ground/platform/ground/openhd_ground.exe
 ```
 
-GCC 13 or newer is supported initially. MSVC is not supported by this target yet.
-PDCurses' Win32 console backend is linked statically. Outside the UCRT64 shell,
-keep the packaged libusb, libsodium, libstdc++, libgcc and libwinpthread DLLs
-beside the executable. Normal Linux builds keep their existing entry point and
-startup behavior.
+The first configure builds the dependencies from source (~15 min, mostly
+libsodium and libusb); vcpkg's binary cache (`%LOCALAPPDATA%\vcpkg\archives`)
+makes every later configure, in any build directory, take well under a minute.
+Changing the GCC version invalidates that cache. The preset uses the overlay
+triplet `x64-mingw-static-release` and links with `-static`, so
+`openhd_ground.exe` needs no DLLs beyond those shipped with Windows 10+.
+
+MSVC is not supported by this target yet. Without vcpkg the CMake files still
+fall back to pkg-config/system packages and the in-tree spdlog/json submodules.
+Normal Linux builds keep their existing entry point and startup behavior.
 
 ## Optional headless operation
 
