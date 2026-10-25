@@ -158,7 +158,7 @@ class RockchipMppStream::Impl {
     auto& actions = openhd::LinkActionHandler::instance();
     actions.set_cam_info(camera.index, info);
     actions.set_cam_info_supports_variable_bitrate(camera.index, true);
-    log->info("Native Pico camera {}: {}x{}@{}, {} VI -> VENC; GStreamer unused",
+    log->info("Native Pico camera {}: {}x{}@{}, {} VI -> VENC; GStreamer unused; packet-address=mb-valid",
               sensor.sensor_info.sensor_name, width, height, fps, h265 ? "H265" : "H264");
   }
 
@@ -221,6 +221,8 @@ class RockchipMppStream::Impl {
     auto window = Clock::now();
     auto last_frame = window;
     uint64_t bytes = 0, frames = 0;
+    auto report_window = window;
+    uint64_t report_frames = 0, report_bytes = 0, age_us_sum = 0, age_us_max = 0;
     while (running) {
       controls();
       const auto result = RK_MPI_VENC_GetStream(0, &stream, 200);
@@ -246,6 +248,20 @@ class RockchipMppStream::Impl {
       }
       check(RK_MPI_VENC_ReleaseStream(0, &stream), "Release encoded frame");
       last_frame = Clock::now();
+      const auto age_us = static_cast<uint64_t>(std::max<int64_t>(0,
+          std::chrono::duration_cast<std::chrono::microseconds>(last_frame - capture_time).count()));
+      ++report_frames;
+      report_bytes += encoded.size();
+      age_us_sum += age_us;
+      age_us_max = std::max(age_us_max, age_us);
+      if (last_frame - report_window >= std::chrono::seconds(5)) {
+        const auto seconds = std::chrono::duration<double>(last_frame - report_window).count();
+        log->info("Pico VENC: {:.1f} fps, {:.0f} kbit/s, capture-to-output average {:.1f} ms max {:.1f} ms",
+                  report_frames / seconds, report_bytes * 8 / seconds / 1000,
+                  age_us_sum / static_cast<double>(report_frames) / 1000, age_us_max / 1000.0);
+        report_window = last_frame;
+        report_frames = report_bytes = age_us_sum = age_us_max = 0;
+      }
       keyframe = openhd::mpp::annex_b_keyframe(encoded.data(), encoded.size(), h265);
       bytes += encoded.size();
       ++frames;

@@ -27,6 +27,7 @@
 #include <openhd_profile.h>
 
 #include <future>
+#include <atomic>
 #include <string>
 #include <vector>
 
@@ -65,6 +66,7 @@ class WifiHotspot {
   //
   void set_enabled_async(bool enable);
   uint16_t get_frequency();
+  bool is_started() const { return started.load(); }
   static bool util_delete_nm_file();
 
  private:
@@ -80,7 +82,9 @@ class WifiHotspot {
   void stop_async();
   const OHDProfile m_profile;
   const WiFiCard m_wifi_card;
-  bool started = false;
+  std::atomic<bool> started{false};
+  bool m_use_buildroot = false;
+  std::future<void> m_operation;
   std::shared_ptr<spdlog::logger> m_console;
   bool m_use_5G_channel;
   bool m_is_enabled = false;

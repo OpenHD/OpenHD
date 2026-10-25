@@ -24,6 +24,11 @@
 #include "wifi_hotspot.h"
 
 #include <iostream>
+#include <fstream>
+#include <filesystem>
+#include <unistd.h>
+#include <sys/stat.h>
+#include "openhd_action_handler.h"
 #include <utility>
 
 #include "openhd_naming.h"
@@ -138,46 +143,72 @@ WifiHotspot::WifiHotspot(OHDProfile profile, WiFiCard wifiCard,
   // create the connection (no matter if hotspot is enabled) such that we can
   // just enable / disable it by running connection up / down.
   m_console->debug("begin create hotspot connection");
-  create_hotspot_connection_file(m_wifi_card, m_profile.is_air,
+  m_use_buildroot = access("/usr/sbin/openhd-pico-hotspot", X_OK) == 0;
+  if (m_use_buildroot) m_use_5G_channel = false;
+  if (!m_use_buildroot) create_hotspot_connection_file(m_wifi_card, m_profile.is_air,
                                  m_use_5G_channel, m_hotspot_ssid_override,
                                  m_hotspot_password_override);
   m_console->debug("end create hotspot connection");
 }
 
-WifiHotspot::~WifiHotspot() { util_delete_nm_file(); }
+WifiHotspot::~WifiHotspot() {
+  if (m_operation.valid()) m_operation.wait();
+  stop();
+  if (!m_use_buildroot) util_delete_nm_file();
+}
 
 void WifiHotspot::start() {
-  m_console->debug("Starting WIFI hotspot on card {}", m_wifi_card.device_name);
-  const auto args =
-      std::vector<std::string>{"con", "up", OHD_WIFI_HOTSPOT_CONNECTION_NAME};
-  OHDUtil::run_command("nmcli", args);
-  started = true;
-  m_console->info("Wifi hotspot started");
-  std::cout << blue << "Started WIFI hotspot on card "
-            << m_wifi_card.device_name << reset << std::endl;
+  int result = -1;
+  if (m_use_buildroot) {
+    const auto ssid = resolve_hotspot_ssid(m_profile.is_air, m_hotspot_ssid_override);
+    const auto password = resolve_hotspot_password(m_hotspot_password_override);
+    if (password.find_first_of("\r\n") != std::string::npos) return;
+    std::filesystem::create_directories("/run/openhd");
+    const char* config = "/run/openhd/pico-hostapd.conf";
+    // Never put credentials into shell arguments or command logs.
+    std::ofstream file(config);
+    chmod(config, 0600);
+    file << "interface=" << m_wifi_card.device_name
+         << "\ndriver=nl80211\nctrl_interface=/run/openhd/hostapd\nssid2=";
+    static constexpr char hex[] = "0123456789abcdef";
+    for (unsigned char c : ssid) file << hex[c >> 4] << hex[c & 15];
+    file << "\nhw_mode=g\nchannel=1\nieee80211n=1\nwmm_enabled=1"
+         << "\nwpa=2\nwpa_key_mgmt=WPA-PSK\nrsn_pairwise=CCMP\nwpa_passphrase="
+         << password << "\n";
+    file.close();
+    if (file) result = OHDUtil::run_command("/usr/sbin/openhd-pico-hotspot", {"start"}, false);
+  } else {
+    result = OHDUtil::run_command("nmcli", {"con", "up", OHD_WIFI_HOTSPOT_CONNECTION_NAME});
+  }
+  started = result == 0;
+  auto& actions = openhd::LinkActionHandler::instance();
+  actions.m_wifi_hotspot_state = started ? 2 : 1;
+  actions.m_wifi_hotspot_frequency = started ? get_frequency() : 0;
+  if (started) m_console->info("Wifi hotspot started");
+  else m_console->error("Wifi hotspot did not start");
 }
 
 void WifiHotspot::stop() {
-  m_console->debug("Stopping wifi hotspot on card {}", m_wifi_card.device_name);
   if (!started) return;
-  const auto args =
-      std::vector<std::string>{"con", "down", OHD_WIFI_HOTSPOT_CONNECTION_NAME};
-  OHDUtil::run_command("nmcli", args);
-  m_console->info("Wifi hotspot stopped");
+  const int result = m_use_buildroot
+      ? OHDUtil::run_command("/usr/sbin/openhd-pico-hotspot", {"stop"}, false)
+      : OHDUtil::run_command("nmcli", {"con", "down", OHD_WIFI_HOTSPOT_CONNECTION_NAME});
+  if (result == 0) started = false;
+  auto& actions = openhd::LinkActionHandler::instance();
+  actions.m_wifi_hotspot_state = started ? 2 : 1;
+  actions.m_wifi_hotspot_frequency = started ? get_frequency() : 0;
 }
 
 void WifiHotspot::start_async() {
-  openhd::AsyncHandle::instance().execute_async(
-      "WiFi HS", [this]() { WifiHotspot::start(); });
+  m_operation = std::async(std::launch::async, [this]() { start(); });
 }
-
 void WifiHotspot::stop_async() {
-  openhd::AsyncHandle::instance().execute_async(
-      "WiFi HS", [this]() { WifiHotspot::stop(); });
+  m_operation = std::async(std::launch::async, [this]() { stop(); });
 }
 
 void WifiHotspot::set_enabled_async(bool enable) {
   if (m_is_enabled == enable) return;
+  if (m_operation.valid()) m_operation.wait();
   m_is_enabled = enable;
   if (enable) {
     start_async();

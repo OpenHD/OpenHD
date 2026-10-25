@@ -31,6 +31,7 @@
 #include <algorithm>
 #include <array>
 #include <sstream>
+#include <fstream>
 #include <utility>
 
 #include "config_paths.h"
@@ -72,6 +73,14 @@ bool is_microhard_device_present() {
   }
 
   return false;
+}
+
+static bool local_hotspot_supported() {
+  if (!OHDPlatform::instance().is_luckfox_pico()) return true;
+  std::ifstream input("/proc/device-tree/model");
+  std::string model;
+  std::getline(input, model, '\0');
+  return model.find("Luckfox Pico Ultra") == 0;
 }
 
 OHDInterface::OHDInterface(OHDProfile profile1, bool disable_wifi_hotspot)
@@ -318,6 +327,7 @@ std::optional<WiFiCard> OHDInterface::find_card_by_name(
 }
 
 std::optional<WiFiCard> OHDInterface::get_configured_hotspot_card() {
+  if (!local_hotspot_supported()) return std::nullopt;
   const auto settings = m_nw_settings.get_settings();
   std::string target = settings.wifi_hotspot_interface_override;
   if (target.empty() && m_opt_hotspot_card) {
@@ -334,6 +344,10 @@ std::optional<WiFiCard> OHDInterface::get_configured_hotspot_card() {
         "Interface {} is used for wifibroadcast, cannot use it for "
         "hotspot/client",
         target);
+    return std::nullopt;
+  }
+  if (OHDPlatform::instance().is_luckfox_pico() && card_opt->driver_name != "aicwf_sdio") {
+    m_console->warn("Pico hotspot is reserved for the Ultra onboard SDIO radio");
     return std::nullopt;
   }
   return card_opt;
@@ -595,6 +609,7 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings() {
       openhd::IntSetting{m_enterprise_multi_link ? 1 : 0, cb_multi_link}});
   auto cb_wifi_mode = [this](std::string, int value) {
     if (!is_valid_wifi_operating_mode(value)) return false;
+    if (value == WIFI_MODE_HOTSPOT && !local_hotspot_supported()) return false;
     m_nw_settings.unsafe_get_settings().wifi_operating_mode = value;
     m_nw_settings.persist();
     apply_wifi_operating_mode();
@@ -634,50 +649,52 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings() {
   if (active_links.empty()) active_links = "NONE";
   ret.push_back(
       openhd::create_read_only_string("ACTIVE_LINKS", active_links));
-  auto cb_wifi_hotspot_mode = [this](std::string, int value) {
-    if (!is_valid_wifi_hotspot_mode(value)) return false;
-    m_nw_settings.unsafe_get_settings().wifi_hotspot_mode = value;
-    m_nw_settings.persist();
-    update_wifi_hotspot_enable();
-    return true;
-  };
-  ret.push_back(openhd::Setting{
-      "WIFI_HOTSPOT_E",
-      openhd::IntSetting{settings.wifi_hotspot_mode, cb_wifi_hotspot_mode}});
-  auto cb_hotspot_iface = [this](std::string, std::string value) {
-    m_nw_settings.unsafe_get_settings().wifi_hotspot_interface_override = value;
-    m_nw_settings.persist();
-    apply_wifi_operating_mode();
-    return true;
-  };
-  ret.push_back(openhd::Setting{
-      "WIFI_HS_IFACE",
-      openhd::StringSetting{settings.wifi_hotspot_interface_override,
-                            cb_hotspot_iface}});
-  auto cb_hotspot_ssid = [this](std::string, std::string value) {
-    m_nw_settings.unsafe_get_settings().wifi_hotspot_ssid = value;
-    m_nw_settings.persist();
-    if (m_nw_settings.get_settings().wifi_operating_mode == WIFI_MODE_HOTSPOT) {
-      recreate_wifi_hotspot_if_needed();
+  if (local_hotspot_supported()) {
+    auto cb_wifi_hotspot_mode = [this](std::string, int value) {
+      if (!is_valid_wifi_hotspot_mode(value)) return false;
+      m_nw_settings.unsafe_get_settings().wifi_hotspot_mode = value;
+      m_nw_settings.persist();
       update_wifi_hotspot_enable();
-    }
-    return true;
-  };
-  ret.push_back(openhd::Setting{
-      "WIFI_HS_SSID",
-      openhd::StringSetting{settings.wifi_hotspot_ssid, cb_hotspot_ssid}});
-  auto cb_hotspot_pw = [this](std::string, std::string value) {
-    m_nw_settings.unsafe_get_settings().wifi_hotspot_password = value;
-    m_nw_settings.persist();
-    if (m_nw_settings.get_settings().wifi_operating_mode == WIFI_MODE_HOTSPOT) {
-      recreate_wifi_hotspot_if_needed();
-      update_wifi_hotspot_enable();
-    }
-    return true;
-  };
-  ret.push_back(openhd::Setting{
-      "WIFI_HS_PW",
-      openhd::StringSetting{settings.wifi_hotspot_password, cb_hotspot_pw}});
+      return true;
+    };
+    ret.push_back(openhd::Setting{
+        "WIFI_HOTSPOT_E",
+        openhd::IntSetting{settings.wifi_hotspot_mode, cb_wifi_hotspot_mode}});
+    auto cb_hotspot_iface = [this](std::string, std::string value) {
+      m_nw_settings.unsafe_get_settings().wifi_hotspot_interface_override = value;
+      m_nw_settings.persist();
+      apply_wifi_operating_mode();
+      return true;
+    };
+    ret.push_back(openhd::Setting{
+        "WIFI_HS_IFACE",
+        openhd::StringSetting{settings.wifi_hotspot_interface_override,
+                              cb_hotspot_iface}});
+    auto cb_hotspot_ssid = [this](std::string, std::string value) {
+      m_nw_settings.unsafe_get_settings().wifi_hotspot_ssid = value;
+      m_nw_settings.persist();
+      if (m_nw_settings.get_settings().wifi_operating_mode == WIFI_MODE_HOTSPOT) {
+        recreate_wifi_hotspot_if_needed();
+        update_wifi_hotspot_enable();
+      }
+      return true;
+    };
+    ret.push_back(openhd::Setting{
+        "WIFI_HS_SSID",
+        openhd::StringSetting{settings.wifi_hotspot_ssid, cb_hotspot_ssid}});
+    auto cb_hotspot_pw = [this](std::string, std::string value) {
+      m_nw_settings.unsafe_get_settings().wifi_hotspot_password = value;
+      m_nw_settings.persist();
+      if (m_nw_settings.get_settings().wifi_operating_mode == WIFI_MODE_HOTSPOT) {
+        recreate_wifi_hotspot_if_needed();
+        update_wifi_hotspot_enable();
+      }
+      return true;
+    };
+    ret.push_back(openhd::Setting{
+        "WIFI_HS_PW",
+        openhd::StringSetting{settings.wifi_hotspot_password, cb_hotspot_pw}});
+  }
   auto cb_client_iface = [this](std::string, std::string value) {
     m_nw_settings.unsafe_get_settings().wifi_client_interface = value;
     m_nw_settings.persist();
@@ -957,8 +974,9 @@ void OHDInterface::update_wifi_hotspot_enable() {
     m_console->warn("Invalid wifi hotspot mode");
     enable_wifi_hotspot = false;
   }
+  // Publish enabled only after the asynchronous backend confirms startup.
+  const bool hotspot_started = m_wifi_hotspot->is_started();
+  action_handler.m_wifi_hotspot_state = hotspot_started ? 2 : 1;
+  action_handler.m_wifi_hotspot_frequency = hotspot_started ? m_wifi_hotspot->get_frequency() : 0;
   m_wifi_hotspot->set_enabled_async(enable_wifi_hotspot);
-  action_handler.m_wifi_hotspot_state = enable_wifi_hotspot ? 2 : 1;
-  action_handler.m_wifi_hotspot_frequency =
-      enable_wifi_hotspot ? m_wifi_hotspot->get_frequency() : 0;
 }
