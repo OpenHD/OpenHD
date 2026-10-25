@@ -1,0 +1,15 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+  "name": "openhd",
+  "version-string": "3.0",
+  "dependencies": [
+    "libusb",
+    "libsodium",
+    "nlohmann-json",
+    {
+      "name": "pdcursesmod",
+      "platform": "windows"
+    },
+    "spdlog"
+  ]
+}

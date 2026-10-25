@@ -35,6 +35,44 @@
         "ENABLE_AIR": "ON",
         "ENABLE_USB_CAMERAS": "OFF"
       }
+    },
+    {
+      "name": "windows-ground",
+      "displayName": "Windows ground (MinGW, vcpkg, static)",
+      "description": "Portable openhd_ground.exe. Needs VCPKG_ROOT and a MinGW-w64 GCC on PATH.",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/../out/windows-ground",
+      "installDir": "${sourceDir}/../out/windows-ground-package",
+      "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++",
+        "CMAKE_EXE_LINKER_FLAGS": "-static",
+        "OPENHD_PORTABLE_GROUND": "ON",
+        "VCPKG_TARGET_TRIPLET": "x64-mingw-static-release",
+        "VCPKG_HOST_TRIPLET": "x64-mingw-static-release"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "windows-ground",
+      "configurePreset": "windows-ground",
+      "targets": ["openhd_ground", "test_ground_udp", "test_ground_pipeline", "test_ground_dashboard", "test_ground_app"]
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "windows-ground",
+      "configurePreset": "windows-ground",
+      "filter": { "include": { "name": "^ground_" } },
+      "output": { "outputOnFailure": true }
     }
   ]
 }

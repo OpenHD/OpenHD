@@ -4,6 +4,10 @@ on:
   push:
     branches: [openhd-3.0]
   workflow_dispatch:
+env:
+  # vcpkg binary cache, persisted with actions/cache below. Cold dependency
+  # builds take ~15 min (libsodium/libusb via autotools); restored ~1 min.
+  VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/.vcpkg-cache
 jobs:
   ground:
     runs-on: windows-latest
@@ -12,9 +16,10 @@ jobs:
         shell: msys2 {0}
     steps:
       - uses: actions/checkout@v7
-      - name: Fetch public transport dependencies
+      - name: Fetch OpenHD-owned transport sources
         shell: pwsh
-        run: git submodule update --init --checkout OpenHD/ohd_common/lib/spdlog OpenHD/ohd_common/lib/json OpenHD/ohd_interface/lib/wifibroadcast OpenHD/ohd_interface/lib/devourer
+        run: git submodule update --init --checkout OpenHD/ohd_interface/lib/wifibroadcast OpenHD/ohd_interface/lib/devourer
+      # MSYS2 only provides the compiler and build tools; libraries come from vcpkg.
       - uses: msys2/setup-msys2@v2
         with:
           msystem: UCRT64
@@ -24,24 +29,35 @@ jobs:
             mingw-w64-ucrt-x86_64-cmake
             mingw-w64-ucrt-x86_64-ninja
             mingw-w64-ucrt-x86_64-pkgconf
-            mingw-w64-ucrt-x86_64-libusb
-            mingw-w64-ucrt-x86_64-libsodium
-            mingw-w64-ucrt-x86_64-pdcurses
+      - name: Toolchain fingerprint
+        id: toolchain
+        run: echo "gcc=$(gcc -dumpfullversion)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        with:
+          path: .vcpkg-cache
+          # gcc is part of vcpkg's ABI hash; MSYS2 updates invalidate packages.
+          key: vcpkg-mingw-${{ steps.toolchain.outputs.gcc }}-${{ hashFiles('OpenHD/vcpkg*.json', 'OpenHD/cmake/vcpkg-*/**') }}
+          restore-keys: vcpkg-mingw-${{ steps.toolchain.outputs.gcc }}-
       - name: Configure
-        run: cmake -S OpenHD -B out/windows-ground -G Ninja -DCMAKE_BUILD_TYPE=Release -DOPENHD_PORTABLE_GROUND=ON -Dsodium_DIR="$(cygpath -m "$MINGW_PREFIX")"
+        run: |
+          mkdir -p .vcpkg-cache
+          export VCPKG_ROOT="$(cygpath -m "$VCPKG_INSTALLATION_ROOT")"
+          cd OpenHD && cmake --preset windows-ground
       - name: Build
-        run: cmake --build out/windows-ground --target openhd_ground test_ground_udp test_ground_pipeline test_ground_dashboard test_ground_app -j 4
+        run: cd OpenHD && cmake --build --preset windows-ground -j 4
       - name: Test
-        run: ctest --test-dir out/windows-ground -R '^ground_' --output-on-failure
+        run: cd OpenHD && ctest --preset windows-ground
       - name: Package
         run: |
-          mkdir -p out/windows-ground-package
-          cp out/windows-ground/platform/ground/openhd_ground.exe out/windows-ground-package/
-          cp "$MINGW_PREFIX"/bin/{libusb-1.0,libstdc++-6,libgcc_s_seh-1,libwinpthread-1}.dll out/windows-ground-package/
-          cp "$MINGW_PREFIX"/bin/libsodium-*.dll out/windows-ground-package/
+          cmake --install out/windows-ground --prefix out/windows-ground-package
+          mv out/windows-ground-package/bin/openhd_ground.exe out/windows-ground-package/
+          rmdir out/windows-ground-package/bin
           cp docs/windows-ground.md out/windows-ground-package/README.md
           cp LICENSE out/windows-ground-package/
-          cp -r "$MINGW_PREFIX"/share/licenses/{libusb,libsodium} out/windows-ground-package/
+          mkdir -p out/windows-ground-package/licenses
+          for p in libusb libsodium pdcursesmod spdlog fmt nlohmann-json; do
+            cp out/windows-ground/vcpkg_installed/x64-mingw-static-release/share/$p/copyright out/windows-ground-package/licenses/$p.txt
+          done
       - uses: actions/upload-artifact@v7
         with:
           name: openhd-windows-ground
