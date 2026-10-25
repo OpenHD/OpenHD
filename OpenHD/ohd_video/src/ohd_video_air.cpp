@@ -185,7 +185,11 @@ void OHDVideoAir::configure(
   } else
 #endif
 #ifdef OPENHD_ROCKCHIP_MPP_PRESENT
-  if ((camera.requires_rockchip1126_mpp_csi_pipeline() ||
+  if ((
+#ifdef OPENHD_PICO_MPI_PRESENT
+       camera.requires_rockchip_rv_pipeline() ||
+#endif
+       camera.requires_rockchip1126_mpp_csi_pipeline() ||
        camera.requires_rockchip1126_mpp_testsrc_pipeline()) &&
       camera_holder->get_settings().rockchip_impl ==
           ROCKCHIP_IMPL_NATIVE_MPP) {

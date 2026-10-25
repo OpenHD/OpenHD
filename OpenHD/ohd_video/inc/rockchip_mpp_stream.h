@@ -7,9 +7,9 @@
 
 #include "camerastream.h"
 
-// RV1126(B) stream using GStreamer only for raw NV12 capture and Rockchip MPP
-// directly for encoding. MPP details live in the implementation so this header
-// remains usable by builds which do not have the Rockchip SDK installed.
+// Native Rockchip camera-worker interface. RV1126(B) uses V4L2 + MPP;
+// RV1103/RV1106 builds use RKAIQ + Rockit VI/VENC. Neither requires GStreamer.
+// SDK details stay in the platform-specific implementation.
 class RockchipMppStream final : public CameraStream {
  public:
   RockchipMppStream(std::shared_ptr<CameraHolder> camera_holder,

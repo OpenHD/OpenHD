@@ -33,6 +33,12 @@ tar -xzf "$(find "$output/openhd" -name 'openhd-luckfox-pico-*-evo-*.tar.gz' -pr
 rm "$output/root/component-manifest.json" "$output/root/sha256sums"
 cp -a "$work/stage/." "$output/root/"
 /usr/bin/python3 "$repo/scripts/bundle_pico_runtime.py" "$output/root" "$STAGING_DIR"
+if "$READELF" -d "$output/root/usr/bin/openhd" | grep -q 'NEEDED.*libgst'; then
+  echo 'Pico native camera build must not depend on GStreamer' >&2
+  exit 1
+fi
+test -s "$output/root/usr/lib/librockit.so"
+test -s "$output/root/usr/lib/librkaiq.so"
 export SYSUTILS_COMMIT="$(git -C "$sysutils" rev-parse HEAD)"
 export OPENHD_COMMIT="$(git -C "$repo" rev-parse HEAD)"
 export DEVOURER_COMMIT="$(git -C "$repo" rev-parse HEAD:OpenHD/ohd_interface/lib/devourer)"
@@ -40,6 +46,7 @@ export DEVOURER_COMMIT="$(git -C "$repo" rev-parse HEAD:OpenHD/ohd_interface/lib
 import hashlib,json,os,pathlib
 p=pathlib.Path(__import__('sys').argv[1]); root=p/'root'
 manifest=dict(schema=1,platform='luckfox-pico',architecture='armhf',
+ video_backend='native-pico-mpi',gstreamer=False,
  sdk_sha256=os.environ['LUCKFOX_SDK_SHA256'],
  sdk_buildroot_commit=os.environ['LUCKFOX_SDK_BUILDROOT_COMMIT'],
  source_commits={n:os.environ[n.upper()+'_COMMIT'] for n in ('openhd','sysutils','devourer')},

@@ -65,6 +65,9 @@ cmake -S "${repo_root}/OpenHD" -B "${build_dir}" \
   -DPYTHON_EXECUTABLE="${host_python}" \
   -DPython3_EXECUTABLE="${host_python}" \
   -DENABLE_USB_CAMERAS=OFF \
+  -DENABLE_GSTREAMER=OFF \
+  -DOPENHD_MPP_ONLY=ON \
+  -DOPENHD_PICO_MPI=ON \
   -DBUILD_SHARED_LIBS=OFF \
   -DCMAKE_EXE_LINKER_FLAGS="-lstdc++fs"
 cmake --build "${build_dir}" --parallel "$(nproc)" --target openhd

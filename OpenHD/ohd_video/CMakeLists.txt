@@ -13,6 +13,7 @@ option(ENABLE_USB_CAMERAS "USB cameras support" ON)
 option(ENABLE_LIBCAMERA "libcamera support" ON)
 option(ENABLE_GSTREAMER "Enable GStreamer support" ON)
 option(OPENHD_MPP_ONLY "Build the RV1126 MPP video path without GStreamer" OFF)
+option(OPENHD_PICO_MPI "Use RV1103/RV1106 native Rockit VI/VENC and RKAIQ" OFF)
 # The MPP-only image intentionally has no USB/GStreamer camera stack. USB
 # discovery also links libv4l2, which is not part of the minimal runtime image.
 if(OPENHD_MPP_ONLY)
@@ -149,7 +150,21 @@ if(ENABLE_AIR)
     find_path(ROCKCHIP_MPP_INCLUDE_DIR rk_mpi.h
               PATH_SUFFIXES rockchip mpp)
     find_library(ROCKCHIP_MPP_LIBRARY NAMES rockchip_mpp)
-    if(ROCKCHIP_MPP_INCLUDE_DIR AND ROCKCHIP_MPP_LIBRARY)
+    if(OPENHD_PICO_MPI)
+        find_path(PICO_MPI_INCLUDE_DIR rk_mpi_vi.h REQUIRED)
+        find_library(PICO_MPI_LIBRARY NAMES rockit REQUIRED)
+        find_path(PICO_RKAIQ_INCLUDE_DIR rk_aiq_user_api2_sysctl.h PATH_SUFFIXES rkaiq/uAPI2 REQUIRED)
+        find_library(PICO_RKAIQ_LIBRARY NAMES rkaiq REQUIRED)
+        get_filename_component(PICO_RKAIQ_ROOT "${PICO_RKAIQ_INCLUDE_DIR}" DIRECTORY)
+        list(APPEND sources src/luckfox_mpi_stream.cpp)
+        target_include_directories(OHDVideoLib PRIVATE ${PICO_MPI_INCLUDE_DIR}
+            ${PICO_RKAIQ_ROOT} ${PICO_RKAIQ_ROOT}/uAPI2 ${PICO_RKAIQ_ROOT}/common
+            ${PICO_RKAIQ_ROOT}/xcore ${PICO_RKAIQ_ROOT}/algos ${PICO_RKAIQ_ROOT}/iq_parser
+            ${PICO_RKAIQ_ROOT}/iq_parser_v2)
+        target_link_libraries(OHDVideoLib PRIVATE ${PICO_MPI_LIBRARY} ${PICO_RKAIQ_LIBRARY})
+        target_compile_definitions(OHDVideoLib PUBLIC OPENHD_ROCKCHIP_MPP_PRESENT OPENHD_PICO_MPI_PRESENT)
+        message(STATUS "Native Pico VI/VENC camera path enabled without GStreamer")
+    elseif(ROCKCHIP_MPP_INCLUDE_DIR AND ROCKCHIP_MPP_LIBRARY)
         message(STATUS "Native Rockchip MPP encoder enabled")
         list(APPEND sources src/rockchip_mpp_stream.cpp)
         target_include_directories(OHDVideoLib PRIVATE ${ROCKCHIP_MPP_INCLUDE_DIR})
