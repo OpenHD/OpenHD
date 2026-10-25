@@ -24,6 +24,10 @@ jobs:
           repository: OpenHD/OpenHD-SysUtils
           ref: dev-release
           path: sysutils-src
+      - id: sources
+        run: |
+          echo "openhd=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "sysutils=$(git -C sysutils-src rev-parse HEAD)" >> "$GITHUB_OUTPUT"
       - name: Install application build tools
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends cmake g++ ninja-build
       - name: Download existing cross SDK
@@ -40,7 +44,13 @@ jobs:
           tar -xzf openhd-luckfox-pico-sdk.tar.gz -C "$RUNNER_TEMP/pico-sdk"
           echo "LUCKFOX_SDK_SHA256=$(sha256sum openhd-luckfox-pico-sdk.tar.gz | cut -d' ' -f1)" >> "$GITHUB_ENV"
           echo "LUCKFOX_SDK_BUILDROOT_COMMIT=$(python3 -c 'import json; print(json.load(open("openhd-luckfox-pico-sdk.manifest.json"))["luckfox_sdk_commit"])')" >> "$GITHUB_ENV"
+      - uses: actions/cache@v5
+        id: application-cache
+        with:
+          path: pico-applications
+          key: pico-applications-${{ env.LUCKFOX_SDK_SHA256 }}-${{ steps.sources.outputs.openhd }}-${{ steps.sources.outputs.sysutils }}
       - name: Build applications and bundle runtime libraries once for all Pico boards
+        if: steps.application-cache.outputs.cache-hit != 'true'
         run: bash scripts/build_pico_applications.sh "$RUNNER_TEMP/pico-sdk" sysutils-src pico-applications
       - uses: actions/upload-artifact@v7
         with:

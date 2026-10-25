@@ -24,6 +24,9 @@ install -m755 "$work/build/openhd_sys_utils" "$work/stage/usr/bin/openhd_sys_uti
 install -Dm644 "$sysutils/misc/openhd-devourer-eu.conf" "$work/stage/lib/modprobe.d/openhd-devourer-eu.conf"
 install -Dm644 "$sysutils/misc/70-openhd-devourer-eu.rules" "$work/stage/lib/udev/rules.d/70-openhd-devourer-eu.rules"
 install -Dm644 "$sysutils/misc/wifi_cards.json" "$work/stage/usr/local/share/OpenHD/SysUtils/wifi_cards.json"
+# The base need not carry this helper; SysUtils uses it for storage-mode radios.
+READELF= bash "$sysutils/scripts/build_usb_modeswitch.sh" "$work/stage/usr/sbin/usb_modeswitch"
+"$READELF" -h "$work/stage/usr/sbin/usb_modeswitch" | grep -q 'Machine:.*ARM'
 # Include every transitive ELF dependency of both applications from this SDK.
 mkdir -p "$output/root"
 tar -xzf "$(find "$output/openhd" -name 'openhd-luckfox-pico-*-evo-*.tar.gz' -print -quit)" -C "$output/root"

@@ -21,6 +21,9 @@ def resolve(root, path):
 
 def bundle(stage, sdk):
     pending = [stage / 'usr/bin' / n for n in ('openhd', 'openhd_sys_utils')]
+    helper = stage / 'usr/sbin/usb_modeswitch'
+    if helper.exists():
+        pending.append(helper)
     done = set()
     while pending:
         binary = pending.pop()
