@@ -23,6 +23,7 @@
 #include "matroska_recorder.h"
 #include "openhd_rtp.h"
 #include "openhd_spdlog.h"
+#include "rockchip_stream_utils.h"
 
 class RockchipMppStream::Impl {
  public:
@@ -143,8 +144,8 @@ class RockchipMppStream::Impl {
       if (!owner.m_output_cb || fragments.empty()) return;
       const auto& settings = owner.m_camera_holder->get_settings();
       owner.m_output_cb(owner.m_camera_holder->get_camera().index,
-          openhd::FragmentedVideoFrame{std::move(fragments), Clock::now(),
-              settings.enable_ultra_secure_encryption, nullptr, false, false});
+          openhd::FragmentedVideoFrame{std::move(fragments), capture_time,
+              settings.enable_ultra_secure_encryption, nullptr, false, keyframe});
     });
     const auto& camera = owner.m_camera_holder->get_camera();
     openhd::LinkActionHandler::CamInfo info{true, static_cast<uint8_t>(camera.index),
@@ -229,6 +230,7 @@ class RockchipMppStream::Impl {
         continue;
       }
       // Own encoded data before returning the DMA buffer to VENC.
+      capture_time = openhd::mpp::capture_time_from_us(pack.u64PTS, Clock::now());
       std::vector<uint8_t> encoded;
       try {
         const auto* data = static_cast<const uint8_t*>(RK_MPI_MB_Handle2VirAddr(pack.pMbBlk));
@@ -240,6 +242,7 @@ class RockchipMppStream::Impl {
       }
       check(RK_MPI_VENC_ReleaseStream(0, &stream), "Release encoded frame");
       last_frame = Clock::now();
+      keyframe = openhd::mpp::annex_b_keyframe(encoded.data(), encoded.size(), h265);
       bytes += encoded.size();
       ++frames;
       rtp->feed_multiple_nalu(encoded.data(), encoded.size());
@@ -252,14 +255,14 @@ class RockchipMppStream::Impl {
         const auto path = openhd::video::create_unused_recording_filename(".mkv");
         if (!recorder.open(path, h265, width, height, fps))
           log->warn("Cannot open Pico recording {}", path);
-        recording_start = last_frame;
+        recording_start = capture_time;
         force_keyframe = true;
       }
       if (!record) recorder.close();
       if (recorder.is_open()) {
         const auto pts_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-            last_frame - recording_start).count();
-        recorder.feed_annex_b_access_unit(encoded.data(), encoded.size(), pts_ms);
+            capture_time - recording_start).count();
+        recorder.feed_annex_b_access_unit(encoded.data(), encoded.size(), std::max<int64_t>(0, pts_ms));
       }
       actions.set_cam_info_recording_active(index, recorder.is_open());
       const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame - window).count();
@@ -298,6 +301,8 @@ class RockchipMppStream::Impl {
   std::unique_ptr<openhd::RTPHelper> rtp;
   MatroskaRecorder recorder;
   Clock::time_point recording_start = Clock::now();
+  Clock::time_point capture_time = Clock::now();
+  bool keyframe = false;
 };
 
 RockchipMppStream::RockchipMppStream(std::shared_ptr<CameraHolder> holder, openhd::ON_ENCODE_FRAME_CB output)

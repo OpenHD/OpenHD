@@ -6,6 +6,7 @@
 #include <condition_variable>
 #include <cstddef>
 #include <cstdint>
+#include <cstdint>
 #include <deque>
 #include <mutex>
 #include <optional>
@@ -13,6 +14,33 @@
 #include <vector>
 
 namespace openhd::mpp {
+
+// Rockit carries capture PTS in monotonic microseconds. Preserve the sensor
+// timestamp instead of measuring latency only after the encoder returns data.
+inline std::chrono::steady_clock::time_point capture_time_from_us(
+    uint64_t pts, std::chrono::steady_clock::time_point now) {
+  const auto now_us = std::chrono::duration_cast<std::chrono::microseconds>(
+      now.time_since_epoch()).count();
+  if (now_us <= 0 || pts == 0 || pts > static_cast<uint64_t>(now_us) ||
+      static_cast<uint64_t>(now_us) - pts > 30'000'000ULL)
+    return now;  // Unknown/foreign clock domains must not corrupt telemetry.
+  return std::chrono::steady_clock::time_point{
+      std::chrono::duration_cast<std::chrono::steady_clock::duration>(
+          std::chrono::microseconds(pts))};
+}
+
+// A VENC access unit can start with SPS/PPS before its IDR slice.
+inline bool annex_b_keyframe(const uint8_t* data, size_t size, bool h265) {
+  for (size_t i = 0; i + 3 < size; ++i) {
+    if (data[i] != 0 || data[i + 1] != 0) continue;
+    const size_t nal = data[i + 2] == 1 ? i + 3 :
+        (i + 4 < size && data[i + 2] == 0 && data[i + 3] == 1 ? i + 4 : size);
+    if (nal >= size) continue;
+    const int type = h265 ? (data[nal] >> 1) & 63 : data[nal] & 31;
+    if (h265 ? type >= 16 && type <= 21 : type == 5) return true;
+  }
+  return false;
+}
 
 // Samples are bounded; percentiles describe the latest 512 observations.
 class LatencySamples {

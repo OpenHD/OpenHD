@@ -15,6 +15,22 @@ void check(bool value, const char* message) {
 }
 
 int main() {
+  const auto timestamp_now = std::chrono::steady_clock::time_point{100s};
+  check(capture_time_from_us(99'980'000, timestamp_now) == timestamp_now - 20ms,
+        "capture PTS did not preserve encoder latency");
+  check(capture_time_from_us(0, timestamp_now) == timestamp_now &&
+        capture_time_from_us(100'000'001, timestamp_now) == timestamp_now &&
+        capture_time_from_us(1, timestamp_now) == timestamp_now &&
+        capture_time_from_us(UINT64_MAX, timestamp_now) == timestamp_now,
+        "invalid capture PTS escaped its clock bounds");
+  const uint8_t h264_idr[] = {0,0,0,1,0x67,1,0,0,1,0x68,1,0,0,0,1,0x65,1};
+  const uint8_t h264_p[] = {0,0,1,0x41,1};
+  const uint8_t h265_idr[] = {0,0,0,1,0x40,1,0,0,1,0x26,1};
+  const uint8_t partial[] = {0,0,0,1};
+  check(annex_b_keyframe(h264_idr, sizeof(h264_idr), false), "SPS/PPS-prefixed IDR lost");
+  check(annex_b_keyframe(h265_idr, sizeof(h265_idr), true), "H265 IDR lost");
+  check(!annex_b_keyframe(h264_p, sizeof(h264_p), false) &&
+        !annex_b_keyframe(partial, sizeof(partial), false), "non-IDR/truncated data marked IDR");
   Nv12Layout padded{32, 32 * 16};
   check(padded.fits(32 * 16 * 3 / 2, 16, 10), "padded NV12 rejected");
   check(padded.matches(32, 16), "compatible DMA layout rejected");
