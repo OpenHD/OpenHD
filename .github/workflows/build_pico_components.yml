@@ -1,0 +1,50 @@
+name: Build Pico applications against cached SDK
+on:
+  workflow_call:
+    secrets:
+      OPENHD_SUBMODULE_TOKEN:
+        required: true
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  components:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          repository: OpenHD/OpenHD
+          ref: openhd-3.0
+          submodules: true
+          token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+      - uses: ./.github/actions/fetch-devourer
+      - uses: actions/checkout@v7
+        with:
+          repository: OpenHD/OpenHD-SysUtils
+          ref: dev-release
+          path: sysutils-src
+      - name: Install application build tools
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends cmake g++ ninja-build
+      - name: Download existing cross SDK
+        run: |
+          set -euo pipefail
+          base=https://dl.cloudsmith.io/public/openhd/dev-release/raw/files
+          mkdir sdk-download
+          cd sdk-download
+          for name in openhd-luckfox-pico-sdk.tar.gz openhd-luckfox-pico-sdk.tar.gz.sha256 openhd-luckfox-pico-sdk.manifest.json; do
+            curl --fail --location --retry 5 "$base/$name" -o "$name"
+          done
+          sha256sum -c openhd-luckfox-pico-sdk.tar.gz.sha256
+          mkdir "$RUNNER_TEMP/pico-sdk"
+          tar -xzf openhd-luckfox-pico-sdk.tar.gz -C "$RUNNER_TEMP/pico-sdk"
+          echo "LUCKFOX_SDK_SHA256=$(sha256sum openhd-luckfox-pico-sdk.tar.gz | cut -d' ' -f1)" >> "$GITHUB_ENV"
+          echo "LUCKFOX_SDK_BUILDROOT_COMMIT=$(python3 -c 'import json; print(json.load(open("openhd-luckfox-pico-sdk.manifest.json"))["luckfox_sdk_commit"])')" >> "$GITHUB_ENV"
+      - name: Build applications and bundle runtime libraries once for all Pico boards
+        run: bash scripts/build_pico_applications.sh "$RUNNER_TEMP/pico-sdk" sysutils-src pico-applications
+      - uses: actions/upload-artifact@v7
+        with:
+          name: pico-applications
+          path: pico-applications/
+          if-no-files-found: error
+          retention-days: 30
