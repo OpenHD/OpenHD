@@ -6,6 +6,11 @@ and ISP control, then binds Rockit VI directly to hardware VENC. Encoded access
 units use OpenHD's existing RTP helper and isolated camera-worker protocol.
 There is no GStreamer dependency or `gst-perf` requirement.
 
+Rockit's packet MB handle already resolves to the valid encoded packet address.
+After invalidating the DMA read cache, copy `u32Len` bytes from that address;
+`u32Offset` describes the packet's position in the encoder ring and must not be
+added again. Applying it twice corrupts H.264 access units before RTP transport.
+
 The backend reports camera presence, encoding state and measured bitrate/FPS
 through the existing worker status channel. Bitrate, QP limits, orientation and
 IDR requests go directly to VENC. Shutdown unbinds VI/VENC before releasing the

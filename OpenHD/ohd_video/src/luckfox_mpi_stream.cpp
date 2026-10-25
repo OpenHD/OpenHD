@@ -233,9 +233,13 @@ class RockchipMppStream::Impl {
       capture_time = openhd::mpp::capture_time_from_us(pack.u64PTS, Clock::now());
       std::vector<uint8_t> encoded;
       try {
+        check(RK_MPI_SYS_MmzFlushCache(pack.pMbBlk, RK_TRUE), "Synchronize encoded DMA output");
         const auto* data = static_cast<const uint8_t*>(RK_MPI_MB_Handle2VirAddr(pack.pMbBlk));
         if (!data || pack.u32Len == 0) throw std::runtime_error("Empty VENC packet");
-        encoded.assign(data + pack.u32Offset, data + pack.u32Offset + pack.u32Len);
+        // Rockit's packet MB handle resolves to this packet's valid address.
+        // u32Offset describes its position in the encoder ring; adding it a
+        // second time skips encoded bytes and reads unrelated ring contents.
+        encoded.assign(data, data + pack.u32Len);
       } catch (...) {
         RK_MPI_VENC_ReleaseStream(0, &stream);
         throw;
