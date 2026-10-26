@@ -6,6 +6,18 @@ and ISP control, then binds Rockit VI directly to hardware VENC. Encoded access
 units use OpenHD's existing RTP helper and isolated camera-worker protocol.
 There is no GStreamer dependency or `gst-perf` requirement.
 
+## Pico USB radios
+
+Pico skips the USB-level reset when opening Devourer radios. On the Ultra W's
+RV1106 host, resetting a ZeroCD-switched RTL8822C can disconnect the adapter
+and leave enumeration failing. The exclusive USB claim and Devourer's chip
+power-off/power-on sequence still run. Other platforms retain USB reset on open.
+Wi-Fi autodetection must be enabled in SysUtils unless a manual broadcast card
+list is configured; an empty manual list intentionally selects no radios.
+The tested RTL8822C also showed unsettled DACK samples on a subsequent warm
+service start. Skipping USB reset fixes the observed disconnect but does not
+establish reliable warm reinitialization or RF/video-link performance.
+
 Rockit's packet MB handle already resolves to the valid encoded packet address.
 After invalidating the DMA read cache, copy `u32Len` bytes from that address;
 `u32Offset` describes the packet's position in the encoder ring and must not be

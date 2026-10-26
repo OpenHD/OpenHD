@@ -489,6 +489,10 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
   txrx_options.use_devourer =
       openhd::wb::use_devourer_backend(m_broadcast_cards);
   if (txrx_options.use_devourer) {
+    // RV1106's host can lose a ZeroCD-switched Jaguar radio on USB reset.
+    // Devourer still claims it exclusively and runs its chip power sequence.
+    txrx_options.devourer_reset_usb_on_open =
+        !OHDPlatform::instance().is_luckfox_pico();
     const auto settings = m_settings->get_settings();
     txrx_options.devourer_frequency_mhz = settings.wb_frequency;
     if (settings.wb_enable_devourer_logging ||
