@@ -14,6 +14,9 @@ and leave enumeration failing. The exclusive USB claim and Devourer's chip
 power-off/power-on sequence still run. Other platforms retain USB reset on open.
 Wi-Fi autodetection must be enabled in SysUtils unless a manual broadcast card
 list is configured; an empty manual list intentionally selects no radios.
+If a Pico radio throws during initialization and an Ethernet transport was
+explicitly configured, OpenHD reports the Wi-Fi error and continues on Ethernet.
+The radio is not registered as an active link; retrying it requires a restart.
 The tested RTL8822C also showed unsettled DACK samples on a subsequent warm
 service start. Skipping USB reset fixes the observed disconnect but does not
 establish reliable warm reinitialization or RF/video-link performance.

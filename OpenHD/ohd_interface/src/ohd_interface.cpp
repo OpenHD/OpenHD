@@ -172,12 +172,22 @@ OHDInterface::OHDInterface(OHDProfile profile1, bool disable_wifi_hotspot)
   } else {
     // Set the card(s) we have into monitor mode
     openhd::wb::takeover_cards_monitor_mode(m_monitor_mode_cards, m_console);
-    m_wb_link = std::make_shared<WBLink>(m_profile, m_monitor_mode_cards);
-    m_multi_link->add_link("WIFIBROADCAST", m_wb_link);
-    m_wb_link->set_fatal_error_callback([this]() { request_wb_recovery(); });
-    start_wb_recovery_supervisor();
-    openhd::LinkActionHandler::instance().set_primary_link_type(
-        openhd::LinkActionHandler::PRIMARY_LINK_WIFIBROADCAST);
+    try {
+      m_wb_link = std::make_shared<WBLink>(m_profile, m_monitor_mode_cards);
+    } catch (const std::exception& ex) {
+      // Keep the explicitly configured management/video path on Pico when a
+      // USB radio disappears during initialization. Never imply RF is ready.
+      if (!OHDPlatform::instance().is_luckfox_pico() || !m_ethernet_link) throw;
+      m_console->error("WiFi initialization failed: {}; continuing with configured Ethernet link", ex.what());
+      m_monitor_mode_cards.clear();
+    }
+    if (m_wb_link) {
+      m_multi_link->add_link("WIFIBROADCAST", m_wb_link);
+      m_wb_link->set_fatal_error_callback([this]() { request_wb_recovery(); });
+      start_wb_recovery_supervisor();
+      openhd::LinkActionHandler::instance().set_primary_link_type(
+          openhd::LinkActionHandler::PRIMARY_LINK_WIFIBROADCAST);
+    }
     // Only start Ethernet discovery when the user explicitly enabled it.
     if (m_ethernet_routing_enabled && !m_ethernet_link) {
       m_ethernet_link = std::make_shared<EthernetLink>(m_profile, true);
