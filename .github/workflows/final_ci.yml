@@ -331,11 +331,21 @@ jobs:
           ref: dev-release
           path: OpenHD-SysUtils
           token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+      - name: Checkout QOpenHD native NXP port
+        uses: actions/checkout@v7
+        with:
+          repository: OpenHD/QOpenHD
+          ref: dev-release
+          path: QOpenHD
+          submodules: recursive
+          token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
       - name: Install SDK tooling
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            autoconf automake curl libtool ninja-build pkg-config unzip xz-utils zip
+            autoconf automake curl libtool ninja-build pkg-config unzip xz-utils zip \
+            meson qtbase5-dev qtdeclarative5-dev qttools5-dev-tools \
+            libwayland-dev libwayland-bin wayland-protocols rsync python3
       - name: Install Orqa SDK and dependencies
         run: |
           mkdir -p "${RUNNER_TEMP}/orqa-sdk"
@@ -347,6 +357,18 @@ jobs:
             "${RUNNER_TEMP}/poco-libraries.zip" \
             "${RUNNER_TEMP}/libsodium-libraries.zip" \
             "${RUNNER_TEMP}/gst-perf-plugin.zip"
+      - name: Build native QOpenHD and GL compositor for Orqa
+        run: |
+          bash QOpenHD/tools/build_orqa_bundle.sh \
+            "${RUNNER_TEMP}/orqa-sdk" "${GITHUB_WORKSPACE}/build-orqa-qopenhd"
+      - name: Upload QOpenHD and compositor runtime for Orqa
+        uses: actions/upload-artifact@v7
+        with:
+          name: qopenhd-nxp-aarch64
+          path: |
+            build-orqa-qopenhd/qopenhd-nxp-runtime.tar.gz
+            build-orqa-qopenhd/deploy/usr/local/share/qopenhd-nxp/manifest.json
+          if-no-files-found: error
       - name: Cross-build and verify Orqa binary
         run: |
           bash ./scripts/build_orqa_cross.sh \
@@ -387,6 +409,9 @@ jobs:
         run: |
           deploy="${GITHUB_WORKSPACE}/build-orqa/deploy"
           mkdir -p "${deploy}/usr/lib/gstreamer-1.0"
+          # The UI runtime includes its source-built GL compositor, Qt plugins,
+          # output profiles, and Ground-mode systemd units.
+          tar -xzf build-orqa-qopenhd/qopenhd-nxp-runtime.tar.gz -C "${deploy}"
 
           # Binaries
           cp build-orqa/openhd                       "${deploy}/"
@@ -417,6 +442,20 @@ jobs:
           # Manifest of runtime deps for the openhd binary
           cp build-orqa/openhd-needed.txt   "${deploy}/"
           cp build-orqa/gst-perf-needed.txt "${deploy}/"
+
+          python3 - "${deploy}" <<'PY'
+          import json, pathlib, subprocess, sys
+          deploy = pathlib.Path(sys.argv[1])
+          revision = lambda path: subprocess.check_output(['git', '-C', path, 'rev-parse', 'HEAD'], text=True).strip()
+          ui = json.loads((deploy/'usr/local/share/qopenhd-nxp/manifest.json').read_text())
+          assert ui['qopenhd_commit'] == revision('QOpenHD')
+          components = dict(schema_version=1, openhd_commit=revision('.'),
+                            sysutils_commit=revision('OpenHD-SysUtils'), qopenhd_commit=ui['qopenhd_commit'],
+                            compositor=ui['compositor'], compositor_source_sha256=ui['compositor_source_sha256'])
+          target = deploy/'usr/local/share/openhd/orqa-components.json'
+          target.parent.mkdir(parents=True, exist_ok=True)
+          target.write_text(json.dumps(components, indent=2)+'\n')
+          PY
 
           # Pack everything into one tarball for easy scp-to-board deployment
           tar -czf "${GITHUB_WORKSPACE}/build-orqa/openhd-orqa-deploy.tar.gz" \
