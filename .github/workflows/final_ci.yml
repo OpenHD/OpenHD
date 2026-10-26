@@ -345,7 +345,7 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             autoconf automake curl libtool ninja-build pkg-config unzip xz-utils zip \
             meson qtbase5-dev qtdeclarative5-dev qttools5-dev-tools \
-            libwayland-dev libwayland-bin wayland-protocols rsync python3
+            libwayland-dev libwayland-bin wayland-protocols rsync python3 debian-archive-keyring
       - name: Install Orqa SDK and dependencies
         run: |
           mkdir -p "${RUNNER_TEMP}/orqa-sdk"
