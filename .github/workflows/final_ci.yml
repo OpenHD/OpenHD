@@ -488,7 +488,7 @@ jobs:
             sha256sum -c -
 
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends e2fsprogs unzip zip
+          sudo apt-get install -y --no-install-recommends e2fsprogs dosfstools mtools unzip zip
           bash OpenHD-ImageBuilder/scripts/install_current_e2fsprogs.sh
           sudo bash OpenHD-ImageBuilder/scripts/build_orqa_image.sh \
             "build-orqa/image-input/${BASE_IMAGE}" \
