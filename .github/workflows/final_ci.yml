@@ -344,7 +344,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             autoconf automake curl libtool ninja-build pkg-config unzip xz-utils zip \
-            meson qtbase5-dev qtdeclarative5-dev qttools5-dev-tools \
+            meson patch qtbase5-dev qtdeclarative5-dev qttools5-dev-tools \
             libwayland-dev libwayland-bin wayland-protocols rsync python3 debian-archive-keyring
       - name: Install Orqa SDK and dependencies
         run: |
@@ -451,7 +451,8 @@ jobs:
           assert ui['qopenhd_commit'] == revision('QOpenHD')
           components = dict(schema_version=1, openhd_commit=revision('.'),
                             sysutils_commit=revision('OpenHD-SysUtils'), qopenhd_commit=ui['qopenhd_commit'],
-                            compositor=ui['compositor'], compositor_source_sha256=ui['compositor_source_sha256'])
+                            compositor=ui['compositor'], compositor_source_sha256=ui['compositor_source_sha256'],
+                            compositor_patch_sha256=ui['compositor_patch_sha256'])
           target = deploy/'usr/local/share/openhd/orqa-components.json'
           target.parent.mkdir(parents=True, exist_ok=True)
           target.write_text(json.dumps(components, indent=2)+'\n')
