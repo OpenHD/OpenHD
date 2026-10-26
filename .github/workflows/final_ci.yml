@@ -458,7 +458,8 @@ jobs:
           PY
 
           # Pack everything into one tarball for easy scp-to-board deployment
-          tar -czf "${GITHUB_WORKSPACE}/build-orqa/openhd-orqa-deploy.tar.gz" \
+          tar --numeric-owner --owner=0 --group=0 \
+            -czf "${GITHUB_WORKSPACE}/build-orqa/openhd-orqa-deploy.tar.gz" \
             -C "${deploy}" .
 
           echo "=== Deploy package contents ==="
