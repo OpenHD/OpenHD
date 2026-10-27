@@ -120,6 +120,7 @@ class OHDMainComponent : public MavlinkComponent {
   std::vector<MavlinkMessage> generate_storage_information();
   std::vector<MavlinkMessage> take_async_messages();
   std::shared_ptr<spdlog::logger> m_console;
+  std::chrono::steady_clock::time_point m_last_stats_diagnostic{};
   std::unique_ptr<LastKnowPosition> m_last_known_position = nullptr;
   // Only set / used on air, where we have a uart connection to the FC and
   // therefore can be 100% sure about the FC sys id

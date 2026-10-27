@@ -26,6 +26,7 @@
 
 #include <atomic>
 #include <chrono>
+#include <condition_variable>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -33,6 +34,7 @@
 #include <utility>
 
 #include "MEndpoint.h"
+#include "SerialTxQueue.h"
 #include "openhd_spdlog.h"
 
 /**
@@ -94,14 +96,24 @@ class SerialEndpoint : public MEndpoint {
   // likely disconnected) Or a stop was requested.
   void receive_data_until_error();
   // Write serial data, returns true on success, false otherwise.
-  [[nodiscard]] bool write_data_serial(const std::vector<uint8_t>& data);
+  [[nodiscard]] bool write_data_serial(const std::vector<uint8_t>& data, uint64_t generation);
+  void write_loop();
 
  private:
   const HWOptions m_options;
-  int m_fd = -1;
+  std::atomic<int> m_fd{-1};
+  // Serialize FD close/reconnect with writes. The reader alone opens/closes.
+  std::mutex m_fd_mutex;
+  std::atomic<bool> m_tx_link_failed{false};
+  std::atomic<uint64_t> m_connection_generation{0};
+  std::mutex m_tx_mutex;
+  std::condition_variable m_tx_cv;
+  SerialTxQueue m_tx_queue;
+  std::unique_ptr<std::thread> m_write_thread;
+  uint64_t m_tx_written = 0, m_tx_write_failed = 0, m_tx_disconnected = 0;
   std::mutex m_connect_receive_thread_mutex;
   std::unique_ptr<std::thread> m_connect_receive_thread = nullptr;
-  bool _stop_requested = false;
+  std::atomic<bool> _stop_requested{false};
   std::shared_ptr<spdlog::logger> m_console;
   // Limit warning console logs to not spam the console
   static constexpr auto MIN_DELAY_BETWEEN_SERIAL_WRITE_FAILED_LOG_MESSAGES =

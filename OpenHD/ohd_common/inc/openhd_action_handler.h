@@ -345,6 +345,12 @@ class LinkActionHandler {
     std::lock_guard<std::mutex> guard(m_last_link_stats_mutex);
     return m_last_link_stats;
   }
+  int64_t get_link_stats_age_ms() {
+    std::lock_guard<std::mutex> guard(m_last_link_stats_mutex);
+    if (m_last_link_stats_time == std::chrono::steady_clock::time_point{}) return -1;
+    return std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now() - m_last_link_stats_time).count();
+  }
   // Sample only on the control thread; do not put indicator I/O in packet paths.
   openhd::link_statistics::StatsAirGround get_fresh_indicator_stats() {
     std::lock_guard<std::mutex> guard(m_last_link_stats_mutex);

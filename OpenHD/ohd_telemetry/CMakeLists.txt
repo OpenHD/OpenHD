@@ -145,6 +145,9 @@ add_test(NAME fc_firmware_detector COMMAND test_fc_firmware_detector)
 
 add_executable(test_serial_endpoint test/test_serial_endpoint.cpp)
 target_link_libraries(test_serial_endpoint OHDTelemetryLib)
+add_executable(test_serial_async test/test_serial_async.cpp)
+target_link_libraries(test_serial_async OHDTelemetryLib util)
+add_test(NAME serial_async COMMAND test_serial_async)
 
 add_executable(test_udp_endpoint test/test_udp_endpoint.cpp)
 target_link_libraries(test_udp_endpoint OHDTelemetryLib)

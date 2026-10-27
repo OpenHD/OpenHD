@@ -60,6 +60,7 @@ std::vector<MavlinkMessage> UartPrioritizer::sort_by_priority(
   std::vector<MavlinkMessage> sorted;
   sorted.reserve(prioritized.size());
   for (auto& entry : prioritized) {
+    entry.first.uart_priority = entry.second;
     sorted.push_back(entry.first);
   }
   return sorted;

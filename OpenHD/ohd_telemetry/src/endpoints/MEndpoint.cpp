@@ -31,11 +31,10 @@
 
 MEndpoint::MEndpoint(std::string tag, bool debug_mavlink_msg_packet_loss)
     : TAG(std::move(tag)),
-      m_mavlink_channel(checkoutFreeChannel()),
       m_debug_mavlink_msg_packet_loss(debug_mavlink_msg_packet_loss) {
   openhd::log::get_default()->debug(
-      "{} using channel:{} debug_mavlink_msg_packet_los:{}", TAG,
-      m_mavlink_channel, m_debug_mavlink_msg_packet_loss);
+      "{} using instance parser debug_mavlink_msg_packet_loss:{}", TAG,
+      m_debug_mavlink_msg_packet_loss);
 }
 
 void MEndpoint::sendMessages(const std::vector<MavlinkMessage>& messages) {
@@ -49,6 +48,10 @@ void MEndpoint::sendMessages(const std::vector<MavlinkMessage>& messages) {
   // openhd::log::create_or_get(TAG)->debug("N messages
   // send:{}",messages.size());
   const auto res = sendMessagesImpl(messages);
+  for (const auto& message : messages)
+    m_diagnostics.record(message.m, res ? TelemetryDiagnostics::TxAccepted
+                                      : TelemetryDiagnostics::TxRejected);
+  m_diagnostics.log_if_due(TAG);
   m_n_messages_sent += messages.size();
   if (!res) {
     m_n_messages_send_failed += messages.size();
@@ -85,8 +88,13 @@ void MEndpoint::parseNewData(const uint8_t* data, const int data_len) {
   std::vector<MavlinkMessage> messages;
   mavlink_message_t msg;
   for (int i = 0; i < data_len; i++) {
-    uint8_t res = openhd_parse_char(m_mavlink_channel, (uint8_t)data[i], &msg,
-                                     &receiveMavlinkStatus);
+    uint8_t framing = MAVLINK_FRAMING_INCOMPLETE;
+    uint8_t res = openhd_parse_buffer(&m_parser_buffer, &m_parser_status, (uint8_t)data[i], &msg,
+                                     &receiveMavlinkStatus, &framing);
+    if (framing == MAVLINK_FRAMING_BAD_CRC)
+      m_diagnostics.record(msg, TelemetryDiagnostics::BadCrc);
+    else if (framing == MAVLINK_FRAMING_BAD_SIGNATURE)
+      m_diagnostics.record(msg, TelemetryDiagnostics::BadSignature);
     if (res) {
       messages.push_back(MavlinkMessage{msg});
       // From
@@ -101,27 +109,23 @@ void MEndpoint::parseNewData(const uint8_t* data, const int data_len) {
     }
   }
   onNewMavlinkMessages(messages);
+  m_diagnostics.log_if_due(TAG);
 }
 
 void MEndpoint::onNewMavlinkMessages(std::vector<MavlinkMessage> messages) {
   if (messages.empty()) return;
+  for (const auto& message : messages)
+    m_diagnostics.record(message.m, TelemetryDiagnostics::Rx);
   // openhd::log::create_or_get(TAG)->debug("N messages
   // receive:{}",messages.size());
   lastMessage = std::chrono::steady_clock::now();
   m_n_messages_received += messages.size();
   if (m_callback != nullptr) {
+    const auto begin = std::chrono::steady_clock::now();
     m_callback(messages);
+    m_diagnostics.callback_time(std::chrono::steady_clock::now() - begin);
   } else {
     openhd::log::get_default()->warn(
         "No callback set,did you forget to add it ?");
   }
-}
-
-int MEndpoint::checkoutFreeChannel() {
-  static std::mutex _channels_used_mutex;
-  static int channel_idx = 0;
-  std::lock_guard<std::mutex> lock(_channels_used_mutex);
-  int ret = channel_idx;
-  channel_idx++;
-  return ret;
 }

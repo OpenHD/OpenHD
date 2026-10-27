@@ -34,6 +34,7 @@
 #include "../mav_helper.h"
 #include "../mav_include.h"
 #include "openhd_spdlog.h"
+#include "TelemetryDiagnostics.h"
 
 // Mavlink Endpoint
 // A Mavlink endpoint hides away the underlying connection - e.g. UART, TCP, WB.
@@ -92,6 +93,7 @@ class MEndpoint {
   // parse new data as it comes in, extract mavlink messages and forward them on
   // the registered callback (if it has been registered)
   void parseNewData(const uint8_t* data, int data_len);
+  void reset_parser() { m_parser_buffer = {}; m_parser_status = {}; }
   // this one is special, since mavsdk in this case has already done the message
   // parsing
   void parseNewDataEmulateForMavsdk(mavlink_message_t msg) {
@@ -109,25 +111,23 @@ class MEndpoint {
   // registered.
   void onNewMavlinkMessages(std::vector<MavlinkMessage> messages);
   mavlink_status_t receiveMavlinkStatus{};
-  const uint8_t m_mavlink_channel;
+  mavlink_message_t m_parser_buffer{};
+  mavlink_status_t m_parser_status{};
   std::chrono::steady_clock::time_point lastMessage{};
   int m_n_messages_received = 0;
   // sendMessage() might be called by different threads.
   std::atomic<int> m_n_messages_sent = 0;
   std::atomic<int> m_n_messages_send_failed = 0;
-  // I think mavlink channels are static, so each endpoint should use his own
-  // channel. Based on mavsdk::mavlink_channels It is not clear what the limit
-  // of the number of channels is, except UINT8_MAX.
-  static int checkoutFreeChannel();
 
  private:
   // Used to measure incoming / outgoing bits per second
-  int m_tx_n_bytes = 0;
+  std::atomic<int> m_tx_n_bytes{0};
   int m_rx_n_bytes = 0;
 
  private:
   const bool m_debug_mavlink_msg_packet_loss;
   mavlink_status_t m_last_status;
+  TelemetryDiagnostics m_diagnostics;
 };
 
 #endif  // XMAVLINKSERVICE_MENDPOINT_H

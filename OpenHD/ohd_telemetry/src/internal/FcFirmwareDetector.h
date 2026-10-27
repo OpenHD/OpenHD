@@ -184,8 +184,23 @@ class FcFirmwareDetector {
       version_requested_ = true;
       deadline_ = now + config_.version_timeout_ms;
     } else {
-      mavlink_msg_param_request_list_pack(sender_system, sender_component, &request,
-          result_.system, result_.component);
+      if (attempts_ == 0) {
+        // One real parameter is sufficient evidence. A list probe can cause
+        // thousands of ArduPilot replies and starve live radio telemetry.
+        const char first_parameter[16]{};
+        mavlink_msg_param_request_read_pack(sender_system, sender_component, &request,
+            result_.system, result_.component, first_parameter, 0);
+      } else if (attempts_ == 1) {
+        // Some INAV versions expose their empty signature only for LIST.
+        // Retain exactly one fallback, never repeatedly restart a full dump.
+        mavlink_msg_param_request_list_pack(sender_system, sender_component, &request,
+            result_.system, result_.component);
+      } else {
+        stage_ = Stage::Done;
+        classify();
+        result_.evidence += "; parameter probes unanswered (bounded fallback)";
+        return requests;
+      }
       parameters_requested_ = true;
       deadline_ = now + config_.parameter_timeout_ms;
     }
@@ -232,7 +247,7 @@ class FcFirmwareDetector {
       result_.evidence = "Conflicting empty and real parameter responses";
     } else if (autopilot_ == MAV_AUTOPILOT_ARDUPILOTMEGA && real_parameters_) {
       result_.firmware = FcFirmware::ARDUPILOT; result_.confidence = "identified";
-      result_.evidence = "ArduPilot heartbeat (3) and real parameter list";
+      result_.evidence = "ArduPilot heartbeat (3) and real parameter response";
     } else if (heartbeat_seen_ && autopilot_ == MAV_AUTOPILOT_GENERIC && valid_version(result_.version)) {
       result_.firmware = FcFirmware::BETAFLIGHT; result_.confidence = "candidate";
       result_.evidence = "Generic heartbeat and valid AUTOPILOT_VERSION; Betaflight candidate only";

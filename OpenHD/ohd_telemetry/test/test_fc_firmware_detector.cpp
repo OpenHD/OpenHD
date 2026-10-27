@@ -39,14 +39,33 @@ void request_version(Detector& d) {
 }
 void request_parameters(Detector& d, int64_t now = 1) {
   const auto requests = d.tick(now);
-  CHECK(requests.size() == 1 && requests[0].msgid == 21);
+  CHECK(requests.size() == 1 && requests[0].msgid == MAVLINK_MSG_ID_PARAM_REQUEST_READ);
   CHECK(requests[0].sysid == 255 && requests[0].compid == 190);
-  mavlink_param_request_list_t value{};
-  mavlink_msg_param_request_list_decode(&requests[0], &value);
+  mavlink_param_request_read_t value{};
+  mavlink_msg_param_request_read_decode(&requests[0], &value);
   CHECK(value.target_system == d.result().system && value.target_component == d.result().component);
+  CHECK(value.param_index == 0);
 }
 int main() {
   try {
+    // Normal ArduPilot detection never starts a parameter dump. INAV retains
+    // one LIST fallback, even when configured for two retries.
+    {
+      auto d = make_detector(); d.receive(heartbeat(3), 0); request_version(d);
+      d.receive(version(0x040601ff), 1); request_parameters(d);
+      d.receive(parameter(false), 2);
+      for (int t = 10; t < 1000; t += 10) CHECK(d.tick(t).empty());
+      CHECK(d.result().firmware == FcFirmware::ARDUPILOT);
+      auto inav = make_detector(); inav.receive(heartbeat(3), 0); request_version(inav);
+      inav.receive(version(0x090000ff), 1); request_parameters(inav);
+      auto fallback = inav.tick(11);
+      CHECK(fallback.size() == 1 && fallback[0].msgid == MAVLINK_MSG_ID_PARAM_REQUEST_LIST);
+      CHECK(inav.tick(21).empty() && inav.tick(31).empty());
+      auto reply = make_detector(); reply.receive(heartbeat(3), 0); request_version(reply);
+      reply.receive(version(0x090000ff), 1); request_parameters(reply); reply.tick(11);
+      reply.receive(parameter(true), 12);
+      CHECK(reply.result().firmware == FcFirmware::INAV);
+    }
     // INAV 8/9 signatures: generic and spoofed ArduPilot heartbeat. No version
     // is inferred from the signature, and the family remains "likely".
     for (int autopilot : {0, 3}) {
@@ -132,11 +151,13 @@ int main() {
     }
     {
       auto d = make_detector(99); d.receive(heartbeat(3), 0);
-      int version_requests = 0, param_requests = 0;
+      int version_requests = 0, param_requests = 0, single_requests = 0;
       for (int t = 0; t < 100; t += 10) for (const auto& request : d.tick(t, 101, 191)) {
-        if (request.msgid == 76) ++version_requests; else if (request.msgid == 21) ++param_requests;
+        if (request.msgid == 76) ++version_requests;
+        else if (request.msgid == 21) ++param_requests;
+        else if (request.msgid == MAVLINK_MSG_ID_PARAM_REQUEST_READ) ++single_requests;
       }
-      CHECK(version_requests == 3 && param_requests == 3);
+      CHECK(version_requests == 3 && param_requests == 1 && single_requests == 1);
       CHECK(d.result().firmware == FcFirmware::UNKNOWN);
       d.receive(parameter(false), 100); d.receive(parameter(false), 110);
       CHECK(d.result().firmware == FcFirmware::ARDUPILOT && d.tick(200, 101, 191).empty());

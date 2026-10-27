@@ -92,57 +92,96 @@ SerialEndpoint::~SerialEndpoint() {
 
 bool SerialEndpoint::sendMessagesImpl(
     const std::vector<MavlinkMessage>& messages) {
-  auto message_buffers = aggregate_pack_messages(messages);
-  bool success = true;
-  for (const auto& message_buffer : message_buffers) {
-    if (!write_data_serial(*message_buffer.aggregated_data)) {
-      success = false;
+  bool accepted = true;
+  {
+    std::lock_guard<std::mutex> lock(m_tx_mutex);
+    if (_stop_requested || m_fd < 0 || m_tx_link_failed) {
+      m_tx_disconnected += messages.size();
+      return false;
+    }
+    for (const auto& message : messages) {
+      if (!m_tx_queue.push(message, SerialTxQueue::Clock::now(), m_connection_generation.load())) accepted = false;
     }
   }
-  return success;
+  m_tx_cv.notify_one();
+  return accepted;  // accepted by the queue, not proof of physical transmission
 }
 
-bool SerialEndpoint::write_data_serial(const std::vector<uint8_t>& data) {
-  // m_console->debug("Write data serial:{} bytes",data.size());
-  if (m_fd == -1) {
-    // cannot send data at the time, UART not setup / doesn't exist. Limit
-    // message to once per second
-    if (!uart_log_warning_once) {
-      m_console->warn("Cannot send data, no fd");
+void SerialEndpoint::write_loop() {
+  auto last_log = std::chrono::steady_clock::now();
+  while (!_stop_requested) {
+    std::optional<SerialTxQueue::Item> item;
+    {
+      std::unique_lock<std::mutex> lock(m_tx_mutex);
+      m_tx_cv.wait_for(lock, std::chrono::milliseconds(100), [this] {
+        return _stop_requested || m_tx_queue.size() != 0;
+      });
+      if (_stop_requested) break;
+      item = m_tx_queue.pop();
     }
-    return false;
-  }
-  const auto before = std::chrono::steady_clock::now();
-  // If we have a fd, but the write fails, most likely the UART disconnected
-  // but the linux driver hasn't noticed it yet.
-  const auto send_len = static_cast<int>(write(m_fd, data.data(), data.size()));
-  const auto send_delta = std::chrono::steady_clock::now() - before;
-  if (send_delta > std::chrono::milliseconds(100)) {
-    const auto send_delta_ms =
-        static_cast<float>(
-            std::chrono::duration_cast<std::chrono::microseconds>(send_delta)
-                .count()) /
-        1000.0f;
-    m_console->warn("UART sending data took {}ms", send_delta_ms);
-  }
-  // m_console->debug("Written {} bytes",send_len);
-  // m_console->debug("{}",MEndpoint::get_tx_rx_stats());
-  if (send_len != data.size()) {
-    m_n_failed_writes++;
-    const auto elapsed_since_last_log =
-        std::chrono::steady_clock::now() - m_last_log_serial_write_failed;
-    if (elapsed_since_last_log >
-        MIN_DELAY_BETWEEN_SERIAL_WRITE_FAILED_LOG_MESSAGES) {
-      m_console->warn("wrote {} instead of {} bytes,n failed:{}", send_len,
-                      data.size(), m_n_failed_writes);
-      m_last_log_serial_write_failed = std::chrono::steady_clock::now();
+    if (item) {
+      if (write_data_serial(item->message.pack(), item->generation)) ++m_tx_written;
+      else ++m_tx_write_failed;
     }
-    return false;
+    const auto now = std::chrono::steady_clock::now();
+    if (now - last_log >= std::chrono::seconds(5)) {
+      size_t queued, high_water;
+      uint64_t dropped, expired, replaced, disconnected;
+      {
+        std::lock_guard<std::mutex> lock(m_tx_mutex);
+        queued = m_tx_queue.size(); high_water = m_tx_queue.high_water;
+        dropped = m_tx_queue.dropped; expired = m_tx_queue.expired;
+        replaced = m_tx_queue.replaced; disconnected = m_tx_disconnected;
+      }
+      m_console->info("serial-tx-v1 fd={} queued={} high_water={} written={} "
+                      "write_failed={} dropped={} expired={} rc_replaced={} disconnected={}",
+                      m_fd.load(), queued, high_water, m_tx_written,
+                      m_tx_write_failed, dropped, expired, replaced, disconnected);
+      last_log = now;
+    }
   }
-  if (TAG == "openhd_uart")
-    openhd::link_usage::Registry::instance().record(
-        "UART", openhd::link_usage::Category::Telemetry, data.size());
-  return true;
+}
+
+bool SerialEndpoint::write_data_serial(const std::vector<uint8_t>& data, uint64_t generation) {
+  std::lock_guard<std::mutex> fd_lock(m_fd_mutex);
+  const int fd = m_fd.load();
+  if (fd < 0 || m_tx_link_failed || _stop_requested ||
+      generation != m_connection_generation.load()) return false;
+  size_t offset = 0;
+  // One nonblocking writer completes each frame before taking another. A stalled
+  // port must not prevent shutdown, nor splice the next frame onto a partial one.
+  const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(500);
+  while (offset < data.size() && !_stop_requested) {
+    const auto count = write(fd, data.data() + offset, data.size() - offset);
+    if (count > 0) {
+      offset += static_cast<size_t>(count);
+      if (TAG == "openhd_uart")
+        openhd::link_usage::Registry::instance().record(
+            "UART", openhd::link_usage::Category::Telemetry, count);
+      continue;
+    }
+    if (count < 0 && errno == EINTR) continue;
+    if (count < 0 && errno != EAGAIN && errno != EWOULDBLOCK) break;
+    if (std::chrono::steady_clock::now() >= deadline) break;
+    struct pollfd pending{fd, POLLOUT, 0};
+    const int result = poll(&pending, 1, 20);
+    if (result < 0 && errno == EINTR) continue;
+    if (result < 0 || (pending.revents & (POLLERR | POLLHUP | POLLNVAL))) break;
+  }
+  if (offset == data.size()) return true;
+  m_tx_link_failed = true;
+  // Never replay queued commands on a reconnected/replaced device.
+  {
+    std::lock_guard<std::mutex> lock(m_tx_mutex);
+    m_tx_queue.clear();
+  }
+  const auto now = std::chrono::steady_clock::now();
+  if (!_stop_requested && now - m_last_log_serial_write_failed >=
+                          MIN_DELAY_BETWEEN_SERIAL_WRITE_FAILED_LOG_MESSAGES) {
+    m_console->warn("serial-tx-v1 incomplete frame bytes={}/{}; reconnecting", offset, data.size());
+    m_last_log_serial_write_failed = now;
+  }
+  return false;
 }
 
 int SerialEndpoint::define_from_baudrate(int baudrate) {
@@ -205,13 +244,8 @@ int SerialEndpoint::setup_port(const SerialEndpoint::HWOptions& options,
     m_console->warn("open failed: {}", GET_ERROR());
     return -1;
   }
-  // We need to clear the O_NONBLOCK again because we can block while reading
-  // as we do it in a separate thread.
-  if (fcntl(fd, F_SETFL, 0) == -1) {
-    m_console->warn("fcntl failed: {}", GET_ERROR());
-    close(fd);
-    return -1;
-  }
+  // Keep O_NONBLOCK: read readiness is polled and the dedicated writer
+  // handles backpressure and short writes without blocking telemetry callers.
   // From
   // https://github.com/mavlink/c_uart_interface_example/blob/master/serial_port.cpp
   if (!isatty(fd)) {
@@ -270,7 +304,13 @@ void SerialEndpoint::connect_and_read_loop() {
       continue;
     }
     // The file exists, so creating the FD should be no problem
-    m_fd = setup_port(m_options, m_console);
+    const int fd = setup_port(m_options, m_console);
+    {
+      std::lock_guard<std::mutex> lock(m_fd_mutex);
+      ++m_connection_generation;
+      m_fd = fd;
+      m_tx_link_failed = false;
+    }
     if (m_fd == -1) {
       // But if it fails, we start over again, checking if at least the linux fd
       // exists
@@ -280,10 +320,18 @@ void SerialEndpoint::connect_and_read_loop() {
     }
     m_console->debug("Successfully created UART fd for: {}",
                      m_options.to_string());
+    reset_parser();
     receive_data_until_error();
     // cleanup and start over again
-    close(m_fd);
-    m_fd = -1;
+    {
+      std::lock_guard<std::mutex> lock(m_fd_mutex);
+      m_tx_link_failed = true;
+      ++m_connection_generation;
+      m_fd = -1;
+      close(fd);
+      std::lock_guard<std::mutex> queue_lock(m_tx_mutex);
+      m_tx_queue.clear();
+    }
   }
 }
 
@@ -297,17 +345,26 @@ void SerialEndpoint::receive_data_until_error() {
   fds[0].events = POLLIN;
   m_n_failed_reads = 0;
   bool warned_once = false;
+  auto last_received = std::chrono::steady_clock::now();
 
   while (!_stop_requested) {
-    const int pollrc = poll(fds, 1, 1000);
+    if (m_tx_link_failed) return;
+    const int pollrc = poll(fds, 1, 100);
     const auto valid = is_serial_fd_still_connected(m_fd);
     if (!valid) {
       m_console->debug("Exiting serial, not connected");
       return;
     }
+    if (pollrc < 0) {
+      if (errno == EINTR) continue;
+      m_console->warn("read poll failure: {}", GET_ERROR());
+      return;
+    }
+    if (fds[0].revents & (POLLERR | POLLHUP | POLLNVAL)) return;
     if (pollrc == 0 || !(fds[0].revents & POLLIN)) {
       m_n_failed_reads++;
-      if (!warned_once && m_options.enable_reading) {
+      if (!warned_once && m_options.enable_reading &&
+          std::chrono::steady_clock::now() - last_received >= std::chrono::seconds(1)) {
         m_console->warn("{} failed reads - FC connected ?", m_n_failed_reads);
         if (TAG == "fc_ser") {
           openhd::Reporter::instance().report_status(
@@ -317,15 +374,13 @@ void SerialEndpoint::receive_data_until_error() {
         warned_once = true;
       }
       continue;
-    } else if (pollrc == -1) {
-      m_console->warn("read poll failure: {}", GET_ERROR());
-      return;
     }
     const int recv_len = static_cast<int>(read(m_fd, buffer, sizeof(buffer)));
     if (recv_len > 0) {
+      last_received = std::chrono::steady_clock::now();
       MEndpoint::parseNewData(buffer, recv_len);
       warned_once = false;
-    } else if (recv_len < 0) {
+    } else if (recv_len < 0 && errno != EAGAIN && errno != EWOULDBLOCK && errno != EINTR) {
       m_console->warn("read failure: {} {}", recv_len, GET_ERROR());
     }
   }
@@ -340,6 +395,7 @@ void SerialEndpoint::start() {
     return;
   }
   _stop_requested = false;
+  m_write_thread = std::make_unique<std::thread>(&SerialEndpoint::write_loop, this);
   m_connect_receive_thread = std::make_unique<std::thread>(
       &SerialEndpoint::connect_and_read_loop, this);
   m_console->debug("start()-end");
@@ -348,7 +404,14 @@ void SerialEndpoint::start() {
 void SerialEndpoint::stop() {
   std::lock_guard<std::mutex> lock(m_connect_receive_thread_mutex);
   m_console->debug("stop()-begin");
-  _stop_requested = true;
+  {
+    std::lock_guard<std::mutex> queue_lock(m_tx_mutex);
+    _stop_requested = true;
+    m_tx_queue.clear();
+  }
+  m_tx_cv.notify_all();
+  if (m_write_thread && m_write_thread->joinable()) m_write_thread->join();
+  m_write_thread.reset();
   if (m_connect_receive_thread && m_connect_receive_thread->joinable()) {
     m_connect_receive_thread->join();
   }

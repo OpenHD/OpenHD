@@ -208,6 +208,25 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mav_wb_stats() {
   // m_console->debug("OHDMainComponent::generate_mav_wb_stats");
   const auto latest_stats =
       openhd::LinkActionHandler::instance().get_link_stats();
+  const auto now = std::chrono::steady_clock::now();
+  if (now - m_last_stats_diagnostic >= std::chrono::seconds(5)) {
+    m_last_stats_diagnostic = now;
+    std::stringstream details;
+    for (size_t i = 0; i < latest_stats.cards.size(); ++i) {
+      const auto& card = latest_stats.cards[i];
+      details << " card=" << i << ",active=" << card.NON_MAVLINK_CARD_ACTIVE
+              << ",type=" << unsigned(card.card_type)
+              << ",rssi=" << int(card.rx_rssi)
+              << ",ant1=" << int(card.rx_rssi_1) << ",ant2=" << int(card.rx_rssi_2)
+              << ",received=" << card.count_p_received << ",metadata=" << card.dummy2;
+    }
+    m_console->info("telemetry-source-v1 sys={} role_air={} ready={} stats_air={} "
+                    "age_ms={} rx_pps={} tx_pps={}{}", m_sys_id, RUNS_ON_AIR,
+                    latest_stats.ready, latest_stats.is_air,
+                    openhd::LinkActionHandler::instance().get_link_stats_age_ms(),
+                    latest_stats.monitor_mode_link.curr_rx_pps,
+                    latest_stats.monitor_mode_link.curr_tx_pps, details.str());
+  }
   if (!latest_stats.ready) {
     // Not yet updated
     return {};
