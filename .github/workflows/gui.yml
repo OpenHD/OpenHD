@@ -48,7 +48,9 @@ jobs:
       - name: Configure integrated GUI
         run: cmake -S OpenHD -B out/gui-windows -G Ninja -DCMAKE_BUILD_TYPE=Release -DOPENHD_PORTABLE_GROUND=ON -DOPENHD_ENABLE_GUI=ON -Dsodium_DIR="$(cygpath -m "$MINGW_PREFIX")"
       - name: Build core and backend tests
-        run: cmake --build out/gui-windows --target openhd_ground test_ground_udp test_ground_pipeline -j 4
+        run: |
+          cmake --build out/gui-windows --target openhd_ground test_ground_udp test_ground_pipeline -j 4
+          objdump -p out/gui-windows/platform/ground/openhd_ground.exe | grep -E 'Subsystem[[:space:]]+00000002'
       - name: Test backend and headless help
         run: ctest --test-dir out/gui-windows -R '^ground_(udp|pipeline|help)$' --output-on-failure
       - name: Package core with Qt runtime
