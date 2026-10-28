@@ -1207,6 +1207,11 @@ bool WBLink::set_air_enable_wb_video_variable_bitrate(int value) {
   // value is read in regular intervals.
   m_settings->unsafe_get_settings().enable_wb_video_variable_bitrate = value;
   m_settings->persist();
+  if (value == 0) {
+    openhd::bandwidth::Store::instance().disable(openhd::bandwidth::Transport::WiFiBroadcast);
+    openhd::LinkActionHandler::instance().action_request_bitrate_change_handle(
+        {0, true, openhd::bandwidth::Transport::WiFiBroadcast, false});
+  }
   return true;
 }
 
@@ -2680,6 +2685,7 @@ void WBLink::wt_perform_rate_adjustment() {
   // Rate adjustment is done on air and only if enabled
   if (!(m_profile.is_air &&
         m_settings->get_settings().enable_wb_video_variable_bitrate)) {
+    openhd::bandwidth::Store::instance().disable(openhd::bandwidth::Transport::WiFiBroadcast);
     return;
   }
   const auto& settings = m_settings->get_settings();
@@ -2773,6 +2779,7 @@ void WBLink::recommend_bitrate_to_encoder(int recommended_video_bitrate_kbits) {
   }
   openhd::LinkActionHandler::LinkBitrateInformation lb{};
   lb.recommended_encoder_bitrate_kbits = recommended_video_bitrate_kbits;
+  lb.transport = openhd::bandwidth::Transport::WiFiBroadcast;
   openhd::LinkActionHandler::instance().action_request_bitrate_change_handle(
       lb);
 }

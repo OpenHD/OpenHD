@@ -1,6 +1,7 @@
 #ifndef OPENHD_LINK_USAGE_HPP
 #define OPENHD_LINK_USAGE_HPP
 
+#include "openhd_ethernet_metrics.hpp"
 #include <algorithm>
 #include <array>
 #include <cstddef>
@@ -8,6 +9,7 @@
 #include <cstdint>
 #include <map>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -28,6 +30,8 @@ struct Sample {
   std::string link_name;
   uint32_t capacity_bps = 0;  // 0 means unknown, never an invented capacity.
   uint32_t total_bps = 0;
+  bool has_ethernet_metrics = false;
+  openhd::ethernet::Metrics ethernet_metrics;
   std::array<uint32_t, 7> category_bps{};
 };
 
@@ -45,11 +49,20 @@ class Registry {
   void remove_link(const std::string& name) {
     std::lock_guard<std::mutex> lock(m_mutex);
     m_links.erase(name);
+    m_latest.erase(name);
   }
   void set_capacity(const std::string& name, uint32_t capacity_bps) {
     std::lock_guard<std::mutex> lock(m_mutex);
     auto it = m_links.find(name);
     if (it != m_links.end()) it->second.capacity_bps = capacity_bps;
+  }
+  void set_ethernet_metrics(uint32_t capacity, const openhd::ethernet::Metrics& metrics) {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    auto it = m_links.find("ETHERNET");
+    if (it == m_links.end()) return;
+    it->second.capacity_bps = capacity;
+    it->second.ethernet_metrics = metrics;
+    it->second.metrics_time = std::chrono::steady_clock::now();
   }
   void record(const std::string& name, Category category, uint64_t bytes) {
     const auto index = static_cast<std::size_t>(category);
@@ -62,6 +75,12 @@ class Registry {
     }
   }
 
+  std::optional<Sample> latest(const std::string& name) {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    const auto found = m_latest.find(name);
+    if (found == m_latest.end() || std::chrono::steady_clock::now() - found->second.second > std::chrono::seconds(3)) return std::nullopt;
+    return found->second.first;
+  }
   std::vector<Sample> sample() {
     std::lock_guard<std::mutex> lock(m_mutex);
     const auto now = std::chrono::steady_clock::now();
@@ -71,7 +90,10 @@ class Registry {
       // A configured secondary transport is not necessarily connected. Only
       // advertise it after recent outbound traffic; the WiFi primary remains
       // visible even while idle.
-      if (name != "WIFIBROADCAST" &&
+      const bool ethernet_metrics_fresh = name == "ETHERNET" &&
+          counter.metrics_time != std::chrono::steady_clock::time_point{} &&
+          now - counter.metrics_time < std::chrono::seconds(3);
+      if (name != "WIFIBROADCAST" && !ethernet_metrics_fresh &&
           (counter.last_activity == std::chrono::steady_clock::time_point{} ||
            now - counter.last_activity > std::chrono::seconds(3))) {
         counter.last_sample = now;
@@ -84,6 +106,8 @@ class Registry {
       Sample sample{};
       sample.link_name = name;
       sample.capacity_bps = counter.capacity_bps;
+      sample.has_ethernet_metrics = ethernet_metrics_fresh;
+      if (ethernet_metrics_fresh) sample.ethernet_metrics = counter.ethernet_metrics;
       uint64_t total = 0;
       for (std::size_t i = 1; i < sample.category_bps.size(); ++i) {
         const auto delta = counter.bytes[i] - counter.previous_bytes[i];
@@ -96,6 +120,7 @@ class Registry {
       sample.total_bps = static_cast<uint32_t>(
           std::min<uint64_t>(total, UINT32_MAX));
       counter.last_sample = now;
+      m_latest[name] = {sample, now};
       result.push_back(sample);
     }
     return result;
@@ -104,6 +129,8 @@ class Registry {
  private:
   struct Counter {
     uint32_t capacity_bps = 0;
+    openhd::ethernet::Metrics ethernet_metrics;
+    std::chrono::steady_clock::time_point metrics_time{};
     std::array<uint64_t, 7> bytes{};
     std::array<uint64_t, 7> previous_bytes{};
     std::chrono::steady_clock::time_point last_sample =
@@ -112,6 +139,7 @@ class Registry {
   };
   std::mutex m_mutex;
   std::map<std::string, Counter> m_links;
+  std::map<std::string, std::pair<Sample, std::chrono::steady_clock::time_point>> m_latest;
 };
 
 }  // namespace openhd::link_usage

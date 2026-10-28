@@ -4,6 +4,9 @@ on:
   push:
     branches: [openhd-3.0]
   workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
 jobs:
   ground:
     runs-on: windows-latest
@@ -44,5 +47,74 @@ jobs:
           cp -r "$MINGW_PREFIX"/share/licenses/{libusb,libsodium} out/windows-ground-package/
       - uses: actions/upload-artifact@v7
         with:
-          name: openhd-windows-ground
+          name: openhd-windows-ground-Unsigned
           path: out/windows-ground-package
+          if-no-files-found: error
+
+  test-sign:
+    name: Sign Windows ground backend (test certificate)
+    if: github.repository == 'OpenHD/OpenHD' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    needs: ground
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Validate test signing configuration
+        shell: pwsh
+        env:
+          SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
+          SIGNPATH_TEST_CERTIFICATE_BASE64: ${{ vars.SIGNPATH_TEST_CERTIFICATE_BASE64 }}
+        run: |
+          foreach ($name in @('SIGNPATH_API_TOKEN', 'SIGNPATH_TEST_CERTIFICATE_BASE64')) {
+            if ([string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($name))) {
+              throw "Missing required setting: $name"
+            }
+          }
+      - uses: actions/download-artifact@v4
+        with:
+          name: openhd-windows-ground-Unsigned
+          path: out/windows-ground-package
+      - name: Upload executable for origin-verified signing
+        id: unsigned
+        uses: actions/upload-artifact@v4
+        with:
+          name: openhd-ground-unsigned-executable
+          path: out/windows-ground-package/openhd_ground.exe
+          if-no-files-found: error
+          retention-days: 7
+      - name: Request test signature
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: 630b3214-208a-4670-bfa3-1955f878b88c
+          project-slug: OpenHD
+          signing-policy-slug: test-signing
+          artifact-configuration-slug: windows-ground-test
+          github-artifact-id: ${{ steps.unsigned.outputs.artifact-id }}
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 1800
+          output-artifact-directory: out/signed-ground
+      - name: Verify signature and package test executable
+        shell: pwsh
+        env:
+          TEST_CERTIFICATE_BASE64: ${{ vars.SIGNPATH_TEST_CERTIFICATE_BASE64 }}
+        run: |
+          & scripts/trust_signpath_test_certificate.ps1 -CertificateBase64 $Env:TEST_CERTIFICATE_BASE64
+          # GITHUB_ENV becomes available to later steps, so read the pin directly here.
+          $certificate = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new(
+            [Convert]::FromBase64String($Env:TEST_CERTIFICATE_BASE64))
+          try {
+            & scripts/verify_windows_signature.ps1 -Path out/signed-ground/openhd_ground.exe `
+              -SigningMode test -ExpectedSignerThumbprint $certificate.Thumbprint
+          } finally {
+            $certificate.Dispose()
+          }
+          Copy-Item -LiteralPath out/signed-ground/openhd_ground.exe -Destination out/windows-ground-package/openhd_ground.exe -Force
+          'Experimental test-signed build. The certificate is not publicly trusted. Not a production release.' |
+            Set-Content out/windows-ground-package/TEST-SIGNED.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openhd-windows-ground-Test-Signed
+          path: out/windows-ground-package
+          if-no-files-found: error

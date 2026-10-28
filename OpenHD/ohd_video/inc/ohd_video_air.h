@@ -76,6 +76,10 @@ class OHDVideoAir {
  private:
   // All the created camera streams
   std::vector<std::shared_ptr<CameraStream>> m_camera_streams;
+  openhd::bandwidth::Allocator m_bandwidth_allocator;
+  std::mutex m_bandwidth_mutex;
+  std::array<std::atomic<int64_t>, 2> m_last_video_frame_ms{};
+  void apply_bandwidth_allocation(openhd::LinkActionHandler::LinkBitrateInformation lb);
   std::shared_ptr<GstAudioStream> m_audio_stream;
   std::shared_ptr<spdlog::logger> m_console;
   std::shared_ptr<OHDLink> m_link_handle;

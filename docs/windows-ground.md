@@ -79,6 +79,36 @@ keep the packaged libusb, libsodium, libstdc++, libgcc and libwinpthread DLLs
 beside the executable. Normal Linux builds keep their existing entry point and
 startup behavior.
 
+## Automatic SignPath test signing
+
+The **Windows ground backend** workflow on `openhd-3.0` already builds, tests,
+and packages the Windows executable. Every push to `openhd-3.0` in the canonical
+repository and every manual run automatically requests test signing. Pull requests
+and forks produce only `openhd-windows-ground-Unsigned`, without signing credentials.
+The additional job signs only `openhd_ground.exe`, verifies
+its timestamped signature against the configured test certificate, then publishes
+`openhd-windows-ground-Test-Signed` with the runtime DLLs and documentation.
+This is an experimental build signed by a test certificate, not a publicly
+trusted production release. It does not activate the pending release certificate.
+Missing signing configuration or a rejected signing request fails the signing job;
+there is no silent fallback to a successful unsigned build.
+
+Required setup in the existing OpenHD SignPath project and GitHub repository:
+
+1. Add an artifact configuration with slug `windows-ground-test`, using
+   `.github/signpath/windows-ground-test.xml`. This test configuration accepts
+   the uploaded ZIP containing only our executable, leaving upstream DLLs unsigned.
+2. Give the CI submitter access to the `test-signing` policy, and store its token
+   in the repository Actions secret `SIGNPATH_API_TOKEN`.
+3. Export the public test certificate as DER, base64-encode it, and store it in
+   the repository Actions variable `SIGNPATH_TEST_CERTIFICATE_BASE64`.
+
+The signing job temporarily trusts that pinned public certificate only on its
+ephemeral GitHub-hosted runner to validate the signature; it does not execute
+the returned binary or change trust on users' computers. It builds the workflow
+revision from the canonical OpenHD repository and uses the GitHub artifact ID
+for [SignPath origin verification](https://docs.signpath.io/trusted-build-systems/github).
+
 ## Optional headless operation
 
 The original CLI remains available for scripts and diagnostics:

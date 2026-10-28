@@ -17,6 +17,7 @@ class CameraProcess : public CameraStream {
   ~CameraProcess();
   void start_looping() override;
   void terminate_looping() override;
+  int minimum_link_bitrate_kbits() const override { return m_backend == Backend::Libcamera ? 2000 : CameraStream::minimum_link_bitrate_kbits(); }
   void handle_change_bitrate_request(
       openhd::LinkActionHandler::LinkBitrateInformation lb) override;
   void handle_update_arming_state(bool armed) override;

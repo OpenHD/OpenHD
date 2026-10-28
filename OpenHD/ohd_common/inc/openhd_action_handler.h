@@ -24,6 +24,7 @@
 #ifndef OPENHD_OPENHD_OHD_COMMON_OPENHD_ACTION_HANDLER_HPP_
 #define OPENHD_OPENHD_OHD_COMMON_OPENHD_ACTION_HANDLER_HPP_
 
+#include "openhd_bandwidth_allocation.hpp"
 #include <atomic>
 #include <chrono>
 #include <functional>
@@ -126,6 +127,8 @@ class LinkActionHandler {
     // setting remains the user-selected ceiling and can still be changed at
     // runtime; the link only applies a temporary encoder limit beneath it.
     bool is_link_capacity_limit = false;
+    openhd::bandwidth::Transport transport = openhd::bandwidth::Transport::Unknown;
+    bool dynamic_enabled = true;
   };
   typedef std::function<void(LinkBitrateInformation link_bitrate_info)>
       ACTION_REQUEST_BITRATE_CHANGE;

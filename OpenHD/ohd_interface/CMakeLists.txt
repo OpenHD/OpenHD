@@ -414,3 +414,9 @@ set(OPENHD_INTERFACE_TEST_TARGETS
 foreach(test_target IN LISTS OPENHD_INTERFACE_TEST_TARGETS)
     target_sources(${test_target} PRIVATE ../ohd_common/src/config_paths.cpp)
 endforeach()
+
+# Standalone Ethernet diagnostics tests require no radio hardware.
+add_executable(test_ethernet_metrics test/test_ethernet_metrics.cpp)
+target_include_directories(test_ethernet_metrics PRIVATE inc ../ohd_common/inc)
+target_link_libraries(test_ethernet_metrics PRIVATE Threads::Threads)
+target_compile_options(test_ethernet_metrics PRIVATE -UNDEBUG)

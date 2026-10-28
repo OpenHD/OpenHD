@@ -58,6 +58,7 @@ class OHDLink {
   virtual ~OHDLink() = default;
 
   // Usage accounting only includes payloads accepted by this transport.
+  virtual bool records_own_usage() const { return false; }
   virtual bool usage_tx_available() { return true; }
   virtual bool usage_supports_video(int) { return true; }
   virtual bool usage_supports_audio() { return true; }

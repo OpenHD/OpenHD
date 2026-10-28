@@ -32,6 +32,7 @@
 #include <thread>
 
 #include "non_wb_video_bitrate_meter.h"
+#include "ethernet_peer_probe.h"
 #include "openhd_config.h"
 #include "openhd_link.hpp"
 #include "openhd_udp.h"
@@ -50,10 +51,13 @@ class EthernetLink : public OHDLink {
       int stream_index,
       const openhd::FragmentedVideoFrame& fragmented_video_frame) override;
   void transmit_audio_data(const openhd::AudioPacket& audio_packet) override;
+  bool records_own_usage() const override { return true; }
   bool usage_tx_available() override;
   bool usage_supports_audio() override { return false; }
 
  private:
+  std::unique_ptr<EthernetPeerProbe> m_peer_probe;
+  std::atomic<uint64_t> m_send_errors{0};
   OHDProfile m_profile;
   openhd::Config m_config;
   // Configuration variables (defaults if not overridden)
@@ -84,7 +88,7 @@ class EthernetLink : public OHDLink {
   void stats_loop();
   void update_link_stats();
 
-  void handle_video_data(int stream_index, const uint8_t* data, int data_len);
+  void handle_video_data(int stream_index, const uint8_t* data, int data_len, int wire_size);
   void handle_telemetry_data(const uint8_t* data, int data_len);
 
   bool m_auto_discovery = false;

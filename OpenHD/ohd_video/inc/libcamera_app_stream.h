@@ -19,6 +19,7 @@ class LibcameraAppStream final : public CameraStream {
   void terminate_looping() override;
   int recording_setting() const { return m_recording_setting.load(); }
 
+  int minimum_link_bitrate_kbits() const override { return 2000; }
   void handle_change_bitrate_request(
       openhd::LinkActionHandler::LinkBitrateInformation lb) override;
 

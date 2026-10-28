@@ -12,11 +12,11 @@
           "value": 1
         }
       ],
-      "description": "Recommend a matching bitrate to the encoder depending on the selected link parameters,and reduce bitrate on TX errors (failed injections). On by default, but only works on select cameras. On Cameras thatdon't support changing the bitrate / are bad at targeting a given bitrate, you have to adjust your link according to your camera needs.",
+      "description": "Automatically allocate the WiFiBroadcast video pool using its MCS/FEC-derived capacity, measured priority and fixed traffic, and encoder capabilities. Does not enable loss or TX-drop-driven rate reduction. Disabled preserves manual bitrate settings.",
       "group": "General",
       "hidden": true,
       "id": "VARIABLE_BITRATE",
-      "label": "VARIABLE_BITRATE",
+      "label": "Dynamic Link Bitrate",
       "maximum": 1,
       "minimum": 0,
       "readOnly": false,
@@ -3248,11 +3248,11 @@
       "type": "int32"
     },
     {
-      "description": "If Variable bitrate is enabled,your primary camera is given that much percentage of the total available link bandwidth. The rest is given to the secondary camera. Default to 60% (60:40 split).",
+      "description": "Primary controllable camera share of the dynamic video pool (10-90 percent). The other controllable camera receives the remainder. A single controllable camera receives 100 percent without changing this saved preference.",
       "group": "General",
       "hidden": false,
       "id": "V_PRIMARY_PERC",
-      "label": "V_PRIMARY_PERC",
+      "label": "Primary dynamic pool share",
       "readOnly": false,
       "requiresReboot": false,
       "type": "runtime"

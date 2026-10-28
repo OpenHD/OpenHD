@@ -83,6 +83,7 @@ class GStreamerStream : public CameraStream {
   void stop();
   // Set gst state to GST_STATE_NULL and properly cleanup the pipeline.
   void cleanup_pipe();
+  int minimum_link_bitrate_kbits() const override { return clamp_runtime_bitrate(*m_camera_holder, 0); }
   void handle_change_bitrate_request(
       openhd::LinkActionHandler::LinkBitrateInformation lb) override;
   void handle_change_qp_request(int qp_min, int qp_max);

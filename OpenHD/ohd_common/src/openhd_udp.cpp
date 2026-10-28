@@ -42,7 +42,7 @@ sockaddr_in destination(const std::string& address, int port) {
     throw std::invalid_argument("Invalid IPv4 address: " + address);
   return result;
 }
-void send_packet(openhd::net::Socket socket, const sockaddr_in& address,
+bool send_packet(openhd::net::Socket socket, const sockaddr_in& address,
                  const uint8_t* packet, std::size_t size) {
   if (size > openhd::UDPReceiver::UDP_PACKET_MAX_SIZE)
     throw std::invalid_argument("UDP datagram too large");
@@ -51,6 +51,7 @@ void send_packet(openhd::net::Socket socket, const sockaddr_in& address,
                            reinterpret_cast<const sockaddr*>(&address), sizeof(address));
   if (sent < 0 || static_cast<std::size_t>(sent) != size)
     get_console()->warn("UDP send failed: {}", openhd::net::error_message());
+  return sent >= 0 && static_cast<std::size_t>(sent) == size;
 }
 }
 
@@ -63,8 +64,8 @@ openhd::UDPForwarder::UDPForwarder(std::string address, int port)
     throw std::runtime_error("UDP socket: " + net::error_message());
 }
 openhd::UDPForwarder::~UDPForwarder() { net::close_socket(sockfd); }
-void openhd::UDPForwarder::forwardPacketViaUDP(const uint8_t* packet, std::size_t size) const {
-  send_packet(sockfd, saddr, packet, size);
+bool openhd::UDPForwarder::forwardPacketViaUDP(const uint8_t* packet, std::size_t size) const {
+  return send_packet(sockfd, saddr, packet, size);
 }
 
 void openhd::UDPMultiForwarder::addForwarder(const std::string &client_addr,

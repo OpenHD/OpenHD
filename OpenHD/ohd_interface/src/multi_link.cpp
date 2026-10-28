@@ -232,7 +232,7 @@ void MultiLink::dispatch_loop(const EndpointPtr& endpoint) {
                                   ? openhd::link_usage::Category::Control
                                   : openhd::link_usage::Category::Telemetry;
         const auto bytes = telemetry.data ? telemetry.data->size() : 0;
-        const bool count_usage = endpoint->link->usage_tx_available();
+        const bool count_usage = !endpoint->link->records_own_usage() && endpoint->link->usage_tx_available();
         endpoint->link->transmit_telemetry_data(std::move(telemetry));
         if (count_usage) {
           openhd::link_usage::Registry::instance().record(endpoint->name,
@@ -248,7 +248,7 @@ void MultiLink::dispatch_loop(const EndpointPtr& endpoint) {
             if (fragment) bytes += fragment->size();
           }
         }
-        const bool count_usage = endpoint->link->usage_tx_available() &&
+        const bool count_usage = !endpoint->link->records_own_usage() && endpoint->link->usage_tx_available() &&
             endpoint->link->usage_supports_video(video.stream_index);
         endpoint->link->transmit_video_data(video.stream_index, video.frame);
         if (count_usage)
@@ -261,7 +261,7 @@ void MultiLink::dispatch_loop(const EndpointPtr& endpoint) {
               bytes);
       }
       if (has_audio) {
-        const bool count_usage = endpoint->link->usage_tx_available() &&
+        const bool count_usage = !endpoint->link->records_own_usage() && endpoint->link->usage_tx_available() &&
             endpoint->link->usage_supports_audio();
         endpoint->link->transmit_audio_data(audio);
         if (count_usage)

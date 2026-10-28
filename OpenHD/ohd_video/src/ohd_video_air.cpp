@@ -22,6 +22,7 @@
  ******************************************************************************/
 
 #include "ohd_video_air.h"
+#include "openhd_link_usage.hpp"
 
 #include <algorithm>
 #include <utility>
@@ -334,7 +335,8 @@ std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
           openhd::IntSetting{m_generic_settings->get_settings()
                                  .ip_camera_bitrate_mbits,
                              cb}});
-    } else {
+    }
+    {
       auto cb = [this](std::string, int value) {
         if (!is_valid_dualcam_primary_video_allocated_bandwidth(value))
           return false;
@@ -458,6 +460,10 @@ std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
 
 void OHDVideoAir::handle_change_bitrate_request(
     openhd::LinkActionHandler::LinkBitrateInformation lb) {
+  if (lb.transport == openhd::bandwidth::Transport::WiFiBroadcast) {
+    apply_bandwidth_allocation(lb);
+    return;
+  }
   if (m_camera_streams.size() == 1) {
     m_camera_streams[0]->handle_change_bitrate_request(lb);
     return;
@@ -512,6 +518,45 @@ void OHDVideoAir::handle_change_bitrate_request(
   m_console->warn("openhd should always have either 1 or 2 cameras");
 }
 
+void OHDVideoAir::apply_bandwidth_allocation(openhd::LinkActionHandler::LinkBitrateInformation lb) {
+  using namespace openhd::bandwidth;
+  std::lock_guard<std::mutex> lock(m_bandwidth_mutex);
+  if (!lb.dynamic_enabled) {
+    for (const auto& stream : m_camera_streams) {
+      const auto index = stream->m_camera_holder->get_camera().index;
+      if (openhd::LinkActionHandler::instance().get_cam_info(index).supports_variable_bitrate)
+        stream->handle_change_bitrate_request({stream->m_camera_holder->get_settings().h26x_bitrate_kbits, true});
+    }
+    return;
+  }
+  const auto now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+  const auto usage = openhd::link_usage::Registry::instance().latest("WIFIBROADCAST");
+  const auto measured = [&](unsigned category) { return usage ? int((uint64_t(usage->category_bps[category]) + 999) / 1000) : 0; };
+  std::vector<Consumer> consumers;
+  // Only traffic actually assigned to this transport consumes its reservation.
+  consumers.push_back({10, Transport::WiFiBroadcast, Priority::Essential, Control::Fixed, true, bool(usage), measured(4) + measured(6)});
+  consumers.push_back({11, Transport::WiFiBroadcast, Priority::Media, Control::Fixed, measured(3) + measured(5) > 0, bool(usage), measured(3) + measured(5)});
+  const unsigned primary_percent = m_generic_settings->get_settings().dualcam_primary_video_allocated_bandwidth_perc;
+  for (unsigned i = 0; i < m_camera_streams.size() && i < 2; ++i) {
+    const auto& stream = m_camera_streams[i];
+    const auto info = openhd::LinkActionHandler::instance().get_cam_info(i);
+    const bool active = m_last_video_frame_ms[i].load() > 0 && now - m_last_video_frame_ms[i].load() < 3000;
+    const bool controllable = info.supports_variable_bitrate != 0;
+    const auto maximum = std::min(stream->m_camera_holder->get_max_video_bitrate_kbits(), stream->m_camera_holder->get_settings().h26x_bitrate_kbits);
+    consumers.push_back({i, Transport::WiFiBroadcast, Priority::Media, controllable ? Control::Dynamic : Control::Fixed,
+        active, bool(usage) && measured(i + 1) > 0, measured(i + 1),
+        stream->minimum_link_bitrate_kbits(), maximum, i == 0 ? primary_percent : 100 - primary_percent});
+  }
+  auto snapshot = m_bandwidth_allocator.calculate(Transport::WiFiBroadcast, lb.recommended_encoder_bitrate_kbits, bool(usage), consumers, now);
+  Store::instance().publish(Transport::WiFiBroadcast, snapshot);
+  if (!snapshot.available) return;
+  for (unsigned i = 0; i < m_camera_streams.size() && i < 2; ++i) {
+    const auto& budget = snapshot.streams[i];
+    if (budget.active && budget.controllable)
+      m_camera_streams[i]->handle_change_bitrate_request({budget.kbits, true, Transport::WiFiBroadcast});
+  }
+}
+
 void OHDVideoAir::start_stop_forwarding_external_device(
     openhd::ExternalDevice external_device, bool connected) {
   // Native LTE owns the fleet upload. A TCP telemetry client must not create
@@ -545,6 +590,7 @@ void OHDVideoAir::on_video_data(
     m_console->debug("Invalid stream index: {}", stream_index);
     return;
   }
+  m_last_video_frame_ms[stream_index] = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
   if (m_link_handle) {
     m_link_handle->transmit_video_data(stream_index, fragmented_video_frame);
   }

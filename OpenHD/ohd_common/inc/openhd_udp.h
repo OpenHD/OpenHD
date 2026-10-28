@@ -50,7 +50,7 @@ class UDPForwarder {
   UDPForwarder(const UDPForwarder &) = delete;
   UDPForwarder &operator=(const UDPForwarder &) = delete;
   ~UDPForwarder();
-  void forwardPacketViaUDP(const uint8_t *packet, std::size_t packetSize) const;
+  bool forwardPacketViaUDP(const uint8_t *packet, std::size_t packetSize) const;
 
  private:
   struct sockaddr_in saddr {};

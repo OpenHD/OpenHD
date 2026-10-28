@@ -44,6 +44,7 @@
 
 #include "config_paths.h"
 #include "openhd_action_handler.h"
+#include "openhd_link_usage.hpp"
 #include "openhd_config.h"
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"
@@ -235,6 +236,38 @@ std::vector<std::string> ethernet_interface_names(
   return interfaces;
 }
 
+// Ask the kernel which local interface routes to this peer. Only advertise the
+// negotiated speed of that interface, never a guessed 100/1000 Mbit capacity.
+uint32_t peer_port_speed(const std::string& peer) {
+  const int fd = socket(AF_INET, SOCK_DGRAM, 0);
+  if (fd < 0) return 0;
+  sockaddr_in remote{}, local{}; remote.sin_family = AF_INET; remote.sin_port = htons(5920);
+  socklen_t size = sizeof(local);
+  const bool routed = inet_pton(AF_INET, peer.c_str(), &remote.sin_addr) == 1 &&
+      connect(fd, reinterpret_cast<sockaddr*>(&remote), sizeof(remote)) == 0 &&
+      getsockname(fd, reinterpret_cast<sockaddr*>(&local), &size) == 0;
+  close(fd);
+  if (!routed) return 0;
+  ifaddrs* interfaces = nullptr;
+  if (getifaddrs(&interfaces) != 0) return 0;
+  uint32_t result = 0;
+  for (auto* current = interfaces; current; current = current->ifa_next) {
+    if (!current->ifa_addr || current->ifa_addr->sa_family != AF_INET) continue;
+    const auto* address = reinterpret_cast<const sockaddr_in*>(current->ifa_addr);
+    if (address->sin_addr.s_addr != local.sin_addr.s_addr) continue;
+    if ((current->ifa_flags & IFF_LOOPBACK) || !has_carrier(current->ifa_name)) break;
+    const auto speed = OHDFilesystemUtil::opt_read_file(
+        std::string("/sys/class/net/") + current->ifa_name + "/speed", false);
+    try {
+      const auto mbps = speed ? std::stoll(*speed) : 0;
+      if (mbps > 0) result = static_cast<uint32_t>(std::min<int64_t>(UINT32_MAX, mbps * 1000000));
+    } catch (...) {}
+    break;
+  }
+  freeifaddrs(interfaces);
+  return result;
+}
+
 std::optional<std::pair<int, int>> parse_discovery_pong(
     const std::string& payload) {
   std::istringstream stream(payload);
@@ -326,12 +359,17 @@ void EthernetLink::initialize(bool auto_discovery) {
   if (m_auto_discovery) {
     start_discovery();
   }
+  m_peer_probe = std::make_unique<EthernetPeerProbe>(m_profile.is_air, [this] {
+    std::lock_guard<std::mutex> lock(m_forwarders_mutex);
+    return m_peer_ip;
+  });
   start_stats_thread();
 }
 
 EthernetLink::~EthernetLink() {
   stop_discovery();
   stop_stats_thread();
+  m_peer_probe.reset();
   // Stop background receivers
   if (m_video_rx) m_video_rx->stopBackground();
   if (m_telemetry_rx) m_telemetry_rx->stopBackground();
@@ -355,7 +393,7 @@ void EthernetLink::initialize_ground_unit() {
   m_video_rx = std::make_unique<openhd::UDPReceiver>(
       "0.0.0.0", VIDEO_PORT, [this](const uint8_t* data, std::size_t len) {
         const auto fragment = demux_video_fragment(data, len);
-        handle_video_data(fragment.stream_index, fragment.data, fragment.size);
+        handle_video_data(fragment.stream_index, fragment.data, fragment.size, len);
       });
 
   if (!m_auto_discovery) {
@@ -411,7 +449,7 @@ void EthernetLink::configure_peer(const std::string& peer_ip, int video_port,
           [this](const uint8_t* data, std::size_t len) {
             const auto fragment = demux_video_fragment(data, len);
             handle_video_data(fragment.stream_index, fragment.data,
-                              fragment.size);
+                              fragment.size, len);
           });
       m_telemetry_rx = std::make_unique<openhd::UDPReceiver>(
           "0.0.0.0", TELEMETRY_PORT,
@@ -681,7 +719,11 @@ void EthernetLink::transmit_telemetry_data(TelemetryTxPacket packet) {
     telemetry_tx = m_telemetry_tx;
   }
   if (telemetry_tx) {
-    telemetry_tx->forwardPacketViaUDP(packet.data->data(), packet.data->size());
+    try { if (!telemetry_tx->forwardPacketViaUDP(packet.data->data(), packet.data->size())) { ++m_send_errors; return; } }
+    catch (...) { ++m_send_errors; return; }
+    openhd::link_usage::Registry::instance().record("ETHERNET",
+        packet.packet_type == TelemetryPacketType::RC ? openhd::link_usage::Category::Control : openhd::link_usage::Category::Telemetry,
+        packet.data->size());
     m_tx_total_bytes.fetch_add(static_cast<uint64_t>(packet.data->size()),
                                std::memory_order_relaxed);
     m_tx_total_packets.fetch_add(1, std::memory_order_relaxed);
@@ -703,7 +745,11 @@ void EthernetLink::transmit_video_data(
   if (video_tx) {
     for (const auto& fragment : fragmented_video_frame.rtp_fragments) {
       const auto packet = mux_video_fragment(stream_index, *fragment);
-      video_tx->forwardPacketViaUDP(packet.data(), packet.size());
+      try { if (!video_tx->forwardPacketViaUDP(packet.data(), packet.size())) { ++m_send_errors; continue; } }
+      catch (...) { ++m_send_errors; continue; }
+      openhd::link_usage::Registry::instance().record("ETHERNET",
+          stream_index == 0 ? openhd::link_usage::Category::Camera1 : openhd::link_usage::Category::Camera2,
+          packet.size());
       m_video_bitrate_meter.on_tx_fragment(
           stream_index, static_cast<uint64_t>(fragment->size()));
       m_tx_total_bytes.fetch_add(static_cast<uint64_t>(packet.size()),
@@ -731,8 +777,8 @@ bool EthernetLink::usage_tx_available() {
 }
 
 void EthernetLink::handle_video_data(int stream_index, const uint8_t* data,
-                                     int data_len) {
-  m_rx_total_bytes.fetch_add(static_cast<uint64_t>(data_len),
+                                     int data_len, int wire_size) {
+  m_rx_total_bytes.fetch_add(static_cast<uint64_t>(wire_size),
                              std::memory_order_relaxed);
   m_rx_total_packets.fetch_add(1, std::memory_order_relaxed);
   m_last_rx_packet_ts_ms.store(openhd::util::steady_clock_time_epoch_ms(),
@@ -777,11 +823,6 @@ void EthernetLink::stats_loop() {
 }
 
 void EthernetLink::update_link_stats() {
-  // WB publishes its own detailed video stats. Never overwrite if WB is active.
-  if (openhd::LinkActionHandler::instance().wb_get_supported_channels !=
-      nullptr) {
-    return;
-  }
   const int64_t now_ms = openhd::util::steady_clock_time_epoch_ms();
   if (m_last_stats_ts_ms == 0) {
     m_last_stats_ts_ms = now_ms;
@@ -845,6 +886,18 @@ void EthernetLink::update_link_stats() {
   const int64_t rx_tele_pps =
       static_cast<int64_t>((d_rx_tele_packets * scale) / dt_ms);
 
+  openhd::ethernet::Metrics metrics;
+  metrics.tx_bps = openhd::ethernet::rate(d_tx_bytes, dt_ms, 8000);
+  metrics.rx_bps = openhd::ethernet::rate(d_rx_bytes, dt_ms, 8000);
+  metrics.tx_pps = openhd::ethernet::rate(d_tx_packets, dt_ms, 1000);
+  metrics.rx_pps = openhd::ethernet::rate(d_rx_packets, dt_ms, 1000);
+  const auto errors = m_send_errors.load();
+  metrics.send_errors = static_cast<uint32_t>(std::min<uint64_t>(UINT32_MAX, errors));
+  if (m_peer_probe) m_peer_probe->apply(metrics);
+  std::string peer;
+  { std::lock_guard<std::mutex> lock(m_forwarders_mutex); peer = m_peer_ip; }
+  openhd::link_usage::Registry::instance().set_ethernet_metrics(peer_port_speed(peer), metrics);
+
   m_last_stats_ts_ms = now_ms;
   m_last_stats_tx_bytes = tx_bytes;
   m_last_stats_tx_packets = tx_packets;
@@ -854,6 +907,9 @@ void EthernetLink::update_link_stats() {
   m_last_stats_tx_tele_packets = tx_tele_packets;
   m_last_stats_rx_tele_bytes = rx_tele_bytes;
   m_last_stats_rx_tele_packets = rx_tele_packets;
+
+  // Ethernet metrics above are independent of the WB compatibility snapshot.
+  if (openhd::LinkActionHandler::instance().wb_get_supported_channels != nullptr) return;
 
   openhd::link_statistics::StatsAirGround stats{};
   stats.is_air = m_profile.is_air;

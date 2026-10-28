@@ -339,6 +339,38 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mav_link_usage_stats() {
       payload.data[offset] = category;
       put_u32(payload.data, offset + 1, sample.category_bps[category]);
     }
+    if (link_id == 1) {
+      auto allocation = openhd::bandwidth::Store::instance().read(openhd::bandwidth::Transport::WiFiBroadcast);
+      if (!allocation.enabled) {
+        for (unsigned i = 0; i < 2; ++i) {
+          const auto info = openhd::LinkActionHandler::instance().get_cam_info(i);
+          allocation.streams[i].active = info.active && info.cam_status == 1;
+          allocation.streams[i].controllable = info.supports_variable_bitrate != 0;
+          allocation.streams[i].kbits = 0;
+        }
+      }
+      std::memcpy(payload.data + 46, "BWA1", 4);
+      const uint32_t fields[] = {uint32_t(allocation.capacity_kbits), uint32_t(allocation.priority_kbits),
+          uint32_t(allocation.fixed_kbits), uint32_t(allocation.safety_kbits), uint32_t(allocation.pool_kbits),
+          uint32_t(allocation.fixed_measured_kbits), uint32_t((allocation.available ? 1 : 0) | (allocation.overcommitted ? 2 : 0) | (allocation.waiting ? 4 : 0) | (allocation.enabled ? 8 : 0))};
+      for (std::size_t i = 0; i < 7; ++i) put_u32(payload.data, 50 + i * 4, fields[i]);
+      for (unsigned i = 0; i < 2; ++i) {
+        const auto& stream = allocation.streams[i];
+        payload.data[78 + i * 6] = (stream.active ? 1 : 0) | (stream.controllable ? 2 : 0);
+        payload.data[79 + i * 6] = stream.percent;
+        put_u32(payload.data, 80 + i * 6, stream.kbits);
+      }
+      payload.len = 90;
+    }
+    if (sample.has_ethernet_metrics) {
+      const auto& metrics = sample.ethernet_metrics;
+      std::memcpy(payload.data + 46, "ETH1", 4);
+      const uint32_t fields[] = {metrics.tx_bps, metrics.rx_bps, metrics.tx_pps,
+          metrics.rx_pps, metrics.rtt_us, metrics.jitter_us,
+          metrics.probe_loss_permille, metrics.send_errors};
+      for (std::size_t i = 0; i < 8; ++i) put_u32(payload.data, 50 + i * 4, fields[i]);
+      payload.len = 82;
+    }
     MavlinkMessage message;
     mavlink_msg_data96_encode(m_sys_id, m_comp_id, &message.m, &payload);
     messages.push_back(message);
