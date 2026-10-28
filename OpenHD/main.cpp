@@ -23,6 +23,9 @@
  ******************************************************************************/
 
 #include "openhd_ncurses_ui.h"
+#ifdef OPENHD_ENABLE_GUI
+#include "openhd_gui.h"
+#endif
 #include "openhd_reboot_util.h"
 
 #include <OHDTelemetry.h>
@@ -512,7 +515,9 @@ int main(int argc, char *argv[]) {
   openhd::ui::DashboardAction dashboard_action = openhd::ui::DashboardAction::None;
   // Curses changes the terminal's stdio state. Initialize it before OpenHD
   // starts any worker threads that can concurrently log to stdout.
+#ifndef OPENHD_ENABLE_GUI
   openhd::ui::init_ncurses();
+#endif
   if (openhd::ui::ncurses_active()) {
     openhd::log::enable_debug_logging_for_dashboard();
   }
@@ -533,6 +538,10 @@ int main(int argc, char *argv[]) {
   }
   openhd::log::initialize_persistent_logging();
   const OHDRunOptions options = parse_run_parameters(argc, argv);
+#ifdef OPENHD_ENABLE_GUI
+  openhd::ui::Gui gui;
+  gui.process_events();
+#endif
   // Create the folder structure
   openhd::generateSettingsDirectoryIfNonExists();
   const auto platform = OHDPlatform::instance();
@@ -781,6 +790,9 @@ int main(int argc, char *argv[]) {
     bool terminate_due_to_internal_error = false;
     auto next_indicator_sample = std::chrono::steady_clock::now();
     while (!quit) {
+#ifdef OPENHD_ENABLE_GUI
+      if (!gui.process_events()) break;
+#endif
       const auto indicator_now = std::chrono::steady_clock::now();
       if (indicator_now >= next_indicator_sample) {
         next_indicator_sample = indicator_now + std::chrono::seconds(2);
@@ -808,8 +820,12 @@ int main(int argc, char *argv[]) {
       openhd::ui::update_ncurses();
       dashboard_action = openhd::ui::take_dashboard_action();
       if (dashboard_action != openhd::ui::DashboardAction::None) break;
+#ifdef OPENHD_ENABLE_GUI
+      std::this_thread::sleep_for(std::chrono::milliseconds(16));
+#else
       std::this_thread::sleep_for(openhd::ui::ncurses_active()
           ? std::chrono::milliseconds(100) : std::chrono::milliseconds(2000));
+#endif
       if (options.run_time_seconds >= 1) {
         if (std::chrono::steady_clock::now() - run_time_begin >=
             std::chrono::seconds(options.run_time_seconds)) {

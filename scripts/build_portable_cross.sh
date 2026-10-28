@@ -98,10 +98,18 @@ if [[ -n "${ARTOSYN_SDK_TUNTAP:-}" ]]; then
   validate_target_artifact "Artosyn tuntap helper" "${ARTOSYN_SDK_TUNTAP}"
 fi
 
+gui_cmake_args=()
+if [[ "${OPENHD_ENABLE_GUI:-OFF}" == "ON" ]]; then
+  qt_dir="${sysroot}/usr/lib/${triplet}/cmake/Qt5"
+  gui_cmake_args+=("-DQT_DIR=${qt_dir}" "-DQt5_DIR=${qt_dir}")
+fi
+
 rm -rf "${build_dir}"
 cmake -S OpenHD -B "${build_dir}" \
   -DCMAKE_TOOLCHAIN_FILE="${toolchain_file}" \
   -DCMAKE_BUILD_TYPE=Release \
+  -DOPENHD_ENABLE_GUI="${OPENHD_ENABLE_GUI:-OFF}" \
+  "${gui_cmake_args[@]}" \
   -DPoco_DIR="${poco_dir}" \
   -DSDL2_DIR="${sdl2_dir}" \
   -DCMAKE_DISABLE_FIND_PACKAGE_SDL2="${OPENHD_MPP_ONLY:-OFF}" \

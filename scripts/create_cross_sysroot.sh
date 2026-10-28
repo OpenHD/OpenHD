@@ -55,6 +55,9 @@ packages=(
   libfreetype6-dev
   zlib1g-dev
 )
+if [[ "${OPENHD_ENABLE_GUI:-OFF}" == "ON" ]]; then
+  packages+=(qtbase5-dev)
+fi
 package_csv="$(IFS=,; echo "${packages[*]}")"
 
 rm -rf "${output_dir}"

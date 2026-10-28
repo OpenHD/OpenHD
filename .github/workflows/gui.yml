@@ -1,0 +1,133 @@
+name: OpenHD integrated GUI
+
+on:
+  push:
+    branches: [openhd-3.0]
+    paths:
+      - OpenHD/**
+      - scripts/create_cross_sysroot.sh
+      - scripts/build_portable_cross.sh
+      - .github/workflows/gui.yml
+  pull_request:
+    paths:
+      - OpenHD/**
+      - scripts/create_cross_sysroot.sh
+      - scripts/build_portable_cross.sh
+      - .github/workflows/gui.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Fetch ground dependencies
+        shell: pwsh
+        run: git submodule update --init --checkout OpenHD/ohd_common/lib/spdlog OpenHD/ohd_common/lib/json OpenHD/ohd_interface/lib/wifibroadcast OpenHD/ohd_interface/lib/devourer
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja
+            mingw-w64-ucrt-x86_64-pkgconf
+            mingw-w64-ucrt-x86_64-libusb
+            mingw-w64-ucrt-x86_64-libsodium
+            mingw-w64-ucrt-x86_64-pdcurses
+            mingw-w64-ucrt-x86_64-qt5-base
+            mingw-w64-ucrt-x86_64-qt5-tools
+      - name: Configure integrated GUI
+        run: cmake -S OpenHD -B out/gui-windows -G Ninja -DCMAKE_BUILD_TYPE=Release -DOPENHD_PORTABLE_GROUND=ON -DOPENHD_ENABLE_GUI=ON -Dsodium_DIR="$(cygpath -m "$MINGW_PREFIX")"
+      - name: Build core and backend tests
+        run: cmake --build out/gui-windows --target openhd_ground test_ground_udp test_ground_pipeline -j 4
+      - name: Test backend and headless help
+        run: ctest --test-dir out/gui-windows -R '^ground_(udp|pipeline|help)$' --output-on-failure
+      - name: Package core with Qt runtime
+        run: |
+          mkdir -p out/gui-windows-package
+          cp out/gui-windows/platform/ground/openhd_ground.exe out/gui-windows-package/
+          windeployqt-qt5 --release --no-translations out/gui-windows-package/openhd_ground.exe
+          cp "$MINGW_PREFIX/share/qt5/plugins/platforms/qoffscreen.dll" out/gui-windows-package/platforms/
+          cp "$MINGW_PREFIX"/bin/{libusb-1.0,libsodium-*,libstdc++-6,libgcc_s_seh-1,libwinpthread-1,libpdcurses*}.dll out/gui-windows-package/
+          # MSYS2 Qt also depends on non-Qt DLLs (fonts, ICU, compression, etc.).
+          find out/gui-windows-package -type f \( -name '*.exe' -o -name '*.dll' \) -print0 |
+            xargs -0 ldd | awk '/\/ucrt64\/bin\// { print $3 }' | sort -u |
+            while IFS= read -r dll; do cp "$dll" out/gui-windows-package/; done
+          cp docs/integrated-gui.md out/gui-windows-package/README.md
+          cp LICENSE out/gui-windows-package/
+      - name: Smoke-test packaged GUI without a radio
+        shell: pwsh
+        run: |
+          $guiProfile = Join-Path $env:RUNNER_TEMP 'gui-smoke.json'
+          '{"autostart":false}' | Set-Content $guiProfile
+          $env:QT_QPA_PLATFORM = 'offscreen'
+          # Prove the package works without DLLs from the build environment.
+          $env:PATH = "$env:SystemRoot\system32;$env:SystemRoot"
+          $exe = (Resolve-Path 'out/gui-windows-package/openhd_ground.exe').Path
+          $process = Start-Process $exe -ArgumentList @('--config', "`"$guiProfile`"") -WindowStyle Hidden -PassThru
+          try {
+            Start-Sleep -Seconds 3
+            if ($process.HasExited) { throw "Packaged GUI exited: $($process.ExitCode)" }
+          } finally {
+            if (!$process.HasExited) { Stop-Process -Id $process.Id }
+          }
+      - uses: actions/upload-artifact@v7
+        with:
+          name: openhd-gui-windows
+          path: out/gui-windows-package
+          if-no-files-found: error
+
+  pi-armhf:
+    runs-on: ubuntu-22.04
+    # The Linux core needs private submodules, as in the normal core CI.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    env:
+      OPENHD_ENABLE_GUI: 'ON'
+      OPENHD_SYSROOT: ${{ github.workspace }}/sysroot-gui-armhf
+      OPENHD_CROSS_TRIPLET: arm-linux-gnueabihf
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: true
+          token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+      - uses: ./.github/actions/fetch-devourer
+      - name: Install cross tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            gcc-10-arm-linux-gnueabihf g++-10-arm-linux-gnueabihf \
+            mmdebstrap debian-archive-keyring gnupg cmake make pkg-config
+      - name: Create Bullseye armhf sysroot with Qt
+        run: sudo --preserve-env=OPENHD_ENABLE_GUI bash scripts/create_cross_sysroot.sh armhf "$OPENHD_SYSROOT" bullseye
+      - name: Configure integrated Linux core
+        run: |
+          cmake -S OpenHD -B out/gui-armhf \
+            -DCMAKE_TOOLCHAIN_FILE="$GITHUB_WORKSPACE/OpenHD/cmake/portable-linux-toolchain.cmake" \
+            -DCMAKE_BUILD_TYPE=Release -DOPENHD_ENABLE_GUI=ON \
+            -DQT_DIR="$OPENHD_SYSROOT/usr/lib/arm-linux-gnueabihf/cmake/Qt5" \
+            -DQt5_DIR="$OPENHD_SYSROOT/usr/lib/arm-linux-gnueabihf/cmake/Qt5" \
+            -DENABLE_LIBCAMERA=OFF
+      - name: Build core and check architecture
+        run: |
+          cmake --build out/gui-armhf --target openhd --parallel 2
+          arm-linux-gnueabihf-readelf -h out/gui-armhf/openhd | tee out/gui-armhf/elf-header.txt
+          grep -Eq 'Machine:.*ARM$' out/gui-armhf/elf-header.txt
+          arm-linux-gnueabihf-readelf -d out/gui-armhf/openhd | tee out/gui-armhf/needed.txt
+          grep -q 'libQt5Widgets.so.5' out/gui-armhf/needed.txt
+      - uses: actions/upload-artifact@v7
+        with:
+          name: openhd-gui-pi-armhf
+          path: |
+            out/gui-armhf/openhd
+            out/gui-armhf/elf-header.txt
+            out/gui-armhf/needed.txt
+            docs/integrated-gui.md
+          if-no-files-found: error

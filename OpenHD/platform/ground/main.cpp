@@ -2,6 +2,9 @@
 #include "default_keys.h"
 #include "openhd_ncurses_ui.h"
 #include "openhd_udp.h"  // Winsock before any Windows headers.
+#ifdef OPENHD_ENABLE_GUI
+#include "openhd_gui.h"
+#endif
 #include <libusb-1.0/libusb.h>
 #include <csignal>
 #include <cctype>
@@ -220,6 +223,32 @@ int dashboard(Config& config, const std::filesystem::path& path, bool configure,
     }
     return 0;
 }
+#ifdef OPENHD_ENABLE_GUI
+int graphical_ui(const Config& config, const std::filesystem::path& path) {
+    openhd::ground::configure_log_directory(path.parent_path() / "logs");
+    openhd::ui::Gui gui;
+    std::atomic<bool> requested_stop{false};
+    std::thread worker;
+    struct WorkerGuard {
+      std::atomic<bool>& stop;
+      std::thread& worker;
+      ~WorkerGuard() { stop.store(true); if (worker.joinable()) worker.join(); }
+    } guard{requested_stop, worker};
+    if (config.autostart) {
+      worker = std::thread([&] {
+        try {
+          run_backend(config, requested_stop, [](const auto&) {});
+        } catch (const std::exception& error) {
+          std::cerr << "OpenHD ground: " << error.what() << '\n';
+        }
+      });
+    }
+    while (!stopping && gui.process_events()) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(16));
+    }
+    return 0;
+}
+#endif
 }
 
 int main(int argc, char** argv) {
@@ -291,6 +320,12 @@ int main(int argc, char** argv) {
       std::atomic<bool> requested_stop{false};
       return run_backend(config, requested_stop, [](const auto&) {});
     }
+#ifdef OPENHD_ENABLE_GUI
+    if (!configure) {
+      if (!load_error.empty()) throw std::runtime_error("Saved settings: " + load_error);
+      return graphical_ui(config, path);
+    }
+#endif
     return dashboard(config, path, configure, load_error);
   } catch (const std::exception& error) {
     std::cerr << "OpenHD ground: " << error.what() << '\n'; return 1;

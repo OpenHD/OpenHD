@@ -5,6 +5,11 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+option(OPENHD_ENABLE_GUI "Build the in-process Qt touchscreen GUI" OFF)
+if(OPENHD_ENABLE_GUI)
+    add_subdirectory(gui)
+endif()
+
 option(OPENHD_PORTABLE_GROUND "Build the portable Devourer ground backend" ${WIN32})
 if(OPENHD_PORTABLE_GROUND)
     enable_testing()
@@ -55,6 +60,9 @@ endif()
 
 # Link the libraries
 target_link_libraries(openhd PRIVATE OHDInterfaceLib OHDVideoLib OHDTelemetryLib OHDCommonLib)
+if(OPENHD_ENABLE_GUI)
+    target_link_libraries(openhd PRIVATE openhd_gui)
+endif()
 
 # Check if libatomic is needed and available
 include(CheckLibraryExists)

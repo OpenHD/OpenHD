@@ -8,6 +8,9 @@ like patched wifi drivers and installed linux utility programs.
 For the native Windows Devourer console ground backend, see
 [Windows ground build and usage](../docs/windows-ground.md).
 
+For the optional in-process Qt touchscreen GUI, enable `OPENHD_ENABLE_GUI`;
+see [integrated GUI build and usage](../docs/integrated-gui.md).
+
 ## List of Assumptions about the linux system we are running on that are non-standard:
 (This might be incomplete)
 1) Wifi drivers are patched to support monitor mode for all WiFi cards OpenHD supports
