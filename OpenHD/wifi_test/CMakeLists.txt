@@ -12,7 +12,8 @@ target_compile_features(openhd_wifi_test PUBLIC cxx_std_17)
 target_include_directories(openhd_wifi_test PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
     ../ohd_common/lib/json/include PRIVATE ${CMAKE_CURRENT_BINARY_DIR}
     ../ohd_interface/inc ../ohd_common/inc ../platform/ground ../ohd_video/librtp/inc
-    ../ohd_common/lib/spdlog/include)
+    ../ohd_common/lib/spdlog/include
+    ../ohd_interface/lib/wifibroadcast/wifibroadcast/src)
 target_link_libraries(openhd_wifi_test PUBLIC wifibroadcast)
 if(OPENHD_PORTABLE_GROUND)
     target_link_libraries(openhd_wifi_test PRIVATE openhd_ground_config)
