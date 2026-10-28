@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <string>
 
 namespace openhd::ui {
 
@@ -15,6 +16,8 @@ class Gui {
 
   // Service Qt from the existing main loop. False means the window was closed.
   bool process_events();
+  void set_radios(const std::string& details);
+  void set_status(const std::string& details);
 
  private:
   struct Impl;

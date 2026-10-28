@@ -105,6 +105,7 @@ class OHDInterface {
   bool has_real_monitor_mode_cards() const;
   // Human-readable list of discovered WiFi cards and their drivers.
   std::string describe_discovered_wifi_cards_with_drivers();
+  std::string describe_wifibroadcast_cards_for_gui() const;
   // Apply live RF control settings (channel/bw/mcs/power).
   bool apply_link_control(const LinkControlRequest& request,
                           std::string* error);

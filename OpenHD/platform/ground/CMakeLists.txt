@@ -54,6 +54,11 @@ add_executable(openhd_ground main.cpp)
 target_link_libraries(openhd_ground PRIVATE openhd_ground_udp wifibroadcast)
 if(OPENHD_ENABLE_GUI)
     target_link_libraries(openhd_ground PRIVATE openhd_gui)
+    if(WIN32)
+        # Keep OpenHD's main() entry point; MinGW supplies the GUI startup.
+        set_target_properties(openhd_ground PROPERTIES WIN32_EXECUTABLE TRUE
+            Qt5_NO_LINK_QTMAIN TRUE qt_no_entrypoint TRUE)
+    endif()
 endif()
 install(TARGETS openhd_ground RUNTIME DESTINATION bin)
 

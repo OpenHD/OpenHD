@@ -774,6 +774,9 @@ int main(int argc, char *argv[]) {
     dashboard.platform = x_platform_type_to_string(platform.platform_type);
     dashboard.camera = dashboard_camera;
     if (ohdInterface) ohdInterface->populate_dashboard_status(dashboard);
+#ifdef OPENHD_ENABLE_GUI
+    if (ohdInterface) gui.set_radios(ohdInterface->describe_wifibroadcast_cards_for_gui());
+#endif
     openhd::ui::set_dashboard_status(dashboard);
     // run forever, everything has its own threads. Note that the only way to
     // break out basically is when one of the modules encounters an exception.
@@ -795,6 +798,14 @@ int main(int argc, char *argv[]) {
 #endif
       const auto indicator_now = std::chrono::steady_clock::now();
       if (indicator_now >= next_indicator_sample) {
+#ifdef OPENHD_ENABLE_GUI
+        if (ohdInterface) {
+          ohdInterface->populate_dashboard_status(dashboard);
+          gui.set_radios(ohdInterface->describe_wifibroadcast_cards_for_gui());
+          gui.set_status(dashboard.wifi + "\n" + dashboard.radio_summary + " | " +
+                         dashboard.video_summary + " | " + dashboard.telemetry_summary);
+        }
+#endif
         next_indicator_sample = indicator_now + std::chrono::seconds(2);
         auto& actions = openhd::LinkActionHandler::instance();
         const auto stats = actions.get_fresh_indicator_stats();

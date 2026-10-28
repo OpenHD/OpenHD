@@ -1,8 +1,10 @@
 # Integrated OpenHD GUI
 
 Enable with `-DOPENHD_ENABLE_GUI=ON` when configuring OpenHD. The default is
-`OFF`, so normal builds do not need Qt. The GUI currently only displays
-**Hello World**.
+`OFF`, so normal builds do not need Qt. The GUI displays compatible radio
+adapters, receiver status and live diagnostics from OpenHD and Devourer.
+Diagnostics include stdout/stderr output, with a bounded 3,000-line view and
+a temporary capture file capped around 10 MiB. The file is removed on exit.
 
 This is part of the existing `openhd` (Linux) / `openhd_ground.exe` (Windows)
 process. `OpenHD/gui` is a static library, not a separate executable or service.
@@ -53,10 +55,15 @@ not the ARMv6 Pi 1 / original Zero.
 Use the existing [MinGW UCRT64 ground build](windows-ground.md) with the extra
 MSYS2 package `mingw-w64-ucrt-x86_64-qt5-base` and CMake argument
 `-DOPENHD_ENABLE_GUI=ON`. Run `openhd_ground.exe` from the generated package.
-Qt uses its native Windows platform plugin. The GUI runs alongside the normal
+Qt uses its native Windows platform plugin, without creating a console window.
+The GUI runs alongside the normal
 ground backend (when saved settings enable autostart); it remains open if no
-radio is connected. `--no-ui` keeps headless operation, and `--configure` opens
-the existing console settings editor. There are no graphical settings yet.
+radio is connected. `--no-ui` keeps headless operation. In a GUI build,
+`--configure` also opens the GUI; use a regular console build for the settings
+editor. There are no graphical settings yet. USB candidates are refreshed
+every two seconds without opening/resetting the adapter; detection is separate
+from receiver initialization and WinUSB access. Receiver failures appear in
+the status and live diagnostics.
 
 The **OpenHD integrated GUI** workflow builds both core executables and uploads
 `openhd-gui-windows` (including Qt runtime) and `openhd-gui-pi-armhf` artifacts.

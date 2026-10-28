@@ -87,7 +87,16 @@ std::vector<UsbAdapter> enumerate_usb() {
     std::ostringstream ids;
     ids << std::hex << std::setfill('0') << std::setw(4) << id.idVendor << '-' << std::setw(4) << id.idProduct;
     const auto classified = devourer::classify_usb_device(id.idVendor, id.idProduct, 0);
-    result.push_back({"devourer-id-" + ids.str(), ids.str() + (classified ? "  Devourer candidate" : "  USB device"), bool(classified)});
+    std::ostringstream details;
+    details << "USB " << int(libusb_get_bus_number(devices[i])) << ':'
+            << int(libusb_get_device_address(devices[i])) << "  VID:PID " << ids.str()
+            << "  USB speed code=" << libusb_get_device_speed(devices[i])
+            << "  bcdDevice=0x" << std::hex << id.bcdDevice << std::dec;
+    if (classified) {
+      details << "  " << classified->chip_name << "  " << classified->marketing_names
+              << (classified->supported_by_build ? "  [supported by build]" : "  [USB candidate; silicon/access not verified]");
+    }
+    result.push_back({"devourer-id-" + ids.str(), details.str(), bool(classified)});
   }
   libusb_free_device_list(devices, 1); libusb_exit(context);
   return result;

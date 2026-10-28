@@ -482,6 +482,19 @@ std::string OHDInterface::describe_discovered_wifi_cards_with_drivers() {
   return ss.str();
 }
 
+std::string OHDInterface::describe_wifibroadcast_cards_for_gui() const {
+  std::stringstream details;
+  for (const auto& card : m_discovered_wifi_cards) {
+    if (!card.supports_openhd_wifibroadcast() || card.type == WiFiCardType::OPENHD_EMULATED) continue;
+    details << card.device_name << "  driver=" << card.driver_name
+            << "  chipset=" << card.chipset_name << "  MAC=" << card.mac
+            << "  backend=" << (card.devourer_wb_enabled ? "Devourer" : "kernel monitor")
+            << "  generation=" << card.devourer_generation
+            << "  chip_id=" << int(card.devourer_chip_id) << '\n';
+  }
+  return details.str().empty() ? "No compatible wifibroadcast adapters detected." : details.str();
+}
+
 bool OHDInterface::apply_link_control(const LinkControlRequest& request,
                                       std::string* error) {
   if (!m_wb_link) {
