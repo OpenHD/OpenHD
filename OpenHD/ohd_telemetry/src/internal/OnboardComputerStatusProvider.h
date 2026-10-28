@@ -32,6 +32,7 @@
 
 #include "../mav_include.h"
 #include "ina219.h"
+#include "openhd_ground_details.hpp"
 #include "openhd_platform.h"
 
 /**
@@ -86,6 +87,8 @@ class OnboardComputerStatusProvider {
       const std::optional<ExtraUartInfo>& extra_uart);
 
  private:
+  openhd::ground_details::Sampler m_details_sampler;
+  openhd::ground_details::Payload m_details{};
   const bool m_enable;
   std::mutex m_curr_onboard_computer_status_mutex;
   mavlink_onboard_computer_status_t m_curr_onboard_computer_status{};

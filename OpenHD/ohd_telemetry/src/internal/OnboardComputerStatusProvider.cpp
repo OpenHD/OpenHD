@@ -172,8 +172,14 @@ void OnboardComputerStatusProvider::calculate_cpu_usage_until_terminate() {
 }
 
 void OnboardComputerStatusProvider::calculate_other_until_terminate() {
+  auto details_updated = std::chrono::steady_clock::time_point{};
   while (!terminate) {
     std::this_thread::sleep_for(std::chrono::seconds(1));
+    if (std::chrono::steady_clock::now() - details_updated >= std::chrono::seconds(5)) {
+      auto details = m_details_sampler.sample(openhd::log::persistent_log_directory());
+      { std::lock_guard<std::mutex> lock(m_new_status_mutex); m_details = details; }
+      details_updated = std::chrono::steady_clock::now();
+    }
     int microhard_enabled = 21;
     int microhard_rssi = 22;
     int microhard_tx_pwr = 24;
@@ -409,6 +415,17 @@ OnboardComputerStatusProvider::get_current_status_as_mavlink_messages(
     const uint8_t sys_id, const uint8_t comp_id,
     const std::optional<ExtraUartInfo>& extra_uart_opt) {
   std::vector<MavlinkMessage> messages;
+
+  {
+    mavlink_data96_t payload{};
+    { std::lock_guard<std::mutex> lock(m_new_status_mutex);
+      if (m_details[4] == 1) {
+        payload.type=0x47; payload.len=m_details.size();
+        std::copy(m_details.begin(),m_details.end(),payload.data);
+      }
+    }
+    if(payload.len) { MavlinkMessage msg; mavlink_msg_data96_encode(sys_id,comp_id,&msg.m,&payload); messages.push_back(msg); }
+  }
 
   // 1. Legacy message (for backward compatibility)
   messages.push_back(
