@@ -8,12 +8,14 @@ on:
       - scripts/create_cross_sysroot.sh
       - scripts/build_portable_cross.sh
       - .github/workflows/gui.yml
+      - scripts/*wifi_test_libwdi*
   pull_request:
     paths:
       - OpenHD/**
       - scripts/create_cross_sysroot.sh
       - scripts/build_portable_cross.sh
       - .github/workflows/gui.yml
+      - scripts/*wifi_test_libwdi*
   workflow_dispatch:
     inputs:
       signing_policy:
@@ -42,6 +44,9 @@ jobs:
           msystem: UCRT64
           update: true
           install: >-
+            base-devel
+            autotools
+            git
             mingw-w64-ucrt-x86_64-gcc
             mingw-w64-ucrt-x86_64-cmake
             mingw-w64-ucrt-x86_64-ninja
@@ -52,18 +57,33 @@ jobs:
             mingw-w64-ucrt-x86_64-qt5-base
             mingw-w64-ucrt-x86_64-qt5-tools
             mingw-w64-ucrt-x86_64-angleproject
+      - name: Fetch pinned libwdi source for integrated driver setup
+        uses: actions/checkout@v7
+        with:
+          repository: pbatard/libwdi
+          ref: 9b23b82a2dd1cbffc16d46c212f92c6bf8c0c602
+          path: out/libwdi-source
+          persist-credentials: false
+      - name: Verify and extract Microsoft WinUSB redistributables
+        shell: pwsh
+        run: ./scripts/prepare_wifi_test_libwdi.ps1
+      - name: Build libwdi for this optional GUI
+        run: bash scripts/build_wifi_test_libwdi.sh
       - name: Configure integrated GUI
-        run: cmake -S OpenHD -B out/gui-windows -G Ninja -DCMAKE_BUILD_TYPE=Release -DOPENHD_PORTABLE_GROUND=ON -DOPENHD_ENABLE_GUI=ON -Dsodium_DIR="$(cygpath -m "$MINGW_PREFIX")"
+        run: cmake -S OpenHD -B out/gui-windows -G Ninja -DCMAKE_BUILD_TYPE=Release -DOPENHD_PORTABLE_GROUND=ON -DOPENHD_ENABLE_GUI=ON -DOPENHD_LIBWDI_ROOT="$(cygpath -m "$PWD/out/libwdi-prefix")" -Dsodium_DIR="$(cygpath -m "$MINGW_PREFIX")"
       - name: Build core and backend tests
         run: |
           cmake --build out/gui-windows --target openhd_ground test_ground_udp test_ground_pipeline test_wifi_test_contract test_wifi_test_gui -j 4
           objdump -p out/gui-windows/platform/ground/WifiTest.exe | grep -E 'Subsystem[[:space:]]+00000002'
       - name: Test backend and headless help
-        run: ctest --test-dir out/gui-windows -R '^(ground_(udp|pipeline|help)|wifi_test_(contract|gui))$' --output-on-failure
+        run: |
+          export PATH="$PWD/out/libwdi-prefix/bin:$PATH"
+          ctest --test-dir out/gui-windows -R '^(ground_(udp|pipeline|help)|wifi_test_(contract|gui))$' --output-on-failure
       - name: Package core with Qt runtime
         run: |
           mkdir -p out/gui-windows-package
           cp out/gui-windows/platform/ground/WifiTest.exe out/gui-windows-package/
+          cp out/libwdi-prefix/bin/libwdi.dll out/gui-windows-package/
           windeployqt-qt5 --release --no-translations out/gui-windows-package/WifiTest.exe
           cp "$MINGW_PREFIX/share/qt5/plugins/platforms/qoffscreen.dll" out/gui-windows-package/platforms/
           cp "$MINGW_PREFIX"/bin/{libusb-1.0,libsodium-*,libstdc++-6,libgcc_s_seh-1,libwinpthread-1,libpdcurses*}.dll out/gui-windows-package/
@@ -73,6 +93,9 @@ jobs:
             while IFS= read -r dll; do cp "$dll" out/gui-windows-package/; done
           cp docs/integrated-gui.md out/gui-windows-package/README.md
           cp LICENSE out/gui-windows-package/
+          mkdir -p out/gui-windows-package/licenses/libwdi
+          cp out/libwdi-source/COPYING* out/gui-windows-package/licenses/libwdi/
+          git -C out/libwdi-source archive --format=zip --output="$PWD/out/gui-windows-package/licenses/libwdi/libwdi-source.zip" HEAD
       - name: Smoke-test packaged GUI without a radio
         shell: pwsh
         run: |
@@ -210,7 +233,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             gcc-10-arm-linux-gnueabihf g++-10-arm-linux-gnueabihf \
-            mmdebstrap debian-archive-keyring gnupg cmake make pkg-config qemu-user
+            mmdebstrap debian-archive-keyring gnupg cmake make pkg-config qemu-user qtbase5-dev-tools
       - name: Create Bullseye armhf sysroot with Qt
         run: sudo --preserve-env=OPENHD_ENABLE_GUI bash scripts/create_cross_sysroot.sh armhf "$OPENHD_SYSROOT" bullseye
       - name: Configure integrated Linux core

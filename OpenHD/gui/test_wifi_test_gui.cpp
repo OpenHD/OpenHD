@@ -4,6 +4,7 @@
 #include <QElapsedTimer>
 #include <QLabel>
 #include <QPushButton>
+#include <QThread>
 #include <QTableWidget>
 #include <iostream>
 #include <stdexcept>
@@ -47,6 +48,32 @@ int main(int argc, char** argv) {
     for (int n = 0; n < 10; ++n)
       require(gui.process_events(), "Window closed unexpectedly");
     require(timer.elapsed() < 2000, "Idle GUI event loop blocked");
+    auto* adapter = window->findChild<QComboBox*>("adapter");
+    auto* start = window->findChild<QPushButton*>("startStop");
+    auto* setup = window->findChild<QPushButton*>("setupWinUSB");
+    require(adapter && start && setup, "Adapter setup controls missing");
+    // Let the initial asynchronous hardware scan finish before injecting a
+    // pending row. Never click Start or perform a driver installation.
+    timer.restart();
+    while (!adapter->isEnabled() && timer.elapsed() < 5000) {
+      gui.process_events();
+      QThread::msleep(10);
+    }
+    adapter->clear();
+    adapter->addItem("ASUS USB-AC56 | WinUSB setup required", "windows-driver:test");
+    adapter->setItemData(0, "{\"needs_driver_setup\":true}", Qt::UserRole + 1);
+    adapter->setItemData(0, false, Qt::UserRole + 2);
+    timer.restart();
+    while (timer.elapsed() < 150) {
+      gui.process_events();
+      QThread::msleep(10);
+    }
+    require(!start->isEnabled(), "Unprobed adapter enabled RF transmission");
+#ifdef _WIN32
+    require(setup->isEnabled(), "Matching adapter cannot enter driver setup");
+#else
+    require(setup->isHidden(), "Windows driver setup appeared on Linux");
+#endif
     if (argc > 1) {
       const QString directory = QString::fromLocal8Bit(argv[1]);
       QDir().mkpath(directory);

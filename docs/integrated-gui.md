@@ -123,3 +123,25 @@ is required. Existing Devourer chip classes contain some CW/continuous-TX
 routines; support needs per-chip inspection and hardware validation. This GUI
 currently implements OpenHD packet broadcast only. It does not enable MP mode,
 write EFUSE, or claim vendor manufacturing-test parity.
+
+### Windows USB driver setup
+
+The Windows GUI uses libwdi (the open-source library behind Zadig) directly.
+No Zadig application or manual device selection in another tool is needed.
+An allowlisted adapter on its vendor driver appears as **WinUSB setup required**,
+with its USB ID and current driver in the details. ASUS `0b05:17d2` is identified
+as **ASUS USB-AC56 / RTL8812AU** before the silicon probe becomes accessible.
+
+Select the adapter and use **Set up WinUSB**. Confirm the displayed adapter and
+Windows administrator prompt. The same `WifiTest.exe` runs its integrated
+installer, then refreshes automatically. Start remains disabled until the
+read-only Devourer probe identifies a supported, accessible chip. Replacing the
+vendor driver removes normal Windows Wi-Fi access on that adapter; Device
+Manager can restore the vendor driver. Windows may bind identical adapters to
+the same driver package.
+
+libwdi and the Microsoft WinUSB redistributables are prepared only by the optional
+Windows GUI CI. Regular OpenHD builds do not find, fetch, link, or package them.
+The Windows package includes the libwdi DLL, its license, and the exact source
+archive used to build it. GUI Windows developers supply `OPENHD_LIBWDI_ROOT`
+pointing to that library's installed prefix.

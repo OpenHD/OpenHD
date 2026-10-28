@@ -38,6 +38,8 @@
 static void initialize_gui_resources() { Q_INIT_RESOURCE(wifi_test); }
 #ifdef _WIN32
 #include <io.h>
+#include <shellapi.h>
+#include <windows.h>
 #else
 #include <unistd.h>
 #endif
@@ -83,13 +85,14 @@ struct Gui::Impl {
   char* argv[2] = {name, nullptr};
   QApplication app{argc, argv};
   QWidget window;
-  QLabel status, metrics, session_path;
+  QLabel status, metrics, session_path, adapter_notice;
   TestDropdown device, frequency, width, mcs, power, stbc, ldpc, gi, beam,
       payload, fec, block, rate, packet, seed, ack, view;
   TestControlPanels* panels = nullptr;
   TestControlPanels* advanced = nullptr;
   QPushButton start{"Start"}, apply{"Apply settings"},
-      refresh{"Refresh adapters"}, export_data{"Export session"};
+      refresh{"Refresh adapters"}, setup_driver{"Set up WinUSB..."},
+      export_data{"Export session"};
   TestTimeline timeline;
   QTableWidget table;
   QPlainTextEdit diagnostics;
@@ -106,6 +109,9 @@ struct Gui::Impl {
   wifi_test::Json last_events = wifi_test::Json::array();
   QString directory;
   bool is_running = false;
+#ifdef _WIN32
+  HANDLE driver_process = nullptr;
+#endif
 
   Impl() {
     initialize_gui_resources();
@@ -146,7 +152,16 @@ struct Gui::Impl {
     adapter_row->addWidget(new QLabel("Adapter"));
     adapter_row->addWidget(&device, 1);
     adapter_row->addWidget(&refresh);
+    adapter_row->addWidget(&setup_driver);
+    setup_driver.setObjectName("setupWinUSB");
+#ifndef _WIN32
+    setup_driver.hide();
+#endif
     root->addLayout(adapter_row);
+    adapter_notice.setWordWrap(true);
+    adapter_notice.setTextFormat(Qt::PlainText);
+    adapter_notice.setObjectName("adapterNotice");
+    root->addWidget(&adapter_notice);
     device.setObjectName("adapter");
     frequency.setObjectName("frequency");
     width.setObjectName("width");
@@ -329,6 +344,8 @@ struct Gui::Impl {
         "vertical{background:#31516a;border-radius:5px;min-height:30px;}");
     capture_logs();
     controller = std::make_unique<wifi_test::Controller>();
+    QObject::connect(&setup_driver, &QPushButton::clicked,
+                     [this] { driver_setup(); });
     QObject::connect(&refresh, &QPushButton::clicked, [this] { scan(); });
     QObject::connect(&start, &QPushButton::clicked, [this] {
       try {
@@ -397,6 +414,9 @@ struct Gui::Impl {
       window.show();
   }
   ~Impl() {
+#ifdef _WIN32
+    if (driver_process) CloseHandle(driver_process);
+#endif
     controller.reset();
     drain_logs();
     fflush(stdout);
@@ -406,6 +426,10 @@ struct Gui::Impl {
   }
   wifi_test::Settings selection() const {
     wifi_test::Settings s;
+    if (!device.currentData(Qt::UserRole + 2).toBool())
+      throw std::runtime_error(
+          "Adapter is not ready: complete USB driver setup, then refresh "
+          "adapters");
     s.device = device.currentData().toString().toStdString();
     s.frequency = frequency.currentData().toInt();
     s.width = width.currentData().toInt();
@@ -423,6 +447,58 @@ struct Gui::Impl {
     s.no_ack = ack.currentData().toInt();
     return s;
   }
+  void driver_setup() {
+#ifdef _WIN32
+    if (!setup_driver.isEnabled()) return;
+    const auto record = wifi_test::Json::parse(
+        device.currentData(Qt::UserRole + 1).toString().toStdString());
+    const auto vid =
+        QString::number(record.at("vid").get<int>(), 16).rightJustified(4, '0');
+    const auto pid =
+        QString::number(record.at("pid").get<int>(), 16).rightJustified(4, '0');
+    QMessageBox guide(&window);
+    guide.setWindowTitle("Install WinUSB for Devourer");
+    guide.setTextFormat(Qt::PlainText);
+    guide.setText("Adapter: " + device.currentText() + "\nUSB ID: " + vid +
+                  ":" + pid + "\nCurrent driver: " +
+                  QString::fromStdString(record.value("driver", "Unknown")) +
+                  "\n\nInstall WinUSB for this supported adapter? "
+                  "It will stop working as a normal Windows Wi-Fi connection. "
+                  "Device Manager can restore its vendor driver later. "
+                  "Windows may use the same driver for identical adapters."
+                  "\n\nWindows will ask for administrator approval. "
+                  "After installation, the tool will refresh and verify the "
+                  "adapter automatically.");
+    auto* install = guide.addButton("Install WinUSB", QMessageBox::AcceptRole);
+    guide.addButton(QMessageBox::Cancel);
+    guide.setDefaultButton(QMessageBox::Cancel);
+    guide.exec();
+    if (guide.clickedButton() != install) return;
+    const auto instance =
+        QString::fromStdString(record.at("instance_id").get<std::string>());
+    if (instance.contains('"')) return;
+    const auto parameters =
+        ("--install-winusb-device \"" + instance + "\"").toStdWString();
+    const auto executable =
+        QDir::toNativeSeparators(QCoreApplication::applicationFilePath())
+            .toStdWString();
+    SHELLEXECUTEINFOW launch{};
+    launch.cbSize = sizeof(launch);
+    launch.fMask = SEE_MASK_NOCLOSEPROCESS;
+    launch.hwnd = reinterpret_cast<HWND>(window.winId());
+    launch.lpVerb = L"runas";
+    launch.lpFile = executable.c_str();
+    launch.lpParameters = parameters.c_str();
+    launch.nShow = SW_SHOWNORMAL;
+    if (!ShellExecuteExW(&launch)) {
+      QMessageBox::warning(&window, "Driver setup not started",
+                           "Administrator approval was cancelled or the "
+                           "installer could not start. You can try again.");
+      return;
+    }
+    driver_process = launch.hProcess;
+#endif
+  }
   void scan() {
     if (device_scan.valid()) return;
     previous_device = device.currentData();
@@ -433,6 +509,23 @@ struct Gui::Impl {
         std::async(std::launch::async, [] { return wifi_test::devices(); });
   }
   void poll() {
+    bool driver_busy = false;
+#ifdef _WIN32
+    if (driver_process) {
+      DWORD exit_code = STILL_ACTIVE;
+      if (GetExitCodeProcess(driver_process, &exit_code) &&
+          exit_code != STILL_ACTIVE) {
+        CloseHandle(driver_process);
+        driver_process = nullptr;
+        diagnostics.appendPlainText(
+            exit_code == 0
+                ? "WinUSB setup completed; verifying adapter..."
+                : "WinUSB setup did not complete. See installer result.");
+        scan();
+      } else
+        driver_busy = true;
+    }
+#endif
     if (device_scan.valid() && device_scan.wait_for(std::chrono::seconds(0)) ==
                                    std::future_status::ready) {
       QSignalBlocker blocker(device);
@@ -442,6 +535,11 @@ struct Gui::Impl {
           device.addItem(
               QString::fromStdString(d.at("label").get<std::string>()),
               QString::fromStdString(d.at("selector").get<std::string>()));
+          device.setItemData(device.count() - 1,
+                             QString::fromStdString(d.dump()),
+                             Qt::UserRole + 1);
+          device.setItemData(device.count() - 1, d.value("ready", false),
+                             Qt::UserRole + 2);
           device.setItemData(device.count() - 1,
                              QString::fromStdString(d.dump(2)),
                              Qt::ToolTipRole);
@@ -467,19 +565,30 @@ struct Gui::Impl {
     }
     drain_logs();
     is_running = phase == "running";
-    const bool busy =
-        phase == "starting" || phase == "applying" || phase == "stopping";
+    const bool busy = phase == "starting" || phase == "applying" ||
+                      phase == "stopping" || driver_busy;
     status.setText(
         QString::fromStdString(snapshot.value("message", std::string())));
     start.setText(phase == "stopping"    ? "Stopping..."
                   : (is_running || busy) ? "Stop"
                                          : "Start");
+    if (driver_busy) start.setText("Installing driver...");
     start.setEnabled(
-        phase != "stopping" &&
-        (is_running || busy || !device.currentData().toString().isEmpty()));
+        !driver_busy && phase != "stopping" &&
+        (is_running || busy || device.currentData(Qt::UserRole + 2).toBool()));
     apply.setEnabled(is_running);
     device.setEnabled(!is_running && !busy && !device_scan.valid());
     refresh.setEnabled(!is_running && !busy && !device_scan.valid());
+    const bool pending_setup =
+        !device.currentData(Qt::UserRole + 2).toBool() &&
+        !device.currentData(Qt::UserRole + 1).toString().isEmpty();
+    setup_driver.setEnabled(pending_setup && !is_running && !busy &&
+                            !device_scan.valid());
+    adapter_notice.setVisible(pending_setup);
+    adapter_notice.setText(
+        "Matching USB Wi-Fi adapter detected. WinUSB access is required for "
+        "Devourer. "
+        "Use Set up WinUSB to install the driver in this tool.");
     export_data.setEnabled(!busy && !is_running &&
                            snapshot.contains("directory"));
     if (snapshot.contains("sample")) {

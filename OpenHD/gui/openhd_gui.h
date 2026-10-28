@@ -22,5 +22,9 @@ class Gui {
   std::unique_ptr<Impl> impl_;
 };
 int run_wifi_test_gui();
+#ifdef _WIN32
+// Elevated driver-install mode of this same GUI executable.
+int run_windows_usb_driver_install(int argc, char** argv);
+#endif
 
 }  // namespace openhd::ui

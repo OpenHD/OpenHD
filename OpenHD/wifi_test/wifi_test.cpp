@@ -1,4 +1,7 @@
 #include "wifi_test.h"
+#ifdef _WIN32
+#include "windows_usb_driver.h"
+#endif
 
 #include <libusb-1.0/libusb.h>
 #include <sodium.h>
@@ -157,7 +160,20 @@ std::optional<Json> describe_usb_radio(uint16_t vid, uint16_t pid,
               {"chip_id", probe->chip_id},
               {"generation", devourer::generation_name(probe->generation)},
               {"supported_by_build", true},
+              {"ready", true},
+              {"needs_driver_setup", false},
               {"label", label.str()}};
+}
+std::optional<Json> describe_usb_setup_candidate(uint16_t vid, uint16_t pid) {
+  if (!devourer::is_usb_driver_setup_candidate(vid, pid)) return std::nullopt;
+  const bool asus = vid == 0x0b05 && pid == 0x17d2;
+  return Json{{"model", asus ? "ASUS USB-AC56" : ""},
+              {"chipset", asus ? "RTL8812AU (USB ID; probe pending)"
+                               : "Silicon not verified"},
+              {"label", asus ? "ASUS USB-AC56 | RTL8812AU"
+                             : "Devourer USB Wi-Fi candidate"},
+              {"ready", false},
+              {"needs_driver_setup", true}};
 }
 Json devices() {
   libusb_context* context = nullptr;
@@ -181,6 +197,12 @@ Json devices() {
     const auto probe = devourer::probe_usb_device(list[i]);
     if (!probe) continue;
     auto identity = describe_usb_radio(d.idVendor, d.idProduct, probe->chip_id);
+#ifdef _WIN32
+    libusb_device_handle* access_handle = nullptr;
+    const int access_error = libusb_open(list[i], &access_handle);
+    if (access_handle) libusb_close(access_handle);
+    if (access_error != 0) identity = std::nullopt;
+#endif
     if (!identity) continue;
     const int bus = libusb_get_bus_number(list[i]),
               address = libusb_get_device_address(list[i]);
@@ -198,6 +220,10 @@ Json devices() {
                       {"address", address}});
     result.push_back(std::move(*identity));
   }
+#ifdef _WIN32
+  for (auto& candidate : windows_usb_driver_candidates())
+    result.push_back(std::move(candidate));
+#endif
   return result;
 }
 std::string sample_video_sha256() {

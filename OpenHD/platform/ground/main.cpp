@@ -228,6 +228,10 @@ int dashboard(Config& config, const std::filesystem::path& path, bool configure,
 
 int main(int argc, char** argv) {
   try {
+#if defined(OPENHD_ENABLE_GUI) && defined(_WIN32)
+    if (argc >= 2 && std::string(argv[1]) == "--install-winusb-device")
+      return openhd::ui::run_windows_usb_driver_install(argc, argv);
+#endif
     auto path = openhd::ground::default_config_path();
     for (int i = 1; i < argc; ++i) {
       const std::string arg = argv[i];

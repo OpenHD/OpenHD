@@ -30,6 +30,15 @@ int main() {
     require(generic && generic->at("model") == "" &&
                 generic->at("chip") == "RTL8812A",
             "Generic USB ID was assigned an unverified retail model");
+    const auto setup = describe_usb_setup_candidate(0x0b05, 0x17d2);
+    require(setup && setup->at("model") == "ASUS USB-AC56" &&
+                !setup->at("ready").get<bool>() &&
+                setup->at("needs_driver_setup").get<bool>(),
+            "Known ASUS awaiting driver setup was lost or marked TX-ready");
+    require(!describe_usb_setup_candidate(0x0bda, 0x5411) &&
+                !describe_usb_setup_candidate(0x1234, 0x5678) &&
+                !describe_usb_setup_candidate(0x0bda, 0x1a2b),
+            "Non-radio USB device offered for driver replacement");
     Settings s;
     s.device = "devourer-usb-1-2";
     require(settings_from_json(settings_json(s)) == s,

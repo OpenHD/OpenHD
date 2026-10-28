@@ -164,6 +164,12 @@ UsbDeviceProbe make_probe(const uint16_t vid, const uint16_t pid,
 
 }  // namespace
 
+bool is_usb_driver_setup_candidate(uint16_t vid, uint16_t pid) {
+  return is_known_jaguar_usb_id(vid, pid) ||
+         rtl8733b::is_usb_id(vid, pid) ||
+         kestrel::variant_for_usb_id(vid, pid).has_value();
+}
+
 std::optional<UsbDeviceProbe> classify_usb_device(const uint16_t vid,
                                                   const uint16_t pid,
                                                   const uint8_t chip_id,

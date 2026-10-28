@@ -39,6 +39,10 @@ struct UsbDeviceProbe {
   bool supported_by_build = false;
 };
 
+// Strict VID:PID allowlist for offering Windows driver setup only.
+// A match is not proof of silicon identity or permission to transmit.
+bool is_usb_driver_setup_candidate(uint16_t vid, uint16_t pid);
+
 // Pure classification entry point, also useful to tests and callers which
 // already obtained SYS_CFG2 themselves.
 std::optional<UsbDeviceProbe> classify_usb_device(uint16_t vid, uint16_t pid,

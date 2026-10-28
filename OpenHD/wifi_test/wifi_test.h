@@ -25,6 +25,8 @@ void validate(const Settings& s);
 Json channels();
 Json control_options();
 Json devices();
+// Strictly allowlisted hardware awaiting Windows USB driver setup. Never TX-ready.
+std::optional<Json> describe_usb_setup_candidate(uint16_t vid, uint16_t pid);
 // An unresolved Realtek USB ID is not a compatible radio. chip_id comes from
 // the shared read-only silicon probe; PID-gated chips can identify without it.
 std::optional<Json> describe_usb_radio(uint16_t vid, uint16_t pid,
