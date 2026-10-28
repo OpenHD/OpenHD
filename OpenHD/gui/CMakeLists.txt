@@ -15,6 +15,9 @@ target_link_libraries(openhd_gui PRIVATE Qt${QT_VERSION_MAJOR}::Widgets openhd_w
 target_compile_definitions(openhd_gui PUBLIC OPENHD_ENABLE_GUI PRIVATE QT_NO_KEYWORDS)
 
 add_executable(test_wifi_test_gui EXCLUDE_FROM_ALL test_wifi_test_gui.cpp)
+if(NOT OPENHD_PORTABLE_GROUND)
+    target_sources(test_wifi_test_gui PRIVATE ../ohd_common/src/config_paths.cpp)
+endif()
 target_link_libraries(test_wifi_test_gui PRIVATE openhd_gui openhd_wifi_test Qt${QT_VERSION_MAJOR}::Widgets)
 add_test(NAME wifi_test_gui COMMAND test_wifi_test_gui)
 set_tests_properties(wifi_test_gui PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen" TIMEOUT 20)

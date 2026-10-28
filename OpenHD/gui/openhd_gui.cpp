@@ -37,9 +37,9 @@
 #include "wifi_test_widgets.h"
 static void initialize_gui_resources() { Q_INIT_RESOURCE(wifi_test); }
 #ifdef _WIN32
+#include <QtCore/qt_windows.h>
 #include <io.h>
 #include <shellapi.h>
-#include <windows.h>
 #else
 #include <unistd.h>
 #endif
