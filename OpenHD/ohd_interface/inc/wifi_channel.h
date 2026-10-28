@@ -30,6 +30,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include <optional>
 #include "openhd_spdlog.h"
 
 // USefully links:
@@ -258,8 +259,10 @@ static std::vector<WifiChannel> get_channels_2G_legal_at_least_one_country() {
 
 static std::vector<WifiChannel> get_all_channels_2G_5G() {
   std::vector<WifiChannel> channels{};
-  OHDUtil::vec_append(channels, get_channels_2G());
-  OHDUtil::vec_append(channels, get_channels_5G());
+  const auto two = get_channels_2G();
+  const auto five = get_channels_5G();
+  channels.insert(channels.end(), two.begin(), two.end());
+  channels.insert(channels.end(), five.begin(), five.end());
   return channels;
 }
 

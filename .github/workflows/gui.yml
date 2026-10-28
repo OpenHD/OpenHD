@@ -49,10 +49,10 @@ jobs:
         run: cmake -S OpenHD -B out/gui-windows -G Ninja -DCMAKE_BUILD_TYPE=Release -DOPENHD_PORTABLE_GROUND=ON -DOPENHD_ENABLE_GUI=ON -Dsodium_DIR="$(cygpath -m "$MINGW_PREFIX")"
       - name: Build core and backend tests
         run: |
-          cmake --build out/gui-windows --target openhd_ground test_ground_udp test_ground_pipeline -j 4
+          cmake --build out/gui-windows --target openhd_ground test_ground_udp test_ground_pipeline test_wifi_test_contract test_wifi_test_gui -j 4
           objdump -p out/gui-windows/platform/ground/openhd_ground.exe | grep -E 'Subsystem[[:space:]]+00000002'
       - name: Test backend and headless help
-        run: ctest --test-dir out/gui-windows -R '^ground_(udp|pipeline|help)$' --output-on-failure
+        run: ctest --test-dir out/gui-windows -R '^(ground_(udp|pipeline|help)|wifi_test_(contract|gui))$' --output-on-failure
       - name: Package core with Qt runtime
         run: |
           mkdir -p out/gui-windows-package
@@ -107,7 +107,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             gcc-10-arm-linux-gnueabihf g++-10-arm-linux-gnueabihf \
-            mmdebstrap debian-archive-keyring gnupg cmake make pkg-config
+            mmdebstrap debian-archive-keyring gnupg cmake make pkg-config qemu-user
       - name: Create Bullseye armhf sysroot with Qt
         run: sudo --preserve-env=OPENHD_ENABLE_GUI bash scripts/create_cross_sysroot.sh armhf "$OPENHD_SYSROOT" bullseye
       - name: Configure integrated Linux core
@@ -120,11 +120,13 @@ jobs:
             -DENABLE_LIBCAMERA=OFF
       - name: Build core and check architecture
         run: |
-          cmake --build out/gui-armhf --target openhd --parallel 2
+          cmake --build out/gui-armhf --target openhd test_wifi_test_contract --parallel 2
           arm-linux-gnueabihf-readelf -h out/gui-armhf/openhd | tee out/gui-armhf/elf-header.txt
           grep -Eq 'Machine:.*ARM$' out/gui-armhf/elf-header.txt
           arm-linux-gnueabihf-readelf -d out/gui-armhf/openhd | tee out/gui-armhf/needed.txt
           grep -q 'libQt5Widgets.so.5' out/gui-armhf/needed.txt
+      - name: Test armhf payload and session contracts
+        run: qemu-arm -L "$OPENHD_SYSROOT" out/gui-armhf/wifi_test/test_wifi_test_contract
       - uses: actions/upload-artifact@v7
         with:
           name: openhd-gui-pi-armhf

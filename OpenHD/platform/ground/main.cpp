@@ -223,59 +223,7 @@ int dashboard(Config& config, const std::filesystem::path& path, bool configure,
     }
     return 0;
 }
-#ifdef OPENHD_ENABLE_GUI
-int graphical_ui(const Config& config, const std::filesystem::path& path, const std::string& load_error) {
-    openhd::ground::configure_log_directory(path.parent_path() / "logs");
-    openhd::ui::Gui gui;
-    std::atomic<bool> requested_stop{false};
-    std::thread worker;
-    std::mutex state_mutex;
-    std::string backend_status = config.autostart ? "Starting receiver..." : "Receiver stopped (autostart disabled)";
-    if (!load_error.empty()) {
-      backend_status = "Saved settings could not be loaded: " + load_error;
-      std::cerr << backend_status << '\n';
-    }
-    struct WorkerGuard {
-      std::atomic<bool>& stop;
-      std::thread& worker;
-      ~WorkerGuard() { stop.store(true); if (worker.joinable()) worker.join(); }
-    } guard{requested_stop, worker};
-    if (config.autostart && load_error.empty()) {
-      worker = std::thread([&] {
-        try {
-          const int result = run_backend(config, requested_stop, [&](const auto& value) {
-            std::lock_guard<std::mutex> lock(state_mutex);
-            backend_status = value.platform + " | " + value.wifi + " | " + value.links[0] +
-                "\n" + value.radio_summary + " | " + value.video_summary + " | " + value.telemetry_summary;
-          });
-          std::lock_guard<std::mutex> lock(state_mutex);
-          backend_status = result ? "Receiver stopped: adapter failed (see diagnostics)" : "Receiver stopped";
-        } catch (const std::exception& error) {
-          std::lock_guard<std::mutex> lock(state_mutex);
-          backend_status = error.what();
-          std::cerr << "OpenHD ground: " << error.what() << '\n';
-        }
-      });
-    }
-    auto next_scan = std::chrono::steady_clock::time_point{};
-    while (!stopping && gui.process_events()) {
-      if (std::chrono::steady_clock::now() >= next_scan) {
-        next_scan = std::chrono::steady_clock::now() + std::chrono::seconds(2);
-        try {
-          std::string cards;
-          for (const auto& adapter : openhd::ground::enumerate_usb()) {
-            if (adapter.candidate) cards += adapter.label + "\n";
-          }
-          gui.set_radios(cards.empty() ? "No compatible USB adapters detected. On Windows, install WinUSB for the radio."
-              : cards + "USB detection alone does not confirm the adapter can be opened; see receiver status below.");
-        } catch (const std::exception& error) { gui.set_radios(error.what()); }
-      }
-      { std::lock_guard<std::mutex> lock(state_mutex); gui.set_status(backend_status); }
-      std::this_thread::sleep_for(std::chrono::milliseconds(16));
-    }
-    return 0;
-}
-#endif
+
 }
 
 int main(int argc, char** argv) {
@@ -287,6 +235,11 @@ int main(int argc, char** argv) {
       if (arg == "--list") { list_usb(); return 0; }
       if (arg == "--config" && i + 1 < argc) path = argv[++i];
     }
+#ifdef OPENHD_ENABLE_GUI
+    bool gui_headless = false;
+    for (int i = 1; i < argc; ++i) if (std::string(argv[i]) == "--no-ui") gui_headless = true;
+    if (!gui_headless) return openhd::ui::run_wifi_test_gui();
+#endif
     Config config;
     std::string load_error;
     try { config = openhd::ground::load_config(path); }
@@ -347,11 +300,6 @@ int main(int argc, char** argv) {
       std::atomic<bool> requested_stop{false};
       return run_backend(config, requested_stop, [](const auto&) {});
     }
-#ifdef OPENHD_ENABLE_GUI
-    {
-      return graphical_ui(config, path, load_error);
-    }
-#endif
     return dashboard(config, path, configure, load_error);
   } catch (const std::exception& error) {
     std::cerr << "OpenHD ground: " << error.what() << '\n'; return 1;

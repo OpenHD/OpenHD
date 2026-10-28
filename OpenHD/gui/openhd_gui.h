@@ -16,12 +16,11 @@ class Gui {
 
   // Service Qt from the existing main loop. False means the window was closed.
   bool process_events();
-  void set_radios(const std::string& details);
-  void set_status(const std::string& details);
 
  private:
   struct Impl;
   std::unique_ptr<Impl> impl_;
 };
+int run_wifi_test_gui();
 
 }  // namespace openhd::ui

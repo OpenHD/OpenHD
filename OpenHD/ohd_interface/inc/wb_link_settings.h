@@ -25,6 +25,7 @@
 #define OPENHD_OPENHD_OHD_INTERFACE_INC_WB_LINK_SETTINGS_HPP_
 
 #include <utility>
+#include "wb_radio_controls.h"
 
 #include "openhd_platform.h"
 #include "openhd_profile.h"
@@ -57,15 +58,6 @@ static constexpr auto DEFAULT_WIFI_TX_POWER_MILLI_WATT = 25;
 static constexpr auto WIFI_TX_POWER_MILLI_WATT_ARMED_DISABLED = 0;
 // User-facing normalized power target. 0..100 is the normal range; 101..150
 // is an explicitly unlocked overdrive range for Devourer radios.
-static constexpr int WB_TX_POWER_LEVEL_MIN = 0;
-static constexpr int WB_TX_POWER_LEVEL_MAX_NORMAL = 100;
-static constexpr int WB_TX_POWER_LEVEL_MAX_OVERDRIVE = 150;
-static constexpr int WB_TX_POWER_LEVEL_STEP = 10;
-static constexpr int WB_TX_POWER_LEVEL_20 = 20;
-static constexpr int WB_TX_POWER_LEVEL_40 = 40;
-static constexpr int WB_TX_POWER_LEVEL_60 = 60;
-static constexpr int WB_TX_POWER_LEVEL_80 = 80;
-static constexpr int WB_TX_POWER_LEVEL_100 = 100;
 // tx power index 22 is about 25mW on asus, but on some card(s) that can be too
 // much already (especially on custom HW). therefore, this default value is
 // written at run time (see below)

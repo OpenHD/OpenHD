@@ -512,6 +512,11 @@ int main(int argc, char *argv[]) {
   const int worker_result = run_camera_worker_if_requested(argc, argv);
   if (worker_result >= 0) return worker_result;
 #endif
+#ifdef OPENHD_ENABLE_GUI
+  // The lab controller exclusively owns the selected radio. Do not start the
+  // normal interface/video workers against the same USB device.
+  return openhd::ui::run_wifi_test_gui();
+#endif
   openhd::ui::DashboardAction dashboard_action = openhd::ui::DashboardAction::None;
   // Curses changes the terminal's stdio state. Initialize it before OpenHD
   // starts any worker threads that can concurrently log to stdout.
@@ -538,10 +543,6 @@ int main(int argc, char *argv[]) {
   }
   openhd::log::initialize_persistent_logging();
   const OHDRunOptions options = parse_run_parameters(argc, argv);
-#ifdef OPENHD_ENABLE_GUI
-  openhd::ui::Gui gui;
-  gui.process_events();
-#endif
   // Create the folder structure
   openhd::generateSettingsDirectoryIfNonExists();
   const auto platform = OHDPlatform::instance();
@@ -774,9 +775,6 @@ int main(int argc, char *argv[]) {
     dashboard.platform = x_platform_type_to_string(platform.platform_type);
     dashboard.camera = dashboard_camera;
     if (ohdInterface) ohdInterface->populate_dashboard_status(dashboard);
-#ifdef OPENHD_ENABLE_GUI
-    if (ohdInterface) gui.set_radios(ohdInterface->describe_wifibroadcast_cards_for_gui());
-#endif
     openhd::ui::set_dashboard_status(dashboard);
     // run forever, everything has its own threads. Note that the only way to
     // break out basically is when one of the modules encounters an exception.
@@ -793,19 +791,8 @@ int main(int argc, char *argv[]) {
     bool terminate_due_to_internal_error = false;
     auto next_indicator_sample = std::chrono::steady_clock::now();
     while (!quit) {
-#ifdef OPENHD_ENABLE_GUI
-      if (!gui.process_events()) break;
-#endif
       const auto indicator_now = std::chrono::steady_clock::now();
       if (indicator_now >= next_indicator_sample) {
-#ifdef OPENHD_ENABLE_GUI
-        if (ohdInterface) {
-          ohdInterface->populate_dashboard_status(dashboard);
-          gui.set_radios(ohdInterface->describe_wifibroadcast_cards_for_gui());
-          gui.set_status(dashboard.wifi + "\n" + dashboard.radio_summary + " | " +
-                         dashboard.video_summary + " | " + dashboard.telemetry_summary);
-        }
-#endif
         next_indicator_sample = indicator_now + std::chrono::seconds(2);
         auto& actions = openhd::LinkActionHandler::instance();
         const auto stats = actions.get_fresh_indicator_stats();
@@ -831,12 +818,8 @@ int main(int argc, char *argv[]) {
       openhd::ui::update_ncurses();
       dashboard_action = openhd::ui::take_dashboard_action();
       if (dashboard_action != openhd::ui::DashboardAction::None) break;
-#ifdef OPENHD_ENABLE_GUI
-      std::this_thread::sleep_for(std::chrono::milliseconds(16));
-#else
       std::this_thread::sleep_for(openhd::ui::ncurses_active()
           ? std::chrono::milliseconds(100) : std::chrono::milliseconds(2000));
-#endif
       if (options.run_time_seconds >= 1) {
         if (std::chrono::steady_clock::now() - run_time_begin >=
             std::chrono::seconds(options.run_time_seconds)) {

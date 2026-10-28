@@ -332,31 +332,8 @@ int power_level_to_value(const SysutilPowerProfile& profile, int level) {
       from_value + (to_value - from_value) * fraction));
 }
 
-bool is_valid_power_level(int level) {
-  return level >= openhd::WB_TX_POWER_LEVEL_MIN &&
-         level <= openhd::WB_TX_POWER_LEVEL_MAX_OVERDRIVE &&
-         level % openhd::WB_TX_POWER_LEVEL_STEP == 0;
-}
-
-constexpr int devourer_power_offset_qdb(int level) {
-  // Piecewise interpolation preserves the original five calibrated points and
-  // adds useful 10% positions plus a true minimum at 0. Positive overdrive is
-  // adapter-relative and is calculated inside DevourerTransport.
-  if (level <= 0) return -127;
-  if (level >= 100) return 0;
-  int x0 = 0, y0 = -127, x1 = 20, y1 = -64;
-  if (level > 20 && level <= 40) {
-    x0 = 20; y0 = -64; x1 = 40; y1 = -40;
-  } else if (level > 40 && level <= 60) {
-    x0 = 40; y0 = -40; x1 = 60; y1 = -24;
-  } else if (level > 60 && level <= 80) {
-    x0 = 60; y0 = -24; x1 = 80; y1 = -12;
-  } else if (level > 80) {
-    x0 = 80; y0 = -12; x1 = 100; y1 = 0;
-  }
-  return y0 + ((y1 - y0) * (level - x0) + (x1 - x0) / 2) /
-                  (x1 - x0);
-}
+using openhd::is_valid_power_level;
+using openhd::devourer_power_offset_qdb;
 
 static_assert(devourer_power_offset_qdb(0) == -127);
 static_assert(devourer_power_offset_qdb(openhd::WB_TX_POWER_LEVEL_20) == -64);
@@ -2091,7 +2068,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
   if (any_card_supports_stbc_ldpc_sgi) {
     // STBC - definitely for advanced users, but aparently it can have benefits.
     auto cb_wb_enable_stbc = [this](std::string, int stbc) {
-      if (stbc < 0 || stbc > 3) return false;
+      if (!openhd::is_valid_stbc(stbc)) return false;
       m_settings->unsafe_get_settings().wb_enable_stbc = stbc;
       m_settings->persist();
       m_tx_header_1->update_stbc(stbc);

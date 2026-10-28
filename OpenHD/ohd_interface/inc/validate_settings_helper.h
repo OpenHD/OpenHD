@@ -28,6 +28,7 @@
 
 #include "openhd_spdlog_include.h"
 #include "wifi_channel.h"
+#include "wb_radio_controls.h"
 
 // Helper for validating user-selectable settings
 
@@ -49,15 +50,6 @@ static bool is_valid_frequency_5G(uint32_t frequency) {
   return false;
 }
 
-static bool is_valid_channel_width(uint32_t channel_width) {
-  // 5 MHz operation is temporarily disabled.
-  return channel_width == 10 || channel_width == 20 || channel_width == 40;
-}
-
-static bool is_valid_mcs_index(uint32_t mcs_index) {
-  return mcs_index >= 0 && mcs_index <= 31;
-}
-
 // Internally, OpenHD uses milli watt (mW)
 // No wifi card will ever do 30W, but some cards increase their tx power a bit
 // more when you set a higher value (I think)
@@ -66,13 +58,10 @@ static bool is_valid_tx_power_milli_watt(int tx_power_mw) {
 }
 
 // NOTE: 0 means variable fec, video codec has to be set in this case
-static bool is_valid_fec_block_length(int block_length) {
-  return block_length >= 0 && block_length < 100;
-}
 // max 100% fec (2x the amount of data), this is already too much
 // 21.10: Using more than 2x for FEC can be usefully for testing
 static bool is_valid_fec_percentage(int fec_perc) {
-  bool valid = fec_perc > 0 && fec_perc <= 400;
+  bool valid = is_valid_fec_percentage_value(fec_perc);
   if (!valid) {
     openhd::log::warning_log("Invalid fec percentage");
   }
