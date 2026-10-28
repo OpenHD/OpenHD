@@ -19,8 +19,16 @@ if(OPENHD_PORTABLE_GROUND)
 else()
     target_link_libraries(openhd_wifi_test PRIVATE OHDInterfaceLib)
 endif()
-execute_process(COMMAND git rev-parse HEAD WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    OUTPUT_VARIABLE source_revision OUTPUT_STRIP_TRAILING_WHITESPACE)
+find_package(Git QUIET)
+set(source_revision "unknown")
+if(DEFINED ENV{GITHUB_SHA} AND NOT "$ENV{GITHUB_SHA}" STREQUAL "")
+    set(source_revision "$ENV{GITHUB_SHA}")
+elseif(GIT_FOUND)
+    execute_process(COMMAND "${GIT_EXECUTABLE}" rev-parse HEAD
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        OUTPUT_VARIABLE source_revision OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET)
+endif()
 target_compile_definitions(openhd_wifi_test PRIVATE OPENHD_WIFI_TEST_REVISION="${source_revision}")
 if(WIN32)
     target_compile_definitions(openhd_wifi_test PRIVATE OS_WINDOWS)
