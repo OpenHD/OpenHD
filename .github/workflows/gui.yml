@@ -44,6 +44,7 @@ jobs:
             mingw-w64-ucrt-x86_64-pdcurses
             mingw-w64-ucrt-x86_64-qt5-base
             mingw-w64-ucrt-x86_64-qt5-tools
+            mingw-w64-ucrt-x86_64-angleproject
       - name: Configure integrated GUI
         run: cmake -S OpenHD -B out/gui-windows -G Ninja -DCMAKE_BUILD_TYPE=Release -DOPENHD_PORTABLE_GROUND=ON -DOPENHD_ENABLE_GUI=ON -Dsodium_DIR="$(cygpath -m "$MINGW_PREFIX")"
       - name: Build core and backend tests
