@@ -27,6 +27,7 @@
 #include <vector>
 
 #include "openhd_spdlog_include.h"
+#include "openhd_spdlog.h"
 #include "wifi_channel.h"
 #include "wb_radio_controls.h"
 

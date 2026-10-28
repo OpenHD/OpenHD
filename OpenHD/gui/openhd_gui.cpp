@@ -11,6 +11,7 @@
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QHeaderView>
+#include <QIcon>
 #include <QLabel>
 #include <QMessageBox>
 #include <QPlainTextEdit>
@@ -34,6 +35,7 @@
 #include <thread>
 
 #include "wifi_test_widgets.h"
+static void initialize_gui_resources() { Q_INIT_RESOURCE(wifi_test); }
 #ifdef _WIN32
 #include <io.h>
 #else
@@ -106,7 +108,9 @@ struct Gui::Impl {
   bool is_running = false;
 
   Impl() {
+    initialize_gui_resources();
     app.setApplicationName("OpenHD WiFi Test");
+    app.setWindowIcon(QIcon(":/openhd/openhd.ico"));
     app.setQuitOnLastWindowClosed(false);
 #ifdef Q_OS_WIN
     app.setFont(QFont("Segoe UI", 10));
@@ -128,8 +132,9 @@ struct Gui::Impl {
     root->setContentsMargins(16, 12, 16, 12);
     root->setSpacing(10);
     auto* heading = new QHBoxLayout;
-    auto* logo = new QLabel(QString(QChar(0x25b3)));
-    logo->setStyleSheet("color:#17abff;font-size:32px;font-weight:bold;");
+    auto* logo = new QLabel;
+    logo->setPixmap(app.windowIcon().pixmap(32, 32));
+    logo->setFixedSize(32, 32);
     heading->addWidget(logo);
     auto* title = new QLabel("OpenHD WiFi Test");
     title->setStyleSheet("font-size:23px;font-weight:600;");

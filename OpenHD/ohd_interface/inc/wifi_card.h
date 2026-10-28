@@ -32,6 +32,7 @@
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"
 #include "validate_settings_helper.h"
+#include "openhd_spdlog.h"
 #include "wifi_channel.h"
 
 // After discovery, the capabilities of a WiFi-Card are immutable !

@@ -1,9 +1,9 @@
-﻿# OpenHD WiFi Test
+# OpenHD WiFi Test
 
 Build with `-DOPENHD_ENABLE_GUI=ON` to enable the in-process RF laboratory
-broadcast tool. It runs inside `openhd` on Linux and `openhd_ground.exe` on
+broadcast tool. It runs inside `openhd` on Linux and `WifiTest.exe` on
 Windows. The flag defaults to OFF: regular OpenHD builds do not find or link
-Qt or the laboratory code. Windows GUI builds do not create a terminal.
+Qt or the laboratory code. Windows GUI builds produce `WifiTest.exe` with the OpenHD icon and do not create a terminal.
 
 The GUI controller owns the selected USB radio exclusively. Normal receiver,
 telemetry and video workers are not started in GUI mode. Nothing transmits on

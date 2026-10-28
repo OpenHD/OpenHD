@@ -22,6 +22,8 @@ int main(int argc, char** argv) {
     for (auto* w : QApplication::topLevelWidgets())
       if (w->windowTitle() == "OpenHD WiFi Test") window = w;
     require(window, "Main test window missing");
+    require(!window->windowIcon().pixmap(32, 32).isNull(),
+            "OpenHD window icon is missing");
     auto* frequency = window->findChild<QComboBox*>("frequency");
     auto* width = window->findChild<QComboBox*>("width");
     auto* mcs = window->findChild<QComboBox*>("mcs");

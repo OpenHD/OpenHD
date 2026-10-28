@@ -15,9 +15,16 @@ on:
       - scripts/build_portable_cross.sh
       - .github/workflows/gui.yml
   workflow_dispatch:
+    inputs:
+      signing_policy:
+        description: Optional signing (unsigned builds need no SignPath configuration)
+        type: choice
+        default: unsigned
+        options: [unsigned, test-signing, release-signing]
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   windows:
@@ -50,14 +57,14 @@ jobs:
       - name: Build core and backend tests
         run: |
           cmake --build out/gui-windows --target openhd_ground test_ground_udp test_ground_pipeline test_wifi_test_contract test_wifi_test_gui -j 4
-          objdump -p out/gui-windows/platform/ground/openhd_ground.exe | grep -E 'Subsystem[[:space:]]+00000002'
+          objdump -p out/gui-windows/platform/ground/WifiTest.exe | grep -E 'Subsystem[[:space:]]+00000002'
       - name: Test backend and headless help
         run: ctest --test-dir out/gui-windows -R '^(ground_(udp|pipeline|help)|wifi_test_(contract|gui))$' --output-on-failure
       - name: Package core with Qt runtime
         run: |
           mkdir -p out/gui-windows-package
-          cp out/gui-windows/platform/ground/openhd_ground.exe out/gui-windows-package/
-          windeployqt-qt5 --release --no-translations out/gui-windows-package/openhd_ground.exe
+          cp out/gui-windows/platform/ground/WifiTest.exe out/gui-windows-package/
+          windeployqt-qt5 --release --no-translations out/gui-windows-package/WifiTest.exe
           cp "$MINGW_PREFIX/share/qt5/plugins/platforms/qoffscreen.dll" out/gui-windows-package/platforms/
           cp "$MINGW_PREFIX"/bin/{libusb-1.0,libsodium-*,libstdc++-6,libgcc_s_seh-1,libwinpthread-1,libpdcurses*}.dll out/gui-windows-package/
           # MSYS2 Qt also depends on non-Qt DLLs (fonts, ICU, compression, etc.).
@@ -74,7 +81,28 @@ jobs:
           $env:QT_QPA_PLATFORM = 'offscreen'
           # Prove the package works without DLLs from the build environment.
           $env:PATH = "$env:SystemRoot\system32;$env:SystemRoot"
-          $exe = (Resolve-Path 'out/gui-windows-package/openhd_ground.exe').Path
+          $exe = (Resolve-Path 'out/gui-windows-package/WifiTest.exe').Path
+          Add-Type @'
+          using System;
+          using System.Runtime.InteropServices;
+          public static class WifiTestIconResource {
+            [DllImport("kernel32.dll", CharSet=CharSet.Unicode)]
+            public static extern IntPtr LoadLibraryEx(string name, IntPtr file, uint flags);
+            [DllImport("kernel32.dll", EntryPoint="FindResourceW")]
+            public static extern IntPtr FindResource(IntPtr module, IntPtr name, IntPtr type);
+            [DllImport("kernel32.dll")]
+            public static extern bool FreeLibrary(IntPtr module);
+          }
+          '@
+          $module = [WifiTestIconResource]::LoadLibraryEx($exe, [IntPtr]::Zero, 2)
+          try {
+            if ($module -eq [IntPtr]::Zero -or
+                [WifiTestIconResource]::FindResource($module, [IntPtr]101, [IntPtr]14) -eq [IntPtr]::Zero) {
+              throw 'WifiTest.exe is missing the embedded OpenHD icon'
+            }
+          } finally {
+            if ($module -ne [IntPtr]::Zero) { [WifiTestIconResource]::FreeLibrary($module) | Out-Null }
+          }
           $process = Start-Process $exe -ArgumentList @('--config', "`"$guiProfile`"") -WindowStyle Hidden -PassThru
           try {
             Start-Sleep -Seconds 3
@@ -85,6 +113,81 @@ jobs:
       - uses: actions/upload-artifact@v7
         with:
           name: openhd-gui-windows
+          path: out/gui-windows-package
+          if-no-files-found: error
+
+  sign-windows:
+    name: Sign WifiTest.exe
+    if: github.repository == 'OpenHD/OpenHD' && github.event_name == 'workflow_dispatch' && inputs.signing_policy != 'unsigned'
+    needs: windows
+    runs-on: windows-latest
+    env:
+      SIGNING_POLICY: ${{ inputs.signing_policy || 'test-signing' }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Validate signing configuration
+        shell: pwsh
+        env:
+          SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
+          TEST_CERTIFICATE_BASE64: ${{ vars.SIGNPATH_TEST_CERTIFICATE_BASE64 }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:SIGNPATH_API_TOKEN)) {
+            throw 'Missing required secret: SIGNPATH_API_TOKEN'
+          }
+          if ($env:SIGNING_POLICY -notin @('test-signing', 'release-signing')) {
+            throw 'Unsupported SignPath signing policy'
+          }
+          if ($env:SIGNING_POLICY -eq 'test-signing' -and [string]::IsNullOrWhiteSpace($env:TEST_CERTIFICATE_BASE64)) {
+            throw 'Missing required variable for test signing: SIGNPATH_TEST_CERTIFICATE_BASE64'
+          }
+      - uses: actions/download-artifact@v7
+        with:
+          name: openhd-gui-windows
+          path: out/gui-windows-package
+      - name: Upload executable for origin-verified signing
+        id: unsigned
+        uses: actions/upload-artifact@v7
+        with:
+          name: wifi-test-unsigned-executable
+          path: out/gui-windows-package/WifiTest.exe
+          if-no-files-found: error
+      - name: Request SignPath signature
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: 630b3214-208a-4670-bfa3-1955f878b88c
+          project-slug: OpenHD
+          signing-policy-slug: ${{ env.SIGNING_POLICY }}
+          artifact-configuration-slug: wifi-test
+          github-artifact-id: ${{ steps.unsigned.outputs.artifact-id }}
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 1800
+          output-artifact-directory: out/signed-wifi-test
+      - name: Verify timestamped signature and package executable
+        shell: pwsh
+        env:
+          TEST_CERTIFICATE_BASE64: ${{ vars.SIGNPATH_TEST_CERTIFICATE_BASE64 }}
+        run: |
+          $signedExe = 'out/signed-wifi-test/WifiTest.exe'
+          if ($env:SIGNING_POLICY -eq 'test-signing') {
+            & scripts/trust_signpath_test_certificate.ps1 -CertificateBase64 $env:TEST_CERTIFICATE_BASE64
+            $certificate = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new(
+              [Convert]::FromBase64String($env:TEST_CERTIFICATE_BASE64))
+            try {
+              & scripts/verify_windows_signature.ps1 -Path $signedExe `
+                -SigningMode test -ExpectedSignerThumbprint $certificate.Thumbprint
+            } finally { $certificate.Dispose() }
+            'SignPath test signature. The certificate is not publicly trusted. Not a production release.' |
+              Set-Content out/gui-windows-package/TEST-SIGNED.txt
+          } else {
+            & scripts/verify_windows_signature.ps1 -Path $signedExe -SigningMode release
+          }
+          Copy-Item -LiteralPath $signedExe -Destination out/gui-windows-package/WifiTest.exe -Force
+      - uses: actions/upload-artifact@v7
+        with:
+          name: openhd-gui-windows-${{ inputs.signing_policy == 'release-signing' && 'Signed' || 'Test-Signed' }}
           path: out/gui-windows-package
           if-no-files-found: error
 
