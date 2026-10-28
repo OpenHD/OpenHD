@@ -21,7 +21,6 @@
 #include <QScrollBar>
 #include <QScroller>
 #include <QSignalBlocker>
-#include <QStandardItemModel>
 #include <QStandardPaths>
 #include <QTableWidget>
 #include <QTemporaryFile>
@@ -73,11 +72,6 @@ void select_value(QComboBox& combo, int value) {
   const int index = combo.findData(value);
   if (index >= 0) combo.setCurrentIndex(index);
 }
-void integers(QComboBox& combo, int first, int last, int step = 1,
-              const QString& suffix = {}) {
-  for (int value = first; value <= last; value += step)
-    combo.addItem(QString::number(value) + suffix, value);
-}
 }  // namespace
 struct Gui::Impl {
   int argc = 1;
@@ -86,10 +80,9 @@ struct Gui::Impl {
   QApplication app{argc, argv};
   QWidget window;
   QLabel status, metrics, session_path, adapter_notice;
-  TestDropdown device, frequency, width, mcs, power, stbc, ldpc, gi, beam,
-      payload, fec, block, rate, packet, seed, ack, view;
+  TestDropdown device, frequency, width, mcs, power, stbc, ldpc, gi, payload,
+      view;
   TestControlPanels* panels = nullptr;
-  TestControlPanels* advanced = nullptr;
   QPushButton start{"Start"}, apply{"Apply settings"},
       refresh{"Refresh adapters"}, setup_driver{"Set up WinUSB..."},
       export_data{"Export session"};
@@ -197,27 +190,10 @@ struct Gui::Impl {
       combo->addItem("Off", 0);
       combo->addItem("On", 1);
     }
-    beam.addItem("Unavailable", 0);
-    beam.setToolTip(
-        "The shared OpenHD transmit path does not expose beamforming");
-    beam.setEnabled(false);
     payload.addItem("Garbage", 0);
     payload.addItem("Sample video (H.264)", 1);
-    for (const auto& n : options.at("fec"))
-      fec.addItem(n == 0 ? "Off" : QString::number(n.get<int>()) + "%",
-                  n.get<int>());
-    for (const auto& n : options.at("block"))
-      block.addItem(n == 0 ? "Auto" : QString::number(n.get<int>()),
-                    n.get<int>());
-    integers(rate, 100, 100000, 100, " kbit/s");
-    integers(packet, 64, 1441, 1, " bytes");
-    for (int value : {1, 42, 12345, 314159})
-      seed.addItem(QString::number(value), value);
-    ack.addItem("Air default (no ACK)", 1);
-    ack.addItem("High retry flag", 0);
     for (auto* combo :
-         {&frequency, &width, &mcs, &power, &stbc, &ldpc, &gi, &beam, &payload,
-          &fec, &block, &rate, &packet, &seed, &ack}) {
+         {&frequency, &width, &mcs, &power, &stbc, &ldpc, &gi, &payload}) {
       combo->setSizeAdjustPolicy(
           QComboBox::AdjustToMinimumContentsLengthWithIcon);
       combo->setMinimumContentsLength(3);
@@ -230,10 +206,6 @@ struct Gui::Impl {
     select_value(stbc, 1);
     select_value(ldpc, 1);
     select_value(gi, 0);
-    select_value(fec, 20);
-    select_value(rate, 4000);
-    select_value(packet, 1024);
-    select_value(seed, 42);
     panels = new TestControlPanels;
     auto panel = [&](const QString& name, QComboBox& combo) {
       auto* group = new QGroupBox(name);
@@ -251,7 +223,6 @@ struct Gui::Impl {
     flags_layout->addRow("STBC", &stbc);
     flags_layout->addRow("LDPC", &ldpc);
     flags_layout->addRow("Short GI", &gi);
-    flags_layout->addRow("Beamforming", &beam);
     panels->add(flags);
     panel("Payload", payload);
     auto* actions = new QWidget;
@@ -262,22 +233,6 @@ struct Gui::Impl {
     action_layout->addWidget(&apply);
     panels->add(actions);
     root->addWidget(panels);
-    advanced = new TestControlPanels;
-    auto field = [&](const QString& label, QComboBox& combo) {
-      auto* field_widget = new QWidget;
-      auto* column = new QVBoxLayout(field_widget);
-      column->setContentsMargins(0, 0, 0, 0);
-      column->addWidget(new QLabel(label));
-      column->addWidget(&combo);
-      advanced->add(field_widget);
-    };
-    field("FEC", fec);
-    field("FEC block", block);
-    field("Source rate", rate);
-    field("Packet / RTP MTU", packet);
-    field("Garbage seed", seed);
-    field("TX flag", ack);
-    root->addWidget(advanced);
     status.setWordWrap(true);
     status.setTextFormat(Qt::PlainText);
     status.setObjectName("status");
@@ -393,17 +348,6 @@ struct Gui::Impl {
                        table.setVisible(mode != 1);
                        diagnostics.setVisible(mode != 0);
                      });
-    QObject::connect(
-        &payload, QOverload<int>::of(&QComboBox::currentIndexChanged),
-        [this](int n) {
-          seed.setEnabled(n == 0);
-          for (int i = 0; i < packet.count(); ++i)
-            static_cast<QStandardItemModel*>(packet.model())
-                ->item(i)
-                ->setEnabled(n == 0 || packet.itemData(i).toInt() >= 564);
-          if (n == 1 && packet.currentData().toInt() < 564)
-            select_value(packet, 564);
-        });
     QObject::connect(&poll_timer, &QTimer::timeout, [this] { poll(); });
     poll_timer.start(100);
     scan();
@@ -438,14 +382,8 @@ struct Gui::Impl {
     s.stbc = stbc.currentData().toInt();
     s.ldpc = ldpc.currentData().toInt();
     s.short_gi = gi.currentData().toInt();
-    s.fec = fec.currentData().toInt();
-    s.block = block.currentData().toInt();
-    s.bitrate_kbps = rate.currentData().toInt();
-    s.packet_bytes = packet.currentData().toInt();
-    s.seed = seed.currentData().toUInt();
     s.video = payload.currentData().toInt();
-    s.no_ack = ack.currentData().toInt();
-    return s;
+    return wifi_test::automatic_link_load(s);
   }
   void driver_setup() {
 #ifdef _WIN32
@@ -555,7 +493,6 @@ struct Gui::Impl {
             QString());
     }
     panels->arrange(std::max(320, window.width() - 48));
-    advanced->arrange(std::max(320, window.width() - 48));
     const auto snapshot = controller->snapshot();
     const auto phase = snapshot.value("state", "");
     if (!session_log.isOpen() && !directory.isEmpty() &&

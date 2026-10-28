@@ -16,8 +16,9 @@ the event table. Closing the window joins the worker and closes the radio.
 ## Controls and backend
 
 Adapter discovery uses the shared read-only Devourer silicon probe. Only
-recognized chipsets enabled in the build enter the dropdown; unrelated USB
-devices and unidentified Realtek devices are excluded. Jaguar adapters need
+recognized chipsets and allowlisted Windows adapters awaiting driver setup enter
+the dropdown; unrelated USB devices are excluded. Transmission requires a
+verified, accessible chipset. Jaguar adapters need
 WinUSB/USB read access to verify their chipset. Refresh runs off the UI thread.
 Known retail identities include `ASUS USB-AC56 | RTL8812AU` for `0b05:17d2`
 with confirmed 8812A silicon. Generic/shared USB IDs retain chipset names
@@ -25,8 +26,9 @@ without guessing a retail model. IDs and bus/address remain visible for
 distinguishing multiple adapters; the tooltip includes the full identity.
 
 All channels come directly from OpenHD's `wifi_channel.h`, including extended
-channels. Widths (currently 10/20/40 MHz), HT MCS (0..31), STBC (0..3), FEC
-(1..400%, or Off) and block limits come from shared OpenHD validators. Hardware
+channels. Widths (currently 10/20/40 MHz), HT MCS (0..31), and STBC (0..3) come
+from shared OpenHD validators. The visible controls are frequency, width, MCS,
+power, STBC, LDPC, short GI, and payload. Payload tuning is automatic. Hardware
 capabilities can reject settings such as an MCS requiring too many spatial
 streams, a band the adapter cannot tune, or unsupported LDPC/STBC/GI. Such a
 request is recorded as an error and transmission stops. An unavailable control
@@ -36,8 +38,7 @@ Power uses OpenHD's normalized 0..150% levels, including its adapter-relative
 overdrive range, and the same calibrated `devourer_power_offset_qdb()` /
 `set_devourer_tx_power_level()` implementation. Percentages are not dBm.
 The actual quantized offset and available register diagnostics are recorded.
-Beamforming is shown as unavailable because the shared OpenHD HT transmit
-header does not expose it. 5 MHz remains disabled by OpenHD's validator; 80 MHz
+5 MHz remains disabled by OpenHD's validator; 80 MHz
 is not supported by that transmit header.
 
 The tool uses `WBTxRx`, `WBStreamTx`, the standard air identifier and primary
@@ -46,18 +47,20 @@ payloads. The same Devourer USB transport opens, tunes and powers the radio.
 It does not substitute a socket-only or simulated transmit path. No receiver
 is required: the other end may be an RF laboratory instrument.
 
-- **Garbage** is deterministic MT19937 data, regenerated from the dropdown seed
-  at each segment. Packet length and offered payload rate are selectable.
-- **Sample video** loops a bundled 30-frame 320x180 H.264 test pattern. OpenHD's
-  librtp packetizer produces payload type 96 RTP with continuous sequence
-  numbers and 90 kHz timestamps. The source-rate setting controls offered load,
-  so replay speed changes with the selected bitrate. RTP MTU must be at least
-  564 bytes, matching the packetizer's existing minimum.
-- FEC uses OpenHD's encoder. Auto block limit is 20 primary fragments; explicit
-  limits are capped as necessary to keep secondary fragments within the
-  encoder's limit at high FEC percentages. The effective cap is recorded.
-- Host pacing never sends unlimited catch-up bursts. Queue rejections, late
-  pacing, TX failures and hardware saturation are evidence, not hidden.
+- **Garbage** is deterministic MT19937 data with a fixed seed of 42. It fills
+  the full normal OpenHD variable-bitrate payload budget for the selected
+  frequency, width and MCS. The same production rate tables and FEC accounting
+  are shared, with the normal 100% budget and default 20% FEC. The offered rate
+  is recalculated whenever settings are applied; no manual bitrate cap is used.
+- **Sample video** loops the bundled 30-frame 320x180 H.264 pattern through
+  OpenHD's librtp packetizer at that same automatically calculated payload rate.
+  Sequence numbers remain continuous and timestamps use a 90 kHz clock.
+- Packets use a fixed 1434-byte limit. FEC uses OpenHD's encoder with an
+  automatic 20-primary-fragment block limit and normal no-ACK transmit flag.
+  There are no beamforming, FEC/block, rate, MTU, seed, or TX-flag controls.
+- Host pacing follows the normal link budget and never emits unlimited catch-up
+  bursts. Queue rejections, late pacing and TX failures remain recorded; they
+  do not silently reduce the configured VBR budget.
 
 ## Sample data
 

@@ -3,6 +3,7 @@
 // Shared by the normal link and the RF laboratory GUI. Keep these lightweight
 // so the portable Windows build uses exactly the same limits and power curve.
 namespace openhd {
+inline constexpr int WB_VIDEO_DEFAULT_FEC_PERCENT = 20;
 inline constexpr int WB_TX_POWER_LEVEL_MIN = 0;
 inline constexpr int WB_TX_POWER_LEVEL_MAX_NORMAL = 100;
 inline constexpr int WB_TX_POWER_LEVEL_MAX_OVERDRIVE = 150;

@@ -19,6 +19,8 @@ struct Settings {
   bool video = false;
   bool operator==(const Settings& other) const;
 };
+// Fill the normal OpenHD VBR payload budget with default FEC and packet options.
+Settings automatic_link_load(Settings settings);
 Json settings_json(const Settings& s);
 Settings settings_from_json(const Json& j);
 void validate(const Settings& s);

@@ -82,6 +82,20 @@ int main() {
             "Sample must contain 30 complete access units");
     require(sample_video_sha256().size() == 64, "Sample hash unavailable");
     s.mcs = 2;
+    const auto automatic = automatic_link_load(s);
+    require(automatic.bitrate_kbps == 11000 && automatic.fec == 20 &&
+                automatic.block == 0 && automatic.no_ack &&
+                automatic.packet_bytes == 1434 && automatic.seed == 42,
+            "Automatic load differs from OpenHD MCS2/20MHz VBR and FEC budget");
+    auto faster = s;
+    faster.mcs = 7;
+    faster.width = 40;
+    require(automatic_link_load(faster).bitrate_kbps == 45833,
+            "Higher MCS/width did not increase the automatic load");
+    faster.mcs = 0;
+    faster.width = 10;
+    require(automatic_link_load(faster).bitrate_kbps == 2417,
+            "Narrow-band load did not include normal FEC overhead");
     PayloadSource a(s), b(s);
     const auto first = a.next(), same = b.next();
     require(first.size() == 1 && *first.front() == *same.front(),

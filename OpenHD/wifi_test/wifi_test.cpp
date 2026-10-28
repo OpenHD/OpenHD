@@ -24,6 +24,7 @@
 #include "devourer_usb_device_probe.h"
 #include "openhd_global_constants.hpp"
 #include "rtp-payload.h"
+#include "wb_link_rate_budget.h"
 #include "wb_radio_controls.h"
 #include "wifi_channel.h"
 #include "wifi_test_video.h"
@@ -45,6 +46,16 @@ std::string hash_bytes(const unsigned char* bytes, size_t count) {
   return s.str();
 }
 }  // namespace
+Settings automatic_link_load(Settings s) {
+  s.fec = WB_VIDEO_DEFAULT_FEC_PERCENT;
+  s.block = 0;
+  s.packet_bytes = 1434;
+  s.seed = 42;
+  s.no_ack = true;
+  s.bitrate_kbps = openhd::wb::devourer_payload_budget_kbits(
+      s.frequency, s.width, s.mcs, s.fec);
+  return s;
+}
 Json settings_json(const Settings& s) {
   return {{"device", s.device},
           {"frequency_mhz", s.frequency},
@@ -426,7 +437,8 @@ struct Controller::Impl {
         {"ldpc", caps->tx.ldpc_ok},     {"short_gi", caps->tx.sgi_ok},
         {"tx_chains", caps->tx_chains}, {"rx_chains", caps->rx_chains}};
   }
-  void configure(const Settings& s) {
+  void configure(const Settings& requested) {
+    const auto s = automatic_link_load(requested);
     validate(s);
     check_capabilities(s);
     if (!radio->set_devourer_channel(s.frequency, s.width))
@@ -457,6 +469,8 @@ struct Controller::Impl {
     tx->set_encryption(false);
     source = std::make_unique<PayloadSource>(s);
     applied = {
+        {"source_rate_mode", "openhd_vbr_full_budget"},
+        {"source_bitrate_kbps", s.bitrate_kbps},
         {"power_offset_qdb", offset},
         {"power_diagnostics", power},
         {"effective_fec_block_limit",
@@ -628,6 +642,7 @@ struct Controller::Impl {
         throw std::runtime_error("Stop before changing the adapter");
       validate(c.settings);
       check_capabilities(c.settings);
+      c.settings = automatic_link_load(c.settings);
       if (c.settings == current) {
         message("running", "Settings unchanged; continuing broadcast");
         return;

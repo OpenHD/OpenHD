@@ -4,8 +4,8 @@
 #include <QElapsedTimer>
 #include <QLabel>
 #include <QPushButton>
-#include <QThread>
 #include <QTableWidget>
+#include <QThread>
 #include <iostream>
 #include <stdexcept>
 
@@ -37,6 +37,13 @@ int main(int argc, char** argv) {
         "GUI limits differ from OpenHD");
     for (auto* combo : window->findChildren<QComboBox*>())
       require(!combo->isEditable(), "A setting is not a dropdown");
+    require(window->findChildren<QComboBox*>().size() == 10,
+            "Extra payload tuning controls returned to the simple RF tool");
+    for (auto* label : window->findChildren<QLabel*>())
+      require(!label->text().contains("Beamforming") &&
+                  !label->text().contains("Source rate") &&
+                  !label->text().contains("Garbage seed"),
+              "Removed advanced controls returned to the UI");
     require(table->rowCount() == 0, "GUI invented test events before Start");
     frequency->setCurrentIndex((frequency->currentIndex() + 1) %
                                frequency->count());
@@ -60,7 +67,8 @@ int main(int argc, char** argv) {
       QThread::msleep(10);
     }
     adapter->clear();
-    adapter->addItem("ASUS USB-AC56 | WinUSB setup required", "windows-driver:test");
+    adapter->addItem("ASUS USB-AC56 | WinUSB setup required",
+                     "windows-driver:test");
     adapter->setItemData(0, "{\"needs_driver_setup\":true}", Qt::UserRole + 1);
     adapter->setItemData(0, false, Qt::UserRole + 2);
     timer.restart();

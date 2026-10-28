@@ -81,7 +81,7 @@ static constexpr auto DEFAULT_WB_VIDEO_FEC_BLOCK_LENGTH =
 // big gaps) if there are many big gaps, increasing the FEC percentage often
 // doesn't help, it is better to reduce the key frame interval of your camera in
 // this case
-static constexpr auto DEFAULT_WB_VIDEO_FEC_PERCENTAGE = 20;
+static constexpr auto DEFAULT_WB_VIDEO_FEC_PERCENTAGE = WB_VIDEO_DEFAULT_FEC_PERCENT;
 // -1 = use openhd recommended for this platform
 static constexpr uint32_t DEFAULT_MAX_FEC_BLK_SIZE = -1;
 // 0 means disabled (default), the rc channel used for setting the mcs index
