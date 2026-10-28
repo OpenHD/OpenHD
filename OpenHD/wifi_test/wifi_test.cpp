@@ -133,6 +133,32 @@ Json control_options() {
     if (is_valid_fec_percentage_value(n)) j["fec"].push_back(n);
   return j;
 }
+std::optional<Json> describe_usb_radio(uint16_t vid, uint16_t pid,
+                                       uint8_t chip_id) {
+  const auto probe = devourer::classify_usb_device(vid, pid, chip_id);
+  if (!probe || probe->chip == devourer::UsbChip::Unknown ||
+      !probe->supported_by_build)
+    return std::nullopt;
+  std::string model;
+  std::string chipset = probe->marketing_names;
+  // Verified USB-AC56 identity; shared/generic Realtek IDs intentionally do
+  // not get a retail model name because multiple vendors/chips reuse them.
+  if (vid == 0x0b05 && pid == 0x17d2 &&
+      probe->chip == devourer::UsbChip::Rtl8812A) {
+    model = "ASUS USB-AC56";
+    chipset = "RTL8812AU";
+  }
+  std::ostringstream label;
+  if (!model.empty()) label << model << " | ";
+  label << chipset;
+  return Json{{"model", model},
+              {"chipset", chipset},
+              {"chip", probe->chip_name},
+              {"chip_id", probe->chip_id},
+              {"generation", devourer::generation_name(probe->generation)},
+              {"supported_by_build", true},
+              {"label", label.str()}};
+}
 Json devices() {
   libusb_context* context = nullptr;
   if (libusb_init(&context) != 0)
@@ -152,21 +178,25 @@ Json devices() {
   for (int64_t i = 0; i < count; ++i) {
     libusb_device_descriptor d{};
     if (libusb_get_device_descriptor(list[i], &d) != 0) continue;
-    const auto c = devourer::classify_usb_device(d.idVendor, d.idProduct, 0);
-    if (!c) continue;
+    const auto probe = devourer::probe_usb_device(list[i]);
+    if (!probe) continue;
+    auto identity = describe_usb_radio(d.idVendor, d.idProduct, probe->chip_id);
+    if (!identity) continue;
     const int bus = libusb_get_bus_number(list[i]),
               address = libusb_get_device_address(list[i]);
     std::ostringstream label;
-    label << c->marketing_names << "  " << std::hex << std::setfill('0')
-          << std::setw(4) << d.idVendor << ':' << std::setw(4) << d.idProduct
-          << std::dec << "  USB " << bus << ':' << address;
-    result.push_back({{"selector", "devourer-usb-" + std::to_string(bus) + "-" +
+    label << identity->at("label").get<std::string>() << "  " << std::hex
+          << std::setfill('0') << std::setw(4) << d.idVendor << ':'
+          << std::setw(4) << d.idProduct << std::dec << "  USB " << bus << ':'
+          << address;
+    identity->update({{"selector", "devourer-usb-" + std::to_string(bus) + "-" +
                                        std::to_string(address)},
                       {"label", label.str()},
                       {"vid", d.idVendor},
                       {"pid", d.idProduct},
                       {"bus", bus},
                       {"address", address}});
+    result.push_back(std::move(*identity));
   }
   return result;
 }

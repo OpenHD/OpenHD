@@ -30,6 +30,7 @@
 #include <QVBoxLayout>
 #include <csignal>
 #include <cstdio>
+#include <future>
 #include <thread>
 
 #include "wifi_test_widgets.h"
@@ -98,6 +99,8 @@ struct Gui::Impl {
   QByteArray pending;
   QTimer poll_timer;
   std::unique_ptr<wifi_test::Controller> controller;
+  std::future<wifi_test::Json> device_scan;
+  QVariant previous_device;
   wifi_test::Json last_events = wifi_test::Json::array();
   QString directory;
   bool is_running = false;
@@ -416,23 +419,38 @@ struct Gui::Impl {
     return s;
   }
   void scan() {
-    const auto selected = device.currentData();
+    if (device_scan.valid()) return;
+    previous_device = device.currentData();
     QSignalBlocker blocker(device);
     device.clear();
-    try {
-      for (const auto& d : wifi_test::devices())
-        device.addItem(
-            QString::fromStdString(d.at("label").get<std::string>()),
-            QString::fromStdString(d.at("selector").get<std::string>()));
-    } catch (const std::exception& e) {
-      status.setText(e.what());
-    }
-    const int found = device.findData(selected);
-    if (found >= 0) device.setCurrentIndex(found);
-    if (device.count() == 0)
-      device.addItem("No compatible USB adapter detected", QString());
+    device.addItem("Identifying Devourer Wi-Fi adapters...", QString());
+    device_scan =
+        std::async(std::launch::async, [] { return wifi_test::devices(); });
   }
   void poll() {
+    if (device_scan.valid() && device_scan.wait_for(std::chrono::seconds(0)) ==
+                                   std::future_status::ready) {
+      QSignalBlocker blocker(device);
+      device.clear();
+      try {
+        for (const auto& d : device_scan.get()) {
+          device.addItem(
+              QString::fromStdString(d.at("label").get<std::string>()),
+              QString::fromStdString(d.at("selector").get<std::string>()));
+          device.setItemData(device.count() - 1,
+                             QString::fromStdString(d.dump(2)),
+                             Qt::ToolTipRole);
+        }
+      } catch (const std::exception& e) {
+        diagnostics.appendPlainText(e.what());
+      }
+      const int found = device.findData(previous_device);
+      if (found >= 0) device.setCurrentIndex(found);
+      if (device.count() == 0)
+        device.addItem(
+            "No supported Devourer adapter accessible (check WinUSB)",
+            QString());
+    }
     panels->arrange(std::max(320, window.width() - 48));
     advanced->arrange(std::max(320, window.width() - 48));
     const auto snapshot = controller->snapshot();
@@ -455,8 +473,8 @@ struct Gui::Impl {
         phase != "stopping" &&
         (is_running || busy || !device.currentData().toString().isEmpty()));
     apply.setEnabled(is_running);
-    device.setEnabled(!is_running && !busy);
-    refresh.setEnabled(!is_running && !busy);
+    device.setEnabled(!is_running && !busy && !device_scan.valid());
+    refresh.setEnabled(!is_running && !busy && !device_scan.valid());
     export_data.setEnabled(!busy && !is_running &&
                            snapshot.contains("directory"));
     if (snapshot.contains("sample")) {

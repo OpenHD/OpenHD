@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <memory>
 #include <nlohmann/json.hpp>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -24,6 +25,10 @@ void validate(const Settings& s);
 Json channels();
 Json control_options();
 Json devices();
+// An unresolved Realtek USB ID is not a compatible radio. chip_id comes from
+// the shared read-only silicon probe; PID-gated chips can identify without it.
+std::optional<Json> describe_usb_radio(uint16_t vid, uint16_t pid,
+                                       uint8_t chip_id);
 // Immutable source payloads, shared by the production worker and contract
 // tests.
 std::vector<std::vector<uint8_t>> sample_video_frames();

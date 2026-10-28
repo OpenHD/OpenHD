@@ -12,6 +12,24 @@ static void require(bool okay, const char* message) {
 }
 int main() {
   try {
+    require(!describe_usb_radio(0x1234, 0x5678, 0x04),
+            "Unrelated USB device admitted as a radio");
+    require(!describe_usb_radio(0x0bda, 0x5411, 0),
+            "Unknown Realtek hub admitted as a radio");
+    require(!describe_usb_radio(0x0bda, 0x8812, 0),
+            "Unidentified shared Realtek PID admitted as a radio");
+    require(!describe_usb_radio(0x0b05, 0x17d2, 0xff),
+            "Retail USB ID bypassed unknown silicon rejection");
+    const auto asus = describe_usb_radio(0x0b05, 0x17d2, 0x04);
+    require(asus && asus->at("model") == "ASUS USB-AC56" &&
+                asus->at("chipset") == "RTL8812AU" &&
+                asus->at("label").get<std::string>().find("ASUS USB-AC56") !=
+                    std::string::npos,
+            "ASUS USB-AC56 chipset/model identity lost");
+    const auto generic = describe_usb_radio(0x0bda, 0x8812, 0x04);
+    require(generic && generic->at("model") == "" &&
+                generic->at("chip") == "RTL8812A",
+            "Generic USB ID was assigned an unverified retail model");
     Settings s;
     s.device = "devourer-usb-1-2";
     require(settings_from_json(settings_json(s)) == s,

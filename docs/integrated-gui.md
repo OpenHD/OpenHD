@@ -15,6 +15,15 @@ the event table. Closing the window joins the worker and closes the radio.
 
 ## Controls and backend
 
+Adapter discovery uses the shared read-only Devourer silicon probe. Only
+recognized chipsets enabled in the build enter the dropdown; unrelated USB
+devices and unidentified Realtek devices are excluded. Jaguar adapters need
+WinUSB/USB read access to verify their chipset. Refresh runs off the UI thread.
+Known retail identities include `ASUS USB-AC56 | RTL8812AU` for `0b05:17d2`
+with confirmed 8812A silicon. Generic/shared USB IDs retain chipset names
+without guessing a retail model. IDs and bus/address remain visible for
+distinguishing multiple adapters; the tooltip includes the full identity.
+
 All channels come directly from OpenHD's `wifi_channel.h`, including extended
 channels. Widths (currently 10/20/40 MHz), HT MCS (0..31), STBC (0..3), FEC
 (1..400%, or Off) and block limits come from shared OpenHD validators. Hardware
