@@ -383,6 +383,10 @@ class NxpV4l2Stream::Impl {
     }
     set_control(encoder_fd, V4L2_CID_ROTATE,
                 settings.camera_rotation_degree);
+    set_control(encoder_fd, V4L2_CID_HFLIP,
+                settings.openhd_flip & OPENHD_FLIP_HORIZONTAL);
+    set_control(encoder_fd, V4L2_CID_VFLIP,
+                (settings.openhd_flip & OPENHD_FLIP_VERTICAL) != 0);
   }
 
   void apply_dynamic_controls() {
@@ -527,6 +531,8 @@ class NxpV4l2Stream::Impl {
     const auto& settings = owner.m_camera_holder->get_settings();
     const auto& format = settings.streamed_video_format;
     const int camera_index = owner.m_camera_holder->get_camera().index;
+    const bool portrait = settings.camera_rotation_degree == 90 ||
+                          settings.camera_rotation_degree == 270;
     openhd::LinkActionHandler::CamInfo cam_info{
         true,
         static_cast<uint8_t>(camera_index),
@@ -537,8 +543,8 @@ class NxpV4l2Stream::Impl {
         static_cast<uint16_t>(settings.h26x_bitrate_kbits),
         static_cast<uint16_t>(settings.h26x_bitrate_kbits),
         static_cast<uint8_t>(settings.h26x_keyframe_interval),
-        static_cast<uint16_t>(width),
-        static_cast<uint16_t>(height),
+        static_cast<uint16_t>(portrait ? height : width),
+        static_cast<uint16_t>(portrait ? width : height),
         static_cast<uint16_t>(fps),
         0,
         0,
@@ -585,6 +591,7 @@ class NxpV4l2Stream::Impl {
     config.keyframe_interval = std::max(1, settings.h26x_keyframe_interval);
     config.slices = std::max(0, settings.h26x_num_slices);
     config.rotation = settings.camera_rotation_degree;
+    config.flip = settings.openhd_flip;
     OrqaHantroEncoder encoder(config,
         [this](const uint8_t* data, size_t size, bool keyframe, int64_t) {
           current_access_unit_is_keyframe = keyframe;

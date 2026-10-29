@@ -542,7 +542,9 @@ void OHDVideoAir::apply_bandwidth_allocation(openhd::LinkActionHandler::LinkBitr
     const auto info = openhd::LinkActionHandler::instance().get_cam_info(i);
     const bool active = m_last_video_frame_ms[i].load() > 0 && now - m_last_video_frame_ms[i].load() < 3000;
     const bool controllable = info.supports_variable_bitrate != 0;
-    const auto maximum = std::min(stream->m_camera_holder->get_max_video_bitrate_kbits(), stream->m_camera_holder->get_settings().h26x_bitrate_kbits);
+    // The saved manual bitrate does not cap automatic link allocation.
+    // It is used only when dynamic bitrate is disabled.
+    const auto maximum = stream->m_camera_holder->get_max_video_bitrate_kbits();
     consumers.push_back({i, Transport::WiFiBroadcast, Priority::Media, controllable ? Control::Dynamic : Control::Fixed,
         active, bool(usage) && measured(i + 1) > 0, measured(i + 1),
         stream->minimum_link_bitrate_kbits(), maximum, i == 0 ? primary_percent : 100 - primary_percent});

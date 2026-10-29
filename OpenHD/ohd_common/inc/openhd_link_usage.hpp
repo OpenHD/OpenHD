@@ -23,7 +23,7 @@ constexpr uint8_t kPayloadVersion = 1;
 
 enum class Category : uint8_t {
   Camera1 = 1, Camera2 = 2, Audio = 3, Telemetry = 4,
-  Other = 5, Control = 6
+  Other = 5, Control = 6, CustomData = 7
 };
 
 struct Sample {
@@ -32,7 +32,7 @@ struct Sample {
   uint32_t total_bps = 0;
   bool has_ethernet_metrics = false;
   openhd::ethernet::Metrics ethernet_metrics;
-  std::array<uint32_t, 7> category_bps{};
+  std::array<uint32_t, 8> category_bps{};
 };
 
 class Registry {
@@ -66,7 +66,7 @@ class Registry {
   }
   void record(const std::string& name, Category category, uint64_t bytes) {
     const auto index = static_cast<std::size_t>(category);
-    if (index == 0 || index >= 7 || bytes == 0) return;
+    if (index == 0 || index >= 8 || bytes == 0) return;
     std::lock_guard<std::mutex> lock(m_mutex);
     auto it = m_links.find(name);
     if (it != m_links.end()) {
@@ -131,8 +131,8 @@ class Registry {
     uint32_t capacity_bps = 0;
     openhd::ethernet::Metrics ethernet_metrics;
     std::chrono::steady_clock::time_point metrics_time{};
-    std::array<uint64_t, 7> bytes{};
-    std::array<uint64_t, 7> previous_bytes{};
+    std::array<uint64_t, 8> bytes{};
+    std::array<uint64_t, 8> previous_bytes{};
     std::chrono::steady_clock::time_point last_sample =
         std::chrono::steady_clock::now();
     std::chrono::steady_clock::time_point last_activity{};

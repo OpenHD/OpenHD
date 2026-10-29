@@ -29,6 +29,7 @@ class CameraProcess : public CameraStream {
   Backend m_backend;
   std::atomic<unsigned> m_keyframe_revision{0};
   std::atomic<bool> m_running{false};
+  std::atomic<bool> m_streaming_enabled{true};
   std::atomic<unsigned> m_revision{0};
   std::thread m_thread;
   std::mutex m_control_mutex;

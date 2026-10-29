@@ -296,6 +296,7 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
       (m_camera.requires_rpi_libcamera_pipeline() &&
        !OHDPlatform::instance().is_rpi5()) ||
       m_camera.requires_rpi_mmal_pipeline() ||
+      m_camera.requires_orqa_pipeline() ||
       m_camera.x20_supports_basic_iq_params() ||
       m_camera.requires_rockchip5_mpp_pipeline() ||
       m_camera.requires_rockchip3_mpp_pipeline() ||

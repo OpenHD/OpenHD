@@ -1,3 +1,4 @@
+#include "openhd_link_usage.hpp"
 #include "channel_survey_average.h"
 /******************************************************************************
  * OpenHD
@@ -1580,7 +1581,11 @@ void WBLink::rebuild_udp_data_stream() {
   tx_options.block_data_queue_size = 8;
   m_wb_udp_data_tx = std::make_unique<WBDataStreamTxUDP>(
       m_wb_txrx, tx_options, 4, settings.wb_udp_data_input_port,
-      settings.wb_udp_data_fec_percentage, 256, m_tx_header_1);
+      settings.wb_udp_data_fec_percentage, 256, m_tx_header_1,
+      [](std::size_t bytes) {
+        openhd::link_usage::Registry::instance().record(
+            "WIFIBROADCAST", openhd::link_usage::Category::CustomData, bytes);
+      });
   m_wb_udp_data_tx->wb_tx->set_encryption(true);
 
   WBStreamRx::Options rx_options{};

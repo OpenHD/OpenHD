@@ -323,18 +323,21 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mav_link_usage_stats() {
     }
 
     // DATA96/OHLU v1: magic, version, link, category count, flags,
-    // total_bps, capacity_bps, then six (category id, rate_bps) tuples.
+    // total_bps, capacity_bps, then seven (category id, rate_bps) tuples.
     mavlink_data96_t payload{};
     payload.type = openhd::link_usage::kMavlinkDataType;
-    payload.len = 16 + 6 * 5;
+    constexpr int category_count = 7;
+    constexpr int trailer = 16 + category_count * 5;
+    static_assert(trailer + 44 <= 96, "Allocation trailer must fit DATA96");
+    payload.len = trailer;
     std::memcpy(payload.data, "OHLU", 4);
     payload.data[4] = openhd::link_usage::kPayloadVersion;
     payload.data[5] = link_id;
-    payload.data[6] = 6;
+    payload.data[6] = category_count;
     payload.data[7] = 0;
     put_u32(payload.data, 8, sample.total_bps);
     put_u32(payload.data, 12, sample.capacity_bps);
-    for (uint8_t category = 1; category <= 6; ++category) {
+    for (uint8_t category = 1; category <= category_count; ++category) {
       const std::size_t offset = 16 + (category - 1) * 5;
       payload.data[offset] = category;
       put_u32(payload.data, offset + 1, sample.category_bps[category]);
@@ -349,27 +352,27 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mav_link_usage_stats() {
           allocation.streams[i].kbits = 0;
         }
       }
-      std::memcpy(payload.data + 46, "BWA1", 4);
+      std::memcpy(payload.data + trailer, "BWA1", 4);
       const uint32_t fields[] = {uint32_t(allocation.capacity_kbits), uint32_t(allocation.priority_kbits),
           uint32_t(allocation.fixed_kbits), uint32_t(allocation.safety_kbits), uint32_t(allocation.pool_kbits),
           uint32_t(allocation.fixed_measured_kbits), uint32_t((allocation.available ? 1 : 0) | (allocation.overcommitted ? 2 : 0) | (allocation.waiting ? 4 : 0) | (allocation.enabled ? 8 : 0))};
-      for (std::size_t i = 0; i < 7; ++i) put_u32(payload.data, 50 + i * 4, fields[i]);
+      for (std::size_t i = 0; i < 7; ++i) put_u32(payload.data, trailer + 4 + i * 4, fields[i]);
       for (unsigned i = 0; i < 2; ++i) {
         const auto& stream = allocation.streams[i];
-        payload.data[78 + i * 6] = (stream.active ? 1 : 0) | (stream.controllable ? 2 : 0);
-        payload.data[79 + i * 6] = stream.percent;
-        put_u32(payload.data, 80 + i * 6, stream.kbits);
+        payload.data[trailer + 32 + i * 6] = (stream.active ? 1 : 0) | (stream.controllable ? 2 : 0);
+        payload.data[trailer + 33 + i * 6] = stream.percent;
+        put_u32(payload.data, trailer + 34 + i * 6, stream.kbits);
       }
-      payload.len = 90;
+      payload.len = trailer + 44;
     }
     if (sample.has_ethernet_metrics) {
       const auto& metrics = sample.ethernet_metrics;
-      std::memcpy(payload.data + 46, "ETH1", 4);
+      std::memcpy(payload.data + trailer, "ETH1", 4);
       const uint32_t fields[] = {metrics.tx_bps, metrics.rx_bps, metrics.tx_pps,
           metrics.rx_pps, metrics.rtt_us, metrics.jitter_us,
           metrics.probe_loss_permille, metrics.send_errors};
-      for (std::size_t i = 0; i < 8; ++i) put_u32(payload.data, 50 + i * 4, fields[i]);
-      payload.len = 82;
+      for (std::size_t i = 0; i < 8; ++i) put_u32(payload.data, trailer + 4 + i * 4, fields[i]);
+      payload.len = trailer + 36;
     }
     MavlinkMessage message;
     mavlink_msg_data96_encode(m_sys_id, m_comp_id, &message.m, &payload);

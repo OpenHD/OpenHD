@@ -43,13 +43,12 @@ inline bool ipv4(Payload& data, unsigned offset, std::string value) {
 }
 class Sampler {
  public:
-  Payload sample(const std::string& logs) {
+  Payload sample() {
     Payload data{};std::memcpy(data.data(),"OHDG",4);data[4]=1;
     if(volume(data,12,"/")) data[5]|=1;
-    // Capacity/usage of the filesystem hosting persistent OpenHD logs.
-    std::error_code error;
-    if(std::filesystem::is_directory(logs,error) && volume(data,28,logs)) data[5]|=2;
-    auto listing=command("timeout 2 iw dev 2>/dev/null");
+    const std::string iw = std::filesystem::exists("/usr/sbin/iw") ? "/usr/sbin/iw"
+        : std::filesystem::exists("/sbin/iw") ? "/sbin/iw" : "iw";
+    auto listing=command("timeout 2 "+iw+" dev 2>/dev/null");
     std::istringstream lines(listing);std::string line,iface,ap;
     while(std::getline(lines,line)) {
       std::istringstream words(line);std::string key,value;words>>key>>value;
@@ -57,7 +56,7 @@ class Sampler {
       if(key=="type" && value=="AP") {ap=iface;break;}
     }
     if(!ap.empty() && ap.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-")==std::string::npos) {
-      auto stations=command("timeout 2 iw dev "+ap+" station dump 2>/dev/null; echo STATUS:$?");
+      auto stations=command("timeout 2 "+iw+" dev "+ap+" station dump 2>/dev/null; echo STATUS:$?");
       if(stations.find("STATUS:0")!=std::string::npos) {
         uint32_t count=0;std::istringstream rows(stations);
         while(std::getline(rows,line)) if(line.rfind("Station ",0)==0) ++count;

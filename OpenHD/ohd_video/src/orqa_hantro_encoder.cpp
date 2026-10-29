@@ -1,4 +1,5 @@
 #include "orqa_hantro_encoder.h"
+#include "orqa_orientation.h"
 
 #include <fcntl.h>
 #include <linux/videodev2.h>
@@ -196,10 +197,12 @@ class OrqaHantroEncoder::Impl {
     preprocess.origWidth = stride / 2;
     preprocess.origHeight = config.height;
     preprocess.inputType = VCENC_YUV422_INTERLEAVED_YUYV;
-    preprocess.rotation = config.rotation == 90    ? VCENC_ROTATE_90R
-                          : config.rotation == 270 ? VCENC_ROTATE_90L
-                          : config.rotation == 180 ? VCENC_ROTATE_180R
+    const auto orientation = orqa_orientation(config.rotation, config.flip);
+    preprocess.rotation = orientation.rotation == 90    ? VCENC_ROTATE_90R
+                          : orientation.rotation == 270 ? VCENC_ROTATE_90L
+                          : orientation.rotation == 180 ? VCENC_ROTATE_180R
                                                    : VCENC_ROTATE_0;
+    preprocess.mirror = orientation.mirror ? VCENC_MIRROR_YES : VCENC_MIRROR_NO;
     preprocess.xOffset = preprocess.yOffset = 0;
     if (!api(VCEncSetPreProcessing(encoder, &preprocess),
              "VCEncSetPreProcessing"))
@@ -277,7 +280,9 @@ class OrqaHantroEncoder::Impl {
     if (config.width < 136 || config.width > 1920 || config.height < 96 ||
         config.height > 1088 || config.width % 2 || config.height % 2 ||
         config.fps == 0 || config.fps > 240 || config.keyframe_interval == 0 ||
-        config.qp_min > config.qp_max || config.qp_max > 51)
+        config.qp_min > config.qp_max || config.qp_max > 51 ||
+        config.rotation < 0 || config.rotation > 270 || config.rotation % 90 ||
+        config.flip < 0 || config.flip > 3)
       return fail("invalid direct encoder configuration", 0);
     if (!open_capture() || !open_encoder()) return false;
     v4l2_requestbuffers request{};

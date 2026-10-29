@@ -190,6 +190,23 @@ void test_recovery() {
           "recording reset rejected");
   std::cout << "PASS: link ceiling and arming-driven recording survive IPC\n";
 
+  // Disabled cameras must release their worker and remain stopped, while
+  // the other camera continues without being restarted.
+  const auto untouched_worker = workers().at(1);
+  require(first->set_enable_streaming(0), "stream disable rejected");
+  wait_until([&] { return workers().count(0) == 0; }, 10s,
+             "disabled camera worker was not stopped");
+  require(actions.get_cam_info(0).cam_status == CameraStream::CAM_STATUS_DISABLED,
+          "disabled camera still reports restarting");
+  std::this_thread::sleep_for(1500ms);
+  require(workers().count(0) == 0, "disabled camera was restarted");
+  require(workers().at(1) == untouched_worker, "disable restarted other camera");
+  const auto before_enable = frames0.load();
+  require(first->set_enable_streaming(1), "stream enable rejected");
+  wait_until([&] { return workers().count(0) && frames0 > before_enable + 5; },
+             15s, "re-enabled camera did not resume");
+  std::cout << "PASS: disabled camera stays stopped and resumes on enable\n";
+
   const auto original = workers().at(0);
   const auto healthy = workers().at(1);
   auto count0 = frames0.load();
@@ -326,6 +343,28 @@ int fake_libcamera() {
     std::this_thread::sleep_for(30ms);
   }
 }
+void test_disabled_lifecycle() {
+  auto holder = camera(0);
+  holder->set_enable_streaming(0);
+  CameraProcess stream(holder, [](int, const auto&) {}, false);
+  stream.start_looping();
+  auto& actions = openhd::LinkActionHandler::instance();
+  wait_until([&] { return actions.get_cam_info(0).cam_status == CameraStream::CAM_STATUS_DISABLED; }, 3s,
+             "disabled camera not reported");
+  require(actions.get_cam_info(0).active, "disabled camera status not published");
+  std::this_thread::sleep_for(1200ms);
+  require(workers().empty(), "disabled camera started a worker");
+  holder->set_enable_streaming(1);
+  wait_until([&] { return actions.get_cam_info(0).cam_status == CameraStream::CAM_STATUS_RESTARTING; }, 5s, "enabled camera did not start its pipeline");
+  holder->set_enable_streaming(0);
+  wait_until([&] { return workers().empty(); }, 10s, "disabled camera retained worker");
+  wait_until([&] { return actions.get_cam_info(0).cam_status == CameraStream::CAM_STATUS_DISABLED; }, 3s,
+             "disabled camera kept restarting status");
+  std::this_thread::sleep_for(1500ms);
+  require(workers().empty(), "disabled camera restarted its worker");
+  stream.terminate_looping();
+  std::cout << "PASS: disabled boot, enable, disable, no worker respawn, and disabled telemetry\n";
+}
 }  // namespace
 
 int main(int argc, char* argv[]) {
@@ -353,6 +392,10 @@ int main(int argc, char* argv[]) {
     setConfigBasePath(path.c_str());
     setVideoPath(path.c_str());
     openhd::set_wifi_monitor_card_emulate_override(true);
+    if (argc == 2 && std::string(argv[1]) == "--disabled-only") {
+      test_disabled_lifecycle();
+      return 0;
+    }
     if (argc != 2 || std::string(argv[1]) != "--native-only") {
       test_frames();
       test_timeout_exit();

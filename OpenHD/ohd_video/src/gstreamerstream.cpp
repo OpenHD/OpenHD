@@ -1563,6 +1563,10 @@ void GStreamerStream::stream_once() {
   // The user can disable streaming for a camera, in which case a restart is
   // requested and after that we land here (and do nothing)
   if (!m_camera_holder->get_settings().enable_streaming) {
+    openhd::LinkActionHandler::instance().set_cam_info_status(
+        m_camera_holder->get_camera().index, CAM_STATUS_DISABLED);
+    openhd::LinkActionHandler::instance().set_cam_info_perf(
+        m_camera_holder->get_camera().index, 0, 0);
     const auto elapsed_log =
         std::chrono::steady_clock::now() - m_last_log_streaming_disabled;
     if (elapsed_log > std::chrono::seconds(5)) {

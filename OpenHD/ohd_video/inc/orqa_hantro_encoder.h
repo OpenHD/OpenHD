@@ -17,6 +17,7 @@ class OrqaHantroEncoder {
     unsigned bitrate_kbits = 8000, keyframe_interval = 5;
     unsigned slices = 0, qp_min = 5, qp_max = 51;
     int rotation = 0;
+    int flip = 0;  // OpenHD: none, horizontal, vertical, both (0..3).
     bool h265 = false;
   };
   struct Stats {

@@ -32,6 +32,10 @@ int main(int argc, char** argv) {
       config.height = std::atoi(argv[++i]);
     else if (arg == "--fps" && i + 1 < argc)
       config.fps = std::atoi(argv[++i]);
+    else if (arg == "--rotation" && i + 1 < argc)
+      config.rotation = std::atoi(argv[++i]);
+    else if (arg == "--flip" && i + 1 < argc)
+      config.flip = std::atoi(argv[++i]);
     else if (arg == "--repeat-rate")
       repeat_rate = true;
     else if (arg == "--bitrate" && i + 1 < argc)
@@ -44,6 +48,9 @@ int main(int argc, char** argv) {
       return 2;
   }
   if (seconds < 12 || next_bitrate < 10) return 2;
+  if (config.rotation < 0 || config.rotation > 270 ||
+      config.rotation % 90 != 0 || config.flip < 0 || config.flip > 3)
+    return 2;
   FILE* file = output_path ? std::fopen(output_path, "wb") : nullptr;
   if (output_path && !file) return 2;
   uint64_t keyframes = 0, before_change = 0, after_change = 0;

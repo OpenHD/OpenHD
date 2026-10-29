@@ -176,7 +176,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
   while (!terminate) {
     std::this_thread::sleep_for(std::chrono::seconds(1));
     if (std::chrono::steady_clock::now() - details_updated >= std::chrono::seconds(5)) {
-      auto details = m_details_sampler.sample(openhd::log::persistent_log_directory());
+      auto details = m_details_sampler.sample();
       { std::lock_guard<std::mutex> lock(m_new_status_mutex); m_details = details; }
       details_updated = std::chrono::steady_clock::now();
     }

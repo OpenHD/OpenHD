@@ -100,6 +100,7 @@ class CameraStream {
   std::shared_ptr<CameraHolder> m_camera_holder;
   static constexpr auto CAM_STATUS_STREAMING = 1;
   static constexpr auto CAM_STATUS_RESTARTING = 2;
+  static constexpr auto CAM_STATUS_DISABLED = 3;
 
  protected:
   openhd::ON_ENCODE_FRAME_CB m_output_cb;

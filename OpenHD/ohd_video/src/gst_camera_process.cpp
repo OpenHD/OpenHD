@@ -83,6 +83,7 @@ CameraProcess::CameraProcess(std::shared_ptr<CameraHolder> camera,
 void CameraProcess::refresh_settings(bool restart) {
   std::lock_guard<std::mutex> lock(m_control_mutex);
   m_snapshot = m_camera_holder->settings_snapshot();
+  m_streaming_enabled = m_camera_holder->get_settings().enable_streaming;
   m_rotation_degree = m_camera_holder->get_settings().camera_rotation_degree;
   m_flip = m_camera_holder->get_settings().openhd_flip;
   m_settings_restart = m_settings_restart || restart;
@@ -161,9 +162,31 @@ void CameraProcess::run() {
   auto console = openhd::log::create_or_get(
       "cam" + std::to_string(camera.index) + "-supervisor");
   while (m_running) {
-    Child child;
     auto& actions = openhd::LinkActionHandler::instance();
-    actions.set_cam_info_status(camera.index, CAM_STATUS_RESTARTING);
+    if (!m_streaming_enabled) {
+      // Disabled at boot still needs a camera-status report, without spawning
+      // a worker merely to discover the persisted camera identity/format.
+      auto info = actions.get_cam_info(camera.index);
+      if (!info.active) {
+        std::lock_guard<std::mutex> lock(m_control_mutex);
+        const auto& settings = m_camera_holder->get_settings();
+        info.active = true;
+        info.cam_index = camera.index;
+        info.cam_type = camera.camera_type;
+        info.encoding_format = video_codec_to_int(settings.streamed_video_format.videoCodec);
+        info.stream_w = settings.streamed_video_format.width;
+        info.stream_h = settings.streamed_video_format.height;
+        info.stream_fps = settings.streamed_video_format.framerate;
+        actions.set_cam_info(camera.index, info);
+      }
+      actions.set_cam_info_status(camera.index, CAM_STATUS_DISABLED);
+      actions.set_cam_info_perf(camera.index, 0, 0);
+      actions.set_cam_info_recording_active(camera.index, false);
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      continue;
+    }
+    Child child;
+    actions.set_cam_info_status(camera.index, m_streaming_enabled ? CAM_STATUS_RESTARTING : CAM_STATUS_DISABLED);
     actions.set_cam_info_perf(camera.index, 0, 0);
     actions.set_cam_info_recording_active(camera.index, false);
     std::vector<std::string> args{
@@ -195,7 +218,7 @@ void CameraProcess::run() {
     unsigned sent_revision = m_revision.load() - 1;
     FrameAssembler assembler;
     bool failed = false;
-    while (m_running && !child.reap()) {
+    while (m_running && m_streaming_enabled && !child.reap()) {
       Control control;
       {
         std::lock_guard<std::mutex> lock(m_control_mutex);
@@ -269,10 +292,10 @@ void CameraProcess::run() {
         break;
       }
     }
-    if (m_running && !failed)
+    if (m_running && m_streaming_enabled && !failed)
       console->warn("Camera worker exited (wait status {}); restarting camera",
                     child.exit_status);
-    if (!m_running && !failed)
+    if ((!m_running || !m_streaming_enabled) && !failed)
       send_packet(child.fd, {Type::Stop});
     else
       child.kill();
@@ -285,7 +308,7 @@ void CameraProcess::run() {
       // Never start another worker until the previous one has been reaped.
       std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
-    actions.set_cam_info_status(camera.index, CAM_STATUS_RESTARTING);
+    actions.set_cam_info_status(camera.index, m_streaming_enabled ? CAM_STATUS_RESTARTING : CAM_STATUS_DISABLED);
     actions.set_cam_info_perf(camera.index, 0, 0);
     actions.set_cam_info_recording_active(camera.index, false);
     for (int i = 0; i < 10 && m_running; ++i)
