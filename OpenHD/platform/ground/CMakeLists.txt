@@ -75,6 +75,13 @@ add_executable(test_ground_pipeline test_pipeline.cpp)
 target_link_libraries(test_ground_pipeline PRIVATE wifibroadcast)
 add_test(NAME ground_pipeline COMMAND test_ground_pipeline)
 set_tests_properties(ground_pipeline PROPERTIES TIMEOUT 15)
+add_executable(test_ground_rx_worker
+    ${ground_root}/ohd_interface/lib/wifibroadcast/wifibroadcast/executables/test_devourer_rx_worker.cpp)
+target_include_directories(test_ground_rx_worker PRIVATE
+    ${ground_root}/ohd_interface/lib/wifibroadcast/wifibroadcast/src)
+target_link_libraries(test_ground_rx_worker PRIVATE Threads::Threads)
+add_test(NAME ground_rx_worker COMMAND test_ground_rx_worker)
+set_tests_properties(ground_rx_worker PROPERTIES TIMEOUT 10)
 add_executable(test_ground_dashboard test_dashboard.cpp)
 target_link_libraries(test_ground_dashboard PRIVATE openhd_ground_udp)
 if(WIN32)

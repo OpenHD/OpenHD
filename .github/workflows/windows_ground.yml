@@ -33,7 +33,7 @@ jobs:
       - name: Configure
         run: cmake -S OpenHD -B out/windows-ground -G Ninja -DCMAKE_BUILD_TYPE=Release -DOPENHD_PORTABLE_GROUND=ON -Dsodium_DIR="$(cygpath -m "$MINGW_PREFIX")"
       - name: Build
-        run: cmake --build out/windows-ground --target openhd_ground test_ground_udp test_ground_pipeline test_ground_dashboard test_ground_app -j 4
+        run: cmake --build out/windows-ground --target openhd_ground test_ground_udp test_ground_pipeline test_ground_rx_worker test_ground_dashboard test_ground_app -j 4
       - name: Test
         run: ctest --test-dir out/windows-ground -R '^ground_' --output-on-failure
       - name: Package
