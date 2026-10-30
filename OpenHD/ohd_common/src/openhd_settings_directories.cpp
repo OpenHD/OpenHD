@@ -62,7 +62,7 @@ void openhd::clean_all_settings() {
         break;
       }
       const auto path = entry.path();
-      if (path == sysutils_dir) {
+      if (path == sysutils_dir || path == get_unit_id_file_path()) {
         continue;
       }
       std::filesystem::remove_all(path, ec);

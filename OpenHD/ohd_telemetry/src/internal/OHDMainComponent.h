@@ -129,6 +129,7 @@ class OHDMainComponent : public MavlinkComponent {
   openhd::telemetry::FcFirmwareDetector m_fc_detector;
   std::string m_fc_detection_log;
   std::atomic_int16_t m_configured_fc_sys_id = OHD_SYS_ID_FC;
+  bool m_settings_reset_scheduled = false;
   std::atomic_bool m_storage_format_running = false;
   std::atomic_bool m_storage_format_completed = false;
   std::atomic_uint8_t m_storage_format_result = MAV_RESULT_FAILED;

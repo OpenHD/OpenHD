@@ -32,6 +32,7 @@
 #include "OHDLinkStatisticsHelper.h"
 #include "OnboardComputerStatusProvider.h"
 #include "openhd_config.h"
+#include "openhd_action_handler.h"
 #include "openhd_reboot_util.h"
 #include "openhd_sock.h"
 #include "openhd_spdlog_include.h"
@@ -774,7 +775,34 @@ void OHDMainComponent::process_command_self(
     return camera0.air_recording_active != 0 ||
            camera1.air_recording_active != 0;
   };
-  if (command.command == MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN) {
+  if (command.command == MAV_CMD_PREFLIGHT_STORAGE) {
+    // Only the targeted companion receives this command; never forward a reset
+    // to the flight controller. Reject other MAVLink storage operations.
+    uint8_t result = MAV_RESULT_DENIED;
+    if (command.param1 == 2 && command.param2 == 0 && command.param3 == 0 &&
+        command.param4 == 0 && command.param5 == 0 && command.param6 == 0 && command.param7 == 0 &&
+        !openhd::ArmingStateHelper::instance().is_currently_armed() && !m_storage_format_running) {
+      if (m_settings_reset_scheduled) {
+        result = MAV_RESULT_ACCEPTED; // Retransmission after a lost ACK.
+      } else {
+        const auto response = openhd::request_sysutil_json(
+            {{"type", "sysutil.settings.update"}, {"reset_defaults", true},
+             {"run_mode", RUNS_ON_AIR ? "air" : "ground"}},
+            std::chrono::milliseconds(500));
+        if (!response) result = MAV_RESULT_FAILED;
+        else if (!response->value("ok", false)) result = MAV_RESULT_FAILED;
+        else if (!response->value("reset_defaults_applied", false)) result = MAV_RESULT_UNSUPPORTED;
+        else {
+          m_settings_reset_scheduled = true;
+          result = MAV_RESULT_ACCEPTED;
+          // Existing startup reset removes persistent interface/telemetry/video
+          // settings before constructing modules. Allow the ACK to leave first.
+          openhd::reboot::handle_power_command_async(std::chrono::seconds(2), false);
+        }
+      }
+    }
+    message_buffer.push_back(ack_command_result(source_sys_id, source_comp_id, command.command, result));
+  } else if (command.command == MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN) {
     // https://mavlink.io/en/messages/common.html#MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN
     m_console->debug("Got shutdown command");
     // we are a companion computer, so we use param2 to get the actual action
