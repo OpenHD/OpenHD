@@ -750,7 +750,7 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
   }
   auto cb_arm = [this](bool armed) { update_arming_state(armed); };
   openhd::ArmingStateHelper::instance().register_listener(
-      WB_LINK_ARM_CHANGED_TX_POWER_TAG, cb_arm);
+      WB_LINK_ARM_CHANGED_TX_POWER_TAG, cb_arm, true);
   std::function<std::vector<uint16_t>(void)> wb_get_supported_channels =
       [this]() {
         std::vector<uint16_t> ret;
@@ -1395,6 +1395,7 @@ bool WBLink::apply_frequency_and_channel_width_from_settings() {
 }
 
 void WBLink::apply_txpower() {
+  const bool armed = m_is_armed.load();
   const auto settings = m_settings->get_settings();
   const int rc_tx_mode_override = m_rc_tx_mode_override.load();
   const bool rc_tx_mode_pit =
@@ -1422,11 +1423,11 @@ void WBLink::apply_txpower() {
     int power_level = settings.wb_tx_power_level;
     if (rc_tx_mode_pit ||
         (m_profile.is_air && rc_tx_mode_override < 0 && settings.wb_pit_mode &&
-         !m_is_armed)) {
+         !armed)) {
       power_level = openhd::WB_TX_POWER_LEVEL_20;
     }
 
-    if (m_is_armed) {
+    if (armed) {
       if (settings.wb_tx_power_mw_armed_per_card.at(i) !=
           openhd::WIFI_TX_POWER_MILLI_WATT_ARMED_DISABLED) {
         card_pwr_mw = settings.wb_tx_power_mw_armed_per_card.at(i);
@@ -1495,7 +1496,7 @@ void WBLink::apply_txpower() {
             m_profile.is_air ? "Air" : "Ground", i,
             m_broadcast_cards.at(i).device_name, settings.wb_frequency,
             settings.wb_air_tx_channel_width, settings.wb_tx_power_level,
-            power_level, settings.wb_pit_mode, m_is_armed, rc_tx_mode_override,
+            power_level, settings.wb_pit_mode, armed, rc_tx_mode_override,
             m_wb_txrx->get_devourer_tx_power_diagnostics(i));
       }
       int offset_qdb = devourer_power_offset_qdb(power_level);

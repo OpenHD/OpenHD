@@ -247,6 +247,13 @@ add_dependencies(OHDVideoLib generate_camera_registry)
 # Executables for testing manually, note that some might need to run after discovery
 add_executable(test_video test/test_video.cpp)
 target_link_libraries(test_video OHDVideoLib)
+add_executable(test_video_worker_log test/test_video_worker_log.cpp)
+target_include_directories(test_video_worker_log PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/inc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../ohd_common/lib/spdlog/include)
+target_link_libraries(test_video_worker_log PRIVATE Threads::Threads)
+# Keep assertions active in Release builds too.
+target_compile_options(test_video_worker_log PRIVATE -UNDEBUG)
 add_executable(test_video_worker_descriptors test/test_video_worker_descriptors.cpp)
 target_include_directories(test_video_worker_descriptors PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/inc)

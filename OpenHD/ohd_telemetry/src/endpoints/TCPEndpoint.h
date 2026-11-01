@@ -32,7 +32,7 @@
 class TCPEndpoint : public MEndpoint, openhd::TCPServer {
  public:
   explicit TCPEndpoint(openhd::TCPServer::Config config);
-  ~TCPEndpoint() = default;
+  ~TCPEndpoint();
   static constexpr int DEFAULT_PORT = 5760;
 
  private:

@@ -170,3 +170,7 @@ target_link_libraries(test_analyze_results OHDCommonLib)
 add_executable(test_bandwidth_allocation test/test_bandwidth_allocation.cpp)
 target_include_directories(test_bandwidth_allocation PRIVATE inc)
 target_compile_options(test_bandwidth_allocation PRIVATE -UNDEBUG)
+
+add_executable(test_arming_state test/test_arming_state.cpp src/config_paths.cpp)
+target_link_libraries(test_arming_state OHDCommonLib)
+target_compile_options(test_arming_state PRIVATE -UNDEBUG)

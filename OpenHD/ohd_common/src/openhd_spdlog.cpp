@@ -88,6 +88,11 @@ PersistentLogState& persistent_state() {
   return *state;
 }
 
+std::shared_ptr<spdlog::sinks::sink>& worker_logging_sink() {
+  static std::shared_ptr<spdlog::sinks::sink> sink;
+  return sink;
+}
+
 std::mutex& logger_mutex() {
   static auto* mutex = new std::mutex();
   return *mutex;
@@ -310,6 +315,11 @@ std::shared_ptr<spdlog::logger> openhd::log::create_or_get(
     created->sinks().push_back(
         std::make_shared<openhd::log::sink::MavlinkTelemetrySink>());
     attach_persistent_sink(created);
+    if (worker_logging_sink()) {
+      created->sinks().push_back(worker_logging_sink());
+      if (created->level() > spdlog::level::info)
+        created->set_level(spdlog::level::info);
+    }
     // This is for debugging for "where a fmt exception occurred"
     // spdlog::set_error_handler([](const std::string &msg) {
     //  std::cerr<<msg<<"\n;";
@@ -317,6 +327,17 @@ std::shared_ptr<spdlog::logger> openhd::log::create_or_get(
     return created;
   }
   return ret;
+}
+
+void openhd::log::install_worker_logging_sink(
+    std::shared_ptr<spdlog::sinks::sink> sink) {
+  std::lock_guard<std::mutex> guard(logger_mutex());
+  worker_logging_sink() = std::move(sink);
+  spdlog::apply_all([](const std::shared_ptr<spdlog::logger>& logger) {
+    logger->sinks().push_back(worker_logging_sink());
+    if (logger->level() > spdlog::level::info)
+      logger->set_level(spdlog::level::info);
+  });
 }
 
 std::string openhd::log::persistent_log_directory() {

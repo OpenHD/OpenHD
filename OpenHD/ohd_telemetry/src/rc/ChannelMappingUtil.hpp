@@ -25,12 +25,11 @@
 #define OPENHD_CHANNELMAPPINGUTIL_H
 
 #include <array>
+#include <charconv>
+#include <cstdint>
 #include <optional>
 #include <string>
 
-#include "openhd_spdlog.h"
-#include "openhd_spdlog_include.h"
-#include "openhd_util.h"
 
 // Util methods for simple channel mapping, where each channel's input can be
 // defined by the user.
@@ -45,14 +44,12 @@ static constexpr auto N_MAV_CHANNELS = 18;
 // big)
 static constexpr auto N_MAPPED_CHANNELS = 18;
 
-// Channel mapping: just look at the default to understand ;)
+// Each output selects a raw input; -1 (stored as 0) leaves the output unassigned.
 using CHAN_MAP = std::array<int, N_MAPPED_CHANNELS>;
 
 static bool validate_channel_mapping(const CHAN_MAP& chan_map) {
   for (const auto& el : chan_map) {  // NOLINT(readability-use-anyofallof)
-    if (el < 0 || el >= N_MAV_CHANNELS) {
-      openhd::log::get_default()->warn("Channel mapping not a valid value{}",
-                                       el);
+    if (el < -1 || el >= N_MAV_CHANNELS) {
       return false;
     }
   }
@@ -61,21 +58,22 @@ static bool validate_channel_mapping(const CHAN_MAP& chan_map) {
 
 static std::optional<CHAN_MAP> convert_string_to_channel_mapping(
     const std::string& input) {
-  auto split_into_substrings = OHDUtil::split_into_substrings(input, ',');
-  if (split_into_substrings.size() != N_MAPPED_CHANNELS) {
-    openhd::log::get_default()->warn("Channel mapping wrong n channels:{}",
-                                     split_into_substrings.size());
-    return std::nullopt;
-  }
   CHAN_MAP parsed_as_int{};
-  for (int i = 0; i < N_MAPPED_CHANNELS; i++) {
-    // In the stored string, we start counting from 1, but in c++, we
-    // use an array index notation.
-    const auto as_int = OHDUtil::string_to_int(split_into_substrings[i]);
-    if (!as_int.has_value()) return std::nullopt;
-    parsed_as_int[i] = as_int.value() - 1;  // array notation
+  const char* begin = input.data();
+  const char* end = begin + input.size();
+  for (int i = 0; i < N_MAPPED_CHANNELS; ++i) {
+    int value = -1;
+    auto parsed = std::from_chars(begin, end, value);
+    if (parsed.ec != std::errc{} || parsed.ptr == begin || value < 0 || value > 18)
+      return std::nullopt;
+    parsed_as_int[i] = value - 1;
+    if (i == N_MAPPED_CHANNELS - 1) {
+      if (parsed.ptr != end) return std::nullopt;
+    } else {
+      if (parsed.ptr == end || *parsed.ptr != ',') return std::nullopt;
+      begin = parsed.ptr + 1;
+    }
   }
-  if (!validate_channel_mapping(parsed_as_int)) return std::nullopt;
   return parsed_as_int;
 }
 
@@ -93,8 +91,6 @@ static CHAN_MAP convert_string_to_channel_mapping_or_default(
   if (ret.has_value()) {
     return ret.value();
   }
-  openhd::log::get_default()->warn("Invalid channel mapping [{}],using default",
-                                   input);
   return get_default_channel_mapping();
 }
 
@@ -107,7 +103,11 @@ static std::array<uint16_t, N_MAV_CHANNELS> remap_channels(
     // shouldn't ever be out of bounds)
     if (i < chan_map.size()) {
       const auto channel_to_use = chan_map[i];
-      if (channel_to_use >= 0 && channel_to_use < channels.size()) {
+      if (channel_to_use == -1) {
+        // MAVLink uses different release values for channels 1-8 and 9-18.
+        // Release a previous assignment instead of leaving a stale override active.
+        ret[i] = i < 8 ? 0 : UINT16_MAX - 1;
+      } else if (channel_to_use >= 0 && channel_to_use < channels.size()) {
         ret[i] = channels[channel_to_use];
       }
     } else {

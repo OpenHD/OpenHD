@@ -188,3 +188,7 @@ target_link_libraries(test_settings_server OHDTelemetryLib)
 ####
 add_subdirectory(lib/dump1090)
 target_link_libraries(OHDTelemetryLib PUBLIC dump1090)
+
+add_executable(test_channel_mapping test/test_channel_mapping.cpp)
+target_include_directories(test_channel_mapping PRIVATE src)
+add_test(NAME channel_mapping COMMAND test_channel_mapping)

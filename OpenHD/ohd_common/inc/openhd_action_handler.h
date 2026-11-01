@@ -61,7 +61,10 @@ class ArmingStateHelper {
    * changes (disarm, arm, disarm,... for example)
    * @param tag needs to be a unique tag (per all submodules)
    */
-  void register_listener(const std::string& tag, STATE_CHANGED_CB cb);
+  // With notify_current, deliver the current state before any later changes.
+  // Callbacks must not register/unregister listeners or update arming state.
+  void register_listener(const std::string& tag, STATE_CHANGED_CB cb,
+                         bool notify_current = false);
   /**
    * Unregister a previously registered cb.
    */
@@ -73,6 +76,8 @@ class ArmingStateHelper {
 
  private:
   std::atomic_bool m_is_armed = false;
+  // Serialize listener lifetime, initial notification and state transitions.
+  std::mutex m_state_mutex;
   std::map<std::string, STATE_CHANGED_CB> m_cbs;
   std::shared_ptr<spdlog::logger> m_console =
       openhd::log::create_or_get("ArmingStateHelper");

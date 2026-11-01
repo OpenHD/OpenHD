@@ -26,6 +26,7 @@
 #define OPENHD_OPENHD_OHD_TELEMETRY_SRC_RC_JOYSTICKREADER_H_
 
 #include <array>
+#include <atomic>
 #include <functional>
 #include <mutex>
 #include <optional>
@@ -85,7 +86,7 @@ class JoystickReader {
   int process_event(void* event, std::array<uint16_t, N_CHANNELS>& values);
   void reset_curr_values();
   std::unique_ptr<std::thread> m_read_joystick_thread;
-  bool terminate = false;
+  std::atomic_bool terminate{false};
   std::mutex m_curr_values_mutex;
   CurrChannelValues m_curr_values;
   std::shared_ptr<spdlog::logger> m_console;

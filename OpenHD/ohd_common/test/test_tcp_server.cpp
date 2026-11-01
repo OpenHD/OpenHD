@@ -28,6 +28,7 @@ class TestServer : public openhd::TCPServer {
  public:
   explicit TestServer()
       : openhd::TCPServer("Test", openhd::TCPServer::Config{5760}){};
+  ~TestServer() { stop(); }
   void on_external_device(std::string ip, int port, bool connected) override {
     if (connected) {
       openhd::log::get_default()->debug("Device {}:{} connected", ip, port);

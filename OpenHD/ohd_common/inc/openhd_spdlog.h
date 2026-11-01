@@ -63,6 +63,9 @@ void enable_debug_logging_for_dashboard();
 // images, under the recordings directory's logs/openhd subdirectory. Opt in
 // with /Config/openhd/enable_logs.txt or opt out with disable_logs.txt.
 // Call after sysutils mounted storage.
+// Worker-only forwarding sink. Install before starting backend threads; keeps
+// file rotation in the parent process and includes subsequently created loggers.
+void install_worker_logging_sink(std::shared_ptr<spdlog::sinks::sink> sink);
 void initialize_persistent_logging();
 bool persistent_logging_enabled();
 std::string persistent_log_directory();

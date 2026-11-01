@@ -256,9 +256,25 @@ class RockchipMppStream::Impl {
       age_us_max = std::max(age_us_max, age_us);
       if (last_frame - report_window >= std::chrono::seconds(5)) {
         const auto seconds = std::chrono::duration<double>(last_frame - report_window).count();
-        log->info("Pico VENC: {:.1f} fps, {:.0f} kbit/s, capture-to-output average {:.1f} ms max {:.1f} ms",
+        const auto state = fmt::format("{}:{}:{}:{}:{}",
+            bitrate.load(), record_mode.load(), armed.load(), recorder.is_open(), recorder.good());
+        const bool changed = state != last_diagnostic_state;
+        last_diagnostic_state = state;
+        if (changed) log->info("Pico VENC: {:.1f} fps, {:.0f} kbit/s, capture-to-output average {:.1f} ms max {:.1f} ms",
                   report_frames / seconds, report_bytes * 8 / seconds / 1000,
                   age_us_sum / static_cast<double>(report_frames) / 1000, age_us_max / 1000.0);
+        if (changed) log->info(
+            "video-diag cam={} backend=native-rkmpi encoder=rkmpi-venc gstreamer=false "
+            "format={}x{}@{} codec={} dual_encoder_active=false "
+            "record_topology=shared-encoded-output record_mode={} armed={} "
+            "record_file_open={} record_writer_good={} tx_target_kbit_s={} "
+            "tx_measured_kbit_s={:.1f} tx_fps={:.1f} "
+            "record_encoded_kbit_s={:.1f} record_rate_scope=shared-encoder-not-disk-throughput",
+            owner.m_camera_holder->get_camera().index, width, height, fps,
+            h265 ? "h265" : "h264", record_mode.load(), armed.load(),
+            recorder.is_open(), recorder.good(), bitrate.load(),
+            report_bytes * 8.0 / seconds / 1000.0, report_frames / seconds,
+            recorder.is_open() ? report_bytes * 8.0 / seconds / 1000.0 : 0.0);
         report_window = last_frame;
         report_frames = report_bytes = age_us_sum = age_us_max = 0;
       }
@@ -321,6 +337,7 @@ class RockchipMppStream::Impl {
   std::unique_ptr<openhd::RTPHelper> rtp;
   MatroskaRecorder recorder;
   Clock::time_point recording_start = Clock::now();
+  std::string last_diagnostic_state;
   Clock::time_point capture_time = Clock::now();
   bool keyframe = false;
 };

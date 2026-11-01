@@ -2,6 +2,28 @@
   "version": 1,
   "settings": [
     {
+      "id": "JOY_MAP_V2",
+      "type": "int32",
+      "label": "Joystick mapping capability",
+      "description": "Supports unassigned RC outputs and raw joystick input monitoring.",
+      "group": "RC",
+      "hidden": true,
+      "readOnly": true,
+      "requiresReboot": false
+    },
+    {
+      "id": "JOY_MONITOR",
+      "type": "int32",
+      "label": "Read joystick inputs",
+      "description": "Send raw joystick inputs to local ground clients for assignment without enabling RC transmission. Stops when the setup page closes.",
+      "group": "RC",
+      "hidden": true,
+      "readOnly": false,
+      "requiresReboot": false,
+      "minimum": 0,
+      "maximum": 1
+    },
+    {
       "choices": [
         {
           "label": "Disable",
@@ -5258,7 +5280,7 @@
           "value": "2,1,4,3,5,6,7,8,9,10,11,12,13,14,15,16,17,18"
         }
       ],
-      "description": "Change which joystick 'channel' is taken for each RC channel. This is a list of numbers, where each number X at position N means take joystick input nr X for channel N. For example, 1,4,... means take channel number 1 for the first channel, and channel number 4 for the second channel. Needs to have ! all! 18 channel elements seperated by a ','",
+      "description": "Assign each of the 18 RC outputs to a joystick input (1-8 axes, 9-18 buttons). A comma-separated list of 18 values. Firmware with JOY_MAP_V2 also accepts 0 to release an unassigned output.",
       "group": "General",
       "hidden": false,
       "id": "RC_CHAN_MAP",

@@ -209,7 +209,7 @@ void OHDVideoAir::configure(
   } else
 #ifdef OPENHD_GSTREAMER_PRESENT
   {
-    m_console->debug("Isolated GStreamer worker for Camera index:{}", camera.index);
+    m_console->info("Isolated GStreamer worker for Camera index:{}", camera.index);
     stream = std::make_shared<CameraProcess>(camera_holder, frame_cb, !m_record_only);
   }
 #else

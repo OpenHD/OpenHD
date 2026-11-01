@@ -44,7 +44,10 @@ openhd::TCPServer::TCPServer(const std::string tag,
   m_console->debug("created with {}", m_config.port);
 }
 
-openhd::TCPServer::~TCPServer() {
+openhd::TCPServer::~TCPServer() { stop(); }
+
+void openhd::TCPServer::stop() {
+  if (!m_accept_thread) return;
   // debug_if("TCPEndpoint::~TCPEndpoint() begin");
   //  First we make sure we don't accept any new connections anymore
   m_keep_accept_thread_alive = false;

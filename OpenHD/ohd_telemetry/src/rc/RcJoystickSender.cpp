@@ -23,13 +23,16 @@
 
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
 #include "RcJoystickSender.h"
+#include "openhd_spdlog_include.h"
 
 #include <utility>
 
 RcJoystickSender::RcJoystickSender(SEND_MESSAGE_CB cb, int update_rate_hz,
-                                   openhd::CHAN_MAP chan_map)
+                                   openhd::CHAN_MAP chan_map, SEND_MESSAGE_CB monitor_cb, bool transmit)
     : m_cb(std::move(cb)),
       m_delay_in_milliseconds(1000 / update_rate_hz),
+      m_transmit(transmit),
+      m_monitor_cb(std::move(monitor_cb)),
       m_chan_map(chan_map) {
   if (!openhd::validate_channel_mapping(chan_map)) {
     openhd::log::get_default()->warn("Invalid channel mapping");
@@ -41,6 +44,7 @@ RcJoystickSender::RcJoystickSender(SEND_MESSAGE_CB cb, int update_rate_hz,
 }
 
 void RcJoystickSender::send_data_until_terminate() {
+  auto last_monitor = std::chrono::steady_clock::time_point{};
   while (!terminate) {
     const auto curr = m_joystick_reader->get_current_state();
     // We only send data if the joystick is in the connected state
@@ -52,7 +56,12 @@ void RcJoystickSender::send_data_until_terminate() {
       // are not on a microcontroller ;)
       auto curr_mapping = get_current_channel_mapping();
       auto mapped_channels = openhd::remap_channels(curr.values, curr_mapping);
-      m_cb(mapped_channels);
+      if (m_transmit) m_cb(mapped_channels);
+      const auto now = std::chrono::steady_clock::now();
+      if ((m_monitor || m_transmit) && m_monitor_cb && now - last_monitor >= std::chrono::milliseconds(100)) {
+        m_monitor_cb(curr.values);  // Raw inputs, only to local GCS clients.
+        last_monitor = now;
+      }
     }
     std::this_thread::sleep_for(
         std::chrono::milliseconds(m_delay_in_milliseconds));

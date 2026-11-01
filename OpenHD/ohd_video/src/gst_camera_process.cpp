@@ -19,6 +19,7 @@
 #include "openhd_config.h"
 #include "video_worker_child.h"
 #include "video_worker_frame.h"
+#include "video_worker_log.h"
 
 namespace {
 using namespace openhd::video_worker;
@@ -265,6 +266,13 @@ void CameraProcess::run() {
             m_camera_holder->persist(false);
             refresh_settings(false);
           }
+        } else if (header.type == Type::Diagnostic && payload.size() <= 2048) {
+          // Preserve the original severity as data. Warnings already travel via
+          // Type::Log; replay at info to avoid duplicate MAVLink alerts.
+          if (openhd::log::persistent_logging_enabled())
+            console->info("Camera worker diagnostic cam={} level={}: {}",
+                          camera.index, header.flags,
+                          std::string(payload.begin(), payload.end()));
         } else if (header.type == Type::Log &&
                    payload.size() == sizeof(openhd::log::MavlinkLogMessage)) {
           openhd::log::MavlinkLogMessage message;
@@ -348,6 +356,13 @@ int run_camera_worker_if_requested(int argc, char* argv[]) {
   camera.index = std::stoi(argv[3]);
   camera.usb_v4l2_device_number = std::stoi(argv[4]);
   if (camera.index < 0 || camera.index > 1) return EXIT_FAILURE;
+  auto diagnostic_sink = std::make_shared<DiagnosticSink>();
+  openhd::log::install_worker_logging_sink(diagnostic_sink);
+  auto worker_log = openhd::log::create_or_get("camera-worker");
+  worker_log->info("video-backend cam={} pid={} backend={} selected=true; "
+                   "encoder activity is reported by the backend",
+                   camera.index, getpid(), use_mpp ? "native-mpp" :
+                   (use_libcamera ? "libcamera-app" : "gstreamer"));
   auto holder = std::make_shared<CameraHolder>(camera, true);
   uint32_t frame_sequence = 0;
   std::atomic<int64_t> last_frame_ms{0};
@@ -496,6 +511,20 @@ int run_camera_worker_if_requested(int argc, char* argv[]) {
            openhd::log::MavlinkLogMessageBuffer::instance()
                .dequeue_log_messages())
         send_packet(3, {Type::Log}, &message, sizeof(message));
+      DiagnosticSink::Entry diagnostic;
+      for (int i = 0; i < 16 && diagnostic_sink->pop(diagnostic); ++i) {
+        Header diagnostic_header{Type::Diagnostic};
+        diagnostic_header.flags = diagnostic.level;
+        if (!send_packet(3, diagnostic_header, diagnostic.text.data(),
+                         diagnostic.text.size())) {
+          diagnostic_sink->dropped();
+          break;
+        }
+      }
+      // Enqueue the loss summary after draining, so a full queue cannot swallow
+      // the original loss count while trying to report it.
+      const auto lost = diagnostic_sink->take_lost();
+      if (lost) worker_log->info("worker diagnostic messages dropped={}", lost);
       last_status = Clock::now();
     }
   }

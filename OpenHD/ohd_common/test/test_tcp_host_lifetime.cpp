@@ -10,6 +10,7 @@
 class Server final : public openhd::TCPServer {
  public:
   Server() : TCPServer("test", {15760}) {}
+  ~Server() { stop(); }
   std::atomic<int> connects{0}, disconnects{0}, packets{0};
   void on_packet_any_tcp_client(const uint8_t*, int) override { ++packets; }
   void on_external_device(std::string, int, bool connected) override {
@@ -36,7 +37,7 @@ int connect_client() {
   return fd;
 }
 
-int main() {
+void check_host_lifetime() {
   Server server;
   int viewer = connect_client();
   wait_for([&] { return server.connects == 1; });
@@ -55,5 +56,15 @@ int main() {
   wait_for([&] { return server.connects == 2; });
   close(reconnect);
   wait_for([&] { return server.disconnects == 2; });
+}
+
+int main() {
+  check_host_lifetime();
+  // Shutdown with a live viewer must finish while derived callbacks still exist.
+  auto stopping = std::make_unique<Server>();
+  int active = connect_client();
+  wait_for([&] { return stopping->connects == 1; });
+  stopping.reset();
+  close(active);
   std::cout << "TCP host lifetime regression passed\n";
 }

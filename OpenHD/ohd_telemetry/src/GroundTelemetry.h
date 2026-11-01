@@ -141,6 +141,7 @@ class GroundTelemetry : public MavlinkSystem {
   //
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
   std::unique_ptr<RcJoystickSender> m_rc_joystick_sender = nullptr;
+  bool m_joystick_monitor = false;
 #endif
   const bool m_ignoreSerial;
 };

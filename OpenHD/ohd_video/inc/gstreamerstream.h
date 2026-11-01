@@ -209,6 +209,9 @@ class GStreamerStream : public CameraStream {
       std::chrono::steady_clock::now();
 
  private:
+  std::atomic<int64_t> m_last_video_diag_ms{0};
+  std::mutex m_video_diag_mutex;
+  std::string m_last_video_diag_state;
   std::shared_ptr<openhd::RTPHelper> m_rtp_helper;
 };
 

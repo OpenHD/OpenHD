@@ -564,6 +564,7 @@ class RockchipMppStream::Impl {
       stop_recording();
       return false;
     }
+    recording_encoder_initialized = true;
     emit_record_codec_header();
     record_time_origin.reset();
     log->info("High-quality MPP recording started: {} kbit/s, QP {}-{}, {}",
@@ -581,6 +582,8 @@ class RockchipMppStream::Impl {
   }
 
   void stop_recording() {
+    recording_encoder_initialized = false;
+    recording_has_output = false;
     record_muxer.close();
     record_au.clear();
     record_header.clear();
@@ -1261,6 +1264,11 @@ class RockchipMppStream::Impl {
         "MPP capture input: {}/{} DMA buffers imported, copy fallback "
         "available, force-copy {}",
         imported_count, capture_buffers.size(), force_copy ? "on" : "off");
+    log->info("video-backend cam={} backend=native-mpp encoder=rockchip-mpp "
+              "gstreamer=false tx_encoder_initialized=true dual_encoder_capable=true "
+              "record_mode={} record_target_kbit_s={}",
+              owner.m_camera_holder->get_camera().index, record_mode.load(),
+              std::max(5000, record_bitrate_kbits.load()));
     log->info("Native MPP encoder active: {}x{} ROI is runtime adjustable",
               width, height);
     openhd::LinkActionHandler::instance().set_cam_info_status(
@@ -1426,6 +1434,7 @@ class RockchipMppStream::Impl {
     mpp_frame_deinit(&frame);
     RK_U32 end_of_image = 0;
     size_t transmit_frame_bytes = 0;
+    bool frame_is_keyframe = false;
     const auto output_deadline = Clock::now() + std::chrono::seconds(2);
     do {
       MppPacket packet = nullptr;
@@ -1448,6 +1457,7 @@ class RockchipMppStream::Impl {
           if (meta)
             mpp_meta_get_s32(meta, KEY_OUTPUT_INTRA, &is_intra);
           const bool is_keyframe = is_intra || is_keyframe_au(data, length);
+          frame_is_keyframe = frame_is_keyframe || is_keyframe;
           if (is_keyframe && !header_sent_for_frame && !codec_header.empty()) {
             rtp->feed_multiple_nalu(codec_header.data(),
                                     static_cast<int>(codec_header.size()));
@@ -1471,6 +1481,8 @@ class RockchipMppStream::Impl {
     } while (!end_of_image);
     if (!transmit && !record_au.empty()) {
       const auto mux_begin = Clock::now();
+      const auto record_bytes = record_au.size();
+      const bool record_keyframe = is_keyframe_au(record_au.data(), record_au.size());
       if (is_keyframe_au(record_au.data(), record_au.size()) &&
           !record_header.empty()) {
         record_muxer.feed_annex_b_access_unit(
@@ -1484,6 +1496,10 @@ class RockchipMppStream::Impl {
         log->error("MPP recording write failed");
         return false;
       }
+      diagnostic_record_bytes += record_bytes;
+      ++diagnostic_record_frames;
+      if (record_keyframe) ++diagnostic_record_keyframes;
+      recording_has_output = true;
     }
     if (transmit) {
       encode_latency.add(elapsed_ms(encode_begin));
@@ -1511,6 +1527,9 @@ class RockchipMppStream::Impl {
         transmit_frame_bytes += padding;
         perf_window_bytes += padding;
       }
+      diagnostic_tx_bytes += transmit_frame_bytes;
+      ++diagnostic_tx_frames;
+      if (frame_is_keyframe) ++diagnostic_tx_keyframes;
       ++perf_window_frames;
       const auto elapsed = now - perf_window_start;
       if (elapsed >= std::chrono::seconds(1)) {
@@ -1667,11 +1686,58 @@ class RockchipMppStream::Impl {
 
   void report_latency(Clock::time_point now) {
     if (now - last_latency_report < std::chrono::seconds(5)) return;
+    const double seconds = std::chrono::duration<double>(now - last_latency_report).count();
     last_latency_report = now;
-    const auto report = [this](const char* stage,
+    const auto tx_bytes = diagnostic_tx_bytes.exchange(0);
+    const auto tx_frames = diagnostic_tx_frames.exchange(0);
+    const auto rec_bytes = diagnostic_record_bytes.exchange(0);
+    const auto rec_frames = diagnostic_record_frames.exchange(0);
+    const auto tx_keyframes = diagnostic_tx_keyframes.exchange(0);
+    const auto rec_keyframes = diagnostic_record_keyframes.exchange(0);
+    const bool initialized = recording_encoder_initialized.load();
+    const bool output = recording_has_output.load();
+    const auto& settings = owner.m_camera_holder->get_settings();
+    const auto drops = recording_drops.load();
+    const auto state = fmt::format(
+        "{}:{}:{}:{}:{}:{}:{}:{}:{}:{}:{}:{}:{}:{}:{}:{}:{}:{}:{}",
+        record_mode.load(), armed.load(), recording_requested(), record_worker_available,
+        initialized, output, tx_frames > 0, rec_frames > 0,
+        requested_bitrate_kbits.load(), bitrate_kbits.load(), record_bitrate_kbits.load(),
+        qp_min.load(), qp_max.load(), record_qp_min.load(), record_qp_max.load(),
+        settings.h26x_keyframe_interval, drops != diagnostic_previous_drops,
+        sequence_gaps != diagnostic_previous_gaps, invalid_capture_frames != diagnostic_previous_invalid);
+    diagnostic_previous_drops = drops;
+    diagnostic_previous_gaps = sequence_gaps;
+    diagnostic_previous_invalid = invalid_capture_frames;
+    const bool changed = state != last_diagnostic_state;
+    last_diagnostic_state = state;
+    if (changed) log->info(
+        "video-diag cam={} backend=native-mpp encoder=rockchip-mpp "
+        "gstreamer=false format={}x{}@{} codec={} window_s={:.2f} "
+        "record_mode={} armed={} record_requested={} record_worker_available={} "
+        "record_encoder_initialized={} record_has_output={} dual_encoder_active={} "
+        "tx_requested_kbit_s={} tx_target_kbit_s={} tx_measured_kbit_s={:.1f} "
+        "tx_fps={:.1f} tx_frames={} tx_keyframes={} tx_gop_frames={} "
+        "record_target_kbit_s={} record_measured_kbit_s={:.1f} record_fps={:.1f} "
+        "record_frames={} record_keyframes={} record_gop_frames={} "
+        "tx_qp_min={} tx_qp_max={} record_qp_min={} record_qp_max={} "
+        "record_raw_drops_total={} rate_scope=elementary-video-before-RTP-and-mux",
+        owner.m_camera_holder->get_camera().index, width, height, configured_fps,
+        coding == MPP_VIDEO_CodingHEVC ? "h265" : "h264", seconds,
+        record_mode.load(), armed.load(), recording_requested(), record_worker_available,
+        initialized, output, initialized && output && tx_frames > 0 && rec_frames > 0,
+        requested_bitrate_kbits.load(), std::max(1000, bitrate_kbits.load()),
+        tx_bytes * 8.0 / seconds / 1000.0, tx_frames / seconds, tx_frames,
+        tx_keyframes, std::max(1, settings.h26x_keyframe_interval),
+        std::max(5000, record_bitrate_kbits.load()), rec_bytes * 8.0 / seconds / 1000.0,
+        rec_frames / seconds, rec_frames, rec_keyframes,
+        std::max(1, settings.streamed_video_format.framerate * 2),
+        qp_min.load(), qp_max.load(), record_qp_min.load(), record_qp_max.load(),
+        recording_drops.load());
+    const auto report = [this, changed](const char* stage,
                                openhd::mpp::LatencySamples& samples) {
       const auto sorted = samples.take();
-      if (!sorted.empty())
+      if (changed && !sorted.empty())
         log->info(
             "MPP latency {} ms: p50 {:.3f}, p95 {:.3f}, max {:.3f}, samples {}",
             stage, openhd::mpp::LatencySamples::percentile(sorted, 50),
@@ -1689,7 +1755,7 @@ class RockchipMppStream::Impl {
     report("recording-encode-and-write", recording_encode_latency);
     report("recording-write", recording_write_latency);
     report("recording-dequeue-to-write", recording_total_latency);
-    log->info(
+    if (changed) log->info(
         "MPP input totals: DMA {}, copy {}, capture sequence gaps {}, invalid "
         "frames {}, recording raw drops {}",
         dma_frames, copied_frames, sequence_gaps, invalid_capture_frames,
@@ -1876,6 +1942,10 @@ class RockchipMppStream::Impl {
   openhd::mpp::SlotQueue<RecordJob, record_slot_count> record_queue;
   std::array<MppBuffer, record_slot_count> record_inputs{};
   std::atomic<uint64_t> recording_drops{0};
+  std::atomic_bool recording_encoder_initialized{false}, recording_has_output{false};
+  std::atomic<uint64_t> diagnostic_tx_bytes{0}, diagnostic_tx_frames{0},
+      diagnostic_tx_keyframes{0}, diagnostic_record_bytes{0},
+      diagnostic_record_frames{0}, diagnostic_record_keyframes{0};
   std::atomic_bool record_rate_dirty{false};
   std::atomic<int> record_bitrate_kbits{40000};
   std::atomic<int> record_qp_min{4};
@@ -1930,6 +2000,9 @@ class RockchipMppStream::Impl {
   Clock::time_point current_capture_time = Clock::now();
   std::optional<double> current_capture_age_ms;
   Clock::time_point last_latency_report = Clock::now();
+  std::string last_diagnostic_state;
+  uint64_t diagnostic_previous_drops = 0, diagnostic_previous_gaps = 0,
+           diagnostic_previous_invalid = 0;
   uint64_t sequence_gaps = 0, invalid_capture_frames = 0, dma_frames = 0,
            copied_frames = 0;
   openhd::mpp::LatencySamples capture_age_latency, copy_latency, encode_latency,

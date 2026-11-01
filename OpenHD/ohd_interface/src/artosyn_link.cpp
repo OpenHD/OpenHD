@@ -2368,10 +2368,6 @@ std::vector<openhd::Setting> ArtosynLink::get_all_settings() {
   if (!expose_artosyn_diagnostic_settings()) {
     return ret;
   }
-  m_console->warn(
-      "OHD_ARTOSYN_DIAG_PARAMS=1 enabled: exposing live Artosyn diagnostic "
-      "parameters during settings registration.");
-
   int link_state = -1;
   int rx_mcs = -1;
   int tx_mcs = -1;
@@ -2381,8 +2377,16 @@ std::vector<openhd::Setting> ArtosynLink::get_all_settings() {
   int real_tp = -1;
   int tx_freq_khz = -1;
   int rx_freq_khz = -1;
-  (void)read_metrics(&link_state, &rx_mcs, &tx_mcs, &bw, &phy_tp, &real_tp,
-                     &tx_freq_khz, &rx_freq_khz, &rx_bw, nullptr, nullptr);
+  // A hardware hint or a saved daemon address can select Artosyn while it is
+  // still reconnecting. Only register diagnostics for an open device that
+  // answers a status query; an RF connection to the peer is not required.
+  if (!read_metrics(&link_state, &rx_mcs, &tx_mcs, &bw, &phy_tp, &real_tp,
+                    &tx_freq_khz, &rx_freq_khz, &rx_bw, nullptr, nullptr)) {
+    return ret;
+  }
+  m_console->warn(
+      "OHD_ARTOSYN_DIAG_PARAMS=1 enabled: exposing live Artosyn diagnostic "
+      "parameters during settings registration.");
   ret.push_back(create_read_only_int(AR_LK_STATE, link_state));
   ret.push_back(create_read_only_int(AR_RX_MCS, rx_mcs));
   ret.push_back(create_read_only_int(AR_TX_MCS, tx_mcs));

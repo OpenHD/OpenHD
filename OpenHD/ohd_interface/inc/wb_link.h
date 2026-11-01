@@ -286,7 +286,7 @@ class WBLink : public OHDLink {
   // Set to true when armed, disarmed by default
   // Used to differentiate between different tx power levels when armed /
   // disarmed
-  bool m_is_armed = false;
+  std::atomic_bool m_is_armed = false;
   std::atomic_bool m_request_apply_tx_power = false;
   std::atomic_bool m_request_apply_tx_mcs_index = false;
   std::atomic<int> m_pending_rc_channel_width = 0;

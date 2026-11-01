@@ -35,6 +35,12 @@
 TCPEndpoint::TCPEndpoint(openhd::TCPServer::Config config)
     : MEndpoint("TCPServer"), openhd::TCPServer("MTCPServer", config) {}
 
+TCPEndpoint::~TCPEndpoint() {
+  // Disconnect notifications and packet callbacks still need our overrides and
+  // receive mutex, which no longer exist when the TCPServer base dtor runs.
+  stop();
+}
+
 bool TCPEndpoint::sendMessagesImpl(
     const std::vector<MavlinkMessage>& messages) {
   auto message_buffers = aggregate_pack_messages(messages, 1024);

@@ -433,6 +433,8 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
       m_gnd_settings->persist();
       if (m_gnd_settings->unsafe_get_settings().enable_rc_over_joystick) {
         enable_joystick();
+      } else if (m_joystick_monitor && m_rc_joystick_sender) {
+        m_rc_joystick_sender->set_transmit_enabled(false);
       } else {
         disable_joystick();
       }
@@ -444,6 +446,17 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
             static_cast<int>(
                 m_gnd_settings->get_settings().enable_rc_over_joystick),
             c_config_enable_joystick}});
+    ret.push_back(openhd::Setting{"JOY_MAP_V2", openhd::IntSetting{1, nullptr}, nullptr, true});
+    ret.push_back(openhd::Setting{"JOY_MONITOR", openhd::IntSetting{0,
+        [this](std::string, int value) {
+          if (!openhd::validate_yes_or_no(value)) return false;
+          m_joystick_monitor = value != 0;
+          if (m_joystick_monitor) enable_joystick();
+          if (m_rc_joystick_sender) m_rc_joystick_sender->set_monitor_enabled(m_joystick_monitor);
+          if (!m_joystick_monitor && !m_gnd_settings->get_settings().enable_rc_over_joystick)
+            disable_joystick();
+          return true;
+        }}});
     // We always expose these params, regardless if joy is enabled or disabled
     auto c_rc_over_joystick_update_rate_hz = [this](std::string, int value) {
       if (!openhd::telemetry::ground::valid_joystick_update_rate(value))
@@ -752,7 +765,7 @@ void GroundTelemetry::set_link_handle(std::shared_ptr<OHDLink> link) {
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
 void GroundTelemetry::enable_joystick() {
   if (m_rc_joystick_sender != nullptr) {
-    m_console->warn("Joy already enabled");
+    m_rc_joystick_sender->set_transmit_enabled(m_gnd_settings->get_settings().enable_rc_over_joystick);
     return;
   }
   auto cb = [this](std::array<uint16_t, 18> channels) {
@@ -775,8 +788,34 @@ void GroundTelemetry::enable_joystick() {
       m_gnd_settings->get_settings().rc_channel_mapping);
   m_rc_joystick_sender = std::make_unique<RcJoystickSender>(
       cb, m_gnd_settings->get_settings().rc_over_joystick_update_rate_hz,
-      mapping_parsed);
-  m_console->info("Joystick enabled");
+      mapping_parsed, [this](std::array<uint16_t,18> values) {
+        mavlink_rc_channels_t raw{};
+        raw.chancount = 18;
+        raw.rssi = UINT8_MAX;
+        raw.chan1_raw = values[0];
+        raw.chan2_raw = values[1];
+        raw.chan3_raw = values[2];
+        raw.chan4_raw = values[3];
+        raw.chan5_raw = values[4];
+        raw.chan6_raw = values[5];
+        raw.chan7_raw = values[6];
+        raw.chan8_raw = values[7];
+        raw.chan9_raw = values[8];
+        raw.chan10_raw = values[9];
+        raw.chan11_raw = values[10];
+        raw.chan12_raw = values[11];
+        raw.chan13_raw = values[12];
+        raw.chan14_raw = values[13];
+        raw.chan15_raw = values[14];
+        raw.chan16_raw = values[15];
+        raw.chan17_raw = values[16];
+        raw.chan18_raw = values[17];
+        MavlinkMessage message{};
+        mavlink_msg_rc_channels_encode(OHD_SYS_ID_GROUND, 0, &message.m, &raw);
+        send_messages_ground_station_clients({message});
+      }, m_gnd_settings->get_settings().enable_rc_over_joystick);
+  m_rc_joystick_sender->set_monitor_enabled(m_joystick_monitor);
+  m_console->info("Joystick reader started");
 }
 void GroundTelemetry::disable_joystick() {
   if (m_rc_joystick_sender == nullptr) {

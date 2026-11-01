@@ -22,7 +22,8 @@ enum class Type : uint32_t {
   Raw,
   FrameEnd,
   Stop,
-  Log
+  Log,
+  Diagnostic
 };
 struct Header {
   Type type;

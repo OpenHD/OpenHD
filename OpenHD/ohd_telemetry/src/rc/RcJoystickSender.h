@@ -44,8 +44,11 @@ class RcJoystickSender {
   typedef std::function<void(std::array<uint16_t, 18> channels)>
       SEND_MESSAGE_CB;
   RcJoystickSender(SEND_MESSAGE_CB cb, int update_rate_hz,
-                   openhd::CHAN_MAP chan_map);
+                   openhd::CHAN_MAP chan_map,
+                   SEND_MESSAGE_CB monitor_cb = {}, bool transmit = true);
   ~RcJoystickSender();
+  void set_transmit_enabled(bool enabled) { m_transmit = enabled; }
+  void set_monitor_enabled(bool enabled) { m_monitor = enabled; }
   // atomic, can be called from any thread.
   void change_update_rate(int update_rate_hz);
   // update the channel mapping, thread-safe
@@ -61,7 +64,10 @@ class RcJoystickSender {
   // Controls the update rate how often we send the rc packets to the air unit.
   // We can just use std::atomic for thread safety here
   std::atomic<int> m_delay_in_milliseconds;
-  bool terminate = false;
+  std::atomic_bool terminate{false};
+  std::atomic_bool m_transmit{true};
+  std::atomic_bool m_monitor{false};
+  const SEND_MESSAGE_CB m_monitor_cb;
 
  private:
   std::mutex m_chan_map_mutex;

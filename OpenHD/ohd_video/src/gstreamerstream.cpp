@@ -591,6 +591,29 @@ void GStreamerStream::update_perf_telemetry(uint32_t bitrate_bps, uint16_t fps,
     m_perf_seen_nonzero_bitrate.store(true, std::memory_order_relaxed);
   }
   m_last_perf_message_ms.store(now_ms, std::memory_order_relaxed);
+  auto previous_diag = m_last_video_diag_ms.load();
+  if (now_ms - previous_diag >= 5000 &&
+      m_last_video_diag_ms.compare_exchange_strong(previous_diag, now_ms)) {
+    // Recording branches from the encoded tee: it shares the live encoder.
+    const auto info = openhd::LinkActionHandler::instance().get_cam_info(
+        m_camera_holder->get_camera().index);
+    std::lock_guard<std::mutex> diag_lock(m_video_diag_mutex);
+    const auto state = fmt::format("{}:{}:{}:{}",
+        info.air_recording_active, m_curr_dynamic_bitrate_kbits.load(),
+        bitrate_bps > 0, fps > 0);
+    const bool changed = state != m_last_video_diag_state;
+    m_last_video_diag_state = state;
+    if (changed) m_console->info(
+        "video-diag cam={} backend=gstreamer dual_encoder_active=false "
+        "record_topology=shared-encoded-tee record_branch_configured={} "
+        "record_write_verified=false tx_target_kbit_s={} "
+        "tx_measured_kbit_s={:.1f} tx_fps={} measurement={} "
+        "record_encoded_kbit_s={:.1f} record_rate_scope=shared-encoder-not-disk-throughput",
+        m_camera_holder->get_camera().index, info.air_recording_active,
+        m_curr_dynamic_bitrate_kbits.load(), bitrate_bps / 1000.0, fps,
+        bitrate_from_gst_perf ? "gst-perf" : "output-fallback",
+        info.air_recording_active ? bitrate_bps / 1000.0 : 0.0);
+  }
   openhd::LinkActionHandler::instance().set_cam_info_perf(
       m_camera_holder->get_camera().index, bitrate_bps, fps);
   update_qp_pid_controller(bitrate_bps, now_ms);
@@ -1203,6 +1226,14 @@ bool GStreamerStream::setup() {
         (uint8_t)setting.qp_min};
     openhd::LinkActionHandler::instance().set_cam_info(index, cam_info);
   }
+  m_console->info(
+      "video-backend cam={} backend=gstreamer format={}x{}@{} codec={} "
+      "record_mode={} record_branch_configured={} dual_encoder_active=false "
+      "record_topology=shared-encoded-tee tx_configured_kbit_s={}",
+      m_camera_holder->get_camera().index, setting.streamed_video_format.width,
+      setting.streamed_video_format.height, setting.streamed_video_format.framerate,
+      video_codec_to_int(setting.streamed_video_format.videoCodec),
+      setting.air_recording, ADD_RECORDING_TO_PIPELINE, setting.h26x_bitrate_kbits);
   const auto full_pipeline = pipeline_content.str();
   m_console->debug("Starting pipeline:[{}]", full_pipeline);
   send_pipeline_debug_over_mavlink(m_camera_holder->get_camera().index,
@@ -1242,6 +1273,18 @@ bool GStreamerStream::setup() {
   m_bitrate_ctrl_element = get_dynamic_bitrate_control_element_in_pipeline(
       m_gst_pipeline, *m_camera_holder);
   m_supports_live_bitrate = m_bitrate_ctrl_element.has_value();
+  if (m_bitrate_ctrl_element) {
+    auto* encoder = m_bitrate_ctrl_element->encoder;
+    auto* factory = gst_element_get_factory(encoder);
+    m_console->info("video-encoder cam={} backend=gstreamer element={} factory={} "
+                    "native_mpp=false",
+                    m_camera_holder->get_camera().index, GST_ELEMENT_NAME(encoder),
+                    factory ? gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory)) : "unknown");
+  } else {
+    m_console->info("video-encoder cam={} backend=gstreamer "
+                    "encoder=source-managed-or-unidentified native_mpp=false",
+                    m_camera_holder->get_camera().index);
+  }
   m_qp_ctrl_element = get_dynamic_qp_control_element_in_pipeline(
       m_gst_pipeline, *m_camera_holder);
   const bool plugin_managed_ip_camera =

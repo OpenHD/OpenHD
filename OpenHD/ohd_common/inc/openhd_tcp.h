@@ -69,6 +69,11 @@ class TCPServer {
    */
   virtual void on_external_device(std::string ip, int port, bool connected) = 0;
 
+ protected:
+  // Derived destructors must join callback threads before their members and
+  // virtual overrides are destroyed. Safe to call again from the base dtor.
+  void stop();
+
  private:
   const Config m_config;
   const bool m_debug;

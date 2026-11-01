@@ -31,12 +31,16 @@ openhd::ArmingStateHelper &openhd::ArmingStateHelper::instance() {
 }
 
 void openhd::ArmingStateHelper::register_listener(
-    const std::string &tag, openhd::ArmingStateHelper::STATE_CHANGED_CB cb) {
+    const std::string &tag, openhd::ArmingStateHelper::STATE_CHANGED_CB cb,
+    bool notify_current) {
+  std::lock_guard<std::mutex> lock(m_state_mutex);
   assert(m_cbs.find(tag) == m_cbs.end());
   m_cbs[tag] = std::move(cb);
+  if (notify_current) m_cbs.at(tag)(m_is_armed.load());
 }
 
 void openhd::ArmingStateHelper::unregister_listener(const std::string &tag) {
+  std::lock_guard<std::mutex> lock(m_state_mutex);
   auto element = m_cbs.find(tag);
   if (element == m_cbs.end()) {
     openhd::log::get_default()->warn("Cannot unregister arming listener {}",
@@ -47,6 +51,7 @@ void openhd::ArmingStateHelper::unregister_listener(const std::string &tag) {
 }
 
 void openhd::ArmingStateHelper::update_arming_state_if_changed(bool armed) {
+  std::lock_guard<std::mutex> lock(m_state_mutex);
   if (m_is_armed == armed) return;
   m_is_armed = armed;
   m_console->debug("MAV armed:{}, calling listeners.",
