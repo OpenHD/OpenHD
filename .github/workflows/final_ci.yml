@@ -389,6 +389,7 @@ jobs:
           "${READELF}" -h build-orqa-sysutils/openhd_sys_utils | \
             grep -q 'Machine:.*AArch64'
           "${STRIP}" --strip-unneeded build-orqa-sysutils/openhd_sys_utils
+          "${STRIP}" --strip-unneeded build-orqa-sysutils/openhd-usb-power-recover
           bash OpenHD-SysUtils/scripts/build_usb_modeswitch.sh \
             "${GITHUB_WORKSPACE}/build-orqa-sysutils/usb_modeswitch"
       - name: Package OpenHD SysUtils for Orqa
@@ -401,6 +402,7 @@ jobs:
           path: |
             build-orqa-sysutils/*.deb
             build-orqa-sysutils/openhd_sys_utils
+            build-orqa-sysutils/openhd-usb-power-recover
             build-orqa-sysutils/openhd-orqa-camera-probe
             build-orqa-sysutils/usb_modeswitch
             build-orqa-sysutils/usb_modeswitch.COPYING
@@ -423,6 +425,8 @@ jobs:
           cp build-orqa-sysutils/usb_modeswitch.COPYING \
             "${deploy}/usr/share/licenses/usb-modeswitch/COPYING"
           mkdir -p "${deploy}/usr/local/sbin"
+          install -m 0755 build-orqa-sysutils/openhd-usb-power-recover \
+            "${deploy}/usr/local/sbin/"
           install -m 0755 build-orqa-sysutils/openhd-orqa-camera-probe \
             "${deploy}/usr/local/sbin/"
 

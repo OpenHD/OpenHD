@@ -1615,7 +1615,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
   ret.push_back(openhd::create_read_only_int("WB_N_CARDS", n_rx_cards));
 
   for (int i = 0; i < MAX_WIFI_CARDS; i++) {
-    int card_type_int = 0;  // UNKNOWN
+    int card_type_int = wifi_card_type_to_int(WiFiCardType::UNKNOWN);
     if (i < m_broadcast_cards.size()) {
       card_type_int = wifi_card_type_to_int(m_broadcast_cards.at(i).type);
     }

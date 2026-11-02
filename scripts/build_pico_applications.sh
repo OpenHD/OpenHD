@@ -21,6 +21,8 @@ cmake --build "$work/build" --parallel "$(nproc)" --target openhd_sys_utils
 mkdir -p "$work/stage/usr/bin"
 install -m755 "$work/build/openhd_sys_utils" "$work/stage/usr/bin/openhd_sys_utils"
 "$STRIP" "$work/stage/usr/bin/openhd_sys_utils"
+install -Dm755 "$work/build/openhd-usb-power-recover" "$work/stage/usr/sbin/openhd-usb-power-recover"
+"$STRIP" "$work/stage/usr/sbin/openhd-usb-power-recover"
 install -Dm644 "$sysutils/misc/openhd-devourer-eu.conf" "$work/stage/lib/modprobe.d/openhd-devourer-eu.conf"
 install -Dm644 "$sysutils/misc/70-openhd-devourer-eu.rules" "$work/stage/lib/udev/rules.d/70-openhd-devourer-eu.rules"
 install -Dm644 "$sysutils/misc/wifi_cards.json" "$work/stage/usr/local/share/OpenHD/SysUtils/wifi_cards.json"
