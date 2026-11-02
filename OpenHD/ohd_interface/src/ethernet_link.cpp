@@ -905,7 +905,8 @@ void EthernetLink::update_link_stats() {
   const auto port_speed = peer_port_speed(peer, &metrics.port_duplex);
   openhd::link_usage::Registry::instance().set_ethernet_metrics(port_speed, metrics);
   if (m_profile.is_air && !peer.empty()) {
-    const int budget = m_video_rate_controller.update(40000, port_speed / 1000,
+    const int budget = m_video_rate_controller.update(
+        port_speed > 0 ? int(port_speed / 1000) : openhd::bandwidth::kMaximumEncoderPoolKbits, port_speed / 1000,
         metrics.rtt_us, metrics.probe_loss_permille, metrics.send_errors, now_ms);
     openhd::LinkActionHandler::instance().action_request_bitrate_change_handle(
         {budget, true, openhd::bandwidth::Transport::Ethernet});

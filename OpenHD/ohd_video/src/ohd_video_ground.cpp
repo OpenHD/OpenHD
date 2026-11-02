@@ -111,7 +111,7 @@ void OHDVideoGround::on_video_data(int stream_index, const uint8_t* data,
       const auto now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
       if (now - m_fleet_feedback_at >= 1000) {
         const auto metrics = m_fleet_output[0]->metrics();
-        const int budget = m_fleet_rate.update(40000, 0, metrics.rtt_us, metrics.probe_loss_permille, 0, now);
+        const int budget = m_fleet_rate.update(openhd::bandwidth::kMaximumEncoderPoolKbits, 0, metrics.rtt_us, metrics.probe_loss_permille, 0, now);
         openhd::link_usage::Registry::instance().set_capacity("LTE", budget * 1000);
         openhd::LinkActionHandler::instance().report_relay_bitrate_budget(budget);
         m_fleet_feedback_at = now;

@@ -214,7 +214,7 @@ void AirTelemetry::on_messages_ground_unit(
     if (payload.type != 0x52 || payload.len != 12 || std::memcmp(payload.data, "OHBR", 4) != 0 || payload.data[4] != 1) continue;
     uint32_t kbits = 0;
     for (unsigned i=0;i<4;++i) kbits |= uint32_t(payload.data[8+i]) << (8*i);
-    if (kbits >= 64 && kbits <= 40000) openhd::LinkActionHandler::instance().receive_relay_bitrate_budget(kbits);
+    if (kbits >= 64 && kbits <= openhd::bandwidth::kMaximumEncoderPoolKbits) openhd::LinkActionHandler::instance().receive_relay_bitrate_budget(kbits);
   }
   if (m_sbus_output) {
     for (const auto& msg : messages) {

@@ -9,6 +9,8 @@
 #include <vector>
 
 namespace openhd::bandwidth {
+// The encoder pool is bounded independently of the physical link capacity.
+inline constexpr int kMaximumEncoderPoolKbits = 50000;
 enum class Transport : uint8_t {
   Unknown = 0,
   WiFiBroadcast = 1,
@@ -139,7 +141,8 @@ class Allocator {
     out.safety_kbits = std::max(64, out.capacity_kbits * 3 / 100);
     const int required =
         out.priority_kbits + out.fixed_kbits + out.safety_kbits;
-    out.pool_kbits = std::max(0, out.capacity_kbits - required);
+    out.pool_kbits = std::min(kMaximumEncoderPoolKbits,
+                              std::max(0, out.capacity_kbits - required));
     out.overcommitted = required > out.capacity_kbits;
     unsigned assigned = 0, remaining = count;
     for (const auto& consumer : consumers) {

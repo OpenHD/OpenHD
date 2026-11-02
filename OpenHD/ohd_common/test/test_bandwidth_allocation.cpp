@@ -52,6 +52,24 @@ int main() {
   router.routed(Transport::Lte, true);
   assert(router.update(Transport::Lte, 2000)->kbits == 2000);
   Allocator allocator;
+  for (auto transport : {Transport::WiFiBroadcast, Transport::Ethernet,
+                         Transport::Microhard, Transport::Artosyn, Transport::Lte}) {
+    Allocator large_link;
+    auto first = camera(0, 70), second = camera(1, 30);
+    first.transport = second.transport = transport;
+    first.maximum_kbits = second.maximum_kbits = 100000;
+    Consumer fixed{12, transport, Priority::Media, Control::Fixed, true, true, 100000};
+    auto capped = large_link.calculate(transport, 1000000, true, {first, second, fixed}, 1000);
+    assert(capped.capacity_kbits == 1000000 && capped.fixed_kbits == 115000);
+    assert(capped.pool_kbits == 50000);
+    assert(capped.streams[0].kbits == 35000 && capped.streams[1].kbits == 15000);
+    second.active = false;
+    capped = large_link.calculate(transport, 1000000, true, {first, second}, 2000);
+    assert(capped.streams[0].kbits == 50000);
+    first.maximum_kbits = 20000;
+    capped = large_link.calculate(transport, 1000000, true, {first}, 3000);
+    assert(capped.streams[0].kbits == 20000);
+  }
   auto a = camera(0, 70), b = camera(1, 30);
   std::vector<Consumer> consumers = {
       a,

@@ -478,7 +478,7 @@ void MicrohardLink::update_link_stats() {
   if (m_profile.is_air && m_capacity_probe) {
     openhd::ethernet::Metrics metrics;
     m_capacity_probe->apply(metrics);
-    const int budget = m_rate_controller.update(40000, 0, metrics.rtt_us,
+    const int budget = m_rate_controller.update(openhd::bandwidth::kMaximumEncoderPoolKbits, 0, metrics.rtt_us,
         metrics.probe_loss_permille, m_send_errors.load(), now_ms);
     openhd::LinkActionHandler::instance().action_request_bitrate_change_handle(
         {budget, true, openhd::bandwidth::Transport::Microhard});

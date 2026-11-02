@@ -59,7 +59,7 @@ struct Recommendation {
 };
 class RelayConstraint {
  public:
-  void update(int kbits, int64_t now_ms) { limit_ = std::clamp(kbits, 64, 40000); updated_ = now_ms; }
+  void update(int kbits, int64_t now_ms) { limit_ = std::clamp(kbits, 64, kMaximumEncoderPoolKbits); updated_ = now_ms; }
   int constrain(int kbits, int64_t now_ms) const {
     return limit_ > 0 && now_ms - updated_ < 3000 ? std::min(kbits, limit_) : kbits;
   }

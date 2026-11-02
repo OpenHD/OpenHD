@@ -7,8 +7,12 @@ Removed links stop constraining the encoders. A late update from a removed link
 is ignored.
 
 WiFiBroadcast supplies its existing MCS/FEC-derived payload budget. Artosyn
-supplies its existing modem estimate. Ethernet combines the negotiated port rate
-with a **40,000 kbit/s total ceiling**. LTE and Microhard start conservatively and
+supplies its existing modem estimate. Ethernet uses negotiated port speed and
+peer probes without substituting an encoder ceiling for reported link capacity.
+The shared allocator limits the adjustable encoder pool to **50,000 kbit/s total**
+after reserving fixed and essential traffic. Per-camera capability limits still
+apply, and unused link capacity stays available for other traffic.
+LTE and Microhard start conservatively and
 use end-to-end probe RTT, probe loss and local send errors to back off and slowly
 recover toward the same ceiling. Current TX throughput is not treated as spare
 capacity. These estimates are congestion signals, not a WAN speed test.
@@ -30,7 +34,7 @@ the WireGuard or permission protocol.
 A Ground LTE gateway forwards both original streams and reports a short-lived
 budget to Air using MAVLink DATA96 type `0x52`: `OHBR`, version 1, three reserved
 bytes, then a little-endian uint32 kbit/s budget. Air accepts this only from the
-Ground onboard-computer component, with a 64..40,000 range. Reports expire after
+Ground onboard-computer component, with a 64..50,000 range. Reports expire after
 three seconds, so a stopped relay cannot permanently lower the local video
 budget. This uses the same trust boundary as existing Ground camera controls.
 

@@ -16,7 +16,7 @@ LteLink::LteLink(LteLinkConfig config) : m_config(std::move(config)) {
         m_video[0]->allowed();
         const auto metrics = m_video[0]->metrics();
         const auto now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
-        const int budget = m_rate.update(40000, 0, metrics.rtt_us, metrics.probe_loss_permille, m_send_errors, now);
+        const int budget = m_rate.update(openhd::bandwidth::kMaximumEncoderPoolKbits, 0, metrics.rtt_us, metrics.probe_loss_permille, m_send_errors, now);
         if (m_config.is_air) {
           openhd::link_usage::Registry::instance().set_capacity("LTE", budget * 1000);
           openhd::LinkActionHandler::instance().action_request_bitrate_change_handle(
