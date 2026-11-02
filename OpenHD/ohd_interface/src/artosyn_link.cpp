@@ -1208,6 +1208,7 @@ void ArtosynLink::update_video_bitrate_recommendation(int capacity_kbits,
   openhd::LinkActionHandler::LinkBitrateInformation bitrate_info{};
   bitrate_info.recommended_encoder_bitrate_kbits = recommendation_kbits;
   bitrate_info.is_link_capacity_limit = true;
+  bitrate_info.transport = openhd::bandwidth::Transport::Artosyn;
   openhd::LinkActionHandler::instance().action_request_bitrate_change_handle(
       bitrate_info);
 }

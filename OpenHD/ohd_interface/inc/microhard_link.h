@@ -33,6 +33,8 @@
 #include "openhd_link.hpp"
 #include "openhd_settings_imp.h"
 #include "openhd_udp.h"
+#include "ethernet_peer_probe.h"
+#include "openhd_transport_bitrate.hpp"
 
 /**
  * Link implementation for microhard modules
@@ -92,6 +94,9 @@ class MicrohardLink : public OHDLink {
   uint64_t m_last_stats_rx_tele_bytes = 0;
   uint64_t m_last_stats_rx_tele_packets = 0;
   openhd::non_wb::VideoBitrateMeter m_video_bitrate_meter;
+  std::unique_ptr<EthernetPeerProbe> m_capacity_probe;
+  openhd::bandwidth::RateController m_rate_controller;
+  std::atomic<uint32_t> m_send_errors{0};
 };
 
 #endif  // OPENHD_MICROHARD_LINK_H

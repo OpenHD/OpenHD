@@ -124,7 +124,7 @@ void CameraProcess::handle_change_bitrate_request(
       m_camera_holder->get_camera().requires_rockchip_rv_pipeline())
     return;
   int requested = lb.recommended_encoder_bitrate_kbits;
-  if (lb.is_link_capacity_limit)
+  if (lb.is_link_capacity_limit && !lb.automatic_allocation)
     requested =
         std::min(requested, m_camera_holder->get_settings().h26x_bitrate_kbits);
   if (m_backend == Backend::GStreamer) {
@@ -139,6 +139,7 @@ void CameraProcess::handle_change_bitrate_request(
   const bool changed = m_bitrate != requested;
   m_bitrate = requested;
   m_capacity_limit = lb.is_link_capacity_limit;
+  m_automatic_allocation = lb.automatic_allocation;
   if (!lb.is_link_capacity_limit &&
       m_camera_holder->get_settings().h26x_bitrate_kbits != requested) {
     m_camera_holder->unsafe_get_settings().h26x_bitrate_kbits = requested;
@@ -234,7 +235,7 @@ void CameraProcess::run() {
         }
         control = {m_bitrate, m_qp_min,         m_qp_max,
                    m_armed,   m_capacity_limit, m_keyframe_revision.load(),
-                   m_rotation_degree, m_flip};
+                   m_rotation_degree, m_flip, m_automatic_allocation};
       }
       send_packet(child.fd, {Type::Control}, &control, sizeof(control));
       pollfd event{child.fd, POLLIN, 0};
@@ -426,7 +427,8 @@ int run_camera_worker_if_requested(int argc, char* argv[]) {
         create_stream();
         stream->handle_update_arming_state(applied.armed);
         if (applied.bitrate >= 0)
-          stream->handle_change_bitrate_request({applied.bitrate, false});
+          stream->handle_change_bitrate_request({applied.bitrate, applied.capacity_limit,
+              openhd::bandwidth::Transport::Unknown, true, applied.automatic_allocation});
 #ifdef OPENHD_ROCKCHIP_MPP_PRESENT
         if (use_mpp && applied.qp_min >= 0 && applied.qp_max >= 0)
           static_cast<RockchipMppStream*>(stream.get())
@@ -454,8 +456,10 @@ int run_camera_worker_if_requested(int argc, char* argv[]) {
         if (stream) {
           if (control.bitrate >= 0 &&
               (control.bitrate != applied.bitrate ||
-               control.capacity_limit != applied.capacity_limit))
-            stream->handle_change_bitrate_request({control.bitrate, false});
+               control.capacity_limit != applied.capacity_limit ||
+               control.automatic_allocation != applied.automatic_allocation))
+            stream->handle_change_bitrate_request({control.bitrate, control.capacity_limit,
+                openhd::bandwidth::Transport::Unknown, true, control.automatic_allocation});
           if (control.armed != applied.armed)
             stream->handle_update_arming_state(control.armed);
 #ifdef OPENHD_ROCKCHIP_MPP_PRESENT

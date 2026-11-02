@@ -37,6 +37,7 @@
 #include "openhd_link.hpp"
 #include "openhd_udp.h"
 #include "openhd_util.h"
+#include "openhd_transport_bitrate.hpp"
 
 class EthernetLink : public OHDLink {
  public:
@@ -92,6 +93,7 @@ class EthernetLink : public OHDLink {
   void handle_telemetry_data(const uint8_t* data, int data_len);
 
   bool m_auto_discovery = false;
+  openhd::bandwidth::RateController m_video_rate_controller;
   std::atomic<bool> m_discovery_running{false};
   std::thread m_discovery_thread;
   std::mutex m_forwarders_mutex;

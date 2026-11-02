@@ -42,6 +42,7 @@ struct AirCameraGenericSettings {
   // Make primary camera secondary camera and other way around (aka if they are
   // detected in the wrong order)
   bool switch_primary_and_secondary = false;
+  int auto_link_bitrate = -1;  // Migrate the legacy WiFi choice on first use.
   // the link recommends a total video bitrate to us - in case of dual camera,
   // we need to split that up into bitrate for primary and secondary video
   int dualcam_primary_video_allocated_bandwidth_perc =

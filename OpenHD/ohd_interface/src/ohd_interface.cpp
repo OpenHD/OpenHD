@@ -112,7 +112,7 @@ OHDInterface::OHDInterface(OHDProfile profile1, bool disable_wifi_hotspot)
                              settings->lte_fleetcontrol_address,
                              settings->lte_video_port,
                              settings->lte_video2_port,
-                             settings->lte_telemetry_port};
+                             settings->lte_telemetry_port, m_profile.is_air};
     m_lte_link = std::make_shared<LteLink>(std::move(lte_config));
     m_multi_link->add_link("LTE", m_lte_link);
   }
@@ -282,6 +282,9 @@ void OHDInterface::apply_link_policy() {
   } else if (m_ethernet_link && m_ethernet_routing_enabled) {
     openhd::LinkActionHandler::instance().set_primary_link_type(
         openhd::LinkActionHandler::PRIMARY_LINK_ETHERNET);
+  } else if (m_lte_link) {
+    openhd::LinkActionHandler::instance().set_primary_link_type(
+        openhd::LinkActionHandler::PRIMARY_LINK_LTE);
   } else {
     openhd::LinkActionHandler::instance().set_primary_link_type(
         openhd::LinkActionHandler::PRIMARY_LINK_NONE);

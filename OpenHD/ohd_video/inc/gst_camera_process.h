@@ -37,6 +37,7 @@ class CameraProcess : public CameraStream {
   bool m_settings_restart = true;
   int m_bitrate = -1;
   bool m_capacity_limit = false;
+  bool m_automatic_allocation = false;
   int m_qp_min = -1;
   int m_qp_max = -1;
   bool m_armed = false;

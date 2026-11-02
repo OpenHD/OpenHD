@@ -27,6 +27,10 @@
 #include "openhd_external_device.h"
 #include "openhd_link.hpp"
 #include "openhd_udp.h"
+#include "openhd_fleet_video_lease.hpp"
+#include "openhd_transport_bitrate.hpp"
+#include <array>
+#include <mutex>
 #ifdef OPENHD_GST_VIDEO_OUTPUT
 namespace openhd { class GstVideoOutput; }
 #endif
@@ -57,9 +61,10 @@ class OHDVideoGround {
   std::shared_ptr<spdlog::logger> m_console;
   std::shared_ptr<OHDLink> m_link_handle;
   std::string m_native_fleet_address;
-#ifdef OPENHD_GST_VIDEO_OUTPUT
-  std::unique_ptr<openhd::GstVideoOutput> m_fleet_output;
-#endif
+  std::array<std::unique_ptr<openhd::FleetVideoLease>, 2> m_fleet_output;
+  std::mutex m_fleet_mutex;
+  openhd::bandwidth::RateController m_fleet_rate;
+  int64_t m_fleet_feedback_at = 0;
   std::unique_ptr<openhd::UDPMultiForwarder> m_primary_video_forwarder;
   std::unique_ptr<openhd::UDPMultiForwarder> m_secondary_video_forwarder;
   std::unique_ptr<openhd::UDPMultiForwarder> m_audio_forwarder;

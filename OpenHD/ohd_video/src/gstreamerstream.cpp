@@ -1311,25 +1311,7 @@ bool GStreamerStream::setup() {
     cleanup_pipe();
     return false;
   }
-  // FleetControl is a low-bandwidth rendition of the primary camera, never a
-  // second copy of the radio encoder's RTP. Outputs have independent encoders.
-  if (m_enable_video_outputs && m_camera_holder->get_camera().index == 0) {
-    if (const auto lte = openhd::request_sysutil_settings();
-        lte && lte->lte_configured && lte->lte_active) {
-      try {
-        openhd::VideoOutputProfile profile{"FleetControl", lte->lte_fleetcontrol_address,
-                                          lte->lte_video_port, 854, 480, 15, 1000,
-                                          !OHDPlatform::instance().is_rpi()};
-        profile.fleet_controlled = true;
-        auto output = std::make_unique<openhd::GstVideoOutput>(std::move(profile));
-        if (output->attach(m_gst_pipeline, setting.streamed_video_format.videoCodec == VideoCodec::H265, !dirty_use_raw))
-          m_video_outputs.push_back(std::move(output));
-        else m_console->warn("FleetControl output could not attach to the camera");
-      } catch (const std::exception& error) {
-        m_console->warn("FleetControl output unavailable: {}", error.what());
-      }
-    }
-  }
+  // Main RTP streams are routed by MultiLink, including LTE.
   // m_console->debug("Cam encoding format: {}",(int)cam_info.encoding_format);
   auto lol_cb =
       [this](
@@ -1481,7 +1463,7 @@ void GStreamerStream::handle_change_bitrate_request(
   //  We do some safety checks first - the link might recommend too much / too
   //  little
   auto bitrate_for_encoder_kbits = lb.recommended_encoder_bitrate_kbits;
-  if (lb.is_link_capacity_limit) {
+  if (lb.is_link_capacity_limit && !lb.automatic_allocation) {
     bitrate_for_encoder_kbits =
         std::min(bitrate_for_encoder_kbits,
                  m_camera_holder->get_settings().h26x_bitrate_kbits);
@@ -1570,8 +1552,10 @@ void GStreamerStream::apply_worker_control() {
   }
   if (control.bitrate >= 0 &&
       (control.bitrate != m_applied_worker_control.bitrate ||
-       control.capacity_limit != m_applied_worker_control.capacity_limit))
-    handle_change_bitrate_request({control.bitrate, control.capacity_limit});
+       control.capacity_limit != m_applied_worker_control.capacity_limit ||
+       control.automatic_allocation != m_applied_worker_control.automatic_allocation))
+    handle_change_bitrate_request({control.bitrate, control.capacity_limit,
+        openhd::bandwidth::Transport::Unknown, true, control.automatic_allocation});
   if (control.armed != m_applied_worker_control.armed)
     handle_update_arming_state(control.armed);
   if (control.qp_min >= 0 && control.qp_max >= 0 &&

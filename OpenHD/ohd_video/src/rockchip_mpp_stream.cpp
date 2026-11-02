@@ -2091,7 +2091,7 @@ int RockchipMppStream::recording_setting() const {
 void RockchipMppStream::handle_change_bitrate_request(
     openhd::LinkActionHandler::LinkBitrateInformation lb) {
   m_impl->requested_bitrate_kbits = m_camera_holder->clamp_video_bitrate_kbits(
-      lb.is_link_capacity_limit
+      lb.is_link_capacity_limit && !lb.automatic_allocation
           ? std::min(lb.recommended_encoder_bitrate_kbits,
                      m_camera_holder->get_settings().h26x_bitrate_kbits)
           : lb.recommended_encoder_bitrate_kbits);

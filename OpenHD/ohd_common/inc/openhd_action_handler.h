@@ -25,6 +25,7 @@
 #define OPENHD_OPENHD_OHD_COMMON_OPENHD_ACTION_HANDLER_HPP_
 
 #include "openhd_bandwidth_allocation.hpp"
+#include "openhd_transport_bitrate.hpp"
 #include <atomic>
 #include <chrono>
 #include <functional>
@@ -118,6 +119,7 @@ class LinkActionHandler {
     PRIMARY_LINK_ETHERNET = 2,
     PRIMARY_LINK_MICROHARD = 3,
     PRIMARY_LINK_ARTOSYN = 4,
+    PRIMARY_LINK_LTE = 5,
   };
   void set_primary_link_type(PrimaryLinkType type) {
     m_primary_link_type = static_cast<int>(type);
@@ -129,11 +131,12 @@ class LinkActionHandler {
   struct LinkBitrateInformation {
     int recommended_encoder_bitrate_kbits;
     // Capacity-driven recommendations must not overwrite BITRATE_MBITS. That
-    // setting remains the user-selected ceiling and can still be changed at
-    // runtime; the link only applies a temporary encoder limit beneath it.
+    // setting remains the user-selected manual bitrate. Automatic allocation
+    // may exceed it while respecting the encoder's capability limit.
     bool is_link_capacity_limit = false;
     openhd::bandwidth::Transport transport = openhd::bandwidth::Transport::Unknown;
     bool dynamic_enabled = true;
+    bool automatic_allocation = false;
   };
   typedef std::function<void(LinkBitrateInformation link_bitrate_info)>
       ACTION_REQUEST_BITRATE_CHANGE;
@@ -148,6 +151,7 @@ class LinkActionHandler {
   // used by ohd_video
   void action_request_bitrate_change_register(
       const ACTION_REQUEST_BITRATE_CHANGE& cb) {
+    std::lock_guard<std::mutex> lock(m_bitrate_callback_mutex);
     if (cb == nullptr) {
       m_action_request_bitrate_change = nullptr;
       return;
@@ -158,8 +162,19 @@ class LinkActionHandler {
   // called by ohd_interface / wb
   void action_request_bitrate_change_handle(
       LinkBitrateInformation link_bitrate_info) {
+    if (link_bitrate_info.transport != openhd::bandwidth::Transport::Unknown) {
+      std::lock_guard<std::mutex> lock(m_bitrate_router_mutex);
+      const auto now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+      link_bitrate_info.recommended_encoder_bitrate_kbits = m_relay_constraint.constrain(link_bitrate_info.recommended_encoder_bitrate_kbits, now);
+      const auto selected = m_bitrate_router.update(link_bitrate_info.transport,
+          link_bitrate_info.recommended_encoder_bitrate_kbits);
+      if (!selected) return;
+      link_bitrate_info.transport = selected->transport;
+      link_bitrate_info.recommended_encoder_bitrate_kbits = selected->kbits;
+    }
     // openhd::log::get_default()->debug("action_request_bitrate_change_handle
     // {}", link_bitrate_info_to_string(link_bitrate_info));
+    std::lock_guard<std::mutex> callback_lock(m_bitrate_callback_mutex);
     auto tmp = m_action_request_bitrate_change;
     if (tmp) {
       auto& cb = *tmp;
@@ -169,6 +184,45 @@ class LinkActionHandler {
     }
   }
 
+  void set_bitrate_transport_routed(const std::string& name, bool enabled) {
+    std::lock_guard<std::mutex> lock(m_bitrate_router_mutex);
+    m_bitrate_router.routed(openhd::bandwidth::transport_for(name), enabled);
+  }
+  std::function<bool()> wb_legacy_auto_bitrate;
+  std::function<void(bool)> wb_sync_auto_bitrate;
+  bool video_auto_bitrate_enabled() const { return m_video_auto_bitrate.load(); }
+  void register_auto_bitrate_setting(std::function<void(bool)> cb) {
+    std::lock_guard<std::mutex> lock(m_auto_bitrate_mutex);
+    m_auto_bitrate_setting = std::move(cb);
+  }
+  void set_video_auto_bitrate(bool enabled) {
+    std::lock_guard<std::mutex> lock(m_auto_bitrate_mutex);
+    m_video_auto_bitrate = enabled;
+    if (m_auto_bitrate_setting) m_auto_bitrate_setting(enabled);
+  }
+  void receive_relay_bitrate_budget(int kbits) {
+    std::lock_guard<std::mutex> lock(m_bitrate_router_mutex);
+    const auto now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+    m_relay_constraint.update(kbits, now);
+  }
+  void register_relay_bitrate_report(std::function<void(int)> cb) {
+    std::lock_guard<std::mutex> lock(m_relay_report_mutex);
+    m_relay_report = std::move(cb);
+  }
+  void report_relay_bitrate_budget(int kbits) {
+    std::lock_guard<std::mutex> lock(m_relay_report_mutex);
+    if (m_relay_report) m_relay_report(kbits);
+  }
+ private:
+  std::mutex m_bitrate_router_mutex;
+  std::mutex m_bitrate_callback_mutex;
+  openhd::bandwidth::BudgetRouter m_bitrate_router;
+  openhd::bandwidth::RelayConstraint m_relay_constraint;
+  std::mutex m_relay_report_mutex;
+  std::function<void(int)> m_relay_report;
+  std::mutex m_auto_bitrate_mutex;
+  std::function<void(bool)> m_auto_bitrate_setting;
+  std::atomic_bool m_video_auto_bitrate{true};
  public:
   // checking both 2G and 5G channels takes really long, but in rare cases might
   // be wanted by the user checking both 20Mhz and 40Mhz (instead of only either

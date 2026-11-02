@@ -13,7 +13,10 @@ enum class Transport : uint8_t {
   Unknown = 0,
   WiFiBroadcast = 1,
   Ethernet = 2,
-  Uart = 3
+  Uart = 3,
+  Microhard = 4,
+  Artosyn = 5,
+  Lte = 6
 };
 // A link instance identifies one physical/logical transport. Separate WiFi
 // radios can share a transport type without sharing a capacity or history.

@@ -41,6 +41,7 @@ struct Control {
   unsigned keyframe_revision = 0;
   int rotation_degree = -1;
   int flip = -1;
+  bool automatic_allocation = false;
 };
 
 inline bool send_packet(int fd, Header header, const void* data = nullptr,

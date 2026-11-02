@@ -238,7 +238,7 @@ std::vector<std::string> ethernet_interface_names(
 
 // Ask the kernel which local interface routes to this peer. Only advertise the
 // negotiated speed of that interface, never a guessed 100/1000 Mbit capacity.
-uint32_t peer_port_speed(const std::string& peer) {
+uint32_t peer_port_speed(const std::string& peer, uint32_t* duplex = nullptr) {
   const int fd = socket(AF_INET, SOCK_DGRAM, 0);
   if (fd < 0) return 0;
   sockaddr_in remote{}, local{}; remote.sin_family = AF_INET; remote.sin_port = htons(5920);
@@ -258,6 +258,12 @@ uint32_t peer_port_speed(const std::string& peer) {
     if ((current->ifa_flags & IFF_LOOPBACK) || !has_carrier(current->ifa_name)) break;
     const auto speed = OHDFilesystemUtil::opt_read_file(
         std::string("/sys/class/net/") + current->ifa_name + "/speed", false);
+    const auto mode = OHDFilesystemUtil::opt_read_file(
+        std::string("/sys/class/net/") + current->ifa_name + "/duplex", false);
+    if (duplex && mode) {
+      if (mode->find("full") != std::string::npos) *duplex = 1;
+      else if (mode->find("half") != std::string::npos) *duplex = 0;
+    }
     try {
       const auto mbps = speed ? std::stoll(*speed) : 0;
       if (mbps > 0) result = static_cast<uint32_t>(std::min<int64_t>(UINT32_MAX, mbps * 1000000));
@@ -896,7 +902,14 @@ void EthernetLink::update_link_stats() {
   if (m_peer_probe) m_peer_probe->apply(metrics);
   std::string peer;
   { std::lock_guard<std::mutex> lock(m_forwarders_mutex); peer = m_peer_ip; }
-  openhd::link_usage::Registry::instance().set_ethernet_metrics(peer_port_speed(peer), metrics);
+  const auto port_speed = peer_port_speed(peer, &metrics.port_duplex);
+  openhd::link_usage::Registry::instance().set_ethernet_metrics(port_speed, metrics);
+  if (m_profile.is_air && !peer.empty()) {
+    const int budget = m_video_rate_controller.update(40000, port_speed / 1000,
+        metrics.rtt_us, metrics.probe_loss_permille, metrics.send_errors, now_ms);
+    openhd::LinkActionHandler::instance().action_request_bitrate_change_handle(
+        {budget, true, openhd::bandwidth::Transport::Ethernet});
+  }
 
   m_last_stats_ts_ms = now_ms;
   m_last_stats_tx_bytes = tx_bytes;

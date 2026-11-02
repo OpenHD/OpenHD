@@ -5,6 +5,7 @@
 
 #include "openhd_secondary_telemetry.hpp"
 #include "openhd_link_usage.hpp"
+#include "openhd_action_handler.h"
 
 namespace {
 constexpr auto kVideoDuplicateLifetime = std::chrono::seconds(2);
@@ -55,6 +56,7 @@ void MultiLink::clear_links() {
     endpoints.swap(m_endpoints);
   }
   for (const auto& endpoint : endpoints) {
+    openhd::LinkActionHandler::instance().set_bitrate_transport_routed(endpoint->name, false);
     openhd::link_usage::Registry::instance().remove_link(endpoint->name);
     if (endpoint->name != "WIFIBROADCAST") {
       openhd::SecondaryTelemetryStatus::instance().set_configured(
@@ -86,6 +88,8 @@ void MultiLink::add_link(std::string name, std::shared_ptr<OHDLink> link) {
                                                                 true);
   }
   openhd::link_usage::Registry::instance().add_link(endpoint->name);
+  if (link->usage_supports_video(0))
+    openhd::LinkActionHandler::instance().set_bitrate_transport_routed(endpoint->name, true);
   endpoint->worker = std::thread([endpoint]() { dispatch_loop(endpoint); });
   auto gate = m_callback_gate;
   link->register_on_receive_video_data_cb(
@@ -141,6 +145,7 @@ void MultiLink::remove_link(const std::shared_ptr<OHDLink>& link) {
                                                                 false);
   }
   openhd::link_usage::Registry::instance().remove_link(removed->name);
+  openhd::LinkActionHandler::instance().set_bitrate_transport_routed(removed->name, false);
   stop_endpoint(removed);
 }
 

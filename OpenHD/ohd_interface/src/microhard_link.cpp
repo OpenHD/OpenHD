@@ -390,6 +390,8 @@ MicrohardLink::MicrohardLink(const openhd::Config& config, OHDProfile profile)
     std::thread(communicate_with_device_slow, modem_ip, command2,
                 m_config.username, m_config.password).detach();
   }
+  m_capacity_probe = std::make_unique<EthernetPeerProbe>(m_profile.is_air,
+      [this] { return m_config.peer_ip; }, 49902);
   start_stats_thread();
 }
 
@@ -417,7 +419,10 @@ void MicrohardLink::transmit_video_data(
   assert(m_profile.is_air);
   if (stream_index == 0) {
     for (const auto& fragment : fragmented_video_frame.rtp_fragments) {
-      m_video_tx->forwardPacketViaUDP(fragment->data(), fragment->size());
+      if (!m_video_tx->forwardPacketViaUDP(fragment->data(), fragment->size())) {
+        ++m_send_errors;
+        continue;
+      }
       m_video_bitrate_meter.on_tx_fragment(
           stream_index, static_cast<uint64_t>(fragment->size()));
       m_tx_total_bytes.fetch_add(static_cast<uint64_t>(fragment->size()),
@@ -470,6 +475,14 @@ void MicrohardLink::update_link_stats() {
     return;
   }
   const int64_t now_ms = openhd::util::steady_clock_time_epoch_ms();
+  if (m_profile.is_air && m_capacity_probe) {
+    openhd::ethernet::Metrics metrics;
+    m_capacity_probe->apply(metrics);
+    const int budget = m_rate_controller.update(40000, 0, metrics.rtt_us,
+        metrics.probe_loss_permille, m_send_errors.load(), now_ms);
+    openhd::LinkActionHandler::instance().action_request_bitrate_change_handle(
+        {budget, true, openhd::bandwidth::Transport::Microhard});
+  }
   if (m_last_stats_ts_ms == 0) {
     m_last_stats_ts_ms = now_ms;
     m_last_stats_tx_bytes = m_tx_total_bytes.load(std::memory_order_relaxed);

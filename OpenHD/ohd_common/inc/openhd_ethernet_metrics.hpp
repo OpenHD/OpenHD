@@ -10,6 +10,7 @@ struct Metrics {
   uint32_t tx_bps = 0, rx_bps = 0, tx_pps = 0, rx_pps = 0;
   uint32_t rtt_us = kUnknown, jitter_us = kUnknown;
   uint32_t probe_loss_permille = kUnknown, send_errors = 0;
+  uint32_t port_duplex = kUnknown;  // 0 = half, 1 = full, unknown on older peers.
 };
 inline uint32_t rate(uint64_t delta, uint64_t elapsed_ms, uint32_t scale) {
   if (!elapsed_ms) return 0;

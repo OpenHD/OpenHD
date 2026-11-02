@@ -361,7 +361,7 @@ void RockchipMppStream::set_orientation(int rotation, int flip) {
 }
 int RockchipMppStream::recording_setting() const { return m_impl->record_mode; }
 void RockchipMppStream::handle_change_bitrate_request(openhd::LinkActionHandler::LinkBitrateInformation request) {
-  m_impl->bitrate = m_camera_holder->clamp_video_bitrate_kbits(request.is_link_capacity_limit
+  m_impl->bitrate = m_camera_holder->clamp_video_bitrate_kbits(request.is_link_capacity_limit && !request.automatic_allocation
       ? std::min(request.recommended_encoder_bitrate_kbits, m_camera_holder->get_settings().h26x_bitrate_kbits)
       : request.recommended_encoder_bitrate_kbits);
   m_impl->rate_dirty = true;

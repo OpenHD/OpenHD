@@ -402,6 +402,15 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
   // this fetches the last settings, otherwise creates default ones
   m_settings = std::make_unique<openhd::WBLinkSettingsHolder>(
       m_profile, m_broadcast_cards);
+  if (m_profile.is_air) {
+    auto& actions = openhd::LinkActionHandler::instance();
+    actions.wb_legacy_auto_bitrate = [this] { return bool(m_settings->get_settings().enable_wb_video_variable_bitrate); };
+    actions.wb_sync_auto_bitrate = [this](bool enabled) {
+      if (bool(m_settings->get_settings().enable_wb_video_variable_bitrate) == enabled) return;
+      m_settings->unsafe_get_settings().enable_wb_video_variable_bitrate = enabled;
+      m_settings->persist();
+    };
+  }
   // Persisted narrowband settings cannot bypass local radio validation.
   if (!local_radios_support_10mhz() &&
       (m_settings->get_settings().wb_air_tx_channel_width == 10 ||
@@ -778,6 +787,10 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
 }
 
 WBLink::~WBLink() {
+  if (m_profile.is_air) {
+    openhd::LinkActionHandler::instance().wb_legacy_auto_bitrate = nullptr;
+    openhd::LinkActionHandler::instance().wb_sync_auto_bitrate = nullptr;
+  }
   m_console->debug("WBLink::~WBLink() begin");
   openhd::log::remove_persistent_logging_listener(
       m_persistent_logging_listener_id);
@@ -1208,6 +1221,7 @@ bool WBLink::set_air_enable_wb_video_variable_bitrate(int value) {
   // value is read in regular intervals.
   m_settings->unsafe_get_settings().enable_wb_video_variable_bitrate = value;
   m_settings->persist();
+  openhd::LinkActionHandler::instance().set_video_auto_bitrate(value != 0);
   if (value == 0) {
     openhd::bandwidth::Store::instance().disable(openhd::bandwidth::Transport::WiFiBroadcast);
     openhd::LinkActionHandler::instance().action_request_bitrate_change_handle(
@@ -2688,12 +2702,8 @@ void WBLink::wt_update_statistics() {
 void WBLink::wt_perform_rate_adjustment() {
   using namespace openhd::wb;
   if (!m_profile.is_air) return;  // Only done on air unit
-  // Rate adjustment is done on air and only if enabled
-  if (!(m_profile.is_air &&
-        m_settings->get_settings().enable_wb_video_variable_bitrate)) {
-    openhd::bandwidth::Store::instance().disable(openhd::bandwidth::Transport::WiFiBroadcast);
-    return;
-  }
+  // Capacity estimation remains active in manual mode. The common camera
+  // policy decides whether to apply it and can compare parallel transports.
   const auto& settings = m_settings->get_settings();
   const auto& card = m_broadcast_cards.at(0);
   // First we calculate the theoretical rate for the current "wifi config" aka
@@ -2786,6 +2796,7 @@ void WBLink::recommend_bitrate_to_encoder(int recommended_video_bitrate_kbits) {
   openhd::LinkActionHandler::LinkBitrateInformation lb{};
   lb.recommended_encoder_bitrate_kbits = recommended_video_bitrate_kbits;
   lb.transport = openhd::bandwidth::Transport::WiFiBroadcast;
+  lb.dynamic_enabled = openhd::LinkActionHandler::instance().video_auto_bitrate_enabled();
   openhd::LinkActionHandler::instance().action_request_bitrate_change_handle(
       lb);
 }

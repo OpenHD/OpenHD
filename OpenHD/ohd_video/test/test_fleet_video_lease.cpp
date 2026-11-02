@@ -13,6 +13,13 @@ int main() {
   timeval timeout{2, 0};
   setsockopt(server, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
   openhd::FleetVideoLease lease("127.0.0.1", ntohs(address.sin_port), true);
+  const auto wait_permission = [&](bool expected) {
+    for (int i=0;i<100;++i) {
+      if (lease.allowed() == expected) return true;
+      std::this_thread::sleep_for(std::chrono::milliseconds(2));
+    }
+    return false;
+  };
   assert(!lease.allowed());
   std::array<char, 16> packet{};
   sockaddr_in client{};
@@ -23,19 +30,25 @@ int main() {
   assert(!lease.allowed()); // A different request's reply cannot grant permission.
   packet[15] ^= 1;
   sendto(server, packet.data(), packet.size(), 0, reinterpret_cast<sockaddr*>(&client), size);
-  assert(lease.allowed());
+  assert(wait_permission(true));
+  assert(lease.metrics().rtt_us != openhd::ethernet::kUnknown);
+  const std::array<uint8_t, 5> rtp{{0x80, 96, 1, 2, 3}};
+  assert(lease.send_rtp(rtp.data(), rtp.size()));
+  std::array<uint8_t, 5> received{};
+  assert(recv(server, received.data(), received.size(), 0) == 5 && received == rtp);
   std::this_thread::sleep_for(std::chrono::milliseconds(800));
   assert(lease.allowed());
   assert(recvfrom(server, packet.data(), packet.size(), 0, reinterpret_cast<sockaddr*>(&client), &size) == 16);
   std::memcpy(packet.data(), "OHDFV1N\0", 8);
   sendto(server, packet.data(), packet.size(), 0, reinterpret_cast<sockaddr*>(&client), size);
-  assert(!lease.allowed()); // Stop revokes the existing lease immediately.
+  assert(wait_permission(false)); // Stop revokes the existing lease immediately.
+  assert(!lease.send_rtp(rtp.data(), rtp.size()));
   std::this_thread::sleep_for(std::chrono::milliseconds(800));
   assert(!lease.allowed());
   assert(recvfrom(server, packet.data(), packet.size(), 0, reinterpret_cast<sockaddr*>(&client), &size) == 16);
   std::memcpy(packet.data(), "OHDFV1Y\0", 8);
   sendto(server, packet.data(), packet.size(), 0, reinterpret_cast<sockaddr*>(&client), size);
-  assert(lease.allowed()); // Start resumes without restarting OpenHD.
+  assert(wait_permission(true)); // Start resumes without restarting OpenHD.
   std::this_thread::sleep_for(std::chrono::milliseconds(2100));
   assert(!lease.allowed()); // Losing the server stops the Fleet output.
   assert(recvfrom(server, packet.data(), packet.size(), 0, reinterpret_cast<sockaddr*>(&client), &size) == 16);

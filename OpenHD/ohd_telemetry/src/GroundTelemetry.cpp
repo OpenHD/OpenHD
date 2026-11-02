@@ -129,10 +129,20 @@ GroundTelemetry::GroundTelemetry(bool ignoreSerial)
           }
         }
       });
+  openhd::LinkActionHandler::instance().register_relay_bitrate_report([this](int kbits) {
+    mavlink_data96_t payload{};
+    payload.type = 0x52; payload.len = 12;
+    std::memcpy(payload.data, "OHBR", 4); payload.data[4] = 1;
+    for (unsigned i=0;i<4;++i) payload.data[8+i] = (uint32_t(kbits) >> (8*i)) & 255;
+    MavlinkMessage message;
+    mavlink_msg_data96_encode(OHD_SYS_ID_GROUND, MAV_COMP_ID_ONBOARD_COMPUTER, &message.m, &payload);
+    send_messages_air_unit({message});
+  });
   m_console->debug("Created GroundTelemetry");
 }
 
 GroundTelemetry::~GroundTelemetry() {
+  openhd::LinkActionHandler::instance().register_relay_bitrate_report(nullptr);
   openhd::SecondaryTelemetryStatus::instance().set_configured("UART", false);
   // first, stop all the endpoints that have their own threads
   m_wb_endpoint = nullptr;

@@ -2,6 +2,7 @@
 #include <iostream>
 
 #include "openhd_bandwidth_allocation.hpp"
+#include "openhd_transport_bitrate.hpp"
 using namespace openhd::bandwidth;
 static Consumer camera(unsigned id, unsigned weight) {
   return {id,
@@ -16,6 +17,40 @@ static Consumer camera(unsigned id, unsigned weight) {
           weight};
 }
 int main() {
+  RateController ethernet;
+  assert(ethernet.update(40000, 1000000, 500, 0, 0, 1000) == 40000);
+  assert(ethernet.update(40000, 10000, 500, 0, 0, 2000) == 8000);
+  assert(ethernet.update(40000, 1000000, 500, 0, 0, 3000) < 40000);
+  const int congested = ethernet.update(40000, 1000000, 100000, 100, 0, 4000);
+  assert(congested < 8000);
+  RateController lte;
+  assert(lte.update(40000, 0, UINT32_MAX, UINT32_MAX, 0, 1000) == 1000);
+  for (int i=2;i<80;i++) lte.update(40000, 0, 50000, 0, 0, i*1000);
+  const int healthy = lte.update(40000, 0, 50000, 0, 0, 80000);
+  assert(healthy > 1000 && healthy <= 40000);
+  assert(lte.update(40000, 0, 300000, 100, 0, 81000) < healthy);
+  RateController handover;
+  handover.update(40000, 0, 10000, 0, 0, 0);
+  int recovered = 0;
+  for (int i=1;i<70;++i) recovered = handover.update(40000, 0, 100000, 0, 0, i*1000);
+  assert(recovered > 1000);  // A new stable RTT must not cause permanent backoff.
+  BudgetRouter router;
+  RelayConstraint relay;
+  assert(relay.constrain(40000, 0) == 40000);
+  relay.update(5000, 1000);
+  assert(relay.constrain(40000, 2000) == 5000);
+  assert(relay.constrain(3000, 2000) == 3000);
+  assert(relay.constrain(40000, 4001) == 40000);
+  router.routed(Transport::WiFiBroadcast, true);
+  router.routed(Transport::Ethernet, true);
+  assert(router.update(Transport::WiFiBroadcast, 18000)->kbits == 18000);
+  assert(router.update(Transport::Ethernet, 40000)->kbits == 18000);
+  assert(router.update(Transport::WiFiBroadcast, 8000)->kbits == 8000);
+  router.routed(Transport::WiFiBroadcast, false);
+  assert(!router.update(Transport::WiFiBroadcast, 9000));
+  assert(router.update(Transport::Ethernet, 40000)->kbits == 40000);
+  router.routed(Transport::Lte, true);
+  assert(router.update(Transport::Lte, 2000)->kbits == 2000);
   Allocator allocator;
   auto a = camera(0, 70), b = camera(1, 30);
   std::vector<Consumer> consumers = {

@@ -67,6 +67,19 @@ OHDVideoAir::OHDVideoAir(std::vector<XCamera> cameras,
     cameras.resize(MAX_N_CAMERAS);
   }
   m_generic_settings = std::make_unique<AirCameraGenericSettingsHolder>();
+  auto& bitrate_actions = openhd::LinkActionHandler::instance();
+  const bool automatic = m_generic_settings->get_settings().auto_link_bitrate < 0
+      ? (!bitrate_actions.wb_legacy_auto_bitrate || bitrate_actions.wb_legacy_auto_bitrate())
+      : m_generic_settings->get_settings().auto_link_bitrate != 0;
+  bitrate_actions.register_auto_bitrate_setting([this](bool enabled) {
+    if (m_generic_settings->get_settings().auto_link_bitrate != int(enabled)) {
+      m_generic_settings->unsafe_get_settings().auto_link_bitrate = int(enabled);
+      m_generic_settings->persist();
+    }
+    auto& actions = openhd::LinkActionHandler::instance();
+    if (actions.wb_sync_auto_bitrate) actions.wb_sync_auto_bitrate(enabled);
+  });
+  bitrate_actions.set_video_auto_bitrate(automatic);
   if (OHDPlatform::instance().is_x20()) {
     m_generic_settings->x20_only_discover_and_save_camera_type();
   }
@@ -131,6 +144,7 @@ OHDVideoAir::OHDVideoAir(std::vector<XCamera> cameras,
 }
 
 OHDVideoAir::~OHDVideoAir() {
+  openhd::LinkActionHandler::instance().register_auto_bitrate_setting(nullptr);
   openhd::ArmingStateHelper::instance().unregister_listener("ohd_video_air");
   openhd::LinkActionHandler::instance().action_request_bitrate_change_register(
       nullptr);
@@ -299,6 +313,13 @@ OHDVideoAir::get_all_camera_settings() {
 
 std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
   std::vector<openhd::Setting> ret;
+  ret.push_back(openhd::Setting{"V_AUTO_BITRATE", openhd::IntSetting{
+      m_generic_settings->get_settings().auto_link_bitrate ? 1 : 0,
+      [this](std::string, int value) {
+        if (!openhd::validate_yes_or_no(value)) return false;
+        openhd::LinkActionHandler::instance().set_video_auto_bitrate(value != 0);
+        return true;
+      }}});
   // Only show dual-cam settings if dual-cam is actually used
   const auto n_cameras = static_cast<int>(m_camera_streams.size());
   if (n_cameras > 1) {
@@ -460,7 +481,7 @@ std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
 
 void OHDVideoAir::handle_change_bitrate_request(
     openhd::LinkActionHandler::LinkBitrateInformation lb) {
-  if (lb.transport == openhd::bandwidth::Transport::WiFiBroadcast) {
+  if (lb.transport != openhd::bandwidth::Transport::Unknown) {
     apply_bandwidth_allocation(lb);
     return;
   }
@@ -521,7 +542,8 @@ void OHDVideoAir::handle_change_bitrate_request(
 void OHDVideoAir::apply_bandwidth_allocation(openhd::LinkActionHandler::LinkBitrateInformation lb) {
   using namespace openhd::bandwidth;
   std::lock_guard<std::mutex> lock(m_bandwidth_mutex);
-  if (!lb.dynamic_enabled) {
+  if (!lb.dynamic_enabled || !m_generic_settings->get_settings().auto_link_bitrate) {
+    Store::instance().disable(lb.transport);
     for (const auto& stream : m_camera_streams) {
       const auto index = stream->m_camera_holder->get_camera().index;
       if (openhd::LinkActionHandler::instance().get_cam_info(index).supports_variable_bitrate)
@@ -530,12 +552,13 @@ void OHDVideoAir::apply_bandwidth_allocation(openhd::LinkActionHandler::LinkBitr
     return;
   }
   const auto now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
-  const auto usage = openhd::link_usage::Registry::instance().latest("WIFIBROADCAST");
+  const auto transport = lb.transport;
+  const auto usage = openhd::link_usage::Registry::instance().latest(openhd::bandwidth::transport_name(transport));
   const auto measured = [&](unsigned category) { return usage ? int((uint64_t(usage->category_bps[category]) + 999) / 1000) : 0; };
   std::vector<Consumer> consumers;
   // Only traffic actually assigned to this transport consumes its reservation.
-  consumers.push_back({10, Transport::WiFiBroadcast, Priority::Essential, Control::Fixed, true, bool(usage), measured(4) + measured(6)});
-  consumers.push_back({11, Transport::WiFiBroadcast, Priority::Media, Control::Fixed, measured(3) + measured(5) > 0, bool(usage), measured(3) + measured(5)});
+  consumers.push_back({10, transport, Priority::Essential, Control::Fixed, true, bool(usage), measured(4) + measured(6)});
+  consumers.push_back({11, transport, Priority::Media, Control::Fixed, measured(3) + measured(5) > 0, bool(usage), measured(3) + measured(5)});
   const unsigned primary_percent = m_generic_settings->get_settings().dualcam_primary_video_allocated_bandwidth_perc;
   for (unsigned i = 0; i < m_camera_streams.size() && i < 2; ++i) {
     const auto& stream = m_camera_streams[i];
@@ -545,17 +568,17 @@ void OHDVideoAir::apply_bandwidth_allocation(openhd::LinkActionHandler::LinkBitr
     // The saved manual bitrate does not cap automatic link allocation.
     // It is used only when dynamic bitrate is disabled.
     const auto maximum = stream->m_camera_holder->get_max_video_bitrate_kbits();
-    consumers.push_back({i, Transport::WiFiBroadcast, Priority::Media, controllable ? Control::Dynamic : Control::Fixed,
+    consumers.push_back({i, transport, Priority::Media, controllable ? Control::Dynamic : Control::Fixed,
         active, bool(usage) && measured(i + 1) > 0, measured(i + 1),
         stream->minimum_link_bitrate_kbits(), maximum, i == 0 ? primary_percent : 100 - primary_percent});
   }
-  auto snapshot = m_bandwidth_allocator.calculate(Transport::WiFiBroadcast, lb.recommended_encoder_bitrate_kbits, bool(usage), consumers, now);
-  Store::instance().publish(Transport::WiFiBroadcast, snapshot);
+  auto snapshot = m_bandwidth_allocator.calculate(transport, lb.recommended_encoder_bitrate_kbits, bool(usage), consumers, now);
+  Store::instance().publish(transport, snapshot);
   if (!snapshot.available) return;
   for (unsigned i = 0; i < m_camera_streams.size() && i < 2; ++i) {
     const auto& budget = snapshot.streams[i];
     if (budget.active && budget.controllable)
-      m_camera_streams[i]->handle_change_bitrate_request({budget.kbits, true, Transport::WiFiBroadcast});
+      m_camera_streams[i]->handle_change_bitrate_request({budget.kbits, true, transport, true, true});
   }
 }
 

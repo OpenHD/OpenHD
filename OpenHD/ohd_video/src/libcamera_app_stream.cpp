@@ -79,7 +79,7 @@ void LibcameraAppStream::terminate_looping() {
 void LibcameraAppStream::handle_change_bitrate_request(
     openhd::LinkActionHandler::LinkBitrateInformation lb) {
   int requested_kbits = lb.recommended_encoder_bitrate_kbits;
-  if (lb.is_link_capacity_limit) {
+  if (lb.is_link_capacity_limit && !lb.automatic_allocation) {
     requested_kbits = std::min(
         requested_kbits,
         m_camera_holder->get_settings().h26x_bitrate_kbits);

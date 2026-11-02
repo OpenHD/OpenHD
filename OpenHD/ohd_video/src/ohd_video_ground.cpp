@@ -31,6 +31,8 @@
 #include "openhd_config.h"
 #include "openhd_sock.h"
 #include "openhd_util.h"
+#include "openhd_action_handler.h"
+#include "openhd_link_usage.hpp"
 
 OHDVideoGround::OHDVideoGround(std::shared_ptr<OHDLink> link_handle)
     : m_link_handle(std::move(link_handle)) {
@@ -38,15 +40,12 @@ OHDVideoGround::OHDVideoGround(std::shared_ptr<OHDLink> link_handle)
   if (const auto settings = openhd::request_sysutil_settings();
       settings && settings->lte_configured) {
     m_native_fleet_address = settings->lte_fleetcontrol_address;
-#ifdef OPENHD_GST_VIDEO_OUTPUT
-    if (!m_native_fleet_address.empty() && settings->lte_video_port >= 1024 && settings->lte_video_port <= 65535) {
-      gst_init(nullptr, nullptr);
-      openhd::VideoOutputProfile profile{"fleet-ground", m_native_fleet_address, settings->lte_video_port};
-      profile.fleet_controlled = true;
-      m_fleet_output = std::make_unique<openhd::GstVideoOutput>(profile);
-      m_fleet_output->start_rtp_input();
+    if (settings->lte_active && !m_native_fleet_address.empty()) {
+      openhd::link_usage::Registry::instance().add_link("LTE");
+      m_fleet_output[0] = std::make_unique<openhd::FleetVideoLease>(m_native_fleet_address, settings->lte_video_port, true);
+      m_fleet_output[1] = std::make_unique<openhd::FleetVideoLease>(m_native_fleet_address, settings->lte_video2_port, true);
     }
-#endif
+
   }
   m_primary_video_forwarder = std::make_unique<openhd::UDPMultiForwarder>();
   m_secondary_video_forwarder = std::make_unique<openhd::UDPMultiForwarder>();
@@ -104,11 +103,24 @@ void OHDVideoGround::removeForwarder(const std::string& client_addr) {
 void OHDVideoGround::on_video_data(int stream_index, const uint8_t* data,
                                    int data_len) {
   // openhd::log::get_default()->debug("on_video_data {}",stream_index);
+  if (stream_index >= 0 && stream_index < 2 && data_len > 0 && m_fleet_output[stream_index]) {
+    std::lock_guard<std::mutex> lock(m_fleet_mutex);
+    if (m_fleet_output[stream_index]->send_rtp(data, data_len))
+      openhd::link_usage::Registry::instance().record("LTE", stream_index == 0 ? openhd::link_usage::Category::Camera1 : openhd::link_usage::Category::Camera2, data_len);
+    if (stream_index == 0 && m_fleet_output[0]->allowed()) {
+      const auto now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+      if (now - m_fleet_feedback_at >= 1000) {
+        const auto metrics = m_fleet_output[0]->metrics();
+        const int budget = m_fleet_rate.update(40000, 0, metrics.rtt_us, metrics.probe_loss_permille, 0, now);
+        openhd::link_usage::Registry::instance().set_capacity("LTE", budget * 1000);
+        openhd::LinkActionHandler::instance().report_relay_bitrate_budget(budget);
+        m_fleet_feedback_at = now;
+      }
+    }
+  }
   if (stream_index == 0) {
     m_primary_video_forwarder->forwardPacketViaUDP(data, data_len);
-#ifdef OPENHD_GST_VIDEO_OUTPUT
-    if (m_fleet_output && data_len > 0) m_fleet_output->push_rtp(data, data_len);
-#endif
+
   } else if (stream_index == 1) {
     m_secondary_video_forwarder->forwardPacketViaUDP(data, data_len);
   } else {

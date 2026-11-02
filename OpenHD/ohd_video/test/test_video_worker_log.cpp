@@ -25,6 +25,17 @@ int main() {
   assert(receive_packet(sockets[1], header, payload) == 1);
   assert(header.type == Type::Diagnostic && header.flags == entry.level);
   assert(std::string(payload.begin(), payload.end()) == entry.text);
+  Control automatic;
+  automatic.bitrate = 20000;
+  automatic.capacity_limit = true;
+  automatic.automatic_allocation = true;
+  assert(send_packet(sockets[0], {Type::Control}, &automatic, sizeof(automatic)));
+  assert(receive_packet(sockets[1], header, payload) == 1);
+  assert(header.type == Type::Control && payload.size() == sizeof(Control));
+  Control received;
+  std::memcpy(&received, payload.data(), sizeof(received));
+  assert(received.bitrate == 20000 && received.capacity_limit &&
+         received.automatic_allocation);
   close(sockets[0]); close(sockets[1]);
   assert(!sink->pop(entry));
   logger.warn("{}", std::string(4000, 'x'));

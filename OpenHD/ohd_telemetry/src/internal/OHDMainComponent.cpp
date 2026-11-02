@@ -343,8 +343,8 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mav_link_usage_stats() {
       payload.data[offset] = category;
       put_u32(payload.data, offset + 1, sample.category_bps[category]);
     }
-    if (link_id == 1) {
-      auto allocation = openhd::bandwidth::Store::instance().read(openhd::bandwidth::Transport::WiFiBroadcast);
+    if (link_id == 1 || link_id == 2 || link_id == 4 || link_id == 5 || link_id == 6) {
+      auto allocation = openhd::bandwidth::Store::instance().read(static_cast<openhd::bandwidth::Transport>(link_id));
       if (!allocation.enabled) {
         for (unsigned i = 0; i < 2; ++i) {
           const auto info = openhd::LinkActionHandler::instance().get_cam_info(i);
@@ -365,15 +365,20 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mav_link_usage_stats() {
         put_u32(payload.data, trailer + 34 + i * 6, stream.kbits);
       }
       payload.len = trailer + 44;
+      if (sample.has_ethernet_metrics) {
+        MavlinkMessage allocation_message;
+        mavlink_msg_data96_encode(m_sys_id, m_comp_id, &allocation_message.m, &payload);
+        messages.push_back(allocation_message);
+      }
     }
     if (sample.has_ethernet_metrics) {
       const auto& metrics = sample.ethernet_metrics;
       std::memcpy(payload.data + trailer, "ETH1", 4);
       const uint32_t fields[] = {metrics.tx_bps, metrics.rx_bps, metrics.tx_pps,
           metrics.rx_pps, metrics.rtt_us, metrics.jitter_us,
-          metrics.probe_loss_permille, metrics.send_errors};
-      for (std::size_t i = 0; i < 8; ++i) put_u32(payload.data, trailer + 4 + i * 4, fields[i]);
-      payload.len = trailer + 36;
+          metrics.probe_loss_permille, metrics.send_errors, metrics.port_duplex};
+      for (std::size_t i = 0; i < 9; ++i) put_u32(payload.data, trailer + 4 + i * 4, fields[i]);
+      payload.len = trailer + 40;
     }
     MavlinkMessage message;
     mavlink_msg_data96_encode(m_sys_id, m_comp_id, &message.m, &payload);
