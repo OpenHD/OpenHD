@@ -23,9 +23,12 @@ try {
     }
     # Only the ephemeral GitHub-hosted test job trusts this public certificate.
     # Release jobs never execute this script and retain normal Windows trust.
+    # The user Root store can show an interactive security prompt.
+    # GitHub-hosted Windows runners are disposable and run as administrator.
     foreach ($storeName in @('Root', 'TrustedPublisher')) {
-        $store = [System.Security.Cryptography.X509Certificates.X509Store]::new($storeName, 'CurrentUser')
+        $store = [System.Security.Cryptography.X509Certificates.X509Store]::new($storeName, 'LocalMachine')
         try {
+            Write-Host "Importing the public test certificate into LocalMachine/$storeName"
             $store.Open('ReadWrite')
             $store.Add($certificate)
         } finally {
