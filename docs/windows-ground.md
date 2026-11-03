@@ -125,3 +125,18 @@ Use `--help` for overrides, `--config FILE` for another saved profile and
 Windows bus numbering can change between libusb contexts, so prefer automatic
 selection or stable VID/PID selection for a single adapter. Ambiguous identical
 adapters are refused without resetting either one.
+# SignPath signing
+
+Pushes to `openhd-3.0` request a test signature. Manual Windows ground workflow
+runs select `test` (default) or `release`. Production signing requires SignPath
+to issue the production certificate and activate `release-signing` first.
+Both modes use the `windows-ground-test` artifact configuration, which signs
+only `openhd_ground.exe` inside the GitHub artifact ZIP. The configuration name
+is retained for compatibility. Third-party runtime DLLs remain unchanged.
+
+Configure organization secret `SIGNPATH_API_TOKEN` for this repository and
+repository variable `SIGNPATH_TEST_CERTIFICATE_BASE64` with the public DER test
+certificate encoded as base64. Test trust is installed only in the ephemeral
+GitHub-hosted runner; release verification uses normal Windows trust. Both
+modes require a valid timestamped signature. Failed signing fails the job.
+

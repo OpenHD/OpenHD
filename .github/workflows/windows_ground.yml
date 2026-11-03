@@ -4,6 +4,12 @@ on:
   push:
     branches: [openhd-3.0]
   workflow_dispatch:
+    inputs:
+      signing_mode:
+        description: Signing policy (release requires the issued production certificate)
+        type: choice
+        options: [test, release]
+        default: test
 permissions:
   contents: read
   actions: read
@@ -51,8 +57,10 @@ jobs:
           path: out/windows-ground-package
           if-no-files-found: error
 
-  test-sign:
-    name: Sign Windows ground backend (test certificate)
+  sign:
+    name: Sign Windows ground backend
+    env:
+      SIGNING_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.signing_mode || 'test' }}
     if: github.repository == 'OpenHD/OpenHD' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     needs: ground
     runs-on: windows-latest
@@ -60,16 +68,19 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - name: Validate test signing configuration
+      - name: Validate signing configuration
         shell: pwsh
         env:
           SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
           SIGNPATH_TEST_CERTIFICATE_BASE64: ${{ vars.SIGNPATH_TEST_CERTIFICATE_BASE64 }}
         run: |
-          foreach ($name in @('SIGNPATH_API_TOKEN', 'SIGNPATH_TEST_CERTIFICATE_BASE64')) {
+          foreach ($name in @('SIGNPATH_API_TOKEN')) {
             if ([string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($name))) {
               throw "Missing required setting: $name"
             }
+          }
+          if ($env:SIGNING_MODE -eq 'test' -and [string]::IsNullOrWhiteSpace($env:SIGNPATH_TEST_CERTIFICATE_BASE64)) {
+            throw 'Missing test certificate'
           }
       - uses: actions/download-artifact@v4
         with:
@@ -83,13 +94,13 @@ jobs:
           path: out/windows-ground-package/openhd_ground.exe
           if-no-files-found: error
           retention-days: 7
-      - name: Request test signature
+      - name: Request signature
         uses: signpath/github-action-submit-signing-request@v3
         with:
           api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
           organization-id: 630b3214-208a-4670-bfa3-1955f878b88c
           project-slug: OpenHD
-          signing-policy-slug: test-signing
+          signing-policy-slug: ${{ env.SIGNING_MODE == 'release' && 'release-signing' || 'test-signing' }}
           artifact-configuration-slug: windows-ground-test
           github-artifact-id: ${{ steps.unsigned.outputs.artifact-id }}
           wait-for-completion: true
@@ -100,21 +111,22 @@ jobs:
         env:
           TEST_CERTIFICATE_BASE64: ${{ vars.SIGNPATH_TEST_CERTIFICATE_BASE64 }}
         run: |
-          & scripts/trust_signpath_test_certificate.ps1 -CertificateBase64 $Env:TEST_CERTIFICATE_BASE64
-          # GITHUB_ENV becomes available to later steps, so read the pin directly here.
-          $certificate = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new(
-            [Convert]::FromBase64String($Env:TEST_CERTIFICATE_BASE64))
-          try {
-            & scripts/verify_windows_signature.ps1 -Path out/signed-ground/openhd_ground.exe `
-              -SigningMode test -ExpectedSignerThumbprint $certificate.Thumbprint
-          } finally {
-            $certificate.Dispose()
+          $thumbprint = $null
+          if ($env:SIGNING_MODE -eq 'test') {
+            & scripts/trust_signpath_test_certificate.ps1 -CertificateBase64 $env:TEST_CERTIFICATE_BASE64
+            $certificate = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new(
+              [Convert]::FromBase64String($env:TEST_CERTIFICATE_BASE64))
+            try { $thumbprint = $certificate.Thumbprint } finally { $certificate.Dispose() }
           }
+          & scripts/verify_windows_signature.ps1 -Path out/signed-ground/openhd_ground.exe `
+            -SigningMode $env:SIGNING_MODE -ExpectedSignerThumbprint $thumbprint
           Copy-Item -LiteralPath out/signed-ground/openhd_ground.exe -Destination out/windows-ground-package/openhd_ground.exe -Force
-          'Experimental test-signed build. The certificate is not publicly trusted. Not a production release.' |
-            Set-Content out/windows-ground-package/TEST-SIGNED.txt
+          if ($env:SIGNING_MODE -eq 'test') {
+            'Experimental test-signed build. The certificate is not publicly trusted. Not a production release.' |
+              Set-Content out/windows-ground-package/TEST-SIGNED.txt
+          }
       - uses: actions/upload-artifact@v4
         with:
-          name: openhd-windows-ground-Test-Signed
+          name: openhd-windows-ground-${{ env.SIGNING_MODE == 'test' && 'Test-Signed' || 'Signed' }}
           path: out/windows-ground-package
           if-no-files-found: error
