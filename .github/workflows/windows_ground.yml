@@ -98,6 +98,7 @@ jobs:
         uses: signpath/github-action-submit-signing-request@v3
         with:
           api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          connector-url: https://pipelineconnector.connectors.signpath.io/GitHub/GitHubCom
           organization-id: 630b3214-208a-4670-bfa3-1955f878b88c
           project-slug: OpenHD
           signing-policy-slug: ${{ env.SIGNING_MODE == 'release' && 'release-signing' || 'test-signing' }}
