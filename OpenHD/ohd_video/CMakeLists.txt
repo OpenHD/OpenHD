@@ -40,6 +40,12 @@ add_custom_command(
 )
 
 add_custom_target(generate_camera_registry DEPENDS ${GENERATED_CAMERA_REGISTRY_HEADER})
+add_executable(test_camera_bitrate_limits test/test_camera_bitrate_limits.cpp)
+add_dependencies(test_camera_bitrate_limits generate_camera_registry)
+target_include_directories(test_camera_bitrate_limits PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/inc ${CMAKE_CURRENT_BINARY_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/../ohd_common/inc)
+target_compile_options(test_camera_bitrate_limits PRIVATE -UNDEBUG)
 
 add_library(OHDVideoLib STATIC
         inc/rpi_hdmi_to_csi_v4l2_helper.h

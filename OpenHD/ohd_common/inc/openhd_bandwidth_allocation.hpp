@@ -145,6 +145,7 @@ class Allocator {
                               std::max(0, out.capacity_kbits - required));
     out.overcommitted = required > out.capacity_kbits;
     unsigned assigned = 0, remaining = count;
+    std::array<int, 2> targets{}, minimums{}, maximums{};
     for (const auto& consumer : consumers) {
       if (consumer.transport != link || consumer.link_instance != instance ||
           !consumer.active || consumer.control != Control::Dynamic ||
@@ -158,17 +159,44 @@ class Allocator {
       assigned += budget.percent;
       const int maximum =
           std::max(consumer.minimum_kbits, consumer.maximum_kbits);
-      const int target = std::clamp(out.pool_kbits * int(budget.percent) / 100,
+      minimums[consumer.id] = consumer.minimum_kbits;
+      maximums[consumer.id] = maximum;
+      targets[consumer.id] = std::clamp(out.pool_kbits * int(budget.percent) / 100,
                                     consumer.minimum_kbits, maximum);
-      // Bound upward movement and suppress tiny oscillations. Capacity
+    }
+    // Respect minima without exceeding a feasible pool. A camera reaching its
+    // maximum releases its unused share to the other adjustable camera.
+    int excess = targets[0] + targets[1] - out.pool_kbits;
+    while (excess > 0) {
+      const int id = targets[0] - minimums[0] >= targets[1] - minimums[1] ? 0 : 1;
+      const int reduction = std::min(excess, targets[id] - minimums[id]);
+      if (reduction <= 0) break;
+      targets[id] -= reduction;
+      excess -= reduction;
+    }
+    int spare = out.pool_kbits - targets[0] - targets[1];
+    while (spare > 1) {
+      const int id = maximums[0] - targets[0] >= maximums[1] - targets[1] ? 0 : 1;
+      const int addition = std::min(spare, maximums[id] - targets[id]);
+      if (addition <= 0) break;
+      targets[id] += addition;
+      spare -= addition;
+    }
+    for (const auto& consumer : consumers) {
+      if (consumer.transport != link || consumer.link_instance != instance ||
+          !consumer.active || consumer.control != Control::Dynamic || consumer.id >= 2)
+        continue;
+      auto& budget = out.streams[consumer.id];
+      const int target = targets[consumer.id];
+      const int maximum = maximums[consumer.id];
+      // Bound upward movement to one step per second. Capacity
       // reductions apply immediately so smoothing cannot keep an unsafe
       // previous target.
       int applied = state.last[consumer.id];
       if (applied <= 0 || target < applied ||
           state.percent[consumer.id] != budget.percent)
         applied = target;
-      else if (now_ms - state.updated[consumer.id] >= 1000 &&
-               target - applied >= std::max(100, applied / 20))
+      else if (now_ms - state.updated[consumer.id] >= 1000 && target > applied)
         applied = std::min(target, applied + std::max(100, applied / 5));
       applied = std::clamp(applied, consumer.minimum_kbits, maximum);
       budget.kbits = applied;

@@ -113,6 +113,15 @@ struct XCamera {
   // the other immutable camera capabilities, so individual platforms, camera
   // types, or primary/secondary streams can receive different budgets later.
   [[nodiscard]] int get_max_video_bitrate_kbits(int platform_type) const {
+    if ((platform_type == X_PLATFORM_TYPE_RPI_OLD ||
+         platform_type == X_PLATFORM_TYPE_RPI_4 ||
+         platform_type == X_PLATFORM_TYPE_RPI_CM4) &&
+        (requires_rpi_libcamera_pipeline() || requires_rpi_mmal_pipeline() ||
+         requires_rpi_veye_pipeline())) {
+      // bcm2835-codec video_bitrate control advertises a 25 Mbit/s maximum.
+      return 25000;
+    }
+    if (is_camera_type_usb_infiray()) return 50000;
     if (camera_type == X_CAM_TYPE_LUCKFOX_AURA_IMX662) return 25000;
     if (platform_type == X_PLATFORM_TYPE_RPI_5 &&
         camera_type == X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V3_IMX708 &&

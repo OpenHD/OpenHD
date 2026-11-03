@@ -71,6 +71,29 @@ int main() {
     assert(capped.streams[0].kbits == 20000);
   }
   auto a = camera(0, 70), b = camera(1, 30);
+  {
+    Allocator pi_pair;
+    auto hardware = camera(0, 89), secondary = camera(1, 11);
+    hardware.maximum_kbits = 25000;
+    secondary.maximum_kbits = 50000;
+    auto paired = pi_pair.calculate(Transport::WiFiBroadcast, 1000000, true,
+                                    {hardware, secondary}, 1000);
+    assert(paired.streams[0].kbits == 25000 && paired.streams[1].kbits == 25000);
+    assert(paired.streams[0].percent == 89 && paired.streams[1].percent == 11);
+    paired = pi_pair.calculate(Transport::WiFiBroadcast, 5000, true,
+                               {hardware, secondary}, 2000);
+    assert(!paired.overcommitted);
+    assert(paired.streams[0].kbits + paired.streams[1].kbits <= paired.pool_kbits);
+    assert(paired.streams[1].kbits >= secondary.minimum_kbits);
+    secondary.maximum_kbits = 20000;
+    paired = pi_pair.calculate(Transport::WiFiBroadcast, 1000000, true,
+                               {hardware, secondary}, 3000);
+    // Infeasible capacity stays unused rather than exceeding either encoder.
+    for (int t=4000;t<30000;t+=1000)
+      paired = pi_pair.calculate(Transport::WiFiBroadcast, 1000000, true,
+                                 {hardware, secondary}, t);
+    assert(paired.streams[0].kbits == 25000 && paired.streams[1].kbits == 20000);
+  }
   std::vector<Consumer> consumers = {
       a,
       b,

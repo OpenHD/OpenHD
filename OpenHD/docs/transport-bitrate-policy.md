@@ -12,6 +12,10 @@ peer probes without substituting an encoder ceiling for reported link capacity.
 The shared allocator limits the adjustable encoder pool to **50,000 kbit/s total**
 after reserving fixed and essential traffic. Per-camera capability limits still
 apply, and unused link capacity stays available for other traffic.
+When a camera reaches its maximum, its unused share is reassigned to the other
+adjustable camera. The BCM2835 CSI encoder is limited to its advertised
+25,000 kbit/s driver maximum. The software thermal encoder can use the remaining
+pool, without the previous generic 20,000 kbit/s restriction.
 LTE and Microhard start conservatively and
 use end-to-end probe RTT, probe loss and local send errors to back off and slowly
 recover toward the same ceiling. Current TX throughput is not treated as spare
