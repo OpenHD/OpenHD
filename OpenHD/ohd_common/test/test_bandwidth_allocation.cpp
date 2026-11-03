@@ -70,6 +70,41 @@ int main() {
     capped = large_link.calculate(transport, 1000000, true, {first}, 3000);
     assert(capped.streams[0].kbits == 20000);
   }
+  // Live traffic changes every 500ms must not move a configured WiFi target.
+  {
+    Allocator stable;
+    auto first = camera(0, 70), second = camera(1, 30);
+    Consumer telemetry{10, Transport::WiFiBroadcast, Priority::Essential,
+                       Control::Fixed, true, true, 100};
+    Consumer audio{11, Transport::WiFiBroadcast, Priority::Media,
+                   Control::Fixed, true, true, 100};
+    auto baseline = stable.calculate(Transport::WiFiBroadcast, 20000, true,
+                                     {first, second, telemetry, audio}, 1000);
+    for (int t = 1500; t < 15000; t += 500) {
+      telemetry.measured_kbits = (t % 2000) + 10;
+      first.measured_kbits = t;
+      audio.measured_kbits = t % 1000;
+      auto current = stable.calculate(Transport::WiFiBroadcast, 20000, true,
+                                      {first, second, telemetry, audio}, t);
+      assert(current.streams[0].kbits == baseline.streams[0].kbits);
+      assert(current.streams[1].kbits == baseline.streams[1].kbits);
+      assert(current.fixed_kbits == baseline.fixed_kbits);
+      assert(current.fixed_measured_kbits == audio.measured_kbits);
+    }
+    first.weight = 30;
+    second.weight = 70;
+    auto split = stable.calculate(Transport::WiFiBroadcast, 20000, true,
+                                  {first, second, telemetry, audio}, 15000);
+    assert(split.streams[0].kbits < baseline.streams[0].kbits);
+    assert(split.streams[1].kbits > baseline.streams[1].kbits);
+    auto mcs = stable.calculate(Transport::WiFiBroadcast, 10000, true,
+                                {first, second, telemetry, audio}, 15500);
+    assert(mcs.streams[0].kbits < split.streams[0].kbits);
+    auto restored = stable.calculate(Transport::WiFiBroadcast, 20000, true,
+                                     {first, second, telemetry, audio}, 16000);
+    assert(restored.streams[0].kbits == split.streams[0].kbits);
+    assert(restored.streams[1].kbits == split.streams[1].kbits);
+  }
   auto a = camera(0, 70), b = camera(1, 30);
   {
     Allocator pi_pair;
@@ -105,10 +140,10 @@ int main() {
                                     consumers, 1000);
   assert(result.available && !result.overcommitted);
   assert(result.priority_kbits == 125 && result.fixed_kbits == 1150 &&
-         result.safety_kbits == 600);
-  assert(result.pool_kbits == 18125);
+         result.safety_kbits == 2000);
+  assert(result.pool_kbits == 16725);
   assert(result.streams[0].percent == 70 && result.streams[1].percent == 30);
-  assert(result.streams[0].kbits == 12687 && result.streams[1].kbits == 5437);
+  assert(result.streams[0].kbits == 11707 && result.streams[1].kbits == 5017);
   result = allocator.calculate(Transport::WiFiBroadcast, 10000, true, consumers,
                                2000);
   assert(result.streams[0].percent + result.streams[1].percent == 100);

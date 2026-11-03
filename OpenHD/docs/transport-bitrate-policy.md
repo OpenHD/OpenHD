@@ -6,7 +6,12 @@ the lowest available budget wins; independent link capacities are never added.
 Removed links stop constraining the encoders. A late update from a removed link
 is ignored.
 
-WiFiBroadcast supplies its existing MCS/FEC-derived payload budget. Artosyn
+WiFiBroadcast supplies its existing MCS/FEC-derived payload budget. It reserves
+10% of that budget for headroom, in addition to fixed/essential reservations.
+Camera targets are held between MCS/FEC, camera-share, camera-availability or
+encoder-limit changes. Live telemetry/audio traffic updates the measurements
+without continually retuning the encoders; reservations refresh on the next
+configuration change. Artosyn
 supplies its existing modem estimate. Ethernet uses negotiated port speed and
 peer probes without substituting an encoder ceiling for reported link capacity.
 The shared allocator limits the adjustable encoder pool to **50,000 kbit/s total**

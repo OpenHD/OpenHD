@@ -129,16 +129,39 @@ class Allocator {
       }
     }
     out.fixed_measured_kbits = fixed;
-    // Fast attack, slow release for reservations. These are estimates, not
-    // measured traffic.
-    state.priority =
-        std::max(double(priority), state.priority * 0.85 + priority * 0.15);
-    state.fixed = std::max(double(fixed), state.fixed * 0.90 + fixed * 0.10);
+    // WiFi capacity comes from MCS/FEC, not live traffic. Reserve headroom
+    // once per configuration so telemetry/audio jitter cannot retune encoders.
+    const bool stable_wifi = link == Transport::WiFiBroadcast;
+    std::vector<int> configuration{usable_kbits};
+    for (const auto& consumer : consumers) {
+      if (consumer.transport != link || consumer.link_instance != instance ||
+          consumer.id >= 2)
+        continue;
+      configuration.insert(configuration.end(),
+          {int(consumer.id), int(consumer.active), int(consumer.control),
+           consumer.minimum_kbits, consumer.maximum_kbits, int(consumer.weight)});
+    }
+    const bool configuration_changed = configuration != state.configuration;
+    if (stable_wifi) {
+      if (out.available && (configuration_changed || !state.reservations_valid)) {
+        state.priority = priority;
+        state.fixed = fixed;
+        state.configuration = configuration;
+        state.reservations_valid = true;
+      }
+    } else {
+      // Fast attack, slow release for reservations. These are estimates, not
+      // measured traffic.
+      state.priority =
+          std::max(double(priority), state.priority * 0.85 + priority * 0.15);
+      state.fixed = std::max(double(fixed), state.fixed * 0.90 + fixed * 0.10);
+    }
     out.priority_kbits = int(state.priority * 1.25 + 0.5);
     out.fixed_kbits = int(state.fixed * 1.15 + 0.5);
     // Management/framing allowance stays local to this link, even without
     // MAVLink.
-    out.safety_kbits = std::max(64, out.capacity_kbits * 3 / 100);
+    out.safety_kbits =
+        std::max(64, out.capacity_kbits * (stable_wifi ? 10 : 3) / 100);
     const int required =
         out.priority_kbits + out.fixed_kbits + out.safety_kbits;
     out.pool_kbits = std::min(kMaximumEncoderPoolKbits,
@@ -189,11 +212,12 @@ class Allocator {
       auto& budget = out.streams[consumer.id];
       const int target = targets[consumer.id];
       const int maximum = maximums[consumer.id];
-      // Bound upward movement to one step per second. Capacity
+      // WiFi applies a new configuration once and holds it until the next
+      // change. Other transports retain gradual upward recovery. Capacity
       // reductions apply immediately so smoothing cannot keep an unsafe
       // previous target.
       int applied = state.last[consumer.id];
-      if (applied <= 0 || target < applied ||
+      if (stable_wifi || applied <= 0 || target < applied ||
           state.percent[consumer.id] != budget.percent)
         applied = target;
       else if (now_ms - state.updated[consumer.id] >= 1000 && target > applied)
@@ -216,6 +240,8 @@ class Allocator {
  private:
   struct State {
     double priority = 0, fixed = 0;
+    bool reservations_valid = false;
+    std::vector<int> configuration;
     std::array<int, 2> last{}, previous{};
     std::array<unsigned, 2> percent{};
     std::array<int64_t, 2> updated{};
