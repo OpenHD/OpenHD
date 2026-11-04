@@ -130,11 +130,12 @@ uint32_t ManagementAir::begin_frequency_change(int target_frequency,
   m_frequency_transaction_target_mhz = target_frequency;
   m_frequency_transaction_width_mhz = channel_width;
   m_frequency_transaction_id = transaction_id;
-  m_frequency_transaction_phase = FREQUENCY_CHANGE_PHASE_PREPARE;
   // A frequency request is acknowledged on the old channel exactly five
   // times. Ground changes on the first matching packet and ignores the rest.
   m_frequency_received_packets_remaining = 5;
   m_last_change_timestamp_ms = openhd::util::steady_clock_time_epoch_ms();
+  // Publish only after the complete transaction and burst count are ready.
+  m_frequency_transaction_phase = FREQUENCY_CHANGE_PHASE_PREPARE;
   return transaction_id;
 }
 
@@ -144,6 +145,7 @@ void ManagementAir::finish_frequency_change(uint32_t transaction_id,
   if (m_frequency_transaction_id.load() != transaction_id) return;
   m_curr_frequency_mhz =
       success ? m_frequency_transaction_target_mhz.load() : fallback_frequency;
+  if (success) m_curr_channel_width_mhz = m_frequency_transaction_width_mhz.load();
   m_frequency_transaction_phase = 0;
   m_frequency_received_packets_remaining = 0;
   m_frequency_transaction_id = 0;
@@ -184,8 +186,10 @@ void ManagementAir::loop() {
     const auto elapsed_since_last_management_frame =
         std::chrono::steady_clock::now() - m_air_last_management_frame;
     if (elapsed_since_last_management_frame < management_frame_interval) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(5));
       continue;
     }
+    m_air_last_management_frame = std::chrono::steady_clock::now();
     DataManagementTxBandwidth managementFrame{m_curr_frequency_mhz.load(),
                                               m_curr_channel_width_mhz.load()};
     auto data = pack_management_frame(managementFrame);
@@ -293,6 +297,13 @@ void ManagementGround::on_new_management_packet(const uint8_t *data,
         openhd::util::steady_clock_time_epoch_ms();
     DataManagementTxBandwidth packet{};
     std::memcpy(&packet, &data[1], data_len - 1);
+    if (!m_announcement_guard.accept(packet.center_frequency_mhz,
+                                    packet.bandwidth_mhz,
+                                    std::chrono::steady_clock::now())) return;
+    if (packet.center_frequency_mhz == m_frequency_transaction_target_mhz.load() &&
+        packet.bandwidth_mhz == m_frequency_transaction_width_mhz.load()) {
+      m_frequency_transaction_phase = 0;
+    }
     if (packet.bandwidth_mhz == 5 || packet.bandwidth_mhz == 10 || packet.bandwidth_mhz == 20 ||
         packet.bandwidth_mhz == 40) {
       m_air_reported_curr_channel_width = packet.bandwidth_mhz;
@@ -318,6 +329,8 @@ void ManagementGround::on_new_management_packet(const uint8_t *data,
     m_frequency_transaction_target_mhz = packet.target_frequency_mhz;
     m_frequency_transaction_width_mhz = packet.bandwidth_mhz;
     m_frequency_transaction_id = packet.transaction_id;
+    m_announcement_guard.prepare(packet.target_frequency_mhz, packet.bandwidth_mhz,
+                                 std::chrono::steady_clock::now());
     // Publish the phase last so readers see a complete request.
     m_frequency_transaction_phase = packet.phase;
   }
@@ -353,6 +366,7 @@ int ManagementGround::get_last_received_packet_ts_ms() {
 
 std::optional<FrequencyChangeRequest>
 ManagementGround::get_prepare_request() const {
+  std::lock_guard<std::mutex> lock(m_channel_updates_mutex);
   if (m_frequency_transaction_phase.load() !=
       FREQUENCY_CHANGE_PHASE_PREPARE) {
     return std::nullopt;

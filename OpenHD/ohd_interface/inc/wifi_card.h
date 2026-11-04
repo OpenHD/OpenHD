@@ -305,10 +305,10 @@ static bool wifi_card_supports_5Mhz_channel_width_injection(
   return false;
 }
 
-static bool wifi_card_supports_10Mhz_channel_width_injection(
-    const WiFiCard& wifi_card) {
-  return wifi_card.type == WiFiCardType::OPENHD_RTL_88X2EU ||
-         wifi_card.type == WiFiCardType::DEVOURER_RTL8822E;
+// Expose 10 MHz for every broadcast card. The backend must reject unsupported
+// hardware requests; no chipset whitelist is imposed by the settings UI.
+static bool wifi_card_supports_10Mhz_channel_width_injection(const WiFiCard&) {
+  return true;
 }
 
 static bool wifi_card_supports_40Mhz_channel_width_injection(

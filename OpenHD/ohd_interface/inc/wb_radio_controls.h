@@ -29,6 +29,18 @@ inline constexpr bool is_valid_power_level(int level) {
          level <= WB_TX_POWER_LEVEL_MAX_OVERDRIVE &&
          level % WB_TX_POWER_LEVEL_STEP == 0;
 }
+// 10 MHz air power compensation for the Devourer backend. Keep the selected
+// value intact so returning to 20/40 MHz restores it. Pit remains deliberate
+// low power; ground must always retain the power its user selected.
+inline constexpr int effective_tx_power_level(bool is_air, int selected,
+                                              bool pit_active,
+                                              bool devourer, int width_mhz) {
+  if (!is_air) return selected;
+  if (pit_active) return WB_TX_POWER_LEVEL_20;
+  if (devourer && width_mhz == 10 && selected > 0 && selected < WB_TX_POWER_LEVEL_80)
+    return WB_TX_POWER_LEVEL_80;
+  return selected;
+}
 inline constexpr int devourer_power_offset_qdb(int level) {
   if (level <= 0) return -127;
   if (level >= 100) return 0;

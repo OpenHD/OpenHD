@@ -103,9 +103,10 @@ static uint32_t rtl8812au_get_max_rate_5G_kbits(uint16_t mcs_index,
   auto rate_kbits = rtl8812au_get_max_rate_5G_kbits(mcs_index);
   switch (channel_bw_mhz) {
     case 5:
-      return rate_kbits.rate_10mhz / 2;
+      return rate_kbits.rate_20mhz / 4;
     case 10:
-      return rate_kbits.rate_10mhz;
+      // Narrowband halves the baseband clock, including packet airtime.
+      return rate_kbits.rate_20mhz / 2;
     case 20:
       return rate_kbits.rate_20mhz;
     case 40:

@@ -34,6 +34,7 @@
 #include <vector>
 
 #include "../lib/wifibroadcast/wifibroadcast/src/WBTxRx.h"
+#include "channel_switch_announcement_guard.h"
 
 struct FrequencyChangeRequest {
   uint32_t transaction_id;
@@ -134,7 +135,8 @@ class ManagementGround {
   std::atomic<uint32_t> m_retry_target_frequency_mhz{0};
   std::atomic<uint8_t> m_retry_channel_width_mhz{20};
   std::atomic<uint8_t> m_retry_packets_remaining{0};
-  std::mutex m_channel_updates_mutex;
+  openhd::wb::ChannelSwitchAnnouncementGuard m_announcement_guard;
+  mutable std::mutex m_channel_updates_mutex;
   bool m_channel_updates_enabled = true;
   // 40Mhz / 20Mhz link management
   void on_new_management_packet(const uint8_t *data, int data_len);

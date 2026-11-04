@@ -415,7 +415,7 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
   if (!local_radios_support_10mhz() &&
       (m_settings->get_settings().wb_air_tx_channel_width == 10 ||
        m_settings->get_settings().wb_gnd_rx_channel_width == 10)) {
-    m_console->warn("10 MHz requires 8812EU broadcast cards; restoring 20 MHz");
+    m_console->warn("10 MHz requires a supported narrowband broadcast card; restoring 20 MHz");
     if (m_settings->get_settings().wb_air_tx_channel_width == 10)
       m_settings->unsafe_get_settings().wb_air_tx_channel_width = 20;
     if (m_settings->get_settings().wb_gnd_rx_channel_width == 10)
@@ -718,7 +718,14 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
     }
   }
   rebuild_udp_data_stream();
-  apply_frequency_and_channel_width_from_settings();
+  if (!apply_frequency_and_channel_width_from_settings()) {
+    m_console->warn("Configured radio width could not be applied; restoring 20 MHz");
+    m_settings->unsafe_get_settings().wb_air_tx_channel_width = 20;
+    m_settings->unsafe_get_settings().wb_gnd_rx_channel_width = 20;
+    m_gnd_curr_rx_channel_width = 20;
+    m_settings->persist();
+    apply_frequency_and_channel_width_from_settings();
+  }
   apply_txpower();
   if (m_profile.is_ground()) {
     m_management_gnd = std::make_unique<ManagementGround>(m_wb_txrx);
@@ -929,13 +936,19 @@ bool WBLink::request_set_frequency(int frequency) {
     m_console->warn("X20 only supports 5G");
     return false;
   }
+  return schedule_air_channel_change(frequency, current_channel_width);
+}
+
+bool WBLink::schedule_air_channel_change(int frequency, int channel_width) {
+  if (!openhd::wb::validate_frequency_change(
+          frequency, channel_width, m_broadcast_cards, m_console)) return false;
   auto work_item = std::make_shared<WorkItem>(
       fmt::format("SET_FREQ:{}", frequency),
-      [this, frequency]() {
+      [this, frequency, channel_width]() {
         const auto settings_before = m_settings->get_settings();
         const int previous_frequency = settings_before.wb_frequency;
-        const int channel_width = settings_before.wb_air_tx_channel_width;
-        if (previous_frequency == frequency) {
+        const int previous_width = settings_before.wb_air_tx_channel_width;
+        if (previous_frequency == frequency && previous_width == channel_width) {
           return;
         }
         m_air_close_video_in = true;
@@ -972,8 +985,8 @@ bool WBLink::request_set_frequency(int frequency) {
               transaction_id, frequency, previous_frequency);
           m_management_air->finish_frequency_change(
               transaction_id, false, previous_frequency);
-          apply_frequency_and_channel_width(previous_frequency, channel_width,
-                                            channel_width);
+          apply_frequency_and_channel_width(previous_frequency, previous_width,
+                                            previous_width);
           if (m_adaptive_pending_target.load() == frequency) {
             m_adaptive_pending_target = -1;
             m_adaptive_pending_previous = -1;
@@ -983,8 +996,10 @@ bool WBLink::request_set_frequency(int frequency) {
         }
         m_management_air->finish_frequency_change(transaction_id, true,
                                                   previous_frequency);
+        m_settings->unsafe_get_settings().wb_air_tx_channel_width = channel_width;
         m_settings->unsafe_get_settings().wb_frequency = frequency;
         m_settings->persist();
+        apply_txpower();
         m_rate_adjustment_frequency_changed = true;
         if (m_adaptive_pending_target.load() == frequency) {
           m_adaptive_air_switch_state.active = true;
@@ -1019,36 +1034,12 @@ bool WBLink::request_set_air_tx_channel_width(int channel_width) {
           channel_width, m_broadcast_cards.at(0), m_console)) {
     return false;
   }
-  const int prev_channel_width =
-      m_settings->get_settings().wb_air_tx_channel_width;
   if (channel_width == 10 && !local_radios_support_10mhz()) {
-    m_console->warn("10 MHz requires 8812EU broadcast cards");
+    m_console->warn("10 MHz is not supported by every broadcast card");
     return false;
   }
-  auto work_item = std::make_shared<WorkItem>(
-      fmt::format("SET_CHWIDTH:{}", channel_width),
-      [this, channel_width, prev_channel_width]() {
-        // temporarily disable video streaming to free up BW
-        m_air_close_video_in = true;
-        m_settings->unsafe_get_settings().wb_air_tx_channel_width =
-            channel_width;
-        m_settings->persist();
-        m_management_air->set_channel_width(channel_width);
-        // On ASUS, we have to reduce the TX power when on 40Mhz
-        apply_txpower();
-        // Allow the ground to receive the new BW announcement while still on the old width.
-        auto announce_delay = std::chrono::milliseconds(300);
-        if (prev_channel_width <= 10 || channel_width <= 10) {
-          announce_delay = std::chrono::milliseconds(800);
-        }
-        std::this_thread::sleep_for(announce_delay);
-        // Ground will automatically apply the right channel width once first
-        // (broadcast) management frame is received.
-        apply_frequency_and_channel_width_from_settings();
-        m_air_close_video_in = false;
-      },
-      std::chrono::steady_clock::now());
-  return try_schedule_work_item(work_item);
+  return schedule_air_channel_change(m_settings->get_settings().wb_frequency,
+                                     channel_width);
 }
 
 bool WBLink::request_set_ground_rx_channel_width(int channel_width) {
@@ -1065,7 +1056,7 @@ bool WBLink::request_set_ground_rx_channel_width(int channel_width) {
     return false;
   }
   if (channel_width == 10 && !local_radios_support_10mhz()) {
-    m_console->warn("10 MHz requires 8812EU broadcast cards");
+    m_console->warn("10 MHz requires a supported narrowband broadcast card");
     return false;
   }
   auto work_item = std::make_shared<WorkItem>(
@@ -1076,15 +1067,19 @@ bool WBLink::request_set_ground_rx_channel_width(int channel_width) {
                 ? m_gnd_curr_rx_frequency.load()
                 : static_cast<int>(m_settings->get_settings().wb_frequency);
         const int previous_channel_width = m_gnd_curr_rx_channel_width.load();
-        m_gnd_curr_rx_channel_width = channel_width;
-        m_settings->unsafe_get_settings().wb_gnd_rx_channel_width =
-            channel_width;
-        m_settings->persist();
-        const bool switched = apply_frequency_and_channel_width_from_settings();
+        const bool switched = apply_frequency_and_channel_width(
+            previous_frequency, channel_width, openhd::DEFAULT_GND_RX_CHANNEL_WIDTH);
         if (switched) {
+          m_gnd_curr_rx_channel_width = channel_width;
+          m_settings->unsafe_get_settings().wb_gnd_rx_channel_width = channel_width;
+          m_settings->persist();
           gnd_note_channel_switch_attempt(previous_frequency,
                                           previous_channel_width,
                                           previous_frequency, channel_width);
+        } else {
+          m_console->warn("Ground width change failed; retaining {} MHz", previous_channel_width);
+          apply_frequency_and_channel_width(previous_frequency, previous_channel_width,
+                                            openhd::DEFAULT_GND_RX_CHANNEL_WIDTH);
         }
       },
       std::chrono::steady_clock::now());
@@ -1351,9 +1346,20 @@ bool WBLink::apply_frequency_and_channel_width(int frequency,
   }
   if ((channel_width_rx == 10 || channel_width_tx == 10) &&
       !local_radios_support_10mhz()) {
-    m_console->warn("10 MHz requires 8812EU broadcast cards");
+    m_console->warn("10 MHz requires a supported narrowband broadcast card");
     return false;
   }
+#ifdef WIFIBROADCAST_WITH_DEVOURER
+  if ((channel_width_rx == 10 || channel_width_tx == 10) && m_wb_txrx->uses_devourer()) {
+    for (int i = 0; i < static_cast<int>(m_broadcast_cards.size()); ++i) {
+      const auto caps = m_wb_txrx->get_devourer_adapter_caps(i);
+      if (!caps || !caps->narrowband_ok || !(caps->bw_mask & devourer::kBw10)) {
+        m_console->warn("Card {} cannot apply a 10 MHz baseband", i);
+        return false;
+      }
+    }
+  }
+#endif
   // Channel management and rollback callers retain the kernel's 20 MHz
   // uplink convention. Normalize every Devourer ground retune here.
   if (m_profile.is_ground() && m_wb_txrx->uses_devourer())
@@ -1434,12 +1440,11 @@ void WBLink::apply_txpower() {
 
     uint32_t card_pwr_mw = settings.wb_tx_power_mw_per_card.at(i);
     uint32_t card_pwr_idx = settings.wb_tx_power_idx_per_card.at(i);
-    int power_level = settings.wb_tx_power_level;
-    if (rc_tx_mode_pit ||
-        (m_profile.is_air && rc_tx_mode_override < 0 && settings.wb_pit_mode &&
-         !armed)) {
-      power_level = openhd::WB_TX_POWER_LEVEL_20;
-    }
+    const bool pit_active = rc_tx_mode_pit ||
+        (m_profile.is_air && rc_tx_mode_override < 0 && settings.wb_pit_mode && !armed);
+    const int power_level = openhd::effective_tx_power_level(
+        m_profile.is_air, settings.wb_tx_power_level, pit_active,
+        m_wb_txrx->uses_devourer(), settings.wb_air_tx_channel_width);
 
     if (armed) {
       if (settings.wb_tx_power_mw_armed_per_card.at(i) !=
@@ -2364,13 +2369,11 @@ void WBLink::wt_update_statistics() {
           if (use_index && !card_uses_tx_power_index(card)) {
             use_index = false;
           }
-          int level = curr_settings.wb_tx_power_level;
-          if (rc_tx_mode_pit) {
-            level = openhd::WB_TX_POWER_LEVEL_20;
-          } else if (m_profile.is_air && rc_tx_mode_override < 0 &&
-                     curr_settings.wb_pit_mode && !armed) {
-            level = openhd::WB_TX_POWER_LEVEL_20;
-          }
+          const bool pit_active = rc_tx_mode_pit ||
+              (m_profile.is_air && rc_tx_mode_override < 0 && curr_settings.wb_pit_mode && !armed);
+          const int level = openhd::effective_tx_power_level(
+              m_profile.is_air, curr_settings.wb_tx_power_level, pit_active,
+              m_wb_txrx->uses_devourer(), curr_settings.wb_air_tx_channel_width);
           const int value = power_level_to_value(profile, level);
           if (is_valid_power_value(value, use_index)) {
             if (use_index) {
@@ -3730,6 +3733,10 @@ void WBLink::wt_gnd_perform_channel_management() {
               prepare_request->channel_width_mhz,
               prepare_request->transaction_id);
         } else {
+          m_management_gnd->m_air_reported_curr_frequency = previous_frequency;
+          m_management_gnd->m_air_reported_curr_channel_width = previous_channel_width;
+          apply_frequency_and_channel_width(previous_frequency, previous_channel_width,
+                                            openhd::DEFAULT_GND_RX_CHANNEL_WIDTH);
           m_console->warn(
               "Ground failed to apply received frequency change {} for "
               "{}@{}MHz",

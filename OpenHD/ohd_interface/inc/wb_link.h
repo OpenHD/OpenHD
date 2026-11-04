@@ -114,6 +114,7 @@ class WBLink : public OHDLink {
   // be able to reason about weather the given change will be successfully or
   // not beforehand.
   bool request_set_frequency(int frequency);
+  bool schedule_air_channel_change(int frequency, int channel_width);
   // Channel width / bandwidth is local to the air, and can be changed without
   // synchronization due to 20Mhz management packets
   bool request_set_air_tx_channel_width(int channel_width);

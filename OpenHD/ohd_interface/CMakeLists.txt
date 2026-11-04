@@ -420,3 +420,8 @@ add_executable(test_ethernet_metrics test/test_ethernet_metrics.cpp)
 target_include_directories(test_ethernet_metrics PRIVATE inc ../ohd_common/inc)
 target_link_libraries(test_ethernet_metrics PRIVATE Threads::Threads)
 target_compile_options(test_ethernet_metrics PRIVATE -UNDEBUG)
+
+add_executable(test_channel_switch_announcement_guard test/test_channel_switch_announcement_guard.cpp)
+target_include_directories(test_channel_switch_announcement_guard PRIVATE inc)
+target_compile_options(test_channel_switch_announcement_guard PRIVATE -UNDEBUG)
+add_test(NAME test_channel_switch_announcement_guard COMMAND test_channel_switch_announcement_guard)
