@@ -9,11 +9,14 @@
 #include "openhd_bandwidth_allocation.hpp"
 
 namespace openhd::bandwidth {
+enum class UnmeasuredStart { Conservative, EncoderLimit };
 // Capacity is supplied by the transport, never inferred from the bitrate of
 // the stream we are currently sending. Independent renditions own independent
 // controllers; a replicated rendition must fit every routed video transport.
 class RateController {
  public:
+  explicit RateController(UnmeasuredStart start = UnmeasuredStart::Conservative)
+      : unmeasured_start_(start) {}
   int update(int ceiling_kbits, int capacity_kbits, uint32_t rtt_us,
              uint32_t loss_permille, uint32_t errors, int64_t now_ms,
              bool queue_congested = false) {
@@ -31,7 +34,12 @@ class RateController {
     const bool congested = queue_congested || delayed ||
         (loss_permille != UINT32_MAX && loss_permille >= 50) || errors > last_errors_;
     last_errors_ = errors;
-    if (!target_) target_ = capacity_kbits > 0 ? limit : std::min(limit, 1000);
+    // USB Ethernet may expose no negotiated speed, and a directly attached
+    // QOpenHD client has no OpenHD probe responder. Its encoder budget must
+    // not stay at the conservative radio startup rate forever. This policy
+    // supplies an encoder ceiling, never a fabricated physical link capacity.
+    if (!target_) target_ = capacity_kbits > 0 || unmeasured_start_ == UnmeasuredStart::EncoderLimit
+        ? limit : std::min(limit, 1000);
     target_ = std::min(target_, limit);  // Capacity reductions are immediate.
     if (congested) {
       healthy_since_ = now_ms;
@@ -47,6 +55,7 @@ class RateController {
     return target_;
   }
  private:
+  UnmeasuredStart unmeasured_start_;
   int target_ = 0;
   uint32_t baseline_rtt_ = 0, last_errors_ = 0;
   std::deque<std::pair<int64_t, uint32_t>> rtt_history_;

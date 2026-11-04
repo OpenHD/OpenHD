@@ -93,7 +93,8 @@ class EthernetLink : public OHDLink {
   void handle_telemetry_data(const uint8_t* data, int data_len);
 
   bool m_auto_discovery = false;
-  openhd::bandwidth::RateController m_video_rate_controller;
+  openhd::bandwidth::RateController m_video_rate_controller{
+      openhd::bandwidth::UnmeasuredStart::EncoderLimit};
   std::atomic<bool> m_discovery_running{false};
   std::thread m_discovery_thread;
   std::mutex m_forwarders_mutex;

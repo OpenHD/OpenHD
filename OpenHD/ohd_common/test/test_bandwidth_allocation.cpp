@@ -24,6 +24,14 @@ int main() {
   const int congested = ethernet.update(40000, 1000000, 100000, 100, 0, 4000);
   assert(congested < 8000);
   RateController lte;
+  RateController usb_ethernet(UnmeasuredStart::EncoderLimit);
+  assert(usb_ethernet.update(50000, 0, UINT32_MAX, UINT32_MAX, 0, 1000) == 50000);
+  assert(usb_ethernet.update(50000, 0, UINT32_MAX, UINT32_MAX, 0, 60000) == 50000);
+  // Unknown speed remains unknown; real congestion/capacity still constrains
+  // this budget, including when a probe responder later becomes available.
+  assert(usb_ethernet.update(50000, 0, UINT32_MAX, UINT32_MAX, 1, 61000) == 40000);
+  assert(usb_ethernet.update(50000, 10000, 500, 0, 1, 62000) == 8000);
+  assert(usb_ethernet.update(50000, 10000, 100000, 100, 1, 63000) < 8000);
   assert(lte.update(40000, 0, UINT32_MAX, UINT32_MAX, 0, 1000) == 1000);
   for (int i=2;i<80;i++) lte.update(40000, 0, 50000, 0, 0, i*1000);
   const int healthy = lte.update(40000, 0, 50000, 0, 0, 80000);
