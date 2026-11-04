@@ -3382,7 +3382,45 @@
       "label": "BRIGHTNESS",
       "readOnly": false,
       "requiresReboot": false,
-      "type": "runtime"
+      "type": "int32",
+      "minimum": 0,
+      "maximum": 200
+    },
+    {
+      "description": "Image capture sharpness, [0..200], default 100.",
+      "group": "General",
+      "hidden": false,
+      "id": "SHARPNESS",
+      "label": "SHARPNESS",
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32",
+      "minimum": 0,
+      "maximum": 200
+    },
+    {
+      "description": "Image capture saturation, [0..200], default 100.",
+      "group": "General",
+      "hidden": false,
+      "id": "SATURATION",
+      "label": "SATURATION",
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32",
+      "minimum": 0,
+      "maximum": 200
+    },
+    {
+      "description": "Image capture contrast, [0..200], default 100.",
+      "group": "General",
+      "hidden": false,
+      "id": "CONTRAST",
+      "label": "CONTRAST",
+      "readOnly": false,
+      "requiresReboot": false,
+      "type": "int32",
+      "minimum": 0,
+      "maximum": 200
     },
     {
       "description": "ISO value to use (0 = Auto)",
@@ -4175,29 +4213,7 @@
       "type": "int32"
     },
     {
-      "choices": [
-        {
-          "label": "default(0)",
-          "value": 0
-        },
-        {
-          "label": "higher (5)",
-          "value": 5
-        },
-        {
-          "label": "higher (10)",
-          "value": 10
-        },
-        {
-          "label": "lower(-5)",
-          "value": -5
-        },
-        {
-          "label": "lower (-10)",
-          "value": -10
-        }
-      ],
-      "description": "Libcamera exposure value, [-10,10]",
+      "description": "Libcamera exposure compensation, [-10..10], adjustable in steps of 1.",
       "group": "General",
       "hidden": false,
       "id": "EXPOSURE_LC",
