@@ -12,6 +12,11 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y g++ libunwind-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav
       - name: Validate device profiles
         run: python3 scripts/test_fleet_setup.py
+      - name: Verify VEYE and USB capture device isolation
+        working-directory: OpenHD/ohd_video
+        run: |
+          g++ -std=c++17 -O2 -Iinc test/test_v4l2_camera_selection.cpp -o /tmp/test_v4l2_camera_selection
+          /tmp/test_v4l2_camera_selection
       - name: Build and exercise independent UDP outputs
         working-directory: OpenHD/ohd_video
         run: |

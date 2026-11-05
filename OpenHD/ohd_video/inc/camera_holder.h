@@ -44,6 +44,7 @@
 #include "openhd_sock.h"
 #include "usb_thermal_cam_helper.h"
 #include "veye_gx_controls.hpp"
+#include "v4l2_camera_selection.h"
 
 // Holds the immutable (camera) and mutable (camera_settings) information about
 // a camera. Changes in the camera
@@ -125,9 +126,14 @@ class CameraHolder :
     // Apply after configuring frame rate: firmware can reject a shutter longer
     // than its current frame period when powering up at the default 60 fps.
     if (m_camera.camera_type != X_CAM_TYPE_RPI_V4L2_VEYE_GX_IMX662) return;
+    const auto capture_device = openhd::v4l2::find_veye_capture_device();
+    if (!capture_device) {
+      spdlog::warn("Cannot restore GX controls: no unique Unicam capture device");
+      return;
+    }
     std::lock_guard<std::mutex> lock(veye_gx::mutex);
     const auto fps = get_settings().streamed_video_format.framerate;
-    if (OHDUtil::run_command("v4l2-ctl", {"-d", "/dev/video0",
+    if (OHDUtil::run_command("v4l2-ctl", {"-d", *capture_device,
             "--set-ctrl=frame_rate=" + std::to_string(fps)}) != 0) {
       spdlog::warn("Cannot set GX frame rate to {}", fps);
     }

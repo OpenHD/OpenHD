@@ -22,6 +22,7 @@
  ******************************************************************************/
 
 #include "gstreamerstream.h"
+#include "v4l2_camera_selection.h"
 
 #include <gst/gst.h>
 
@@ -970,11 +971,16 @@ std::string GStreamerStream::create_source_encode_pipeline(
     pipeline << OHDGstHelper::createLibcamerasrcStream(setting);
   } else if (camera.requires_rpi_veye_pipeline()) {
     openhd::log::get_default()->debug("Camera requires RPI Veye pipeline.");
-    auto bus = "/dev/video0";
+    const auto bus = openhd::v4l2::find_veye_capture_device();
+    if (!bus) {
+      m_console->error("No unique VEYE Unicam capture device; check camera overlay and power");
+      return {};
+    }
+    m_console->info("VEYE capture device: {}", *bus);
     if (camera.camera_type == X_CAM_TYPE_RPI_V4L2_VEYE_GX_IMX662) {
       m_camera_holder->restore_gx_isp_controls();
     }
-    pipeline << OHDGstHelper::create_veye_vl2_stream(setting, bus);
+    pipeline << OHDGstHelper::create_veye_vl2_stream(setting, *bus);
   } else if (camera.requires_rockchip3_mpp_pipeline()) {
     openhd::log::get_default()->debug(
         "Camera requires Rockchip3 MPP pipeline.");
@@ -1152,7 +1158,9 @@ bool GStreamerStream::setup() {
         "Refusing to start ORQA camera with an invalid CSI media graph");
     return false;
   }
-  pipeline_content << create_source_encode_pipeline(*m_camera_holder);
+  const auto source_pipeline = create_source_encode_pipeline(*m_camera_holder);
+  if (source_pipeline.empty()) return false;
+  pipeline_content << source_pipeline;
   pipeline_content << OHDGstHelper::createEncoderPerfElement();
   // quick check,here the pipeline should end with a "! ";
   if (!OHDUtil::endsWith(pipeline_content.str(), "! ")) {

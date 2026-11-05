@@ -296,6 +296,8 @@ add_executable(test_matroska_recorder
 add_executable(test_rockchip_stream_utils test/test_rockchip_stream_utils.cpp)
 target_link_libraries(test_rockchip_stream_utils PRIVATE Threads::Threads)
 add_executable(test_ground_ae test/test_ground_ae.cpp)
+add_executable(test_v4l2_camera_selection test/test_v4l2_camera_selection.cpp)
+target_include_directories(test_v4l2_camera_selection PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/inc)
 target_include_directories(test_ground_ae PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/inc)
 target_include_directories(test_matroska_recorder PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/inc)

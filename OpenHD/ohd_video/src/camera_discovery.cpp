@@ -22,6 +22,7 @@
  ******************************************************************************/
 
 #include "camera_discovery.h"
+#include "v4l2_camera_selection.h"
 
 #include <fcntl.h>
 
@@ -424,6 +425,7 @@ std::vector<DCameras::DiscoveredUSBCamera> DCameras::detect_usb_cameras(
     const auto &probed = probed_opt.value();
     const std::string bus((char *)probed.caps.bus_info);
     const std::string driver((char *)probed.caps.driver);
+    if (!openhd::v4l2::is_usb_or_loopback(bus, driver)) continue;
     if (debug) {
       m_console->debug("V4l2 info {} {} {}", device, bus,
                        probed.formats.formats_raw.size());
