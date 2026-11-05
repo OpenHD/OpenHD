@@ -2997,15 +2997,15 @@
     {
       "choices": [
         {
-          "label": "GStreamer (MPP elements)",
-          "value": 0
+          "label": "Native MPP (standard)",
+          "value": 1
         },
         {
-          "label": "MPP direct (native)",
-          "value": 1
+          "label": "GStreamer (emergency)",
+          "value": 0
         }
       ],
-      "description": "Select the supported Rockchip camera backend. Changing it restarts OpenHD and the camera stream.",
+      "description": "Native MPP is standard on X21 and provides an independent high-quality recording encoder. GStreamer is an emergency backend and records the transmitted stream. Changing the backend restarts OpenHD and the camera stream.",
       "group": "General",
       "hidden": false,
       "id": "ROCKCHIP_IMPL",

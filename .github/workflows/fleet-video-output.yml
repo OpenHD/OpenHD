@@ -17,6 +17,8 @@ jobs:
         run: |
           g++ -std=c++17 -O2 -Iinc test/test_v4l2_camera_selection.cpp -o /tmp/test_v4l2_camera_selection
           /tmp/test_v4l2_camera_selection
+          g++ -std=c++17 -O2 -Iinc test/test_rockchip_backend_policy.cpp -o /tmp/test_rockchip_backend_policy
+          /tmp/test_rockchip_backend_policy
       - name: Build and exercise independent UDP outputs
         working-directory: OpenHD/ohd_video
         run: |

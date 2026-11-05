@@ -184,6 +184,30 @@ void OHDVideoAir::restart_audio_stream() {
 void OHDVideoAir::configure(
     const std::shared_ptr<CameraHolder>& camera_holder) {
   const auto camera = camera_holder->get_camera();
+  if (OHDPlatform::instance().is_x21() &&
+      (camera.requires_rockchip1126_mpp_csi_pipeline() ||
+       camera.requires_rockchip1126_mpp_testsrc_pipeline())) {
+#ifdef OPENHD_ROCKCHIP_MPP_PRESENT
+    constexpr bool native_mpp = true;
+#else
+    constexpr bool native_mpp = false;
+#endif
+#ifdef OPENHD_GSTREAMER_PRESENT
+    constexpr bool gstreamer = true;
+#else
+    constexpr bool gstreamer = false;
+#endif
+    const auto backend = openhd::video::resolve_rockchip_backend(
+        camera_holder->get_settings().rockchip_impl, native_mpp, gstreamer);
+    if (backend == openhd::video::RockchipBackend::Unavailable) {
+      m_console->error("X21 camera backend unavailable: native MPP is standard; "
+                       "install a complete X21 build or explicitly select the GStreamer emergency backend");
+      return;
+    }
+    if (backend == openhd::video::RockchipBackend::EmergencyGStreamer)
+      m_console->warn("X21 GStreamer emergency backend selected: recording shares "
+                      "the transmitted stream; independent high-quality recording requires native MPP");
+  }
   auto frame_cb =
       [this](int stream_index,
              const openhd::FragmentedVideoFrame& fragmented_video_frame) {

@@ -28,6 +28,7 @@
 #include <map>
 
 #include "camera_enums.hpp"
+#include "rockchip_backend_policy.h"
 #include "validate_settings.h"
 
 // Mutable data for a discovered camera
@@ -52,8 +53,6 @@ static constexpr auto MINIMUM_AMOUNT_FREE_SPACE_FOR_AIR_RECORDING_MB = 300;
 static constexpr int RPI_LIBCAMERA_DEFAULT_EV = 0;
 static constexpr int RPI_LIBCAMERA_IMPL_GSTREAMER = 0;
 static constexpr int RPI_LIBCAMERA_IMPL_NATIVE = 1;
-static constexpr int ROCKCHIP_IMPL_GSTREAMER = 0;
-static constexpr int ROCKCHIP_IMPL_NATIVE_MPP = 1;
 
 // Temporary managed T010 IP-camera source used for field testing.
 static constexpr auto DEFAULT_IP_CAMERA_PIPELINE =
