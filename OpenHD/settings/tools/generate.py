@@ -91,6 +91,10 @@ def outputs(doc):
     imagewriter['cameraResolution']['defaultByCameraValue'] = {
         str(entry['id']): default_resolution(entry) for entry in cameras if entry['id'] != 255
     }
+    for entry in cameras:
+        if entry.get('resolutions'):
+            imagewriter['cameraResolution']['byCameraValue'].setdefault(str(entry['id']), [
+                f"{r['width']}x{r['height']}@{r['fps']}" for r in entry['resolutions']])
     camera_types=[{'value':entry['id'],'label':entry.get('ui_label',entry['name'])} for entry in cameras]
     camera_types.append({'value':255,'label':'Disabled'})
     webui='// Generated from OpenHD/settings; do not edit.\n'

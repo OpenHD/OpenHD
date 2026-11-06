@@ -6236,8 +6236,8 @@
               "displayName": "Integrated camera",
               "options": [
                 {
-                  "id": "ROCKCHIP-RV",
-                  "valueWritten": "125"
+                  "id": "MIS5001",
+                  "valueWritten": "140"
                 }
               ]
             }
