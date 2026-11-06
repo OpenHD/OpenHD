@@ -610,7 +610,164 @@
         "file": "openhd/camera1.txt",
         "vendors": []
       }
-    ]
+    ],
+    "firmwareDefaults": {
+      "x86": {
+        "label": "Dummy (debug)",
+        "resolution": "1280x720@60",
+        "autoDetect": false
+      },
+      "rpi3": {
+        "label": "GENERIC HDMI to CSI",
+        "resolution": "1280x720@60",
+        "autoDetect": false
+      },
+      "rpi4": {
+        "label": "GENERIC HDMI to CSI",
+        "resolution": "1280x720@60",
+        "autoDetect": false
+      },
+      "cm4": {
+        "label": "GENERIC HDMI to CSI",
+        "resolution": "1280x720@60",
+        "autoDetect": false
+      },
+      "rpi5": {
+        "label": "Dummy (debug)",
+        "resolution": "1280x720@60",
+        "autoDetect": false
+      },
+      "zero3w": {
+        "label": "IMX462",
+        "resolution": "1920x1080@60",
+        "autoDetect": false
+      },
+      "rock5a": {
+        "label": "IMX462",
+        "resolution": "1920x1080@60",
+        "autoDetect": false
+      },
+      "rock5b": {
+        "label": "HDMI IN",
+        "resolution": "3840x2160@60",
+        "autoDetect": false
+      },
+      "cm5": {
+        "label": "Dummy (debug)",
+        "resolution": "1280x720@60",
+        "autoDetect": false
+      },
+      "cm3": {
+        "label": "IMX462",
+        "resolution": "1920x1080@60",
+        "autoDetect": false
+      },
+      "luckfox-pico": {
+        "label": "MIS5001",
+        "resolution": "1280x720@60",
+        "autoDetect": false
+      },
+      "luckfox-lyra": {
+        "label": "Dummy (debug)",
+        "resolution": "1280x720@60",
+        "autoDetect": false
+      },
+      "x21b": {
+        "label": "HDZero Generic",
+        "resolution": "720x540@90",
+        "autoDetect": true
+      },
+      "luckfox-aura": {
+        "label": "IMX662 (native CSI)",
+        "resolution": "1280x720@137",
+        "autoDetect": false
+      },
+      "x20": {
+        "label": "GENERIC",
+        "resolution": "1280x720@60",
+        "autoDetect": true
+      },
+      "cubie-a7s": {
+        "label": "Dummy (debug)",
+        "resolution": "1280x720@60",
+        "autoDetect": false
+      },
+      "cubie-a7z": {
+        "label": "IMX415",
+        "resolution": "1920x1080@30",
+        "autoDetect": false
+      },
+      "openipc": {
+        "label": "External (DEV)",
+        "resolution": "640x480@30",
+        "autoDetect": false
+      },
+      "nvidia-xavier": {
+        "label": "IMX577",
+        "resolution": "1920x1080@60",
+        "autoDetect": false
+      },
+      "qrb5165": {
+        "label": "CORETRONIC IMX577",
+        "resolution": "1920x1080@30",
+        "autoDetect": false
+      },
+      "qcs405": {
+        "label": "Dummy (debug)",
+        "resolution": "1280x720@60",
+        "autoDetect": false
+      },
+      "orqa": {
+        "label": "REKINDLE",
+        "resolution": "960x720@60",
+        "autoDetect": true
+      },
+      "uvx": {
+        "label": "Dummy (debug)",
+        "resolution": "1280x720@60",
+        "autoDetect": false
+      },
+      "nxp-imx8": {
+        "label": "OS08A20",
+        "resolution": "1280x720@60",
+        "autoDetect": false
+      },
+      "rpi-zero": {
+        "label": "GENERIC HDMI to CSI",
+        "resolution": "1280x720@60",
+        "autoDetect": false
+      },
+      "rpi-zero-w": {
+        "label": "GENERIC HDMI to CSI",
+        "resolution": "1280x720@60",
+        "autoDetect": false
+      },
+      "rpi-zero2w": {
+        "label": "GENERIC HDMI to CSI",
+        "resolution": "1280x720@60",
+        "autoDetect": false
+      },
+      "rpi2": {
+        "label": "GENERIC HDMI to CSI",
+        "resolution": "1280x720@60",
+        "autoDetect": false
+      },
+      "rpi-cm3": {
+        "label": "GENERIC HDMI to CSI",
+        "resolution": "1280x720@60",
+        "autoDetect": false
+      },
+      "rpi-cm5": {
+        "label": "Dummy (debug)",
+        "resolution": "1280x720@60",
+        "autoDetect": false
+      },
+      "rock3": {
+        "label": "IMX462",
+        "resolution": "1920x1080@60",
+        "autoDetect": false
+      }
+    }
   },
   "cameraResolution": {
     "_comment": "Resolution/fps choices keyed by OpenHD camera type value (widthxheight@fps).",
@@ -875,6 +1032,90 @@
         "1920x1080@25",
         "2592x1944@25"
       ]
+    },
+    "defaultByCameraValue": {
+      "0": "1280x720@60",
+      "2": "640x480@30",
+      "3": "640x480@30",
+      "4": "1920x1080@60",
+      "10": "0x0@0",
+      "11": "384x292@25",
+      "12": "0x0@0",
+      "13": "384x292@50",
+      "14": "256x192@25",
+      "15": "640x512@30",
+      "16": "640x512@60",
+      "20": "1280x720@60",
+      "30": "1920x1080@30",
+      "31": "1920x1080@30",
+      "32": "1920x1080@30",
+      "33": "1920x1080@30",
+      "40": "1920x1080@30",
+      "41": "1920x1080@30",
+      "42": "1920x1080@30",
+      "43": "1920x1080@30",
+      "44": "1920x1080@30",
+      "45": "640x480@30",
+      "46": "1920x1080@60",
+      "47": "1920x1080@30",
+      "48": "1920x1080@60",
+      "60": "1920x1080@30",
+      "61": "1920x1080@30",
+      "62": "1920x1080@30",
+      "63": "1920x1080@30",
+      "64": "1920x1080@30",
+      "70": "1280x720@60",
+      "71": "1280x720@60",
+      "72": "1280x720@60",
+      "73": "1280x720@60",
+      "74": "1280x720@60",
+      "75": "1280x720@60",
+      "76": "1920x1080@100",
+      "77": "1920x1080@30",
+      "78": "1920x1080@30",
+      "79": "1920x1080@30",
+      "80": "3840x2160@60",
+      "81": "1920x1080@30",
+      "82": "1920x1080@30",
+      "83": "4608x2592@14",
+      "84": "1920x1080@60",
+      "85": "3864x2192@30",
+      "86": "4056x3040@10",
+      "87": "4056x3040@9",
+      "88": "3840x2160@90",
+      "90": "1280x720@60",
+      "91": "1920x1080@30",
+      "92": "1920x1080@30",
+      "93": "1920x1080@60",
+      "94": "1920x1080@60",
+      "95": "1920x1080@60",
+      "96": "1920x1080@100",
+      "97": "640x480@30",
+      "101": "1920x1080@60",
+      "110": "640x480@30",
+      "120": "1920x1080@30",
+      "121": "1280x720@30",
+      "122": "960x720@120",
+      "123": "960x720@120",
+      "124": "960x720@60",
+      "125": "1280x720@60",
+      "126": "1920x1080@60",
+      "130": "1920x1080@30",
+      "131": "1280x720@60",
+      "132": "1280x720@60",
+      "140": "1280x720@60",
+      "141": "720x540@90",
+      "142": "1280x720@60",
+      "143": "720x540@90",
+      "144": "1920x1080@30",
+      "145": "1920x1080@30",
+      "146": "1920x1080@60",
+      "152": "1920x1080@30",
+      "151": "1280x720@137",
+      "147": "1280x720@60",
+      "148": "1280x720@60",
+      "149": "1280x720@30",
+      "150": "1280x720@60"
     }
   },
   "ipCamera": {
@@ -1089,11 +1330,12 @@
       "aliases": [
         "rockchip-rv",
         "rv110x",
+        "rv1106",
+        "rv1103",
         "luckfox-pico"
       ],
       "roles": [
-        "air",
-        "ground"
+        "air"
       ]
     },
     {
@@ -1350,7 +1592,7 @@
   ],
   "_settingsContract": {
     "version": 1,
-    "catalogHash": "92d7f383842321ba5c10be9c5c649d23a74fdfaea8c83485b75eea7d3eb6bc8a"
+    "catalogHash": "5562c6c15adee330f95ddc5b6f3391244c27caebb3e94a800534632b7c0cb4ed"
   },
   "initialFields": [
     {
@@ -1374,34 +1616,6 @@
       "id": "AIR_RECORDING_E",
       "label": "Air recording",
       "maximum": 2,
-      "minimum": 0,
-      "readOnly": false,
-      "requiresReboot": false,
-      "type": "int32",
-      "provision": {
-        "componentId": 100,
-        "roles": [
-          "air"
-        ]
-      }
-    },
-    {
-      "choices": [
-        {
-          "label": "Disable",
-          "value": 0
-        },
-        {
-          "label": "Enable",
-          "value": 1
-        }
-      ],
-      "description": "Enable / disable streaming for this camera. Note that this setting is persistent at run time - once you disable streaming for a camera, you won't have video until you re-enable streaming or reboot your air unit. On by default",
-      "group": "General",
-      "hidden": true,
-      "id": "STREAMING_E",
-      "label": "Video streaming",
-      "maximum": 1,
       "minimum": 0,
       "readOnly": false,
       "requiresReboot": false,

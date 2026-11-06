@@ -3068,13 +3068,7 @@
       "minimum": 0,
       "readOnly": false,
       "requiresReboot": false,
-      "type": "int32",
-      "provision": {
-        "componentId": 100,
-        "roles": [
-          "air"
-        ]
-      }
+      "type": "int32"
     },
     {
       "choices": [

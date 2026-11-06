@@ -71,6 +71,26 @@ def outputs(doc):
     imagewriter['_settingsContract']={'version':1,'catalogHash':hashlib.sha256(encoded.encode()).hexdigest()}
     imagewriter['initialFields']=[entry for entry in doc['settings'] if entry.get('provision')]
     cameras=json.loads((ROOT.parent/'ohd_video/misc/camera_registry.json').read_text())['camera_types']
+    # Match AirCameraGenericSettingsHolder::create_default(). Camera defaults
+    # select the last registry resolution, except VEYE GX's explicit 1080p30.
+    default_types = {1: 0, 10: 20, 11: 20, 12: 20, 13: 0, 20: 94,
+                     21: 84, 22: 80, 23: 0, 24: 94, 25: 140, 27: 0,
+                     28: 141, 29: 151, 30: 70, 31: 0, 32: 77,
+                     36: 2, 40: 101, 46: 120, 47: 0, 51: 124, 52: 0, 61: 131}
+    by_id = {entry['id']: entry for entry in cameras}
+    def default_resolution(entry):
+        resolutions = entry.get('resolutions') or [{'width': 640, 'height': 480, 'fps': 30}]
+        r = resolutions[-1] if entry['id'] != 64 else {'width': 1920, 'height': 1080, 'fps': 30}
+        return f"{r['width']}x{r['height']}@{r['fps']}"
+    imagewriter['camera']['firmwareDefaults'] = {
+        board['id']: {'label': by_id[default_types[board['platformId']]].get('ui_label', by_id[default_types[board['platformId']]]['name']),
+                      'resolution': default_resolution(by_id[default_types[board['platformId']]]),
+                      'autoDetect': board['platformId'] in (28, 30, 51)}
+        for board in boards
+    }
+    imagewriter['cameraResolution']['defaultByCameraValue'] = {
+        str(entry['id']): default_resolution(entry) for entry in cameras if entry['id'] != 255
+    }
     camera_types=[{'value':entry['id'],'label':entry.get('ui_label',entry['name'])} for entry in cameras]
     camera_types.append({'value':255,'label':'Disabled'})
     webui='// Generated from OpenHD/settings; do not edit.\n'

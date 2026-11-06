@@ -141,11 +141,12 @@
       "aliases": [
         "rockchip-rv",
         "rv110x",
+        "rv1106",
+        "rv1103",
         "luckfox-pico"
       ],
       "roles": [
-        "air",
-        "ground"
+        "air"
       ]
     },
     {
