@@ -473,12 +473,17 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
           wifibroadcast::WifiCard{card.device_name, wb_type});
     }
   }
+  // The single-core Pico must leave CPU time for USB, camera and networking.
+  txrx_options.receive_thread_max_realtime =
+      !OHDPlatform::instance().is_luckfox_pico();
   txrx_options.use_devourer =
       openhd::wb::use_devourer_backend(m_broadcast_cards);
   if (txrx_options.use_devourer) {
     // RV1106's host can lose a ZeroCD-switched Jaguar radio on USB reset.
     // Devourer still claims it exclusively and runs its chip power sequence.
     txrx_options.devourer_reset_usb_on_open =
+        !OHDPlatform::instance().is_luckfox_pico();
+    txrx_options.devourer_register_batching =
         !OHDPlatform::instance().is_luckfox_pico();
     const auto settings = m_settings->get_settings();
     txrx_options.devourer_frequency_mhz = settings.wb_frequency;
@@ -604,6 +609,8 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
     m_wb_tele_rx = std::make_unique<WBStreamRx>(m_wb_txrx, options_tele_rx);
     m_wb_tele_rx->set_callback(cb_rx);
     WBStreamTx::Options options_tele_tx{};
+    options_tele_tx.dequeue_thread_max_realtime =
+        !OHDPlatform::instance().is_luckfox_pico();
     options_tele_tx.enable_fec = false;
     options_tele_tx.radio_port = radio_port_tx;
     options_tele_tx.default_packet_type = WB_PACKET_TYPE_TELEMETRY;
@@ -621,6 +628,8 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
     if (m_profile.is_air) {
       // we transmit video
       WBStreamTx::Options options_video_tx{};
+      options_video_tx.dequeue_thread_max_realtime =
+          !OHDPlatform::instance().is_luckfox_pico();
       options_video_tx.enable_fec = true;
       // Enable retransmission if configured
       const auto settings = m_settings->unsafe_get_settings();
@@ -648,6 +657,8 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
       m_wb_video_tx_list.push_back(std::move(primary));
       m_wb_video_tx_list.push_back(std::move(secondary));
       WBStreamTx::Options options_audio_tx{};
+      options_audio_tx.dequeue_thread_max_realtime =
+          !OHDPlatform::instance().is_luckfox_pico();
       options_audio_tx.enable_fec = false;
       options_audio_tx.radio_port = openhd::AUDIO_WIFIBROADCAST_PORT;
       options_audio_tx.packet_data_queue_size = 16;
@@ -1595,6 +1606,8 @@ void WBLink::rebuild_udp_data_stream() {
   if (!settings.wb_udp_data_enabled || !m_wb_txrx) return;
 
   WBStreamTx::Options tx_options{};
+  tx_options.dequeue_thread_max_realtime =
+      !OHDPlatform::instance().is_luckfox_pico();
   tx_options.enable_fec = true;
   tx_options.radio_port = openhd::UDP_DATA_WIFIBROADCAST_PORT;
   tx_options.default_packet_type = WB_PACKET_TYPE_DATA;
