@@ -534,8 +534,11 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
                                                set_flag_tx_no_ack};
     m_console->debug("{}", RadiotapHeaderTx::user_params_to_string(tmp_params));
     m_tx_header_1->thread_safe_set(tmp_params);
-    auto tmp_params2 =
-        RadiotapHeaderTx::UserSelectableParams{20,
+    // Devourer management and session keys need to survive weak links and
+    // announce the next width even when the video PHY settings are aggressive.
+    const auto tmp_params2 = txrx_options.use_devourer
+        ? RadiotapHeaderTx::UserSelectableParams{20, false, 0, false, 0, true}
+        : RadiotapHeaderTx::UserSelectableParams{20,
                                                settings.wb_enable_short_guard,
                                                settings.wb_enable_stbc,
                                                settings.wb_enable_ldpc,
@@ -1388,6 +1391,10 @@ bool WBLink::apply_frequency_and_channel_width(int frequency,
                        : openhd::wb::set_frequency_and_channel_width_for_all_cards(
                              frequency, channel_width_rx, m_broadcast_cards,
                              m_profile.is_air);
+  if (!res) {
+    re_enable_injection_unless_user_passive_mode_enabled();
+    return false;
+  }
   m_tx_header_1->update_channel_width(channel_width_tx);
   // Keep management/session-key packets on 20MHz (if possible) to allow re-sync after BW changes.
   // Narrowband management must use the same baseband clock as data.
@@ -2115,7 +2122,9 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
       m_settings->unsafe_get_settings().wb_enable_stbc = stbc;
       m_settings->persist();
       m_tx_header_1->update_stbc(stbc);
-      m_tx_header_2->update_stbc(stbc);
+      if (!m_wb_txrx->uses_devourer()) {
+        m_tx_header_2->update_stbc(stbc);
+      }
       return true;
     };
     ret.push_back(openhd::Setting{
@@ -2128,7 +2137,9 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
       m_settings->unsafe_get_settings().wb_enable_ldpc = ldpc;
       m_settings->persist();
       m_tx_header_1->update_ldpc(ldpc);
-      m_tx_header_2->update_ldpc(ldpc);
+      if (!m_wb_txrx->uses_devourer()) {
+        m_tx_header_2->update_ldpc(ldpc);
+      }
       return true;
     };
     ret.push_back(openhd::Setting{
@@ -2139,7 +2150,9 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
       m_settings->unsafe_get_settings().wb_enable_short_guard = short_gi;
       m_settings->persist();
       m_tx_header_1->update_guard_interval(short_gi);
-      m_tx_header_2->update_guard_interval(short_gi);
+      if (!m_wb_txrx->uses_devourer()) {
+        m_tx_header_2->update_guard_interval(short_gi);
+      }
       return true;
     };
     ret.push_back(openhd::Setting{
@@ -2325,7 +2338,9 @@ void WBLink::loop_do_work() {
     if (m_request_apply_tx_mcs_index.compare_exchange_strong(tmp_true, false)) {
       const int mcs_index = get_configured_tx_mcs_index();
       m_tx_header_1->update_mcs_index(mcs_index);
-      m_tx_header_2->update_mcs_index(mcs_index);
+      if (!m_wb_txrx->uses_devourer()) {
+        m_tx_header_2->update_mcs_index(mcs_index);
+      }
     }
     // update statistics in regular intervals
     wt_update_statistics();

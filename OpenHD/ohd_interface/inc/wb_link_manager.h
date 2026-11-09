@@ -86,6 +86,7 @@ class ManagementAir {
   std::atomic<int> m_last_received_packet_timestamp_ms = 0;
   std::chrono::steady_clock::time_point m_increase_interval_tp;
   std::atomic<int> m_last_change_timestamp_ms;
+  mutable std::mutex m_frequency_transaction_mutex;
   std::atomic<uint32_t> m_next_frequency_transaction_id{1};
   std::atomic<uint32_t> m_frequency_transaction_id{0};
   std::atomic<uint32_t> m_frequency_transaction_old_mhz{0};

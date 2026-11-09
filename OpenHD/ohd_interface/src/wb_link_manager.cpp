@@ -122,6 +122,7 @@ void ManagementAir::set_channel_width(uint8_t bw) {
 
 uint32_t ManagementAir::begin_frequency_change(int target_frequency,
                                                uint8_t channel_width) {
+  std::lock_guard<std::mutex> lock(m_frequency_transaction_mutex);
   uint32_t transaction_id = m_next_frequency_transaction_id.fetch_add(1);
   if (transaction_id == 0) {
     transaction_id = m_next_frequency_transaction_id.fetch_add(1);
@@ -142,6 +143,7 @@ uint32_t ManagementAir::begin_frequency_change(int target_frequency,
 void ManagementAir::finish_frequency_change(uint32_t transaction_id,
                                             bool success,
                                             int fallback_frequency) {
+  std::lock_guard<std::mutex> lock(m_frequency_transaction_mutex);
   if (m_frequency_transaction_id.load() != transaction_id) return;
   m_curr_frequency_mhz =
       success ? m_frequency_transaction_target_mhz.load() : fallback_frequency;
@@ -154,6 +156,7 @@ void ManagementAir::finish_frequency_change(uint32_t transaction_id,
 
 bool ManagementAir::frequency_received_burst_sent(
     uint32_t transaction_id) const {
+  std::lock_guard<std::mutex> lock(m_frequency_transaction_mutex);
   return m_frequency_transaction_id.load() == transaction_id &&
          m_frequency_received_packets_remaining.load() == 0;
 }
@@ -190,26 +193,32 @@ void ManagementAir::loop() {
       continue;
     }
     m_air_last_management_frame = std::chrono::steady_clock::now();
-    DataManagementTxBandwidth managementFrame{m_curr_frequency_mhz.load(),
-                                              m_curr_channel_width_mhz.load()};
-    auto data = pack_management_frame(managementFrame);
-    auto radiotap_header = m_tx_header->thread_safe_get();
-    m_wb_txrx->tx_inject_packet(openhd::MANAGEMENT_RADIO_PORT_AIR_TX,
-                                data.data(), data.size(), radiotap_header,
-                                true);
-    const uint8_t transaction_phase = m_frequency_transaction_phase.load();
-    if (transaction_phase != 0 &&
-        m_frequency_received_packets_remaining.load() > 0) {
-      DataManagementFrequencyChange change{
-          m_frequency_transaction_id.load(),
-          m_frequency_transaction_old_mhz.load(),
-          m_frequency_transaction_target_mhz.load(),
-          m_frequency_transaction_width_mhz.load(), transaction_phase};
-      auto change_data = pack_management_frame(change);
-      m_wb_txrx->tx_inject_packet(openhd::MANAGEMENT_RADIO_PORT_AIR_TX,
-                                  change_data.data(), change_data.size(),
-                                  radiotap_header, true);
-      m_frequency_received_packets_remaining.fetch_sub(1);
+    {
+      std::lock_guard<std::mutex> lock(m_frequency_transaction_mutex);
+      const auto radiotap_header = m_tx_header->thread_safe_get();
+      const uint8_t phase = m_frequency_transaction_phase.load();
+      if (phase == 0) {
+        const DataManagementTxBandwidth management_frame{
+            m_curr_frequency_mhz.load(), m_curr_channel_width_mhz.load()};
+        const auto data = pack_management_frame(management_frame);
+        m_wb_txrx->tx_inject_packet(openhd::MANAGEMENT_RADIO_PORT_AIR_TX,
+                                    data.data(), data.size(), radiotap_header,
+                                    true);
+      } else if (m_frequency_received_packets_remaining.load() > 0) {
+        const DataManagementFrequencyChange change{
+            m_frequency_transaction_id.load(),
+            m_frequency_transaction_old_mhz.load(),
+            m_frequency_transaction_target_mhz.load(),
+            m_frequency_transaction_width_mhz.load(), phase};
+        const auto data = pack_management_frame(change);
+        if (m_wb_txrx->tx_inject_packet(openhd::MANAGEMENT_RADIO_PORT_AIR_TX,
+                                       data.data(), data.size(),
+                                       radiotap_header, true)) {
+          m_frequency_received_packets_remaining.fetch_sub(1);
+        }
+      }
+      // After PREPARE, wait for finish_frequency_change() to publish the
+      // settled channel. Do not send the old channel on the new PHY.
     }
     std::this_thread::sleep_for(management_frame_interval);
     // std::this_thread::sleep_for(std::chrono::milliseconds(100));
