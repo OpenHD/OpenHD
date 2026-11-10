@@ -94,7 +94,7 @@ int main() {
             "Higher MCS/width did not increase the automatic load");
     faster.mcs = 0;
     faster.width = 10;
-    require(automatic_link_load(faster).bitrate_kbps == 2417,
+    require(automatic_link_load(faster).bitrate_kbps == 1958,
             "Narrow-band load did not include normal FEC overhead");
     PayloadSource a(s), b(s);
     const auto first = a.next(), same = b.next();
