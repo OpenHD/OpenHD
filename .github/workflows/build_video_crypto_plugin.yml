@@ -39,11 +39,15 @@ jobs:
         with:
           path: openhd
 
+      - name: Read pinned plugin revision
+        id: plugin-revision
+        run: echo "sha=$(git -C openhd rev-parse HEAD:OpenHD/ohd_interface/video_crypto_private)" >> "$GITHUB_OUTPUT"
+
       - name: Checkout private plugin
         uses: actions/checkout@v7
         with:
           repository: OpenHD-Technologies/video_crypto_private
-          ref: main
+          ref: ${{ steps.plugin-revision.outputs.sha }}
           token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
           path: plugin
 

@@ -31,13 +31,6 @@ jobs:
           submodules: true
           token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
       - uses: ./.github/actions/fetch-devourer
-      - name: Checkout private video crypto
-        uses: actions/checkout@v7
-        with:
-          repository: OpenHD-Technologies/video_crypto_private
-          ref: main
-          token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
-          path: OpenHD/ohd_interface/video_crypto_private
       - name: Install dependencies and sysutils
         uses: ./.github/actions/setup-native-build
         with:
