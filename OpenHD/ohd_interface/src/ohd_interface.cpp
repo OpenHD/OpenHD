@@ -201,12 +201,11 @@ OHDInterface::OHDInterface(OHDProfile profile1, bool disable_wifi_hotspot)
     // interfere with anything
     m_usb_tether_listener = std::make_unique<USBTetherListener>();
   }
-  // Ethernet - optional, only on ground
-  if (m_profile.is_ground() && !config.DISABLE_ETHERNET_LINK) {
+  // Ground Ethernet port management is independent of the Air/Ground link.
+  if (m_profile.is_ground()) {
     m_ethernet_manager = std::make_unique<EthernetManager>();
     m_ethernet_manager->async_initialize(
         m_nw_settings.get_settings().ethernet_operating_mode);
-    // m_nw_settings.get_settings().ethernet_operating_mode
   }
 
   // use config defaults if user still relies on legacy WIFI_LOCAL_NETWORK
