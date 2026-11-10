@@ -31,6 +31,7 @@ class MultiLink final : public OHDLink {
   [[nodiscard]] std::vector<std::string> link_names() const;
 
   void transmit_telemetry_data(TelemetryTxPacket packet) override;
+  uint64_t video_crypto_generation() const override;
   void transmit_video_data(
       int stream_index,
       const openhd::FragmentedVideoFrame& fragmented_video_frame) override;

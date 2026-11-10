@@ -546,6 +546,10 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
                                                true};
     m_tx_header_2->thread_safe_set(tmp_params2);
   }
+  if (!m_profile.is_air) {
+    txrx_options.external_crypto_video_streams = {
+        openhd::VIDEO_PRIMARY_RADIO_PORT, openhd::VIDEO_SECONDARY_RADIO_PORT};
+  }
   m_wb_txrx =
       std::make_shared<WBTxRx>(tmp_wifi_cards, txrx_options, m_tx_header_2);
   m_video_crypto_available = m_wb_txrx->load_external_encryption_plugin();
@@ -2919,6 +2923,10 @@ void WBLink::transmit_telemetry_data(TelemetryTxPacket packet) {
   if (n_dropped > 0) {
     m_console->debug("Telemetry queue jam, dropped {}", n_dropped);
   }
+}
+
+uint64_t WBLink::video_crypto_generation() const {
+  return m_wb_txrx->video_crypto_generation();
 }
 
 void WBLink::transmit_video_data(

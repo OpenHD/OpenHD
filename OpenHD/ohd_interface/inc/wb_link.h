@@ -202,6 +202,7 @@ class WBLink : public OHDLink {
   void transmit_telemetry_data(TelemetryTxPacket packet) override;
   // Called by the camera stream on the air unit only
   // transmit video data via wifibradcast
+  uint64_t video_crypto_generation() const override;
   void transmit_video_data(
       int stream_index,
       const openhd::FragmentedVideoFrame& fragmented_video_frame) override;

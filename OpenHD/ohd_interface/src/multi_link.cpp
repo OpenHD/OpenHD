@@ -173,6 +173,14 @@ void MultiLink::transmit_telemetry_data(TelemetryTxPacket packet) {
   }
 }
 
+uint64_t MultiLink::video_crypto_generation() const {
+  uint64_t generation = 0;
+  for (const auto& endpoint : endpoints_snapshot()) {
+    generation += endpoint->link->video_crypto_generation();
+  }
+  return generation;
+}
+
 void MultiLink::transmit_video_data(
     int stream_index,
     const openhd::FragmentedVideoFrame& fragmented_video_frame) {

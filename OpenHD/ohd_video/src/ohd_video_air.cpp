@@ -209,8 +209,17 @@ void OHDVideoAir::configure(
                       "the transmitted stream; independent high-quality recording requires native MPP");
   }
   auto frame_cb =
-      [this](int stream_index,
-             const openhd::FragmentedVideoFrame& fragmented_video_frame) {
+      [this, camera_holder, last_crypto_generation = uint64_t{0}](
+          int stream_index,
+          const openhd::FragmentedVideoFrame& fragmented_video_frame) mutable {
+        if (m_link_handle &&
+            fragmented_video_frame.enable_ultra_secure_encryption) {
+          const auto generation = m_link_handle->video_crypto_generation();
+          if (generation && generation != last_crypto_generation) {
+            last_crypto_generation = generation;
+            camera_holder->force_mpp_keyframe(1);
+          }
+        }
         this->on_video_data(stream_index, fragmented_video_frame);
       };
   std::shared_ptr<CameraStream> stream;

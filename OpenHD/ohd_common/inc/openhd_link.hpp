@@ -109,6 +109,8 @@ class OHDLink {
                              int data_len)>
       ON_VIDEO_DATA_CB;
   // -------- video, air sends, ground receives ---------
+  virtual uint64_t video_crypto_generation() const { return 0; }
+
   /**
    * Video, unidirectional
    * only valid on air (transmit)
