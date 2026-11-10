@@ -31,8 +31,16 @@ jobs:
           submodules: true
           token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
       - uses: ./.github/actions/fetch-devourer
+      - name: Read pinned plugin revision
+        id: plugin-revision
+        run: echo "sha=$(git rev-parse HEAD:OpenHD/ohd_interface/video_crypto_private)" >> "$GITHUB_OUTPUT"
       - name: Check out the pinned private video crypto plugin
-        run: git submodule update --init --checkout -- OpenHD/ohd_interface/video_crypto_private
+        uses: actions/checkout@v7
+        with:
+          repository: OpenHD-Technologies/video_crypto_private
+          ref: ${{ steps.plugin-revision.outputs.sha }}
+          token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
+          path: OpenHD/ohd_interface/video_crypto_private
       - name: Install dependencies and sysutils
         uses: ./.github/actions/setup-native-build
         with:
