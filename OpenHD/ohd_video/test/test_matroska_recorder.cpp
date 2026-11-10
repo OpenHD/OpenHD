@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "matroska_recorder.h"
+#include "async_matroska_recorder.h"
 
 namespace {
 
@@ -31,20 +32,34 @@ int main(int argc, char** argv) {
   if (!input && stream.empty()) return 3;
 
   MatroskaRecorder recorder;
-  if (!recorder.open(argv[2], std::string(argv[3]) == "h265",
+  AsyncMatroskaRecorder writer;
+  const bool asynchronous = argc == 8 && std::string(argv[7]) == "async";
+  if (asynchronous) {
+    writer.open([&] { return std::string(argv[2]); },
+                std::string(argv[3]) == "h265", std::stoi(argv[4]),
+                std::stoi(argv[5]), std::stoi(argv[6]), {}, {});
+  } else if (!recorder.open(argv[2], std::string(argv[3]) == "h265",
                      std::stoi(argv[4]), std::stoi(argv[5]),
                      std::stoi(argv[6]))) {
     return 4;
   }
   std::size_t start = 0;
-  const bool timestamped = argc == 8 && std::string(argv[7]) == "timestamped";
+  const bool timestamped = asynchronous ||
+      (argc == 8 && std::string(argv[7]) == "timestamped");
   std::vector<uint8_t> access_unit;
   uint64_t frame = 0;
   const auto emit = [&] {
     if (access_unit.empty()) return;
     // Preserve a deliberate 500 ms gap after the second frame.
-    recorder.feed_annex_b_access_unit(access_unit.data(), access_unit.size(),
-                                      frame * 100 + (frame >= 2 ? 500 : 0));
+    const auto timestamp = frame * 100 + (frame >= 2 ? 500 : 0);
+    if (asynchronous) {
+      AsyncMatroskaRecorder::Packet packet;
+      packet.data = std::move(access_unit);
+      packet.timestamp_ms = timestamp;
+      if (!writer.enqueue(std::move(packet))) throw std::runtime_error("enqueue failed");
+    } else {
+      recorder.feed_annex_b_access_unit(access_unit.data(), access_unit.size(), timestamp);
+    }
     ++frame;
     access_unit.clear();
   };
@@ -69,6 +84,10 @@ int main(int argc, char** argv) {
     start = next;
   }
   if (timestamped) emit();
+  if (asynchronous) {
+    writer.close();
+    return writer.error().empty() ? 0 : 5;
+  }
   recorder.close();
   return recorder.good() ? 0 : 5;
 }

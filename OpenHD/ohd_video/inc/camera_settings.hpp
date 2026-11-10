@@ -119,7 +119,7 @@ struct CameraSettings {
   // follow the RF-link bitrate controller.
   int mpp_record_bitrate_kbits = 40000;
   int mpp_record_qp_min = 4;
-  int mpp_record_qp_max = 28;
+  int mpp_record_qp_max = 51;
   // Opt-in native MPP video impairment controls for repeatable link testing.
   // Packet loss is applied after RTP packetization and never affects telemetry.
   int mpp_debug_noise_percent = 0;

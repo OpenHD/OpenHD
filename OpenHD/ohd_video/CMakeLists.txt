@@ -304,6 +304,11 @@ target_include_directories(test_rockchip_backend_policy PRIVATE ${CMAKE_CURRENT_
 target_include_directories(test_ground_ae PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/inc)
 target_include_directories(test_matroska_recorder PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/inc)
+target_link_libraries(test_matroska_recorder PRIVATE Threads::Threads)
+add_executable(test_async_matroska_recorder test/test_async_matroska_recorder.cpp
+        src/matroska_recorder.cpp)
+target_include_directories(test_async_matroska_recorder PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/inc)
+target_link_libraries(test_async_matroska_recorder PRIVATE Threads::Threads)
 add_executable(openhd_lan_test test/openhd_lan_test.cpp)
 target_link_libraries(openhd_lan_test OHDVideoLib)
 if(ENABLE_AIR)

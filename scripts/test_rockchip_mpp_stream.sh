@@ -7,10 +7,15 @@ for tool in "${CXX:-g++}" python3 ffmpeg ffprobe; do command -v "$tool" >/dev/nu
 "${CXX:-g++}" -std=c++17 -Wall -Wextra -Werror -pthread \
   "$repo_root/OpenHD/ohd_video/test/test_rockchip_stream_utils.cpp" -o "$work/test_stream_utils"
 "$work/test_stream_utils"
-"${CXX:-g++}" -std=c++17 -Wall -Wextra -Werror \
+"${CXX:-g++}" -std=c++17 -Wall -Wextra -Werror -pthread \
   -I"$repo_root/OpenHD/ohd_video/inc" \
   "$repo_root/OpenHD/ohd_video/test/test_matroska_recorder.cpp" \
   "$repo_root/OpenHD/ohd_video/src/matroska_recorder.cpp" -o "$work/test_matroska"
+"${CXX:-g++}" -std=c++17 -Wall -Wextra -Werror -pthread \
+  -I"$repo_root/OpenHD/ohd_video/inc" \
+  "$repo_root/OpenHD/ohd_video/test/test_async_matroska_recorder.cpp" \
+  "$repo_root/OpenHD/ohd_video/src/matroska_recorder.cpp" -o "$work/test_async_recorder"
+"$work/test_async_recorder"
 for codec in h264 h265; do
   if [[ "$codec" == h264 ]]; then
     encoder=libx264
@@ -25,6 +30,11 @@ for codec in h264 h265; do
   ffprobe -v error -select_streams v -show_entries frame=best_effort_timestamp_time \
     -of csv=p=0 "$work/timestamps-$codec.mkv" > "$work/pts-$codec.txt"
   ffmpeg -v error -xerror -i "$work/timestamps-$codec.mkv" -f null -
+  "$work/test_matroska" "$work/input.$codec" "$work/async-$codec.mkv" "$codec" 128 96 10 async
+  ffmpeg -v error -xerror -i "$work/async-$codec.mkv" -f null -
+  ffprobe -v error -select_streams v -show_entries frame=best_effort_timestamp_time \
+    -of csv=p=0 "$work/async-$codec.mkv" > "$work/async-pts-$codec.txt"
+  cmp "$work/pts-$codec.txt" "$work/async-pts-$codec.txt"
   "$work/test_matroska" "$work/input.$codec" "$work/baseline-$codec.mkv" "$codec" 128 96 10
   ffmpeg -v error -xerror -i "$work/baseline-$codec.mkv" -f null -
 done

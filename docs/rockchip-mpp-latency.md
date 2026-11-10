@@ -23,7 +23,10 @@ incompatible padding use the existing row-copy path. Debug noise always uses a
 copy, so capture buffers are never modified. Negotiated dimensions must match
 the encoder; unsupported multi-plane layouts are rejected.
 
-Capture buffers remain dequeued until all encoder output partitions complete.
+Capture buffers handed to transmission remain dequeued until all encoder output
+partitions complete. A bounded two-slot transmit queue retains at most two of
+the four capture buffers; rejected raw transmit frames return their buffer
+immediately. Capture continues feeding recording when transmission is delayed.
 Encoder failure ends the stream and destroys the encoder before returning or
 releasing its input. Input/output waits use 250 ms MPP timeouts, with a two-second
 partition deadline. File-system calls can still block the recording worker.
@@ -42,8 +45,9 @@ in milliseconds for the latest at most 512 observations per stage:
 - `output-callback`: synchronous handoff to the link; it does not measure RF delivery.
 - `dequeue-to-output`: application capture dequeue to encoded output handoff.
 - `capture-timestamp-to-output`: capture-buffer age plus dequeue-to-output.
-- `recording-copy`, `recording-queue`, `recording-encode-and-write`,
-  `recording-write`, `recording-dequeue-to-write`: isolated recording stages.
+- `recording-copy`, `recording-queue`, `recording-encode-and-enqueue`,
+  `recording-writer-queue`, `recording-write`, `recording-dequeue-to-write`:
+  isolated recording stages, including time waiting for the SD writer.
 
 Totals distinguish DMA/copy frames, capture sequence gaps, invalid capture frames,
 and dropped raw recording inputs. Sequence wrap is handled; backward sequence
@@ -53,20 +57,31 @@ to the existing link timing statistics now uses application dequeue time.
 
 ## Recording ownership and overload
 
-A recording worker owns its encoder, ROI metadata and Matroska writer. Three
-preallocated MPP input buffers bound the sum of copying, queued and encoding
-work. Capture copies the raw recording input only when a free slot is available,
-after transmission encoding completes. It never waits for a recording slot.
+A recording worker owns its encoder and ROI metadata. A separate writer owns
+the Matroska file and recording counter. Three preallocated MPP input buffers
+bound copying, queued and encoding work. Capture submits recording input before
+handing transmission to its own worker; transmit rate-control, encoding and
+output callbacks never run on the capture thread. Capture never waits for a
+recording or transmission slot.
 When full, it drops the new raw recording frame before encoding; it never drops
 an already encoded reference frame. Matroska timestamps preserve elapsed time
 across those gaps and complete Annex-B access units are split into their NALUs.
 
-Stopping/disarming discards pending raw work. The current recording operation
-finishes before encoder destruction and buffer recycling. An encoder or write
-failure retires the context before recycling its input and retries with a new
-file and fresh codec headers after one second. Storage checks run on the recording
-worker. Transmission and recording still share the hardware encoder and memory
-bandwidth; the worker does not remove that resource contention.
+The file writer buffers up to 32 MiB of complete encoded access units, including
+the in-flight write, to absorb short SD stalls without retaining raw encoder
+inputs. Counter/open/write failures are contained by the writer. A full byte
+budget or writer failure ends that recording session; it never drops encoded
+reference frames from a continuing file. Accepted data drains on normal close.
+Stopping/disarming discards pending raw work. Encoder failure retires its context
+before recycling input and retries with a fresh file and codec headers after one
+second. Transmission and recording retain independent MPP contexts and rate
+settings, but still share the SoC's encoder hardware and memory bandwidth.
+
+Recording defaults to QP 4–51 so rate control can meet its 40 Mbit/s target even
+with a complex/noisy scene; the recording maximum bitrate hint equals its target.
+Existing persisted QP settings are preserved. A restrictive maximum QP can still
+make the requested rate unattainable. Encoder rate control is not a per-packet
+traffic shaper.
 
 ## Copy-versus-DMA benchmark on X21B
 

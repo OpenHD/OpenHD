@@ -105,6 +105,24 @@ int main() {
         "producer waited on stalled consumer");
   queue.stop();
   queue.release(active->first);
+  // Capture leases survive pending-work cancellation while an encoder owns
+  // them, and are returned exactly once when that encoder releases its job.
+  std::atomic<int> returned{0};
+  SlotQueue<std::shared_ptr<int>, 2> leases;
+  auto first = leases.reserve(), second = leases.reserve();
+  auto make_lease = [&] {
+    return std::shared_ptr<int>(new int(1), [&](int* value) {
+      delete value;
+      ++returned;
+    });
+  };
+  leases.publish(*first, make_lease());
+  leases.publish(*second, make_lease());
+  auto owned = leases.wait(0ms);
+  leases.stop();
+  check(returned == 1, "stop released an encoder-owned capture lease");
+  owned.reset();
+  check(returned == 2, "capture lease was not returned exactly once");
   std::cout << "MPP layout, sequence, latency, pool ownership and overload "
                "checks passed\n";
 }
