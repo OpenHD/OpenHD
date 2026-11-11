@@ -500,48 +500,27 @@ std::optional<uint8_t> openhd::wb::RCChannelHelper::get_bw_from_rc_channel(
 }
 
 std::optional<openhd::wb::RCChannelHelper::TxMode>
-openhd::wb::RCChannelHelper::get_tx_mode_from_rc_channel(int channel_index) {
-  if (channel_index <= openhd::WB_TX_MODE_VIA_RC_CHANNEL_OFF) {
-    return std::nullopt;
-  }
-  channel_index--;
-  if (channel_index < 0 || channel_index >= 18) return std::nullopt;
-  const auto rc_channels_opt = get_fc_reported_rc_channels();
-  if (!rc_channels_opt.has_value()) {
-    return std::nullopt;
-  }
-  const auto tx_mode_channel_value_pwm = rc_channels_opt.value()[channel_index];
-  if (tx_mode_channel_value_pwm == UINT16_MAX) {
-    return std::nullopt;
-  }
-  if (tx_mode_channel_value_pwm < 900 || tx_mode_channel_value_pwm > 2100) {
-    return std::nullopt;
-  }
-  if (tx_mode_channel_value_pwm > 1700) return TxMode::NORMAL;
-  if (tx_mode_channel_value_pwm > 1300) return TxMode::PIT;
-  return TxMode::OFF;
+openhd::wb::RCChannelHelper::get_tx_mode_from_rc_channel(
+    int channel_index, const std::string& ranges) {
+  const auto channels = get_fc_reported_rc_channels();
+  if (!channels || channel_index < 1 || channel_index > 18) return std::nullopt;
+  const auto value = openhd::rc::value_for_pwm(
+      ranges, openhd::rc::RangeKind::TxMode, (*channels)[channel_index - 1]);
+  if (!value) return std::nullopt;
+  if (*value == 0) return TxMode::OFF;
+  if (*value == 1) return TxMode::PIT;
+  return TxMode::NORMAL;
 }
 
 std::optional<bool>
-openhd::wb::RCChannelHelper::get_fhss_from_rc_channel(int channel_index) {
-  if (channel_index <= openhd::WB_FHSS_VIA_RC_CHANNEL_OFF) {
-    return std::nullopt;
-  }
-  channel_index--;
-  if (channel_index < 0 || channel_index >= 18) return std::nullopt;
-  const auto rc_channels_opt = get_fc_reported_rc_channels();
-  if (!rc_channels_opt.has_value()) {
-    return std::nullopt;
-  }
-  const auto fhss_channel_value_pwm = rc_channels_opt.value()[channel_index];
-  if (fhss_channel_value_pwm == UINT16_MAX) {
-    return std::nullopt;
-  }
-  if (fhss_channel_value_pwm < 900 || fhss_channel_value_pwm > 2100) {
-    return std::nullopt;
-  }
-  // Standard 2-pos / 3-pos switch: > 1500us is ON (enabled), <= 1500us is OFF (disabled)
-  return fhss_channel_value_pwm > 1500;
+openhd::wb::RCChannelHelper::get_fhss_from_rc_channel(
+    int channel_index, const std::string& ranges) {
+  const auto channels = get_fc_reported_rc_channels();
+  if (!channels || channel_index < 1 || channel_index > 18) return std::nullopt;
+  const auto value = openhd::rc::value_for_pwm(
+      ranges, openhd::rc::RangeKind::Fhss, (*channels)[channel_index - 1]);
+  if (!value) return std::nullopt;
+  return *value == 1;
 }
 
 std::optional<bool> openhd::wb::RCSettingsProtocol::binary(int pwm) {

@@ -957,6 +957,26 @@
       "requiresReboot": false
     },
     {
+      "id": "RC_TX_RANGES",
+      "type": "string",
+      "label": "RC transmit-mode ranges",
+      "description": "Transmit mode PWM areas as inclusive upper bound:value pairs covering 900-2100 us. Values are 0 (Off), 1 (Pit), and 2 (Normal).",
+      "group": "RC",
+      "hidden": false,
+      "readOnly": false,
+      "requiresReboot": false
+    },
+    {
+      "id": "RC_FHSS_RANGES",
+      "type": "string",
+      "label": "RC frequency-hopping ranges",
+      "description": "Frequency hopping PWM areas as inclusive upper bound:value pairs covering 900-2100 us. Values are 0 (Off) and 1 (On).",
+      "group": "RC",
+      "hidden": false,
+      "readOnly": false,
+      "requiresReboot": false
+    },
+    {
       "choices": [
         {
           "label": "Disable",

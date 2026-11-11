@@ -24,6 +24,7 @@
 #ifndef OPENHD_OPENHD_OHD_INTERFACE_INC_WB_LINK_SETTINGS_HPP_
 #define OPENHD_OPENHD_OHD_INTERFACE_INC_WB_LINK_SETTINGS_HPP_
 
+#include <mutex>
 #include <utility>
 
 #include "rc_range_mapping.h"
@@ -153,6 +154,8 @@ struct WBLinkSettings {
   int wb_bw_via_rc_channel = WB_BW_VIA_RC_CHANNEL_OFF;
   std::string wb_bw_rc_ranges = rc::default_bw_ranges;
   std::string wb_mcs_rc_ranges = rc::default_mcs_ranges;
+  std::string wb_tx_mode_rc_ranges = rc::default_tx_mode_ranges;
+  std::string wb_fhss_rc_ranges = rc::default_fhss_ranges;
   // change tx mode via RC channel: low=off, mid=pit, high=normal
   int wb_tx_mode_via_rc_channel = WB_TX_MODE_VIA_RC_CHANNEL_OFF;
   // change fhss enable via RC channel: low=off, high=on
@@ -240,6 +243,30 @@ class WBLinkSettingsHolder : public openhd::PersistentSettings<WBLinkSettings> {
     if (changed) persist();
   }
 
+  WBLinkSettings snapshot() const {
+    std::lock_guard<std::mutex> lock(m_rc_profiles_mutex);
+    return get_settings();
+  }
+
+  std::string get_rc_ranges(std::string WBLinkSettings::*profile) const {
+    std::lock_guard<std::mutex> lock(m_rc_profiles_mutex);
+    return get_settings().*profile;
+  }
+
+  bool set_rc_ranges(std::string WBLinkSettings::*profile, std::string value) {
+    std::lock_guard<std::mutex> lock(m_rc_profiles_mutex);
+    auto& current = unsafe_get_settings().*profile;
+    if (current == value) return false;
+    current = std::move(value);
+    PersistentSettings::persist();
+    return true;
+  }
+
+  void persist(bool trigger_restart = true) const {
+    std::lock_guard<std::mutex> lock(m_rc_profiles_mutex);
+    PersistentSettings::persist(trigger_restart);
+  }
+
  public:
   const OHDProfile m_profile;
   const std::vector<WiFiCard> m_cards;
@@ -258,6 +285,7 @@ class WBLinkSettingsHolder : public openhd::PersistentSettings<WBLinkSettings> {
   std::optional<WBLinkSettings> impl_deserialize(
       const std::string& file_as_string) const override;
   std::string imp_serialize(const WBLinkSettings& data) const override;
+  mutable std::mutex m_rc_profiles_mutex;
 };
 
 // Note: max 16 char for id limit

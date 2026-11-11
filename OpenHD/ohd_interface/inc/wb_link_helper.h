@@ -188,8 +188,8 @@ class RCChannelHelper {
   // returns either a valid channel width (10 / 20 / 40) or std::nullopt
   std::optional<uint8_t> get_bw_from_rc_channel(
       int channel_index, const std::string& ranges = "1300:10,1700:20,2100:40");
-  std::optional<TxMode> get_tx_mode_from_rc_channel(int channel_index);
-  std::optional<bool> get_fhss_from_rc_channel(int channel_index);
+  std::optional<TxMode> get_tx_mode_from_rc_channel(int channel_index, const std::string& ranges);
+  std::optional<bool> get_fhss_from_rc_channel(int channel_index, const std::string& ranges);
 
  private:
   std::optional<std::array<int, 18>> m_rc_channels;

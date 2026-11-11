@@ -10,11 +10,15 @@ int main() {
   for (int pwm = 0; pwm <= 65535; ++pwm) {
     const auto bw = value_for_pwm(default_bw_ranges, RangeKind::Bandwidth, pwm);
     const auto mcs = value_for_pwm(default_mcs_ranges, RangeKind::Mcs, pwm);
+    const auto tx = value_for_pwm(default_tx_mode_ranges, RangeKind::TxMode, pwm);
+    const auto fhss = value_for_pwm(default_fhss_ranges, RangeKind::Fhss, pwm);
     if (pwm < 900 || pwm > 2100) {
-      assert(!bw && !mcs);
+      assert(!bw && !mcs && !tx && !fhss);
     } else {
       assert(bw == (pwm <= 1500 ? 20 : 40));
       assert(mcs == (pwm <= 1300 ? 0 : pwm <= 1700 ? 2 : 3));
+      assert(tx == (pwm <= 1300 ? 0 : pwm <= 1700 ? 1 : 2));
+      assert(fhss == (pwm <= 1500 ? 0 : 1));
       assert(value_for_pwm(legacy_bw_ranges, RangeKind::Bandwidth, pwm) ==
              (pwm <= 1300 ? 10 : pwm <= 1700 ? 20 : 40));
       assert(value_for_pwm(legacy_mcs_ranges, RangeKind::Mcs, pwm) ==
@@ -45,6 +49,10 @@ int main() {
   }
   assert(!parse_ranges("2100:5", RangeKind::Mcs));
   assert(!parse_ranges("2100:20", RangeKind::Mcs));
+  assert(!parse_ranges("2100:3", RangeKind::TxMode));
+  assert(!parse_ranges("2100:2", RangeKind::Fhss));
+  assert(value_for_pwm("1250:0,1800:2,2100:1", RangeKind::TxMode, 1500) == 2);
+  assert(value_for_pwm("1250:0,1800:1,2100:0", RangeKind::Fhss, 1801) == 0);
   assert(std::string(initial_ranges(RangeKind::Bandwidth, true)) == legacy_bw_ranges);
   assert(std::string(initial_ranges(RangeKind::Mcs, true)) == legacy_mcs_ranges);
   assert(std::string(initial_ranges(RangeKind::Bandwidth, false)) == default_bw_ranges);
