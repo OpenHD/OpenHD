@@ -931,6 +931,10 @@ void OHDMainComponent::process_command_self(
           openhd::LinkActionHandler::ScanChannelsParam scanChannelsParam{};
           scanChannelsParam.channels_to_scan = channels_to_scan;
           scanChannelsParam.channel_widths_mask = channel_widths_mask;
+          if (command.param2 == 10.0f || command.param2 == 20.0f ||
+              command.param2 == 40.0f) {
+            scanChannelsParam.required_air_width_mhz = static_cast<int>(command.param2);
+          }
           scanChannelsParam.use_nexmon = command.param3 == 1.0f;
           success = openhd::LinkActionHandler::instance().wb_cmd_scan_channels(
               scanChannelsParam);

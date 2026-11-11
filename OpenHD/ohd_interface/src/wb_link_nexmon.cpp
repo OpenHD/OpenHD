@@ -57,7 +57,10 @@ void WBLink::perform_nexmon_scan(
           if (length != 6 || data[0] != 0) return;
           uint32_t frequency = 0;
           std::memcpy(&frequency, data+1, 4);
-          if (data[5] != 20 && data[5] != 40) return;
+          // The scout listens at 20 MHz. Filter on the width in the
+          // authenticated Air announcement before changing the primary radio.
+          if ((data[5] != 20 && data[5] != 40) ||
+              !params.accepts_air_width(data[5])) return;
           reported_width = data[5];
           reported_frequency = static_cast<int>(frequency);
         }, nullptr);

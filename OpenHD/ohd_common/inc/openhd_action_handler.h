@@ -232,6 +232,15 @@ class LinkActionHandler {
     // Bitmask of channel widths to scan for (5/10/20/40/80).
     // Use scan_channel_width_bit(width_mhz) to construct.
     uint32_t channel_widths_mask = 0;
+    // A literal 10, 20 or 40 MHz request must match Air's advertised width.
+    // Legacy requests may discover Air on any supported width.
+    int required_air_width_mhz = 0;
+
+    bool accepts_air_width(int width_mhz) const {
+      return (width_mhz == 10 || width_mhz == 20 || width_mhz == 40) &&
+             (required_air_width_mhz == 0 || width_mhz == required_air_width_mhz);
+    }
+
     // COMMAND_LONG param3: 0 = primary radio, 1 = passive Nexmon scout.
     bool use_nexmon = false;
   };

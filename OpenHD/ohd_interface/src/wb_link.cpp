@@ -3055,10 +3055,10 @@ void WBLink::perform_channel_scan(
     // We only scan 20Mhz by default; management frames are always 20Mhz,
     // then we switch to the reported air unit width.
     channel_widths_to_scan = {20};
-  } else if (std::find(channel_widths_to_scan.begin(),
-                        channel_widths_to_scan.end(),
-                        20) == channel_widths_to_scan.end()) {
-    // Management frames are always 20MHz, ensure we can decode them.
+  } else if (scan_channels_params.required_air_width_mhz == 0 &&
+             std::find(channel_widths_to_scan.begin(), channel_widths_to_scan.end(),
+                       20) == channel_widths_to_scan.end()) {
+    // Keep the management-frame fallback for legacy scan requests.
     channel_widths_to_scan.insert(channel_widths_to_scan.begin(), 20);
     m_console->debug(
         "Channel scan added 20MHz to ensure management frame detection");
@@ -3141,7 +3141,8 @@ void WBLink::perform_channel_scan(
           const int air_tx_channel_width =
               m_management_gnd->m_air_reported_curr_channel_width;
           const bool has_received_management =
-              air_center_frequency > 0 && air_tx_channel_width > 0;
+              air_center_frequency == channel.frequency &&
+              scan_channels_params.accepts_air_width(air_tx_channel_width);
           if (has_received_management) {
             break;
           }
@@ -3160,8 +3161,7 @@ void WBLink::perform_channel_scan(
           n_valid_packets, channel.frequency, scan_channel_width,
           air_center_frequency, air_tx_channel_width, packet_loss);
       if (n_valid_packets > 0 && air_center_frequency > 0 &&
-          (air_tx_channel_width == 10 || air_tx_channel_width == 20 ||
-           air_tx_channel_width == 40) &&
+          scan_channels_params.accepts_air_width(air_tx_channel_width) &&
           channel.frequency == air_center_frequency) {
         m_console->debug("Found air unit");
         result.frequency = channel.frequency;
