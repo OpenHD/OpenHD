@@ -317,6 +317,9 @@ void ManagementGround::on_new_management_packet(const uint8_t *data,
         packet.bandwidth_mhz == 40) {
       m_air_reported_curr_channel_width = packet.bandwidth_mhz;
       m_air_reported_curr_frequency = packet.center_frequency_mhz;
+      m_last_channel_announcement = {static_cast<int>(packet.center_frequency_mhz),
+                                     packet.bandwidth_mhz,
+                                     std::chrono::steady_clock::now()};
     } else {
       m_console->warn("Air reports invalid bandwidth {}", packet.bandwidth_mhz);
     }
@@ -371,6 +374,15 @@ void ManagementGround::loop() {
 
 int ManagementGround::get_last_received_packet_ts_ms() {
   return m_last_received_packet_timestamp_ms;
+}
+
+bool ManagementGround::has_channel_announcement_since(
+    int frequency, int width,
+    std::chrono::steady_clock::time_point since) const {
+  std::lock_guard<std::mutex> lock(m_channel_updates_mutex);
+  return m_last_channel_announcement.frequency == frequency &&
+         m_last_channel_announcement.width == width &&
+         m_last_channel_announcement.received_at >= since;
 }
 
 std::optional<FrequencyChangeRequest>

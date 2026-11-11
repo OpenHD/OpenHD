@@ -1332,7 +1332,8 @@ bool WBLink::apply_radio_settings(
 
 bool WBLink::apply_frequency_and_channel_width(int frequency,
                                                int channel_width_rx,
-                                               int channel_width_tx) {
+                                               int channel_width_tx,
+                                               bool keep_tx_passive) {
   if (channel_width_rx == 5 || channel_width_tx == 5) {
     m_console->warn("5 MHz channel width is temporarily disabled");
     return false;
@@ -1357,7 +1358,7 @@ bool WBLink::apply_frequency_and_channel_width(int frequency,
                              frequency, channel_width_rx, m_broadcast_cards,
                              m_profile.is_air);
   if (!res) {
-    re_enable_injection_unless_user_passive_mode_enabled();
+    if (!keep_tx_passive) re_enable_injection_unless_user_passive_mode_enabled();
     return false;
   }
   m_tx_header_1->update_channel_width(channel_width_tx);
@@ -1372,7 +1373,7 @@ bool WBLink::apply_frequency_and_channel_width(int frequency,
   m_tx_header_2->update_channel_width(management_channel_width);
   m_wb_txrx->tx_reset_stats();
   m_wb_txrx->rx_reset_stats();
-  re_enable_injection_unless_user_passive_mode_enabled();
+  if (!keep_tx_passive) re_enable_injection_unless_user_passive_mode_enabled();
   return res;
 }
 
@@ -2275,6 +2276,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
 #pragma clang diagnostic pop
 
 void WBLink::loop_do_work() {
+  m_gnd_last_valid_rx = std::chrono::steady_clock::now();
   while (m_work_thread_run) {
     // Perform any queued up work if it exists
     {
@@ -3184,6 +3186,7 @@ void WBLink::perform_channel_scan(
     m_settings->unsafe_get_settings().wb_gnd_rx_channel_width =
         result.channel_width;
     m_settings->persist();
+    m_gnd_curr_rx_frequency = result.frequency;
     m_gnd_curr_rx_channel_width = result.channel_width;
     apply_frequency_and_channel_width_from_settings();
   }
@@ -3694,6 +3697,70 @@ void WBLink::wt_gnd_perform_channel_switch_rollback_check() {
   }
 }
 
+void WBLink::wt_gnd_recover_channel_width() {
+  using Clock = std::chrono::steady_clock;
+  using namespace std::chrono_literals;
+  const auto now = Clock::now();
+  const auto valid_rx = m_wb_txrx->get_rx_stats().count_p_valid;
+  if (valid_rx != m_gnd_last_valid_rx_count) {
+    m_gnd_last_valid_rx_count = valid_rx;
+    m_gnd_last_valid_rx = now;
+  }
+  if (now - m_gnd_last_valid_rx < 1500ms || now < m_gnd_next_width_probe ||
+      m_gnd_switch_rollback_state.active || m_gnd_pending_frequency > 0) {
+    return;
+  }
+
+  const int current_width = m_gnd_curr_rx_channel_width.load();
+  if (current_width != 10 && current_width != 20) return;
+  const int probe_width = current_width == 10 ? 20 : 10;
+  const int frequency = m_gnd_curr_rx_frequency > 0
+                            ? m_gnd_curr_rx_frequency.load()
+                            : m_settings->get_settings().wb_frequency;
+  if (!openhd::wb::validate_frequency_change(
+          frequency, probe_width, m_broadcast_cards, m_console)) {
+    m_gnd_next_width_probe = now + 8s;
+    return;
+  }
+  {
+    std::lock_guard<std::mutex> lock(m_work_item_queue_mutex);
+    if (!m_work_item_queue.empty()) return;
+  }
+
+  // Air may have changed width after all of its PREPARE packets were lost.
+  // Probe only the current frequency and require a new Air channel report.
+  m_console->debug("Ground bandwidth recovery probing {}@{}MHz from {}MHz",
+                   frequency, probe_width, current_width);
+  const bool tuned = apply_frequency_and_channel_width(
+      frequency, probe_width, openhd::DEFAULT_GND_RX_CHANNEL_WIDTH, true);
+  if (tuned) {
+    const auto listening_since = Clock::now();
+    while (m_work_thread_run && Clock::now() - listening_since < 1500ms) {
+      if (m_management_gnd->has_channel_announcement_since(
+              frequency, probe_width, listening_since)) {
+        m_gnd_curr_rx_frequency = frequency;
+        m_gnd_curr_rx_channel_width = probe_width;
+        auto& settings = m_settings->unsafe_get_settings();
+        settings.wb_frequency = frequency;
+        settings.wb_gnd_rx_channel_width = probe_width;
+        m_settings->persist(false);
+        m_gnd_last_valid_rx = Clock::now();
+        re_enable_injection_unless_user_passive_mode_enabled();
+        m_console->info("Ground bandwidth recovery found Air at {}@{}MHz",
+                        frequency, probe_width);
+        return;
+      }
+      std::this_thread::sleep_for(20ms);
+    }
+  }
+  if (!apply_frequency_and_channel_width(frequency, current_width,
+                                         openhd::DEFAULT_GND_RX_CHANNEL_WIDTH)) {
+    m_console->warn("Ground bandwidth recovery could not restore {}@{}MHz",
+                    frequency, current_width);
+  }
+  m_gnd_next_width_probe = Clock::now() + 8s;
+}
+
 void WBLink::wt_gnd_perform_channel_management() {
   if (m_profile.is_ground() && !m_settings->get_settings().wb_enable_fhss) {
     wt_gnd_perform_channel_switch_rollback_check();
@@ -3851,6 +3918,7 @@ void WBLink::wt_gnd_perform_channel_management() {
         }
       }
     }
+    wt_gnd_recover_channel_width();
   }
 }
 

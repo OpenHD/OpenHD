@@ -149,7 +149,8 @@ class WBLink : public OHDLink {
   // apply the frequency (wifi channel) and channel with for all wifibroadcast
   // cards r.n uses both iw and modifies the radiotap header
   bool apply_frequency_and_channel_width(int frequency, int channel_width_rx,
-                                         int channel_width_tx);
+                                         int channel_width_tx,
+                                         bool keep_tx_passive = false);
   bool apply_frequency_and_channel_width_from_settings();
   // set the tx power of all wb cards. For rtl8812au, uses the tx power index
   // for other cards, uses the mW value
@@ -167,6 +168,7 @@ class WBLink : public OHDLink {
   // Do rate adjustments, does nothing if variable bitrate is disabled
   void wt_perform_rate_adjustment();
   void wt_gnd_perform_channel_management();
+  void wt_gnd_recover_channel_width();
   void wt_air_perform_frequency_retry();
   void wt_air_perform_adaptive_channel_selection();
   void wt_air_check_adaptive_channel_switch();
@@ -359,6 +361,9 @@ class WBLink : public OHDLink {
         std::chrono::steady_clock::now();
   };
   GroundSwitchRollbackState m_gnd_switch_rollback_state{};
+  int64_t m_gnd_last_valid_rx_count = 0;
+  std::chrono::steady_clock::time_point m_gnd_last_valid_rx{};
+  std::chrono::steady_clock::time_point m_gnd_next_width_probe{};
   uint32_t m_gnd_last_prepared_frequency_transaction = 0;
   uint32_t m_gnd_last_committed_frequency_transaction = 0;
   static constexpr auto FREQUENCY_RECEIVED_BURST_TIMEOUT =

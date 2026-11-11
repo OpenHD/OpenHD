@@ -113,6 +113,9 @@ class ManagementGround {
   std::atomic<int> m_air_reported_curr_frequency = -1;
   std::atomic<int> m_air_reported_curr_channel_width = -1;
   int get_last_received_packet_ts_ms();
+  bool has_channel_announcement_since(
+      int frequency, int width,
+      std::chrono::steady_clock::time_point since) const;
   std::optional<FrequencyChangeRequest> get_prepare_request() const;
   void retry_frequency_change(int target_frequency, int channel_width);
   // Off-channel surveys must not replace the home link with announcements
@@ -138,6 +141,12 @@ class ManagementGround {
   std::atomic<uint8_t> m_retry_packets_remaining{0};
   openhd::wb::ChannelSwitchAnnouncementGuard m_announcement_guard;
   mutable std::mutex m_channel_updates_mutex;
+  struct ChannelAnnouncement {
+    int frequency = -1;
+    int width = -1;
+    std::chrono::steady_clock::time_point received_at{};
+  };
+  ChannelAnnouncement m_last_channel_announcement;
   bool m_channel_updates_enabled = true;
   // 40Mhz / 20Mhz link management
   void on_new_management_packet(const uint8_t *data, int data_len);
