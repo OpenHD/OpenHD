@@ -92,6 +92,19 @@ int main() {
   if (!openhd::wb::all_cards_support_frequency_and_channel_width(
           5785, 10, {card}, logger)) return 12;
 
+  // Selecting 10 MHz must not depend on chipset identity or a mixed-card setup.
+  for (const auto type : {WiFiCardType::UNKNOWN, WiFiCardType::ATHEROS,
+                          WiFiCardType::MT_7921u, WiFiCardType::OPENHD_RTL_88X2AU}) {
+    auto other = card;
+    other.type = type;
+    other.devourer_wb_enabled = false;
+    if (!openhd::wb::validate_air_channel_width_change(10, other, logger) ||
+        !openhd::wb::all_cards_support_frequency_and_channel_width(
+            5785, 10, {card, other}, logger)) return 44;
+    if (openhd::wb::all_cards_support_frequency_and_channel_width(
+            1234, 10, {other}, logger)) return 45;
+  }
+
   // Exercise a complete clocked RC settings frame and duplicate suppression.
   openhd::wb::RCSettingsProtocol protocol;
   std::array<int, 18> rc{};

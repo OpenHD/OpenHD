@@ -85,8 +85,6 @@ bool openhd::wb::all_cards_support_frequency_and_channel_width(
     const std::shared_ptr<spdlog::logger>& m_console) {
   if (channel_width == 5) return false;
   for (const auto& card : m_broadcast_cards) {
-    if (channel_width == 10 &&
-        !wifi_card_supports_10Mhz_channel_width_injection(card)) return false;
     if (!wifi_card_supports_frequency_channel_width(card, frequency,
                                                     channel_width)) {
       if (m_console) {
@@ -410,10 +408,8 @@ bool openhd::wb::validate_air_channel_width_change(
     m_console->warn("Invalid channel width {}", new_channel_width);
     return false;
   }
-  if ((new_channel_width == 5 &&
-       !wifi_card_supports_5Mhz_channel_width_injection(card)) ||
-      (new_channel_width == 10 &&
-       !wifi_card_supports_10Mhz_channel_width_injection(card))) {
+  if (new_channel_width == 5 &&
+      !wifi_card_supports_5Mhz_channel_width_injection(card)) {
     m_console->warn("Cannot change channel width, not supported by card");
     return false;
   }
