@@ -1821,6 +1821,20 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
           Setting{openhd::WB_BW_VIA_RC_CHANNEL,
                   openhd::IntSetting{(int)settings.wb_bw_via_rc_channel,
                                      cb_bw_via_rc_channel}});
+      auto cb_bw_ranges = [this](std::string, std::string value) {
+        if (!openhd::rc::parse_ranges(value, openhd::rc::RangeKind::Bandwidth)) return false;
+        m_settings->unsafe_get_settings().wb_bw_rc_ranges = value;
+        m_settings->persist();
+        return true;
+      };
+      ret.push_back(Setting{"RC_BW_RANGES", openhd::StringSetting{settings.wb_bw_rc_ranges, cb_bw_ranges}});
+      auto cb_mcs_ranges = [this](std::string, std::string value) {
+        if (!openhd::rc::parse_ranges(value, openhd::rc::RangeKind::Mcs)) return false;
+        m_settings->unsafe_get_settings().wb_mcs_rc_ranges = value;
+        m_settings->persist();
+        return true;
+      };
+      ret.push_back(Setting{"RC_MCS_RANGES", openhd::StringSetting{settings.wb_mcs_rc_ranges, cb_mcs_ranges}});
       auto cb_tx_mode_via_rc_channel = [this](std::string, int value) {
         if (value < 0 || value > 18) {
           return false;
@@ -3490,7 +3504,7 @@ void WBLink::wt_perform_mcs_via_rc_channel_if_enabled() {
   // 1= channel number 1 aka array index 0
   const int channel_index = (int)settings.wb_mcs_index_via_rc_channel - 1;
   const auto mcs_from_rc_opt =
-      m_rc_channel_helper.get_mcs_from_rc_channel(channel_index, m_console);
+      m_rc_channel_helper.get_mcs_from_rc_channel(channel_index, m_console, settings.wb_mcs_rc_ranges);
   if (!mcs_from_rc_opt.has_value()) {
     return;
   }
@@ -3513,7 +3527,7 @@ void WBLink::wt_perform_bw_via_rc_channel_if_enabled() {
     return;
   }
   const auto opt_rc_bw =
-      m_rc_channel_helper.get_bw_from_rc_channel(settings.wb_bw_via_rc_channel);
+      m_rc_channel_helper.get_bw_from_rc_channel(settings.wb_bw_via_rc_channel, settings.wb_bw_rc_ranges);
   if (!opt_rc_bw.has_value()) return;
   const auto rc_bw = opt_rc_bw.value();
   if (settings.wb_air_tx_channel_width == rc_bw) {

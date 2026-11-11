@@ -183,9 +183,11 @@ class RCChannelHelper {
    * invalid or the pwm value is not valid, return std::nullopt.
    */
   std::optional<int> get_mcs_from_rc_channel(
-      int channel_index, std::shared_ptr<spdlog::logger>& m_console);
+      int channel_index, std::shared_ptr<spdlog::logger>& m_console,
+      const std::string& ranges = "1200:0,1400:1,1600:2,1800:3,2100:4");
   // returns either a valid channel width (10 / 20 / 40) or std::nullopt
-  std::optional<uint8_t> get_bw_from_rc_channel(int channel_index);
+  std::optional<uint8_t> get_bw_from_rc_channel(
+      int channel_index, const std::string& ranges = "1300:10,1700:20,2100:40");
   std::optional<TxMode> get_tx_mode_from_rc_channel(int channel_index);
   std::optional<bool> get_fhss_from_rc_channel(int channel_index);
 

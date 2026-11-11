@@ -958,6 +958,26 @@
       "type": "int32"
     },
     {
+      "id": "RC_BW_RANGES",
+      "type": "string",
+      "label": "RC channel-width ranges",
+      "description": "Channel-width PWM areas: inclusive upper bound:value pairs, e.g. 1500:20,2100:40. Covers 900-2100 us with 1-5 areas; values are 10, 20 or 40 MHz.",
+      "group": "RC",
+      "hidden": false,
+      "readOnly": false,
+      "requiresReboot": false
+    },
+    {
+      "id": "RC_MCS_RANGES",
+      "type": "string",
+      "label": "RC MCS ranges",
+      "description": "MCS PWM areas: inclusive upper bound:value pairs, e.g. 1300:0,1700:2,2100:3. Covers 900-2100 us with 1-5 areas; values are MCS 0-4.",
+      "group": "RC",
+      "hidden": false,
+      "readOnly": false,
+      "requiresReboot": false
+    },
+    {
       "choices": [
         {
           "label": "Disable",

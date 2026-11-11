@@ -63,6 +63,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
     wb_max_fec_block_size, wb_enable_rc_openhd_control,
     wb_rc_settings_base_channel,
     wb_mcs_index_via_rc_channel, wb_bw_via_rc_channel,
+    wb_bw_rc_ranges, wb_mcs_rc_ranges,
     wb_tx_mode_via_rc_channel, wb_fhss_via_rc_channel,
     enable_wb_video_variable_bitrate, wb_enable_listen_only_mode, wb_pit_mode,
     wb_dev_air_set_high_retransmit_count, wb_enable_redundant_tx,
@@ -133,6 +134,14 @@ std::optional<WBLinkSettings> openhd::WBLinkSettingsHolder::impl_deserialize(
         "wb_mcs_index_via_rc_channel", settings.wb_mcs_index_via_rc_channel);
     settings.wb_bw_via_rc_channel =
         parsed.value("wb_bw_via_rc_channel", settings.wb_bw_via_rc_channel);
+    settings.wb_bw_rc_ranges = parsed.value("wb_bw_rc_ranges", std::string(
+        rc::initial_ranges(rc::RangeKind::Bandwidth, settings.wb_bw_via_rc_channel > 0)));
+    settings.wb_mcs_rc_ranges = parsed.value("wb_mcs_rc_ranges", std::string(
+        rc::initial_ranges(rc::RangeKind::Mcs, settings.wb_mcs_index_via_rc_channel > 0)));
+    if (!rc::parse_ranges(settings.wb_bw_rc_ranges, rc::RangeKind::Bandwidth))
+      settings.wb_bw_rc_ranges = rc::initial_ranges(rc::RangeKind::Bandwidth, settings.wb_bw_via_rc_channel > 0);
+    if (!rc::parse_ranges(settings.wb_mcs_rc_ranges, rc::RangeKind::Mcs))
+      settings.wb_mcs_rc_ranges = rc::initial_ranges(rc::RangeKind::Mcs, settings.wb_mcs_index_via_rc_channel > 0);
     settings.wb_tx_mode_via_rc_channel = parsed.value(
         "wb_tx_mode_via_rc_channel", settings.wb_tx_mode_via_rc_channel);
     settings.wb_fhss_via_rc_channel = parsed.value(

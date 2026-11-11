@@ -425,3 +425,8 @@ add_executable(test_channel_switch_announcement_guard test/test_channel_switch_a
 target_include_directories(test_channel_switch_announcement_guard PRIVATE inc)
 target_compile_options(test_channel_switch_announcement_guard PRIVATE -UNDEBUG)
 add_test(NAME test_channel_switch_announcement_guard COMMAND test_channel_switch_announcement_guard)
+
+add_executable(test_rc_range_mapping test/test_rc_range_mapping.cpp)
+target_include_directories(test_rc_range_mapping PRIVATE inc)
+target_compile_options(test_rc_range_mapping PRIVATE -UNDEBUG)
+add_test(NAME test_rc_range_mapping COMMAND test_rc_range_mapping)

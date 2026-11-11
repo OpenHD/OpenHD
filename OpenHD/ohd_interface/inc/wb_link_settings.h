@@ -25,6 +25,8 @@
 #define OPENHD_OPENHD_OHD_INTERFACE_INC_WB_LINK_SETTINGS_HPP_
 
 #include <utility>
+
+#include "rc_range_mapping.h"
 #include "wb_radio_controls.h"
 
 #include "openhd_platform.h"
@@ -149,6 +151,8 @@ struct WBLinkSettings {
   uint32_t wb_mcs_index_via_rc_channel = WB_MCS_INDEX_VIA_RC_CHANNEL_OFF;
   // change bw via RC channel
   int wb_bw_via_rc_channel = WB_BW_VIA_RC_CHANNEL_OFF;
+  std::string wb_bw_rc_ranges = rc::default_bw_ranges;
+  std::string wb_mcs_rc_ranges = rc::default_mcs_ranges;
   // change tx mode via RC channel: low=off, mid=pit, high=normal
   int wb_tx_mode_via_rc_channel = WB_TX_MODE_VIA_RC_CHANNEL_OFF;
   // change fhss enable via RC channel: low=off, high=on
