@@ -109,6 +109,24 @@ jobs:
           export OPENHD_REQUIRE_ARTOSYN_DAEMON=1
           ./scripts/build_portable_cross.sh \
             "${{ matrix.architecture }}" "${sysroot}" "${build_dir}"
+          if [[ "${{ matrix.architecture }}" == arm64 ]]; then
+            mpp_ref=20959ec3dabb313b8c33ca0b7b09c06ffd2a9caa
+            mpp_archive="${RUNNER_TEMP}/x21-mpp.tar.gz"
+            curl -fsSL --retry 5 "https://codeload.github.com/HermanChen/mpp/tar.gz/${mpp_ref}" -o "${mpp_archive}"
+            printf '%s  %s\n' 345148b74b8a5e5dd329d58163113756581102685fe9d3d657621960d04172f4 "${mpp_archive}" | sha256sum -c -
+            tar -xzf "${mpp_archive}" -C "${RUNNER_TEMP}"
+            mpp_build="${RUNNER_TEMP}/x21-mpp-build"
+            export OPENHD_SYSROOT="${sysroot}" OPENHD_CROSS_TRIPLET=aarch64-linux-gnu
+            cmake -S "${RUNNER_TEMP}/mpp-${mpp_ref}" -B "${mpp_build}" \
+              -DCMAKE_TOOLCHAIN_FILE="${PWD}/OpenHD/cmake/portable-linux-toolchain.cmake" \
+              -DCMAKE_C_FLAGS=-mno-outline-atomics -DCMAKE_CXX_FLAGS=-mno-outline-atomics \
+              -DCMAKE_BUILD_TYPE=Release -DBUILD_TEST=OFF -DBUILD_SHARED_LIBS=ON
+            cmake --build "${mpp_build}" --parallel "$(nproc)"
+            DESTDIR="${RUNNER_TEMP}/x21-mpp" cmake --install "${mpp_build}"
+            OPENHD_MPP_ONLY=ON OPENHD_MPP_PREFIX="${RUNNER_TEMP}/x21-mpp/usr/local" \
+              ./scripts/build_portable_cross.sh arm64 "${sysroot}" "${build_dir}-zero3w"
+            export OPENHD_ZERO3W_BINARY="${build_dir}-zero3w/openhd"
+          fi
           source "${build_dir}/openhd-cross.env"
           export OPENHD_SYSROOT="${sysroot}"
           export OPENHD_CROSS_TRIPLET="${{ matrix.triplet }}"

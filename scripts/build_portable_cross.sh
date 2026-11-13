@@ -104,6 +104,14 @@ if [[ "${OPENHD_ENABLE_GUI:-OFF}" == "ON" ]]; then
   gui_cmake_args+=("-DQT_DIR=${qt_dir}" "-DQt5_DIR=${qt_dir}")
 fi
 
+mpp_cmake_args=()
+if [[ -n "${OPENHD_MPP_PREFIX:-}" ]]; then
+  mpp_cmake_args+=(
+    "-DROCKCHIP_MPP_INCLUDE_DIR=${OPENHD_MPP_PREFIX}/include/rockchip"
+    "-DROCKCHIP_MPP_LIBRARY=${OPENHD_MPP_PREFIX}/lib/librockchip_mpp.so"
+  )
+fi
+
 rm -rf "${build_dir}"
 cmake -S OpenHD -B "${build_dir}" \
   -DCMAKE_TOOLCHAIN_FILE="${toolchain_file}" \
@@ -112,9 +120,9 @@ cmake -S OpenHD -B "${build_dir}" \
   "${gui_cmake_args[@]}" \
   -DPoco_DIR="${poco_dir}" \
   -DSDL2_DIR="${sdl2_dir}" \
-  -DCMAKE_DISABLE_FIND_PACKAGE_SDL2="${OPENHD_MPP_ONLY:-OFF}" \
   -DENABLE_LIBCAMERA=OFF \
   -DOPENHD_MPP_ONLY="${OPENHD_MPP_ONLY:-OFF}" \
+  "${mpp_cmake_args[@]}" \
   -DARTOSYN_SDK_ROOT="${ARTOSYN_SDK_ROOT:-}" \
   -DARTOSYN_SDK_LIB="${ARTOSYN_SDK_LIB:-}" \
   -DARTOSYN_SDK_DAEMON="${ARTOSYN_SDK_DAEMON:-}" \

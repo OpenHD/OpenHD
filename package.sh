@@ -502,6 +502,17 @@ build_package() {
 
   mkdir -p "${PKGDIR}usr/local/bin/"
   cp "${build_dir}/openhd" "${PKGDIR}usr/local/bin/"
+  if [[ -n "${OPENHD_ZERO3W_BINARY:-}" ]]; then
+    test "${debian_arch}" = arm64
+    local needed
+    needed="$(readelf -d "${OPENHD_ZERO3W_BINARY}")"
+    grep -Fq '[librockchip_mpp.so.1]' <<<"${needed}"
+    if grep -Eq 'NEEDED.*libgst' <<<"${needed}"; then
+      echo 'The Zero 3W binary must use native MPP without GStreamer.' >&2
+      exit 1
+    fi
+    install -D -m 0755 "${OPENHD_ZERO3W_BINARY}" "${PKGDIR}usr/local/libexec/openhd-zero3w"
+  fi
   mkdir -p "${PKGDIR}usr/local/share/openhd/audio/"
   cp OpenHD/ohd_video/assets/example.mp3 \
     "${PKGDIR}usr/local/share/openhd/audio/example.mp3"
