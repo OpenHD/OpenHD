@@ -304,7 +304,7 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mav_link_usage_stats() {
   const auto latest = openhd::LinkActionHandler::instance().get_link_stats();
   for (auto& sample : samples) {
     const auto link_id = link_usage_id(sample.link_name);
-    if (link_id == 0) continue;
+    if (link_id == 0 || (!RUNS_ON_AIR && link_id != 2)) continue;
     if (link_id == 1 && latest.ready && latest.is_air == RUNS_ON_AIR &&
         latest.monitor_mode_link.curr_rate_kbits > 0) {
       sample.capacity_bps =
@@ -343,7 +343,8 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mav_link_usage_stats() {
       payload.data[offset] = category;
       put_u32(payload.data, offset + 1, sample.category_bps[category]);
     }
-    if (link_id == 1 || link_id == 2 || link_id == 4 || link_id == 5 || link_id == 6) {
+    if (RUNS_ON_AIR && (link_id == 1 || link_id == 2 || link_id == 4 ||
+                        link_id == 5 || link_id == 6)) {
       auto allocation = openhd::bandwidth::Store::instance().read(static_cast<openhd::bandwidth::Transport>(link_id));
       if (!allocation.enabled) {
         for (unsigned i = 0; i < 2; ++i) {
@@ -708,8 +709,7 @@ OHDMainComponent::create_broadcast_stats_if_needed() {
   if (elapsed_wb > m_wb_stats_interval) {
     m_last_wb_stats = now;
     OHDUtil::vec_append(ret, generate_mav_wb_stats());
-    if (RUNS_ON_AIR)
-      OHDUtil::vec_append(ret, generate_mav_link_usage_stats());
+    OHDUtil::vec_append(ret, generate_mav_link_usage_stats());
     if (RUNS_ON_AIR) {
       auto cam_stats1 = openhd::LinkActionHandler::instance().get_cam_info(0);
       auto cam_stats2 = openhd::LinkActionHandler::instance().get_cam_info(1);
