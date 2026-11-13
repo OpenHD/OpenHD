@@ -5,6 +5,7 @@
 #include <fstream>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace openhd::v4l2 {
@@ -16,25 +17,33 @@ inline bool is_usb_or_loopback(const std::string& bus,
          driver == "v4l2loopback";
 }
 
-inline std::optional<std::string> find_veye_capture_device(
-    const std::filesystem::path& root = "/sys/class/video4linux") {
+inline std::optional<std::string> find_unique_capture_device(
+    const std::filesystem::path& root, std::string_view name,
+    std::string_view alternate_name = {}) {
   std::error_code error;
-  std::vector<std::string> candidates;
+  std::optional<std::string> device;
   for (std::filesystem::directory_iterator it(root, error), end;
        !error && it != end; it.increment(error)) {
     const auto node = it->path().filename().string();
     if (node.rfind("video", 0) != 0 || node.size() == 5 ||
         node.find_first_not_of("0123456789", 5) != std::string::npos) continue;
     std::ifstream input(it->path() / "name");
-    std::string name;
-    std::getline(input, name);
-    // A VEYE overlay uses the legacy Unicam capture node (not its metadata
-    // node). USB UVC devices, ISP outputs and encoders must never be selected.
-    if (name == "unicam-image" || name == "unicam")
-      candidates.push_back("/dev/" + node);
+    std::string node_name;
+    if (!std::getline(input, node_name) || node_name.empty()) continue;
+    if (node_name != name && node_name != alternate_name) continue;
+    if (device) return std::nullopt;
+    device = "/dev/" + node;
   }
-  // Multiple CSI receivers require explicit port mapping, not an arbitrary pick.
-  if (candidates.size() != 1) return std::nullopt;
-  return candidates.front();
+  return error ? std::nullopt : device;
+}
+
+inline std::optional<std::string> find_veye_capture_device(
+    const std::filesystem::path& root = "/sys/class/video4linux") {
+  return find_unique_capture_device(root, "unicam-image", "unicam");
+}
+
+inline std::optional<std::string> find_rockchip_isp_mainpath(
+    const std::filesystem::path& root = "/sys/class/video4linux") {
+  return find_unique_capture_device(root, "rkisp_mainpath");
 }
 }  // namespace openhd::v4l2

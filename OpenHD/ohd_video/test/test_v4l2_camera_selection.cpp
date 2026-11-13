@@ -28,6 +28,12 @@ int main() {
   require(find_veye_capture_device(root) == "/dev/video0");
   add("video4", "unicam-image");
   require(!find_veye_capture_device(root));
+  require(!find_rockchip_isp_mainpath(root));
+  add("video5", "rkisp_selfpath");
+  add("video11", "rkisp_mainpath");
+  require(find_rockchip_isp_mainpath(root) == "/dev/video11");
+  add("video12", "rkisp_mainpath");
+  require(!find_rockchip_isp_mainpath(root));
   std::filesystem::remove_all(root);
   std::cout << "V4L2 CSI/USB isolation and VEYE node selection passed\n";
 }

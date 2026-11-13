@@ -987,18 +987,17 @@ std::string GStreamerStream::create_source_encode_pipeline(
     if (camera.camera_type == X_CAM_TYPE_ROCK_3_HDMI_IN) {
       openhd::log::get_default()->warn("Using Rockchip HDMI stream.");
       pipeline << OHDGstHelper::createRockchipHDMIStream(setting);
+    } else if (OHDPlatform::instance().is_zero3w() &&
+               camera.camera_type == X_CAM_TYPE_ROCK_3_IMX708) {
+      const auto device = openhd::v4l2::find_rockchip_isp_mainpath();
+      if (!device) {
+        m_console->error("No unique Rockchip ISP mainpath for IMX708");
+        return {};
+      }
+      pipeline << OHDGstHelper::createRockchipCSIStream(
+          std::stoi(device->substr(sizeof("/dev/video") - 1)), setting, true);
     } else {
-      openhd::log::get_default()->warn(
-          "Determining V4l2 file number for Rockchip platform.");
-      const int v4l2_filenumber =
-          OHDPlatform::instance().platform_type ==
-                      X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W ||
-                  OHDPlatform::instance().platform_type ==
-                      X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3
-              ? 0
-              : 0;
-      pipeline << OHDGstHelper::createRockchipCSIStream(v4l2_filenumber,
-                                                        setting);
+      pipeline << OHDGstHelper::createRockchipCSIStream(0, setting);
     }
   } else if (camera.requires_rockchip5_mpp_pipeline()) {
     openhd::log::get_default()->debug(

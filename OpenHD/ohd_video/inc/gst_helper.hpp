@@ -622,7 +622,8 @@ static std::string createRockchipEncoderPipeline(
 
   ss << " gop=5";
 
-  if (h264_needs_level_4_2(settings.streamed_video_format,
+  if (settings.streamed_video_format.videoCodec == VideoCodec::H264 &&
+      h264_needs_level_4_2(settings.streamed_video_format,
                            settings.h26x_bitrate_kbits)) {
     ss << " level=42";
   }
@@ -635,10 +636,14 @@ static std::string createRockchipEncoderPipeline(
 }
 
 static std::string createRockchipV4L2Pipeline(const int video_dev,
-                                              const int framerate) {
+                                              const int framerate,
+                                              int width = 0, int height = 0) {
   std::stringstream ss;
   ss << "v4l2src device=/dev/video" << video_dev
      << " io-mode=auto do-timestamp=true ! video/x-raw,format=NV12, ";
+  if (width > 0 && height > 0) {
+    ss << "width=" << width << ",height=" << height << ",";
+  }
   ss << "framerate=" << framerate << "/1 ! ";
   return ss.str();
 }
@@ -651,10 +656,13 @@ static std::string createRockchipHDMIStream(const CameraSettings& settings) {
 }
 
 static std::string createRockchipCSIStream(int v4l2_filenumber,
-                                           const CameraSettings& settings) {
+                                           const CameraSettings& settings,
+                                           bool set_capture_size = false) {
+  const auto& format = settings.streamed_video_format;
   std::stringstream ss;
-  ss << createRockchipV4L2Pipeline(v4l2_filenumber,
-                                   settings.streamed_video_format.framerate);
+  ss << createRockchipV4L2Pipeline(v4l2_filenumber, format.framerate,
+                                   set_capture_size ? format.width : 0,
+                                   set_capture_size ? format.height : 0);
   ss << createRockchipEncoderPipeline(settings);
   return ss.str();
 }
