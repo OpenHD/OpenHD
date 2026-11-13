@@ -951,9 +951,12 @@ class RockchipMppStream::Impl {
         sizeimage ? (sizeimage / capture_stride) * 2 / 3 : align16(height);
     if (luma_rows < height) luma_rows = align16(height);
     capture_uv_offset = static_cast<size_t>(capture_stride) * luma_rows;
-    if ((owner.m_camera_holder->has_rk_camera_modes() ||
-         camera.camera_type == X_CAM_TYPE_X21_ARDUCAM_PIVARIETY) &&
-        coding == MPP_VIDEO_CodingAVC &&
+    const bool zero3w_imx708 = OHDPlatform::instance().is_zero3w() &&
+                              camera.camera_type == X_CAM_TYPE_ROCK_3_IMX708;
+    if ((zero3w_imx708 ||
+         ((owner.m_camera_holder->has_rk_camera_modes() ||
+           camera.camera_type == X_CAM_TYPE_X21_ARDUCAM_PIVARIETY) &&
+          coding == MPP_VIDEO_CodingAVC)) &&
         capture_stride == hor_stride && luma_rows >= height && luma_rows <= align16(height)) {
       // VEPU511 uses the frame's real vertical stride to locate UV. A 1080-row
       // ISP buffer need not be copied into an artificial 1088-row allocation.
@@ -968,7 +971,8 @@ class RockchipMppStream::Impl {
     }
 
     v4l2_requestbuffers request{};
-    request.count = 4;
+    // Keep ISP buffers queued while the transmit worker holds DMA leases.
+    request.count = zero3w_imx708 ? 4 + transmit_slot_count : 4;
     request.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
     request.memory = V4L2_MEMORY_MMAP;
     if (retry_ioctl(capture_fd, VIDIOC_REQBUFS, &request) < 0 ||
@@ -1188,6 +1192,7 @@ class RockchipMppStream::Impl {
       return errno == EAGAIN;
     }
     const auto captured = Clock::now();
+    ++capture_frames;
     sequence_gaps += capture_sequence.observe(buffer.sequence);
     std::optional<double> age_ms;
     const uint32_t timestamp_type = buffer.flags & V4L2_BUF_FLAG_TIMESTAMP_MASK;
@@ -1768,6 +1773,8 @@ class RockchipMppStream::Impl {
     last_latency_report = now;
     const auto tx_bytes = diagnostic_tx_bytes.exchange(0);
     const auto tx_frames = diagnostic_tx_frames.exchange(0);
+    const auto captured_frames = capture_frames;
+    capture_frames = 0;
     const auto rec_bytes = diagnostic_record_bytes.exchange(0);
     const auto rec_frames = diagnostic_record_frames.exchange(0);
     const auto tx_keyframes = diagnostic_tx_keyframes.exchange(0);
@@ -1795,7 +1802,7 @@ class RockchipMppStream::Impl {
         "record_mode={} armed={} record_requested={} record_worker_available={} "
         "record_encoder_initialized={} record_has_output={} dual_encoder_active={} "
         "tx_requested_kbit_s={} tx_target_kbit_s={} tx_measured_kbit_s={:.1f} "
-        "tx_fps={:.1f} tx_frames={} tx_keyframes={} tx_gop_frames={} "
+        "capture_fps={:.1f} tx_fps={:.1f} tx_frames={} tx_keyframes={} tx_gop_frames={} "
         "record_target_kbit_s={} record_measured_kbit_s={:.1f} record_fps={:.1f} "
         "record_frames={} record_keyframes={} record_gop_frames={} "
         "tx_qp_min={} tx_qp_max={} record_qp_min={} record_qp_max={} "
@@ -1805,7 +1812,9 @@ class RockchipMppStream::Impl {
         record_mode.load(), armed.load(), recording_requested(), record_worker_available,
         initialized, output, initialized && output && tx_frames > 0 && rec_frames > 0,
         requested_bitrate_kbits.load(), std::max(1000, bitrate_kbits.load()),
-        tx_bytes * 8.0 / seconds / 1000.0, tx_frames / seconds, tx_frames,
+        tx_bytes * 8.0 / seconds / 1000.0,
+        synthetic_capture ? 0.0 : captured_frames / seconds,
+        tx_frames / seconds, tx_frames,
         tx_keyframes, std::max(1, settings.h26x_keyframe_interval),
         std::max(5000, record_bitrate_kbits.load()), rec_bytes * 8.0 / seconds / 1000.0,
         rec_frames / seconds, rec_frames, rec_keyframes,
@@ -2086,6 +2095,7 @@ class RockchipMppStream::Impl {
   Clock::time_point current_capture_time = Clock::now();
   std::optional<double> current_capture_age_ms;
   Clock::time_point last_latency_report = Clock::now();
+  uint64_t capture_frames = 0;
   std::string last_diagnostic_state;
   uint64_t diagnostic_previous_drops = 0, diagnostic_previous_gaps = 0,
            diagnostic_previous_invalid = 0;

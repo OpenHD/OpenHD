@@ -233,14 +233,16 @@ void OHDVideoAir::configure(
   } else
 #endif
 #ifdef OPENHD_ROCKCHIP_MPP_PRESENT
-  if ((
+  if ((OHDPlatform::instance().is_zero3w() &&
+       camera.camera_type == X_CAM_TYPE_ROCK_3_IMX708) ||
+      ((
 #ifdef OPENHD_PICO_MPI_PRESENT
        camera.requires_rockchip_rv_pipeline() ||
 #endif
        camera.requires_rockchip1126_mpp_csi_pipeline() ||
        camera.requires_rockchip1126_mpp_testsrc_pipeline()) &&
       camera_holder->get_settings().rockchip_impl ==
-          ROCKCHIP_IMPL_NATIVE_MPP) {
+          ROCKCHIP_IMPL_NATIVE_MPP)) {
     m_console->info("Native Rockchip MPP stream for Camera index:{}",
                     camera.index);
     stream = std::make_shared<CameraProcess>(camera_holder, frame_cb, !m_record_only,

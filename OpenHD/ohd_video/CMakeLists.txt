@@ -12,14 +12,8 @@ option(ENABLE_AIR "Enable air support" ON)
 option(ENABLE_USB_CAMERAS "USB cameras support" ON)
 option(ENABLE_LIBCAMERA "libcamera support" ON)
 option(ENABLE_GSTREAMER "Enable GStreamer support" ON)
-option(OPENHD_MPP_ONLY "Build the RV1126 MPP video path without GStreamer" OFF)
 option(OPENHD_REQUIRE_NATIVE_MPP "Require native Rockchip MPP in X21 builds" OFF)
 option(OPENHD_PICO_MPI "Use RV1103/RV1106 native Rockit VI/VENC and RKAIQ" OFF)
-# The MPP-only image intentionally has no USB/GStreamer camera stack. USB
-# discovery also links libv4l2, which is not part of the minimal runtime image.
-if(OPENHD_MPP_ONLY)
-    set(ENABLE_USB_CAMERAS OFF CACHE BOOL "USB cameras support" FORCE)
-endif()
 find_package(PkgConfig REQUIRED)
 
 find_program(PYTHON_EXECUTABLE NAMES python3 python)

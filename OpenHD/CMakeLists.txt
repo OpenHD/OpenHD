@@ -32,6 +32,10 @@ endif ()
 # Allows to explicitly disable USB camera support - removes a few dependencies
 # (Libusb an libv4l2), only makes sense if air support is enabled
 option(ENABLE_USB_CAMERAS "USB cameras support" ON)
+option(OPENHD_MPP_ONLY "Build the native Rockchip video path without GStreamer" OFF)
+if(OPENHD_MPP_ONLY)
+    set(ENABLE_USB_CAMERAS OFF)
+endif()
 message("USB cameras enabled: ${ENABLE_USB_CAMERAS}")
 if (ENABLE_USB_CAMERAS)
         add_definitions(-DENABLE_USB_CAMERAS)
