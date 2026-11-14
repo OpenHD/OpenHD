@@ -426,9 +426,11 @@ int run_camera_worker_if_requested(int argc, char* argv[]) {
         native_enabled = holder->get_settings().enable_streaming;
         create_stream();
         stream->handle_update_arming_state(applied.armed);
-        if (applied.bitrate >= 0)
-          stream->handle_change_bitrate_request({applied.bitrate, applied.capacity_limit,
+        if (applied.bitrate >= 0) {
+          // The parent already applies the manual cap. MPP's snapshot can predate a live bitrate write.
+          stream->handle_change_bitrate_request({applied.bitrate, !use_mpp && applied.capacity_limit,
               openhd::bandwidth::Transport::Unknown, true, applied.automatic_allocation});
+        }
 #ifdef OPENHD_ROCKCHIP_MPP_PRESENT
         if (use_mpp && applied.qp_min >= 0 && applied.qp_max >= 0)
           static_cast<RockchipMppStream*>(stream.get())
@@ -458,7 +460,7 @@ int run_camera_worker_if_requested(int argc, char* argv[]) {
               (control.bitrate != applied.bitrate ||
                control.capacity_limit != applied.capacity_limit ||
                control.automatic_allocation != applied.automatic_allocation))
-            stream->handle_change_bitrate_request({control.bitrate, control.capacity_limit,
+            stream->handle_change_bitrate_request({control.bitrate, !use_mpp && control.capacity_limit,
                 openhd::bandwidth::Transport::Unknown, true, control.automatic_allocation});
           if (control.armed != applied.armed)
             stream->handle_update_arming_state(control.armed);
