@@ -57,6 +57,8 @@ class CameraHolder :
  public:
   static constexpr auto zero3w_imx519_media_helper =
       "/usr/local/libexec/openhd-zero3w-imx519-media";
+  static constexpr auto zero3w_imx290_media_helper =
+      "/usr/local/libexec/openhd-zero3w-imx290-media";
 
   explicit CameraHolder(XCamera camera, bool in_memory = false)
       : m_camera(std::move(camera)),
@@ -263,7 +265,10 @@ class CameraHolder :
     }
     const bool zero3w_imx519 = OHDPlatform::instance().is_zero3w() &&
         m_camera.camera_type == X_CAM_TYPE_ROCK_3_IMX519;
-    if (zero3w_imx519) {
+    const bool zero3w_imx290 = OHDPlatform::instance().is_zero3w() &&
+        m_camera.camera_type == X_CAM_TYPE_ROCK_3_IMX462 &&
+        std::filesystem::exists(zero3w_imx290_media_helper);
+    if (zero3w_imx519 || zero3w_imx290) {
       const auto supported = m_camera.get_supported_resolutions();
       if (std::none_of(supported.begin(), supported.end(), [&](const auto& mode) {
             return mode.width_px == width && mode.height_px == height &&
@@ -272,9 +277,10 @@ class CameraHolder :
         return false;
       }
     }
-    const bool reboot_imx519 = zero3w_imx519 &&
+    const bool reboot_sensor =
         framerate != get_settings().streamed_video_format.framerate &&
-        std::filesystem::exists(zero3w_imx519_media_helper);
+        (zero3w_imx290 ||
+         (zero3w_imx519 && std::filesystem::exists(zero3w_imx519_media_helper)));
     if (m_camera.camera_type == X_CAM_TYPE_ORQA_HORNET ||
         m_camera.camera_type == X_CAM_TYPE_ORQA_REKINDLE) {
       const auto native_format = m_camera.get_default_resolution_fps();
@@ -293,7 +299,7 @@ class CameraHolder :
       unsafe_get_settings().rpi_libcamera_sensor_mode =
           VideoFormat{VideoCodec::H264, 0, 0, 0};
     }
-    if (reboot_imx519) {
+    if (reboot_sensor) {
       // Restart the sensor and ISP together when the exposure budget changes.
       persist(false);
       openhd::reboot::handle_power_command_async(std::chrono::seconds(1), false);
