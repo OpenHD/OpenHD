@@ -92,6 +92,10 @@ struct XCamera {
   bool requires_rockchip3_mpp_pipeline() const {
     return camera_type >= 90 && camera_type < 100;
   }
+  bool uses_zero3w_native_mpp(int platform_type) const {
+    return platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W &&
+           requires_rockchip3_mpp_pipeline();
+  }
   bool requires_orqa_pipeline() const {
     return camera_type >= 122 && camera_type <= 126;
   }
@@ -123,8 +127,7 @@ struct XCamera {
     }
     if (is_camera_type_usb_infiray()) return 50000;
     if (camera_type == X_CAM_TYPE_LUCKFOX_AURA_IMX662 ||
-        (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W &&
-         camera_type == X_CAM_TYPE_ROCK_3_IMX708)) {
+        uses_zero3w_native_mpp(platform_type)) {
       return 25000;
     }
     if (platform_type == X_PLATFORM_TYPE_RPI_5 &&

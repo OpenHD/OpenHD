@@ -233,8 +233,7 @@ void OHDVideoAir::configure(
   } else
 #endif
 #ifdef OPENHD_ROCKCHIP_MPP_PRESENT
-  if ((OHDPlatform::instance().is_zero3w() &&
-       camera.camera_type == X_CAM_TYPE_ROCK_3_IMX708) ||
+  if (camera.uses_zero3w_native_mpp(OHDPlatform::instance().platform_type) ||
       ((
 #ifdef OPENHD_PICO_MPI_PRESENT
        camera.requires_rockchip_rv_pipeline() ||

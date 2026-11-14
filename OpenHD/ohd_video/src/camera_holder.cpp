@@ -18,7 +18,7 @@
  * A full list of contributors can be found at the OpenHD GitHub repository:
  * https://github.com/OpenHD
  *
- * © OpenHD, All Rights Reserved.
+ * Â© OpenHD, All Rights Reserved.
  ******************************************************************************/
 
 #include "camera_holder.h"
@@ -364,8 +364,7 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
               return get_settings().h26x_bitrate_kbits / 1000;
             }},
         [this]() {
-          if (!OHDPlatform::instance().is_zero3w() ||
-              m_camera.camera_type != X_CAM_TYPE_ROCK_3_IMX708) {
+          if (!m_camera.uses_zero3w_native_mpp(OHDPlatform::instance().platform_type)) {
             return nlohmann::json::object();
           }
           return nlohmann::json{{"minimum", 1},

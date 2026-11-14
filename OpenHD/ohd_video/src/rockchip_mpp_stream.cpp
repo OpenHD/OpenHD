@@ -335,8 +335,9 @@ class RockchipMppStream::Impl {
       mpp_enc_cfg_set_s32(cfg, "h264:cabac_en", 1);
     }
     const auto& camera = owner.m_camera_holder->get_camera();
-    if (OHDPlatform::instance().is_zero3w() &&
-        camera.camera_type == X_CAM_TYPE_ROCK_3_IMX708) {
+    const bool zero3w_mpp =
+        camera.uses_zero3w_native_mpp(OHDPlatform::instance().platform_type);
+    if (zero3w_mpp) {
       mpp_enc_cfg_set_u32(cfg, "rc:max_reenc_times", 0);
       mpp_enc_cfg_set_u32(cfg, "rc:super_mode", 0);
     } else {
@@ -358,8 +359,7 @@ class RockchipMppStream::Impl {
     }
     // Reuse the encoded output buffer for the synchronous RK3566 TX path.
     // The packet is returned by MPP before the next frame is submitted.
-    if (OHDPlatform::instance().is_zero3w() &&
-        camera.camera_type == X_CAM_TYPE_ROCK_3_IMX708 &&
+    if (zero3w_mpp &&
         mpp_buffer_get(group, &tx_packet_buffer, hor_stride * ver_stride)) {
       log->error("Cannot allocate MPP output buffer");
       return false;
@@ -966,9 +966,9 @@ class RockchipMppStream::Impl {
         sizeimage ? (sizeimage / capture_stride) * 2 / 3 : align16(height);
     if (luma_rows < height) luma_rows = align16(height);
     capture_uv_offset = static_cast<size_t>(capture_stride) * luma_rows;
-    const bool zero3w_imx708 = OHDPlatform::instance().is_zero3w() &&
-                              camera.camera_type == X_CAM_TYPE_ROCK_3_IMX708;
-    if ((zero3w_imx708 ||
+    const bool zero3w_mpp =
+        camera.uses_zero3w_native_mpp(OHDPlatform::instance().platform_type);
+    if ((zero3w_mpp ||
          ((owner.m_camera_holder->has_rk_camera_modes() ||
            camera.camera_type == X_CAM_TYPE_X21_ARDUCAM_PIVARIETY) &&
           coding == MPP_VIDEO_CodingAVC)) &&
@@ -987,7 +987,7 @@ class RockchipMppStream::Impl {
 
     v4l2_requestbuffers request{};
     // Keep ISP buffers queued while the transmit worker holds DMA leases.
-    request.count = zero3w_imx708 ? 4 + transmit_slot_count : 4;
+    request.count = zero3w_mpp ? 4 + transmit_slot_count : 4;
     request.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
     request.memory = V4L2_MEMORY_MMAP;
     if (retry_ioctl(capture_fd, VIDIOC_REQBUFS, &request) < 0 ||
