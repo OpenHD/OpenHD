@@ -263,6 +263,10 @@ class CameraHolder :
     if (!openhd::validate_video_width_height_fps(width, height, framerate)) {
       return false;
     }
+    if (m_camera.camera_type == X_CAM_TYPE_ROCK_3_IMX462_PIVARIETY &&
+        (width != 1920 || height != 1080 || framerate != 60)) {
+      return false;
+    }
     const bool zero3w_imx519 = OHDPlatform::instance().is_zero3w() &&
         m_camera.camera_type == X_CAM_TYPE_ROCK_3_IMX519;
     const bool zero3w_imx290 = OHDPlatform::instance().is_zero3w() &&

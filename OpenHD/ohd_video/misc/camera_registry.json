@@ -581,6 +581,13 @@
     },
     {"key": "X_CAM_TYPE_ROCK_3_VEYE", "id": 97, "name": "ROCK_3_VEYE"},
     {
+      "key": "X_CAM_TYPE_ROCK_3_IMX462_PIVARIETY",
+      "id": 98,
+      "name": "ROCK_3_IMX462_PIVARIETY",
+      "ui_label": "IMX462 Pivariety",
+      "resolutions": [{"width": 1920, "height": 1080, "fps": 60}]
+    },
+    {
       "key": "X_CAM_TYPE_NVIDIA_XAVIER_IMX577",
       "id": 101,
       "name": "XAVIER_IMX577",
@@ -961,6 +968,11 @@
       ]
     },
     {
+      "key": "ZERO3W_PIVARIETY",
+      "name": "Arducam Pivariety",
+      "cameras": ["X_CAM_TYPE_ROCK_3_IMX462_PIVARIETY"]
+    },
+    {
       "key": "ROCK5_A_GENERIC",
       "name": "Generic",
       "cameras": [
@@ -1110,7 +1122,7 @@
     },
     {
       "platform": "X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W",
-      "manufacturers": ["ROCK3_ARDUCAM", "IP_CAMERA", "USB", "DEBUG"]
+      "manufacturers": ["ROCK3_ARDUCAM", "ZERO3W_PIVARIETY", "IP_CAMERA", "USB", "DEBUG"]
     },
     {
       "platform": "X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3",

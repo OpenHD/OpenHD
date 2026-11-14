@@ -25,6 +25,9 @@
 
 #include "include_json.hpp"
 #include "openhd_spdlog_include.h"
+#ifdef OPENHD_ROCKCHIP_MPP_PRESENT
+#include "rockchip_isp_controls.hpp"
+#endif
 
 NLOHMANN_JSON_SERIALIZE_ENUM(VideoCodec, {
                                              {VideoCodec::H264, "h264"},
@@ -49,7 +52,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
     h26x_bitrate_kbits, h26x_keyframe_interval, h26x_intra_refresh_type,
     h26x_num_slices, nxp_enable_aud, air_recording, camera_rotation_degree,
     openhd_flip,
-    openhd_iso, veye_gx_isp, veye_framerate, veye_wbmode, veye_cameramode, veye_mshutter, veye_denoise, veye_wdrbtargetbr, openhd_brightness, openhd_sharpness, openhd_saturation, openhd_contrast,
+    openhd_iso, veye_gx_isp, rockchip_isp, veye_framerate, veye_wbmode, veye_cameramode, veye_mshutter, veye_denoise, veye_wdrbtargetbr, openhd_brightness, openhd_sharpness, openhd_saturation, openhd_contrast,
     // rpi libcamera specific IQ params begin
     rpi_libcamera_ev_value, rpi_libcamera_denoise_index,
     rpi_libcamera_awb_index, rpi_libcamera_metering_index,
@@ -534,6 +537,31 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
           }}});
     }
   }
+#ifdef OPENHD_ROCKCHIP_MPP_PRESENT
+  if (m_camera.index == 0 &&
+      m_camera.camera_type != X_CAM_TYPE_X21_ARDUCAM_PIVARIETY &&
+      (m_camera.uses_zero3w_native_mpp(OHDPlatform::instance().platform_type) ||
+       (m_camera.requires_rockchip1126_mpp_csi_pipeline() &&
+        get_settings().rockchip_impl == ROCKCHIP_IMPL_NATIVE_MPP))) {
+    for (const auto& control : rockchip_isp::controls) {
+      const auto height = get_settings().streamed_video_format.height;
+      const auto current = rockchip_isp::access_control(control, height);
+      if (!current) continue;
+      const auto saved = get_settings().rockchip_isp.find(control.param);
+      const int value = saved == get_settings().rockchip_isp.end()
+          ? *current : saved->second;
+      ret.push_back(openhd::Setting{control.param, openhd::IntSetting{
+          value, [this, control](std::string, int requested) {
+            if (!rockchip_isp::access_control(
+                    control, get_settings().streamed_video_format.height,
+                    requested)) return false;
+            unsafe_get_settings().rockchip_isp[control.param] = requested;
+            persist(false);
+            return true;
+          }}});
+    }
+  }
+#endif
   // right now only supported by libcamera and (partially) x20
   const bool SUPPORTS_OPENHD_IQ = (m_camera.requires_rpi_libcamera_pipeline() &&
                                    !OHDPlatform::instance().is_rpi5()) ||

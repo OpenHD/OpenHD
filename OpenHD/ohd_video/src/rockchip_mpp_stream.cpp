@@ -44,6 +44,7 @@
 #include "openhd_spdlog.h"
 #include "rockchip_stream_utils.h"
 #include "arducam_modes.hpp"
+#include "rockchip_isp_controls.hpp"
 #include "ground_ae.hpp"
 
 namespace {
@@ -1067,6 +1068,16 @@ class RockchipMppStream::Impl {
       return false;
     }
     capture_streaming = true;
+    if (camera.index == 0 && camera.camera_type != X_CAM_TYPE_X21_ARDUCAM_PIVARIETY) {
+      const auto& saved = owner.m_camera_holder->get_settings().rockchip_isp;
+      for (const auto& control : rockchip_isp::controls) {
+        const auto value = saved.find(control.param);
+        if (value != saved.end() &&
+            !rockchip_isp::access_control(control, height, value->second)) {
+          log->warn("Cannot restore Rockchip camera setting {}", control.param);
+        }
+      }
+    }
     return true;
   }
 

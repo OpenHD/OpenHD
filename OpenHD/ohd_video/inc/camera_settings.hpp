@@ -148,6 +148,7 @@ struct CameraSettings {
   // direct V4L2 capture + Rockchip MPP implementation.
   int rockchip_impl = ROCKCHIP_IMPL_NATIVE_MPP;
   std::map<std::string,int> arducam_isp;
+  std::map<std::string, int> rockchip_isp;
   int arducam_hdr = 0; // Three-exposure sensor HDR, full-field 2x2 binning.
   int rk_readout_mode = 0; // 0 full-frame linear, 1 crop linear, 2 merged HDR.
   // The settings below can only be implemented on a "best effort" manner -
