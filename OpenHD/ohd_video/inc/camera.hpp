@@ -122,7 +122,11 @@ struct XCamera {
       return 25000;
     }
     if (is_camera_type_usb_infiray()) return 50000;
-    if (camera_type == X_CAM_TYPE_LUCKFOX_AURA_IMX662) return 25000;
+    if (camera_type == X_CAM_TYPE_LUCKFOX_AURA_IMX662 ||
+        (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W &&
+         camera_type == X_CAM_TYPE_ROCK_3_IMX708)) {
+      return 25000;
+    }
     if (platform_type == X_PLATFORM_TYPE_RPI_5 &&
         camera_type == X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V3_IMX708 &&
         index == 0) {

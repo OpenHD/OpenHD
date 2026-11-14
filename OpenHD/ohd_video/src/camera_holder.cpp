@@ -362,7 +362,16 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
             c_bitrate,
             [this]() {
               return get_settings().h26x_bitrate_kbits / 1000;
-            }}});
+            }},
+        [this]() {
+          if (!OHDPlatform::instance().is_zero3w() ||
+              m_camera.camera_type != X_CAM_TYPE_ROCK_3_IMX708) {
+            return nlohmann::json::object();
+          }
+          return nlohmann::json{{"minimum", 1},
+                                {"maximum", get_max_video_bitrate_kbits() / 1000},
+                                {"choices", nlohmann::json::array()}};
+        }});
   }
   if (true) {
     auto c_keyframe_interval = [this](std::string, int value) {
