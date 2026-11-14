@@ -787,8 +787,10 @@ bool OHDVideoAir::x_set_camera_type(bool primary, int cam_type) {
     openhd::log::get_default()->warn(
         "Requesting sysutils camera setup for cam type {}({})", cam_type,
         x_cam_type_to_string(cam_type));
-    if (!openhd::request_sysutil_camera_setup(cam_type,
-                                              std::chrono::seconds(2))) {
+    const auto setup_timeout = OHDPlatform::instance().is_zero3w()
+                                   ? std::chrono::seconds(15)
+                                   : std::chrono::seconds(2);
+    if (!openhd::request_sysutil_camera_setup(cam_type, setup_timeout)) {
       openhd::log::get_default()->error(
           "Sysutils camera setup request failed for cam type {}", cam_type);
       return false;

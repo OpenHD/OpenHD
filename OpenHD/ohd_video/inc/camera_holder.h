@@ -27,6 +27,7 @@
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
+#include <filesystem>
 #include <functional>
 #include <sstream>
 
@@ -37,6 +38,7 @@
 #include "openhd_action_handler.h"
 #include "openhd_bitrate.h"
 #include "openhd_plugin_manager.h"
+#include "openhd_reboot_util.h"
 #include "openhd_settings_directories.h"
 #include "openhd_settings_imp.h"
 #include "openhd_settings_persistent.h"
@@ -53,6 +55,9 @@ class CameraHolder :
     // persistence via JSON
     public openhd::PersistentSettings<CameraSettings> {
  public:
+  static constexpr auto zero3w_imx519_media_helper =
+      "/usr/local/libexec/openhd-zero3w-imx519-media";
+
   explicit CameraHolder(XCamera camera, bool in_memory = false)
       : m_camera(std::move(camera)),
         openhd::PersistentSettings<CameraSettings>(
@@ -256,6 +261,20 @@ class CameraHolder :
     if (!openhd::validate_video_width_height_fps(width, height, framerate)) {
       return false;
     }
+    const bool zero3w_imx519 = OHDPlatform::instance().is_zero3w() &&
+        m_camera.camera_type == X_CAM_TYPE_ROCK_3_IMX519;
+    if (zero3w_imx519) {
+      const auto supported = m_camera.get_supported_resolutions();
+      if (std::none_of(supported.begin(), supported.end(), [&](const auto& mode) {
+            return mode.width_px == width && mode.height_px == height &&
+                   mode.fps == framerate;
+          })) {
+        return false;
+      }
+    }
+    const bool reboot_imx519 = zero3w_imx519 &&
+        framerate != get_settings().streamed_video_format.framerate &&
+        std::filesystem::exists(zero3w_imx519_media_helper);
     if (m_camera.camera_type == X_CAM_TYPE_ORQA_HORNET ||
         m_camera.camera_type == X_CAM_TYPE_ORQA_REKINDLE) {
       const auto native_format = m_camera.get_default_resolution_fps();
@@ -273,6 +292,12 @@ class CameraHolder :
       // Advanced users can explicitly override SENSOR_MODE afterwards.
       unsafe_get_settings().rpi_libcamera_sensor_mode =
           VideoFormat{VideoCodec::H264, 0, 0, 0};
+    }
+    if (reboot_imx519) {
+      // Restart the sensor and ISP together when the exposure budget changes.
+      persist(false);
+      openhd::reboot::handle_power_command_async(std::chrono::seconds(1), false);
+      return true;
     }
     persist();
     notify_plugin_video_settings_changed();
