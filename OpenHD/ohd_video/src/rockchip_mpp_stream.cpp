@@ -334,7 +334,14 @@ class RockchipMppStream::Impl {
       mpp_enc_cfg_set_s32(cfg, "h264:level", 42);
       mpp_enc_cfg_set_s32(cfg, "h264:cabac_en", 1);
     }
-    apply_chroma_qp_offset(cfg);
+    const auto& camera = owner.m_camera_holder->get_camera();
+    if (OHDPlatform::instance().is_zero3w() &&
+        camera.camera_type == X_CAM_TYPE_ROCK_3_IMX708) {
+      mpp_enc_cfg_set_u32(cfg, "rc:max_reenc_times", 0);
+      mpp_enc_cfg_set_u32(cfg, "rc:super_mode", 0);
+    } else {
+      apply_chroma_qp_offset(cfg);
+    }
     apply_rate_control();
     if (mpi->control(ctx, MPP_ENC_SET_CFG, cfg)) {
       log->error("MPP rejected encoder configuration");
@@ -347,6 +354,14 @@ class RockchipMppStream::Impl {
         mpp_buffer_get(group, &input_buffer,
                        hor_stride * ver_stride * 3 / 2)) {
       log->error("Cannot allocate MPP input buffer");
+      return false;
+    }
+    // Reuse the encoded output buffer for the synchronous RK3566 TX path.
+    // The packet is returned by MPP before the next frame is submitted.
+    if (OHDPlatform::instance().is_zero3w() &&
+        camera.camera_type == X_CAM_TYPE_ROCK_3_IMX708 &&
+        mpp_buffer_get(group, &tx_packet_buffer, hor_stride * ver_stride)) {
+      log->error("Cannot allocate MPP output buffer");
       return false;
     }
     emit_codec_header();
@@ -1518,6 +1533,15 @@ class RockchipMppStream::Impl {
         encoder_mpi->control(encoder_ctx, MPP_ENC_SET_IDR_FRAME, nullptr)) {
       log->warn("MPP rejected the force-keyframe request");
     }
+    MppPacket output = nullptr;
+    if (transmit && tx_packet_buffer) {
+      if (mpp_packet_init_with_buffer(&output, tx_packet_buffer)) {
+        mpp_frame_deinit(&frame);
+        return false;
+      }
+      mpp_packet_set_length(output, 0);
+      mpp_meta_set_packet(mpp_frame_get_meta(frame), KEY_OUTPUT_PACKET, output);
+    }
     if (encoder_mpi->encode_put_frame(encoder_ctx, frame)) {
       log->warn("MPP {} channel failed to accept an input frame",
                 transmit ? "transmit" : "recording");
@@ -1979,6 +2003,8 @@ class RockchipMppStream::Impl {
     capture_streaming = false;
     synthetic_capture = false;
     synthetic_frame.clear();
+    if (tx_packet_buffer) mpp_buffer_put(tx_packet_buffer);
+    tx_packet_buffer = nullptr;
     if (input_buffer) mpp_buffer_put(input_buffer);
     if (group) mpp_buffer_group_put(group);
     if (cfg) mpp_enc_cfg_deinit(cfg);
@@ -2074,6 +2100,7 @@ class RockchipMppStream::Impl {
   MppEncCfg cfg = nullptr;
   MppBufferGroup group = nullptr;
   MppBuffer input_buffer = nullptr;
+  MppBuffer tx_packet_buffer = nullptr;
   MppCtx record_ctx = nullptr;
   MppApi* record_mpi = nullptr;
   MppEncCfg record_cfg = nullptr;
