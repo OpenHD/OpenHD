@@ -862,6 +862,15 @@ class RockchipMppStream::Impl {
     if (OHDPlatform::instance().is_x21() && owner.m_camera_holder->has_rk_camera_modes() &&
         !rk_camera_modes::register_driver_present() &&
         !configure_x21_imx662()) return false;
+    constexpr auto imx708_mode_helper =
+        "/usr/local/libexec/openhd-zero3w-imx708-media";
+    if (camera.camera_type == X_CAM_TYPE_ROCK_3_IMX708 &&
+        access(imx708_mode_helper, X_OK) == 0 &&
+        OHDUtil::run_command(imx708_mode_helper,
+                            {"--select", configured_fps == 120 ? "120" : "60"}) != 0) {
+      log->error("Could not configure Zero 3W IMX708 sensor readout");
+      return false;
+    }
     std::string capture_device;
     // The X21 routes the HDZero camera's NV12 output through CIF
     // (stream_cif_mipi_id0). The Luckfox Aura and ISP-based cameras (IMX415,
