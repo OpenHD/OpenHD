@@ -110,11 +110,11 @@ struct CameraSettings {
   int mpp_roi_quality = -8;
   // Native MPP intra-refresh is opt-in. A normal short GOP provides recovery
   // without relying on firmware-specific intra-refresh behavior.
-  // mode 0 refreshes rows, mode 1 columns, and OpenHD MPP mode 2 refreshes
-  // individual raster-ordered macroblocks; num is the count per frame.
+  // Mode 0 refreshes rows, mode 1 columns. One block row per frame gives a
+  // gradual sweep while limiting how much of a picture is refreshed at once.
   bool mpp_intra_refresh_enable = false;
-  int mpp_intra_refresh_mode = 2;
-  int mpp_intra_refresh_num = 8;
+  int mpp_intra_refresh_mode = 0;
+  int mpp_intra_refresh_num = 1;
   // Independent native MPP recording channel. It intentionally does not
   // follow the RF-link bitrate controller.
   int mpp_record_bitrate_kbits = 40000;

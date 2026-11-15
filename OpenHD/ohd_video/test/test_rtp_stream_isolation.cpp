@@ -39,13 +39,19 @@ int main() {
 
   openhd::RTPHelper helper(false);
   std::vector<uint32_t> timestamps;
-  unsigned callbacks = 0, markers = 0;
+  unsigned callbacks = 0, markers = 0, recovery_points = 0, other_sei = 0;
   helper.set_out_cb([&](const auto& packets) {
     ++callbacks;
     for (const auto& p : packets) {
       timestamps.push_back(uint32_t((*p)[4]) << 24 | uint32_t((*p)[5]) << 16 |
                            uint32_t((*p)[6]) << 8 | (*p)[7]);
       markers += ((*p)[1] & 128) != 0;
+      if (p->size() >= 14 && ((*p)[12] & 31) == 6) {
+        if ((*p)[13] == 6)
+          ++recovery_points;
+        else
+          ++other_sei;
+      }
     }
   });
   const uint8_t au[]{
@@ -62,7 +68,21 @@ int main() {
   helper.feed_nalu(nal, sizeof(nal));
   const uint32_t elapsed = timestamps.back() - previous;
   const bool clock_ok = elapsed >= 1800;  // 30 ms is ~2700 ticks, not 30.
+  const uint8_t recovery_au[]{
+      0,0,0,1,0x06,0x05,0x01,0x11,0x80,
+      0,0,0,1,0x06,0x06,0x01,0xc4,0x80,
+      0,0,0,1,0x61,0x88,0x84,0x55};
+  helper.feed_multiple_nalu(recovery_au, sizeof(recovery_au));
+  const bool sei_opt_in = recovery_points == 0 && other_sei == 0;
+  const unsigned callbacks_before_recovery = callbacks;
+  const unsigned markers_before_recovery = markers;
+  helper.feed_multiple_nalu(recovery_au, sizeof(recovery_au), true);
+  const bool recovery_grouped = sei_opt_in && recovery_points == 1 &&
+      other_sei == 0 && callbacks == callbacks_before_recovery + 1 &&
+      markers == markers_before_recovery + 1 &&
+      timestamps.back() == timestamps[timestamps.size() - 2];
+
   std::cout << "cross-stream corruption=" << corrupt << " grouped_slices="
             << grouped << " RTP_clock_ticks=" << elapsed << '\n';
-  return corrupt == 0 && grouped && clock_ok ? 0 : 1;
+  return corrupt == 0 && grouped && clock_ok && recovery_grouped ? 0 : 1;
 }

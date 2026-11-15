@@ -71,13 +71,14 @@ openhd::RTPHelper::RTPHelper(bool is_h265) : m_is_h265(is_h265) {
 
 openhd::RTPHelper::~RTPHelper() { rtp_payload_encode_destroy(encoder); }
 
-void openhd::RTPHelper::feed_multiple_nalu(const uint8_t* data, int data_len) {
+void openhd::RTPHelper::feed_multiple_nalu(const uint8_t* data, int data_len,
+                                          bool include_recovery_point) {
   m_access_unit_data.clear();
   m_collect_access_unit = true;
   int offset = 0;
   while (offset < data_len) {
     int nalu_len = find_next_nal(&data[offset], data_len - offset);
-    on_new_split_nalu(&data[offset], nalu_len);
+    on_new_split_nalu(&data[offset], nalu_len, include_recovery_point);
     offset += nalu_len;
   }
   m_collect_access_unit = false;
@@ -120,7 +121,8 @@ void openhd::RTPHelper::set_out_cb(openhd::RTPHelper::OUT_CB cb) {
   m_out_cb = std::move(cb);
 }
 
-void openhd::RTPHelper::on_new_split_nalu(const uint8_t* data, int data_len) {
+void openhd::RTPHelper::on_new_split_nalu(const uint8_t* data, int data_len,
+                                         bool include_recovery_point) {
   NALU nalu(data, data_len, m_is_h265);
   // m_console->debug("Got new NAL {}
   // {}",data_len,nalu.get_nal_unit_type_as_string()); if(nalu.is_sei())return;
@@ -134,11 +136,18 @@ void openhd::RTPHelper::on_new_split_nalu(const uint8_t* data, int data_len) {
         m_config_finder.save_if_config(nalu);
       }
     } else {
-      if (nalu.is_sei() || nalu.is_aud()) {
-        // We can discard (AUDs are written manually on the rx)
-      } else {
-        on_new_nalu_frame(data, data_len);
+      if (nalu.is_aud()) return;
+      if (nalu.is_sei()) {
+        // MPP puts the recovery point first in its own SEI NAL. Keep it with
+        // the first refresh picture so the decoder knows when recovery ends.
+        const int header_size = m_is_h265 ? 2 : 1;
+        if (!include_recovery_point ||
+            nalu.getDataSizeWithoutPrefix() <= header_size ||
+            nalu.getDataWithoutPrefix()[header_size] != 6)
+          return;
+        m_codec_config_sent = false;  // Give a joining decoder the parameter sets.
       }
+      on_new_nalu_frame(data, data_len);
     }
   } else {
     m_config_finder.save_if_config(nalu);

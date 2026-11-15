@@ -27,6 +27,24 @@ build_dir="${work_dir}/build"
 stage_dir="${work_dir}/component"
 toolchain_file="${sdk_dir}/share/buildroot/toolchainfile.cmake"
 
+# Build the same MPP revision and intra-refresh fixes used by the Zero 3W.
+mpp_ref=20959ec3dabb313b8c33ca0b7b09c06ffd2a9caa
+mpp_archive="${work_dir}/mpp.tar.gz"
+mpp_source="${work_dir}/mpp-${mpp_ref}"
+mpp_build="${work_dir}/mpp-build"
+mpp_prefix="${work_dir}/mpp-install"
+curl -fsSL --retry 5 "https://codeload.github.com/HermanChen/mpp/tar.gz/${mpp_ref}" -o "${mpp_archive}"
+printf '%s  %s\n' 345148b74b8a5e5dd329d58163113756581102685fe9d3d657621960d04172f4 "${mpp_archive}" | sha256sum -c -
+tar -xzf "${mpp_archive}" -C "${work_dir}"
+patch -d "${mpp_source}" -p1 < "${repo_root}/scripts/rockchip-mpp-intra-refresh.patch"
+cmake -S "${mpp_source}" -B "${mpp_build}" \
+  -DCMAKE_TOOLCHAIN_FILE="${toolchain_file}" \
+  -DCMAKE_INSTALL_PREFIX="${mpp_prefix}" \
+  -DCMAKE_INSTALL_LIBDIR=lib \
+  -DCMAKE_BUILD_TYPE=Release -DBUILD_TEST=OFF -DBUILD_SHARED_LIBS=ON
+cmake --build "${mpp_build}" --parallel "$(nproc)"
+cmake --install "${mpp_build}"
+
 # Configurable options
 ENABLE_USB_CAMERAS="${ENABLE_USB_CAMERAS:-OFF}"
 
@@ -35,6 +53,8 @@ cmake -S "${repo_root}/OpenHD" -B "${build_dir}" \
   -DCMAKE_BUILD_TYPE=Release \
   -DENABLE_USB_CAMERAS="${ENABLE_USB_CAMERAS}" \
   -DOPENHD_REQUIRE_NATIVE_MPP=ON \
+  -DROCKCHIP_MPP_INCLUDE_DIR="${mpp_prefix}/include/rockchip" \
+  -DROCKCHIP_MPP_LIBRARY="${mpp_prefix}/lib/librockchip_mpp.so" \
   -DOPENHD_MPP_ONLY=OFF \
   -DENABLE_GSTREAMER=ON \
   -DOPENHD_ENABLE_DEVOURER=ON \
@@ -72,11 +92,9 @@ copy_library_family 'libpcap.so*'
 copy_library_family 'libsodium.so*'
 copy_library_family 'libusb-1.0.so*'
 copy_library_family 'librtlsdr.so*'
-if compgen -G "${STAGING_DIR}/usr/lib/librockchip_mpp.so*" >/dev/null; then
-  copy_library_family 'librockchip_mpp.so*'
-  # A production X21 SDK must actually enable the native capture path.
-  strings "${build_dir}/openhd" | grep -F 'Fly ground metering' >/dev/null
-fi
+cp -a "${mpp_prefix}"/lib/librockchip_mpp.so* "${stage_dir}/usr/lib/"
+# A production X21 SDK must actually enable the native capture path.
+strings "${build_dir}/openhd" | grep -F 'Fly ground metering' >/dev/null
 bash "${repo_root}/scripts/bundle_terminal_runtime.sh" "${STAGING_DIR}" "${stage_dir}" "${stage_dir}/usr/bin/openhd"
 
 version_header="${repo_root}/OpenHD/ohd_common/inc/openhd_global_constants.hpp"

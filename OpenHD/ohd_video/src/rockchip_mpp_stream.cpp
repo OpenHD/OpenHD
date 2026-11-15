@@ -272,8 +272,8 @@ class RockchipMppStream::Impl {
                                          current_capture_time,
                                          s.enable_ultra_secure_encryption,
                                          nullptr,
-                                         intra_refresh_enable.load(),
-                                         false};
+                                         intra_refresh_enabled,
+                                         transmitting_keyframe.load()};
       const auto output_begin = Clock::now();
       this->owner.m_output_cb(this->owner.m_camera_holder->get_camera().index,
                               frame);
@@ -326,10 +326,7 @@ class RockchipMppStream::Impl {
     mpp_enc_cfg_set_s32(cfg, "rc:fps_out_flex", 0);
     mpp_enc_cfg_set_s32(cfg, "rc:fps_out_num", f.framerate);
     mpp_enc_cfg_set_s32(cfg, "rc:fps_out_denom", 1);
-    // Keep IDR cadence independent from cyclic intra refresh. In particular,
-    // sparse refresh must not turn every completed sweep into a full IDR.
-    mpp_enc_cfg_set_s32(cfg, "rc:gop",
-                        std::max(1, s.h26x_keyframe_interval));
+    if (!configure_intra_refresh(s)) return false;
     if (coding == MPP_VIDEO_CodingAVC) {
       mpp_enc_cfg_set_s32(cfg, "h264:profile", 100);
       mpp_enc_cfg_set_s32(cfg, "h264:level", 42);
@@ -476,6 +473,35 @@ class RockchipMppStream::Impl {
     mpp_enc_cfg_set_s32(target, cr, -6);
   }
 
+  bool configure_intra_refresh(const CameraSettings& settings) {
+    int gop = std::max(1, settings.h26x_keyframe_interval);
+    intra_refresh_enabled = settings.mpp_intra_refresh_enable;
+    if (intra_refresh_enabled) {
+      const bool columns = settings.mpp_intra_refresh_mode == 1;
+      const int extent = columns ? width : height;
+      const int block_size = coding == MPP_VIDEO_CodingHEVC ? 64 : 16;
+      const int blocks = (extent + block_size - 1) / block_size;
+      const int units = std::clamp(settings.mpp_intra_refresh_num, 1, blocks);
+      const int sweep_frames = (blocks + units - 1) / units;
+      // MPP uses rc:gop to schedule recovery points when refresh is enabled.
+      // A new sweep must not cut the previous one short.
+      gop = std::max({2, gop, sweep_frames});
+      // Leave time for a complete sweep after the initial GOP.
+      refresh_idr_period = std::max(2 * configured_fps, gop + sweep_frames + 1);
+      frames_until_refresh_idr = refresh_idr_period;
+      if (mpp_enc_cfg_set_s32(cfg, "rc:refresh_mode", columns) ||
+          mpp_enc_cfg_set_s32(cfg, "rc:refresh_num", units) ||
+          mpp_enc_cfg_set_s32(cfg, "rc:refresh_en", 1)) {
+        log->error("MPP does not accept native intra-refresh controls");
+        return false;
+      }
+      log->info("MPP intra refresh: {} {} per frame, {} frames per sweep, "
+                "recovery point every {} frames",
+                units, columns ? "columns" : "rows", sweep_frames, gop);
+    }
+    return mpp_enc_cfg_set_s32(cfg, "rc:gop", gop) == MPP_OK;
+  }
+
   void apply_rate_control() {
     const int bps = std::max(1000, bitrate_kbits.load()) * 1000;
     // RV1126's MPP rate controller otherwise keeps its default three-second
@@ -491,11 +517,6 @@ class RockchipMppStream::Impl {
     mpp_enc_cfg_set_s32(cfg, "rc:qp_max", qp_max.load());
     mpp_enc_cfg_set_s32(cfg, "rc:qp_min_i", qp_min.load());
     mpp_enc_cfg_set_s32(cfg, "rc:qp_max_i", qp_max.load());
-    // RV1126 MPP native intra-refresh. Mode 2 is the OpenHD sparse-block mode
-    // and refreshes only refresh_num raster-ordered macroblocks per frame.
-    mpp_enc_cfg_set_s32(cfg, "rc:refresh_en", intra_refresh_enable.load());
-    mpp_enc_cfg_set_s32(cfg, "rc:refresh_mode", intra_refresh_mode.load());
-    mpp_enc_cfg_set_s32(cfg, "rc:refresh_num", intra_refresh_num.load());
   }
 
   void apply_record_rate_control() {
@@ -510,9 +531,6 @@ class RockchipMppStream::Impl {
     mpp_enc_cfg_set_s32(record_cfg, "rc:qp_max", record_qp_max.load());
     mpp_enc_cfg_set_s32(record_cfg, "rc:qp_min_i", record_qp_min.load());
     mpp_enc_cfg_set_s32(record_cfg, "rc:qp_max_i", record_qp_max.load());
-    mpp_enc_cfg_set_s32(record_cfg, "rc:refresh_en", intra_refresh_enable.load());
-    mpp_enc_cfg_set_s32(record_cfg, "rc:refresh_mode", intra_refresh_mode.load());
-    mpp_enc_cfg_set_s32(record_cfg, "rc:refresh_num", intra_refresh_num.load());
   }
 
   void emit_codec_header() {
@@ -1559,6 +1577,12 @@ class RockchipMppStream::Impl {
       --bootstrap_keyframes_remaining;
       next_bootstrap_keyframe = encode_now + std::chrono::seconds(5);
     }
+    // Legacy hardware decoders can require a real IDR when joining midstream.
+    if (transmit && intra_refresh_enabled &&
+        (request_keyframe || --frames_until_refresh_idr == 0)) {
+      request_keyframe = true;
+      frames_until_refresh_idr = refresh_idr_period;
+    }
     bool header_sent_for_frame = false;
     if (request_keyframe && !codec_header.empty()) {
       rtp->feed_multiple_nalu(codec_header.data(),
@@ -1620,7 +1644,8 @@ class RockchipMppStream::Impl {
             transmitting_keyframe = true;
           transmit_frame_bytes += length;
           perf_window_bytes += length;
-          rtp->feed_multiple_nalu(data, static_cast<int>(length));
+          rtp->feed_multiple_nalu(data, static_cast<int>(length),
+                                  intra_refresh_enabled);
         } else {
           record_au.insert(record_au.end(), data, data + length);
         }
@@ -1967,10 +1992,6 @@ class RockchipMppStream::Impl {
     roi_width = s.mpp_roi_width_percent;
     roi_height = s.mpp_roi_height_percent;
     roi_quality = s.mpp_roi_quality;
-    intra_refresh_enable = s.mpp_intra_refresh_enable;
-    intra_refresh_mode = s.mpp_intra_refresh_mode;
-    intra_refresh_num = s.mpp_intra_refresh_num;
-    rate_dirty = true;
   }
 
   void update_recording_snapshot() {
@@ -2080,9 +2101,9 @@ class RockchipMppStream::Impl {
   std::atomic<int> roi_width{50};
   std::atomic<int> roi_height{50};
   std::atomic<int> roi_quality{-8};
-  std::atomic_bool intra_refresh_enable{false};
-  std::atomic<int> intra_refresh_mode{2};
-  std::atomic<int> intra_refresh_num{8};
+  bool intra_refresh_enabled = false;
+  int refresh_idr_period = 0;
+  int frames_until_refresh_idr = 0;
   std::atomic_bool armed{false};
   std::atomic<int> record_mode{AIR_RECORDING_OFF};
   std::atomic_bool recording_enabled{false};

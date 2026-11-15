@@ -54,7 +54,8 @@ class RTPHelper {
 
   // Accepts one or more than one NALUs.
   // Needs to be aligned on NAL !
-  void feed_multiple_nalu(const uint8_t* data, int data_len);
+  void feed_multiple_nalu(const uint8_t* data, int data_len,
+                          bool include_recovery_point = false);
 
   // Feeds one complete access unit (one or more Annex B NALUs).
   void feed_nalu(const uint8_t* data, int data_len);
@@ -65,7 +66,8 @@ class RTPHelper {
                            int last);
 
  private:
-  void on_new_split_nalu(const uint8_t* data, int data_len);
+  void on_new_split_nalu(const uint8_t* data, int data_len,
+                         bool include_recovery_point);
   void on_new_nalu_frame(const uint8_t* data, int data_len);
   const bool m_is_h265;
   OUT_CB m_out_cb = nullptr;

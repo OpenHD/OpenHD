@@ -13,6 +13,7 @@ on:
     paths:
       - OpenHD/**
       - scripts/build_x21_component.sh
+      - scripts/rockchip-mpp-intra-refresh.patch
       - scripts/build_luckfox_component.sh
       - scripts/build_lyra_ground_component.sh
       - .github/actions/**
@@ -23,6 +24,7 @@ on:
     paths:
       - OpenHD/**
       - scripts/build_x21_component.sh
+      - scripts/rockchip-mpp-intra-refresh.patch
       - scripts/build_luckfox_component.sh
       - scripts/build_lyra_ground_component.sh
       - .github/actions/**
@@ -103,7 +105,7 @@ jobs:
       - name: Install build tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends cmake g++ ninja-build ${{ matrix.extra_packages }}
+          sudo apt-get install -y --no-install-recommends cmake curl g++ ninja-build patch ${{ matrix.extra_packages }}
 
       - name: Download and verify the stable SDK
         if: matrix.sdk != ''

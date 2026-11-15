@@ -512,6 +512,8 @@ build_package() {
       exit 1
     fi
     install -D -m 0755 "${OPENHD_ZERO3W_BINARY}" "${PKGDIR}usr/local/libexec/openhd-zero3w"
+    install -D -m 0644 scripts/rockchip-mpp-intra-refresh.patch \
+      "${PKGDIR}usr/local/share/openhd/rockchip-mpp-intra-refresh.patch"
   fi
   mkdir -p "${PKGDIR}usr/local/share/openhd/audio/"
   cp OpenHD/ohd_video/assets/example.mp3 \

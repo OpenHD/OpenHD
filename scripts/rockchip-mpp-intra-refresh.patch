@@ -1,0 +1,131 @@
+--- a/mpp/codec/enc/h264/h264e_sei.c
++++ b/mpp/codec/enc/h264/h264e_sei.c
+@@ -85,4 +85,6 @@
+ 
+     write_recovery_point(bit, recovery_frame_cnt);
++    /* Align the recovery payload, then terminate the enclosing SEI RBSP. */
++    mpp_writer_trailing(bit);
+ 
+     sei_size = mpp_writer_bytes(bit);
+--- a/mpp/codec/mpp_enc_impl.c
++++ b/mpp/codec/mpp_enc_impl.c
+@@ -1084,12 +1084,10 @@
+ 
+     if (enc->cfg->rc.refresh_en) {
+-        RK_U32 mb_rows;
+-
+-        if (!enc->cfg->rc.refresh_mode)
+-            mb_rows = MPP_ALIGN(enc->cfg->prep.height, 32) / 32;
+-        else
+-            mb_rows = MPP_ALIGN(enc->cfg->prep.width, 32) / 32;
+-
+-        enc->cfg->rc.refresh_length = (mb_rows + enc->cfg->rc.refresh_num - 1) /
++        /* The VEPU541 and VEPU580 HEVC refresh regions advance in 64px CTUs. */
++        RK_U32 extent = enc->cfg->rc.refresh_mode ?
++                        enc->cfg->prep.width : enc->cfg->prep.height;
++        RK_U32 ctu_count = MPP_ALIGN(extent, 64) / 64;
++
++        enc->cfg->rc.refresh_length = (ctu_count + enc->cfg->rc.refresh_num - 1) /
+                                       enc->cfg->rc.refresh_num;
+         if (enc->cfg->rc.gop < enc->cfg->rc.refresh_length)
+@@ -1323,6 +1321,7 @@
+         }
+ 
+-        if (enc->cfg->rc.refresh_en)
+-            mpp_enc_refs_set_refresh_length(enc->refs, enc->cfg->rc.refresh_length);
++        if (!cfg->rc.refresh_en)
++            cfg->rc.refresh_length = 0;
++        mpp_enc_refs_set_refresh_length(enc->refs, cfg->rc.refresh_length);
+ 
+         /* Then process the rest config */
+--- a/mpp/hal/rkenc/h264e/hal_h264e_vepu541.c
++++ b/mpp/hal/rkenc/h264e/hal_h264e_vepu541.c
+@@ -1056,9 +1056,6 @@
+         region->w = w;
+-        if (refresh_idx > 0) {
+-            region->y = refresh_idx * 16 * refresh_num - 32;
+-            region->h = 16 * refresh_num + 32;
+-        } else {
+-            region->y = refresh_idx * 16 * refresh_num;
+-            region->h = 16 * refresh_num;
+-        }
++        RK_U32 start = refresh_idx * 16 * refresh_num;
++        RK_U32 overlap = MPP_MIN(start, 32);
++        region->y = start - overlap;
++        region->h = 16 * refresh_num + overlap;
+         regs->reg089.cme_srch_v = 1;
+@@ -1067,9 +1064,6 @@
+         region->h = h;
+-        if (refresh_idx > 0) {
+-            region->x = refresh_idx * 16 * refresh_num - 32;
+-            region->w = 16 * refresh_num + 32;
+-        } else {
+-            region->x = refresh_idx * 16 * refresh_num;
+-            region->w = 16 * refresh_num;
+-        }
++        RK_U32 start = refresh_idx * 16 * refresh_num;
++        RK_U32 overlap = MPP_MIN(start, 32);
++        region->x = start - overlap;
++        region->w = 16 * refresh_num + overlap;
+         regs->reg089.cme_srch_h = 1;
+--- a/mpp/hal/rkenc/h265e/hal_h265e_vepu541.c
++++ b/mpp/hal/rkenc/h265e/hal_h265e_vepu541.c
+@@ -902,9 +902,6 @@
+         region->w = w;
+-        if (refresh_idx > 0) {
+-            region->y = refresh_idx * 64 * ctx->cfg->rc.refresh_num - 128;
+-            region->h = 64 * ctx->cfg->rc.refresh_num + 128;
+-        } else {
+-            region->y = refresh_idx * 64 * ctx->cfg->rc.refresh_num;
+-            region->h = 64 * ctx->cfg->rc.refresh_num;
+-        }
++        RK_U32 start = refresh_idx * 64 * ctx->cfg->rc.refresh_num;
++        RK_U32 overlap = MPP_MIN(start, 128);
++        region->y = start - overlap;
++        region->h = 64 * ctx->cfg->rc.refresh_num + overlap;
+         regs->me_rnge.cime_srch_v = 1;
+@@ -913,9 +910,6 @@
+         region->h = h;
+-        if (refresh_idx > 0) {
+-            region->x = refresh_idx * 64 * ctx->cfg->rc.refresh_num - 128;
+-            region->w = 64 * ctx->cfg->rc.refresh_num + 128;
+-        } else {
+-            region->x = refresh_idx * 64 * ctx->cfg->rc.refresh_num;
+-            region->w = 64 * ctx->cfg->rc.refresh_num;
+-        }
++        RK_U32 start = refresh_idx * 64 * ctx->cfg->rc.refresh_num;
++        RK_U32 overlap = MPP_MIN(start, 128);
++        region->x = start - overlap;
++        region->w = 64 * ctx->cfg->rc.refresh_num + overlap;
+         regs->me_rnge.cime_srch_h = 1;
+--- a/mpp/hal/rkenc/h264e/hal_h264e_vepu580.c
++++ b/mpp/hal/rkenc/h264e/hal_h264e_vepu580.c
+@@ -1510,20 +1510,14 @@
+         region->w = w;
+-        if (refresh_idx > 0) {
+-            region->y = refresh_idx * 16 * refresh_num - 32;
+-            region->h = 16 * refresh_num + 32;
+-        } else {
+-            region->y = refresh_idx * 16 * refresh_num;
+-            region->h = 16 * refresh_num;
+-        }
++        RK_U32 start = refresh_idx * 16 * refresh_num;
++        RK_U32 overlap = MPP_MIN(start, 32);
++        region->y = start - overlap;
++        region->h = 16 * refresh_num + overlap;
+         regs->reg_base.common.me_rnge.cme_srch_v = 1;
+     } else if (ctx->cfg->rc.refresh_mode == MPP_ENC_RC_INTRA_REFRESH_COL) {
+         region->y = 0;
+         region->h = h;
+-        if (refresh_idx > 0) {
+-            region->x = refresh_idx * 16 * refresh_num - 32;
+-            region->w = 16 * refresh_num + 32;
+-        } else {
+-            region->x = refresh_idx * 16 * refresh_num;
+-            region->w = 16 * refresh_num;
+-        }
++        RK_U32 start = refresh_idx * 16 * refresh_num;
++        RK_U32 overlap = MPP_MIN(start, 32);
++        region->x = start - overlap;
++        region->w = 16 * refresh_num + overlap;
+         regs->reg_base.common.me_rnge.cme_srch_h = 1;

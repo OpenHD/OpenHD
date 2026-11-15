@@ -115,6 +115,7 @@ jobs:
             curl -fsSL --retry 5 "https://codeload.github.com/HermanChen/mpp/tar.gz/${mpp_ref}" -o "${mpp_archive}"
             printf '%s  %s\n' 345148b74b8a5e5dd329d58163113756581102685fe9d3d657621960d04172f4 "${mpp_archive}" | sha256sum -c -
             tar -xzf "${mpp_archive}" -C "${RUNNER_TEMP}"
+            patch -d "${RUNNER_TEMP}/mpp-${mpp_ref}" -p1 < scripts/rockchip-mpp-intra-refresh.patch
             mpp_build="${RUNNER_TEMP}/x21-mpp-build"
             export OPENHD_SYSROOT="${sysroot}" OPENHD_CROSS_TRIPLET=aarch64-linux-gnu
             cmake -S "${RUNNER_TEMP}/mpp-${mpp_ref}" -B "${mpp_build}" \

@@ -493,25 +493,25 @@ class CameraHolder :
   }
   bool set_mpp_intra_refresh_enable(int value) {
     if (!openhd::validate_yes_or_no(value)) return false;
+    if (get_settings().mpp_intra_refresh_enable == (value != 0)) return true;
     unsafe_get_settings().mpp_intra_refresh_enable = value != 0;
-    persist(false);
-    if (m_video_roi_changed_callback) m_video_roi_changed_callback();
+    persist();
     return true;
   }
   bool set_mpp_intra_refresh_mode(int value) {
     // Rockchip MPP exposes only row (0) and column (1) refresh. Its enum value
     // 2 is the end sentinel, not a sparse-block mode.
     if (value < 0 || value > 1) return false;
+    if (get_settings().mpp_intra_refresh_mode == value) return true;
     unsafe_get_settings().mpp_intra_refresh_mode = value;
-    persist(false);
-    if (m_video_roi_changed_callback) m_video_roi_changed_callback();
+    persist(get_settings().mpp_intra_refresh_enable);
     return true;
   }
   bool set_mpp_intra_refresh_num(int value) {
     if (value < 1 || value > 32) return false;
+    if (get_settings().mpp_intra_refresh_num == value) return true;
     unsafe_get_settings().mpp_intra_refresh_num = value;
-    persist(false);
-    if (m_video_roi_changed_callback) m_video_roi_changed_callback();
+    persist(get_settings().mpp_intra_refresh_enable);
     return true;
   }
   bool set_mpp_record_bitrate(int value_mbits) {

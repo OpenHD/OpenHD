@@ -110,6 +110,12 @@ std::optional<CameraSettings> CameraHolder::impl_deserialize(
     parsed_settings->h26x_bitrate_kbits =
         std::clamp(parsed_settings->h26x_bitrate_kbits, 1000,
                    get_max_video_bitrate_kbits());
+    // Older settings could contain mode 2, which is outside MPP's enum.
+    if (parsed_settings->mpp_intra_refresh_mode != 1) {
+      parsed_settings->mpp_intra_refresh_mode = 0;
+    }
+    parsed_settings->mpp_intra_refresh_num =
+        std::clamp(parsed_settings->mpp_intra_refresh_num, 1, 32);
     parsed_settings->mpp_debug_noise_percent =
         std::clamp(parsed_settings->mpp_debug_noise_percent, 0, 100);
     parsed_settings->mpp_debug_packet_loss_percent =
@@ -413,95 +419,103 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
             static_cast<int>(get_settings().rk_bitrate_pid_enable),
             c_rk_bitrate_pid_enable}});
   }
-  if (m_camera.requires_rockchip1126_mpp_csi_pipeline() ||
-      m_camera.requires_rockchip1126_mpp_testsrc_pipeline()) {
-    auto add_roi_param = [&ret](const char* name, int value, auto setter) {
-      ret.push_back(openhd::Setting{name, openhd::IntSetting{value, setter}});
-    };
-    add_roi_param("MPP_ROI_ENABLE", get_settings().mpp_roi_enable,
+  const bool rv1126_mpp_camera = m_camera.requires_rockchip1126_mpp_csi_pipeline() ||
+                                m_camera.requires_rockchip1126_mpp_testsrc_pipeline();
+  auto add_mpp_param = [&ret](const char* name, int value, auto setter) {
+    ret.push_back(openhd::Setting{name, openhd::IntSetting{value, setter}});
+  };
+  if (rv1126_mpp_camera) {
+    add_mpp_param("MPP_ROI_ENABLE", get_settings().mpp_roi_enable,
                   [this](std::string, int value) {
                     return set_mpp_roi_enable(value);
                   });
-    add_roi_param("MPP_ROI_X", get_settings().mpp_roi_x_percent,
+    add_mpp_param("MPP_ROI_X", get_settings().mpp_roi_x_percent,
                   [this](std::string, int value) {
                     return set_mpp_roi_geometry(0, value);
                   });
-    add_roi_param("MPP_ROI_Y", get_settings().mpp_roi_y_percent,
+    add_mpp_param("MPP_ROI_Y", get_settings().mpp_roi_y_percent,
                   [this](std::string, int value) {
                     return set_mpp_roi_geometry(1, value);
                   });
-    add_roi_param("MPP_ROI_W", get_settings().mpp_roi_width_percent,
+    add_mpp_param("MPP_ROI_W", get_settings().mpp_roi_width_percent,
                   [this](std::string, int value) {
                     return set_mpp_roi_geometry(2, value);
                   });
-    add_roi_param("MPP_ROI_H", get_settings().mpp_roi_height_percent,
+    add_mpp_param("MPP_ROI_H", get_settings().mpp_roi_height_percent,
                   [this](std::string, int value) {
                     return set_mpp_roi_geometry(3, value);
                   });
-    add_roi_param("MPP_ROI_QP", get_settings().mpp_roi_quality,
+    add_mpp_param("MPP_ROI_QP", get_settings().mpp_roi_quality,
                   [this](std::string, int value) {
                     return set_mpp_roi_quality(value);
                   });
-    add_roi_param("MPP_IR_ENABLE", get_settings().mpp_intra_refresh_enable,
-                  [this](std::string, int value) {
-                    return set_mpp_intra_refresh_enable(value);
-                  });
-    add_roi_param("MPP_IR_MODE", get_settings().mpp_intra_refresh_mode,
-                  [this](std::string, int value) {
-                    return set_mpp_intra_refresh_mode(value);
-                  });
-    add_roi_param("MPP_IR_NUM", get_settings().mpp_intra_refresh_num,
-                  [this](std::string, int value) {
-                    return set_mpp_intra_refresh_num(value);
-                  });
-    add_roi_param("MPP_REC_MBPS",
+    add_mpp_param("MPP_REC_MBPS",
                   get_settings().mpp_record_bitrate_kbits / 1000,
                   [this](std::string, int value) {
                     return set_mpp_record_bitrate(value);
                   });
-    add_roi_param("MPP_REC_QPMIN", get_settings().mpp_record_qp_min,
+    add_mpp_param("MPP_REC_QPMIN", get_settings().mpp_record_qp_min,
                   [this](std::string, int value) {
                     return set_mpp_record_qp_min(value);
                   });
-    add_roi_param("MPP_REC_QPMAX", get_settings().mpp_record_qp_max,
+    add_mpp_param("MPP_REC_QPMAX", get_settings().mpp_record_qp_max,
                   [this](std::string, int value) {
                     return set_mpp_record_qp_max(value);
                   });
-    add_roi_param("DBG_NOISE", get_settings().mpp_debug_noise_percent,
+    add_mpp_param("DBG_NOISE", get_settings().mpp_debug_noise_percent,
                   [this](std::string, int value) {
                     return set_mpp_debug_noise(value);
                   });
-    add_roi_param("DBG_PKT_LOSS",
+    add_mpp_param("DBG_PKT_LOSS",
                   get_settings().mpp_debug_packet_loss_percent,
                   [this](std::string, int value) {
                     return set_mpp_debug_packet_loss(value);
                   });
-    add_roi_param("DBG_KEY_LOSS",
+    add_mpp_param("DBG_KEY_LOSS",
                   get_settings().mpp_debug_keyframe_loss_percent,
                   [this](std::string, int value) {
                     return set_mpp_debug_keyframe_loss(value);
                   });
-    add_roi_param("MPP_FORCE_IDR", 0, [this](std::string, int value) {
+    add_mpp_param("MPP_FORCE_IDR", 0, [this](std::string, int value) {
       return force_mpp_keyframe(value);
     });
-    add_roi_param("DBG_BR_SWEEP", get_settings().mpp_debug_bitrate_sweep,
+    add_mpp_param("DBG_BR_SWEEP", get_settings().mpp_debug_bitrate_sweep,
                   [this](std::string, int value) {
                     return set_mpp_debug_bitrate_sweep(value);
                   });
-    add_roi_param("DBG_BR_MIN",
+    add_mpp_param("DBG_BR_MIN",
                   get_settings().mpp_debug_bitrate_min_kbits / 1000,
                   [this](std::string, int value) {
                     return set_mpp_debug_bitrate_min(value);
                   });
-    add_roi_param("DBG_BR_MAX",
+    add_mpp_param("DBG_BR_MAX",
                   get_settings().mpp_debug_bitrate_max_kbits / 1000,
                   [this](std::string, int value) {
                     return set_mpp_debug_bitrate_max(value);
                   });
-    add_roi_param("DBG_BR_PERIOD",
+    add_mpp_param("DBG_BR_PERIOD",
                   get_settings().mpp_debug_bitrate_period_seconds,
                   [this](std::string, int value) {
                     return set_mpp_debug_bitrate_period(value);
+                  });
+  }
+  bool has_mpp_intra_refresh = rv1126_mpp_camera;
+#ifdef OPENHD_ROCKCHIP_MPP_PRESENT
+  has_mpp_intra_refresh |=
+      m_camera.uses_zero3w_native_mpp(OHDPlatform::instance().platform_type);
+#endif
+  if (has_mpp_intra_refresh) {
+    add_mpp_param("MPP_IR_ENABLE", get_settings().mpp_intra_refresh_enable,
+                  [this](std::string, int value) {
+                    return set_mpp_intra_refresh_enable(value);
+                  });
+    add_mpp_param("MPP_IR_MODE", get_settings().mpp_intra_refresh_mode,
+                  [this](std::string, int value) {
+                    return set_mpp_intra_refresh_mode(value);
+                  });
+    add_mpp_param("MPP_IR_NUM", get_settings().mpp_intra_refresh_num,
+                  [this](std::string, int value) {
+                    return set_mpp_intra_refresh_num(value);
                   });
   }
   if (true) {  // Always show intra, on libcamera without sw encode it
