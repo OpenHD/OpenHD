@@ -1165,6 +1165,8 @@ std::optional<std::vector<SysutilStorageEntry>> request_sysutil_storage_list(
     entry.can_format = item.value("can_format", false);
     entry.can_repartition = item.value("can_repartition", false);
     entry.can_mount = item.value("can_mount", false);
+    entry.recording_card_needs_format =
+        item.value("recording_card_needs_format", false);
     if (entry.id != 0 && !entry.device.empty()) {
       entries.push_back(std::move(entry));
     }

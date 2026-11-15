@@ -386,7 +386,11 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_storage_information() {
                 : (entry.filesystem.empty() ? STORAGE_STATUS_UNFORMATTED
                                             : STORAGE_STATUS_READY);
     const std::string name =
-        std::string(is_disk ? "D " : "P ") + entry.device;
+        std::string(is_disk ? "D " : "P ") +
+        (entry.recording_card_needs_format ? "U " : "") + entry.device;
+    // OpenHD encodes storage capabilities in read_speed. Keep bit 5 for
+    // the recording-card prompt and bit 4 for the existing repartition action.
+    const float capabilities = entry.recording_card_needs_format ? 48.0F : 0.0F;
     std::array<char, 32> storage_name{};
     std::memcpy(storage_name.data(), name.data(),
                 std::min(name.size(), storage_name.size() - 1));
@@ -394,7 +398,7 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_storage_information() {
     mavlink_msg_storage_information_pack(
         m_sys_id, m_comp_id, &message.m, 0, entry.id,
         static_cast<uint8_t>(entries->size()), status, total_mib, used_mib,
-        available_mib, 0.0F, 0.0F,
+        available_mib, capabilities, 0.0F,
         is_disk ? STORAGE_TYPE_HD : STORAGE_TYPE_OTHER, storage_name.data(),
         entry.mounted_at_video
             ? STORAGE_USAGE_FLAG_SET | STORAGE_USAGE_FLAG_VIDEO

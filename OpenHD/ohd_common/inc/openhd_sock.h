@@ -210,6 +210,7 @@ struct SysutilStorageEntry {
   bool can_format = false;
   bool can_repartition = false;
   bool can_mount = false;
+  bool recording_card_needs_format = false;
 };
 
 std::optional<std::vector<SysutilStorageEntry>> request_sysutil_storage_list(
