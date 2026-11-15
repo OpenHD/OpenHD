@@ -97,17 +97,7 @@ struct CameraSettings {
   int qp_min = 5;
   bool qp_pid_enable = false;
   bool rk_bitrate_pid_enable = false;
-  // Native Rockchip MPP region of interest. Geometry is expressed as a
-  // percentage of the encoded picture; negative quality values improve the
-  // selected region by lowering its QP.
-  // ROI is opt-in. Some sensors and MPP versions do not support region
-  // updates reliably, so production images must not enable it implicitly.
-  bool mpp_roi_enable = false;
-  int mpp_roi_x_percent = 25;
-  int mpp_roi_y_percent = 25;
-  int mpp_roi_width_percent = 50;
-  int mpp_roi_height_percent = 50;
-  int mpp_roi_quality = -8;
+  bool mpp_center_roi_enable = true;
   // Native MPP intra-refresh is opt-in. A normal short GOP provides recovery
   // without relying on firmware-specific intra-refresh behavior.
   // Mode 0 refreshes rows, mode 1 columns. One block row per frame gives a

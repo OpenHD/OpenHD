@@ -39,9 +39,8 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(VideoFormat, videoCodec, width, height,
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
     CameraSettings, enable_streaming, ip_camera_pipeline, ip_camera_address,
-    qp_max, qp_min, qp_pid_enable, rk_bitrate_pid_enable, mpp_roi_enable,
-    mpp_roi_x_percent, mpp_roi_y_percent, mpp_roi_width_percent,
-    mpp_roi_height_percent, mpp_roi_quality, mpp_intra_refresh_enable,
+    qp_max, qp_min, qp_pid_enable, rk_bitrate_pid_enable, mpp_center_roi_enable,
+    mpp_intra_refresh_enable,
     mpp_intra_refresh_mode, mpp_intra_refresh_num, mpp_record_bitrate_kbits,
     mpp_record_qp_min, mpp_record_qp_max, mpp_debug_noise_percent,
     mpp_debug_packet_loss_percent, mpp_debug_keyframe_loss_percent,
@@ -425,30 +424,6 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
     ret.push_back(openhd::Setting{name, openhd::IntSetting{value, setter}});
   };
   if (rv1126_mpp_camera) {
-    add_mpp_param("MPP_ROI_ENABLE", get_settings().mpp_roi_enable,
-                  [this](std::string, int value) {
-                    return set_mpp_roi_enable(value);
-                  });
-    add_mpp_param("MPP_ROI_X", get_settings().mpp_roi_x_percent,
-                  [this](std::string, int value) {
-                    return set_mpp_roi_geometry(0, value);
-                  });
-    add_mpp_param("MPP_ROI_Y", get_settings().mpp_roi_y_percent,
-                  [this](std::string, int value) {
-                    return set_mpp_roi_geometry(1, value);
-                  });
-    add_mpp_param("MPP_ROI_W", get_settings().mpp_roi_width_percent,
-                  [this](std::string, int value) {
-                    return set_mpp_roi_geometry(2, value);
-                  });
-    add_mpp_param("MPP_ROI_H", get_settings().mpp_roi_height_percent,
-                  [this](std::string, int value) {
-                    return set_mpp_roi_geometry(3, value);
-                  });
-    add_mpp_param("MPP_ROI_QP", get_settings().mpp_roi_quality,
-                  [this](std::string, int value) {
-                    return set_mpp_roi_quality(value);
-                  });
     add_mpp_param("MPP_REC_MBPS",
                   get_settings().mpp_record_bitrate_kbits / 1000,
                   [this](std::string, int value) {
@@ -501,8 +476,17 @@ std::vector<openhd::Setting> CameraHolder::get_all_settings() {
   }
   bool has_mpp_intra_refresh = rv1126_mpp_camera;
 #ifdef OPENHD_ROCKCHIP_MPP_PRESENT
-  has_mpp_intra_refresh |=
+  const bool zero3w_mpp =
       m_camera.uses_zero3w_native_mpp(OHDPlatform::instance().platform_type);
+  has_mpp_intra_refresh |= zero3w_mpp;
+  if ((rv1126_mpp_camera &&
+       get_settings().rockchip_impl == ROCKCHIP_IMPL_NATIVE_MPP) ||
+      zero3w_mpp) {
+    add_mpp_param("MPP_ROI_ENABLE", get_settings().mpp_center_roi_enable,
+                  [this](std::string, int value) {
+                    return set_mpp_center_roi_enable(value);
+                  });
+  }
 #endif
   if (has_mpp_intra_refresh) {
     add_mpp_param("MPP_IR_ENABLE", get_settings().mpp_intra_refresh_enable,

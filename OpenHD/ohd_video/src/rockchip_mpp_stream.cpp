@@ -231,7 +231,6 @@ class RockchipMppStream::Impl {
     qp_min = settings.qp_min;
     qp_max = settings.qp_max;
     orientation = (settings.camera_rotation_degree / 90 << 2) | settings.openhd_flip;
-    update_roi_snapshot();
     update_recording_snapshot();
     update_debug_snapshot();
     rtp = std::make_shared<openhd::RTPHelper>(
@@ -347,6 +346,8 @@ class RockchipMppStream::Impl {
       return false;
     }
     applied_orientation = initial_orientation;
+    roi_cfg.number = 0;
+    if (s.mpp_center_roi_enable) configure_center_roi();
     const auto buffer_type = static_cast<MppBufferType>(
         MPP_BUFFER_TYPE_DRM | MPP_BUFFER_FLAGS_CACHABLE);
     if (mpp_buffer_group_get_internal(&group, buffer_type) ||
@@ -1367,8 +1368,8 @@ class RockchipMppStream::Impl {
               "record_mode={} record_target_kbit_s={}",
               owner.m_camera_holder->get_camera().index, record_mode.load(),
               std::max(5000, record_bitrate_kbits.load()));
-    log->info("Native MPP encoder active: {}x{} ROI is runtime adjustable",
-              width, height);
+    log->info("Native MPP encoder active: {}x{}, center ROI {}",
+              width, height, roi_cfg.number ? "on" : "off");
     openhd::LinkActionHandler::instance().set_cam_info_status(
         owner.m_camera_holder->get_camera().index,
         CameraStream::CAM_STATUS_STREAMING);
@@ -1563,11 +1564,8 @@ class RockchipMppStream::Impl {
     mpp_frame_set_ver_stride(frame, ver_stride);
     mpp_frame_set_fmt(frame, MPP_FMT_YUV420SP);
     mpp_frame_set_buffer(frame, encoder_input);
-    if (roi_enable.load()) {
-      auto& region = transmit ? roi_region : record_roi_region;
-      auto& config = transmit ? roi_cfg : record_roi_cfg;
-      configure_roi(region, config);
-      mpp_meta_set_ptr(mpp_frame_get_meta(frame), KEY_ROI_DATA, &config);
+    if (transmit && roi_cfg.number) {
+      mpp_meta_set_ptr(mpp_frame_get_meta(frame), KEY_ROI_DATA, &roi_cfg);
     }
     const auto encode_now = std::chrono::steady_clock::now();
     bool request_keyframe = transmit && force_keyframe_pending.exchange(false);
@@ -1962,37 +1960,27 @@ class RockchipMppStream::Impl {
     return emitted;
   }
 
-  void configure_roi(MppEncROIRegion& region, MppEncROICfg& roi_cfg) {
-    auto pct = [](RK_U32 extent, int percentage) {
-      return align16(extent * static_cast<RK_U32>(percentage) / 100U);
+  void configure_center_roi() {
+    // sqrt(0.5) on both axes covers half the frame. Round to MPP's block grid.
+    constexpr double axis_scale = 0.7071067811865476;
+    const auto align_to_block = [](double pixels) {
+      return static_cast<int>((pixels + 8) / 16) * 16;
     };
-    region.x = std::min(pct(width, roi_x.load()), align16(width) - 16);
-    region.y = std::min(pct(height, roi_y.load()), align16(height) - 16);
-    region.w = std::max<RK_U32>(16, pct(width, roi_width.load()));
-    region.h = std::max<RK_U32>(16, pct(height, roi_height.load()));
-    region.w = std::min<RK_U32>(region.w, align16(width) - region.x);
-    region.h = std::min<RK_U32>(region.h, align16(height) - region.y);
-    region.quality = roi_quality.load();
-    region.abs_qp_en = 0;
+    roi_region.w = align_to_block(width * axis_scale);
+    roi_region.h = align_to_block(height * axis_scale);
+    roi_region.x = align_to_block((width - roi_region.w) / 2.0);
+    roi_region.y = align_to_block((height - roi_region.h) / 2.0);
+    // Keep the QP relative to the frame QP chosen by CBR.
+    roi_region.quality = -10;
+    roi_region.area_map_en = 1;
     roi_cfg.number = 1;
 #if defined(OPENHD_LEGACY_MPP_API)
-    roi_cfg.regions[0] = region;
+    roi_cfg.regions[0] = roi_region;
 #else
-    roi_cfg.regions = &region;
+    roi_cfg.regions = &roi_region;
 #endif
   }
 
-  void update_roi_snapshot() {
-    const auto& s = owner.m_camera_holder->get_settings();
-    // These are the primary MPP resilience features; keep them enabled even
-    // if an older persisted profile contains a false/missing value.
-    roi_enable = s.mpp_roi_enable;
-    roi_x = s.mpp_roi_x_percent;
-    roi_y = s.mpp_roi_y_percent;
-    roi_width = s.mpp_roi_width_percent;
-    roi_height = s.mpp_roi_height_percent;
-    roi_quality = s.mpp_roi_quality;
-  }
 
   void update_recording_snapshot() {
     const auto& s = owner.m_camera_holder->get_settings();
@@ -2095,12 +2083,6 @@ class RockchipMppStream::Impl {
   std::atomic<int> requested_bitrate_kbits{8000};
   std::atomic<int> qp_min{5};
   std::atomic<int> qp_max{51};
-  std::atomic_bool roi_enable{false};
-  std::atomic<int> roi_x{25};
-  std::atomic<int> roi_y{25};
-  std::atomic<int> roi_width{50};
-  std::atomic<int> roi_height{50};
-  std::atomic<int> roi_quality{-8};
   bool intra_refresh_enabled = false;
   int refresh_idr_period = 0;
   int frames_until_refresh_idr = 0;
@@ -2165,8 +2147,6 @@ class RockchipMppStream::Impl {
   // backing storage must outlive the encode_context stack frame.
   MppEncROIRegion roi_region{};
   MppEncROICfg roi_cfg{};
-  MppEncROIRegion record_roi_region{};
-  MppEncROICfg record_roi_cfg{};
   std::optional<Clock::time_point> record_time_origin;
   uint64_t record_timestamp_ms = 0;
   Clock::time_point record_capture_time;
@@ -2218,8 +2198,6 @@ RockchipMppStream::RockchipMppStream(
     m_impl->qp_max = max;
     m_impl->rate_dirty = true;
   });
-  m_camera_holder->register_video_roi_listener(
-      [this]() { m_impl->update_roi_snapshot(); });
   m_camera_holder->register_video_recording_listener(
       [this]() { m_impl->update_recording_snapshot(); });
   m_camera_holder->register_video_debug_listener(
@@ -2234,7 +2212,6 @@ RockchipMppStream::~RockchipMppStream() {
   m_camera_holder->register_listener(nullptr);
   m_camera_holder->register_video_bitrate_listener(nullptr);
   m_camera_holder->register_video_qp_listener(nullptr);
-  m_camera_holder->register_video_roi_listener(nullptr);
   m_camera_holder->register_video_recording_listener(nullptr);
   m_camera_holder->register_video_debug_listener(nullptr);
   m_camera_holder->register_video_force_keyframe_listener(nullptr);

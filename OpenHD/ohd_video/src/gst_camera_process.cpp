@@ -70,8 +70,6 @@ CameraProcess::CameraProcess(std::shared_ptr<CameraHolder> camera,
       m_flip = flip;
       m_snapshot = m_camera_holder->settings_snapshot();
     });
-    m_camera_holder->register_video_roi_listener(
-        [this]() { refresh_settings(true); });
     m_camera_holder->register_video_recording_listener(
         [this]() { refresh_settings(true); });
     m_camera_holder->register_video_debug_listener(
@@ -97,7 +95,6 @@ CameraProcess::~CameraProcess() {
   m_camera_holder->register_video_qp_listener(nullptr);
   if (m_backend == Backend::Mpp) {
     m_camera_holder->register_video_orientation_listener(nullptr);
-    m_camera_holder->register_video_roi_listener(nullptr);
     m_camera_holder->register_video_recording_listener(nullptr);
     m_camera_holder->register_video_debug_listener(nullptr);
     m_camera_holder->register_video_force_keyframe_listener(nullptr);

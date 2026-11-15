@@ -129,3 +129,138 @@
 +        region->x = start - overlap;
 +        region->w = 16 * refresh_num + overlap;
          regs->reg_base.common.me_rnge.cme_srch_h = 1;
+--- a/mpp/hal/rkenc/common/vepu541_common.c
++++ b/mpp/hal/rkenc/common/vepu541_common.c
+@@ -34,7 +34,8 @@
+     return buf_size + 32;
+ }
+ 
+-MPP_RET vepu541_set_one_roi(void *buf, MppEncROIRegion *region, RK_S32 w, RK_S32 h)
++static MPP_RET vepu541_apply_roi(void *buf, MppEncROIRegion *region, RK_S32 w, RK_S32 h,
++                                 RK_U32 preserve_qp)
+ {
+     Vepu541RoiCfg *ptr = (Vepu541RoiCfg *)buf;
+     RK_S32 mb_w = MPP_ALIGN(w, 16) / 16;
+@@ -79,13 +80,27 @@
+     for (y = 0; y < roi_height; y++) {
+         Vepu541RoiCfg *dst = ptr;
+ 
+-        for (x = 0; x < roi_width; x++, dst++)
+-            memcpy(dst, &cfg, sizeof(cfg));
++        for (x = 0; x < roi_width; x++, dst++) {
++            if (preserve_qp && dst->qp_adj)
++                dst->force_intra = 1;
++            else
++                memcpy(dst, &cfg, sizeof(cfg));
++        }
+ 
+         ptr += stride_h;
+     }
+ DONE:
+     return ret;
++}
++
++MPP_RET vepu541_set_one_roi(void *buf, MppEncROIRegion *region, RK_S32 w, RK_S32 h)
++{
++    return vepu541_apply_roi(buf, region, w, h, 0);
++}
++
++MPP_RET vepu541_set_refresh_roi(void *buf, MppEncROIRegion *region, RK_S32 w, RK_S32 h)
++{
++    return vepu541_apply_roi(buf, region, w, h, 1);
+ }
+ 
+ MPP_RET vepu541_set_roi(void *buf, MppEncROICfg *roi, RK_S32 w, RK_S32 h)
+--- a/mpp/hal/rkenc/common/vepu541_common.h
++++ b/mpp/hal/rkenc/common/vepu541_common.h
+@@ -111,6 +111,7 @@
+ RK_S32  vepu541_get_roi_buf_size(RK_S32 w, RK_S32 h);
+ MPP_RET vepu541_set_roi(void *buf, MppEncROICfg *roi, RK_S32 w, RK_S32 h);
+ MPP_RET vepu541_set_one_roi(void *buf, MppEncROIRegion *region, RK_S32 w, RK_S32 h);
++MPP_RET vepu541_set_refresh_roi(void *buf, MppEncROIRegion *region, RK_S32 w, RK_S32 h);
+ 
+ MPP_RET vepu541_set_osd(Vepu5xxOsdCfg *cfg);
+ MPP_RET vepu540_set_osd(Vepu5xxOsdCfg *cfg);
+--- a/mpp/hal/rkenc/h264e/hal_h264e_vepu541.c
++++ b/mpp/hal/rkenc/h264e/hal_h264e_vepu541.c
+@@ -1004,7 +1004,8 @@
+     MPP_RET ret = MPP_OK;
+     RK_U32 w = ctx->sps->pic_width_in_mbs * 16;
+     RK_U32 h = ctx->sps->pic_height_in_mbs * 16;
+-    MppEncROIRegion *region = NULL;
++    MppEncROIRegion refresh_region = {0};
++    MppEncROIRegion *region = &refresh_region;
+     RK_U32 refresh_num = ctx->cfg->rc.refresh_num;
+     RK_U32 stride_h = MPP_ALIGN(w / 16, 4);
+     RK_U32 stride_v = MPP_ALIGN(h / 16, 4);
+@@ -1043,13 +1044,6 @@
+ 
+     for (i = 0; i < stride_h * stride_v; i++, ptr++)
+         memcpy(ptr, &cfg, sizeof(cfg));
+-
+-    region = mpp_calloc(MppEncROIRegion, 1);
+-
+-    if (NULL == region) {
+-        mpp_err_f("Failed to calloc for MppEncROIRegion !\n");
+-        ret = MPP_ERR_MALLOC;
+-    }
+ 
+     if (ctx->cfg->rc.refresh_mode == MPP_ENC_RC_INTRA_REFRESH_ROW) {
+         region->x = 0;
+@@ -1078,8 +1072,10 @@
+ 
+     regs->reg013.roi_enc = 1;
+     regs->reg073.roi_addr = fd;
+-    vepu541_set_one_roi(buf, region, w, h);
+-    mpp_free(region);
++    /* Keep the spatial QP map and add the force-intra sweep over it. */
++    if (ctx->roi_data && ctx->roi_data->regions && ctx->roi_data->number)
++        vepu541_set_roi(buf, ctx->roi_data, w, h);
++    vepu541_set_refresh_roi(buf, region, w, h);
+     mpp_buffer_sync_end(ctx->roi_buf);
+ 
+ RET:
+--- a/mpp/hal/rkenc/h265e/hal_h265e_vepu541.c
++++ b/mpp/hal/rkenc/h265e/hal_h265e_vepu541.c
+@@ -848,9 +848,10 @@
+     MPP_RET ret = MPP_OK;
+     RK_U32 h = ctx->cfg->prep.height;
+     RK_U32 w = ctx->cfg->prep.width;
+-    MppEncROIRegion *region = NULL;
+-    RK_U32 stride_h = MPP_ALIGN(w / 16, 4);
+-    RK_U32 stride_v = MPP_ALIGN(h / 16, 4);
++    MppEncROIRegion refresh_region = {0};
++    MppEncROIRegion *region = &refresh_region;
++    RK_U32 stride_h = MPP_ALIGN(w, 64) / 16;
++    RK_U32 stride_v = MPP_ALIGN(h, 64) / 16;
+     RK_U32 i = 0;
+     RK_U32 roi_buf_size;
+ 
+@@ -889,13 +890,6 @@
+ 
+     for (i = 0; i < stride_h * stride_v; i++, ptr++)
+         memcpy(ptr, &cfg, sizeof(cfg));
+-
+-    region = mpp_calloc(MppEncROIRegion, 1);
+-
+-    if (NULL == region) {
+-        mpp_err_f("Failed to calloc for MppEncROIRegion !\n");
+-        ret = MPP_ERR_MALLOC;
+-    }
+ 
+     if (ctx->cfg->rc.refresh_mode == MPP_ENC_RC_INTRA_REFRESH_ROW) {
+         region->x = 0;
+@@ -924,9 +918,11 @@
+ 
+     regs->enc_pic.roi_en = 1;
+     regs->roi_addr_hevc = fd;
+-    vepu541_set_one_roi(buf, region, w, h);
++    /* Keep the spatial QP map and add the force-intra sweep over it. */
++    if (ctx->roi_data && ctx->roi_data->regions && ctx->roi_data->number)
++        vepu541_set_roi(buf, ctx->roi_data, w, h);
++    vepu541_set_refresh_roi(buf, region, w, h);
+     vepu541_h265_set_roi(dst_buf, buf, w, h);
+-    mpp_free(region);
+     mpp_buffer_sync_end(ctx->roi_buf);
+ 
+ RET:
