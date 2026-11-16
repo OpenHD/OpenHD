@@ -131,7 +131,9 @@ void CameraProcess::handle_change_bitrate_request(
 #endif
   } else {
     requested = m_camera_holder->clamp_video_bitrate_kbits(requested);
-    if (m_backend == Backend::Libcamera) requested = std::max(2000, requested);
+    if (m_backend == Backend::Libcamera) {
+      requested = std::max(RPI_HARDWARE_MIN_BITRATE_KBITS, requested);
+    }
   }
   const bool changed = m_bitrate != requested;
   m_bitrate = requested;

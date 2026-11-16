@@ -39,6 +39,7 @@
 // fits well into MCS index 3, even on highly polluted channels (we account for
 // the worst here)
 static constexpr int DEFAULT_BITRATE_KBITS = 8000;
+static constexpr int RPI_HARDWARE_MIN_BITRATE_KBITS = 1500;
 // The ideal value is not definitive, and depends on the rf environment, the FEC
 // percentage, and the camera fps Higher values result in less key frames, and
 // better image quality at the same bitrate, but increases the risk for

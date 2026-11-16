@@ -85,7 +85,8 @@ void LibcameraAppStream::handle_change_bitrate_request(
         m_camera_holder->get_settings().h26x_bitrate_kbits);
   }
   requested_kbits = std::max(
-      2000, m_camera_holder->clamp_video_bitrate_kbits(requested_kbits));
+      RPI_HARDWARE_MIN_BITRATE_KBITS,
+      m_camera_holder->clamp_video_bitrate_kbits(requested_kbits));
   const int previous_kbits = m_requested_bitrate_kbits.exchange(requested_kbits);
   openhd::LinkActionHandler::instance().set_cam_info_bitrate(
       m_camera_holder->get_camera().index,
@@ -142,7 +143,8 @@ void LibcameraAppStream::run() {
     const int width = settings.streamed_video_format.width;
     const int height = settings.streamed_video_format.height;
     const int fps = settings.streamed_video_format.framerate;
-    const int bitrate_kbits = std::max(2000, m_requested_bitrate_kbits.load());
+    const int bitrate_kbits =
+        std::max(RPI_HARDWARE_MIN_BITRATE_KBITS, m_requested_bitrate_kbits.load());
     const auto& sensor_mode = settings.rpi_libcamera_sensor_mode;
     m_bitrate_update_requested = false;
     const int intra_period = settings.h26x_keyframe_interval > 0

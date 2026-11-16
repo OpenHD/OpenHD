@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
 // Shared production rate tables and FEC accounting. No platform/radio
@@ -119,6 +120,16 @@ static uint32_t rtl8812au_get_max_rate_5G_kbits(uint16_t mcs_index,
 static int deduce_fec_overhead(int bandwidth_kbits, int fec_overhead_perc) {
   const double tmp = bandwidth_kbits * 100.0 / (100.0 + fec_overhead_perc);
   return static_cast<int>(std::roundl(tmp));
+}
+
+inline int wifi_video_budget_kbits(int radio_budget_kbits, int fec_percent,
+                                  int width_mhz, int mcs_index) {
+  const int payload_kbits = deduce_fec_overhead(radio_budget_kbits, fec_percent);
+  if (width_mhz != 10) return payload_kbits;
+
+  // Reserve airtime for return telemetry and encoder bitrate bursts.
+  const int reduced_kbits = payload_kbits * 3 / 4;
+  return mcs_index == 0 ? std::min(1500, reduced_kbits) : reduced_kbits;
 }
 
 static int multiply_by_perc(int bandwidth_kbits, int percentage) {

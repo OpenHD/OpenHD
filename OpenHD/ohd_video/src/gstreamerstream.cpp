@@ -1419,20 +1419,15 @@ void GStreamerStream::request_restart() { m_request_restart = true; }
 int GStreamerStream::clamp_runtime_bitrate(const CameraHolder& holder,
                                          int bitrate_for_encoder_kbits) {
   const auto& camera = holder.get_camera();
-  int MIN_BITRATE_KBITS = 1 * 1000;
-  // RPi cannot do less than 2MBit/s
+  int minimum_kbits = 1000;
   if (OHDPlatform::instance().is_rpi() &&
       !is_usb_camera(camera.camera_type) &&
       camera.camera_type != X_CAM_TYPE_DUMMY_SW &&
       !holder.get_settings().force_sw_encode &&
       !OHDPlatform::instance().is_rpi5()) {
-    MIN_BITRATE_KBITS = 2 * 1000;
+    minimum_kbits = RPI_HARDWARE_MIN_BITRATE_KBITS;
   }
-  if (bitrate_for_encoder_kbits < MIN_BITRATE_KBITS) {
-    // m_console->debug("Cam cannot do <{}",
-    // kbits_per_second_to_string(MIN_BITRATE_KBITS));
-    bitrate_for_encoder_kbits = MIN_BITRATE_KBITS;
-  }
+  bitrate_for_encoder_kbits = std::max(bitrate_for_encoder_kbits, minimum_kbits);
   if (camera.requires_rockchip1126_mpp_csi_pipeline() ||
       camera.requires_rockchip1126_mpp_testsrc_pipeline() ||
       camera.requires_rockchip3_mpp_pipeline() ||

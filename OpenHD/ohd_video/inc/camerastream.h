@@ -70,7 +70,9 @@ class CameraStream {
   virtual int minimum_link_bitrate_kbits() const { const auto& camera = m_camera_holder->get_camera();
     const bool rpi_hardware = OHDPlatform::instance().is_rpi() && !OHDPlatform::instance().is_rpi5() &&
         !is_usb_camera(camera.camera_type) && camera.camera_type != X_CAM_TYPE_DUMMY_SW && !m_camera_holder->get_settings().force_sw_encode;
-    return m_camera_holder->clamp_video_bitrate_kbits(rpi_hardware ? 2000 : 1000); }
+    return m_camera_holder->clamp_video_bitrate_kbits(
+        rpi_hardware ? RPI_HARDWARE_MIN_BITRATE_KBITS : 1000);
+  }
   CameraStream(const CameraStream&) = delete;
   CameraStream(const CameraStream&&) = delete;
 

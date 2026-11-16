@@ -29,6 +29,12 @@ int main() {
   // Failed retunes must not mask old-channel recovery forever.
   guard.prepare(5785, 40, now);
   assert(guard.accept(5765, 20, now + std::chrono::seconds(2)));
+  using openhd::wb::wifi_video_budget_kbits;
+  assert(wifi_video_budget_kbits(2600, 20, 10, 0) == 1500);
+  assert(wifi_video_budget_kbits(2000, 50, 10, 0) == 999);
+  assert(wifi_video_budget_kbits(4900, 20, 10, 1) == 3062);
+  assert(wifi_video_budget_kbits(6600, 20, 10, 2) == 4125);
+  assert(wifi_video_budget_kbits(4900, 20, 20, 1) == 4083);
   for (int mcs = 0; mcs <= 12; ++mcs) {
     const auto wide = openhd::wb::rtl8812au_get_max_rate_5G_kbits(mcs, 20);
     assert(openhd::wb::rtl8812au_get_max_rate_5G_kbits(mcs, 10) == wide / 2);

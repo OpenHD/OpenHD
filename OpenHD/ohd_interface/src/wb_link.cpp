@@ -2731,8 +2731,9 @@ void WBLink::wt_perform_rate_adjustment() {
                 (100 - settings.wb_udp_data_link_budget_percent) / 100
           : max_rate_for_current_wifi_config;
   const int max_video_rate_for_current_wifi_fec_config =
-      openhd::wb::deduce_fec_overhead(video_radio_budget,
-                                      settings.wb_video_fec_percentage);
+      wifi_video_budget_kbits(video_radio_budget, settings.wb_video_fec_percentage,
+                             settings.wb_air_tx_channel_width,
+                             settings.wb_air_mcs_index);
   // const auto stats=m_wb_txrx->get_rx_stats();
   // m_foreign_p_helper.update(stats.count_p_any,stats.count_p_valid);
   // m_console->debug("N foreign packets per second
