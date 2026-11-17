@@ -76,6 +76,11 @@ append_elf_runtime_dependencies() {
       awk -v soname="${soname}" '
         $1 == soname && $2 == "=>" && $3 ~ /^\// { print $3; exit }
         $1 == soname && $2 ~ /^\// { print $2; exit }
+        $1 ~ /^\// {
+          direct_name = $1
+          sub(/^.*\//, "", direct_name)
+          if (direct_name == soname) { print $1; exit }
+        }
       ' <<<"${ldd_output}"
     )"
     if [[ -z "${library}" ]]; then
