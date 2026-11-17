@@ -175,15 +175,8 @@ class RCChannelHelper {
   // Atomic / thread-safe setter / getter
   void set_rc_channels(const std::array<int, 18>& rc_channels);
   std::optional<std::array<int, 18>> get_fc_reported_rc_channels();
-  /**
-   * Get the mcs index mapping pwm channel (channel_index) to mcs indices.
-   * If no rc data has been supplied by the FC yet and / or the channel index is
-   * invalid or the pwm value is not valid, return std::nullopt.
-   */
-  std::optional<int> get_mcs_from_rc_channel(
-      int channel_index, std::shared_ptr<spdlog::logger>& m_console);
-  // returns either a valid channel width (10 / 20 / 40) or std::nullopt
-  std::optional<uint8_t> get_bw_from_rc_channel(int channel_index);
+  // Channel numbers are one-based. Zero means no assignment.
+  std::optional<int> get_channel_pwm(int channel);
   std::optional<TxMode> get_tx_mode_from_rc_channel(int channel_index);
 
  private:

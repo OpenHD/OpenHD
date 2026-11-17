@@ -256,7 +256,6 @@ class WBLink : public OHDLink {
   bool m_is_armed = false;
   std::atomic_bool m_request_apply_tx_power = false;
   std::atomic_bool m_request_apply_tx_mcs_index = false;
-  std::atomic<int> m_pending_rc_channel_width = 0;
   std::atomic<int> m_rc_tx_mode_override = -1;
   std::chrono::steady_clock::time_point m_last_log_key_mismatch =
       std::chrono::steady_clock::now();

@@ -102,6 +102,29 @@ std::optional<WBLinkSettings> openhd::WBLinkSettingsHolder::impl_deserialize(
         "wb_mcs_index_via_rc_channel", settings.wb_mcs_index_via_rc_channel);
     settings.wb_bw_via_rc_channel =
         parsed.value("wb_bw_via_rc_channel", settings.wb_bw_via_rc_channel);
+    const auto load_ranges = [&parsed](RcLinkFunction function, const char* key,
+                                       const char* legacy,
+                                       RcChannelRanges& ranges) {
+      if (legacy) ranges = RcChannelRanges::parse(function, legacy).value();
+      const auto entry = parsed.find(key);
+      if (entry == parsed.end() || !entry->is_string()) return;
+      if (const auto saved = RcChannelRanges::parse(
+              function, entry->get_ref<const std::string&>())) {
+        ranges = *saved;
+      }
+    };
+    // Preserve the fixed PWM thresholds for already assigned channels when
+    // upgrading from firmware that did not store ranges.
+    load_ranges(RcLinkFunction::Mcs, "rc_mcs_ranges",
+                settings.wb_mcs_index_via_rc_channel != 0
+                    ? "1200:0,1400:1,1600:2,1800:3,2100:4"
+                    : nullptr,
+                settings.rc_mcs_ranges);
+    load_ranges(RcLinkFunction::Bandwidth, "rc_bw_ranges",
+                settings.wb_bw_via_rc_channel != 0
+                    ? "1300:10,1700:20,2100:40"
+                    : nullptr,
+                settings.rc_bw_ranges);
     settings.wb_tx_mode_via_rc_channel = parsed.value(
         "wb_tx_mode_via_rc_channel", settings.wb_tx_mode_via_rc_channel);
     settings.enable_wb_video_variable_bitrate =
@@ -164,8 +187,41 @@ std::optional<WBLinkSettings> openhd::WBLinkSettingsHolder::impl_deserialize(
 
 std::string WBLinkSettingsHolder::imp_serialize(
     const openhd::WBLinkSettings &data) const {
-  const nlohmann::json tmp = data;
+  nlohmann::json tmp = data;
+  tmp["rc_mcs_ranges"] = data.rc_mcs_ranges.encode();
+  tmp["rc_bw_ranges"] = data.rc_bw_ranges.encode();
   return tmp.dump(4);
+}
+
+WBLinkSettings WBLinkSettingsHolder::get_settings_snapshot() const {
+  const std::lock_guard<std::mutex> lock(m_rc_ranges_mutex);
+  return get_settings();
+}
+
+RcChannelRanges WBLinkSettingsHolder::get_rc_ranges(
+    RcLinkFunction function) const {
+  const std::lock_guard<std::mutex> lock(m_rc_ranges_mutex);
+  const auto& settings = get_settings();
+  return function == RcLinkFunction::Mcs ? settings.rc_mcs_ranges
+                                        : settings.rc_bw_ranges;
+}
+
+bool WBLinkSettingsHolder::set_rc_ranges(RcLinkFunction function,
+                                        std::string_view text) {
+  const auto ranges = RcChannelRanges::parse(function, text);
+  if (!ranges) return false;
+  const std::lock_guard<std::mutex> lock(m_rc_ranges_mutex);
+  auto& settings = unsafe_get_settings();
+  auto& profile = function == RcLinkFunction::Mcs ? settings.rc_mcs_ranges
+                                                 : settings.rc_bw_ranges;
+  profile = *ranges;
+  PersistentSettings::persist();
+  return true;
+}
+
+void WBLinkSettingsHolder::persist(bool trigger_restart) const {
+  const std::lock_guard<std::mutex> lock(m_rc_ranges_mutex);
+  PersistentSettings::persist(trigger_restart);
 }
 
 WBLinkSettings create_default_wb_stream_settings(

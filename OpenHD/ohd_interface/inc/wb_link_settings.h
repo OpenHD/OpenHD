@@ -24,12 +24,14 @@
 #ifndef OPENHD_OPENHD_OHD_INTERFACE_INC_WB_LINK_SETTINGS_HPP_
 #define OPENHD_OPENHD_OHD_INTERFACE_INC_WB_LINK_SETTINGS_HPP_
 
+#include <mutex>
 #include <utility>
 
 #include "openhd_platform.h"
 #include "openhd_profile.h"
 #include "openhd_settings_directories.h"
 #include "openhd_settings_persistent.h"
+#include "rc_channel_ranges.h"
 #include "wifi_card.h"
 
 namespace openhd {
@@ -143,12 +145,16 @@ struct WBLinkSettings {
   int wb_video_rate_for_mcs_adjustment_percent = 100;
   // NOTE: -1 means use whatever is the openhd recommendation for this platform
   int wb_max_fec_block_size = DEFAULT_MAX_FEC_BLK_SIZE;
-  // Master switch for RC-driven OpenHD link controls.
+  // Legacy opt-in for the RC transmit-mode override.
   bool wb_enable_rc_openhd_control = false;
   // change mcs index via RC channel
   uint32_t wb_mcs_index_via_rc_channel = WB_MCS_INDEX_VIA_RC_CHANNEL_OFF;
   // change bw via RC channel
   int wb_bw_via_rc_channel = WB_BW_VIA_RC_CHANNEL_OFF;
+  RcChannelRanges rc_mcs_ranges =
+      RcChannelRanges::parse(RcLinkFunction::Mcs, "1300:0,1700:2,2100:3").value();
+  RcChannelRanges rc_bw_ranges =
+      RcChannelRanges::parse(RcLinkFunction::Bandwidth, "1500:20,2100:40").value();
   // change tx mode via RC channel: low=off, mid=pit, high=normal
   int wb_tx_mode_via_rc_channel = WB_TX_MODE_VIA_RC_CHANNEL_OFF;
   // wb link recommends bitrate(s) to the encoder.
@@ -208,6 +214,10 @@ class WBLinkSettingsHolder : public openhd::PersistentSettings<WBLinkSettings> {
  public:
   const OHDProfile m_profile;
   const std::vector<WiFiCard> m_cards;
+  WBLinkSettings get_settings_snapshot() const;
+  RcChannelRanges get_rc_ranges(RcLinkFunction function) const;
+  bool set_rc_ranges(RcLinkFunction function, std::string_view text);
+  void persist(bool trigger_restart = true) const;
 
  private:
   [[nodiscard]] std::string get_unique_filename() const override {
@@ -223,6 +233,8 @@ class WBLinkSettingsHolder : public openhd::PersistentSettings<WBLinkSettings> {
   std::optional<WBLinkSettings> impl_deserialize(
       const std::string& file_as_string) const override;
   std::string imp_serialize(const WBLinkSettings& data) const override;
+  // Synchronize range edits with worker reads and settings saves.
+  mutable std::mutex m_rc_ranges_mutex;
 };
 
 // Note: max 16 char for id limit
@@ -251,6 +263,8 @@ static constexpr auto WB_ENABLE_SHORT_GUARD = "WB_E_SHORT_GUARD";
 static constexpr auto WB_ENABLE_RC_OPENHD_CONTROL = "RC_OHD_CTRL";
 static constexpr auto WB_MCS_INDEX_VIA_RC_CHANNEL = "MCS_VIA_RC";
 static constexpr auto WB_BW_VIA_RC_CHANNEL = "BW_VIA_RC";
+static constexpr auto WB_RC_MCS_RANGES = "RC_MCS_RANGES";
+static constexpr auto WB_RC_BW_RANGES = "RC_BW_RANGES";
 static constexpr auto WB_TX_MODE_VIA_RC_CHANNEL = "TXMODE_VIA_RC";
 static constexpr auto WB_PASSIVE_MODE = "WB_PASSIVE_MODE";
 static constexpr auto WB_PIT_MODE = "WB_PIT_MODE";
