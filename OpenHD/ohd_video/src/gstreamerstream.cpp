@@ -1269,14 +1269,6 @@ bool GStreamerStream::setup() {
     return false;
   }
   m_gst_bus = gst_pipeline_get_bus(GST_PIPELINE(m_gst_pipeline));
-  const auto camera_type = m_camera_holder->get_camera().camera_type;
-  if (camera_type == X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_SKYVISIONPRO_IMX519 ||
-      camera_type == X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V3_IMX708) {
-    auto* source = gst_bin_get_by_name(GST_BIN(m_gst_pipeline), "openhd_camera_source");
-    m_autofocus_available = source && g_object_class_find_property(
-        G_OBJECT_GET_CLASS(source), "auto-focus-trigger");
-    if (source) gst_object_unref(source);
-  }
   if (m_gst_bus == nullptr) {
     report_required_perf_problem(
         "gst_pipeline_no_bus",
@@ -1556,6 +1548,21 @@ void GStreamerStream::apply_worker_settings(bool restarting) {
 }
 
 void GStreamerStream::apply_worker_control() {
+  // The camera may have a focus motor in its device tree yet fail to open it.
+  // Advertise the controls actually exposed by the running libcamera source.
+  m_autofocus_available = false;
+  if (m_gst_pipeline) {
+    auto* source = gst_bin_get_by_name(GST_BIN(m_gst_pipeline), "openhd_camera_source");
+    if (source) {
+      if (g_object_class_find_property(G_OBJECT_GET_CLASS(source), "auto-focus-supported") &&
+          g_object_class_find_property(G_OBJECT_GET_CLASS(source), "auto-focus-trigger")) {
+        gboolean supported = FALSE;
+        g_object_get(source, "auto-focus-supported", &supported, nullptr);
+        m_autofocus_available = supported;
+      }
+      gst_object_unref(source);
+    }
+  }
   openhd::video_worker::Control control;
   {
     std::lock_guard<std::mutex> lock(m_worker_mutex);
