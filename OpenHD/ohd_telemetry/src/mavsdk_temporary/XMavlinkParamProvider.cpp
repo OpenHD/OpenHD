@@ -286,6 +286,28 @@ std::vector<MavlinkMessage> XMavlinkParamProvider::process_mavlink_messages(
   return msges;
 }
 
+std::optional<MavlinkMessage> XMavlinkParamProvider::broadcast_read_only_int(const std::string& id) {
+  std::lock_guard<std::mutex> lock(_mutex);
+  if (!m_ready) return std::nullopt;
+  for (size_t i = 0; i < m_registered_settings.size(); ++i) {
+    const auto& setting = m_registered_settings[i];
+    if (setting.id != id || !setting.read_only ||
+        !std::holds_alternative<openhd::IntSetting>(setting.setting)) continue;
+    const auto& value = std::get<openhd::IntSetting>(setting.setting);
+    const int32_t number = value.get_callback ? value.get_callback() : value.value;
+    float encoded;
+    static_assert(sizeof(encoded) == sizeof(number));
+    std::memcpy(&encoded, &number, sizeof(encoded));
+    char param_id[16]{};
+    std::copy_n(id.data(), std::min(id.size(), sizeof(param_id)), param_id);
+    MavlinkMessage message{};
+    mavlink_msg_param_value_pack(m_sys_id, m_comp_id, &message.m, param_id,
+        encoded, MAV_PARAM_TYPE_INT32, m_registered_settings.size(), i);
+    return message;
+  }
+  return std::nullopt;
+}
+
 std::optional<MavlinkMessage> XMavlinkParamProvider::broadcast_read_only_string(const std::string& id) {
   std::lock_guard<std::mutex> lock(_mutex);
   if (!m_ready) return std::nullopt;

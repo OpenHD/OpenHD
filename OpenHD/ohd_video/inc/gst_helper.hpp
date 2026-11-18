@@ -432,7 +432,7 @@ static std::string createLibcamerasrcStream(const CameraSettings& settings) {
   assert(settings.streamed_video_format.isValid());
   std::stringstream ss;
   // ss << fmt::format("libcamerasrc camera-name={} ",camera_name.value);
-  ss << "libcamerasrc ";  // camera_name is not needed for us - we only support
+  ss << "libcamerasrc name=openhd_camera_source ";  // camera_name is not needed for us - we only support
                           // one libcamera at a time. rpi cannot do more than
                           // that anyway.
   // NOTE: those options require openhd/arducam lbcamera !!

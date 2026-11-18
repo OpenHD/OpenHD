@@ -42,6 +42,7 @@ struct Control {
   int rotation_degree = -1;
   int flip = -1;
   bool automatic_allocation = false;
+  unsigned autofocus_revision = 0;
 };
 
 inline bool send_packet(int fd, Header header, const void* data = nullptr,

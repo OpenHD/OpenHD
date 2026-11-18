@@ -70,6 +70,7 @@ class GStreamerStream : public CameraStream {
   void queue_worker_control(openhd::video_worker::Control control);
   unsigned worker_settings_revision() const { return m_worker_revision.load(); }
   int worker_recording_setting() const { return m_worker_recording.load(); }
+  bool supports_autofocus() const { return m_autofocus_available.load(); }
   static int clamp_runtime_bitrate(const CameraHolder& holder, int bitrate);
 
  private:
@@ -134,6 +135,7 @@ class GStreamerStream : public CameraStream {
   std::atomic<unsigned> m_worker_revision{std::numeric_limits<unsigned>::max()};
   bool m_worker_settings_restart = false;
   std::atomic<int> m_worker_recording{AIR_RECORDING_OFF};
+  std::atomic<bool> m_autofocus_available{false};
   openhd::video_worker::Control m_worker_control;
   openhd::video_worker::Control m_applied_worker_control;
   // pull samples (fragments) out of the gstreamer pipeline

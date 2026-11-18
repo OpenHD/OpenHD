@@ -27,6 +27,7 @@
 #include "openhd_bandwidth_allocation.hpp"
 #include "openhd_transport_bitrate.hpp"
 #include <atomic>
+#include <array>
 #include <chrono>
 #include <functional>
 #include <map>
@@ -111,6 +112,16 @@ class LinkActionHandler {
   LinkActionHandler(const LinkActionHandler&) = delete;
   LinkActionHandler(const LinkActionHandler&&) = delete;
   static LinkActionHandler& instance();
+
+  // Capability and one-shot requests cross the telemetry/video thread boundary.
+  std::atomic<unsigned> camera_autofocus_mask{0};
+  std::array<std::atomic<unsigned>, 2> camera_autofocus_revision{};
+  bool request_camera_autofocus(unsigned index) {
+    if (index >= camera_autofocus_revision.size() ||
+        !(camera_autofocus_mask.load() & (1u << index))) return false;
+    ++camera_autofocus_revision[index];
+    return true;
+  }
 
  public:
   enum PrimaryLinkType : int {

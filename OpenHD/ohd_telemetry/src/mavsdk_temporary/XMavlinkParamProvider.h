@@ -50,6 +50,7 @@ class XMavlinkParamProvider : public MavlinkComponent {
   void add_params(const std::vector<openhd::Setting>& settings);
   void set_ready();
   std::optional<MavlinkMessage> broadcast_read_only_string(const std::string& id);
+  std::optional<MavlinkMessage> broadcast_read_only_int(const std::string& id);
   // override from component
   std::vector<MavlinkMessage> process_mavlink_messages(
       std::vector<MavlinkMessage> messages) override;

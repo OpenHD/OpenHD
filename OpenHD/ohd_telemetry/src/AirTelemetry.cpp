@@ -408,6 +408,8 @@ std::vector<MavlinkMessage> AirTelemetry::process_plugin_camera_controls(
                    focus_type == FOCUS_TYPE_AUTO_SINGLE) {
           accepted = send_control(camera_index,
                                   OPENHD_PLUGIN_CAMERA_AUTO_FOCUS);
+          if (!accepted)
+            accepted = openhd::LinkActionHandler::instance().request_camera_autofocus(camera_index);
         }
         break;
       }
@@ -485,6 +487,8 @@ void AirTelemetry::loop_infinite(bool& terminate,
         auto message = m_generic_mavlink_param_provider->broadcast_read_only_string(id);
         if (message) identity.push_back(*message);
       }
+      if (auto message = m_generic_mavlink_param_provider->broadcast_read_only_int("CAM_AF_MASK"))
+        identity.push_back(*message);
       send_messages_ground_unit(identity);
     }
     // send messages to the ground pi in regular intervals, includes heartbeat.
@@ -818,6 +822,11 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
       openhd::IntSetting{
           static_cast<int>(m_air_settings->get_settings().sbus_update_rate_hz),
           c_sbus_rate}});
+  auto autofocus = openhd::create_read_only_int("CAM_AF_MASK", 0);
+  std::get<openhd::IntSetting>(autofocus.setting).get_callback = []() {
+    return static_cast<int>(openhd::LinkActionHandler::instance().camera_autofocus_mask.load());
+  };
+  ret.push_back(std::move(autofocus));
   ret.push_back(openhd::create_read_only_int(
       "SIYI_ACTIVE",
       openhd::PluginManager::instance().is_plugin_loaded("siyi") ? 1 : 0));

@@ -1269,6 +1269,14 @@ bool GStreamerStream::setup() {
     return false;
   }
   m_gst_bus = gst_pipeline_get_bus(GST_PIPELINE(m_gst_pipeline));
+  const auto camera_type = m_camera_holder->get_camera().camera_type;
+  if (camera_type == X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_SKYVISIONPRO_IMX519 ||
+      camera_type == X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V3_IMX708) {
+    auto* source = gst_bin_get_by_name(GST_BIN(m_gst_pipeline), "openhd_camera_source");
+    m_autofocus_available = source && g_object_class_find_property(
+        G_OBJECT_GET_CLASS(source), "auto-focus-trigger");
+    if (source) gst_object_unref(source);
+  }
   if (m_gst_bus == nullptr) {
     report_required_perf_problem(
         "gst_pipeline_no_bus",
@@ -1361,6 +1369,7 @@ void GStreamerStream::cleanup_pipe() {
                                                    GST_STATE_NULL);
   m_video_outputs.clear();
   m_supports_live_bitrate = false;
+  m_autofocus_available = false;
   cleanup_perf_element();
   if (m_gst_bus != nullptr) {
     gst_object_unref(m_gst_bus);
@@ -1564,6 +1573,16 @@ void GStreamerStream::apply_worker_control() {
       (control.qp_min != m_applied_worker_control.qp_min ||
        control.qp_max != m_applied_worker_control.qp_max))
     handle_change_qp_request(control.qp_min, control.qp_max);
+  if (control.autofocus_revision != m_applied_worker_control.autofocus_revision &&
+      m_autofocus_available && m_gst_pipeline) {
+    auto* source = gst_bin_get_by_name(GST_BIN(m_gst_pipeline), "openhd_camera_source");
+    if (source) {
+      g_object_set(source, "auto-focus-trigger", TRUE, nullptr);
+      gst_object_unref(source);
+      m_console->info("Camera{} one-shot autofocus triggered (request {})",
+          m_camera_holder->get_camera().index, control.autofocus_revision);
+    }
+  }
   m_applied_worker_control = control;
   m_worker_recording = m_camera_holder->get_settings().air_recording;
 }

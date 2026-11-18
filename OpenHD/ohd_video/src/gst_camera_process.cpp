@@ -31,6 +31,7 @@ struct Status {
   openhd::LinkActionHandler::CamInfo camera;
   int64_t progress_ms;
   int recording;
+  bool autofocus_available;
 };
 
 bool external_plugin() {
@@ -234,7 +235,8 @@ void CameraProcess::run() {
         }
         control = {m_bitrate, m_qp_min,         m_qp_max,
                    m_armed,   m_capacity_limit, m_keyframe_revision.load(),
-                   m_rotation_degree, m_flip, m_automatic_allocation};
+                   m_rotation_degree, m_flip, m_automatic_allocation,
+                   actions.camera_autofocus_revision[camera.index].load()};
       }
       send_packet(child.fd, {Type::Control}, &control, sizeof(control));
       pollfd event{child.fd, POLLIN, 0};
@@ -252,6 +254,11 @@ void CameraProcess::run() {
           Status status;
           std::memcpy(&status, payload.data(), sizeof(status));
           actions.set_cam_info(camera.index, status.camera);
+          const auto autofocus_bit = 1u << camera.index;
+          if (status.autofocus_available)
+            actions.camera_autofocus_mask.fetch_or(autofocus_bit);
+          else
+            actions.camera_autofocus_mask.fetch_and(~autofocus_bit);
           if (status.progress_ms != progress_ms) {
             progress_ms = status.progress_ms;
             last_progress = Clock::now();
@@ -317,6 +324,7 @@ void CameraProcess::run() {
       std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
     actions.set_cam_info_status(camera.index, m_streaming_enabled ? CAM_STATUS_RESTARTING : CAM_STATUS_DISABLED);
+    actions.camera_autofocus_mask.fetch_and(~(1u << camera.index));
     actions.set_cam_info_perf(camera.index, 0, 0);
     actions.set_cam_info_recording_active(camera.index, false);
     for (int i = 0; i < 10 && m_running; ++i)
@@ -490,6 +498,7 @@ int run_camera_worker_if_requested(int argc, char* argv[]) {
     if (Clock::now() - last_status >= std::chrono::milliseconds(250)) {
       int64_t progress = last_frame_ms.load();
       int recording = AIR_RECORDING_OFF;
+      bool autofocus_available = false;
       if (stream && use_libcamera)
         recording = static_cast<LibcameraAppStream*>(stream.get())->recording_setting();
 #ifdef OPENHD_ROCKCHIP_MPP_PRESENT
@@ -506,11 +515,12 @@ int run_camera_worker_if_requested(int argc, char* argv[]) {
         progress = gst->last_progress_ms();
         recording = gst->worker_recording_setting();
         revision = gst->worker_settings_revision();
+        autofocus_available = gst->supports_autofocus();
       }
 #endif
       Status status{
           openhd::LinkActionHandler::instance().get_cam_info(camera.index),
-          progress, recording};
+          progress, recording, autofocus_available};
       send_packet(3, {Type::Status, revision}, &status, sizeof(status));
       for (const auto& message :
            openhd::log::MavlinkLogMessageBuffer::instance()
