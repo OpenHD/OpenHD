@@ -9,7 +9,7 @@ on:
         default: "main"
   push:
     branches:
-      - openhd-3.0
+      - dev-release
     paths:
       - ".github/workflows/build_luckfox_sysroot.yml"
       - "scripts/build_luckfox_sysroot.sh"

@@ -64,7 +64,8 @@ static_assert(VIDEO_GROUND_VIDEO_STREAM_1_UDP !=
 static constexpr uint8_t MAJOR_VERSION = 3;
 static constexpr uint8_t MINOR_VERSION = 0;
 static constexpr uint8_t PATCH_VERSION = 0;
-static constexpr uint8_t RELEASE_TYPE = 0;
+static constexpr uint8_t RELEASE_TYPE = 1;
+static constexpr uint8_t BETA_VERSION = 4;
 static std::string ohd_version_as_string(uint8_t major, uint8_t minor,
                                          uint8_t patch, uint8_t release_type) {
   std::stringstream ss;
@@ -81,8 +82,10 @@ static std::string ohd_version_as_string(uint8_t major, uint8_t minor,
   return ss.str();
 }
 static std::string get_ohd_version_as_string() {
-  return ohd_version_as_string(MAJOR_VERSION, MINOR_VERSION, PATCH_VERSION,
-                               RELEASE_TYPE);
+  auto version = ohd_version_as_string(MAJOR_VERSION, MINOR_VERSION, PATCH_VERSION,
+                                       RELEASE_TYPE);
+  if (RELEASE_TYPE == 1) version += std::to_string(BETA_VERSION);
+  return version;
 }
 
 }  // namespace openhd

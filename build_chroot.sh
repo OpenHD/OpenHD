@@ -274,7 +274,7 @@ if [[ -n "${OPENHD_REQUIRE_ARTOSYN_DAEMON_FILE_VALUE}" ]]; then
     export OPENHD_REQUIRE_ARTOSYN_DAEMON="${OPENHD_REQUIRE_ARTOSYN_DAEMON_FILE_VALUE}"
 fi
 
-if [[ "${REPO}" == "openhd-3.0" || "${REPO}" == "openhd-3.0-test" ]]; then
+if [[ "${REPO}" == "dev-release" || "${REPO}" == "openhd-3.0-test" ]]; then
     # OpenHD 3.0 builds should produce packages with full Artosyn support.
     export OPENHD_REQUIRE_ARTOSYN="${OPENHD_REQUIRE_ARTOSYN:-1}"
     export OPENHD_REQUIRE_ARTOSYN_DAEMON="${OPENHD_REQUIRE_ARTOSYN_DAEMON:-1}"

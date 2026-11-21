@@ -33,7 +33,9 @@ OS="${3:-}"
 TARGET_RELEASE="${4:-}"
 
 PKGDIR="/out/openhd-installdir/"
-VERSION="3.0-alpha-$(date '+%Y%m%d%H%M')-$(git rev-parse --short HEAD)"
+version_header="OpenHD/ohd_common/inc/openhd_global_constants.hpp"
+beta="$(awk '/BETA_VERSION =/{gsub(/;/, "", $NF); print $NF}' "${version_header}")"
+VERSION="3.0-beta${beta}-$(date '+%Y%m%d%H%M')-$(git rev-parse --short HEAD)"
 
 join_by() {
   local IFS="$1"
@@ -452,7 +454,7 @@ build_package() {
   local require_artosyn_daemon="${OPENHD_REQUIRE_ARTOSYN_DAEMON:-0}"
   local current_branch=""
   current_branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
-  if [[ "${current_branch}" == "openhd-3.0" || "${current_branch}" == "openhd-3.0-test" ]]; then
+  if [[ "${current_branch}" == "dev-release" || "${current_branch}" == "openhd-3.0-test" ]]; then
     require_artosyn="${OPENHD_REQUIRE_ARTOSYN:-1}"
     require_artosyn_daemon="${OPENHD_REQUIRE_ARTOSYN_DAEMON:-1}"
   fi

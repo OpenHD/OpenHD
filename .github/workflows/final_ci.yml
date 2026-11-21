@@ -4,10 +4,10 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - openhd-3.0
+      - dev-release
   pull_request:
     branches:
-      - openhd-3.0
+      - dev-release
 
 concurrency:
   group: final-ci-${{ github.ref }}
@@ -208,7 +208,7 @@ jobs:
         if: github.event_name != 'pull_request'
         id: cloudsmith
         run: |
-          if [[ "${GITHUB_REF_NAME}" == "openhd-3.0" ]]; then
+          if [[ "${GITHUB_REF_NAME}" == "dev-release" ]]; then
             echo "repo=dev-release" >> "${GITHUB_OUTPUT}"
           else
             echo "repo=${GITHUB_REF_NAME}" >> "${GITHUB_OUTPUT}"
@@ -312,7 +312,7 @@ jobs:
       - name: Resolve Cloudsmith target
         id: cloudsmith
         run: |
-          if [[ "${GITHUB_REF_NAME}" == "openhd-3.0" ]]; then
+          if [[ "${GITHUB_REF_NAME}" == "dev-release" ]]; then
             echo "repo=dev-release" >> "${GITHUB_OUTPUT}"
           else
             echo "repo=${GITHUB_REF_NAME}" >> "${GITHUB_OUTPUT}"

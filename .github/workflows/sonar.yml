@@ -3,10 +3,10 @@ name: SonarCloud Analysis
 on:
   push:
     branches:
-      - openhd-3.0
+      - dev-release
   pull_request:
     branches:
-      - openhd-3.0
+      - dev-release
   workflow_dispatch:
 
 # CI-based analysis replaces SonarCloud's Automatic Analysis, which has to

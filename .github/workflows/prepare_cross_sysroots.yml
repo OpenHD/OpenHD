@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - "openhd-3.0"
+      - "dev-release"
     paths:
       - "scripts/create_cross_sysroot.sh"
       - "scripts/install_rockchip_mpp_sysroot.sh"

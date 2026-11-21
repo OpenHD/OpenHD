@@ -3,10 +3,10 @@ name: openhd_3_0_build_test
 on:
   push:
     branches:
-      - openhd-3.0
+      - dev-release
   pull_request:
     branches:
-      - openhd-3.0
+      - dev-release
   workflow_dispatch:
 
 jobs:

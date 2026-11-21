@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - openhd-3.0
+      - dev-release
 
 permissions:
   contents: read

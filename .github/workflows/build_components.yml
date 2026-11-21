@@ -3,13 +3,13 @@ name: Build platform components
 # X21B / Luckfox Aura (RV1126B), Luckfox Pico and Luckfox Lyra (RK3506) ground
 # components. Each is cross-compiled by its scripts/build_*_component.sh and
 # published as raw files to Cloudsmith. Pull requests build and upload the
-# artifacts only; publishing happens from openhd-3.0.
+# artifacts only; publishing happens from dev-release.
 
 on:
   workflow_dispatch:
   push:
     branches:
-      - openhd-3.0
+      - dev-release
     paths:
       - OpenHD/**
       - scripts/build_x21_component.sh
@@ -20,7 +20,7 @@ on:
       - .github/workflows/build_components.yml
   pull_request:
     branches:
-      - openhd-3.0
+      - dev-release
     paths:
       - OpenHD/**
       - scripts/build_x21_component.sh
@@ -81,7 +81,7 @@ jobs:
             cxx: arm-linux-gnueabihf-g++-10
     env:
       CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
-      PUBLISH: ${{ github.ref == 'refs/heads/openhd-3.0' && secrets.CLOUDSMITH_API_KEY != '' }}
+      PUBLISH: ${{ github.ref == 'refs/heads/dev-release' && secrets.CLOUDSMITH_API_KEY != '' }}
       COMPONENT_DIR: ${{ github.workspace }}/${{ matrix.platform }}-component
     steps:
       - name: Validate credentials

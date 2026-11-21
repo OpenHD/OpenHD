@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           repository: OpenHD/OpenHD
-          ref: openhd-3.0
+          ref: dev-release
           submodules: true
           token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
       - uses: ./.github/actions/fetch-devourer

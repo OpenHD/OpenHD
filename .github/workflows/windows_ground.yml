@@ -2,7 +2,7 @@ name: Windows ground backend
 on:
   pull_request:
   push:
-    branches: [openhd-3.0]
+    branches: [dev-release]
   workflow_dispatch:
     inputs:
       signing_mode:

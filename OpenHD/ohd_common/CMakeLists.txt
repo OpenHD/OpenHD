@@ -18,7 +18,7 @@ add_compile_options(-Wno-psabi)
 add_library(OHDCommonLib STATIC) # Initialized below
 add_library(OHDCommonLib::OHDCommonLib ALIAS OHDCommonLib)
 
-# All builds from openhd-3.0 are development releases, including source archives
+# All builds from dev-release are development releases, including source archives
 # and detached CI checkouts that have no branch metadata or image marker.
 option(OPENHD_DEVELOPMENT_BUILD "Enable development-release defaults" ON)
 target_compile_definitions(OHDCommonLib PRIVATE
