@@ -1,7 +1,27 @@
 {
   "settings": [
-    {"id": "JOY_MAP_V2", "type": "int32", "label": "Joystick mapping capability", "description": "Supports unassigned RC outputs and raw joystick input monitoring.", "group": "RC", "hidden": true, "readOnly": true, "requiresReboot": false},
-    {"id": "JOY_MONITOR", "type": "int32", "label": "Read joystick inputs", "description": "Send raw joystick inputs to local ground clients for assignment without enabling RC transmission. Stops when the setup page closes.", "group": "RC", "hidden": true, "readOnly": false, "requiresReboot": false, "minimum": 0, "maximum": 1},
+    {
+      "id": "JOY_MAP_V2",
+      "type": "int32",
+      "label": "Joystick mapping capability",
+      "description": "Supports unassigned RC outputs and raw joystick input monitoring.",
+      "group": "RC",
+      "hidden": true,
+      "readOnly": true,
+      "requiresReboot": false
+    },
+    {
+      "id": "JOY_MONITOR",
+      "type": "int32",
+      "label": "Read joystick inputs",
+      "description": "Send raw joystick inputs to local ground clients for assignment without enabling RC transmission. Stops when the setup page closes.",
+      "group": "RC",
+      "hidden": true,
+      "readOnly": false,
+      "requiresReboot": false,
+      "minimum": 0,
+      "maximum": 1
+    },
     {
       "choices": [
         {
@@ -6058,8 +6078,83 @@
         },
         {
           "sbc": [
-            "zero3w",
-            "radxa-cm3"
+            "rock-3a"
+          ],
+          "bootTypeRequired": "Air",
+          "file": "openhd/camera1.txt",
+          "vendors": [
+            {
+              "id": "rock3-rpi",
+              "displayName": "Raspberry Pi",
+              "options": [
+                {
+                  "id": "OV5647",
+                  "valueWritten": "91"
+                },
+                {
+                  "id": "IMX219",
+                  "valueWritten": "92"
+                }
+              ]
+            },
+            {
+              "id": "rock3-hdmi-csi",
+              "displayName": "HDMI to CSI",
+              "options": [
+                {
+                  "id": "TC358743 (2 CSI lanes)",
+                  "valueWritten": "90"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sbc": [
+            "rock-3c"
+          ],
+          "bootTypeRequired": "Air",
+          "file": "openhd/camera1.txt",
+          "vendors": [
+            {
+              "id": "rock3-rpi",
+              "displayName": "Raspberry Pi",
+              "options": [
+                {
+                  "id": "OV5647",
+                  "valueWritten": "91"
+                },
+                {
+                  "id": "IMX219",
+                  "valueWritten": "92"
+                }
+              ]
+            },
+            {
+              "id": "rock3-hdmi-csi",
+              "displayName": "HDMI to CSI",
+              "options": [
+                {
+                  "id": "TC358743 (2 CSI lanes)",
+                  "valueWritten": "90"
+                }
+              ]
+            },
+            {
+              "id": "radxa-rk628",
+              "displayName": "Radxa",
+              "options": [
+                {
+                  "id": "Radxa HDMI to CSI (RK628H)",
+                  "valueWritten": "100"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sbc": [
+            "zero3w"
           ],
           "bootTypeRequired": "Air",
           "file": "openhd/camera1.txt",
@@ -6068,10 +6163,6 @@
               "id": "rock3-default",
               "displayName": "Zero3W",
               "options": [
-                {
-                  "id": "HDMI",
-                  "valueWritten": "90"
-                },
                 {
                   "id": "OV5647",
                   "valueWritten": "91"
@@ -6099,6 +6190,91 @@
                 {
                   "id": "VEYE",
                   "valueWritten": "97"
+                }
+              ]
+            },
+            {
+              "id": "rock3-hdmi-csi",
+              "displayName": "HDMI to CSI",
+              "options": [
+                {
+                  "id": "TC358743 (2 CSI lanes)",
+                  "valueWritten": "90"
+                },
+                {
+                  "id": "TC358743 (4 CSI lanes)",
+                  "valueWritten": "99"
+                }
+              ]
+            },
+            {
+              "id": "radxa-rk628",
+              "displayName": "Radxa",
+              "options": [
+                {
+                  "id": "Radxa HDMI to CSI (RK628H)",
+                  "valueWritten": "100"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sbc": [
+            "radxa-cm3"
+          ],
+          "bootTypeRequired": "Air",
+          "file": "openhd/camera1.txt",
+          "vendors": [
+            {
+              "id": "rock3-default",
+              "displayName": "Zero3W",
+              "options": [
+                {
+                  "id": "OV5647",
+                  "valueWritten": "91"
+                },
+                {
+                  "id": "IMX219",
+                  "valueWritten": "92"
+                },
+                {
+                  "id": "IMX708",
+                  "valueWritten": "93"
+                },
+                {
+                  "id": "IMX462",
+                  "valueWritten": "94"
+                },
+                {
+                  "id": "IMX519",
+                  "valueWritten": "95"
+                },
+                {
+                  "id": "OHD-JAGUAR",
+                  "valueWritten": "96"
+                },
+                {
+                  "id": "VEYE",
+                  "valueWritten": "97"
+                },
+                {
+                  "id": "IMX462 Pivariety",
+                  "valueWritten": "98"
+                }
+              ]
+            },
+            {
+              "id": "rock3-hdmi-csi",
+              "displayName": "HDMI to CSI",
+              "options": [
+                {
+                  "id": "TC358743 (2 CSI lanes)",
+                  "valueWritten": "90"
+                },
+                {
+                  "id": "TC358743 (4 CSI lanes)",
+                  "valueWritten": "99"
                 }
               ]
             }
@@ -6311,6 +6487,62 @@
           "bootTypeRequired": "Air",
           "file": "openhd/camera1.txt",
           "vendors": []
+        },
+        {
+          "sbc": [
+            "ochin-cm3"
+          ],
+          "secondaryCsi": true,
+          "bootTypeRequired": "Air",
+          "file": "openhd/camera1.txt",
+          "vendors": [
+            {
+              "id": "ochin-csi",
+              "displayName": "OCHIN CSI",
+              "options": [
+                {
+                  "id": "IMX219 on CAM0",
+                  "valueWritten": "102"
+                },
+                {
+                  "id": "IMX219 on CAM1",
+                  "valueWritten": "103"
+                },
+                {
+                  "id": "IMX708 on CAM0",
+                  "valueWritten": "104"
+                },
+                {
+                  "id": "IMX708 on CAM1",
+                  "valueWritten": "105"
+                },
+                {
+                  "id": "IMX519 on CAM0",
+                  "valueWritten": "106"
+                },
+                {
+                  "id": "IMX519 on CAM1",
+                  "valueWritten": "107"
+                },
+                {
+                  "id": "IMX462 on CAM0",
+                  "valueWritten": "108"
+                },
+                {
+                  "id": "IMX462 on CAM1",
+                  "valueWritten": "109"
+                },
+                {
+                  "id": "IMX462 Pivariety on CAM0",
+                  "valueWritten": "112"
+                },
+                {
+                  "id": "IMX462 Pivariety on CAM1",
+                  "valueWritten": "113"
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -6512,7 +6744,8 @@
         ],
         "90": [
           "1280x720@30",
-          "1280x720@60"
+          "1280x720@60",
+          "1920x1080@30"
         ],
         "91": [
           "640x480@60",
@@ -6576,6 +6809,12 @@
           "1296x968@60",
           "1920x1080@25",
           "2592x1944@25"
+        ],
+        "99": [
+          "1280x720@30",
+          "1280x720@60",
+          "1920x1080@30",
+          "1920x1080@60"
         ]
       }
     },

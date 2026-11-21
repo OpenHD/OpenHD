@@ -779,18 +779,24 @@ bool OHDVideoAir::x_set_camera_type(bool primary, int cam_type) {
   }
 
   bool reboot_required = false;
+  const auto& old = m_generic_settings->get_settings();
+  const bool ochin =
+      OHDPlatform::instance().platform_type == X_PLATFORM_TYPE_RADXA_CM3_OCHIN;
   const bool requires_boot_config =
-      primary &&
+      ochin || (primary &&
       ((OHDPlatform::instance().is_rpi() && is_rpi_csi_camera(cam_type)) ||
-       (OHDPlatform::instance().is_rock() && is_rock_csi_camera(cam_type)));
+       (OHDPlatform::instance().is_rock() && is_rock_csi_camera(cam_type))));
   if (requires_boot_config) {
     openhd::log::get_default()->warn(
         "Requesting sysutils camera setup for cam type {}({})", cam_type,
         x_cam_type_to_string(cam_type));
-    const auto setup_timeout = OHDPlatform::instance().is_zero3w()
+    const auto setup_timeout = ochin || OHDPlatform::instance().is_zero3w()
                                    ? std::chrono::seconds(15)
                                    : std::chrono::seconds(2);
-    if (!openhd::request_sysutil_camera_setup(cam_type, setup_timeout)) {
+    const int first = primary ? cam_type : old.primary_camera_type;
+    const int second = primary ? old.secondary_camera_type : cam_type;
+    if (!openhd::request_sysutil_camera_setup(
+            first, setup_timeout, ochin ? std::optional<int>{second} : std::nullopt)) {
       openhd::log::get_default()->error(
           "Sysutils camera setup request failed for cam type {}", cam_type);
       return false;

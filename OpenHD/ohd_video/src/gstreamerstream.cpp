@@ -50,6 +50,7 @@
 #include "openhd_sock.h"
 #include "openhd_util.h"
 #include "rpi_hdmi_to_csi_v4l2_helper.h"
+#include "rockchip_hdmi_csi.hpp"
 #include "rtp_eof_helper.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "x20_cam_helper.h"
@@ -984,9 +985,36 @@ std::string GStreamerStream::create_source_encode_pipeline(
   } else if (camera.requires_rockchip3_mpp_pipeline()) {
     openhd::log::get_default()->debug(
         "Camera requires Rockchip3 MPP pipeline.");
-    if (camera.camera_type == X_CAM_TYPE_ROCK_3_HDMI_IN) {
-      openhd::log::get_default()->warn("Using Rockchip HDMI stream.");
-      pipeline << OHDGstHelper::createRockchipHDMIStream(setting);
+    if (camera.uses_rockchip_hdmi_csi()) {
+      using openhd::rockchip_hdmi_csi::Bridge;
+      const auto& format = setting.streamed_video_format;
+      const auto bridge = camera.camera_type == X_CAM_TYPE_ROCK_3_RK628_HDMI_IN
+                              ? Bridge::RadxaRk628
+                              : camera.camera_type == X_CAM_TYPE_ROCK_3_HDMI_IN_4LANE
+                                    ? Bridge::Toshiba4Lane : Bridge::Toshiba2Lane;
+      const auto device = openhd::rockchip_hdmi_csi::setup_capture(
+          format.width, format.height, format.framerate, bridge);
+      if (device.empty()) return {};
+      pipeline << "v4l2src device=" << device
+               << " do-timestamp=true ! video/x-raw,format=NV12,width="
+               << format.width << ",height=" << format.height
+               << " ! videorate drop-only=true ! video/x-raw,framerate="
+               << format.framerate << "/1 ! "
+               << OHDGstHelper::createRockchipEncoderPipeline(setting);
+    } else if (camera.uses_ochin_csi()) {
+      const bool cam0 = ochin_csi_port(camera.camera_type) == 0;
+      const auto device = openhd::v4l2::find_ochin_isp_mainpath(cam0);
+      if (!device) {
+        m_console->error("No Rockchip ISP capture node for OCHIN CAM{}", cam0 ? 0 : 1);
+        return {};
+      }
+      const auto& format = setting.streamed_video_format;
+      pipeline << "v4l2src device=" << *device
+               << " do-timestamp=true ! video/x-raw,format=NV12,width="
+               << format.width << ",height=" << format.height
+               << " ! videorate drop-only=true ! video/x-raw,framerate="
+               << format.framerate << "/1 ! "
+               << OHDGstHelper::createRockchipEncoderPipeline(setting);
     } else if (OHDPlatform::instance().is_zero3w() &&
                camera.camera_type == X_CAM_TYPE_ROCK_3_IMX708) {
       const auto device = openhd::v4l2::find_rockchip_isp_mainpath();
@@ -997,7 +1025,10 @@ std::string GStreamerStream::create_source_encode_pipeline(
       pipeline << OHDGstHelper::createRockchipCSIStream(
           std::stoi(device->substr(sizeof("/dev/video") - 1)), setting, true);
     } else {
-      pipeline << OHDGstHelper::createRockchipCSIStream(0, setting);
+      const auto device = openhd::v4l2::find_rockchip_isp_mainpath();
+      const int video_number = device
+          ? std::stoi(device->substr(sizeof("/dev/video") - 1)) : 0;
+      pipeline << OHDGstHelper::createRockchipCSIStream(video_number, setting);
     }
   } else if (camera.requires_rockchip5_mpp_pipeline()) {
     openhd::log::get_default()->debug(

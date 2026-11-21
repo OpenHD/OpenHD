@@ -46,4 +46,30 @@ inline std::optional<std::string> find_rockchip_isp_mainpath(
     const std::filesystem::path& root = "/sys/class/video4linux") {
   return find_unique_capture_device(root, "rkisp_mainpath");
 }
+
+inline std::optional<std::string> find_ochin_isp_mainpath(
+    bool cam0, const std::filesystem::path& root = "/sys/class/video4linux") {
+  const std::string_view isp = cam0 ? "rkisp-vir1" : "rkisp-vir0";
+  std::error_code error;
+  std::optional<std::string> device;
+  for (std::filesystem::directory_iterator it(root, error), end;
+       !error && it != end; it.increment(error)) {
+    const auto node = it->path().filename().string();
+    if (node.rfind("video", 0) != 0 || node.size() == 5 ||
+        node.find_first_not_of("0123456789", 5) != std::string::npos) continue;
+    std::ifstream input(it->path() / "name");
+    std::string name;
+    if (!std::getline(input, name) || name != "rkisp_mainpath") continue;
+    std::error_code path_error;
+    auto parent = std::filesystem::canonical(it->path() / "device", path_error);
+    if (path_error) continue;
+    for (; parent != parent.root_path() && !parent.empty(); parent = parent.parent_path()) {
+      if (parent.filename().string() != isp) continue;
+      if (device) return std::nullopt;
+      device = "/dev/" + node;
+      break;
+    }
+  }
+  return error ? std::nullopt : device;
+}
 }  // namespace openhd::v4l2

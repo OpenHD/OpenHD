@@ -63,7 +63,19 @@ std::optional<int> read_cached_platform_type() {
       parsed.value("platform_name", "") == "RPI 5") {
     return std::nullopt;
   }
-  return parsed["platform_type"].get<int>();
+  const int platform = parsed["platform_type"].get<int>();
+  if ((platform == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3 ||
+       platform == X_PLATFORM_TYPE_RADXA_CM3_OCHIN) &&
+      (platform == X_PLATFORM_TYPE_RADXA_CM3_OCHIN) !=
+          OHDFilesystemUtil::exists("/boot/openhd/ochin-cm3.txt")) {
+    return std::nullopt;
+  }
+  if (platform == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W &&
+      !parsed.contains("rk356x_board_detection")) {
+    // Older SysUtils builds reported some ROCK 3 boards as Zero 3W.
+    return std::nullopt;
+  }
+  return platform;
 }
 
 void write_cached_platform_type(int platform_type) {
@@ -71,6 +83,8 @@ void write_cached_platform_type(int platform_type) {
   nlohmann::json payload;
   payload["platform_type"] = platform_type;
   payload["platform_name"] = x_platform_type_to_string(platform_type);
+  if (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W)
+    payload["rk356x_board_detection"] = true;
   OHDFilesystemUtil::write_file(platform_cache_path(), payload.dump(2));
 }
 
@@ -115,6 +129,12 @@ std::string x_platform_type_to_string(int platform_type) {
       return "RPI 5";
     case X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W:
       return "RADXA ZERO3W";
+    case X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ROCK3C:
+      return "Radxa ROCK 3C";
+    case X_PLATFORM_TYPE_ROCKCHIP_RK3568_RADXA_ROCK3:
+      return "Radxa ROCK 3";
+    case X_PLATFORM_TYPE_RADXA_CM3_OCHIN:
+      return "Radxa CM3 on OCHIN";
     case X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3:
       return "RADXA CM3";
     case X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A:
@@ -172,6 +192,9 @@ int get_fec_max_block_size_for_platform() {
   }
   if (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W ||
       platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3 ||
+      platform_type == X_PLATFORM_TYPE_RADXA_CM3_OCHIN ||
+      platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3568_RADXA_ROCK3 ||
+      platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ROCK3C ||
       platform_type == X_PLATFORM_TYPE_LUCKFOX_RV110X ||
       platform_type == X_PLATFORM_TYPE_LUCKFOX_LYRA ||
       platform_type == X_PLATFORM_TYPE_OPENHD_X21 ||

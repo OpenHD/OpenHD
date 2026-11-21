@@ -500,10 +500,11 @@
       "key": "X_CAM_TYPE_ROCK_3_HDMI_IN",
       "id": 90,
       "name": "ROCK_3_HDMI_IN",
-      "ui_label": "HDMI IN",
+      "ui_label": "TC358743 (2 CSI lanes)",
       "resolutions": [
         {"width": 1280, "height": 720, "fps": 30},
-        {"width": 1280, "height": 720, "fps": 60}
+        {"width": 1280, "height": 720, "fps": 60},
+        {"width": 1920, "height": 1080, "fps": 30}
       ]
     },
     {
@@ -586,6 +587,194 @@
       "name": "ROCK_3_IMX462_PIVARIETY",
       "ui_label": "IMX462 Pivariety",
       "resolutions": [{"width": 1920, "height": 1080, "fps": 60}]
+    },
+    {
+      "key": "X_CAM_TYPE_OCHIN_CAM0_IMX219",
+      "id": 102,
+      "name": "OCHIN_CAM0_IMX219",
+      "ui_label": "IMX219 on CAM0",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 30},
+        {"width": 1920, "height": 1080, "fps": 30}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_OCHIN_CAM1_IMX219",
+      "id": 103,
+      "name": "OCHIN_CAM1_IMX219",
+      "ui_label": "IMX219 on CAM1",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 30},
+        {"width": 1920, "height": 1080, "fps": 30}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_OCHIN_CAM0_IMX708",
+      "id": 104,
+      "name": "OCHIN_CAM0_IMX708",
+      "ui_label": "IMX708 on CAM0",
+      "resolutions": [
+        {
+          "width": 1280,
+          "height": 720,
+          "fps": 30
+        },
+        {
+          "width": 1920,
+          "height": 1080,
+          "fps": 30
+        }
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_OCHIN_CAM1_IMX708",
+      "id": 105,
+      "name": "OCHIN_CAM1_IMX708",
+      "ui_label": "IMX708 on CAM1",
+      "resolutions": [
+        {
+          "width": 1280,
+          "height": 720,
+          "fps": 30
+        },
+        {
+          "width": 1920,
+          "height": 1080,
+          "fps": 30
+        }
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_OCHIN_CAM0_IMX519",
+      "id": 106,
+      "name": "OCHIN_CAM0_IMX519",
+      "ui_label": "IMX519 on CAM0",
+      "resolutions": [
+        {
+          "width": 1280,
+          "height": 720,
+          "fps": 30
+        },
+        {
+          "width": 1920,
+          "height": 1080,
+          "fps": 30
+        }
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_OCHIN_CAM1_IMX519",
+      "id": 107,
+      "name": "OCHIN_CAM1_IMX519",
+      "ui_label": "IMX519 on CAM1",
+      "resolutions": [
+        {
+          "width": 1280,
+          "height": 720,
+          "fps": 30
+        },
+        {
+          "width": 1920,
+          "height": 1080,
+          "fps": 30
+        }
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_OCHIN_CAM0_IMX462",
+      "id": 108,
+      "name": "OCHIN_CAM0_IMX462",
+      "ui_label": "IMX462 on CAM0",
+      "resolutions": [
+        {
+          "width": 1280,
+          "height": 720,
+          "fps": 30
+        },
+        {
+          "width": 1920,
+          "height": 1080,
+          "fps": 30
+        }
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_OCHIN_CAM1_IMX462",
+      "id": 109,
+      "name": "OCHIN_CAM1_IMX462",
+      "ui_label": "IMX462 on CAM1",
+      "resolutions": [
+        {
+          "width": 1280,
+          "height": 720,
+          "fps": 30
+        },
+        {
+          "width": 1920,
+          "height": 1080,
+          "fps": 30
+        }
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_OCHIN_CAM0_IMX462_PIVARIETY",
+      "id": 112,
+      "name": "OCHIN_CAM0_IMX462_PIVARIETY",
+      "ui_label": "IMX462 Pivariety on CAM0",
+      "resolutions": [
+        {
+          "width": 1280,
+          "height": 720,
+          "fps": 30
+        },
+        {
+          "width": 1920,
+          "height": 1080,
+          "fps": 30
+        }
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_OCHIN_CAM1_IMX462_PIVARIETY",
+      "id": 113,
+      "name": "OCHIN_CAM1_IMX462_PIVARIETY",
+      "ui_label": "IMX462 Pivariety on CAM1",
+      "resolutions": [
+        {
+          "width": 1280,
+          "height": 720,
+          "fps": 30
+        },
+        {
+          "width": 1920,
+          "height": 1080,
+          "fps": 30
+        }
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_ROCK_3_RK628_HDMI_IN",
+      "id": 100,
+      "name": "ROCK_3_RK628_HDMI_IN",
+      "ui_label": "Radxa HDMI to CSI (RK628H)",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 30},
+        {"width": 1280, "height": 720, "fps": 60},
+        {"width": 1920, "height": 1080, "fps": 30},
+        {"width": 1920, "height": 1080, "fps": 60}
+      ]
+    },
+    {
+      "key": "X_CAM_TYPE_ROCK_3_HDMI_IN_4LANE",
+      "id": 99,
+      "name": "ROCK_3_HDMI_IN_4LANE",
+      "ui_label": "TC358743 (4 CSI lanes)",
+      "resolutions": [
+        {"width": 1280, "height": 720, "fps": 30},
+        {"width": 1280, "height": 720, "fps": 60},
+        {"width": 1920, "height": 1080, "fps": 30},
+        {"width": 1920, "height": 1080, "fps": 60}
+      ]
     },
     {
       "key": "X_CAM_TYPE_NVIDIA_XAVIER_IMX577",
@@ -958,6 +1147,42 @@
       ]
     },
     {
+      "key": "OCHIN_CSI",
+      "name": "OCHIN CSI",
+      "cameras": [
+        "X_CAM_TYPE_OCHIN_CAM0_IMX219",
+        "X_CAM_TYPE_OCHIN_CAM1_IMX219",
+        "X_CAM_TYPE_OCHIN_CAM0_IMX708",
+        "X_CAM_TYPE_OCHIN_CAM1_IMX708",
+        "X_CAM_TYPE_OCHIN_CAM0_IMX519",
+        "X_CAM_TYPE_OCHIN_CAM1_IMX519",
+        "X_CAM_TYPE_OCHIN_CAM0_IMX462",
+        "X_CAM_TYPE_OCHIN_CAM1_IMX462",
+        "X_CAM_TYPE_OCHIN_CAM0_IMX462_PIVARIETY",
+        "X_CAM_TYPE_OCHIN_CAM1_IMX462_PIVARIETY"
+      ]
+    },
+    {
+      "key": "ROCK3_HDMI",
+      "name": "HDMI to CSI",
+      "cameras": ["X_CAM_TYPE_ROCK_3_HDMI_IN", "X_CAM_TYPE_ROCK_3_HDMI_IN_4LANE"]
+    },
+    {
+      "key": "ROCK3_RK628",
+      "name": "Radxa",
+      "cameras": ["X_CAM_TYPE_ROCK_3_RK628_HDMI_IN"]
+    },
+    {
+      "key": "ROCK3_HDMI_2LANE",
+      "name": "HDMI to CSI",
+      "cameras": ["X_CAM_TYPE_ROCK_3_HDMI_IN"]
+    },
+    {
+      "key": "ROCK3_RPIF",
+      "name": "Raspberry Pi",
+      "cameras": ["X_CAM_TYPE_ROCK_3_OV5647", "X_CAM_TYPE_ROCK_3_IMX219"]
+    },
+    {
       "key": "ROCK3_ARDUCAM",
       "name": "Arducam",
       "cameras": [
@@ -1122,11 +1347,23 @@
     },
     {
       "platform": "X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W",
-      "manufacturers": ["ROCK3_ARDUCAM", "ZERO3W_PIVARIETY", "IP_CAMERA", "USB", "DEBUG"]
+      "manufacturers": ["ROCK3_HDMI", "ROCK3_RK628", "ROCK3_RPIF", "ROCK3_ARDUCAM", "ZERO3W_PIVARIETY", "IP_CAMERA", "USB", "DEBUG"]
+    },
+    {
+      "platform": "X_PLATFORM_TYPE_RADXA_CM3_OCHIN",
+      "manufacturers": ["OCHIN_CSI", "IP_CAMERA", "USB", "DEBUG"]
     },
     {
       "platform": "X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3",
-      "manufacturers": ["ROCK3_ARDUCAM", "IP_CAMERA", "USB", "DEBUG"]
+      "manufacturers": ["ROCK3_HDMI", "ROCK3_RPIF", "ROCK3_ARDUCAM", "IP_CAMERA", "USB", "DEBUG", "ZERO3W_PIVARIETY"]
+    },
+    {
+      "platform": "X_PLATFORM_TYPE_ROCKCHIP_RK3568_RADXA_ROCK3",
+      "manufacturers": ["ROCK3_RPIF", "ROCK3_HDMI_2LANE", "USB", "DEBUG"]
+    },
+    {
+      "platform": "X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ROCK3C",
+      "manufacturers": ["ROCK3_RPIF", "ROCK3_HDMI_2LANE", "ROCK3_RK628", "IP_CAMERA", "USB", "DEBUG"]
     },
     {
       "platform": "X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A",

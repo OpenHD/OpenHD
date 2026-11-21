@@ -53,6 +53,17 @@ struct ResolutionFramerate {
   }
 };
 
+// Each model has an adjacent CAM0/CAM1 pair.
+inline int ochin_csi_port(int camera_type) {
+  if ((camera_type >= X_CAM_TYPE_OCHIN_CAM0_IMX219 &&
+       camera_type <= X_CAM_TYPE_OCHIN_CAM1_IMX462) ||
+      camera_type == X_CAM_TYPE_OCHIN_CAM0_IMX462_PIVARIETY ||
+      camera_type == X_CAM_TYPE_OCHIN_CAM1_IMX462_PIVARIETY) {
+    return (camera_type - X_CAM_TYPE_OCHIN_CAM0_IMX219) % 2;
+  }
+  return -1;
+}
+
 struct XCamera {
   static constexpr int DEFAULT_MAX_VIDEO_BITRATE_KBITS = 20000;
   static constexpr int RPI5_IMX708_MAX_VIDEO_BITRATE_KBITS = 30000;
@@ -89,8 +100,18 @@ struct XCamera {
   bool requires_rockchip5_mpp_pipeline() const {
     return camera_type >= 80 && camera_type < 90;
   }
+  bool uses_ochin_csi() const {
+    return ochin_csi_port(camera_type) >= 0;
+  }
   bool requires_rockchip3_mpp_pipeline() const {
-    return camera_type >= 90 && camera_type < 100;
+    return (camera_type >= 90 && camera_type < 100) ||
+           uses_ochin_csi() ||
+           camera_type == X_CAM_TYPE_ROCK_3_RK628_HDMI_IN;
+  }
+  bool uses_rockchip_hdmi_csi() const {
+    return camera_type == X_CAM_TYPE_ROCK_3_HDMI_IN ||
+           camera_type == X_CAM_TYPE_ROCK_3_HDMI_IN_4LANE ||
+           camera_type == X_CAM_TYPE_ROCK_3_RK628_HDMI_IN;
   }
   bool uses_zero3w_native_mpp(int platform_type) const {
     return platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W &&
@@ -187,7 +208,7 @@ static bool is_rpi_csi_camera(int cam_type) {
   return cam_type >= 20 && cam_type <= 69;
 }
 static bool is_rock_csi_camera(int cam_type) {
-  return cam_type >= 80 && cam_type <= 99;
+  return (cam_type >= 80 && cam_type <= 100) || ochin_csi_port(cam_type) >= 0;
 }
 static bool is_orqa_csi_camera(int cam_type) {
   return cam_type >= 122 && cam_type <= 126;
@@ -201,6 +222,7 @@ static bool is_valid_primary_cam_type(int cam_type) {
   return false;
 }
 static bool is_valid_secondary_cam_type(int cam_type) {
+  if (ochin_csi_port(cam_type) >= 0) return true;
   // ORQA exposes a separate CSI/ISI capture path for the second camera.
   if (is_orqa_csi_camera(cam_type)) return true;
   if (is_usb_camera(cam_type)) return true;
@@ -324,6 +346,14 @@ static std::vector<ManufacturerForPlatform> get_camera_choices_for_platform(
       };
 
   if (is_secondary) {
+    if (platform_type == X_PLATFORM_TYPE_RADXA_CM3_OCHIN) {
+      auto choices = to_manufacturers(openhd::camera_registry::kSecondaryManufacturers,
+                                      openhd::camera_registry::kSecondaryManufacturerCount);
+      const auto& csi = openhd::camera_registry::kManufacturer_OCHIN_CSI;
+      auto csi_choice = to_manufacturers(&csi, 1);
+      choices.insert(choices.begin() + 1, csi_choice.front());
+      return choices;
+    }
     return to_manufacturers(
         openhd::camera_registry::kSecondaryManufacturers,
         openhd::camera_registry::kSecondaryManufacturerCount);

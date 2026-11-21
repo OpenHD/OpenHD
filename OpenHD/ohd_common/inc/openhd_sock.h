@@ -165,7 +165,8 @@ bool update_sysutil_settings(
     std::chrono::milliseconds timeout = std::chrono::seconds(1));
 bool request_sysutil_camera_setup(
     int camera_type,
-    std::chrono::milliseconds timeout = std::chrono::seconds(2));
+    std::chrono::milliseconds timeout = std::chrono::seconds(2),
+    std::optional<int> secondary = std::nullopt);
 
 bool wait_for_sysutils(
     std::chrono::milliseconds timeout = std::chrono::seconds(30),

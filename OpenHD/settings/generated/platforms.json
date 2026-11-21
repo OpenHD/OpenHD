@@ -134,6 +134,36 @@
       ]
     },
     {
+      "id": "rock3a",
+      "label": "Radxa ROCK 3A / 3B",
+      "platformId": 34,
+      "sbc": "rock-3a",
+      "aliases": [
+        "radxa-rock3a",
+        "rock-3a",
+        "radxa-rock3b",
+        "rock-3b"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "rock3c",
+      "label": "Radxa ROCK 3C",
+      "platformId": 35,
+      "sbc": "rock-3c",
+      "aliases": [
+        "radxa-rock3c",
+        "rock-3c"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
       "id": "luckfox-pico",
       "label": "Luckfox Pico / RV110X",
       "platformId": 25,
@@ -394,6 +424,21 @@
       "sbc": "zero3w",
       "aliases": [
         "radxa-rock3"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "ochin-cm3",
+      "label": "Radxa CM3 on OCHIN V1 / V2",
+      "platformId": 38,
+      "sbc": "ochin-cm3",
+      "aliases": [
+        "ochin-v1",
+        "ochin-v2",
+        "ochin-cm3"
       ],
       "roles": [
         "air",

@@ -1,5 +1,7 @@
 #include "rockchip_mpp_stream.h"
 
+#include "rockchip_hdmi_csi.hpp"
+
 #include <fcntl.h>
 #include <linux/dma-buf.h>
 #include <linux/media-bus-format.h>
@@ -918,7 +920,16 @@ class RockchipMppStream::Impl {
         log->warn("IMX415 HFR configuration was not applied; attempting capture");
       }
     }
-    if (camera.camera_type == X_CAM_TYPE_X21_ARDUCAM_PIVARIETY ||
+    if (camera.uses_rockchip_hdmi_csi()) {
+      using openhd::rockchip_hdmi_csi::Bridge;
+      const auto bridge = camera.camera_type == X_CAM_TYPE_ROCK_3_RK628_HDMI_IN
+                              ? Bridge::RadxaRk628
+                              : camera.camera_type == X_CAM_TYPE_ROCK_3_HDMI_IN_4LANE
+                                    ? Bridge::Toshiba4Lane : Bridge::Toshiba2Lane;
+      capture_device = openhd::rockchip_hdmi_csi::setup_capture(
+          width, height, configured_fps, bridge);
+      if (capture_device.empty()) return false;
+    } else if (camera.camera_type == X_CAM_TYPE_X21_ARDUCAM_PIVARIETY ||
         camera.camera_type == X_CAM_TYPE_ROCKCHIP_RV1126_CSI ||
         camera.camera_type == X_CAM_TYPE_X21_HDZERO_RUNCAM_NANO_90) {
       capture_device = find_v4l2_video("stream_cif_mipi_id0");

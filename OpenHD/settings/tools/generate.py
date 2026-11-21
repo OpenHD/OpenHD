@@ -75,8 +75,8 @@ def outputs(doc):
     # select the last registry resolution, except VEYE GX's explicit 1080p30.
     default_types = {1: 0, 10: 20, 11: 20, 12: 20, 13: 0, 20: 94,
                      21: 84, 22: 80, 23: 0, 24: 94, 25: 140, 27: 0,
-                     28: 141, 29: 151, 30: 70, 31: 0, 32: 77,
-                     36: 2, 40: 101, 46: 120, 47: 0, 51: 124, 52: 0, 61: 131}
+                     28: 141, 29: 151, 30: 70, 31: 0, 32: 77, 34: 0, 35: 0,
+                     36: 2, 38: 0, 40: 101, 46: 120, 47: 0, 51: 124, 52: 0, 61: 131}
     by_id = {entry['id']: entry for entry in cameras}
     def default_resolution(entry):
         resolutions = entry.get('resolutions') or [{'width': 640, 'height': 480, 'fps': 30}]

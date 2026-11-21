@@ -356,8 +356,83 @@
       },
       {
         "sbc": [
-          "zero3w",
-          "radxa-cm3"
+          "rock-3a"
+        ],
+        "bootTypeRequired": "Air",
+        "file": "openhd/camera1.txt",
+        "vendors": [
+          {
+            "id": "rock3-rpi",
+            "displayName": "Raspberry Pi",
+            "options": [
+              {
+                "id": "OV5647",
+                "valueWritten": "91"
+              },
+              {
+                "id": "IMX219",
+                "valueWritten": "92"
+              }
+            ]
+          },
+          {
+            "id": "rock3-hdmi-csi",
+            "displayName": "HDMI to CSI",
+            "options": [
+              {
+                "id": "TC358743 (2 CSI lanes)",
+                "valueWritten": "90"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sbc": [
+          "rock-3c"
+        ],
+        "bootTypeRequired": "Air",
+        "file": "openhd/camera1.txt",
+        "vendors": [
+          {
+            "id": "rock3-rpi",
+            "displayName": "Raspberry Pi",
+            "options": [
+              {
+                "id": "OV5647",
+                "valueWritten": "91"
+              },
+              {
+                "id": "IMX219",
+                "valueWritten": "92"
+              }
+            ]
+          },
+          {
+            "id": "rock3-hdmi-csi",
+            "displayName": "HDMI to CSI",
+            "options": [
+              {
+                "id": "TC358743 (2 CSI lanes)",
+                "valueWritten": "90"
+              }
+            ]
+          },
+          {
+            "id": "radxa-rk628",
+            "displayName": "Radxa",
+            "options": [
+              {
+                "id": "Radxa HDMI to CSI (RK628H)",
+                "valueWritten": "100"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sbc": [
+          "zero3w"
         ],
         "bootTypeRequired": "Air",
         "file": "openhd/camera1.txt",
@@ -366,10 +441,6 @@
             "id": "rock3-default",
             "displayName": "Zero3W",
             "options": [
-              {
-                "id": "HDMI",
-                "valueWritten": "90"
-              },
               {
                 "id": "OV5647",
                 "valueWritten": "91"
@@ -397,6 +468,91 @@
               {
                 "id": "VEYE",
                 "valueWritten": "97"
+              }
+            ]
+          },
+          {
+            "id": "rock3-hdmi-csi",
+            "displayName": "HDMI to CSI",
+            "options": [
+              {
+                "id": "TC358743 (2 CSI lanes)",
+                "valueWritten": "90"
+              },
+              {
+                "id": "TC358743 (4 CSI lanes)",
+                "valueWritten": "99"
+              }
+            ]
+          },
+          {
+            "id": "radxa-rk628",
+            "displayName": "Radxa",
+            "options": [
+              {
+                "id": "Radxa HDMI to CSI (RK628H)",
+                "valueWritten": "100"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sbc": [
+          "radxa-cm3"
+        ],
+        "bootTypeRequired": "Air",
+        "file": "openhd/camera1.txt",
+        "vendors": [
+          {
+            "id": "rock3-default",
+            "displayName": "Zero3W",
+            "options": [
+              {
+                "id": "OV5647",
+                "valueWritten": "91"
+              },
+              {
+                "id": "IMX219",
+                "valueWritten": "92"
+              },
+              {
+                "id": "IMX708",
+                "valueWritten": "93"
+              },
+              {
+                "id": "IMX462",
+                "valueWritten": "94"
+              },
+              {
+                "id": "IMX519",
+                "valueWritten": "95"
+              },
+              {
+                "id": "OHD-JAGUAR",
+                "valueWritten": "96"
+              },
+              {
+                "id": "VEYE",
+                "valueWritten": "97"
+              },
+              {
+                "id": "IMX462 Pivariety",
+                "valueWritten": "98"
+              }
+            ]
+          },
+          {
+            "id": "rock3-hdmi-csi",
+            "displayName": "HDMI to CSI",
+            "options": [
+              {
+                "id": "TC358743 (2 CSI lanes)",
+                "valueWritten": "90"
+              },
+              {
+                "id": "TC358743 (4 CSI lanes)",
+                "valueWritten": "99"
               }
             ]
           }
@@ -609,6 +765,62 @@
         "bootTypeRequired": "Air",
         "file": "openhd/camera1.txt",
         "vendors": []
+      },
+      {
+        "sbc": [
+          "ochin-cm3"
+        ],
+        "secondaryCsi": true,
+        "bootTypeRequired": "Air",
+        "file": "openhd/camera1.txt",
+        "vendors": [
+          {
+            "id": "ochin-csi",
+            "displayName": "OCHIN CSI",
+            "options": [
+              {
+                "id": "IMX219 on CAM0",
+                "valueWritten": "102"
+              },
+              {
+                "id": "IMX219 on CAM1",
+                "valueWritten": "103"
+              },
+              {
+                "id": "IMX708 on CAM0",
+                "valueWritten": "104"
+              },
+              {
+                "id": "IMX708 on CAM1",
+                "valueWritten": "105"
+              },
+              {
+                "id": "IMX519 on CAM0",
+                "valueWritten": "106"
+              },
+              {
+                "id": "IMX519 on CAM1",
+                "valueWritten": "107"
+              },
+              {
+                "id": "IMX462 on CAM0",
+                "valueWritten": "108"
+              },
+              {
+                "id": "IMX462 on CAM1",
+                "valueWritten": "109"
+              },
+              {
+                "id": "IMX462 Pivariety on CAM0",
+                "valueWritten": "112"
+              },
+              {
+                "id": "IMX462 Pivariety on CAM1",
+                "valueWritten": "113"
+              }
+            ]
+          }
+        ]
       }
     ],
     "firmwareDefaults": {
@@ -660,6 +872,16 @@
       "cm3": {
         "label": "IMX462",
         "resolution": "1920x1080@60",
+        "autoDetect": false
+      },
+      "rock3a": {
+        "label": "Dummy (debug)",
+        "resolution": "1280x720@60",
+        "autoDetect": false
+      },
+      "rock3c": {
+        "label": "Dummy (debug)",
+        "resolution": "1280x720@60",
         "autoDetect": false
       },
       "luckfox-pico": {
@@ -765,6 +987,11 @@
       "rock3": {
         "label": "IMX462",
         "resolution": "1920x1080@60",
+        "autoDetect": false
+      },
+      "ochin-cm3": {
+        "label": "Dummy (debug)",
+        "resolution": "1280x720@60",
         "autoDetect": false
       }
     }
@@ -967,7 +1194,8 @@
       ],
       "90": [
         "1280x720@30",
-        "1280x720@60"
+        "1280x720@60",
+        "1920x1080@30"
       ],
       "91": [
         "640x480@60",
@@ -1032,6 +1260,12 @@
         "1920x1080@25",
         "2592x1944@25"
       ],
+      "99": [
+        "1280x720@30",
+        "1280x720@60",
+        "1920x1080@30",
+        "1920x1080@60"
+      ],
       "48": [
         "1280x720@60",
         "1920x1080@30",
@@ -1054,6 +1288,52 @@
         "1920x1080@30"
       ],
       "98": [
+        "1920x1080@60"
+      ],
+      "102": [
+        "1280x720@30",
+        "1920x1080@30"
+      ],
+      "103": [
+        "1280x720@30",
+        "1920x1080@30"
+      ],
+      "104": [
+        "1280x720@30",
+        "1920x1080@30"
+      ],
+      "105": [
+        "1280x720@30",
+        "1920x1080@30"
+      ],
+      "106": [
+        "1280x720@30",
+        "1920x1080@30"
+      ],
+      "107": [
+        "1280x720@30",
+        "1920x1080@30"
+      ],
+      "108": [
+        "1280x720@30",
+        "1920x1080@30"
+      ],
+      "109": [
+        "1280x720@30",
+        "1920x1080@30"
+      ],
+      "112": [
+        "1280x720@30",
+        "1920x1080@30"
+      ],
+      "113": [
+        "1280x720@30",
+        "1920x1080@30"
+      ],
+      "100": [
+        "1280x720@30",
+        "1280x720@60",
+        "1920x1080@30",
         "1920x1080@60"
       ],
       "126": [
@@ -1197,7 +1477,7 @@
       "86": "4056x3040@10",
       "87": "4056x3040@9",
       "88": "3840x2160@90",
-      "90": "1280x720@60",
+      "90": "1920x1080@30",
       "91": "1920x1080@30",
       "92": "1920x1080@30",
       "93": "1280x720@120",
@@ -1206,6 +1486,18 @@
       "96": "1920x1080@100",
       "97": "640x480@30",
       "98": "1920x1080@60",
+      "102": "1920x1080@30",
+      "103": "1920x1080@30",
+      "104": "1920x1080@30",
+      "105": "1920x1080@30",
+      "106": "1920x1080@30",
+      "107": "1920x1080@30",
+      "108": "1920x1080@30",
+      "109": "1920x1080@30",
+      "112": "1920x1080@30",
+      "113": "1920x1080@30",
+      "100": "1920x1080@60",
+      "99": "1920x1080@60",
       "101": "1920x1080@60",
       "110": "640x480@30",
       "120": "1920x1080@30",
@@ -1431,6 +1723,36 @@
       "sbc": "radxa-cm3",
       "aliases": [
         "radxa-cm3"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "rock3a",
+      "label": "Radxa ROCK 3A / 3B",
+      "platformId": 34,
+      "sbc": "rock-3a",
+      "aliases": [
+        "radxa-rock3a",
+        "rock-3a",
+        "radxa-rock3b",
+        "rock-3b"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "rock3c",
+      "label": "Radxa ROCK 3C",
+      "platformId": 35,
+      "sbc": "rock-3c",
+      "aliases": [
+        "radxa-rock3c",
+        "rock-3c"
       ],
       "roles": [
         "air",
@@ -1698,6 +2020,21 @@
       "sbc": "zero3w",
       "aliases": [
         "radxa-rock3"
+      ],
+      "roles": [
+        "air",
+        "ground"
+      ]
+    },
+    {
+      "id": "ochin-cm3",
+      "label": "Radxa CM3 on OCHIN V1 / V2",
+      "platformId": 38,
+      "sbc": "ochin-cm3",
+      "aliases": [
+        "ochin-v1",
+        "ochin-v2",
+        "ochin-cm3"
       ],
       "roles": [
         "air",
