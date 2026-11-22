@@ -872,7 +872,11 @@ int main(int argc, char *argv[]) {
       ohdInterface.reset();
       m_console->debug("Terminating ohd_interface - end");
     }
-    if (terminate_due_to_internal_error) {
+    // X21 starts OpenHD directly from its firmware launcher without a service
+    // supervisor. Re-exec after teardown when a setting requests a restart.
+    if (terminate_due_to_internal_error && !quit && platform.is_x21()) {
+      dashboard_action = openhd::ui::DashboardAction::Restart;
+    } else if (terminate_due_to_internal_error) {
       reporter.report(openhd::State::Error);
       openhd::remove_currently_running_file();
       return EXIT_FAILURE;

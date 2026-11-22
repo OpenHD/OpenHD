@@ -444,36 +444,77 @@ std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
             cb_audio_gain}});
 
 #ifdef OPENHD_GSTREAMER_AUDIO_PRESENT
-    const auto usb_cards = GstAudioStream::discover_usb_audio_cards();
-    ret.push_back(openhd::create_read_only_int(
-        "AUDIO_USB_COUNT",
-        usb_cards.has_value() ? static_cast<int>(usb_cards->size()) : -1));
-    std::string usb_names;
-    if (usb_cards.has_value()) {
-      for (const auto& name : *usb_cards) {
-        if (!usb_names.empty()) usb_names += ", ";
-        usb_names += name;
-      }
-    }
-    usb_names.resize(std::min<std::size_t>(usb_names.size(), 128));
-    ret.push_back(openhd::Setting{
-        "AUD_USB_NAMES",
-        openhd::StringSetting{
-            usb_names,
-            [](const std::string&, const std::string&) { return false; }}});
-    const auto audio_devices = GstAudioStream::discover_capture_devices();
+    auto usb_cards = GstAudioStream::discover_usb_audio_cards();
+    auto audio_devices = GstAudioStream::discover_capture_devices();
     m_console->info(
         "Audio detection: {} USB sound cards, {} capture inputs",
         usb_cards.has_value() ? static_cast<int>(usb_cards->size()) : -1,
         audio_devices.size());
-    constexpr std::size_t kMaxPublishedAudioDevices = 8;
-    const auto published_audio_device_count =
-        std::min(audio_devices.size(), kMaxPublishedAudioDevices);
-    ret.push_back(openhd::create_read_only_int(
-        "AUDIO_DEV_COUNT", static_cast<int>(published_audio_device_count)));
-    auto cb_audio_device = [this, audio_devices](std::string,
-                                                 std::string value) {
+    static constexpr std::size_t kMaxPublishedAudioDevices = 8;
+    const bool supports_audio_hotplug = OHDPlatform::instance().is_x21();
+    struct AudioDeviceCache {
+      std::vector<GstAudioStream::DeviceInfo> devices;
+      std::optional<std::vector<std::string>> usb_cards;
+      std::chrono::steady_clock::time_point refreshed;
+    };
+    const auto device_cache = std::make_shared<AudioDeviceCache>(
+        AudioDeviceCache{std::move(audio_devices), std::move(usb_cards),
+                         std::chrono::steady_clock::now()});
+    // MAVLink can read every audio parameter together. Reuse one scan for
+    // those reads so the count and the device names describe the same inputs.
+    const auto audio_inventory = [device_cache, supports_audio_hotplug]()
+        -> const AudioDeviceCache& {
+      const auto now = std::chrono::steady_clock::now();
+      if (supports_audio_hotplug &&
+          now - device_cache->refreshed >= std::chrono::seconds(2)) {
+        device_cache->devices = GstAudioStream::discover_capture_devices();
+        device_cache->usb_cards = GstAudioStream::discover_usb_audio_cards();
+        device_cache->refreshed = now;
+      }
+      return *device_cache;
+    };
+    const auto usb_count = [audio_inventory]() {
+      const auto& cards = audio_inventory().usb_cards;
+      return cards ? static_cast<int>(cards->size()) : -1;
+    };
+    const auto usb_names = [audio_inventory]() {
+      std::string names;
+      const auto& cards = audio_inventory().usb_cards;
+      if (cards) {
+        for (const auto& name : *cards) {
+          if (!names.empty()) names += ", ";
+          names += name;
+        }
+      }
+      return names.substr(0, 128);
+    };
+    auto usb_count_setting =
+        openhd::create_read_only_int("AUDIO_USB_COUNT", usb_count());
+    openhd::StringSetting usb_names_setting{
+        usb_names(), [](const std::string&, const std::string&) { return false; }};
+    if (supports_audio_hotplug) {
+      std::get<openhd::IntSetting>(usb_count_setting.setting).get_callback =
+          usb_count;
+      usb_names_setting.get_callback = usb_names;
+    }
+    ret.push_back(std::move(usb_count_setting));
+    ret.push_back(openhd::Setting{"AUD_USB_NAMES", std::move(usb_names_setting),
+                                  nullptr, true});
+    const auto device_count = [audio_inventory]() {
+      return static_cast<int>(
+          std::min(audio_inventory().devices.size(), kMaxPublishedAudioDevices));
+    };
+    auto count_setting =
+        openhd::create_read_only_int("AUDIO_DEV_COUNT", device_count());
+    if (supports_audio_hotplug) {
+      std::get<openhd::IntSetting>(count_setting.setting).get_callback =
+          device_count;
+    }
+    ret.push_back(std::move(count_setting));
+    auto cb_audio_device = [this, audio_inventory](std::string,
+                                                  std::string value) {
       if (!value.empty()) {
+        const auto& audio_devices = audio_inventory().devices;
         const auto match = std::find_if(
             audio_devices.begin(), audio_devices.end(),
             [&value](const GstAudioStream::DeviceInfo& device) {
@@ -490,19 +531,23 @@ std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
         "AUDIO_DEVICE",
         openhd::StringSetting{m_generic_settings->get_settings().audio_device,
                               cb_audio_device}});
-    for (std::size_t i = 0; i < published_audio_device_count; ++i) {
+    // Reserve the slots on X21 so plug and unplug only change parameter
+    // values and the existing QOpenHD refresh can fetch the new inventory.
+    const std::size_t num_audio_slots =
+        supports_audio_hotplug ? kMaxPublishedAudioDevices : device_count();
+    for (std::size_t i = 0; i < num_audio_slots; ++i) {
       auto reject_string_change = [](const std::string&, const std::string&) {
         return false;
       };
-      auto description =
-          audio_devices[i].token + "|" + audio_devices[i].display_name;
-      constexpr std::size_t kMavlinkExtendedParameterValueLength = 128;
-      if (description.size() > kMavlinkExtendedParameterValueLength) {
-        description.resize(kMavlinkExtendedParameterValueLength);
-      }
-      ret.push_back(openhd::Setting{
-          "AUD_DEV_" + std::to_string(i),
-          openhd::StringSetting{description, reject_string_change}});
+      const auto description = [audio_inventory, i]() {
+        const auto& devices = audio_inventory().devices;
+        if (i >= devices.size()) return std::string{};
+        return (devices[i].token + "|" + devices[i].display_name).substr(0, 128);
+      };
+      openhd::StringSetting slot{description(), reject_string_change};
+      if (supports_audio_hotplug) slot.get_callback = description;
+      ret.push_back(openhd::Setting{"AUD_DEV_" + std::to_string(i),
+                                    std::move(slot), nullptr, true});
     }
 #endif
   }

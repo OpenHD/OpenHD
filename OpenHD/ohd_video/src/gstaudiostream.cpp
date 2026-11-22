@@ -74,7 +74,9 @@ std::vector<GstAudioStream::DeviceInfo>
 GstAudioStream::discover_capture_devices() {
   OHDGstHelper::initGstreamerOrThrow();
   std::vector<DeviceInfo> result;
-  GstDeviceMonitor* monitor = gst_device_monitor_new();
+  // The X21 image uses ALSA directly and has no desktop audio providers.
+  GstDeviceMonitor* monitor =
+      OHDPlatform::instance().is_x21() ? nullptr : gst_device_monitor_new();
   if (monitor) gst_device_monitor_add_filter(monitor, "Audio/Source", nullptr);
   const bool monitor_started = monitor && gst_device_monitor_start(monitor);
   GList* devices =
@@ -117,7 +119,7 @@ GstAudioStream::discover_capture_devices() {
   GstElementFactory* alsa_factory = gst_element_factory_find("alsasrc");
   if (alsa_factory) {
     gst_object_unref(alsa_factory);
-    const auto output = OHDUtil::run_command_out("LC_ALL=C arecord -l");
+    const auto output = OHDUtil::run_command_out("LC_ALL=C arecord -l 2>/dev/null");
     if (output.has_value()) {
       static const std::regex pattern(
           R"(card\s+([0-9]+):\s*(.*?)\s*,\s*device\s+([0-9]+):\s*([^\r\n]*))");
@@ -258,7 +260,8 @@ std::string GstAudioStream::create_pipeline() {
       m_console->warn("Configured microphone is unavailable; using default");
     }
     const auto& platform = OHDPlatform::instance();
-    const bool prefer_alsa = platform.is_rpi() || platform.is_zero3w();
+    const bool prefer_alsa =
+        platform.is_rpi() || platform.is_zero3w() || platform.is_x21();
     if (selected == devices.end() && prefer_alsa) {
       // Use the first ALSA capture device on these embedded Air units.
       selected = std::find_if(devices.begin(), devices.end(),
