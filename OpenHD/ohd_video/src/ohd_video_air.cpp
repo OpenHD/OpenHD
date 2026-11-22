@@ -34,7 +34,7 @@
 #ifdef OPENHD_NXP_V4L2_PRESENT
 #include "nxp_v4l2_stream.h"
 #endif
-#ifdef OPENHD_GSTREAMER_PRESENT
+#ifdef OPENHD_GSTREAMER_AUDIO_PRESENT
 #include "gstaudiostream.h"
 #include "gstreamerstream.h"
 #endif
@@ -165,7 +165,7 @@ void OHDVideoAir::restart_audio_stream() {
           OPENHD_AUDIO_DISABLE) {
     return;
   }
-#ifdef OPENHD_GSTREAMER_PRESENT
+#ifdef OPENHD_GSTREAMER_AUDIO_PRESENT
   m_audio_stream = std::make_shared<GstAudioStream>(
       m_generic_settings->get_settings().audio_device,
       m_generic_settings->get_settings().audio_mic_gain_percent);
@@ -423,7 +423,7 @@ std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
         "AUDIO_ENABLE",
         openhd::IntSetting{m_generic_settings->get_settings().enable_audio,
                            cb_audio}});
-#ifdef OPENHD_GSTREAMER_PRESENT
+#ifdef OPENHD_GSTREAMER_AUDIO_PRESENT
     ret.push_back(openhd::create_read_only_int("AUDIO_EXAMPLE", 1));
 #endif
 
@@ -431,7 +431,7 @@ std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
       if (!is_valid_audio_mic_gain_percent(value)) return false;
       m_generic_settings->unsafe_get_settings().audio_mic_gain_percent = value;
       m_generic_settings->persist();
-#ifdef OPENHD_GSTREAMER_PRESENT
+#ifdef OPENHD_GSTREAMER_AUDIO_PRESENT
       std::lock_guard<std::mutex> lock(m_audio_stream_mutex);
       if (m_audio_stream) m_audio_stream->set_mic_gain_percent(value);
 #endif
@@ -443,7 +443,7 @@ std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
             m_generic_settings->get_settings().audio_mic_gain_percent,
             cb_audio_gain}});
 
-#ifdef OPENHD_GSTREAMER_PRESENT
+#ifdef OPENHD_GSTREAMER_AUDIO_PRESENT
     const auto usb_cards = GstAudioStream::discover_usb_audio_cards();
     ret.push_back(openhd::create_read_only_int(
         "AUDIO_USB_COUNT",

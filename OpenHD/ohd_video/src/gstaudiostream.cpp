@@ -257,9 +257,10 @@ std::string GstAudioStream::create_pipeline() {
     if (!m_device_token.empty() && selected == devices.end()) {
       m_console->warn("Configured microphone is unavailable; using default");
     }
-    if (selected == devices.end() && OHDPlatform::instance().is_rpi()) {
-      // autoaudiosrc is unreliable on Raspberry Pi; use the first actual
-      // ALSA capture device instead of assuming a fixed card number.
+    const auto& platform = OHDPlatform::instance();
+    const bool prefer_alsa = platform.is_rpi() || platform.is_zero3w();
+    if (selected == devices.end() && prefer_alsa) {
+      // Use the first ALSA capture device on these embedded Air units.
       selected = std::find_if(devices.begin(), devices.end(),
                               [](const DeviceInfo& device) {
                                 return device.token.rfind("alsasrc:", 0) == 0;
@@ -273,7 +274,7 @@ std::string GstAudioStream::create_pipeline() {
            << escape_gst_string(selected->token.substr(separator + 1)) << "\"";
       }
       ss << " ! ";
-    } else if (OHDPlatform::instance().is_rpi()) {
+    } else if (prefer_alsa) {
       ss << "alsasrc device=default ! ";
     } else {
       ss << "autoaudiosrc ! ";

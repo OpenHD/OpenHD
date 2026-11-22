@@ -124,7 +124,8 @@ jobs:
               -DCMAKE_BUILD_TYPE=Release -DBUILD_TEST=OFF -DBUILD_SHARED_LIBS=ON
             cmake --build "${mpp_build}" --parallel "$(nproc)"
             DESTDIR="${RUNNER_TEMP}/x21-mpp" cmake --install "${mpp_build}"
-            OPENHD_MPP_ONLY=ON OPENHD_MPP_PREFIX="${RUNNER_TEMP}/x21-mpp/usr/local" \
+            OPENHD_MPP_ONLY=ON OPENHD_MPP_GSTREAMER_AUDIO=ON \
+              OPENHD_MPP_PREFIX="${RUNNER_TEMP}/x21-mpp/usr/local" \
               ./scripts/build_portable_cross.sh arm64 "${sysroot}" "${build_dir}-zero3w"
             export OPENHD_ZERO3W_BINARY="${build_dir}-zero3w/openhd"
           fi

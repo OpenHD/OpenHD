@@ -122,6 +122,7 @@ cmake -S OpenHD -B "${build_dir}" \
   -DSDL2_DIR="${sdl2_dir}" \
   -DENABLE_LIBCAMERA=OFF \
   -DOPENHD_MPP_ONLY="${OPENHD_MPP_ONLY:-OFF}" \
+  -DOPENHD_MPP_GSTREAMER_AUDIO="${OPENHD_MPP_GSTREAMER_AUDIO:-OFF}" \
   "${mpp_cmake_args[@]}" \
   -DARTOSYN_SDK_ROOT="${ARTOSYN_SDK_ROOT:-}" \
   -DARTOSYN_SDK_LIB="${ARTOSYN_SDK_LIB:-}" \
