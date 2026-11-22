@@ -65,6 +65,7 @@ set(sources
     src/ethernet_link.cpp
     src/lte_link.cpp
     src/ethernet_manager.cpp
+    src/lan_platform_announcer.cpp
     src/multi_link.cpp
 )
 

@@ -36,6 +36,7 @@
 
 #include "config_paths.h"
 #include "ethernet_link.h"
+#include "lan_platform_announcer.h"
 #include "lte_link.h"
 #ifdef OHD_ENABLE_ARTOSYN
 #include "artosyn_link.h"
@@ -208,6 +209,9 @@ OHDInterface::OHDInterface(OHDProfile profile1, bool disable_wifi_hotspot)
         m_nw_settings.get_settings().ethernet_operating_mode);
   }
 
+  m_lan_platform_announcer =
+      std::make_unique<LanPlatformAnnouncer>(m_profile.is_air);
+
   // use config defaults if user still relies on legacy WIFI_LOCAL_NETWORK
   if (config.WIFI_LOCAL_NETWORK_ENABLE) {
     auto& settings = m_nw_settings.unsafe_get_settings();
@@ -291,6 +295,7 @@ void OHDInterface::apply_link_policy() {
 }
 
 OHDInterface::~OHDInterface() {
+  m_lan_platform_announcer.reset();
   stop_wifi_client();
   m_wifi_hotspot = nullptr;
   if (m_wb_link) m_wb_link->set_fatal_error_callback(nullptr);

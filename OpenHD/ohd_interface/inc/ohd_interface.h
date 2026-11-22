@@ -50,6 +50,7 @@
 class WBLink;
 class MicrohardLink;
 class EthernetLink;
+class LanPlatformAnnouncer;
 class LteLink;
 class MultiLink;
 #ifdef OHD_ENABLE_ARTOSYN
@@ -139,6 +140,7 @@ class OHDInterface {
 #endif
   std::unique_ptr<USBTetherListener> m_usb_tether_listener;
   std::unique_ptr<EthernetManager> m_ethernet_manager;
+  std::unique_ptr<LanPlatformAnnouncer> m_lan_platform_announcer;
   std::unique_ptr<WifiHotspot> m_wifi_hotspot;
   std::shared_ptr<EthernetLink> m_ethernet_link;
   std::shared_ptr<LteLink> m_lte_link;
