@@ -52,7 +52,7 @@ jobs:
         uses: ./.github/actions/setup-native-build
         with:
           sysutils: "true"
-          extra-packages: ccache python3-pip
+          extra-packages: ccache python3-pip python3-coverage python3-cryptography
 
       - name: Cache ccache data
         uses: actions/cache@v6
@@ -80,6 +80,15 @@ jobs:
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_FLAGS=--coverage -DCMAKE_EXE_LINKER_FLAGS=--coverage"
 
+          cmake --build build --parallel "$(nproc)" --target test_hdmi_edid
+          build/ohd_video/test_hdmi_edid
+
+      - name: Test OTA and collect Python coverage
+        run: |
+          /usr/bin/python3 -m coverage run --include='OpenHD/scripts/openhd-wb-ota.py' \
+            -m unittest discover -s OpenHD/tests -p test_wb_ota.py
+          /usr/bin/python3 -m coverage xml -o coverage-python.xml
+
       - name: Generate Coverage Report
         run: |
           pip3 install --only-binary :all: gcovr==8.7
@@ -93,5 +102,6 @@ jobs:
           args: >
             -Dsonar.cfamily.analysisCache.path=.sonar/analysis-cache
             -Dsonar.cfamily.analysisCache.mode=fs
+            -Dsonar.qualitygate.wait=true
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

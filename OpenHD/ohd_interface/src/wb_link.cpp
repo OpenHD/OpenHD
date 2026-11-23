@@ -32,10 +32,12 @@
 #include <array>
 #include <cctype>
 #include <cmath>
+#include <cstdlib>
 #include <cstring>
 #include <filesystem>
 #include <iostream>
 #include <limits>
+#include <string_view>
 #include <optional>
 #include <sodium.h>
 #include <unordered_map>
@@ -68,6 +70,12 @@ static constexpr size_t WB_RETRANSMISSION_HISTORY_MIN_SIZE = 10;
 static constexpr size_t WB_RETRANSMISSION_HISTORY_MAX_SIZE = 20000;
 
 namespace {
+
+constexpr int OTA_BRIDGE_PORT = 47600;
+constexpr int OTA_CLIENT_PORT = 47601;
+constexpr int OTA_GROUND_TX_RADIO_PORT = 24;
+constexpr int OTA_AIR_TX_RADIO_PORT = 25;
+constexpr std::size_t OTA_MAX_DATAGRAM = 937;
 
 std::string prepare_devourer_log(const std::string& directory) {
   OHDFilesystemUtil::create_directories(directory);
@@ -747,6 +755,7 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
     m_management_air->m_tx_header = m_tx_header_2;
     m_management_air->start();
   }
+  init_ota_stream();
   m_wb_txrx->start_receiving();
   m_work_thread_run = true;
   m_work_thread = std::make_unique<std::thread>(&WBLink::loop_do_work, this);
@@ -800,6 +809,45 @@ WBLink::WBLink(OHDProfile profile, std::vector<WiFiCard> broadcast_cards)
       });
 }
 
+void WBLink::init_ota_stream() {
+  const auto* enabled = std::getenv("OPENHD_WB_OTA");
+  if (!enabled || std::string_view(enabled) != "1") return;
+  WBStreamTx::Options tx{};
+  tx.radio_port = m_profile.is_air ? OTA_AIR_TX_RADIO_PORT
+                                  : OTA_GROUND_TX_RADIO_PORT;
+  tx.enable_fec = false;
+  tx.packet_data_queue_size = 16;
+  m_wb_ota_tx = std::make_unique<WBStreamTx>(m_wb_txrx, tx, m_tx_header_1);
+  m_wb_ota_tx->set_encryption(true);
+
+  m_ota_bridge = std::make_unique<openhd::UDPReceiver>(
+      openhd::ADDRESS_LOCALHOST, OTA_BRIDGE_PORT,
+      [this](const uint8_t* data, std::size_t size) {
+        if (size == 0 || size > OTA_MAX_DATAGRAM ||
+            openhd::ArmingStateHelper::instance().is_currently_armed()) {
+          return;
+        }
+        m_wb_ota_tx->try_enqueue_packet(
+            std::make_shared<std::vector<uint8_t>>(data, data + size));
+      });
+
+  WBStreamRx::Options rx{};
+  rx.radio_port = m_profile.is_air ? OTA_GROUND_TX_RADIO_PORT
+                                  : OTA_AIR_TX_RADIO_PORT;
+  rx.enable_fec = false;
+  rx.enable_threading = true;
+  rx.packet_queue_size = 32;
+  m_wb_ota_rx = std::make_unique<WBStreamRx>(m_wb_txrx, rx);
+  m_wb_ota_rx->set_callback([this](const uint8_t* data, int size) {
+    if (size > 0 && static_cast<std::size_t>(size) <= OTA_MAX_DATAGRAM &&
+        !openhd::ArmingStateHelper::instance().is_currently_armed()) {
+      m_ota_bridge->forwardPacketViaUDP(openhd::ADDRESS_LOCALHOST,
+                                       OTA_CLIENT_PORT, data, size);
+    }
+  });
+  m_ota_bridge->runInBackground();
+}
+
 WBLink::~WBLink() {
   if (m_profile.is_air) {
     openhd::LinkActionHandler::instance().wb_legacy_auto_bitrate = nullptr;
@@ -824,6 +872,9 @@ WBLink::~WBLink() {
   m_wb_txrx->stop_receiving();
   // stop all the receiver/transmitter instances, after that, give card back to
   // network manager
+  m_wb_ota_rx.reset();
+  m_ota_bridge.reset();
+  m_wb_ota_tx.reset();
   m_wb_tele_rx.reset();
   m_wb_tele_tx.reset();
   m_wb_video_tx_list.resize(0);

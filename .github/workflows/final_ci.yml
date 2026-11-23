@@ -66,6 +66,11 @@ jobs:
         uses: ./.github/actions/setup-native-build
         with:
           make-setup: "false"
+          extra-packages: python3-cryptography
+
+      - name: Verify signed OTA and lossy transfer
+        if: matrix.architecture == 'amd64'
+        run: /usr/bin/python3 -m unittest discover -s OpenHD/tests -p test_wb_ota.py -v
 
       - name: Build native AMD64 package
         if: matrix.architecture == 'amd64'
@@ -155,6 +160,9 @@ jobs:
           dpkg-deb -x "${package}" "${RUNNER_TEMP}/package-root"
           package_root="${RUNNER_TEMP}/package-root"
           openhd_binary="${package_root}/usr/local/bin/openhd"
+          test -x "${package_root}/usr/local/bin/openhd-wb-ota"
+          test -f "${package_root}/etc/systemd/system/openhd-wb-ota.service"
+          dpkg-deb -f "${package}" Depends | grep -qw python3-cryptography
           readelf -d "${openhd_binary}" | tee openhd-needed.txt
           if grep -qi libcamera openhd-needed.txt; then
             echo "Portable package must not link libcamera directly."

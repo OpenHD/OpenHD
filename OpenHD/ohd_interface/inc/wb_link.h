@@ -45,6 +45,7 @@
 #include "openhd_platform.h"
 #include "openhd_profile.h"
 #include "openhd_settings_imp.h"
+#include "openhd_udp.h"
 #include "openhd_spdlog.h"
 #include "openhd_util_time.h"
 #include "wb_link_helper.h"
@@ -256,6 +257,10 @@ class WBLink : public OHDLink {
   // For telemetry, bidirectional in opposite directions
   std::unique_ptr<WBStreamTx> m_wb_tele_tx;
   std::unique_ptr<WBStreamRx> m_wb_tele_rx;
+  void init_ota_stream();
+  std::unique_ptr<WBStreamTx> m_wb_ota_tx;
+  std::unique_ptr<openhd::UDPReceiver> m_ota_bridge;
+  std::unique_ptr<WBStreamRx> m_wb_ota_rx;
   // For video, on air there are only tx instances, on ground there are only rx
   // instances.
   std::vector<std::unique_ptr<WBStreamTx>> m_wb_video_tx_list;

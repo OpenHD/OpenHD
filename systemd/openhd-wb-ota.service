@@ -1,0 +1,16 @@
+[Unit]
+Description=OpenHD signed WiFiBroadcast package updater
+After=openhd.service
+Wants=openhd.service
+ConditionPathExists=/etc/openhd/ota-trusted.pem
+
+[Service]
+Type=simple
+StateDirectory=openhd-ota
+StateDirectoryMode=0700
+ExecStart=/usr/local/bin/openhd-wb-ota listen /var/lib/openhd-ota --public-key /etc/openhd/ota-trusted.pem --install
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

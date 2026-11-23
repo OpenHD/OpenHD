@@ -4,6 +4,7 @@
 #include <sys/ioctl.h>
 
 #include <algorithm>
+#include <memory>
 #include <array>
 #include <cerrno>
 #include <chrono>
@@ -14,8 +15,16 @@
 namespace openhd::hdmi_edid {
 
 struct Mode {
-  int width, height, fps, pixel_clock_10khz;
-  int h_front, h_sync, h_back, v_front, v_sync, v_back;
+  int width;
+  int height;
+  int fps;
+  int pixel_clock_10khz;
+  int h_front;
+  int h_sync;
+  int h_back;
+  int v_front;
+  int v_sync;
+  int v_back;
   uint8_t vic;
 };
 
@@ -32,7 +41,7 @@ inline const Mode* find_mode(int width, int height, int fps) {
   const auto mode = std::find_if(modes.begin(), modes.end(), [&](const Mode& m) {
     return m.width == width && m.height == height && m.fps == fps;
   });
-  return mode == modes.end() ? nullptr : &*mode;
+  return mode == modes.end() ? nullptr : std::addressof(*mode);
 }
 
 using Edid = std::array<uint8_t, 256>;
@@ -56,23 +65,23 @@ inline Edid edid_for(const Mode& mode, bool cta = true) {
   const int h_blank = mode.h_front + mode.h_sync + mode.h_back;
   const int v_blank = mode.v_front + mode.v_sync + mode.v_back;
   auto* timing = edid.data() + 54;
-  timing[0] = mode.pixel_clock_10khz & 0xff;
-  timing[1] = mode.pixel_clock_10khz >> 8;
-  timing[2] = mode.width & 0xff;
-  timing[3] = h_blank & 0xff;
-  timing[4] = (mode.width >> 8) << 4 | (h_blank >> 8);
-  timing[5] = mode.height & 0xff;
-  timing[6] = v_blank & 0xff;
-  timing[7] = (mode.height >> 8) << 4 | (v_blank >> 8);
-  timing[8] = mode.h_front & 0xff;
-  timing[9] = mode.h_sync & 0xff;
-  timing[10] = (mode.v_front & 0xf) << 4 | (mode.v_sync & 0xf);
-  timing[11] = (mode.h_front >> 8) << 6 | (mode.h_sync >> 8) << 4 |
-               (mode.v_front >> 4) << 2 | (mode.v_sync >> 4);
-  timing[12] = 480 & 0xff;
-  timing[13] = 270 & 0xff;
-  timing[14] = 0x11;
-  timing[17] = 0x1e;
+  timing[0] = static_cast<uint8_t>(mode.pixel_clock_10khz & 0xff);
+  timing[1] = static_cast<uint8_t>(mode.pixel_clock_10khz >> 8);
+  timing[2] = static_cast<uint8_t>(mode.width & 0xff);
+  timing[3] = static_cast<uint8_t>(h_blank & 0xff);
+  timing[4] = static_cast<uint8_t>((mode.width >> 8) << 4 | (h_blank >> 8));
+  timing[5] = static_cast<uint8_t>(mode.height & 0xff);
+  timing[6] = static_cast<uint8_t>(v_blank & 0xff);
+  timing[7] = static_cast<uint8_t>((mode.height >> 8) << 4 | (v_blank >> 8));
+  timing[8] = static_cast<uint8_t>(mode.h_front & 0xff);
+  timing[9] = static_cast<uint8_t>(mode.h_sync & 0xff);
+  timing[10] = static_cast<uint8_t>((mode.v_front & 0xf) << 4 | (mode.v_sync & 0xf));
+  timing[11] = static_cast<uint8_t>((mode.h_front >> 8) << 6 | (mode.h_sync >> 8) << 4 |
+               (mode.v_front >> 4) << 2 | (mode.v_sync >> 4));
+  timing[12] = static_cast<uint8_t>(480 & 0xff);
+  timing[13] = static_cast<uint8_t>(270 & 0xff);
+  timing[14] = static_cast<uint8_t>(0x11);
+  timing[17] = static_cast<uint8_t>(0x1e);
   constexpr std::array<uint8_t, 18> name{
       0, 0, 0, 0xfc, 0, 'O', 'p', 'e', 'n', 'H', 'D', ' ', 'I', 'n', 10,
       ' ', ' ', ' '};
@@ -99,7 +108,8 @@ inline Edid edid_for(const Mode& mode, bool cta = true) {
   return edid;
 }
 
-inline int call(int fd, unsigned long request, void* data) {
+template <typename Payload>
+inline int call(int fd, unsigned long request, Payload* data) {
   int result;
   do {
     result = ioctl(fd, request, data);
@@ -151,8 +161,8 @@ inline bool wait_for_input(int fd, const Mode& mode, uint64_t max_pixel_clock,
   const auto deadline = std::chrono::steady_clock::now() + 2s;
   if (renegotiating) std::this_thread::sleep_for(250ms);
   do {
-    v4l2_dv_timings detected{};
-    if (call(fd, VIDIOC_SUBDEV_QUERY_DV_TIMINGS, &detected) == 0 &&
+    if (v4l2_dv_timings detected{};
+        call(fd, VIDIOC_SUBDEV_QUERY_DV_TIMINGS, &detected) == 0 &&
         matches(detected, mode, max_pixel_clock) &&
         call(fd, VIDIOC_SUBDEV_S_DV_TIMINGS, &detected) == 0)
       return true;

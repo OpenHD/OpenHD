@@ -80,6 +80,7 @@ endif()
 
 # Install the OpenHD executable
 install(TARGETS openhd DESTINATION bin)
+install(PROGRAMS scripts/openhd-wb-ota.py DESTINATION bin RENAME openhd-wb-ota)
 install(FILES settings/generated/catalog.json
               settings/generated/platforms.json
               settings/generated/imagewriter-settings.json

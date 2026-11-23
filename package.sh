@@ -418,7 +418,7 @@ build_package() {
   echo "Building package..."
   local package_name=""
   local debian_arch=""
-  local packages=(python3 openssl wireguard-tools gstreamer1.0-libav gstreamer1.0-plugins-ugly libncurses6 libncursesw6 libtinfo6 ncurses-base)
+  local packages=(python3 python3-cryptography openssl wireguard-tools gstreamer1.0-libav gstreamer1.0-plugins-ugly libncurses6 libncursesw6 libtinfo6 ncurses-base)
 
   package_name="$(resolve_package_name "${PACKAGE_ARCH}" "${CUSTOM}")"
   debian_arch="$(normalize_debian_arch "${PACKAGE_ARCH}")"
@@ -530,6 +530,8 @@ build_package() {
   if [[ -f "${PKGDIR}usr/local/lib/openhd/nexmon/manifest.json" ]]; then
     packages+=(network-manager systemd iw iproute2 kmod coreutils)
   fi
+  install -m 0755 OpenHD/scripts/openhd-wb-ota.py "${PKGDIR}usr/local/bin/openhd-wb-ota"
+  install -m 0644 systemd/openhd-wb-ota.service "${PKGDIR}etc/systemd/system/openhd-wb-ota.service"
   bundle_poco_runtime "${PKGDIR}usr/local/bin/openhd"
   verify_packaged_poco_abi "${PKGDIR}usr/local/bin/openhd"
   build_and_stage_gst_perf
