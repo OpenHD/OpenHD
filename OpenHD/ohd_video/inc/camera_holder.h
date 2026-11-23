@@ -102,10 +102,10 @@ class CameraHolder :
       unsafe_get_settings().arducam_hdr = 0;
       persist(false);
     }
-    // Hornet and Rekindle expose fixed CSI modes. Migrate values persisted by
-    // older releases so CamInfo and RESOLUTION_FPS match the native capture.
+    // Keep persisted formats and CamInfo in sync with fixed CSI capture modes.
     if (m_camera.camera_type == X_CAM_TYPE_ORQA_HORNET ||
-        m_camera.camera_type == X_CAM_TYPE_ORQA_REKINDLE) {
+        m_camera.camera_type == X_CAM_TYPE_ORQA_REKINDLE ||
+        m_camera.camera_type == X_CAM_TYPE_ZERO3W_IMX415) {
       const auto native_format = m_camera.get_default_resolution_fps();
       auto& configured_format = unsafe_get_settings().streamed_video_format;
       if (configured_format.width != native_format.width_px ||
@@ -259,9 +259,13 @@ class CameraHolder :
     if (!openhd::validate_video_width_height_fps(width, height, framerate)) {
       return false;
     }
-    if (m_camera.camera_type == X_CAM_TYPE_ROCK_3_IMX462_PIVARIETY &&
-        (width != 1920 || height != 1080 || framerate != 60)) {
-      return false;
+    if (m_camera.camera_type == X_CAM_TYPE_ROCK_3_IMX462_PIVARIETY ||
+        m_camera.camera_type == X_CAM_TYPE_ZERO3W_IMX415) {
+      const auto mode = m_camera.get_default_resolution_fps();
+      if (width != mode.width_px || height != mode.height_px ||
+          framerate != mode.fps) {
+        return false;
+      }
     }
     const bool zero3w_imx519 = OHDPlatform::instance().is_zero3w() &&
         m_camera.camera_type == X_CAM_TYPE_ROCK_3_IMX519;

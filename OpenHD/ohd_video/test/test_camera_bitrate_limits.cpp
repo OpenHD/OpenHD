@@ -15,12 +15,16 @@ int main() {
   for (const int type : {X_CAM_TYPE_ROCK_3_HDMI_IN, X_CAM_TYPE_ROCK_3_OV5647,
                          X_CAM_TYPE_ROCK_3_IMX219, X_CAM_TYPE_ROCK_3_IMX708,
                          X_CAM_TYPE_ROCK_3_IMX462, X_CAM_TYPE_ROCK_3_IMX519,
-                         X_CAM_TYPE_ROCK_3_OHD_Jaguar, X_CAM_TYPE_ROCK_3_VEYE}) {
+                         X_CAM_TYPE_ROCK_3_OHD_Jaguar, X_CAM_TYPE_ROCK_3_VEYE,
+                         X_CAM_TYPE_ZERO3W_IMX415}) {
     camera.camera_type = type;
     assert(camera.uses_zero3w_native_mpp(zero3w));
     assert(camera.get_max_video_bitrate_kbits(zero3w) == 25000);
     assert(!camera.uses_zero3w_native_mpp(X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3));
   }
+  const auto imx415_mode = camera.get_default_resolution_fps();
+  assert(imx415_mode.width_px == 1920 && imx415_mode.height_px == 1080 &&
+         imx415_mode.fps == 30);
   camera.camera_type = X_CAM_TYPE_EXTERNAL_IP;
   assert(!camera.uses_zero3w_native_mpp(zero3w));
   camera.camera_type = X_CAM_TYPE_LUCKFOX_AURA_IMX662;

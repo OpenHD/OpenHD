@@ -589,6 +589,13 @@
       "resolutions": [{"width": 1920, "height": 1080, "fps": 60}]
     },
     {
+      "key": "X_CAM_TYPE_ZERO3W_IMX415",
+      "id": 114,
+      "name": "ZERO3W_IMX415",
+      "ui_label": "IMX415",
+      "resolutions": [{"width": 1920, "height": 1080, "fps": 30}]
+    },
+    {
       "key": "X_CAM_TYPE_OCHIN_CAM0_IMX219",
       "id": 102,
       "name": "OCHIN_CAM0_IMX219",
@@ -1198,6 +1205,11 @@
       "cameras": ["X_CAM_TYPE_ROCK_3_IMX462_PIVARIETY"]
     },
     {
+      "key": "ZERO3W_SONY",
+      "name": "Sony",
+      "cameras": ["X_CAM_TYPE_ZERO3W_IMX415"]
+    },
+    {
       "key": "ROCK5_A_GENERIC",
       "name": "Generic",
       "cameras": [
@@ -1347,7 +1359,7 @@
     },
     {
       "platform": "X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W",
-      "manufacturers": ["ROCK3_HDMI", "ROCK3_RK628", "ROCK3_RPIF", "ROCK3_ARDUCAM", "ZERO3W_PIVARIETY", "IP_CAMERA", "USB", "DEBUG"]
+      "manufacturers": ["ROCK3_HDMI", "ROCK3_RK628", "ROCK3_RPIF", "ROCK3_ARDUCAM", "ZERO3W_SONY", "ZERO3W_PIVARIETY", "IP_CAMERA", "USB", "DEBUG"]
     },
     {
       "platform": "X_PLATFORM_TYPE_RADXA_CM3_OCHIN",

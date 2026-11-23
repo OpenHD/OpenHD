@@ -24,6 +24,7 @@
 #include <rk_venc_rc.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
+#include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -886,12 +887,21 @@ class RockchipMppStream::Impl {
         !configure_x21_imx662()) return false;
     constexpr auto imx708_mode_helper =
         "/usr/local/libexec/openhd-zero3w-imx708-media";
-    if (camera.camera_type == X_CAM_TYPE_ROCK_3_IMX708 &&
-        access(imx708_mode_helper, X_OK) == 0 &&
-        OHDUtil::run_command(imx708_mode_helper,
-                            {"--select", configured_fps == 120 ? "120" : "60"}) != 0) {
-      log->error("Could not configure Zero 3W IMX708 sensor readout");
-      return false;
+    if (OHDPlatform::instance().is_zero3w() &&
+        camera.camera_type == X_CAM_TYPE_ROCK_3_IMX708 &&
+        access(imx708_mode_helper, X_OK) == 0) {
+      int result = OHDUtil::run_command(
+          imx708_mode_helper, {"--select", std::to_string(configured_fps)});
+      if (configured_fps == 30 && result != -1 && WIFEXITED(result) &&
+          WEXITSTATUS(result) == 2) {
+        // Older images only ship the 60/120 fps helper.
+        log->warn("Zero 3W image needs an update for IMX708 capture at 30 fps");
+        result = OHDUtil::run_command(imx708_mode_helper, {"--select", "60"});
+      }
+      if (result != 0) {
+        log->error("Could not configure Zero 3W IMX708 sensor readout");
+        return false;
+      }
     }
     if (OHDPlatform::instance().is_zero3w() &&
         camera.camera_type == X_CAM_TYPE_ROCK_3_IMX519 &&
@@ -910,6 +920,14 @@ class RockchipMppStream::Impl {
       return false;
     }
     std::string capture_device;
+    if (camera.camera_type == X_CAM_TYPE_ZERO3W_IMX415) {
+      // The image initializes the binned sensor and ISP together before RKAIQ.
+      constexpr auto helper = "/usr/local/libexec/openhd-zero3w-imx415-media";
+      if (OHDUtil::run_command(helper, {"--check"}) != 0) {
+        log->error("Zero 3W IMX415 was not initialized for 1080p30");
+        return false;
+      }
+    }
     // The X21 routes the HDZero camera's NV12 output through CIF
     // (stream_cif_mipi_id0). The Luckfox Aura and ISP-based cameras (IMX415,
     // VEYE, Arducam) route through rkisp_mainpath.

@@ -106,6 +106,7 @@ struct XCamera {
   bool requires_rockchip3_mpp_pipeline() const {
     return (camera_type >= 90 && camera_type < 100) ||
            uses_ochin_csi() ||
+           camera_type == X_CAM_TYPE_ZERO3W_IMX415 ||
            camera_type == X_CAM_TYPE_ROCK_3_RK628_HDMI_IN;
   }
   bool uses_rockchip_hdmi_csi() const {
