@@ -31,6 +31,8 @@ SET(sources
     "src/endpoints/MEndpoint.h"
     "src/endpoints/SerialEndpoint.cpp"
     "src/endpoints/SerialEndpoint.h"
+    "src/endpoints/SerialPortDiscovery.cpp"
+    "src/endpoints/SerialPortDiscovery.h"
     "src/endpoints/UDPEndpoint.cpp"
     "src/endpoints/UDPEndpoint.h"
     "src/endpoints/WBEndpoint.cpp"

@@ -23,6 +23,8 @@
 
 #include "GroundTelemetry.h"
 
+#include "endpoints/SerialPortDiscovery.h"
+
 #include "openhd_secondary_telemetry.hpp"
 
 #include <algorithm>
@@ -534,7 +536,8 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
         "TRACKER_UART_OUT",
         openhd::StringSetting{
             m_gnd_settings->get_settings().gnd_uart_connection_type,
-            c_gnd_uart_connection_type}});
+            c_gnd_uart_connection_type},
+        openhd::telemetry::serial_port_metadata});
     ret.push_back(openhd::Setting{
         openhd::telemetry::ground::TRACKER_UART_BAUD_PARAM,
         openhd::IntSetting{
@@ -618,7 +621,8 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
       openhd::telemetry::ground::OPENHD_UART_TELEMETRY_PARAM,
       openhd::StringSetting{
           m_gnd_settings->get_settings().openhd_uart_telemetry_connection,
-          c_openhd_uart_conn}});
+          c_openhd_uart_conn},
+      openhd::telemetry::serial_port_metadata});
   ret.push_back(openhd::Setting{
       openhd::telemetry::ground::OPENHD_UART_TELEMETRY_ENABLE_PARAM,
       openhd::IntSetting{

@@ -13,8 +13,11 @@ An endpoint (under src/endpoints) receives and/ or transmits a continuous mavlin
    usefully in some networking situations.
 
 ### UART roles and configuration
-OpenHD exposes every UART over MAVLink so that wiring choices are documented and configurable without
-rebuilding the image:
+Each unit scans Linux TTY devices when serving its settings metadata. QOpenHD
+lists the detected device paths for that unit. Refresh the settings after
+plugging in or removing a USB serial adapter. The scan skips the active system
+console, virtual terminals and unpopulated 8250 ports. Existing assignments
+continue to use the configured path or role alias.
 
 - **Air unit**
   - **Flight controller telemetry (RX/TX):** `FC_UART_CONN`, `FC_UART_BAUD`, `FC_UART_FLWCTL` remain the primary knobs.
