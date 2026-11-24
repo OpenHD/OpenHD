@@ -99,6 +99,44 @@ std::vector<HeaderUart> rockchip_header_uarts(const std::string& compatible) {
   return {};
 }
 
+// The primary serial device may be wired to Bluetooth or a debug socket.
+// Check the active GPIO pin group rather than assuming a /dev/serial0 route.
+std::vector<HeaderUart> raspberry_pi_header_uarts(const std::string& compatible,
+                                                 const fs::path& dt) {
+  auto has_compatible = [&](std::string_view name) {
+    return contains_dt_string(compatible, name);
+  };
+  if (has_compatible("raspberrypi,5-model-b")) {
+    return {{"rp1_uart0_14_15", 10, 8}, {"rp1_uart1_0_1", 28, 27},
+            {"rp1_uart2_4_5", 29, 7}, {"rp1_uart3_8_9", 21, 24},
+            {"rp1_uart4_12_13", 33, 32}};
+  }
+  if (!(has_compatible("raspberrypi,4-model-b") ||
+        has_compatible("raspberrypi,3-model-b") ||
+        has_compatible("raspberrypi,3-model-b-plus") ||
+        has_compatible("raspberrypi,3-model-a-plus") ||
+        has_compatible("raspberrypi,2-model-b") ||
+        has_compatible("raspberrypi,model-zero") ||
+        has_compatible("raspberrypi,model-zero-w") ||
+        has_compatible("raspberrypi,model-zero-2-w"))) {
+    return {};
+  }
+  std::vector<HeaderUart> routes;
+  for (const char* symbol : {"uart0_gpio14", "uart0_pins", "uart1_gpio14", "uart1_pins"}) {
+    const auto node = read_property(dt / "__symbols__" / symbol);
+    if (node.empty() || node.front() != '/') continue;
+    const auto path = dt / (node.c_str() + 1);
+    const auto gpios = read_property(path / "brcm,pins");
+    const auto function = read_property(path / "brcm,function");
+    const char* mux = std::string_view(symbol).find("uart0") == 0 ? "\0\0\0\4" : "\0\0\0\2";
+    if (gpios.compare(0, 8, "\0\0\0\16\0\0\0\17", 8) == 0 &&
+        function.size() == 4 && function.compare(0, 4, mux, 4) == 0) {
+      routes.push_back({symbol, 10, 8});
+    }
+  }
+  return routes;
+}
+
 nlohmann::json cubie_header_routes(const std::vector<std::string>& ports,
                                     const fs::path& dt,
                                     const fs::path& tty_class) {
@@ -158,7 +196,8 @@ nlohmann::json serial_header_routes(const std::vector<std::string>& ports,
       contains_dt_string(compatible, "radxa,cubie-a7z")) {
     return cubie_header_routes(ports, dt, tty_class);
   }
-  const auto pin_pairs = rockchip_header_uarts(compatible);
+  auto pin_pairs = rockchip_header_uarts(compatible);
+  if (pin_pairs.empty()) pin_pairs = raspberry_pi_header_uarts(compatible, dt);
   if (pin_pairs.empty()) return routes;
   for (const auto& port : ports) {
     const auto pins = read_property(tty_class /
