@@ -537,7 +537,13 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
         openhd::StringSetting{
             m_gnd_settings->get_settings().gnd_uart_connection_type,
             c_gnd_uart_connection_type},
-        openhd::telemetry::serial_port_metadata});
+        [this] {
+            const auto& value =
+                m_gnd_settings->get_settings().gnd_uart_connection_type;
+            return openhd::telemetry::serial_port_metadata(
+                value, serial_openhd_param_to_linux_fd(value, SerialPortRole::Tracker)
+                           .value_or(""));
+        }});
     ret.push_back(openhd::Setting{
         openhd::telemetry::ground::TRACKER_UART_BAUD_PARAM,
         openhd::IntSetting{
@@ -622,7 +628,13 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
       openhd::StringSetting{
           m_gnd_settings->get_settings().openhd_uart_telemetry_connection,
           c_openhd_uart_conn},
-      openhd::telemetry::serial_port_metadata});
+      [this] {
+          const auto& value =
+              m_gnd_settings->get_settings().openhd_uart_telemetry_connection;
+          return openhd::telemetry::serial_port_metadata(
+              value, serial_openhd_param_to_linux_fd(value, SerialPortRole::OpenHD)
+                         .value_or(""));
+      }});
   ret.push_back(openhd::Setting{
       openhd::telemetry::ground::OPENHD_UART_TELEMETRY_ENABLE_PARAM,
       openhd::IntSetting{

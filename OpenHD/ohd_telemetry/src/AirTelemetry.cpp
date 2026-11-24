@@ -717,7 +717,13 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
       openhd::StringSetting{
           m_air_settings->get_settings().fc_uart_connection_type,
           c_fc_uart_connection_type},
-      openhd::telemetry::serial_port_metadata});
+      [this] {
+          const auto& value =
+              m_air_settings->get_settings().fc_uart_connection_type;
+          return openhd::telemetry::serial_port_metadata(
+              value, serial_openhd_param_to_linux_fd(value, SerialPortRole::Flight)
+                         .value_or(""));
+      }});
   for (const auto& id : {"FC_FW_INFO", "FC_FW_EVID"}) {
     const auto read = [this, id = std::string(id)] {
       const auto r = m_ohd_main_component->fc_firmware_result();
@@ -755,7 +761,13 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
       openhd::StringSetting{
           m_air_settings->get_settings().openhd_uart_telemetry_connection,
           c_openhd_uart_conn},
-      openhd::telemetry::serial_port_metadata});
+      [this] {
+          const auto& value =
+              m_air_settings->get_settings().openhd_uart_telemetry_connection;
+          return openhd::telemetry::serial_port_metadata(
+              value, serial_openhd_param_to_linux_fd(value, SerialPortRole::OpenHD)
+                         .value_or(""));
+      }});
   ret.push_back(openhd::Setting{
       air::OPENHD_UART_TELEMETRY_ENABLE_PARAM,
       openhd::IntSetting{
@@ -821,7 +833,12 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
       air::SBUS_OUT_DEVICE_PARAM,
       openhd::StringSetting{
           m_air_settings->get_settings().sbus_uart_device, c_sbus_device},
-      openhd::telemetry::serial_port_metadata});
+      [this] {
+          const auto& value =
+              m_air_settings->get_settings().sbus_uart_device;
+          return openhd::telemetry::serial_port_metadata(
+              value, OHDUtil::str_equal(value, "DEFAULT") ? "/dev/Sbus" : value);
+      }});
   ret.push_back(openhd::Setting{
       air::SBUS_OUT_RATE_PARAM,
       openhd::IntSetting{

@@ -13,6 +13,7 @@ std::vector<std::string> discover_serial_ports(
     const std::filesystem::path& tty_class = "/sys/class/tty",
     const std::filesystem::path& device_directory = "/dev");
 
-nlohmann::json serial_port_metadata();
+nlohmann::json serial_port_metadata(const std::string& configured,
+                                    const std::string& resolved);
 
 }  // namespace openhd::telemetry
