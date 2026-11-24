@@ -103,9 +103,9 @@ class PersistentSettings {
   /*
    * looks for a previously written file (base_path+unique filename).
    * If this file exists, create settings from it - otherwise, create default
-   * and persist.
+   * and optionally persist.
    */
-  void init() {
+  void init(bool persist_defaults = true) {
     if (!OHDFilesystemUtil::exists(_base_path)) {
       OHDFilesystemUtil::create_directory(_base_path);
     }
@@ -117,9 +117,8 @@ class PersistentSettings {
       _created_defaults = true;
       openhd::log::info_log("Creating default settings in [" + get_file_path() +
                             "]");
-      // create default settings and persist them for the next reboot
       _settings = std::make_unique<T>(create_default());
-      persist_settings();
+      if (persist_defaults) persist_settings();
     }
   }
   // Initial provisioning may seed only a newly created owner's settings.

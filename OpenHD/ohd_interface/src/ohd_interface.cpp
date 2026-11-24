@@ -604,6 +604,15 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings() {
   if (m_wb_link) {
     auto settings = m_wb_link->get_all_settings();
     OHDUtil::vec_append(ret, settings);
+  } else if (m_profile.is_air) {
+    if (!m_wb_settings_without_radio) {
+      m_wb_settings_without_radio =
+          std::make_unique<openhd::WBLinkSettingsHolder>(m_profile, std::vector<WiFiCard>{});
+    }
+    OHDUtil::vec_append(ret, m_wb_settings_without_radio->get_rc_profile_settings());
+  }
+  if (m_profile.is_air) {
+    ret.push_back(openhd::create_read_only_int("RC_RANGE_MAX", openhd::rc::max_ranges));
   }
   if (m_microhard_link) {
     auto settings = m_microhard_link->get_all_settings();

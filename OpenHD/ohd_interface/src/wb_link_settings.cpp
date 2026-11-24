@@ -23,11 +23,25 @@
 
 #include "wb_link_settings.h"
 
+#include <algorithm>
+#include <array>
+
 #include "include_json.hpp"
 
 namespace openhd {
 
 namespace {
+
+constexpr std::array rc_profile_keys{
+    "wb_mcs_index_via_rc_channel", "wb_bw_via_rc_channel",
+    "wb_mcs_rc_ranges", "wb_bw_rc_ranges"};
+
+nlohmann::json read_wb_settings_json(const std::string& path) {
+  const auto saved = OHDFilesystemUtil::opt_read_file(path, false);
+  if (!saved) return nlohmann::json::object();
+  auto parsed = nlohmann::json::parse(*saved, nullptr, false);
+  return parsed.is_object() ? parsed : nlohmann::json::object();
+}
 
 int migrate_tx_power_level(const int value) {
   // Migrate the short-lived four-level implementation and its disabled
@@ -50,6 +64,86 @@ int migrate_tx_power_level(const int value) {
 }
 
 }  // namespace
+
+WBLinkSettingsHolder::WBLinkSettingsHolder(
+    OHDProfile profile, std::vector<WiFiCard> wifibroadcast_cards,
+    std::string settings_directory)
+    : PersistentSettings<WBLinkSettings>(settings_directory),
+      m_profile(std::move(profile)),
+      m_cards(std::move(wifibroadcast_cards)),
+      m_settings_directory(std::move(settings_directory)) {
+  if (!m_cards.empty()) {
+    const auto saved = read_wb_settings_json(
+        m_settings_directory + get_unique_filename());
+    m_had_staged_rc_profiles = !saved.empty() &&
+                               saved.size() <= rc_profile_keys.size();
+    if (m_had_staged_rc_profiles) {
+      for (const auto& entry : saved.items()) {
+        if (std::find(rc_profile_keys.begin(), rc_profile_keys.end(), entry.key()) ==
+            rc_profile_keys.end()) {
+          m_had_staged_rc_profiles = false;
+          break;
+        }
+      }
+    }
+  }
+  init(!m_cards.empty());
+  if (m_cards.empty()) return;
+
+  // Keep hardware-specific defaults and normal first-start provisioning when
+  // the only saved settings were configured before a radio was available.
+  if (m_had_staged_rc_profiles) _created_defaults = true;
+  auto& settings = unsafe_get_settings();
+  bool changed = m_had_staged_rc_profiles;
+  for (auto* width : {&settings.wb_air_tx_channel_width,
+                      &settings.wb_gnd_rx_channel_width}) {
+    if (*width == 5) {
+      *width = 20;
+      changed = true;
+    }
+  }
+  if (changed) persist();
+}
+
+std::vector<Setting> WBLinkSettingsHolder::get_rc_profile_settings(
+    std::function<void()> on_bandwidth_changed) {
+  std::vector<Setting> result;
+  const auto add_channel = [&](const char* id, auto member, bool bandwidth) {
+    result.push_back(Setting{id, IntSetting{get_rc_channel(member),
+        [this, member, bandwidth, on_bandwidth_changed](std::string, int value) {
+          if (value < 0 || value > 18) return false;
+          {
+            std::lock_guard<std::mutex> lock(m_rc_profiles_mutex);
+            auto& channel = unsafe_get_settings().*member;
+            if (static_cast<int>(channel) == value) return true;
+            channel = value;
+            PersistentSettings::persist();
+          }
+          if (bandwidth && on_bandwidth_changed) on_bandwidth_changed();
+          return true;
+        }}});
+  };
+  const auto add_profile = [&](const char* id, rc::RangeKind kind,
+                               std::string WBLinkSettings::*member) {
+    result.push_back(Setting{id, StringSetting{get_rc_ranges(member),
+        [this, kind, member, on_bandwidth_changed](std::string, std::string value) {
+          if (!rc::parse_ranges(value, kind)) return false;
+          if (set_rc_ranges(member, std::move(value)) &&
+              kind == rc::RangeKind::Bandwidth && on_bandwidth_changed)
+            on_bandwidth_changed();
+          return true;
+        }}});
+  };
+  add_channel(WB_MCS_INDEX_VIA_RC_CHANNEL, &WBLinkSettings::wb_mcs_index_via_rc_channel, false);
+  add_channel(WB_BW_VIA_RC_CHANNEL, &WBLinkSettings::wb_bw_via_rc_channel, true);
+  add_profile("RC_MCS_RANGES", rc::RangeKind::Mcs, &WBLinkSettings::wb_mcs_rc_ranges);
+  add_profile("RC_BW_RANGES", rc::RangeKind::Bandwidth, &WBLinkSettings::wb_bw_rc_ranges);
+  for (auto& setting : result) {
+    setting.seed_allowed = created_defaults() && !m_had_staged_rc_profiles &&
+                           !m_cards.empty();
+  }
+  return result;
+}
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
     WBLinkSettings, wb_frequency, wb_air_tx_channel_width,
@@ -80,7 +174,7 @@ std::optional<WBLinkSettings> openhd::WBLinkSettingsHolder::impl_deserialize(
     const std::string &file_as_string) const {
   try {
     const auto parsed = nlohmann::json::parse(file_as_string);
-    auto settings = create_default_wb_stream_settings(m_cards);
+    auto settings = create_default();
     settings.wb_frequency = parsed.value("wb_frequency", settings.wb_frequency);
     settings.wb_air_tx_channel_width = parsed.value(
         "wb_air_tx_channel_width", settings.wb_air_tx_channel_width);
@@ -235,6 +329,16 @@ std::optional<WBLinkSettings> openhd::WBLinkSettingsHolder::impl_deserialize(
 
 std::string WBLinkSettingsHolder::imp_serialize(
     const openhd::WBLinkSettings &data) const {
+  if (m_cards.empty()) {
+    // Preserve previous radio configuration, or leave radio defaults unset
+    // until a real card is discovered.
+    auto saved = read_wb_settings_json(m_settings_directory + get_unique_filename());
+    saved[rc_profile_keys[0]] = data.wb_mcs_index_via_rc_channel;
+    saved[rc_profile_keys[1]] = data.wb_bw_via_rc_channel;
+    saved[rc_profile_keys[2]] = data.wb_mcs_rc_ranges;
+    saved[rc_profile_keys[3]] = data.wb_bw_rc_ranges;
+    return saved.dump(4);
+  }
   const nlohmann::json tmp = data;
   return tmp.dump(4);
 }

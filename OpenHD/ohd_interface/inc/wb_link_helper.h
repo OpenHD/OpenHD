@@ -24,6 +24,7 @@
 #ifndef OPENHD_OPENHD_OHD_INTERFACE_INC_WB_LINK_HELPER_H_
 #define OPENHD_OPENHD_OHD_INTERFACE_INC_WB_LINK_HELPER_H_
 
+#include <chrono>
 #include <mutex>
 #include <optional>
 #include <utility>
@@ -176,7 +177,9 @@ class RCChannelHelper {
 
   // Atomic / thread-safe setter / getter
   void set_rc_channels(const std::array<int, 18>& rc_channels);
-  std::optional<std::array<int, 18>> get_fc_reported_rc_channels();
+  std::optional<std::array<int, 18>> get_fc_reported_rc_channels(
+      std::chrono::steady_clock::duration max_age =
+          std::chrono::steady_clock::duration::max());
   /**
    * Get the mcs index mapping pwm channel (channel_index) to mcs indices.
    * If no rc data has been supplied by the FC yet and / or the channel index is
@@ -193,6 +196,7 @@ class RCChannelHelper {
 
  private:
   std::optional<std::array<int, 18>> m_rc_channels;
+  std::chrono::steady_clock::time_point m_last_rc_update{};
   std::mutex m_rc_channels_mutex;
 };
 

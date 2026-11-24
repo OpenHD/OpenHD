@@ -2,7 +2,7 @@
 
 Air exports `RC_BW_RANGES`, `RC_MCS_RANGES`, `RC_TX_RANGES`, and `RC_FHSS_RANGES`
 as PARAM_EXT strings. Each string
-is a complete profile of one to five inclusive `upper:value` areas, in increasing
+is a complete profile of one to eight inclusive `upper:value` areas, in increasing
 PWM order. Coverage starts at 900 us and must end at 2100 us. Bandwidth values
 are 10, 20 and 40 MHz. MCS values are 0 through 4. Transmit mode uses 0 (Off),
 1 (Pit), or 2 (Normal), and frequency hopping uses 0 (Off) or 1 (On). Values may repeat or appear in
@@ -10,7 +10,9 @@ any order. A rejected profile leaves the previous profile untouched.
 
 Fresh defaults are `1500:20,2100:40`, `1300:0,1700:2,2100:3`,
 `1300:0,1700:1,2100:2`, and `1500:0,2100:1`, respectively. Profiles persist
-in the normal WBLink settings file.
+in the normal WBLink settings file. Air advertises its limit as `RC_RANGE_MAX`.
+MCS and bandwidth mappings can be saved through the Air management connection
+before a radio or RC data is available.
 When an older file already enables the corresponding RC assignment, missing
 profiles use the legacy thresholds and values. Disabled assignments get the new
 defaults. Invalid persisted profiles recover using the same migration rule.

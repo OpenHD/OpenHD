@@ -1803,46 +1803,15 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
           openhd::WB_RC_SETTINGS_BASE_CHANNEL,
           openhd::IntSetting{settings.wb_rc_settings_base_channel,
                              cb_rc_settings_base_channel}});
-      auto cb_mcs_via_rc_channel = [this](std::string, int value) {
-        if (value < 0 || value > 18)
-          return false;  // 0 is disabled, valid rc channel number otherwise
-        // we check if this is enabled in regular intervals (whenever we get the
-        // rc channels message from the FC)
-        m_settings->unsafe_get_settings().wb_mcs_index_via_rc_channel = value;
-        m_settings->persist();
-        return true;
-      };
-      ret.push_back(
-          Setting{openhd::WB_MCS_INDEX_VIA_RC_CHANNEL,
-                  openhd::IntSetting{(int)settings.wb_mcs_index_via_rc_channel,
-                                     cb_mcs_via_rc_channel}});
-      auto cb_bw_via_rc_channel = [this](std::string, int value) {
-        if (value < 0 || value > 18) {
-          return false;
-        }
-        auto& settings = m_settings->unsafe_get_settings();
-        if (settings.wb_bw_via_rc_channel != value) m_pending_rc_channel_width = 0;
-        settings.wb_bw_via_rc_channel = value;
-        m_settings->persist();
-        return true;
-      };
-      ret.push_back(
-          Setting{openhd::WB_BW_VIA_RC_CHANNEL,
-                  openhd::IntSetting{(int)settings.wb_bw_via_rc_channel,
-                                     cb_bw_via_rc_channel}});
       auto add_rc_ranges = [this, &ret, &settings](
           const char* id, rc::RangeKind kind, std::string WBLinkSettings::*profile) {
         auto update = [this, kind, profile](std::string, std::string value) {
           if (!rc::parse_ranges(value, kind)) return false;
-          const bool changed = m_settings->set_rc_ranges(profile, std::move(value));
-          if (changed && kind == rc::RangeKind::Bandwidth)
-            m_pending_rc_channel_width = 0;
+          m_settings->set_rc_ranges(profile, std::move(value));
           return true;
         };
         ret.push_back(Setting{id, StringSetting{settings.*profile, update}});
       };
-      add_rc_ranges("RC_BW_RANGES", rc::RangeKind::Bandwidth, &WBLinkSettings::wb_bw_rc_ranges);
-      add_rc_ranges("RC_MCS_RANGES", rc::RangeKind::Mcs, &WBLinkSettings::wb_mcs_rc_ranges);
       add_rc_ranges("RC_TX_RANGES", rc::RangeKind::TxMode, &WBLinkSettings::wb_tx_mode_rc_ranges);
       add_rc_ranges("RC_FHSS_RANGES", rc::RangeKind::Fhss, &WBLinkSettings::wb_fhss_rc_ranges);
       auto cb_tx_mode_via_rc_channel = [this](std::string, int value) {
@@ -2317,6 +2286,10 @@ std::vector<openhd::Setting> WBLink::get_all_settings() {
       return nlohmann::json{{"available",m_profile.is_ground() || variable},{"writable",variable},
         {"reason",variable ? "" : "This radio uses a fixed MCS rate"}};
     };
+  }
+  if (m_profile.is_air) {
+    OHDUtil::vec_append(ret, m_settings->get_rc_profile_settings(
+        [this]() { m_pending_rc_channel_width = 0; }));
   }
   openhd::validate_provided_ids(ret);
   return ret;
@@ -3506,17 +3479,16 @@ void WBLink::wt_perform_rc_settings_protocol_if_enabled() {
 }
 
 void WBLink::wt_perform_mcs_via_rc_channel_if_enabled() {
-  if (!m_profile.is_air) {
+  if (!m_profile.is_air || !m_radio_available ||
+      !m_broadcast_cards.front().supports_openhd_wifibroadcast() ||
+      !wifi_card_supports_variable_mcs(m_broadcast_cards.front())) {
     return;
   }
-  const auto& settings = m_settings->get_settings();
-  if (settings.wb_mcs_index_via_rc_channel <=
-      openhd::WB_MCS_INDEX_VIA_RC_CHANNEL_OFF) {
-    // disabled
-    return;
-  }
+  const int channel = m_settings->get_rc_channel(
+      &openhd::WBLinkSettings::wb_mcs_index_via_rc_channel);
+  if (channel <= openhd::WB_MCS_INDEX_VIA_RC_CHANNEL_OFF) return;
   // 1= channel number 1 aka array index 0
-  const int channel_index = (int)settings.wb_mcs_index_via_rc_channel - 1;
+  const int channel_index = channel - 1;
   const auto mcs_from_rc_opt =
       m_rc_channel_helper.get_mcs_from_rc_channel(
           channel_index, m_console, m_settings->get_rc_ranges(&openhd::WBLinkSettings::wb_mcs_rc_ranges));
@@ -3524,6 +3496,7 @@ void WBLink::wt_perform_mcs_via_rc_channel_if_enabled() {
     return;
   }
   const auto& mcs_from_rc = mcs_from_rc_opt.value();
+  const auto& settings = m_settings->get_settings();
   if (settings.wb_air_mcs_index != mcs_from_rc) {
     m_console->debug("RC CHANNEL - changing MCS from {} to {} ",
                      settings.wb_air_mcs_index, mcs_from_rc);
@@ -3534,29 +3507,37 @@ void WBLink::wt_perform_mcs_via_rc_channel_if_enabled() {
 }
 
 void WBLink::wt_perform_bw_via_rc_channel_if_enabled() {
-  if (!m_profile.is_air) {
+  if (!m_profile.is_air || !m_radio_available ||
+      !m_broadcast_cards.front().supports_openhd_wifibroadcast()) {
     return;
   }
+  const int channel = m_settings->get_rc_channel(
+      &openhd::WBLinkSettings::wb_bw_via_rc_channel);
+  if (channel <= openhd::WB_BW_VIA_RC_CHANNEL_OFF) return;
   const auto& settings = m_settings->get_settings();
-  if (settings.wb_bw_via_rc_channel <= openhd::WB_BW_VIA_RC_CHANNEL_OFF) return;
   const auto opt_rc_bw = m_rc_channel_helper.get_bw_from_rc_channel(
-      settings.wb_bw_via_rc_channel, m_settings->get_rc_ranges(&openhd::WBLinkSettings::wb_bw_rc_ranges));
+      channel, m_settings->get_rc_ranges(&openhd::WBLinkSettings::wb_bw_rc_ranges));
   if (!opt_rc_bw.has_value()) return;
   const auto rc_bw = opt_rc_bw.value();
+  if (rc_bw == 40 &&
+      !wifi_card_supports_40Mhz_channel_width_injection(m_broadcast_cards.front()))
+    return;
   if (settings.wb_air_tx_channel_width == rc_bw) {
     m_pending_rc_channel_width = 0;
     return;
   }
-  if (m_pending_rc_channel_width.load() == rc_bw) {
+  const auto now = std::chrono::steady_clock::now();
+  if (m_pending_rc_channel_width.load() == rc_bw &&
+      now < m_next_rc_bandwidth_retry) {
     return;
   }
-  if (settings.wb_air_tx_channel_width != rc_bw) {
-    m_console->debug("RC CHANNEL - changing BW from {} to {} ",
-                     settings.wb_air_tx_channel_width, rc_bw);
-    if (request_set_air_tx_channel_width(rc_bw)) {
-      m_pending_rc_channel_width = rc_bw;
-    }
-  }
+  // A queued change can be rolled back by the radio transaction. While fresh
+  // RC still requests this width, retry without flooding the radio work queue.
+  m_pending_rc_channel_width = rc_bw;
+  m_next_rc_bandwidth_retry = now + std::chrono::seconds(2);
+  m_console->debug("RC CHANNEL - changing BW from {} to {} ",
+                   settings.wb_air_tx_channel_width, rc_bw);
+  request_set_air_tx_channel_width(rc_bw);
 }
 
 void WBLink::wt_perform_tx_mode_via_rc_channel_if_enabled() {
@@ -3999,9 +3980,9 @@ bool WBLink::restart_after_card_replug(
       return false;
     }
   }
-  m_broadcast_cards = broadcast_cards;
   m_work_thread_run = false;
   if (m_work_thread && m_work_thread->joinable()) m_work_thread->join();
+  m_broadcast_cards = broadcast_cards;
   std::vector<wifibroadcast::WifiCard> runtime_cards;
   runtime_cards.reserve(broadcast_cards.size());
   for (const auto& card : broadcast_cards) {
@@ -4022,6 +4003,7 @@ bool WBLink::restart_after_card_replug(
   apply_frequency_and_channel_width_from_settings();
   apply_txpower();
   re_enable_injection_unless_user_passive_mode_enabled();
+  m_pending_rc_channel_width = 0;
   m_work_thread_run = true;
   m_work_thread = std::make_unique<std::thread>(&WBLink::loop_do_work, this);
   m_wifi_card_error_has_been_handled = false;

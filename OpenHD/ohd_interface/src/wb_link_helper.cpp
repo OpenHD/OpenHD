@@ -471,15 +471,18 @@ int openhd::wb::calculate_bitrate_for_wifi_config_kbits(
 std::optional<int> openhd::wb::RCChannelHelper::get_mcs_from_rc_channel(
     int channel_index, std::shared_ptr<spdlog::logger>& /*m_console*/,
     const std::string& ranges) {
-  const auto channels = get_fc_reported_rc_channels();
+  const auto channels = get_fc_reported_rc_channels(std::chrono::seconds(3));
   if (!channels || channel_index < 0 || channel_index >= 18) return std::nullopt;
   return openhd::rc::value_for_pwm(ranges, openhd::rc::RangeKind::Mcs,
                                   (*channels)[channel_index]);
 }
 
 std::optional<std::array<int, 18>>
-openhd::wb::RCChannelHelper::get_fc_reported_rc_channels() {
+openhd::wb::RCChannelHelper::get_fc_reported_rc_channels(
+    std::chrono::steady_clock::duration max_age) {
   std::lock_guard<std::mutex> guard(m_rc_channels_mutex);
+  if (std::chrono::steady_clock::now() - m_last_rc_update > max_age)
+    return std::nullopt;
   return m_rc_channels;
 }
 
@@ -487,11 +490,12 @@ void openhd::wb::RCChannelHelper::set_rc_channels(
     const std::array<int, 18>& rc_channels) {
   std::lock_guard<std::mutex> guard(m_rc_channels_mutex);
   m_rc_channels = rc_channels;
+  m_last_rc_update = std::chrono::steady_clock::now();
 }
 
 std::optional<uint8_t> openhd::wb::RCChannelHelper::get_bw_from_rc_channel(
     int channel_index, const std::string& ranges) {
-  const auto channels = get_fc_reported_rc_channels();
+  const auto channels = get_fc_reported_rc_channels(std::chrono::seconds(3));
   if (!channels || channel_index < 1 || channel_index > 18) return std::nullopt;
   const auto value = openhd::rc::value_for_pwm(
       ranges, openhd::rc::RangeKind::Bandwidth, (*channels)[channel_index - 1]);

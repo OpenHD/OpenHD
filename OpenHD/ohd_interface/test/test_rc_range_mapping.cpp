@@ -40,11 +40,15 @@ int main() {
   assert(value_for_pwm("2100:20", RangeKind::Bandwidth, 900) == 20);
   assert(value_for_pwm("900:0,2100:4", RangeKind::Mcs, 900) == 0);
   assert(value_for_pwm("900:0,2100:4", RangeKind::Mcs, 901) == 4);
+  const auto eight = "1050:10,1200:20,1350:40,1500:10,1650:20,1800:40,1950:20,2100:10";
+  assert(parse_ranges(eight, RangeKind::Bandwidth)->size() == 8);
+  assert(value_for_pwm(eight, RangeKind::Bandwidth, 1950) == 20);
+  assert(value_for_pwm(eight, RangeKind::Bandwidth, 1951) == 10);
   for (const auto* invalid : {"", "2100", "2100:", ":20", "899:20,2100:40",
        "1500:20,1500:40,2100:10", "1700:20,1300:10,2100:40", "2000:20",
        "2101:20", "2100:80", "2100:-1", "2100:20,", ",2100:20", "2100:20x",
        " 2100:20", "+2100:20", "2100:20:40", "999999999999:20",
-       "1000:10,1200:20,1400:40,1600:10,1800:20,2100:40"}) {
+       "1000:10,1100:20,1200:40,1300:10,1400:20,1500:40,1600:10,1700:20,2100:40"}) {
     assert(!parse_ranges(invalid, RangeKind::Bandwidth));
   }
   assert(!parse_ranges("2100:5", RangeKind::Mcs));

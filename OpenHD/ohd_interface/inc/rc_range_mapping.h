@@ -7,6 +7,7 @@
 
 namespace openhd::rc {
 
+inline constexpr int max_ranges = 8;
 inline constexpr auto default_bw_ranges = "1500:20,2100:40";
 inline constexpr auto default_mcs_ranges = "1300:0,1700:2,2100:3";
 inline constexpr auto default_tx_mode_ranges = "1300:0,1700:1,2100:2";
@@ -51,7 +52,7 @@ inline std::optional<std::vector<Range>> parse_ranges(std::string_view text,
         !number(entry.substr(colon + 1), value) || upper <= previous || upper > 2100 ||
         !valid_value(kind, value)) return std::nullopt;
     result.push_back({upper, value});
-    if (result.size() > 5) return std::nullopt;
+    if (result.size() > max_ranges) return std::nullopt;
     previous = upper;
     if (comma == std::string_view::npos) break;
     text.remove_prefix(comma + 1);

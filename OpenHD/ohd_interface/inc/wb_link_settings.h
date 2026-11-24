@@ -24,6 +24,7 @@
 #ifndef OPENHD_OPENHD_OHD_INTERFACE_INC_WB_LINK_SETTINGS_HPP_
 #define OPENHD_OPENHD_OHD_INTERFACE_INC_WB_LINK_SETTINGS_HPP_
 
+#include <functional>
 #include <mutex>
 #include <utility>
 
@@ -33,6 +34,7 @@
 #include "openhd_platform.h"
 #include "openhd_profile.h"
 #include "openhd_settings_directories.h"
+#include "openhd_settings_imp.h"
 #include "openhd_settings_persistent.h"
 #include "wifi_card.h"
 
@@ -219,28 +221,18 @@ static bool validate_wb_rtl8812au_tx_pwr_idx_override(int value) {
 
 class WBLinkSettingsHolder : public openhd::PersistentSettings<WBLinkSettings> {
  public:
-  /**
-   * @param platform needed to figure out the proper default params
-   * @param wifibroadcast_cards1 needed to figure out the proper default params
-   */
-  explicit WBLinkSettingsHolder(OHDProfile profile,
-                                std::vector<WiFiCard> wifibroadcast_cards1)
-      : openhd::PersistentSettings<WBLinkSettings>(
-            get_interface_settings_directory()),
-        m_cards(std::move(wifibroadcast_cards1)),
-        m_profile(std::move(profile)) {
-    init();
-    // Migrate persisted 5 MHz settings before either radio is initialized.
-    auto& settings = unsafe_get_settings();
-    bool changed = false;
-    for (auto* width : {&settings.wb_air_tx_channel_width,
-                        &settings.wb_gnd_rx_channel_width}) {
-      if (*width == 5) {
-        *width = 20;
-        changed = true;
-      }
-    }
-    if (changed) persist();
+  explicit WBLinkSettingsHolder(
+      OHDProfile profile, std::vector<WiFiCard> wifibroadcast_cards,
+      std::string settings_directory = get_interface_settings_directory());
+
+  // These mappings are Air settings even when no WiFiBroadcast radio is present.
+  std::vector<Setting> get_rc_profile_settings(
+      std::function<void()> on_bandwidth_changed = {});
+
+  template <typename Channel>
+  int get_rc_channel(Channel WBLinkSettings::*channel) const {
+    std::lock_guard<std::mutex> lock(m_rc_profiles_mutex);
+    return static_cast<int>(get_settings().*channel);
   }
 
   WBLinkSettings snapshot() const {
@@ -278,6 +270,7 @@ class WBLinkSettingsHolder : public openhd::PersistentSettings<WBLinkSettings> {
     return ss.str();
   }
   [[nodiscard]] WBLinkSettings create_default() const override {
+    if (m_cards.empty()) return WBLinkSettings{};
     return create_default_wb_stream_settings(m_cards);
   }
 
@@ -285,6 +278,8 @@ class WBLinkSettingsHolder : public openhd::PersistentSettings<WBLinkSettings> {
   std::optional<WBLinkSettings> impl_deserialize(
       const std::string& file_as_string) const override;
   std::string imp_serialize(const WBLinkSettings& data) const override;
+  const std::string m_settings_directory;
+  bool m_had_staged_rc_profiles = false;
   mutable std::mutex m_rc_profiles_mutex;
 };
 

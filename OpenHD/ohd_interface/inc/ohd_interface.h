@@ -53,6 +53,9 @@ class EthernetLink;
 class LanPlatformAnnouncer;
 class LteLink;
 class MultiLink;
+namespace openhd {
+class WBLinkSettingsHolder;
+}
 #ifdef OHD_ENABLE_ARTOSYN
 class ArtosynLink;
 #endif
@@ -134,6 +137,7 @@ class OHDInterface {
   const OHDProfile m_profile;
   std::shared_ptr<spdlog::logger> m_console;
   std::shared_ptr<WBLink> m_wb_link;
+  std::unique_ptr<openhd::WBLinkSettingsHolder> m_wb_settings_without_radio;
   std::shared_ptr<MicrohardLink> m_microhard_link;
 #ifdef OHD_ENABLE_ARTOSYN
   std::shared_ptr<ArtosynLink> m_artosyn_link;
