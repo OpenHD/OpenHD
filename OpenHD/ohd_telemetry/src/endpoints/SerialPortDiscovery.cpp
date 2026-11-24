@@ -5,6 +5,7 @@
 #include <iterator>
 #include <fstream>
 #include <set>
+#include <string_view>
 #include <utility>
 
 #include <nlohmann/json.hpp>
@@ -58,17 +59,21 @@ struct HeaderUart {
   int tx;
 };
 
+bool contains_dt_string(const std::string& property, std::string_view value) {
+  for (std::size_t start = 0; start < property.size();) {
+    const auto end = property.find('\0', start);
+    if (std::string_view(property).substr(start, end - start) == value) return true;
+    if (end == std::string::npos) break;
+    start = end + 1;
+  }
+  return false;
+}
+
 // Physical pin numbers from the Radxa hardware interface documentation.
 // For boards with different revisions, use UART routes shared by the revisions.
-std::vector<HeaderUart> radxa_header_uarts(const std::string& compatible) {
-  auto has_compatible = [&](const std::string& name) {
-    for (std::size_t start = 0; start < compatible.size();) {
-      const auto end = compatible.find('\0', start);
-      if (compatible.substr(start, end - start) == name) return true;
-      if (end == std::string::npos) break;
-      start = end + 1;
-    }
-    return false;
+std::vector<HeaderUart> rockchip_header_uarts(const std::string& compatible) {
+  auto has_compatible = [&](std::string_view name) {
+    return contains_dt_string(compatible, name);
   };
 
   if (has_compatible("radxa,zero3w") || has_compatible("radxa,zero3e") ||
@@ -94,13 +99,66 @@ std::vector<HeaderUart> radxa_header_uarts(const std::string& compatible) {
   return {};
 }
 
+nlohmann::json cubie_header_routes(const std::vector<std::string>& ports,
+                                    const fs::path& dt,
+                                    const fs::path& tty_class) {
+  struct Route {
+    const char* function;
+    const char* rx_gpio;
+    const char* tx_gpio;
+    int rx;
+    int tx;
+  };
+  // Both A733 Cubies share these positions on their main GPIO header. The
+  // A7S auxiliary header is separate and has a different numbering space.
+  constexpr Route wired_routes[] = {
+      {"uart0", "PB10", "PB9", 10, 8}, {"uart0", "PB1", "PB0", 11, 7},
+      {"uart2", "PB1", "PB0", 11, 7}, {"uart3", "PJ23", "PJ22", 3, 5},
+      {"uart3", "PD17", "PD16", 27, 28}, {"uart4", "PJ25", "PJ24", 18, 16},
+  };
+
+  auto routes = nlohmann::json::object();
+  std::error_code error;
+  for (fs::recursive_directory_iterator group(dt, error), end;
+       group != end && !error; group.increment(error)) {
+    if (!group->is_directory(error) || error) continue;
+    const auto phandle = read_property(group->path() / "phandle");
+    if (phandle.size() != 4) continue;
+    const auto function = read_property(group->path() / "function");
+    if (function.compare(0, 4, "uart") != 0) continue;
+    const auto gpios = read_property(group->path() / "pins");
+
+    for (const auto& route : wired_routes) {
+      if (!contains_dt_string(function, route.function) ||
+          !contains_dt_string(gpios, route.rx_gpio) ||
+          !contains_dt_string(gpios, route.tx_gpio)) continue;
+      for (const auto& port : ports) {
+        const auto pins = read_property(tty_class / fs::path(port).filename() /
+                                        "device/of_node/pinctrl-0");
+        for (size_t offset = 0; offset + 4 <= pins.size(); offset += 4) {
+          if (pins.compare(offset, 4, phandle) == 0) {
+            routes[port] = {{"rx", route.rx}, {"tx", route.tx}};
+            break;
+          }
+        }
+      }
+    }
+  }
+  return routes;
+}
+
 // The same tty can be muxed away from the header. Match the actual pinctrl
 // phandles against the documented header routes for this exact board family.
 nlohmann::json serial_header_routes(const std::vector<std::string>& ports,
                                     const fs::path& dt,
                                     const fs::path& tty_class = "/sys/class/tty") {
   auto routes = nlohmann::json::object();
-  const auto pin_pairs = radxa_header_uarts(read_property(dt / "compatible"));
+  const auto compatible = read_property(dt / "compatible");
+  if (contains_dt_string(compatible, "radxa,cubie-a7s") ||
+      contains_dt_string(compatible, "radxa,cubie-a7z")) {
+    return cubie_header_routes(ports, dt, tty_class);
+  }
+  const auto pin_pairs = rockchip_header_uarts(compatible);
   if (pin_pairs.empty()) return routes;
   for (const auto& port : ports) {
     const auto pins = read_property(tty_class /
