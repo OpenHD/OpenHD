@@ -71,11 +71,39 @@ bool contains_dt_string(const std::string& property, std::string_view value) {
 
 // Physical pin numbers from the Radxa hardware interface documentation.
 // For boards with different revisions, use UART routes shared by the revisions.
-std::vector<HeaderUart> rockchip_header_uarts(const std::string& compatible) {
+std::vector<HeaderUart> rockchip_header_uarts(const std::string& compatible,
+                                              const std::string& model) {
   auto has_compatible = [&](std::string_view name) {
     return contains_dt_string(compatible, name);
   };
 
+  // Pico and Pico Plus use the same SoC compatible but have different
+  // castellated headers. The vendor DTS model distinguishes these variants.
+  if (has_compatible("rockchip,rv1103") &&
+      (contains_dt_string(model, "Luckfox Pico") ||
+       contains_dt_string(model, "Luckfox Pico Plus"))) {
+    std::vector<HeaderUart> routes{{"uart2m1_xfer", 2, 1},
+                                   {"uart3m1_xfer", 20, 19},
+                                   {"uart4m1_xfer", 7, 6}};
+    if (contains_dt_string(model, "Luckfox Pico Plus"))
+      routes.push_back({"uart5m0_xfer", 22, 21});
+    return routes;
+  }
+  const std::string_view board_model(model.c_str());
+  if (has_compatible("rockchip,rv1126b") &&
+      (board_model.find("Luckfox Aura") == 0 || board_model.find("Luckfox-Aura") == 0)) {
+    return {{"uart4m1_xfer", 10, 8}, {"uart5m1_xfer", 35, 38},
+            {"uart6m0_xfer", 33, 32}, {"uart7m0_xfer", 29, 7}};
+  }
+
+  if (has_compatible("rockchip,rk3506") || has_compatible("rockchip,rk3506b")) {
+    // UART0 is GPIO0_C6/C7. Header numbering varies across Lyra products.
+    if (board_model == "Luckfox Lyra" || board_model == "Luckfox Lyra B")
+      return {{"uart0_xfer", 2, 1}};
+    if (board_model == "Luckfox Lyra Plus") return {{"uart0_xfer", 3, 1}};
+    if (board_model == "Luckfox Lyra Zero W" || board_model.find("Luckfox Lyra Pi") == 0)
+      return {{"uart0_xfer", 10, 8}};
+  }
   if (has_compatible("radxa,zero3w") || has_compatible("radxa,zero3e") ||
       has_compatible("radxa,zero3") || has_compatible("radxa,rock-3c")) {
     return {{"uart2m0_xfer", 10, 8}, {"uart3m0_xfer", 3, 5},
@@ -196,7 +224,7 @@ nlohmann::json serial_header_routes(const std::vector<std::string>& ports,
       contains_dt_string(compatible, "radxa,cubie-a7z")) {
     return cubie_header_routes(ports, dt, tty_class);
   }
-  auto pin_pairs = rockchip_header_uarts(compatible);
+  auto pin_pairs = rockchip_header_uarts(compatible, read_property(dt / "model"));
   if (pin_pairs.empty()) pin_pairs = raspberry_pi_header_uarts(compatible, dt);
   if (pin_pairs.empty()) return routes;
   for (const auto& port : ports) {
