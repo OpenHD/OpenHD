@@ -26,7 +26,8 @@
 #include "include_json.hpp"
 
 namespace openhd::telemetry::rpi {
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GPIOControlSettings, gpio_2);
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(GPIOControlSettings, gpio_2,
+                                                gpio_26);
 
 std::optional<GPIOControlSettings> GPIOControlSettingsHolder::impl_deserialize(
     const std::string &file_as_string) const {
