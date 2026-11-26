@@ -41,6 +41,9 @@ namespace openhd {
 // corruption !!!
 // static constexpr auto SETTINGS_BASE_PATH ="/boot/openhd/settings/";
 static constexpr auto SETTINGS_BASE_PATH = "/usr/local/share/openhd/";
+// Persistent handoff from SysUtils, which may reboot to activate a camera overlay.
+inline constexpr auto INITIAL_PARAMETER_SETTINGS_PATH =
+    "/usr/local/share/OpenHD/SysUtils/initial-parameter-settings.json";
 // for example, the unique id
 static std::string get_unit_id_file_path() {
   return std::string(SETTINGS_BASE_PATH) + "unit.id";

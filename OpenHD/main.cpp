@@ -71,6 +71,7 @@
 #include "openhd_telemetry_recorder.h"
 #include "openhd_config.h"
 #include "openhd_util.h"
+#include "openhd_settings_directories.h"
 #include "openhd_util_filesystem.h"
 #include "config_paths.h"
 #include "include_json.hpp"
@@ -751,6 +752,15 @@ int main(int argc, char *argv[]) {
     // complete
     if (ohdTelemetry) {
       ohdTelemetry->settings_generic_ready();
+      // The camera and generic parameter providers have read the initial plan.
+      if (!emulate_monitor_card && !std::getenv("OPENHD_INITIAL_SETTINGS_FILE")) {
+        std::error_code error;
+        std::filesystem::remove(openhd::INITIAL_PARAMETER_SETTINGS_PATH, error);
+        if (error) {
+          m_console->warn("Could not remove initial parameter settings: {}",
+                          error.message());
+        }
+      }
       // now telemetry can send / receive data via wifibroadcast
       if (ohdInterface) {
         ohdTelemetry->set_link_handle(ohdInterface->get_link_handle());

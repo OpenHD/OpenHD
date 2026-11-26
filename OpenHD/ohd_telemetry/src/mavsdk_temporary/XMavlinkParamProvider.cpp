@@ -24,6 +24,7 @@
 #include "XMavlinkParamProvider.h"
 
 #include <openhd_spdlog.h>
+#include "openhd_settings_directories.h"
 #include "openhd_settings_registry.h"
 #include "openhd_sysutil_settings_adapter.h"
 #include <cstring>
@@ -101,7 +102,10 @@ void XMavlinkParamProvider::set_ready() {
 void XMavlinkParamProvider::apply_initial_configuration() {
   const char* override_path=std::getenv("OPENHD_INITIAL_SETTINGS_FILE");
   const std::vector<std::string> paths=override_path ? std::vector<std::string>{override_path} :
-    std::vector<std::string>{"/Config/settings.json","/Config/openhd/settings.json","/boot/openhd/settings.json"};
+    std::vector<std::string>{openhd::INITIAL_PARAMETER_SETTINGS_PATH,
+                             "/Config/settings.json",
+                             "/Config/openhd/settings.json",
+                             "/boot/openhd/settings.json"};
   for (const auto& path:paths) {
     try {
       if (!std::filesystem::exists(path) || std::filesystem::file_size(path)>1024*1024) continue;
