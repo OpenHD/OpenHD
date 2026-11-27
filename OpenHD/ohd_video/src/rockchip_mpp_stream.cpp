@@ -621,6 +621,7 @@ class RockchipMppStream::Impl {
 
   bool start_recording() {
     if (record_ctx) return true;
+    if (OHDPlatform::instance().is_zero3w() && !hasMountedVideoPartition()) return false;
     if (!init_record_encoder() || !setup_record_file()) {
       stop_recording();
       return false;

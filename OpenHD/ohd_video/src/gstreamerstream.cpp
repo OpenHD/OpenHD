@@ -1197,10 +1197,15 @@ bool GStreamerStream::setup() {
     m_console->warn("Probably ill-formatted pipeline: [{}]",
                     pipeline_content.str());
   }
-  const bool ADD_RECORDING_TO_PIPELINE =
+  const bool recording_requested =
       setting.air_recording == AIR_RECORDING_ON ||
       (setting.air_recording == AIR_RECORDING_AUTO_ARM_DISARM &&
        m_armed_enable_air_recording);
+  const auto recording_filename = recording_requested
+      ? openhd::video::create_unused_recording_filename(
+            OHDGstHelper::file_suffix_for_video_codec(setting.streamed_video_format.videoCodec))
+      : std::string{};
+  const bool ADD_RECORDING_TO_PIPELINE = !recording_filename.empty();
   // for safety we only add the tee command at the right place if recording is
   // enabled.
   if (ADD_RECORDING_TO_PIPELINE) {
@@ -1230,10 +1235,6 @@ bool GStreamerStream::setup() {
     pipeline_content << OHDGstHelper::createOutputAppSink();
   }
   if (ADD_RECORDING_TO_PIPELINE) {
-    const auto recording_filename =
-        openhd::video::create_unused_recording_filename(
-            OHDGstHelper::file_suffix_for_video_codec(
-                setting.streamed_video_format.videoCodec));
     m_console->debug("Using [{}] for recording", recording_filename);
     pipeline_content << OHDGstHelper::createRecordingForVideoCodec(
         setting.streamed_video_format.videoCodec, recording_filename);

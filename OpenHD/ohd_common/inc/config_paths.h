@@ -29,5 +29,6 @@ void setConfigBasePath(const char* path);
 void setVideoPath(const char* path);
 const char* getConfigBasePath();
 const char* getVideoPath();
+bool hasMountedVideoPartition();
 
 #endif  // CONFIG_H

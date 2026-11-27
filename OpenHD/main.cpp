@@ -539,6 +539,13 @@ int main(int argc, char *argv[]) {
     openhd::set_wifi_monitor_card_emulate_override(true);
   } else {
     if (!openhd::wait_for_sysutils()) {
+      const auto compatible =
+          OHDFilesystemUtil::opt_read_file("/proc/device-tree/compatible", false);
+      if (std::getenv("OPENHD_REQUIRE_SYSUTILS") ||
+          (compatible && compatible->find("radxa,zero3w") != std::string::npos)) {
+        std::cerr << "SysUtils has not loaded the Zero 3W boot settings; retrying startup.\n";
+        return 1;
+      }
       std::cerr << "WARN: sysutils socket not ready after 30s, continuing.\n";
     }
   }

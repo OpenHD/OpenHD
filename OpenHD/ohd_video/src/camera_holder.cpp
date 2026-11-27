@@ -23,6 +23,7 @@
 
 #include "camera_holder.h"
 
+#include "config_paths.h"
 #include "include_json.hpp"
 #include "openhd_spdlog_include.h"
 #ifdef OPENHD_ROCKCHIP_MPP_PRESENT
@@ -743,6 +744,11 @@ bool CameraHolder::set_air_recording(int recording_enable) {
   if (get_settings().air_recording == recording_enable) return true;
 
   if (recording_enable != AIR_RECORDING_OFF &&
+      OHDPlatform::instance().is_zero3w() && !hasMountedVideoPartition()) {
+    openhd::log::get_default()->warn("No writable recordings partition at /Video");
+    return false;
+  }
+  if (recording_enable != AIR_RECORDING_OFF &&
       OHDFilesystemUtil::get_remaining_space_in_mb() <
           MINIMUM_AMOUNT_FREE_SPACE_FOR_AIR_RECORDING_MB) {
     // Corrected log statement
@@ -764,6 +770,9 @@ bool CameraHolder::set_air_recording(int recording_enable) {
 
 void CameraHolder::check_remaining_space_air_recording(bool call_callback) {
   static bool error_logged = false;
+
+  // A missing removable volume can return without changing the recording mode.
+  if (OHDPlatform::instance().is_zero3w() && !hasMountedVideoPartition()) return;
 
   if (OHDFilesystemUtil::get_remaining_space_in_mb() >
       MINIMUM_AMOUNT_FREE_SPACE_FOR_AIR_RECORDING_MB) {

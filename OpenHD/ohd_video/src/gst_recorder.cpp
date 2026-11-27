@@ -82,6 +82,10 @@ GstVideoRecorder::GstVideoRecorder() {
   const auto recording_filename =
       openhd::video::create_unused_recording_filename(
           OHDGstHelper::file_suffix_for_video_codec(video_codec));
+  if (recording_filename.empty()) {
+    m_console->warn("No writable recordings partition at /Video");
+    return;
+  }
   m_console->debug("Using [{}] for recording", recording_filename);
 
   const auto pipeline_str =
@@ -166,6 +170,7 @@ void GstVideoRecorder::enqueue_rtp_fragment(
 }
 
 void GstVideoRecorder::start() {
+  if (!m_gst_pipeline) return;
   openhd::gst_element_set_state_with_timeout(m_gst_pipeline,
                                              GST_STATE_PLAYING);
   m_console->debug(
@@ -176,6 +181,7 @@ void GstVideoRecorder::start() {
 }
 
 void GstVideoRecorder::stop_and_cleanup() {
+  if (!m_gst_pipeline) return;
   gst_element_send_event(m_gst_pipeline, gst_event_new_eos());
   openhd::gst_element_set_set_state_and_log_result(m_gst_pipeline,
                                                    GST_STATE_PAUSED);

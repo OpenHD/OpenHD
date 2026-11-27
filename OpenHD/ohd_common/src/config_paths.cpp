@@ -26,6 +26,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <string>
+#include <sys/stat.h>
+#include <sys/statvfs.h>
 
 #include "openhd_util_filesystem.h"
 
@@ -33,38 +35,34 @@
 static char* CONFIG_BASE_PATH = nullptr;
 static char* VIDEO_PATH = nullptr;
 
-const char* getConfigBasePath() { return "/Config/"; }
+const char* getConfigBasePath() {
+  return CONFIG_BASE_PATH && *CONFIG_BASE_PATH ? CONFIG_BASE_PATH : "/Config/";
+}
+
+bool hasMountedVideoPartition() {
+  struct stat root {}, video {};
+  struct statvfs volume {};
+  return stat("/", &root) == 0 && stat("/Video", &video) == 0 &&
+         root.st_dev != video.st_dev && statvfs("/Video", &volume) == 0 &&
+         (volume.f_flag & ST_RDONLY) == 0;
+}
 
 const char* getVideoPath() {
-  static std::string cached_path;
-  if (!cached_path.empty()) {
-    return cached_path.c_str();
-  }
+  // The camera worker can inherit an explicit recording path.
+  if (VIDEO_PATH && *VIDEO_PATH) return VIDEO_PATH;
+  if (hasMountedVideoPartition()) return "/Video/";
 
-  // Honour an explicitly configured path first.
-  if (VIDEO_PATH != nullptr && std::strlen(VIDEO_PATH) > 0) {
-    cached_path = VIDEO_PATH;
-  } else if (OHDFilesystemUtil::exists(
-                 "/Videos/external_video_part.txt")) {
-    // Legacy removable-storage mount used by Raspberry Pi and Rock images.
-    cached_path = "/Videos/";
-  } else if (OHDFilesystemUtil::exists(
-                 "/external/Videos/external_video_part.txt")) {
-    // Legacy X20 removable-storage mount.
-    cached_path = "/external/Videos/";
-  } else if (OHDFilesystemUtil::exists("/Video/")) {
-    // Current images mount their recording partition here.
-    cached_path = "/Video/";
-  } else {
-    // Sysutils mounts whichever recording device the user selected here. If
-    // there is no dedicated partition, this remains a usable local directory.
-    cached_path = "/Video/";
+  // Legacy removable-storage mount points.
+  if (OHDFilesystemUtil::exists("/Videos/external_video_part.txt")) {
+    return "/Videos/";
   }
-
-  if (!OHDFilesystemUtil::exists(cached_path)) {
-    OHDFilesystemUtil::create_directories(cached_path);
+  if (OHDFilesystemUtil::exists("/external/Videos/external_video_part.txt")) {
+    return "/external/Videos/";
   }
-  return cached_path.c_str();
+  if (!OHDFilesystemUtil::exists("/Video/")) {
+    OHDFilesystemUtil::create_directories("/Video/");
+  }
+  return "/Video/";
 }
 
 void setConfigBasePath(const char* path) {

@@ -34,6 +34,7 @@
 #include <unistd.h>
 
 #include "config_paths.h"
+#include "openhd_platform.h"
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"
 
@@ -61,9 +62,8 @@ static std::string format_track_count(int count) {
   return oss.str();
 }
 
-static int get_recording_index_track_count() {
-  const std::string recording_track_filename =
-      std::string(getVideoPath()) + "track_count.txt";
+static int get_recording_index_track_count(const std::string& directory) {
+  const std::string recording_track_filename = directory + "track_count.txt";
   // Camera workers have separate address spaces. Serialize index allocation
   // across both cameras (and native stream backends) using the counter inode.
   const int lock_fd = open(recording_track_filename.c_str(),
@@ -98,17 +98,20 @@ static int get_recording_index_track_count() {
  * @param suffix the suffix of the filename,e.g. ".avi" or ".mp4"
  */
 static std::string create_unused_recording_filename(const std::string& suffix) {
-  if (!OHDFilesystemUtil::exists(std::string(getVideoPath()))) {
-    OHDFilesystemUtil::create_directories(std::string(getVideoPath()));
+  const bool zero3w = OHDPlatform::instance().is_zero3w();
+  const std::string directory = zero3w ? "/Video/" : getVideoPath();
+  if (zero3w && !hasMountedVideoPartition()) return {};
+  if (!OHDFilesystemUtil::exists(directory)) {
+    OHDFilesystemUtil::create_directories(directory);
   }
   // TEMPORARY - considering how many users use RPI (where date is not reliable)
   // we just name the files ascending
   // recording-1, recording-2 ...
   // we also make sure that we always use ascending numbers, even if the user
   // deletes a video
-  const int track_index = get_recording_index_track_count();
+  const int track_index = get_recording_index_track_count(directory);
   std::stringstream ss;
-  ss << std::string(getVideoPath()) << "recording_" << track_index << suffix;
+  ss << directory << "recording_" << track_index << suffix;
   return ss.str();
   /*for(int i=0;i<10000;i++){
     // Suffix might be either .
