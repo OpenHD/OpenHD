@@ -18,6 +18,11 @@
 #include "openhd_global_constants.hpp"
 
 namespace {
+#ifdef OPENHD_SNAPSHOT_VERSION
+constexpr auto ground_display_version = "OpenHD - Ground " OPENHD_SNAPSHOT_VERSION;
+#else
+constexpr auto ground_display_version = "OpenHD - Ground";
+#endif
 volatile std::sig_atomic_t stopping = 0;
 void stop(int) { stopping = 1; }
 void help() {
@@ -139,7 +144,7 @@ int run_backend(const Config& c, std::atomic<bool>& requested_stop,
     auto last_packet = std::chrono::steady_clock::time_point{};
     while (!requested_stop.load() && !stopping && !failed.load()) {
       openhd::ui::DashboardStatus status;
-      status.version = "OpenHD - Ground";
+      status.version = ground_display_version;
 #ifdef _WIN32
       status.platform = "Windows / Devourer USB";
 #else
@@ -169,7 +174,7 @@ int dashboard(Config& config, const std::filesystem::path& path, bool configure,
     if (!ncurses_active()) throw std::runtime_error("Open in an interactive console for the dashboard, or use --no-ui");
     struct RestoreTerminal { ~RestoreTerminal() { shutdown_ncurses(); } } terminal;
     DashboardStatus status;
-    status.version = "OpenHD - Ground";
+    status.version = ground_display_version;
 #ifdef _WIN32
     status.platform = "Windows / Devourer USB";
 #else
