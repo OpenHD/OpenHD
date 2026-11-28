@@ -5,7 +5,7 @@ on:
    branches:
       - "2.6-evo"
       - "dev-release"
-      - "release"
+      - "master"
 
 jobs:
   build:
@@ -42,7 +42,7 @@ jobs:
           echo "armhf" > /opt/OpenHD-ChrootCompiler/additionalFiles/arch.txt
           echo "debian" > /opt/OpenHD-ChrootCompiler/additionalFiles/distro.txt
           echo "bullseye" > /opt/OpenHD-ChrootCompiler/additionalFiles/flavor.txt
-          echo "${{ github.ref_name }}" > /opt/OpenHD-ChrootCompiler/additionalFiles/repo.txt
+          echo "${{ github.ref_name == 'master' && 'release' || github.ref_name }}" > /opt/OpenHD-ChrootCompiler/additionalFiles/repo.txt
 
           cd /opt/OpenHD-ChrootCompiler/
           sudo apt update
@@ -62,14 +62,14 @@ jobs:
 
       - name: Push
         id: push
-        if: github.ref_name == 'release' || github.ref_name == 'dev-release'
+        if: github.ref_name == 'master' || github.ref_name == 'dev-release'
         uses: cloudsmith-io/action@master
         with:
           api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
           command: "push"
           format: "deb"
           owner: "openhd"
-          repo: ${{ github.ref_name }}
+          repo: ${{ github.ref_name == 'master' && 'release' || github.ref_name }}
           distro: "debian"
           release: "bullseye"
           republish: "true" # needed ONLY if version is not changing

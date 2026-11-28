@@ -4,7 +4,7 @@ name: Clang-tidy
 on:
   push:
     branches-ignore:
-      - release
+      - master
       - dev-release
 
 jobs:
