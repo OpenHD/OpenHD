@@ -30,6 +30,8 @@
 #include <unistd.h>
 
 #include <cassert>
+#include <filesystem>
+#include <fstream>
 #include <map>
 #include <utility>
 
@@ -495,6 +497,21 @@ std::string role_alias_for(SerialPortRole role) {
   return "/dev/Flight";
 }
 
+bool pico_uart1_available_for_telemetry() {
+  std::error_code ec;
+  if (!device_path_exists("/dev/ttyS1") ||
+      !std::filesystem::exists("/sys/class/tty/ttyS1/device/of_node", ec)) {
+    return false;
+  }
+  // Some Pico device trees route UART1 to the onboard Bluetooth controller.
+  constexpr auto bluetooth = "/proc/device-tree/wireless-bluetooth";
+  if (!std::filesystem::exists(bluetooth, ec)) return !ec;
+  std::ifstream input(std::string(bluetooth) + "/status", std::ios::binary);
+  std::string status;
+  std::getline(input, status, '\0');
+  return status == "disabled";
+}
+
 std::string platform_default_for(SerialPortRole role) {
   if (role == SerialPortRole::Tracker) {
     return role_alias_for(role);
@@ -519,6 +536,8 @@ std::string platform_default_for(SerialPortRole role) {
     return "/dev/ttyS4";
   }
   if (platform.is_luckfox_pico()) {
+    if (role == SerialPortRole::Flight && pico_uart1_available_for_telemetry())
+      return "/dev/ttyS1";
     return "/dev/ttyS3";
   }
   if (platform.is_luckfox_lyra()) {
