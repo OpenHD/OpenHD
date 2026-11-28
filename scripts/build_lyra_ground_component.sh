@@ -164,6 +164,9 @@ minor="$(awk '/MINOR_VERSION =/{gsub(/;/, "", $NF); print $NF}' "${version_heade
 patch="$(awk '/PATCH_VERSION =/{gsub(/;/, "", $NF); print $NF}' "${version_header}")"
 beta="$(awk '/BETA_VERSION =/{gsub(/;/, "", $NF); print $NF}' "${version_header}")"
 openhd_version="${major}.${minor}.${patch}-evo-beta${beta}"
+if [[ ${OPENHD_SNAPSHOT_NUMBER:-} =~ ^[1-9][0-9]*$ ]]; then
+  openhd_version="0.0.${OPENHD_SNAPSHOT_NUMBER}"
+fi
 openhd_commit="$(git -C "${repo_root}" rev-parse HEAD)"
 package_version="${openhd_version}-${openhd_commit:0:12}"
 package_name="openhd-lyra-ground-${package_version}.tar.gz"
