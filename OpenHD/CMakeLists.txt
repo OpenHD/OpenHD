@@ -1,4 +1,8 @@
 cmake_minimum_required(VERSION 3.16.3)
+
+if("$ENV{OPENHD_SNAPSHOT_NUMBER}" MATCHES "^[1-9][0-9]*$")
+    add_compile_definitions(OPENHD_SNAPSHOT_VERSION="0.0.$ENV{OPENHD_SNAPSHOT_NUMBER}")
+endif()
 project(OpenHD)
 
 set(CMAKE_CXX_STANDARD 17)

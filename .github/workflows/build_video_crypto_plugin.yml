@@ -3,7 +3,7 @@ name: Build private video crypto plugin
 on:
   workflow_dispatch:
   push:
-    branches: [dev-release]
+    branches: [snapshots]
 
 permissions:
   contents: read

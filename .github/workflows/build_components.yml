@@ -3,13 +3,13 @@ name: Build platform components
 # X21B / Luckfox Aura (RV1126B), Luckfox Pico and Luckfox Lyra (RK3506) ground
 # components. Each is cross-compiled by its scripts/build_*_component.sh and
 # published as raw files to Cloudsmith. Pull requests build and upload the
-# artifacts only; publishing happens from dev-release.
+# artifacts only; publishing happens from snapshots.
 
 on:
   workflow_dispatch:
   push:
     branches:
-      - dev-release
+      - snapshots
     paths:
       - OpenHD/**
       - scripts/build_x21_component.sh
@@ -20,7 +20,7 @@ on:
       - .github/workflows/build_components.yml
   pull_request:
     branches:
-      - dev-release
+      - snapshots
     paths:
       - OpenHD/**
       - scripts/build_x21_component.sh
@@ -38,6 +38,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  OPENHD_SNAPSHOT_NUMBER: ${{ github.ref_name == 'snapshots' && github.run_number || '' }}
   INPUT_BASE_URL: https://dl.cloudsmith.io/public/openhd/dev-release/raw/files
 
 jobs:
@@ -81,7 +82,7 @@ jobs:
             cxx: arm-linux-gnueabihf-g++-10
     env:
       CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
-      PUBLISH: ${{ github.ref == 'refs/heads/dev-release' && secrets.CLOUDSMITH_API_KEY != '' }}
+      PUBLISH: ${{ github.ref == 'refs/heads/snapshots' && secrets.CLOUDSMITH_API_KEY != '' }}
       COMPONENT_DIR: ${{ github.workspace }}/${{ matrix.platform }}-component
     steps:
       - name: Validate credentials
@@ -210,4 +211,4 @@ jobs:
             echo "The production base and both X21B components must share an SDK; waiting for publication."
             exit 0
           fi
-          gh workflow run update-image.yml --repo OpenHD/OpenHD-ImageBuilder --ref dev-release -f target=x21-update
+          gh workflow run update-image.yml --repo OpenHD/OpenHD-ImageBuilder --ref snapshots -f target=x21-update

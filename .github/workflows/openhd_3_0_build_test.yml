@@ -3,11 +3,14 @@ name: openhd_3_0_build_test
 on:
   push:
     branches:
-      - dev-release
+      - snapshots
   pull_request:
     branches:
-      - dev-release
+      - snapshots
   workflow_dispatch:
+
+env:
+  OPENHD_SNAPSHOT_NUMBER: ${{ github.ref_name == 'snapshots' && github.run_number || '' }}
 
 jobs:
   build-and-run-air-ground-test:

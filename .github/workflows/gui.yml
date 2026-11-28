@@ -2,7 +2,7 @@ name: OpenHD integrated GUI
 
 on:
   push:
-    branches: [dev-release]
+    branches: [snapshots]
     paths:
       - OpenHD/**
       - scripts/create_cross_sysroot.sh

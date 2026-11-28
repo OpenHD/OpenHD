@@ -4,10 +4,10 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - dev-release
+      - snapshots
   pull_request:
     branches:
-      - dev-release
+      - snapshots
 
 concurrency:
   group: final-ci-${{ github.ref }}
@@ -17,6 +17,7 @@ permissions:
   contents: read
 
 env:
+  OPENHD_SNAPSHOT_NUMBER: ${{ github.ref_name == 'snapshots' && github.run_number || '' }}
   OPENHD_SUBMODULE_TOKEN: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
   ARTLINK_REPO: https://github.com/OpenHD-Technologies/OpenHD-ArtLink.git
   ARTLINK_BRANCH: sdk
@@ -217,10 +218,10 @@ jobs:
         if: github.event_name != 'pull_request'
         id: cloudsmith
         run: |
-          if [[ "${GITHUB_REF_NAME}" == "dev-release" ]]; then
+          if [[ "${GITHUB_REF_NAME}" == "snapshots" ]]; then
             echo "repo=dev-release" >> "${GITHUB_OUTPUT}"
           else
-            echo "repo=${GITHUB_REF_NAME}" >> "${GITHUB_OUTPUT}"
+            echo "repo=${GITHUB_REF_NAME/master/release}" >> "${GITHUB_OUTPUT}"
           fi
 
       # Every package goes to any-distro/any-version, its build distribution
@@ -291,7 +292,8 @@ jobs:
           echo armhf > /opt/OpenHD-ChrootCompiler/additionalFiles/arch.txt
           echo debian > /opt/OpenHD-ChrootCompiler/additionalFiles/distro.txt
           echo bullseye > /opt/OpenHD-ChrootCompiler/additionalFiles/flavor.txt
-          echo "${GITHUB_REF_NAME}" > /opt/OpenHD-ChrootCompiler/additionalFiles/repo.txt
+          echo "${GITHUB_REF_NAME/snapshots/dev-release}" > /opt/OpenHD-ChrootCompiler/additionalFiles/repo.txt
+          printf "%s\n" "$OPENHD_SNAPSHOT_NUMBER" > /opt/OpenHD-ChrootCompiler/additionalFiles/snapshot_number.txt
           cd /opt/OpenHD-ChrootCompiler
           sudo apt-get update
           sudo bash install_dep.sh
@@ -321,10 +323,10 @@ jobs:
       - name: Resolve Cloudsmith target
         id: cloudsmith
         run: |
-          if [[ "${GITHUB_REF_NAME}" == "dev-release" ]]; then
+          if [[ "${GITHUB_REF_NAME}" == "snapshots" ]]; then
             echo "repo=dev-release" >> "${GITHUB_OUTPUT}"
           else
-            echo "repo=${GITHUB_REF_NAME}" >> "${GITHUB_OUTPUT}"
+            echo "repo=${GITHUB_REF_NAME/master/release}" >> "${GITHUB_OUTPUT}"
           fi
       - name: Publish X20 package
         uses: cloudsmith-io/action@master
@@ -356,14 +358,14 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: OpenHD/OpenHD-SysUtils
-          ref: dev-release
+          ref: snapshots
           path: OpenHD-SysUtils
           token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
       - name: Checkout QOpenHD native NXP port
         uses: actions/checkout@v7
         with:
           repository: OpenHD/QOpenHD
-          ref: dev-release
+          ref: snapshots
           path: QOpenHD
           submodules: recursive
           token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
@@ -458,10 +460,10 @@ jobs:
           install -m 0755 build-orqa-sysutils/openhd-orqa-camera-probe \
             "${deploy}/usr/local/sbin/"
 
-          # Poco shared libraries  → /usr/lib
+          # Poco shared libraries  â†’ /usr/lib
           unzip -o "${RUNNER_TEMP}/poco-libraries.zip"    -d "${deploy}/usr/lib/"
 
-          # libsodium shared library → /usr/lib
+          # libsodium shared library â†’ /usr/lib
           unzip -o "${RUNNER_TEMP}/libsodium-libraries.zip" -d "${deploy}/usr/lib/"
 
           # RTL-SDR shared library used by the built-in ADS-B receiver
@@ -502,7 +504,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: OpenHD/OpenHD-ImageBuilder
-          ref: dev-release
+          ref: snapshots
           path: OpenHD-ImageBuilder
           token: ${{ secrets.OPENHD_SUBMODULE_TOKEN }}
 
@@ -567,4 +569,4 @@ jobs:
         run: |
           gh api --method POST \
             /repos/OpenHD/OpenHD-ImageBuilder/actions/workflows/update-image.yml/dispatches \
-            -f ref=dev-release
+            -f ref=snapshots

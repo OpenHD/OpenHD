@@ -188,6 +188,9 @@ if [[ -f cloudsmith_api_key.txt && -f distro.txt && -f flavor.txt && -f repo.txt
     DISTRO=$(cat distro.txt)
     FLAVOR=$(cat flavor.txt)
     REPO=$(cat repo.txt)
+    if [[ -s snapshot_number.txt ]]; then
+        export OPENHD_SNAPSHOT_NUMBER="$(cat snapshot_number.txt)"
+    fi
     CUSTOM=$(cat custom.txt)
     ARCH=$(cat arch.txt)
 else

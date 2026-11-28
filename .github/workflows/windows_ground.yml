@@ -2,7 +2,7 @@ name: Windows ground backend
 on:
   pull_request:
   push:
-    branches: [dev-release]
+    branches: [snapshots]
   workflow_dispatch:
     inputs:
       signing_mode:
@@ -13,6 +13,9 @@ on:
 permissions:
   contents: read
   actions: read
+env:
+  OPENHD_SNAPSHOT_NUMBER: ${{ github.ref_name == 'snapshots' && github.run_number || '' }}
+
 jobs:
   ground:
     runs-on: windows-latest

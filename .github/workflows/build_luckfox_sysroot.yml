@@ -9,7 +9,7 @@ on:
         default: "main"
   push:
     branches:
-      - dev-release
+      - snapshots
     paths:
       - ".github/workflows/build_luckfox_sysroot.yml"
       - "scripts/build_luckfox_sysroot.sh"

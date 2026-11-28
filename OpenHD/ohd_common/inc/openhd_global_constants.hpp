@@ -82,10 +82,14 @@ static std::string ohd_version_as_string(uint8_t major, uint8_t minor,
   return ss.str();
 }
 static std::string get_ohd_version_as_string() {
+#ifdef OPENHD_SNAPSHOT_VERSION
+  return OPENHD_SNAPSHOT_VERSION;
+#else
   auto version = ohd_version_as_string(MAJOR_VERSION, MINOR_VERSION, PATCH_VERSION,
                                        RELEASE_TYPE);
   if (RELEASE_TYPE == 1) version += std::to_string(BETA_VERSION);
   return version;
+#endif
 }
 
 }  // namespace openhd

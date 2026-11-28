@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - "dev-release"
+      - "snapshots"
     paths:
       - "scripts/create_cross_sysroot.sh"
       - "scripts/install_rockchip_mpp_sysroot.sh"

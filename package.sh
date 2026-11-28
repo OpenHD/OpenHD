@@ -36,6 +36,14 @@ PKGDIR="/out/openhd-installdir/"
 version_header="OpenHD/ohd_common/inc/openhd_global_constants.hpp"
 beta="$(awk '/BETA_VERSION =/{gsub(/;/, "", $NF); print $NF}' "${version_header}")"
 VERSION="3.0-beta${beta}-$(date '+%Y%m%d%H%M')-$(git rev-parse --short HEAD)"
+PACKAGE_EPOCH=()
+DEBIAN_VERSION="${VERSION}"
+if [[ ${OPENHD_SNAPSHOT_NUMBER:-} =~ ^[1-9][0-9]*$ ]]; then
+  VERSION="0.0.${OPENHD_SNAPSHOT_NUMBER}"
+  # Keep the snapshot package installable over earlier 3.x developer builds.
+  PACKAGE_EPOCH=(--epoch 1)
+  DEBIAN_VERSION="1:${VERSION}"
+fi
 
 join_by() {
   local IFS="$1"
@@ -248,7 +256,7 @@ build_deb_package() {
   chmod 0755 "${debian_dir}"
   {
     echo "Package: ${package_name}"
-    echo "Version: ${VERSION}"
+    echo "Version: ${DEBIAN_VERSION}"
     echo "Section: misc"
     echo "Priority: optional"
     echo "Architecture: ${package_arch}"
@@ -700,7 +708,7 @@ build_package() {
         --replaces "openhd-${debian_arch}"
       )
     fi
-    fpm -a "${debian_arch}" -s dir -t deb -n "${package_name}" -v "${VERSION}" -C "${PKGDIR}" \
+    fpm -a "${debian_arch}" -s dir -t deb -n "${package_name}" -v "${VERSION}" "${PACKAGE_EPOCH[@]}" -C "${PKGDIR}" \
       -p "${package_name}_${VERSION}_${debian_arch}.deb" \
       --deb-compression xz \
       --after-install after-install.sh \

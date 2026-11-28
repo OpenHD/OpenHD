@@ -2,9 +2,9 @@ name: Terminal dashboard
 
 on:
   push:
-    branches: [dev-release]
+    branches: [snapshots]
   pull_request:
-    branches: [dev-release]
+    branches: [snapshots]
   workflow_dispatch:
 
 jobs:
